@@ -25,7 +25,6 @@
 
 <%  // Get parameters
     boolean kickEnabled = ParamUtils.getBooleanParameter(request,"kickEnabled");
-    String kickfreq = ParamUtils.getParameter(request,"kickfreq");
     String idletime = ParamUtils.getParameter(request,"idletime");
     String logfreq = ParamUtils.getParameter(request,"logfreq");
     String logbatchsize = ParamUtils.getParameter(request,"logbatchsize");
@@ -47,32 +46,24 @@
             return;
         }
         // do validation
-        if (kickfreq == null) {
-            errors.put("kickfreq","kickfreq");
-        }
         if (idletime == null) {
             errors.put("idletime","idletime");
         }
-        int frequency = 0;
         int idle = 0;
         // Try to obtain an int from the provided strings
         if (errors.size() == 0) {
             try {
-                frequency = Integer.parseInt(kickfreq) * 1000;
+                idle = Integer.parseInt(idletime) * 1000 * 60;
             }
             catch (NumberFormatException e) {
-                errors.put("kickfreq","kickfreq");
+                errors.put("idletime","idletime");
             }
-            try {
-                idle = Integer.parseInt(idletime) * 1000;
-            }
-            catch (NumberFormatException e) {
+            if (idle < 0) {
                 errors.put("idletime","idletime");
             }
         }
 
         if (errors.size() == 0) {
-            mucServer.setKickIdleUsersTimeout(frequency);
             mucServer.setUserIdleTime(idle);
             response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
             return;
@@ -117,18 +108,18 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Tasks Settings";
+    String title = "Other Settings";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Tasks Settings", "muc-tasks.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Other Settings", "muc-tasks.jsp"));
     pageinfo.setPageID("muc-tasks");
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Use the forms below to configure the task for kicking idle users from group chat rooms and to configure the task
-that logs room conversations to the database.
+Use the forms below to configure settings for kicking idle users from group chat rooms and to
+configure the task that logs room conversations to the database.
 </p>
 
 <%  if (kickSettingSuccess || logSettingSuccess) { %>
@@ -140,11 +131,11 @@ that logs room conversations to the database.
         <td class="jive-icon-label">
         <%  if (kickSettingSuccess) { %>
 
-            Kicking settings updated successfully.
+            Idle user settings updated successfully.
 
         <%  } else if (logSettingSuccess) { %>
 
-            Conversations logging settings updated successfully.
+            Conversation logging settings updated successfully.
 
         <%  } %>
         </td></tr>
@@ -154,76 +145,54 @@ that logs room conversations to the database.
 
 <%  } %>
 
+<% if (errors.size() != 0) {  %>
+
+   <table class="jive-error-message" cellpadding="3" cellspacing="0" border="0" width="350"> <tr valign="top">
+    <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+    <td width="99%" class="jive-error-text">
+
+		<% if (errors.get("idletime") != null) { %>
+                Please enter a valid number for max idle minutes.
+        <% }
+           else if (errors.get("logfreq") != null) { %>
+                Please enter a valid number for the frequency.
+        <%  }
+            else if (errors.get("logbatchsize") != null) { %>
+                Please enter a valid number for the batch size.
+            <%  } %>
+    </td>
+    </tr>
+    </table><br>
+
+<% } %>
+
 <form action="muc-tasks.jsp?kickSettings" method="post">
 
 <fieldset>
-    <legend>Kicking settings</legend>
+    <legend>Idle User Settings</legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="kickEnabled" value="false" id="rb01"
-                 <%= ((mucServer.getUserIdleTime() == -1) ? "checked" : "") %>>
+                 <%= ((mucServer.getUserIdleTime() < 0) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01">Disable kicking idle users.</label>
+                <label for="rb01">Never kick idle users.</label>
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="kickEnabled" value="true" id="rb02"
                  <%= ((mucServer.getUserIdleTime() > -1) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                    <label for="rb02">Enable kicking idle users.</label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                &nbsp;
-            </td>
-            <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        Check frequency (seconds):
-                    </td>
-                    <td width="99%">
-                        <input type="text" name="kickfreq" size="15" maxlength="50"
+                    <label for="rb02">Kick users after they have been idle for</label>
+                     <input type="text" name="idletime" size="5" maxlength="5"
                          onclick="this.form.kickEnabled[1].checked=true;"
-                         value="<%= mucServer.getKickIdleUsersTimeout() / 1000 %>">
-
-                    <%  if (errors.get("kickfreq") != null) { %>
-
-                        <span class="jive-error-text">
-                        Please enter a valid number.
-                        </span>
-
-                    <%  } %>
-
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        Idle time (seconds):
-                    </td>
-                    <td width="99%">
-                        <input type="text" name="idletime" size="15" maxlength="50"
-                         onclick="this.form.kickEnabled[1].checked=true;"
-                         value="<%= mucServer.getUserIdleTime() == -1 ? 1800 : mucServer.getUserIdleTime() / 1000 %>">
-
-                        <%  if (errors.get("idletime") != null) { %>
-
-                            <span class="jive-error-text">
-                            Please enter a valid number.
-                            </span>
-
-                        <%  } %>
-
-                    </td>
-                </tr>
-                </table>
+                         value="<%= mucServer.getUserIdleTime() == -1 ? 30 : mucServer.getUserIdleTime() / 1000 / 60 %>">
+                     minutes.
             </td>
         </tr>
     </tbody>
@@ -242,43 +211,25 @@ that logs room conversations to the database.
 <form action="muc-tasks.jsp?logSettings" method="post">
 
 <fieldset>
-    <legend>Conversation logging settings</legend>
+    <legend>Conversation Logging</legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tr valign="top">
+    <tr valign="middle">
         <td width="1%" nowrap class="c1">
             Flush interval (seconds):
         </td>
         <td width="99%">
             <input type="text" name="logfreq" size="15" maxlength="50"
              value="<%= mucServer.getLogConversationsTimeout() / 1000 %>">
-
-        <%  if (errors.get("logfreq") != null) { %>
-
-            <span class="jive-error-text">
-            Please enter a valid number.
-            </span>
-
-        <%  } %>
-
         </td>
     </tr>
-    <tr valign="top">
+    <tr valign="middle">
         <td width="1%" nowrap class="c1">
             Batch size:
         </td>
         <td width="99%">
             <input type="text" name="logbatchsize" size="15" maxlength="50"
              value="<%= mucServer.getLogConversationBatchSize() %>">
-
-            <%  if (errors.get("logbatchsize") != null) { %>
-
-                <span class="jive-error-text">
-                Please enter a valid number.
-                </span>
-
-            <%  } %>
-
         </td>
     </tr>
     </table>

@@ -98,9 +98,8 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Group Chat rooms can replay conversation histories to provide context to new members joining a room.
-<fmt:message key="short.title"/> provides several options for controlling how much
-history to store for each room.
+Group chat rooms can replay conversation histories to provide context to new members joining a room.
+Thre are several options for controlling how much history to store for each room.
 </p>
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
@@ -121,7 +120,7 @@ history to store for each room.
 <form action="muc-history-settings.jsp" method="post">
 
 <fieldset>
-    <legend>Set Conflict Policy</legend>
+    <legend>History Settings</legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -132,7 +131,7 @@ history to store for each room.
             <td width="99%">
                 <label for="rb01">
                 <b>Don't Show History</b>
-                </label>- Do not show the entire chat history.
+                </label>- Do not show a chat history to users joining a room.
             </td>
         </tr>
         <tr valign="top">
@@ -142,7 +141,7 @@ history to store for each room.
             <td width="99%">
                 <label for="rb02">
                 <b>Show Entire Chat History</b>
-                </label>- Show the entire chat history to the user.
+                </label>- Show the entire chat history to users joining a room.
             </td>
         </tr>
         <tr valign="top">

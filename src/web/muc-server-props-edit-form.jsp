@@ -73,7 +73,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Group Chat Properties";
+    String title = "Group Chat Service Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-server-props-edit-form.jsp"));
@@ -94,7 +94,7 @@ a server restart.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-            Server properties edited successfully. You must <b>restart</b> the server in order for
+            Service properties edited successfully. You must <b>restart</b> the server in order for
             the changes to take effect.
         </td></tr>
     </tbody>
@@ -119,23 +119,16 @@ a server restart.
 <form action="muc-server-props-edit-form.jsp?save" method="post">
 
 <fieldset>
-    <legend>Set Conflict Policy</legend>
+    <legend>Service Name</legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0">
-    <tr>
-        <td class="c1">
-            Server name:
-        </td>
-        <td>
-        <%= name %>
-        </td>
-    </tr>
+
     <tr>
         <td class="c1">
             Group chat service name:
         </td>
         <td>
-        <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">.<%=name%>
+        <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">
 
         <%  if (errors.get("mucname") != null) { %>
 

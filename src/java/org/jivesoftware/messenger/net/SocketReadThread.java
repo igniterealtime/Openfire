@@ -35,36 +35,34 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.Roster;
 
 /**
+ * Reads XMPP XML from a socket.
+ *
  * @author Derek DeMoro
  */
 public class SocketReadThread extends Thread {
 
-    private Socket sock;
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
-    private String charset = "UTF-8";
-
-    private Session session;
-    private Connection connection;
+    private static String CHARSET = "UTF-8";
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
 
+    private Socket sock;
+    private Session session;
+    private Connection connection;
     private String serverName;
     /**
      * Router used to route incoming packets to the correct channels.
      */
     private PacketRouter router;
-
     /**
      * Audits incoming data
      */
     private Auditor auditor;
-
     private boolean clearSignout = false;
     XmlPullParserFactory factory = null;
     XPPPacketReader reader = null;
-
 
     /**
      * Create dedicated read thread for this socket.
@@ -98,10 +96,8 @@ public class SocketReadThread extends Thread {
             reader = new XPPPacketReader();
             reader.setXPPFactory(factory);
 
-
             reader.getXPPParser().setInput(new InputStreamReader(sock.getInputStream(),
-                    charset));
-
+                    CHARSET));
 
             // Read in the opening tag and prepare for packet stream
             createSession();
@@ -248,7 +244,7 @@ public class SocketReadThread extends Thread {
         }
 
         Writer writer = connection.getWriter();
-        String startPacket = "<?xml version='1.0' encoding='"+charset+"'?><stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\""+serverName+"\" id=\""+session.getStreamID().toString()+"\">";
+        String startPacket = "<?xml version='1.0' encoding='"+CHARSET+"'?><stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\""+serverName+"\" id=\""+session.getStreamID().toString()+"\">";
         writer.write(startPacket);
         writer.flush();
         // TODO: check for SASL support in opening stream tag

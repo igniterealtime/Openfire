@@ -103,7 +103,7 @@ enter any group chat room and their permissions are the same as the room owner.
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error adding the admin. Please verify the JID is correct.
+        Error adding the user. Please verify the JID is correct.
         </td></tr>
     </tbody>
     </table>
@@ -114,9 +114,9 @@ enter any group chat room and their permissions are the same as the room owner.
 <form action="muc-sysadmins.jsp?add" method="post">
 
 <fieldset>
-    <legend>Admin Users</legend>
+    <legend>Administrators</legend>
     <div>
-    <label for="userJIDtf">Add Admin (JID):</label>
+    <label for="userJIDtf">Add Administrator (JID):</label>
     <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
      id="userJIDtf">
     <input type="submit"s value="Add">
@@ -135,7 +135,7 @@ enter any group chat room and their permissions are the same as the room owner.
 
             <tr>
                 <td colspan="2">
-                    No admins specified, use the form above to add one.
+                    No administrators specified, use the form above to add one.
                 </td>
             </tr>
 

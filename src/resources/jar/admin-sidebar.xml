@@ -145,7 +145,7 @@
                     url="muc-create-permission.jsp"
                     description="" />
 
-            <item id="muc-tasks" name="Tasks Settings"
+            <item id="muc-tasks" name="Other Settings"
                     url="muc-tasks.jsp"
                     description="" />
         </sidebar>

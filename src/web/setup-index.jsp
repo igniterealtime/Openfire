@@ -134,14 +134,14 @@ below.
 </tr>
 <tr>
     <td class="jive-setup-category">
-        messengerHome Directory
+        conf Directory
         <br>
         <span class="jive-info">
         <%  boolean messengerHomeOK = true;
             if (messengerHomeErrors.size() == 0) {
         %>
 
-            Valid messengerHome directory.
+            Valid conf directory.
 
         <%  } else {
                 messengerHomeOK = false;
@@ -149,17 +149,17 @@ below.
 
             <%  if (messengerHomeErrors.get("exists") != null) { %>
 
-                Unable to locate valid messengerHome directory. Please refer to the installation
-                documentation for the correct way to set the messengerHome directory.
+                Unable to locate valid conf directory. Please refer to the installation
+                documentation for the correct way to set the conf directory.
 
             <%  } else if (messengerHomeErrors.get("read") != null) { %>
 
-                Setup was able to find your messengerHome directory but does not have read
+                Setup was able to find your conf directory but does not have read
                 permission on it. Please alter the directory permissions.
 
             <%  } else if (messengerHomeErrors.get("write") != null) { %>
 
-                Setup was able to find your messengerHome directory but does not have write permission
+                Setup was able to find your conf directory but does not have write permission
                 on it. Please alter the directory permissions.
 
            

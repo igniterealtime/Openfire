@@ -21,16 +21,22 @@ import org.jivesoftware.messenger.*;
  * @author Iain Shigeoka
  */
 public class PacketRouterImpl extends BasicModule implements PacketRouter {
-
     public IQRouter iqRouter;
     public PresenceRouter presenceRouter;
     public MessageRouter messageRouter;
+
+    /**
+     * Initialize ComponentManager to handle delegation of packets.
+     */
+    private ComponentManager componentManager;
 
     /**
      * Create a packet router.
      */
     public PacketRouterImpl() {
         super("XMPP Packet Router");
+
+        componentManager = ComponentManager.getInstance();
     }
 
     /**
@@ -44,6 +50,13 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      * @throws NullPointerException If the packet is null or the packet could not be routed
      */
     public void route(XMPPPacket packet) {
+         // Check for registered components
+        Component component = componentManager.getComponent(packet.getRecipient().toBareStringPrep());
+        if(component != null){
+            component.processPacket(packet);
+            return;
+        }
+
         if (packet instanceof Message) {
             route((Message)packet);
         }

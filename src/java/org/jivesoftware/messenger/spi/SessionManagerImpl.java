@@ -311,6 +311,12 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
                 return;
             }
             resources.changePriority(sender, priority);
+
+            // Get the session with highest priority
+            Session defaultSession = resources.getDefaultSession();
+            // Update the route to the bareJID with the session with highest priority
+            routingTable.addRoute(new XMPPAddress(defaultSession.getAddress().getNamePrep(),
+                    defaultSession.getAddress().getHostPrep(), ""), defaultSession);
         }
         finally {
             sessionLock.writeLock().unlock();

@@ -168,6 +168,9 @@ public class SessionImpl implements Session {
     public Presence setPresence(Presence presence) {
         Presence oldPresence = this.presence;
         this.presence = presence;
+        if (oldPresence.getPriority() != this.presence.getPriority()) {
+            sessionManager.changePriority(getAddress(), this.presence.getPriority());
+        }
         return oldPresence;
     }
 

@@ -14,9 +14,14 @@ package org.jivesoftware.messenger.roster;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.group.GroupManager;
+import org.jivesoftware.messenger.group.Group;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -50,19 +55,61 @@ public class Roster implements Cacheable {
 
     /**
      * <p>Create a roster for the given user, pulling the existing roster items
-     * out of the backend storage provider.</p>
+     * out of the backend storage provider. The roster will also include items that
+     * belong to the user's shared groups.</p>
+     *
+     * <p>RosterItems that ONLY belong to shared groups won't be persistent unless the user
+     * explicitly subscribes to the contact's presence, renames the contact in his roster or adds
+     * the item to a personal group.</>
      *
      * @param username The username of the user that owns this roster
      */
     public Roster(String username) {
         sessionManager = SessionManager.getInstance();
-
         this.username = username;
+
+        // Get the shared groups of this user
+        Collection<Group> sharedGroups = null;
+        try {
+            User rosterUser = UserManager.getInstance().getUser(getUsername());
+            sharedGroups = GroupManager.getInstance().getGroups(rosterUser);
+        }
+        catch (UserNotFoundException e) {
+            sharedGroups = new ArrayList<Group>();
+        }
+
+        // Add RosterItems that belong to the personal roster
         rosterItemProvider =  RosterItemProvider.getInstance();
         Iterator items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
+            // Check if the item (i.e. contact) belongs to a shared group of the user. Add the
+            // shared group (if any) to this item
+            for (Group group : sharedGroups) {
+                if (group.isUser(item.getJid().getNode())) {
+                    // TODO Group name conflicts are not being considered (do we need this?)
+                    item.addSharedGroups(group.getName());
+                }
+            }
             rosterItems.put(item.getJid().toBareJID(), item);
+        }
+        // Add RosterItems that belong only to shared groups
+        Map<JID,List<String>> sharedUsers = getSharedUsers(sharedGroups);
+        for (JID jid : sharedUsers.keySet()) {
+            try {
+                User user = UserManager.getInstance().getUser(jid.getNode());
+                RosterItem item = new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
+                        RosterItem.RECV_NONE, user.getName(), null);
+                for (String group : sharedUsers.get(jid)) {
+                    item.addSharedGroups(group);
+                }
+                rosterItems.put(item.getJid().toBareJID(), item);
+            }
+            catch (UserNotFoundException e) {
+                Log.error("Groups (" + sharedUsers.get(jid) + ") include non-existent username (" +
+                        jid.getNode() +
+                        ")");
+            }
         }
     }
 
@@ -116,7 +163,8 @@ public class Roster implements Cacheable {
      *
      * @param user the item to add to the roster.
      */
-    public RosterItem createRosterItem(JID user) throws UserAlreadyExistsException {
+    public RosterItem createRosterItem(JID user) throws UserAlreadyExistsException,
+            SharedGroupException {
         return createRosterItem(user, null, null);
     }
 
@@ -129,7 +177,7 @@ public class Roster implements Cacheable {
      * @param groups   The list of groups to assign this roster item to (can be null)
      */
     public RosterItem createRosterItem(JID user, String nickname, List<String> groups)
-            throws UserAlreadyExistsException {
+            throws UserAlreadyExistsException, SharedGroupException {
         RosterItem item = provideRosterItem(user, nickname, groups);
         rosterItems.put(item.getJid().toBareJID(), item);
         return item;
@@ -143,7 +191,7 @@ public class Roster implements Cacheable {
      * @param item the item to copy and add to the roster.
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
-            throws UnauthorizedException, UserAlreadyExistsException {
+            throws UserAlreadyExistsException, SharedGroupException {
         RosterItem rosterItem = provideRosterItem(item);
         rosterItems.put(item.getJID().toBareJID(), rosterItem);
     }
@@ -155,7 +203,7 @@ public class Roster implements Cacheable {
      * @return The newly created roster items ready to be stored by the Roster item's hash table
      */
     protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item)
-            throws UserAlreadyExistsException, UnauthorizedException {
+            throws UserAlreadyExistsException, SharedGroupException {
         return provideRosterItem(item.getJID(), item.getName(),
                 new ArrayList<String>(item.getGroups()));
     }
@@ -169,7 +217,18 @@ public class Roster implements Cacheable {
      * @return The newly created roster items ready to be stored by the Roster item's hash table
      */
     protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups)
-            throws UserAlreadyExistsException {
+            throws UserAlreadyExistsException, SharedGroupException {
+        if (groups != null && !groups.isEmpty()) {
+            // Raise an error if the groups the item belongs to include a shared group
+            Collection<Group> sharedGroups = GroupManager.getInstance().getGroups();
+            for (String group : groups) {
+                for (Group sharedGroup : sharedGroups) {
+                    if (sharedGroup.getName().equals(group)) {
+                        throw new SharedGroupException("Cannot add an item to a shared group");
+                    }
+                }
+            }
+        }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
         roster.setType(IQ.Type.set);
         org.xmpp.packet.Roster.Item item = roster.addItem(user, nickname, null,
@@ -194,18 +253,33 @@ public class Roster implements Cacheable {
             rosterItems.remove(item.getJid().toBareJID());
             throw new UserNotFoundException(item.getJid().toBareJID());
         }
-        // Update the backend data store
-        rosterItemProvider.updateItem(username, item);
+        // If the item only had shared groups before this update then make it persistent
+        if (item.isShared() && item.getID() == 0) {
+            try {
+                rosterItemProvider.createItem(username, item);
+            }
+            catch (UserAlreadyExistsException e) {
+                // Do nothing. We shouldn't be here.
+            }
+        }
+        else {
+            // Update the backend data store
+            rosterItemProvider.updateItem(username, item);
+        }
         // broadcast roster update
         if (!(item.getSubStatus() == RosterItem.SUB_NONE
                 && item.getAskStatus() == RosterItem.ASK_NONE)) {
+
+            // Set the groups to broadcast (include personal and shared groups)
+            List<String> groups = new ArrayList<String>(item.getGroups());
+            groups.addAll(item.getSharedGroups());
 
             org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
             roster.setType(IQ.Type.set);
             roster.addItem(item.getJid(), item.getNickname(),
                     getAskStatus(item.getAskStatus()),
                     org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus().getName()),
-                    item.getGroups());
+                    groups);
             broadcast(roster);
 
         }
@@ -222,14 +296,26 @@ public class Roster implements Cacheable {
      * Remove a user from the roster.
      *
      * @param user the user to remove from the roster.
+     * @param forceRemove flag that indicates if checkings should be done before deleting the user. 
      * @return The roster item being removed or null if none existed
+     * @throws SharedGroupException if the user to remove belongs to a shared group
      */
-    public RosterItem deleteRosterItem(JID user) {
+    public RosterItem deleteRosterItem(JID user, boolean forceRemove) throws SharedGroupException {
+        // Answer an error if user (i.e. contact) to delete belongs to a shared group
+        RosterItem itemToRemove = rosterItems.get(user.toBareJID());
+        if (itemToRemove.isShared()) {
+            throw new SharedGroupException("Cannot remove contact that belongs to a shared group");
+        }
+
         // If removing the user was successful, remove the user from the subscriber list:
         RosterItem item = rosterItems.remove(user.toBareJID());
         if (item != null) {
-            // If removing the user was successful, remove the user from the backend store
-            rosterItemProvider.deleteItem(username, item.getID());
+            // Delete the item from the provider if the item is persistent. RosteItems that only
+            // belong to shared groups won't be persistent
+            if (item.getID() > 0) {
+                // If removing the user was successful, remove the user from the backend store
+                rosterItemProvider.deleteItem(username, item.getID());
+            }
 
             // Broadcast the update to the user
             org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
@@ -257,19 +343,25 @@ public class Roster implements Cacheable {
      */
     public org.xmpp.packet.Roster getReset() {
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
+
+        // Add the roster items (includes the personal roster and shared groups) to the answer
         for (RosterItem item : rosterItems.values()) {
-            if (item.getSubStatus() != RosterItem.SUB_NONE || item.getAskStatus() != RosterItem.ASK_NONE) {
-                roster.addItem(item.getJid(), item.getNickname(),
-                        getAskStatus(item.getAskStatus()),
-                        org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus().getName()),
-                        item.getGroups());
+            org.xmpp.packet.Roster.Ask ask = getAskStatus(item.getAskStatus());
+            org.xmpp.packet.Roster.Subscription sub = org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus()
+                    .getName());
+            // Set the groups to broadcast (include personal and shared groups)
+            List<String> groups = new ArrayList<String>(item.getGroups());
+            groups.addAll(item.getSharedGroups());
+            if (item.getSubStatus() != RosterItem.SUB_NONE ||
+                    item.getAskStatus() != RosterItem.ASK_NONE) {
+                roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
             }
         }
         return roster;
     }
 
     private org.xmpp.packet.Roster.Ask getAskStatus(RosterItem.AskType askType) {
-        if ("".equals(askType.getName())) {
+        if (askType == null || "".equals(askType.getName())) {
             return null;
         }
         return org.xmpp.packet.Roster.Ask.valueOf(askType.getName());
@@ -307,6 +399,41 @@ public class Roster implements Cacheable {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the list of users that belong ONLY to a shared group of this user. If the contact
+     * belongs to the personal roster and a shared group then it wont' be included in the answer.
+     *
+     * @param sharedGroups the shared groups of this user.
+     * @return the list of users that belong ONLY to a shared group of this user.
+     */
+    private Map<JID,List<String>> getSharedUsers(Collection<Group> sharedGroups) {
+        // Get the users to process from the shared groups. Users that belong to different groups
+        // will have one entry in the map associated with all the groups
+        Map<JID,List<String>> sharedGroupUsers = new HashMap<JID,List<String>>();
+        for (Group group : sharedGroups) {
+            // Collect all the users of the group (i.e. members and administrators)
+            Collection<String> users = new ArrayList<String>(group.getAdministrators());
+            users.addAll(group.getMembers());
+
+            // Add the users of the group to the general list of users to process
+            for (String groupUser : users) {
+                // Add the user to the answer if the user doesn't belong to the personal roster
+                // (since we have already added the user to the answer)
+                JID jid = new JID(groupUser, XMPPServer.getInstance().getServerInfo().getName(),
+                        null);
+                if (!isRosterItem(jid) && !getUsername().equals(groupUser)) {
+                    List<String> groups = sharedGroupUsers.get(jid);
+                    if (groups == null) {
+                        groups = new ArrayList<String>();
+                        sharedGroupUsers.put(jid, groups);
+                    }
+                    groups.add(group.getName());
+                }
+            }
+        }
+        return sharedGroupUsers;
     }
 
     private void broadcast(org.xmpp.packet.Roster roster) {

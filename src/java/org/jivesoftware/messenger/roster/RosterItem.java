@@ -14,11 +14,12 @@ package org.jivesoftware.messenger.roster;
 import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.messenger.group.GroupManager;
+import org.jivesoftware.messenger.group.GroupNotFoundException;
+import org.jivesoftware.messenger.SharedGroupException;
 import org.xmpp.packet.JID;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * <p>Represents a single roster item for a User's Roster.</p>
@@ -123,6 +124,7 @@ public class RosterItem implements Cacheable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
+    protected Set<String> sharedGroups = new HashSet<String>();
     protected SubType subStatus;
     protected AskType askStatus;
     private long rosterID;
@@ -151,9 +153,8 @@ public class RosterItem implements Cacheable {
         this.nickname = nickname;
         this.groups = new LinkedList<String>();
         if (groups != null) {
-            Iterator<String> groupItr = groups.iterator();
-            while (groupItr.hasNext()) {
-                this.groups.add(groupItr.next());
+            for (String group : groups) {
+                this.groups.add(group);
             }
         }
     }
@@ -208,7 +209,13 @@ public class RosterItem implements Cacheable {
      * @return The subscription status of the item
      */
     public SubType getSubStatus() {
-        return subStatus;
+        if (isShared()) {
+            // Redefine the sub status since the item belongs to a shared group
+            return SUB_BOTH;
+        }
+        else {
+            return subStatus;
+        }
     }
 
     /**
@@ -226,7 +233,13 @@ public class RosterItem implements Cacheable {
      * @return The ask status of the item
      */
     public AskType getAskStatus() {
-        return askStatus;
+        if (isShared()) {
+            // Redefine the ask status since the item belongs to a shared group
+            return ASK_NONE;
+        }
+        else {
+            return askStatus;
+        }
     }
 
     /**
@@ -284,9 +297,9 @@ public class RosterItem implements Cacheable {
     }
 
     /**
-     * <p>Obtain the groups for the item.</p>
+     * Returns the groups for the item. Shared groups won't be included in the answer.
      *
-     * @return The subscription status of the item
+     * @return The groups for the item.
      */
     public List<String> getGroups() {
         return groups;
@@ -295,15 +308,75 @@ public class RosterItem implements Cacheable {
     /**
      * <p>Set the current groups for the item.</p>
      *
-     * @param groups The subscription status of the item
+     * @param groups The new lists of groups the item belongs to.
      */
-    public void setGroups(List<String> groups) {
+    public void setGroups(List<String> groups) throws SharedGroupException {
         if (groups == null) {
             this.groups = new LinkedList<String>();
         }
         else {
+            // Raise an error if the user is trying to remove the item from a shared group
+            for (String groupName : getSharedGroups()) {
+                // Check if the group has been removed from the new groups list
+                if (!groups.contains(groupName)) {
+                    throw new SharedGroupException("Cannot remove item from shared group");
+                }
+            }
+
+            // Remove shared groups from the param
+            for (Iterator<String> it=groups.iterator(); it.hasNext();) {
+                try {
+                    String group = it.next();
+                    // Check if exists a shared group with this name
+                    GroupManager.getInstance().getGroup(group);
+                    // Remove the shared group from the list (since it exists)
+                    it.remove();
+                }
+                catch (GroupNotFoundException e) {
+                    // Do nothing since the group is a personal group
+                }
+            }
             this.groups = groups;
         }
+    }
+
+    /**
+     * Returns the shared groups for the item.
+     *
+     * @return The shared groups this item belongs to.
+     */
+    public Collection<String> getSharedGroups() {
+        return sharedGroups;
+    }
+
+    /**
+     * Adds a new group to the shared groups list.
+     *
+     * @param sharedGroup The shared group to add to the list of shared groups.
+     */
+    public void addSharedGroups(String sharedGroup) {
+        sharedGroups.add(sharedGroup);
+    }
+
+    /**
+     * Returns true if this item belongs to a shared group. Return true even if the item belongs
+     * to a personal group and a shared group.
+     *
+     * @return true if this item belongs to a shared group.
+     */
+    public boolean isShared() {
+        return !sharedGroups.isEmpty();
+    }
+
+    /**
+     * Returns true if this item belongs ONLY to shared groups. This means that the the item is
+     * considered to be "only shared" if it doesn't belong to a personal group but only to shared
+     * groups.
+     *
+     * @return true if this item belongs ONLY to shared groups.
+     */
+    public boolean isOnlyShared() {
+        return !sharedGroups.isEmpty() && groups.isEmpty();
     }
 
     /**
@@ -328,9 +401,9 @@ public class RosterItem implements Cacheable {
      *
      * @param item The item who's settings will be copied into the cached copy
      */
-    public void setAsCopyOf(org.xmpp.packet.Roster.Item item) {
-        setNickname(item.getName());
+    public void setAsCopyOf(org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         setGroups(new LinkedList<String>(item.getGroups()));
+        setNickname(item.getName());
     }
 
     public int getCachedSize() {

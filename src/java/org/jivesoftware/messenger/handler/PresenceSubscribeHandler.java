@@ -23,6 +23,7 @@ import org.jivesoftware.messenger.user.*;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -88,14 +89,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             JID recipientJID = presence.getTo();
             Presence.Type type = presence.getType();
             Roster roster = getRoster(senderJID);
-            if (roster != null) {
-                manageSub(recipientJID, true, type, roster);
-            }
-            roster = getRoster(recipientJID);
-            if (roster != null) {
-                manageSub(senderJID, false, type, roster);
-            }
             try {
+                if (roster != null) {
+                    manageSub(recipientJID, true, type, roster);
+                }
+                roster = getRoster(recipientJID);
+                if (roster != null) {
+                    manageSub(senderJID, false, type, roster);
+                }
                 // Try to obtain a handler for the packet based on the routes. If the handler is
                 // a module, the module will be able to handle the packet. If the handler is a
                 // Session the packet will be routed to the client. If a route cannot be found
@@ -105,6 +106,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             }
             catch (NoSuchRouteException e) {
                 deliverer.deliver(presence.createCopy());
+            }
+            catch (SharedGroupException e) {
+                Presence result = presence.createCopy();
+                JID sender = result.getFrom();
+                result.setFrom(presence.getTo());
+                result.setTo(sender);
+                result.setError(PacketError.Condition.not_acceptable);
+                deliverer.deliver(result);
             }
         }
         catch (Exception e) {
@@ -126,9 +135,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             // Check for a cached roster:
             roster = (Roster)CacheManager.getCache("username2roster").get(username);
             if (roster == null) {
-                // Not in cache so load a new one:
-                roster = new Roster(username);
-                CacheManager.getCache("username2roster").put(username, roster);
+                synchronized(address.toString().intern()) {
+                    roster = (Roster)CacheManager.getCache("username2roster").get(username);
+                    if (roster == null) {
+                        // Not in cache so load a new one:
+                        roster = new Roster(username);
+                        CacheManager.getCache("username2roster").put(username, roster);
+                    }
+                }
             }
         }
         return roster;
@@ -143,8 +157,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param isSending True if the request is being sent by the owner
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
      */
-    private void manageSub(JID target, boolean isSending, Presence.Type type,
-            Roster roster) throws UserAlreadyExistsException
+    private void manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
+            throws UserAlreadyExistsException, SharedGroupException
     {
         try {
             RosterItem item;

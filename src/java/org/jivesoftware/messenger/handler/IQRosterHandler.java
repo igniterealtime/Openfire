@@ -102,6 +102,11 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             }
             return returnPacket;
         }
+        catch (SharedGroupException e) {
+            IQ result = IQ.createResultIQ(packet);
+            result.setError(PacketError.Condition.not_acceptable);
+            return result;
+        }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
@@ -116,7 +121,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      *
      * @param packet The packet suspected of containing a roster removal
      */
-    private void removeRosterItem(org.xmpp.packet.Roster packet) throws UnauthorizedException {
+    private void removeRosterItem(org.xmpp.packet.Roster packet) throws UnauthorizedException,
+            SharedGroupException {
         JID recipientJID = packet.getTo();
         JID senderJID = packet.getFrom();
         try {
@@ -124,7 +130,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 if (packetItem.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
                     Roster roster = userManager.getUser(recipientJID.getNode()).getRoster();
                     RosterItem item = roster.getRosterItem(senderJID);
-                    roster.deleteRosterItem(senderJID);
+                    roster.deleteRosterItem(senderJID, true);
                     item.setSubStatus(RosterItem.SUB_REMOVE);
                     item.setSubStatus(RosterItem.SUB_NONE);
 
@@ -148,7 +154,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @return Either a response to the roster update or null if the packet is corrupt and the session was closed down
      */
     private IQ manageRoster(org.xmpp.packet.Roster packet) throws UnauthorizedException,
-            UserAlreadyExistsException {
+            UserAlreadyExistsException, SharedGroupException {
 
         IQ returnPacket = null;
         Session session = sessionManager.getSession(packet.getFrom());
@@ -207,15 +213,15 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param item   The removal item element
      */
     private void removeItem(org.jivesoftware.messenger.roster.Roster roster, JID sender,
-            org.xmpp.packet.Roster.Item item) {
+            org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         JID recipient = item.getJID();
         // Remove recipient from the sender's roster
-        roster.deleteRosterItem(item.getJID());
+        roster.deleteRosterItem(item.getJID(), true);
         // Forward set packet to the subscriber
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
                 Roster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
-                recipientRoster.deleteRosterItem(sender);
+                recipientRoster.deleteRosterItem(sender, true);
             }
             catch (UserNotFoundException e) {
             }

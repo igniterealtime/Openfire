@@ -16,6 +16,7 @@ import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.SharedGroupException;
 
 import java.util.Iterator;
 
@@ -82,7 +83,12 @@ public class RosterManager extends BasicModule {
             }
             // Remove each roster item from the user's roster
             for (RosterItem item : roster.getRosterItems()) {
-                roster.deleteRosterItem(item.getJid());
+                try {
+                    roster.deleteRosterItem(item.getJid(), false);
+                }
+                catch (SharedGroupException e) {
+                    // Do nothing. We shouldn't have this exception since we disabled the checkings
+                }
             }
             // Remove the cached roster from memory
             CacheManager.getCache("username2roster").remove(username);
@@ -99,7 +105,12 @@ public class RosterManager extends BasicModule {
                     roster = new Roster(username);
                 }
                 // Remove the deleted user reference from this roster
-                roster.deleteRosterItem(user);
+                try {
+                    roster.deleteRosterItem(user, false);
+                }
+                catch (SharedGroupException e) {
+                    // Do nothing. We shouldn't have this exception since we disabled the checkings
+                }
             }
         }
         catch (UnsupportedOperationException e) {

@@ -385,10 +385,10 @@ public class DefaultGroupProvider implements GroupProvider {
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
-                pstmt = con.prepareStatement(LOAD_MEMBERS);
+                pstmt = con.prepareStatement(LOAD_ADMINS);
             }
             else {
-                pstmt = con.prepareStatement(LOAD_ADMINS);
+                pstmt = con.prepareStatement(LOAD_MEMBERS);
             }
             pstmt.setString(1, groupName);
             ResultSet rs = pstmt.executeQuery();

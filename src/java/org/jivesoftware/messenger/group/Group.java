@@ -161,6 +161,16 @@ public class Group implements Cacheable {
         return new MemberCollection(members, false);
     }
 
+    /**
+     * Returns true if the provided username belongs to a user of the group.
+     *
+     * @param username the username to check.
+     * @return true if the provided username belongs to a user of the group.
+     */
+    public boolean isUser(String username) {
+        return members.contains(username) || administrators.contains(username);
+    }
+
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.

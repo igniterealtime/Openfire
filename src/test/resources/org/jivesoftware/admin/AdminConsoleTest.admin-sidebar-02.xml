@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<adminconsole>
+    <tabs>
+        <tab0>
+            <id>foobar</id>
+            <name>Foo Bar</name>
+            <description>Click to see foo bar</description>
+        </tab0>
+    </tabs>
+</adminconsole>

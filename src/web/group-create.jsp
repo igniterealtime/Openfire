@@ -108,54 +108,57 @@
 <p>Use the form below to create a new group.</p>
 
 <form name="f" action="group-create.jsp" method="post">
+
 <fieldset>
-<legend>Create New Group</legend>
-<div>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr valign="middle" class="jive-even">
-    <td>
-        Group Name: *
-    </td>
-    <td>
-        <input type="text" name="name" size="30" maxlength="75"
-         value="<%= ((name!=null) ? name : "") %>">
+    <legend>Create New Group</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tr valign="top">
+        <td width="1%" nowrap>
+            <label for="gname">Group Name:</label> *
+        </td>
+        <td width="99%">
+            <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
+             id="gname">
 
-        <%  if (errors.get("name") != null) { %>
+            <%  if (errors.get("name") != null) { %>
 
-            <span class="jive-error-text">
-            Invalid name.
-            </span>
+                <span class="jive-error-text">
+                Invalid name.
+                </span>
 
-        <%  } else if (errors.get("groupAlreadyExists") != null) { %>
+            <%  } else if (errors.get("groupAlreadyExists") != null) { %>
 
-            <span class="jive-error-text">
-            Group already exists - please choose a different name.
-            </span>
+                <span class="jive-error-text">
+                Group already exists - please choose a different name.
+                </span>
 
-        <%  } %>
-    </td>
-</tr>
-<tr valign="middle" class="jive-odd">
-    <td>
-        Description:
-    </td>
-    <td>
-        <input type="text" name="description" size="30" maxlength="75"
-         value="<%= ((description!=null) ? description : "") %>">
+            <%  } %>
+        </td>
+    </tr>
+    <tr valign="top">
+        <td width="1%" nowrap>
+            <label for="gdesc">Description:</label>
+        </td>
+        <td width="99%">
+            <textarea name="description" cols="30" rows="5" id="gdesc"
+             ><%= ((description!=null) ? description : "") %></textarea>
 
-        <%  if (errors.get("description") != null) { %>
+            <%  if (errors.get("description") != null) { %>
 
-            <span class="jive-error-text">
-            Invalid description.
-            </span>
+                <span class="jive-error-text">
+                Invalid description.
+                </span>
 
-        <%  } %>
-    </td>
-</tr>
-</table>
-<br>
-* Required fields
-</div>
+            <%  } %>
+        </td>
+    </tr>
+    </table>
+    <br>
+    <span class="jive-description">
+    * Required fields
+    </span>
+    </div>
 </fieldset>
 
 <br><br>

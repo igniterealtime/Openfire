@@ -111,7 +111,7 @@ Administrator Account
 </p>
 
 <p>
-Enter settings for the system administrator account below. It is important choose a password for the
+Enter settings for the system administrator account below. It is important to choose a password for the
 account that cannot be easily guessed -- for example, at least six characters long and containing a
 mix of letters and numbers. You can skip this step if you have already setup your admin
 account (not for first time users).

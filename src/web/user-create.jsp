@@ -1,4 +1,3 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -9,6 +8,7 @@
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
+
 <%@ page import="org.jivesoftware.util.*,
                  java.util.HashMap,
                  java.util.Map,
@@ -34,7 +34,8 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
-    boolean create = request.getParameter("create") != null;
+    boolean another = request.getParameter("another") != null;
+    boolean create = another || request.getParameter("create") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String username = ParamUtils.getParameter(request,"username");
     String name = ParamUtils.getParameter(request,"name");
@@ -70,7 +71,12 @@
                 User newUser = webManager.getUserManager().createUser(username, password, name, email);
 
                 // Successful, so redirect
-                response.sendRedirect("user-properties.jsp?success=true&username=" + newUser.getUsername());
+                if (another) {
+                    response.sendRedirect("user-create.jsp?success=true");
+                }
+                else {
+                    response.sendRedirect("user-properties.jsp?success=true&username=" + newUser.getUsername());
+                }
                 return;
             }
             catch (UserAlreadyExistsException e) {
@@ -85,6 +91,7 @@
         }
     }
 %>
+
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <%   // Title of this page and breadcrumbs
     String title = "Create User";
@@ -95,88 +102,128 @@
 %>
 <jsp:include page="top.jsp" flush="true"/>
 <jsp:include page="title.jsp" flush="true"/>
+
+<p>Use the form below to create a new user.</p>
+
 <c:set var="submit" value="${param.create}"/>
 <c:set var="errors" value="${errors}"/>
-<%   if (errors.get("general") != null) { %>
-<div class="jive-success">
-  <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-      <tr>
-        <td class="jive-icon">
-          <img src="images/success-16x16.gif" width="16" height="16" border="0"/>
-        </td>
-        <td class="jive-icon-label">Error creating the user account. Please check your error logs.</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<br/>
-<%   } %>
-<form name="f" action="user-create.jsp" method="post">
-<fieldset><legend>Create New User</legend>
-<table  cellpadding="3" cellspacing="1" border="0">
 
-   <tr><td class="c1">* Required fields</td></tr>
+<%  if (errors.get("general") != null) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon-label">Error creating the user account. Please check your error logs.</td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%  } else if (request.getParameter("success") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        New user created successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } %>
+
+<form name="f" action="user-create.jsp" method="post">
+
+<fieldset>
+    <legend>Create New User</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
     <tr>
-      <td width="1%" class="c1">Username: *</td>
-      <td class="c2">
-        <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"/>
-        <%   if (errors.get("username") != null) { %>
-        <span class="jive-error-text">Invalid username. </span>
-        <%   } else if (errors.get("usernameAlreadyExists") != null) { %>
-        <span class="jive-error-text">Username already exists - please choose a different one. </span>
-        <%   } %>
-      </td>
+        <td width="1%" nowrap><label for="usernametf">Username:</label> *</td>
+        <td width="99%">
+            <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
+             id="usernametf" autocomplete="off">
+            <%   if (errors.get("username") != null) { %>
+                <span class="jive-error-text">Invalid username. </span>
+            <%   } else if (errors.get("usernameAlreadyExists") != null) { %>
+                <span class="jive-error-text">Username already exists - please choose a different one.</span>
+            <%   } %>
+        </td>
     </tr>
     <tr>
-      <td width="1%" class="c1">Name:</td>
-      <td class="c2">
-        <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"/>
-        <%   if (errors.get("name") != null) { %>
-        <span class="jive-error-text">Invalid name. </span>
-        <%   } %>
-      </td>
+        <td width="1%" nowrap>
+            <label for="nametf">Name:</label>
+        </td>
+        <td width="99%">
+            <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
+             id="nametf">
+            <%   if (errors.get("name") != null) { %>
+                <span class="jive-error-text">Invalid name. </span>
+            <%   } %>
+        </td>
     </tr>
     <tr>
-      <td width="1%" class="c1">Email:</td>
-      <td class="c2">
-        <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"/>
-        <%   if (errors.get("email") != null) { %>
-        <span class="jive-error-text">Invalid email. </span>
-        <%   } %>
-      </td>
+        <td width="1%" nowrap>
+            <label for="emailtf">Email:</label></td>
+        <td width="99%">
+            <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
+             id="emailtf">
+            <%   if (errors.get("email") != null) { %>
+                <span class="jive-error-text">Invalid email. </span>
+            <%   } %>
+        </td>
     </tr>
     <tr>
-      <td class="c1">Password: *</td>
-      <td class="c2">
-        <input type="password" name="password" value="" size="20" maxlength="75"/>
-        <%   if (errors.get("password") != null) { %>
-        <span class="jive-error-text">Invalid password. </span>
-        <%   } else if (errors.get("passwordMatch") != null) { %>
-        <span class="jive-error-text">Passwords don't match. </span>
-        <%   } %>
-      </td>
+        <td nowrap>
+            <label for="passtf">Password:</label> *
+        </td>
+        <td width="99%">
+            <input type="password" name="password" value="" size="20" maxlength="75"
+             id="passtf">
+            <%   if (errors.get("password") != null) { %>
+                <span class="jive-error-text">Invalid password. </span>
+            <%   } else if (errors.get("passwordMatch") != null) { %>
+                <span class="jive-error-text">Passwords don't match. </span>
+            <%   } %>
+        </td>
     </tr>
     <tr>
-      <td width="1%" class="c1">Confirm Password: *</td>
-      <td class="c2">
-        <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"/>
-        <%   if (errors.get("passwordConfirm") != null) { %>
-        <span class="jive-error-text">Invalid password confirmation. </span>
-        <%   } %>
-      </td>
+        <td width="1%" nowrap>
+            <label for="confpasstf">Confirm Password:</label> *
+        </td>
+        <td width="99%">
+            <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
+             id="confpasstf">
+            <%   if (errors.get("passwordConfirm") != null) { %>
+                <span class="jive-error-text">Invalid password confirmation. </span>
+            <%   } %>
+        </td>
     </tr>
-    <tr>
-      <td colspan="2" nowrap><input type="submit" name="create" value="Create User"/><input type="submit" name="cancel" value="Cancel"/>
-      </tr></td></fieldset>
-  </form>
-  <script language="JavaScript" type="text/javascript">
-     document.f.username.focus();
-     function checkFields() {
-     }
+    </tbody>
+    </table>
+    <br>
+    <span class="jive-description">
+    * Required fields
+    </span>
+    </div>
+</fieldset>
+
+<br><br>
+
+<input type="submit" name="create" value="Create User">
+<input type="submit" name="another" value="Create &amp; Create Another">
+<input type="submit" name="cancel" value="Cancel">
+
+</form>
+
+<script language="JavaScript" type="text/javascript">
+document.f.username.focus();
 </script>
 
-  <jsp:include page="bottom.jsp" flush="true"/>
-</table>
-
-
+<jsp:include page="bottom.jsp" flush="true"/>

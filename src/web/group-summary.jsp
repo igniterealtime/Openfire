@@ -34,7 +34,6 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters
-    try {
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",15);
 
@@ -179,7 +178,5 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
     </p>
 
 <%  } %>
-
-<% } catch (Exception e) { e.printStackTrace(); } %>
 
 <jsp:include page="bottom.jsp" flush="true" />

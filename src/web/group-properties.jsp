@@ -123,12 +123,12 @@ Below is a summary of the group. To edit properties, click the "Edit" button bel
             Description:
         </td>
         <td>
-            <%  if (group.getDescription() == null) { %>
-
-                &nbsp;
+            <%  if (group.getDescription() == null || "".equals(group.getDescription().trim())) { %>
+                <span style="color:#999">
+                <i>Not set.</i>
+                </span>
 
             <%  } else { %>
-
                 <%= group.getDescription() %>
 
             <%  } %>

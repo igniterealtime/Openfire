@@ -41,8 +41,5 @@ To continue, please restart the server then
 <a href="index.jsp">login to the admin console</a>.
 </p>
 
-<center><input type="button" value="Exit Setup" onClick="javascript:window.close();"></a>
-
-
 <%@ include file="setup-footer.jsp" %>
 

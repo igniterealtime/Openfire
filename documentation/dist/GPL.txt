@@ -1,3 +1,6 @@
+Please see README.html for full licensing terms for Jive Messenger.
+
+---------------------------------------------------------------------
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 

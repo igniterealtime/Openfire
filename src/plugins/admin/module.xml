@@ -18,5 +18,5 @@
 -->
 <!-- root element, all properties must be under this element -->
 <jive>
-    <module>org.jivesoftware.container.spi.JettyModule</module>
+    <module>org.jivesoftware.messenger.container.spi.JettyModule</module>
 </jive>

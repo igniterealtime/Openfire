@@ -138,7 +138,6 @@ CREATE TABLE mucRoom (
   subject             NVARCHAR(100) NULL,
   rolesToBroadcast    INT           NOT NULL,
   lastActiveDate      CHAR(15)      NULL,
-  inMemory            INT           NOT NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );
 

@@ -21,7 +21,7 @@ all JVMs. You must consult the documentation for your JVM in creating a
 valid keystore and truststore
 and populating those with the SSL certificates needed for your
 deployment. In this document, we will describe how use the standard JDK
-1.4 tools to accomplish these tasks.
+1.5 tools to accomplish these tasks.
 </p>
 <h2>Background</h2>
 <p>
@@ -50,7 +50,7 @@ relatively small.
 <p>
 Certificates attempt to guarantee that a particular party is who they
 claim to be.
-Certificates are trusted based on who signed the certifcate. If you
+Certificates are trusted based on who signed the certificate. If you
 only require light security,
 are deploying for internal use on trusted networks, etc. you can use
 "self-signed" certificates.
@@ -88,9 +88,9 @@ interacted with before. Certificate signing is similar to a public
 notary (with equivalent amounts of
 verification of identity, record keeping, and costs).
 </p>
-<h2>Sun JDK 1.4 security tools</h2>
+<h2>Sun JDK 1.5 security tools</h2>
 <p>
-The Sun JDK (version 1.4.x) ships with all the security tools you need
+The Sun JDK (version 1.5.x) ships with all the security tools you need
 to configure SSL with Jive
 Messenger. The most important is the <tt>keytool</tt> located in the <tt>JAVA_HOME/bin
 directory</tt> of the JDK.
@@ -160,7 +160,10 @@ information and set
 a key password. <b>You must use the same key password as the store
 password.</b> By default
 you get this by simply hitting 'enter' when prompted for a key
-password.
+password.</p>
+<p>If you later change the keystore password remember to
+change the entries' password as well using the keytool:</p>
+<p><tt>keytool -keypasswd -alias server.com -keystore keystore</tt>
 </p>
 <h3>3 Obtain a CA signed certificate</h3>
 <p>
@@ -206,44 +209,24 @@ Now import each certificate using the keytool:
 certificate_file</tt></p>
 <h3>6 Configure Messenger</h3>
 <p>
-Open the Messenger configuration file <tt>MESSENGER_HOME/config/jive-messenger.xml</tt>
-in your favorite
-editor and change the following settings:
+Open the Jive Messenger Admin Console in your favorite
+browser and add or change the following system properties:
 </p>
 <ul>
-  <li>jive.xmpp.socket.ssl.active - set to 'true' to active SSL</li>
-  <li>jive.xmpp.socket.ssl.port - the port to use for SSL (default is
+  <li>xmpp.socket.ssl.active - set to 'true' to active SSL</li>
+  <li>xmpp.socket.ssl.port - the port to use for SSL (default is
 5223 for XMPP)</li>
-  <li>jive.xmpp.socket.ssl.storeType - the store type used ("JKS" is
+  <li>xmpp.socket.ssl.storeType - the store type used ("JKS" is
 the Sun Java Keystore format used by the JDK keytool).</li>
-  <li>jive.xmpp.socket.ssl.keystore - The location of the keystore file
+  <li>xmpp.socket.ssl.keystore - The location of the keystore file
 relative to the <tt>MESSENGER_HOME</tt> root directory.</li>
-  <li>jive.xmpp.socket.ssl.keypass - The keystore/key password you
+  <li>xmpp.socket.ssl.keypass - The keystore/key password you
 changed in step 2.</li>
-  <li>jive.xmpp.socket.ssl.truststore - Leave blank to not use a
+  <li>xmpp.socket.ssl.truststore - Leave blank to not use a
 truststore, otherwise the location of the truststore file relative to
 the <tt>MESSENGER_HOME</tt> root directory.</li>
-  <li>jive.xmpp.socket.ssl.trustpass - The truststore/key password you
+  <li>xmpp.socket.ssl.trustpass - The truststore/key password you
 changed in step 5.</li>
 </ul>
-<p>
-Below is a sample set up with no truststore.
-</p>
-<pre><code>
-&lt;jive&gt;
-  &lt;xmpp&gt;
-    &lt;socket&gt;
-      &lt;ssl&gt;
-        &lt;active&gt;true&lt;/active&gt;
-        &lt;port&gt;5223&lt;/port&gt;
-        &lt;storeType&gt;JKS&lt;/storeType&gt;
-        &lt;keystore&gt;security/keystore&lt;/keystore&gt;
-        &lt;keypass&gt;changeit&lt;/keypass&gt;
-        &lt;truststore/&gt;
-        &lt;trustpass/&gt;
-      &lt;/ssl&gt;
-    &lt;/socket&gt;
-  &lt;/xmpp&gt;
-&lt;/jive&gt;
-</code></pre></body>
+</body>
 </html>

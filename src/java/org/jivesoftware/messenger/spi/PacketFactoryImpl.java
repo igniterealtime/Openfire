@@ -29,7 +29,6 @@ import org.dom4j.Element;
 public class PacketFactoryImpl extends BasicModule implements PacketFactory {
 
     public LinkedList iqHandlers = new LinkedList();
-    //private HashMap namespace2Handlers = new HashMap();
     public UserManager userManager;
     private XMLInputFactory xppFactory;
 
@@ -83,49 +82,7 @@ public class PacketFactoryImpl extends BasicModule implements PacketFactory {
             throw new XMLStreamException(e.getMessage());
         }
         return iq;
-        /*
-        IQ iq = null;
-        XMPPAddress recipient = XMPPAddress.parseJID(xpp.getAttributeValue("","to"));
-        String type = xpp.getAttributeValue("","type");
-        String id = xpp.getAttributeValue("","id");
-
-        try {
-            if (xpp.next() == XmlPullParser.END_TAG){
-                // empty iq
-                iq = new IQImpl();
-            } else {
-                IQHandler handler = getHandler(xpp.getNamespace());
-                iq = handler.getInfo().parse(xpp);
-            }
-            iq.setRecipient(recipient);
-            iq.setType(iq.typeFromString(type));
-            iq.setID(id);
-        } catch (XmlPullParserException e) {
-            throw new IOException(e.getMessage());
-        }
-        return iq;
-        */
     }
-
-    /*private IQHandler getHandler(String namespace) {
-        IQHandler handler = null;
-
-        handler = (IQHandler)namespace2Handlers.get(namespace);
-        if (handler == null) {
-            Iterator handlerIter = iqHandlers.iterator();
-            while (handlerIter.hasNext() && handler == null) {
-                IQHandler handlerCandidate = (IQHandler)handlerIter.next();
-                IQHandlerInfo handlerInfo = handlerCandidate.getInfo();
-                if (handlerInfo != null && namespace.equalsIgnoreCase(handlerInfo.getNamespace())) {
-                    handler = handlerCandidate;
-                }
-            }
-            if (handler != null) {
-                namespace2Handlers.put(namespace, handler);
-            }
-        }
-        return handler;
-    }*/
 
     public Presence getPresence() {
         return new PresenceImpl();
@@ -144,7 +101,6 @@ public class PacketFactoryImpl extends BasicModule implements PacketFactory {
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
-        //trackInfo.getTrackerClasses().put(IQHandler.class, "iqHandlers");
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
         return trackInfo;
     }

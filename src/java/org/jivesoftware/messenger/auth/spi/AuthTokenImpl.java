@@ -41,6 +41,6 @@ public final class AuthTokenImpl implements AuthToken, Serializable {
     }
 
     public boolean isAnonymous() {
-        return username != null;
+        return username == null;
     }
 }

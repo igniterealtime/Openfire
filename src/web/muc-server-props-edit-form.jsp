@@ -95,7 +95,7 @@ a server restart.
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
             Service properties edited successfully. You must <b>restart</b> the server in order for
-            the changes to take effect.
+            the changes to take effect (see <a href="index.jsp">Server Status</a>).
         </td></tr>
     </tbody>
     </table>

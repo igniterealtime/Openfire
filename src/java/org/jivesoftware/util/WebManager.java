@@ -126,30 +126,30 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * Restarts the container then sleeps for 3 seconds.
+     * Restarts the server then sleeps for 3 seconds.
      */
-    /*public void restart(XMPPServer server) {
+    public void restart() {
         try {
-            server.restart();
+            getXMPPServer().restart();
         }
         catch (Exception e) {
             Log.error(e);
         }
         sleep();
-    }*/
+    }
 
     /**
      * Stops the server then sleeps for 3 seconds.
      */
-    /*public void stop(XMPPServer server) {
+    public void stop() {
         try {
-            server.stop();
+            getXMPPServer().stop();
         }
         catch (Exception e) {
             Log.error(e);
         }
         sleep();
-    }*/
+    }
 
     public WebManager getManager() {
         return this;
@@ -160,10 +160,6 @@ public class WebManager extends WebBean {
                 getXMPPServer() == null) {
             showServerDown();
         }
-    }
-
-    public String getErrorPage() {
-        return "error-serverdown.jsp";
     }
 
     public boolean isServerRunning() {

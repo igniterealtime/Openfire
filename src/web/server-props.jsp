@@ -122,7 +122,7 @@ Use the form below to edit server properties.
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
         Server properties updated successfully. You'll need to <b>restart</b> the server to have
-        the changes take effect.
+        the changes take effect (see <a href="index.jsp">Server Status</a>).
         </td></tr>
     </tbody>
     </table>

@@ -18,7 +18,6 @@
                  java.text.*,
                  org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.admin.AdminConsole"
-
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -41,6 +40,18 @@
 
 <%  // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
+    boolean stop = request.getParameter("stop") != null;
+    boolean restart = request.getParameter("restart") != null;
+
+    // Handle stops & restarts
+    if (stop) {
+      response.sendRedirect("server-stopped.jsp");
+      return;
+    }
+    else if (restart) {
+      response.sendRedirect("server-stopped.jsp?restart=Restart");
+      return;
+    }
 %>
 
 <%  // Title of this page and breadcrumbs
@@ -58,6 +69,15 @@ Below are properties for this server. Click the "Edit Properties" button below t
 some of the server settings. Some settings can not be changed.
 </p>
 
+<script lang="JavaScript" type="text/javascript">
+    var checked = false;
+    function checkClick() {
+        if (checked) { return false; }
+        else { checked = true; return true; }
+    }
+</script>
+
+<form action="index.jsp" onsubmit="return checkClick();">
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
@@ -97,6 +117,14 @@ some of the server settings. Some settings can not be changed.
                 <%  } %>
 
                 started <%= formatter.format(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
+
+                <% if (webManager.getXMPPServer().isStandAlone()){ %>
+                        &nbsp;&nbsp;<input type="submit" value="Stop" name="stop" <%= ((serverOn) ? "" : "disabled") %>>
+                    <% if (webManager.getXMPPServer().isRestartable()){ %>
+                        &nbsp;&nbsp;<input type="submit" value="Restart" name="restart" <%= ((serverOn) ? "" : "disabled") %>>
+                    <% } %>
+                <% } %>
+
             </td>
         </tr>
 
@@ -204,6 +232,7 @@ some of the server settings. Some settings can not be changed.
 </tbody>
 </table>
 </div>
+</form>
 <br>
 
 <form action="server-props.jsp">

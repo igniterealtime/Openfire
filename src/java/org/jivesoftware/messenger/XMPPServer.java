@@ -317,6 +317,23 @@ public class XMPPServer {
     }
 
     /**
+     * Restarts the server and all it's modules only if the server is restartable. Otherwise do
+     * nothing.
+     */
+    public void restart() {
+        if (isStandAlone() && isRestartable()) {
+            try {
+                Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
+                Method restartMethod = wrapperClass.getMethod("restart", null);
+                restartMethod.invoke(null, null);
+            }
+            catch (Exception e) {
+                Log.error("Could not restart container", e);
+            }
+        }
+    }
+
+    /**
      * Stops the server only if running in standalone mode. Do nothing if the server is running
      * inside of another server.
      */
@@ -348,7 +365,7 @@ public class XMPPServer {
         return setupMode;
     }
 
-    private boolean isRestartable() {
+    public boolean isRestartable() {
         boolean restartable = false;
         try {
             restartable = Class.forName(WRAPPER_CLASSNAME) != null;
@@ -366,7 +383,7 @@ public class XMPPServer {
      *
      * @return true if the server is running in standalone mode.
      */
-    private boolean isStandAlone() {
+    public boolean isStandAlone() {
         boolean standalone = false;
         try {
             standalone = Class.forName(STARTER_CLASSNAME) != null;
@@ -558,6 +575,10 @@ public class XMPPServer {
      * Makes a best effort attempt to shutdown the server
      */
     private void shutdownServer() {
+        // If we don't have modules then the server has already been shutdown 
+        if (modules.isEmpty()) {
+            return;
+        }
         // Get all modules and stop and destroy them
         for (Module module : modules.values()) {
             module.stop();

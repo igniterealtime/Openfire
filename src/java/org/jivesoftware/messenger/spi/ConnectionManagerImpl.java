@@ -94,10 +94,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         else {
             socketThread = new SocketAcceptThread(this);
             ports.add(new ServerPortImpl(socketThread.getPort(),
-                    serverName,
-                    localIPAddress,
-                    false,
-                    null));
+                    serverName, localIPAddress, false, null));
             socketThread.setDaemon(true);
             socketThread.start();
 
@@ -105,7 +102,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             params.add(Integer.toString(socketThread.getPort()));
             Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
         }
-
     }
 
     public Iterator getPorts() {
@@ -129,11 +125,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     isSecure);
             Session session = sessionManager.createSession(conn);
             SocketReadThread reader = new SocketReadThread(router,
-                    packetFactory,
-                    serverName,
-                    auditManager.getAuditor(),
-                    sock,
-                    session);
+                    packetFactory, serverName, auditManager.getAuditor(),
+                    sock, session);
             reader.setDaemon(true);
             reader.start();
         }

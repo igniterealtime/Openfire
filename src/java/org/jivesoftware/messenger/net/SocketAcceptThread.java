@@ -29,7 +29,7 @@ import java.net.UnknownHostException;
 public class SocketAcceptThread extends Thread {
 
     /**
-     * The default Jabber socket.
+     * The default XMPP port.
      */
     public static final int DEFAULT_PORT = 5222;
 
@@ -58,11 +58,7 @@ public class SocketAcceptThread extends Thread {
     public SocketAcceptThread(ConnectionManager connManager) {
         super("SAT accept");
         this.connManager = connManager;
-        port = SocketAcceptThread.DEFAULT_PORT;
-        String portName = JiveGlobals.getProperty("xmpp.socket.plain.port");
-        if (portName != null) {
-            port = Integer.parseInt(portName);
-        }
+        port = JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
         String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");
         bindInterface = null;
         if (interfaceName != null) {

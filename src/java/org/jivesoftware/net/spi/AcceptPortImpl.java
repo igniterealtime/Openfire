@@ -38,8 +38,17 @@ public class AcceptPortImpl implements AcceptPort {
         this.context = context;
         conManager = connectionManager;
         String hostname = JiveGlobals.getProperty(context + ".hostname");
-        String port = JiveGlobals.getProperty(".portnumber");
-        address = new InetSocketAddress(hostname,Integer.parseInt(port));
+        int port = JiveGlobals.getIntProperty(context + ".portnumber", -1);
+        if (port == -1) {
+            Log.error("No port number set for " + context);
+            return;
+        }
+        if (hostname == null) {
+            address = new InetSocketAddress(port);
+        }
+        else {
+            address = new InetSocketAddress(hostname, port);
+        }
     }
 
     public AcceptPortImpl(String context, ConnectionManager connectionManager,

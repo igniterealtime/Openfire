@@ -86,7 +86,7 @@ public class AcceptManagerImpl extends BasicModule implements AcceptManager {
                 throw new AlreadyExistsException(portAddress.toString());
             }
         }
-        AcceptPort acceptPort = new AcceptPortImpl("port" + ports.size(),
+        AcceptPort acceptPort = new AcceptPortImpl("acceptPorts.port" + ports.size(),
                 connManager, portAddress);
         ports.add(acceptPort);
         return acceptPort;
@@ -123,6 +123,12 @@ public class AcceptManagerImpl extends BasicModule implements AcceptManager {
             connManager = (ConnectionManager) service;
             for (String propName : JiveGlobals.getProperties("acceptPorts")) {
                 AcceptPort port = new AcceptPortImpl(propName, connManager);
+                ports.add(port);
+            }
+            if (ports.size() == 0) {
+                // Add a default
+                JiveGlobals.setProperty("acceptPorts.port1.portnumber", "5222");
+                AcceptPort port = new AcceptPortImpl("acceptPorts.port1", connManager);
                 ports.add(port);
             }
         }

@@ -45,9 +45,9 @@ import org.xmpp.packet.Packet;
  */
 public class SearchPlugin implements Component, Plugin {
 
-    private UserManager userManager = null;
-    private ComponentManager componentManager = null;
-    private PluginManager pluginManager = null;
+    private UserManager userManager;
+    private ComponentManager componentManager;
+    private PluginManager pluginManager;
 
     private static final String SERVICE_NAME = "search";
 
@@ -126,10 +126,13 @@ public class SearchPlugin implements Component, Plugin {
         pluginManager = null;
         try {
             componentManager.removeComponent(SERVICE_NAME);
-        } catch (Exception e) {
+            componentManager = null;
+        }
+        catch (Exception e) {
             componentManager.getLog().error(e);
         }
-    }    
+        userManager = null;
+    }
 
     public void shutdown() {
     }
@@ -148,11 +151,13 @@ public class SearchPlugin implements Component, Plugin {
                 try {
                     IQ replyPacket = handleIQ(packet);
                     componentManager.sendPacket(this, replyPacket);
-                } catch (ComponentException e) {
+                }
+                catch (ComponentException e) {
                     componentManager.getLog().error(e);
                 }
 
-            } else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+            }
+            else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                 try {
                     IQ replyPacket = IQ.createResultIQ(packet);
 
@@ -163,7 +168,8 @@ public class SearchPlugin implements Component, Plugin {
                     replyPacket.setChildElement(responseElement);
 
                     componentManager.sendPacket(this, replyPacket);
-                } catch (ComponentException e) {
+                }
+                catch (ComponentException e) {
                     componentManager.getLog().error(e);
                 }
             }
@@ -174,7 +180,8 @@ public class SearchPlugin implements Component, Plugin {
         if (IQ.Type.get.equals(packet.getType())) {
             return processGetPacket(packet);
 
-        } else if (IQ.Type.set.equals(packet.getType())) {
+        }
+        else if (IQ.Type.set.equals(packet.getType())) {
             return processSetPacket(packet);
         }
 
@@ -224,7 +231,7 @@ public class SearchPlugin implements Component, Plugin {
                         queryField.getTextTrim()).iterator();
                 }
                 
-                // filter out all duplicate users
+                // Filter out all duplicate users.
                 if (foundIter != null) {
                     while (foundIter.hasNext()) {
                         User user = (User) foundIter.next();
@@ -335,7 +342,8 @@ public class SearchPlugin implements Component, Plugin {
                     }
                 }
             }
-        } else {
+        }
+        else {
             String prefix = query.substring(0, index);
             Iterator users = userManager.getUsers().iterator();
             while (users.hasNext()) {
@@ -344,9 +352,11 @@ public class SearchPlugin implements Component, Plugin {
                 String userInfo = "";
                 if (field.equals("Username")) {
                     userInfo = user.getUsername();
-                } else if (field.equals("Name")) {
+                }
+                else if (field.equals("Name")) {
                     userInfo = user.getName();
-                } else if (field.equals("Email")) {
+                }
+                else if (field.equals("Email")) {
                     userInfo = user.getEmail() == null ? "" : user.getEmail();
                 }
 

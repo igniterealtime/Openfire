@@ -15,14 +15,14 @@
 <h2>Introduction</h2>
 
 <p>
-The Jive Messenger admin console can be easily translated into other languages. This document 
+The Jive Messenger admin console can be easily translated into other languages. This document
 provides instructions for those that wish to make translations.
 </p>
 <p>
 All text in the Jive Messenger admin console is stored in a resource
-bundle. A resource bundle is a file containing key/value pairs.  Words and phrases are 
-represented using keys. The correct values are retrieved based on locale settings 
-(English values are used for English locales, French values for French locales, etc). 
+bundle. A resource bundle is a file containing key/value pairs.  Words and phrases are
+represented using keys. The correct values are retrieved based on locale settings
+(English values are used for English locales, French values for French locales, etc).
 Key/value pairs in the English resource bundle might look like the following:
 <pre>
     skin.yes=Yes
@@ -45,16 +45,16 @@ renaming the file, then translating its contents.</p>
 
 <h2>Construct a Resource Bundle</h2>
 
-<p>To start, make a copy of the default (English) locale file "messenger_i18n.properties". 
+<p>To start, make a copy of the default (English) locale file "messenger_i18n.properties".
 It can be found in the <tt>resources\i18n</tt> directory of your Jive Messenger
 installation. Note: the files found in <tt>resources\i18n</tt> are copies of the
 real resource bundles used by the application (the real resource bundles are contained
 in the messenger.jar file). Editing the resource files in the <tt>resources\i18n</tt>
 directory will not affect your running copy of Jive Messenger.</p>
 
-<p>Next, you'll need to rename the file to match the locale that you're making a 
-translation for. The syntax of the name is "messenger_i18n_[lang]_[country].properties". 
-However, the country code should be used in most cases. For example, the German resource 
+<p>Next, you'll need to rename the file to match the locale that you're making a
+translation for. The syntax of the name is "messenger_i18n_[lang]_[country].properties".
+However, the country code should be used in most cases. For example, the German resource
 bundle should be named "messenger_i18n_de.properties" because
 "de" is the language code for German. For French, the file would be called
 "messenger_i18n_fr.properties". A list of language codes can
@@ -104,12 +104,12 @@ messenger_i18n_de.properties) to the <tt>lib/</tt> directory of your Jive Messen
 installation. Make sure Jive Messenger is stopped and then edit the <tt>conf/jive-messenger.xml</tt>
 file. Set the <tt>locale</tt> property to match your new resource
 bundle such as "de" or "zh_CN". Start Jive Messenger and the admin console
-should now be using your translation.  If you still see English text you may have 
+should now be using your translation.  If you still see English text you may have
 named your bundle incorrectly or used the wrong value for the <tt>locale</tt>
 property.</p>
 
 <p>Once your translation is complete and tested, please submit it to the Jive Messenger
-developers so that others can enjoy it in the next release!</p> 
+developers so that others can enjoy it in the next release!</p>
 
 <br><br>
 

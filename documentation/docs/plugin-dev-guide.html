@@ -23,7 +23,7 @@ developer's guide for creating plugins.
 
 <p>
 Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. When a plugin
-is deployed as a JAR file, it is automatically expanded into a directory. The files in a 
+is deployed as a JAR file, it is automatically expanded into a directory. The files in a
 plugin directory are as follows:
 </p>
 
@@ -34,8 +34,8 @@ plugin directory are as follows:
  |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
  |- lib/           &lt;- Libraries (JAR files) your plugin needs
  |- web            &lt;- Resources for Admin Console integration.
-     |- web.xml   
-     |- images/  
+     |- web.xml
+     |- images/
 </pre>
 </fieldset>
 
@@ -54,14 +54,14 @@ file might look like the following:
 &lt;plugin&gt;
     <span class="comment">&lt;!-- Main plugin class --&gt;</span>
     &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
-    
+
     <span class="comment">&lt;!-- Plugin meta-data --&gt;</span>
     &lt;name&gt;Example Plugin&lt;/name&gt;
     &lt;description&gt;This is an example plugin.&lt;/description&gt;
     &lt;author&gt;Jive Software&lt;/author&gt;
     &lt;version&gt;1.0&lt;/version&gt;
     &lt;minServerVersion&gt;2.1.2&lt;/minServerVersion&gt;
-    
+
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
     &lt;adminconsole&gt;
         <span class="comment">&lt;!-- More on this below --&gt;</span>
@@ -72,7 +72,7 @@ file might look like the following:
 
 <p>The meta-data fields that can be set in the plugin.xml file:
 
-<ul> 
+<ul>
     <li>name -- the name of the plugin.</li>
     <li>description -- the description of the plugin.</li>
     <li>author -- the author of the plugin.</li>
@@ -80,11 +80,11 @@ file might look like the following:
     <li>minServerVersion -- the minimum version of Jive Messenger required
           to run the plugin (supported by Jive Messenger 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
-</ul></p> 
- 
+</ul></p>
+
 <p>Your plugin class must be implement the
 <tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
-interface from the <a href="javadoc/index.html">Jive Messenger API</a> as 
+interface from the <a href="javadoc/index.html">Jive Messenger API</a> as
 well as have a default (no argument) contructor. The Plugin interface has
 methods for initializing and destroying the plugin.
 </p>
@@ -118,7 +118,7 @@ public class ExamplePlugin implements Plugin {
 <h2>Modifying the Admin Console</h2>
 
 <p>Plugins can add tabs, sections, and pages to the admin console. There
-are a several steps to accomplishing this: 
+are a several steps to accomplishing this:
 
 <ul>
     <li>An &lt;adminconsole/&gt; section must be added to the
@@ -134,11 +134,11 @@ are a several steps to accomplishing this:
     <li>Any images required by your JSP pages must live in <tt>web/images/</tt>
         directory. Only GIF and PNG images are supported.
     </li>
-</ul> 
+</ul>
 
 <p>The <tt>&lt;adminconsole /&gt;</tt> section of <tt>plugin.xml</tt> defines additional
-tabs, sections and entries in the Admin Console framework. A sample 
-<tt>plugin.xml</tt> file might look like the following:</p> 
+tabs, sections and entries in the Admin Console framework. A sample
+<tt>plugin.xml</tt> file might look like the following:</p>
 
 <fieldset>
     <legend>Sample plugin.xml</legend>
@@ -181,16 +181,16 @@ that plugins should integrate seamlessly:
 				significant new functionality.
 		<li>Don't use the word "plugin" in names of tabs, sidebars and items.
 				For example, instead of having an item called "Gateway Plugin", it
-				could be called "Gateway Settings". 
+				could be called "Gateway Settings".
 		<li>Try to match the UI of the existing admin console in your custom
 		    plugin pages.
 		<li>There is no need to create an admin console entry to show plugin
 	      meta-data. Instead, let Jive Messenger inform the user about which
 				plugins are installed and provide plugin management.
-</ul> 
+</ul>
 
 <h2>Using the Jive Messenger Build Script</h2>
-				   
+
 <p>
 The Jive Messenger build script will help you build and develop plugins. It
 looks for plugin development directories in the following format:
@@ -213,7 +213,7 @@ looks for plugin development directories in the following format:
 </pre>
 </fieldset>
 
-<p>The build script will compile source files and JSPs and create a valid 
+<p>The build script will compile source files and JSPs and create a valid
 plugin structure and JAR file. Put your plugin directories in the <tt>src/plugins</tt>
 directory of the source distribution and then use <tt>ant plugins</tt> to
 build your plugins.</p>
@@ -224,27 +224,27 @@ the plugin's generated <tt>lib</tt> directory as part of the build process.
 
 <h2>Implementing Your Plugin</h2>
 
-<p>Plugins have full access to the Jive Messenger API. This provides a tremendous 
+<p>Plugins have full access to the Jive Messenger API. This provides a tremendous
 amount of flexibility for what plugins can accomplish. However, there are several integration
 points that are the most common:
 
 <ol>
-    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/Component.html">Component</a>. 
- Components receive all packets addressed to a particular sub-domain. For example, 
- <tt>test_component.example.com</tt>. So, a packet sent to <tt>joe@test_component.example.com</tt> would 
- be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS entries 
- for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the 
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/Component.html">Component</a>.
+ Components receive all packets addressed to a particular sub-domain. For example,
+ <tt>test_component.example.com</tt>. So, a packet sent to <tt>joe@test_component.example.com</tt> would
+ be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS entries
+ for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the
  example above); sub-domains are only used for routing within the XMPP server.
- 
-   <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and 
+
+   <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
   namespace. The following code snippet demonstrates how to register an IQHandler:
-  
+
   <pre>
   IQHandler myHandler = new MyIQHander();
   IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
   iqRouter.addHandler(myHandler);
   </pre>
-  
+
 </ol>
 
 </p>
@@ -257,8 +257,8 @@ Jive Messenger assumes that the file has been deleted and that the users wants t
 so it also deletes the directory.</p>
 
 <b>What license agreement are plugins subject to?</b>
-<p>Because Jive Messenger is released under the Open Source GPL license, any plugins developed 
-must also be released under the GPL or a compatible Open Source license (such as Apache). It is a 
+<p>Because Jive Messenger is released under the Open Source GPL license, any plugins developed
+must also be released under the GPL or a compatible Open Source license (such as Apache). It is a
 violation of the license agreement to create plugins that are not Open Source. Please see the Jive
 Messenger website if you need different licensing terms for Jive Messenger.
 

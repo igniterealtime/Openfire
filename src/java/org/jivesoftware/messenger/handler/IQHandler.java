@@ -76,7 +76,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
             }
         }
         catch (Exception e) {
-            // TODO: take action
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
 

@@ -171,7 +171,19 @@ Choose your database from the list below for setup details:
 			necessary tables.
 		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
 			when prompted.
-     </ol>   
+   </ol>
+	 
+	 <p>Note: if you are using SQL Server 7, the Open Source jTDS drivers should
+	 be used instead of the Microsoft JDBC drivers. Download the jTDS driver from 
+   <a href="http://jtds.sourceforge.net/">http://jtds.sourceforge.net/</a>
+	 and place the jtds-1.0.2.jar (name may be different depending on version
+	 downloaded) in the lib/ directory of your Jive Messenger installation. Use
+	 the following values in the Jive Messenger setup tool:</p>
+	 
+	 	<ul>
+				<li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
+				<li>server -- <tt>jdbc:jtds:sqlserver://[HOST_NAME]:[PORT]/[DATABASE]</tt>
+	  </ul>	     
 </ul>     
 
 <p><h2><a name="postgres">PostgreSQL</a></h2><p>

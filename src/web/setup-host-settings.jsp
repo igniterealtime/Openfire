@@ -78,7 +78,7 @@
 
         // If the domain is still blank, guess at the value:
         if (domain == null) {
-            domain = InetAddress.getLocalHost().getHostName();
+            domain = InetAddress.getLocalHost().getHostName().toLowerCase();
         }
     }
 %>

@@ -208,6 +208,7 @@ public class ComponentSession extends Session {
                     conn.deliver(packet);
                 }
                 catch (Exception e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     try {
                         conn.close();
                     }

@@ -97,6 +97,7 @@ public class SocketConnection extends BasicConnection {
             }
         }
         catch (Exception e) {
+            Log.error("Closing no longer valid connection", e);
             close();
         }
         return !isClosed();

@@ -9,7 +9,7 @@ CREATE TABLE jiveUser (
   email                 VARCHAR2(100),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveUser_pk PRIMARY KEY (userID)
+  CONSTRAINT jiveUser_pk PRIMARY KEY (username)
 );
 CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate ASC);
 

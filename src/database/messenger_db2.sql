@@ -9,7 +9,7 @@ CREATE TABLE jiveUser (
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveUser_pk PRIMARY KEY (userID)
+  CONSTRAINT jiveUser_pk PRIMARY KEY (username)
 );
 CREATE INDEX jiveUsr_cDate_idx ON jiveUser (creationDate ASC);
 
@@ -51,7 +51,7 @@ CREATE TABLE jiveRoster (
   nick                  VARCHAR(255),
   CONSTRAINT jiveRoster_pk PRIMARY KEY (rosterID)
 );
-CREATE INDEX jiveR_userid_idx ON jiveRoster (userID ASC);
+CREATE INDEX jiveR_userid_idx ON jiveRoster (username ASC);
 
 
 CREATE TABLE jiveRosterGroups (
@@ -95,7 +95,7 @@ CREATE TABLE jiveGroupUser (
   groupID               INTEGER         NOT NULL,
   username              VARCHAR(32)     NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGrpUser PRIMARY KEY (groupID, userID, administrator)
+  CONSTRAINT jiveGrpUser PRIMARY KEY (groupID, username, administrator)
 );
 
  

@@ -24,6 +24,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.ElementHandler;
 import org.dom4j.QName;
+import org.dom4j.DocumentHelper;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -323,6 +324,7 @@ public class XPPPacketReader {
                     {
                         QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
                         Element newElement = df.createElement(qname);
+                       // Element newElement = DocumentHelper.createElement(pp.getName());
                         int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
                         int nsEnd = pp.getNamespaceCount(pp.getDepth());
                         for (int i = nsStart; i < nsEnd; i++)

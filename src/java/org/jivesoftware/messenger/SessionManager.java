@@ -378,6 +378,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 anonymousSessionLock.readLock().lock();
                 try {
                     session = (Session)anonymousSessions.get(resource);
+                    if(session == null){
+                        session = getSession(recipient);
+                    }
                 }
                 finally {
                     anonymousSessionLock.readLock().unlock();

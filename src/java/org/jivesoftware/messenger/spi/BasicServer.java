@@ -39,6 +39,8 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
     private ConnectionManager connectionManager;
     private boolean initialized = false;
 
+     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
+
     /**
      * Create a default loopback test server.
      */
@@ -90,7 +92,9 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
         super.initialize(container);
         try {
             lookup = container.getServiceLookup();
-            name = JiveGlobals.getProperty("xmpp.domain");
+            if (!setupMode) {
+                name = JiveGlobals.getProperty("xmpp.domain");
+            }
             if (name == null) {
                 name = "127.0.0.1";
             }

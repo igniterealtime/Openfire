@@ -23,10 +23,9 @@ import org.jivesoftware.messenger.transport.TransportHandler;
 import org.jivesoftware.messenger.user.spi.*;
 
 /**
- * <p>A bootstrap container to launch the Messenger XMPP server.</p>
- * <p/>
- * <p>This container knows what classes must be loaded to create a
- * functional Messenger deployment.</p>
+ * A bootstrap container to launch the Messenger XMPP server. This
+ * container knows what classes must be loaded to create a functional
+ * Jive Messenger deployment.
  *
  * @author Iain Shigeoka
  */

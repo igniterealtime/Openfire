@@ -17,26 +17,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-
 /**
- * <p>A simple classloader to extend the classpath to
- * include all jars in a lib directory.</p>
- * <p/>
- * <p>The new classpath includes all <tt>*.jar</tt> and <tt>*.zip</tt>
+ * A simple classloader to extend the classpath to
+ * include all jars in a lib directory.<p>
+ *
+ * The new classpath includes all <tt>*.jar</tt> and <tt>*.zip</tt>
  * archives (zip is commonly used in packaging JDBC drivers). The extended
  * classpath is used for both the initial server startup, as well as loading
- * plug-in support jars.</p>
+ * plug-in support jars.
  *
  * @author Derek DeMoro
  * @author Iain Shigeoka
  */
 class JiveClassLoader extends URLClassLoader {
+
     /**
-     * <p>Create the classloader.</p>
+     * Constructs the classloader.
      *
-     * @param parent The parent class loader (or null for none)
-     * @param libDir The directory to load jar files from
-     * @throws java.net.MalformedURLException If the libDir path is not valid
+     * @param parent the parent class loader (or null for none).
+     * @param libDir the directory to load jar files from.
+     * @throws java.net.MalformedURLException if the libDir path is not valid.
      */
     JiveClassLoader(ClassLoader parent, File libDir) throws MalformedURLException {
         super(new URL[]{libDir.toURL()}, parent);

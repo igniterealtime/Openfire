@@ -125,6 +125,8 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     private File messengerHome;
     private ClassLoader loader;
 
+    private PluginManager pluginManager;
+
     /**
      * True if in setup mode
      */
@@ -136,9 +138,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             "org.tanukisoftware.wrapper.WrapperManager";
 
     /**
-     * Construct the server bootstrap server.
-     * <p/>
-     * the server could not be started
+     * Constructs the bootstrap server.
      */
     public BootstrapContainer() {
         ServiceLookupFactory.setLookupProvider(this);
@@ -166,16 +166,19 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             loader = Thread.currentThread().getContextClassLoader();
 
             if (setupMode) {
-                loadCorePlugins(getSetupModuleNames());
+                loadCoreModules(getSetupModuleNames());
             }
             else {
                 verifyDataSource();
-                loadCorePlugins(getBootModuleNames());
-                loadCorePlugins(getCoreModuleNames());
-                loadCorePlugins(getStandardModuleNames());
+                loadCoreModules(getBootModuleNames());
+                loadCoreModules(getCoreModuleNames());
+                loadCoreModules(getStandardModuleNames());
             }
-            startCorePlugins();
-            loadPlugins(setupMode);
+            startCoreModules();
+            // Load plugins.
+            File pluginDir = new File(messengerHome + "/plugins");
+            pluginManager = new PluginManager(pluginDir, this);
+            pluginManager.start();
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -196,7 +199,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         return restartable;
     }
 
-
     public boolean isStandAlone() {
         boolean standalone = false;
         try {
@@ -215,7 +217,8 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         java.sql.Connection conn = null;
         try {
             conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM jiveID");
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT count(*) FROM jiveID");
             ResultSet rs = stmt.executeQuery();
             rs.next();
             rs.close();
@@ -241,7 +244,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * <p/>
      *
      */
-    private void loadCorePlugins(String[] modules) {
+    private void loadCoreModules(String[] modules) {
         for (int i = 0; i < modules.length; i++) {
             Module mod = null;
             boolean isInitialized = false;
@@ -268,7 +271,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * this method is called to iterate through the known modules and
      * start them.</p>
      */
-    private void startCorePlugins() {
+    private void startCoreModules() {
         for (Module module : modules) {
             boolean started = false;
             try {
@@ -301,71 +304,10 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             mod.destroy();
         }
         modules.clear();
+        // Stop all plugins
+        pluginManager.shutdown();
         // TODO: hack to allow safe stopping
         Log.info("Jive Messenger stopped");
-    }
-
-    /**
-     * Loads the plugins for the container.
-     *
-     * @param setupMode True if starting in setup mode.
-     */
-    private void loadPlugins(boolean setupMode) {
-        File pluginDir = new File(messengerHome + "/plugins");
-        if (pluginDir.exists()) {
-            File[] plugins = pluginDir.listFiles();
-            for (int i = 0; i < plugins.length; i++) {
-                if (plugins[i].isDirectory()) {
-                    // Only load admin plugin if in setup mode.
-                    if (setupMode) {
-                        if ("admin".equals(plugins[i].getName())) {
-                            loadPlugin(plugins[i]);
-                        }
-                    }
-                    else {
-                        loadPlugin(plugins[i]);
-                    }
-                }
-            }
-        }
-        else {
-            Log.info("startup.missing-plugins");
-        }
-    }
-
-    /**
-     * Loads a plug-in module into the container. Loading consists of the
-     * following steps:
-     * <p/>
-     * <ul>
-     * <li>Add all jars in the <tt>lib</tt> dir (if it exists) to the class loader</li>
-     * <li>Add all files in <tt>classes</tt> dir (if it exists) to the class loader</li>
-     * <li>Locate and load <tt>module.xml</tt> into the context</li>
-     * <li>For each jive.module entry, load the given class as a module and start it</li>
-     * </ul>
-     *
-     * @param pluginDir The root directory for the plug-in
-     */
-    private void loadPlugin(File pluginDir) {
-        Module mod = null;
-        try {
-            File moduleConfig = new File(pluginDir, "module.xml");
-            if (moduleConfig.exists()) {
-                XMLProperties moduleProps = new XMLProperties(moduleConfig);
-                JiveModuleLoader modLoader = new JiveModuleLoader(pluginDir.toString());
-                mod = modLoader.loadModule(moduleProps.getProperty("module"));
-                mod.initialize(this);
-                mod.start();
-                this.modules.add(mod);
-            }
-            else {
-                Log.warn("Plugin " + pluginDir +
-                        " not loaded: no module.xml configuration file found");
-            }
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
     }
 
     public boolean isSetupMode() {
@@ -380,7 +322,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         Object instance = lookup.lookup(service);
         if (instance == null) {
             if (service.getName().equals("org.jivesoftware.messenger.user.UserManager")) {
-                loadCorePlugins(new String[]{
+                loadCoreModules(new String[]{
                     "org.jivesoftware.messenger.user.spi.UserManagerImpl"});
                 instance = lookup.lookup(service);
             }

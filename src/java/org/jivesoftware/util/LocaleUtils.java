@@ -28,8 +28,8 @@ public class LocaleUtils {
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
-    // and defaults to jive_i18n if nothing set.
-    private static final String resourceBaseName = "jive_i18n";
+    // and defaults to messenger_i18n if nothing set.
+    private static final String resourceBaseName = "messenger_i18n";
 
     private LocaleUtils() {
     }

@@ -592,7 +592,7 @@ public class IQOwnerHandler {
 
         XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
         field.setType(FormField.TYPE_HIDDEN);
-        field.addValue("http://jabber.org/protocol/muc#owner");
+        field.addValue("http://jabber.org/protocol/muc#roomconfig");
         configurationForm.addField(field);
 
         field = new XFormFieldImpl("muc#roomconfig_roomname");

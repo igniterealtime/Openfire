@@ -353,7 +353,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // A non-anonymous session is now available
             Session defaultSession = null;
             try {
-                defaultSession = sessions.get(session.getUsername()).getDefaultSession(true);
+                String username = session.getUsername().toLowerCase();
+                defaultSession = sessions.get(username).getDefaultSession(true);
                 JID node = new JID(defaultSession.getAddress().getNode(),
                         defaultSession.getAddress().getDomain(), null);
                 // Add route to default session (used when no resource is specified)
@@ -383,7 +384,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // Remove route to the removed session (anonymous or not)
             routingTable.removeRoute(session.getAddress());
             try {
-                SessionMap sessionMap = sessions.get(session.getUsername());
+                String username = session.getUsername().toLowerCase();
+                SessionMap sessionMap = sessions.get(username);
                 // If sessionMap is null, which is an irregular case, try to clean up the routes to
                 // the user from the routing table
                 if (sessionMap == null) {

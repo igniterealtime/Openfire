@@ -1,8 +1,12 @@
-<%@ taglib uri="core" prefix="c"%>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
@@ -13,7 +17,11 @@
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.JiveGlobals"
+    errorPage="error.jsp"
 %>
+
+<%@ taglib uri="core" prefix="c"%>
+
 <%
    // Handle a cancel
     if (request.getParameter("cancel") != null) {

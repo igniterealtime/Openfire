@@ -1,17 +1,26 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt"%>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
+
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,                  
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.HistoryStrategy,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer"%>
-                 
+                 org.jivesoftware.messenger.muc.MultiUserChatServer"
+    errorPage="error.jsp"
+%>
+
+<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="fmt" prefix="fmt"%>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"/>
 <%  admin.init(request, response, session, application, out ); %>

@@ -15,6 +15,21 @@ BODY {
 P {
     margin-top : 0px;
 }
+FIELDSET DIV {
+    margin : 10px;
+    padding : 5px 3px 5px 0px;
+    width : 100%;
+}
+FIELDSET {
+    -moz-border-radius : 3px;
+    border-style : solid;
+    border-width : 1px;
+    border-color : #ccc;
+    width : 95%;
+}
+FIELDSET LEGEND {
+    color : #000;
+}
 
 /* --------------------------------------------- */
 /*  Header                                       */

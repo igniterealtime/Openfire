@@ -1,4 +1,4 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
@@ -8,7 +8,13 @@
                  org.jivesoftware.messenger.handler.IQRegisterHandler,
                  org.jivesoftware.messenger.handler.IQAuthHandler,
                  org.jivesoftware.admin.AdminPageBean"
+    errorPage="error.jsp"
 %>
+
+<%@ taglib uri="core" prefix="c" %>
+
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
+<% admin.init(request, response, session, application, out ); %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
@@ -19,15 +25,6 @@
     pageinfo.setPageID("server-reg-and-login");
 %>
 
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
-
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Registration and Login Settings"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="reg-settings.jsp" />
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
@@ -55,74 +52,98 @@
     anonLogin = authHandler.isAllowAnonymous();
 %>
 
+<p>
 Use the forms below to change various aspects of user registration and login.
+</p>
 
 <form action="reg-settings.jsp">
-<c:if test="${success}" > 
-  <p class="jive-success-text">
-    Settings updated.
-  </p>
+
+<c:if test="${success}" >
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
 </c:if>
-<table  cellpadding="3" cellspacing="0" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Inband Account Registration</td></tr>
-<tr><td colspan="2" class="text">
+
+<fieldset>
+    <legend>Inband Account Registration</legend>
+    <div>
+    <p>
     Inband account registration allows users to create accounts on the server automatically using most
     clients. It does not affect the ability to create new accounts through this web administration
     interface. Administrators may want to disable this option so users are required to register by
     other means (e.g. sending requests to the server administrator or through your own custom web
     interface).
-</td></tr>
-    <tr valign="top" class="">
-        <td width="1%" nowrap>
-            <input type="radio" name="inbandEnabled" value="true" id="rb01"
-             <%= ((inbandEnabled) ? "checked" : "") %>>
-        </td>
-        <td width="99%">
-            <label for="rb01"><b>Enabled</b></label> - Users can automatically create new accounts.
-        </td>
-    </tr>
-        <td width="1%" nowrap>
-            <input type="radio" name="inbandEnabled" value="false" id="rb02"
-             <%= ((!inbandEnabled) ? "checked" : "") %>>
-        </td>
-        <td width="99%">
-            <label for="rb02"><b>Disabled</b></label> - Users can not automatically create new
-            accounts.
-        </td>
-    </tr>
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+                <input type="radio" name="inbandEnabled" value="true" id="rb01"
+                 <%= ((inbandEnabled) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb01"><b>Enabled</b></label> - Users can automatically create new accounts.
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+                <input type="radio" name="inbandEnabled" value="false" id="rb02"
+                 <%= ((!inbandEnabled) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb02"><b>Disabled</b></label> - Users can not automatically create new accounts.
+            </td>
+        </tr>
+    </tbody>
     </table>
+    </div>
+</fieldset>
 
-</ul>  
-<br>
-<table  cellpadding="3" cellspacing="0" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Anonymous Login</td></tr>
-<tr><td class="text" colspan="2">
+<br><br>
+
+<fieldset>
+    <legend>Anonymous Login</legend>
+    <div>
+    <p>
     You can choose to enable or disable anonymous user login. If it is enabled, anyone can
     connect to the server and create a new session. If it is disabled only users who have
     accounts will be able to connect.
-</td></tr>
-    <tr valign="top" class="">
-        <td width="1%" nowrap>
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
             <input type="radio" name="anonLogin" value="true" id="rb03"
              <%= ((anonLogin) ? "checked" : "") %>>
-        </td>
-        <td width="99%">
-            <label for="rb03"><b>Enabled</b></label> - Anyone may login to the server.
-        </td>
-    </tr>
-        <td width="1%" nowrap>
+            </td>
+            <td width="99%">
+                <label for="rb03"><b>Enabled</b></label> - Anyone may login to the server.
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
             <input type="radio" name="anonLogin" value="false" id="rb04"
              <%= ((!anonLogin) ? "checked" : "") %>>
-        </td>
-        <td width="99%">
-            <label for="rb04"><b>Disabled</b></label> - Only registered users may login.
-        </td>
-    </tr>
+            </td>
+            <td width="99%">
+                <label for="rb04"><b>Disabled</b></label> - Only registered users may login.
+            </td>
+        </tr>
+    </tbody>
     </table>
+    </div>
+</fieldset>
 
-</ul>
-
-<br>
+<br><br>
 
 <input type="submit" name="save" value="Save Settings">
 

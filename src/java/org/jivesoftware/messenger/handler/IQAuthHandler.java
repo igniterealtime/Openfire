@@ -89,7 +89,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     String username = query.elementTextTrim("username");
                     queryResponse.element("username").setText(username);
                     response = IQ.createResultIQ(packet);
-                    queryResponse.setParent(null);
                     response.setChildElement(queryResponse);
                     // This is a workaround. Since we don't want to have an incorrect TO attribute
                     // value we need to clean up the TO attribute and send directly the response.

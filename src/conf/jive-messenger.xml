@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file stores bootstrap properties needed by Jive Messenger.
+    Property names must be in the format: "prop.name.is.blah=value"
+    That will be stored as:
+        <prop>
+            <name>
+                <is>
+                    <blah>value</blah>
+                </is>
+            </name>
+        </prop>
+-->
+<!-- root element, all properties must be under this element -->
+<jive>
+    <embedded-web>
+        <port>9090</port>
+    </embedded-web>
+    
+    <!-- Example LDAP Settings -->
+	<!--
+    <UserProvider>
+        <id><className>com.jivesoftware.messenger.ldap.LdapUserIDProvider</className></id>
+        <properties><className>com.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className></properties>
+        <info><className>com.jivesoftware.messenger.ldap.LdapUserInfoProvider</className></info>
+        <account><className>com.jivesoftware.messenger.ldap.LdapUserAccountProvider</className></account>
+    </UserProvider>
+    <AuthProvider><className>com.jivesoftware.messenger.ldap.LdapAuthProvider</className></AuthProvider>
+    <ldap>
+        <host></host>
+        <port>389</port>
+        <usernameField>uid</usernameField>
+        <nameField>cn</nameField>
+        <emailField>mail</emailField>
+        <baseDN></baseDN>
+        <adminDN></adminDN>
+        <adminPassword></adminPassword>
+        <mode>1</mode>
+    </ldap>
+    -->
+</jive>

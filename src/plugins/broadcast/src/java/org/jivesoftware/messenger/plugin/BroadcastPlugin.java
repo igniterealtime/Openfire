@@ -46,6 +46,7 @@ public class BroadcastPlugin implements Plugin, Component {
     private GroupManager groupManager;
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
+    private JID serviceJID;
 
     /**
      * Constructs a new broadcast plugin.
@@ -55,6 +56,8 @@ public class BroadcastPlugin implements Plugin, Component {
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
+        serviceJID =
+                new JID(serviceName + "." + XMPPServer.getInstance().getServerInfo().getName());
     }
 
     // Plugin Interface
@@ -93,7 +96,7 @@ public class BroadcastPlugin implements Plugin, Component {
 
     // Component Interface
 
-    public void processPacket(Packet packet) {
+    public void process(Packet packet) {
         // Only respond to incoming messages. TODO: handle disco, presence, etc.
         if (packet instanceof Message) {
             Message message = (Message)packet;
@@ -183,6 +186,10 @@ public class BroadcastPlugin implements Plugin, Component {
         return serviceName;
     }
 
+    public JID getAddress() {
+        return serviceJID;
+    }
+
     /**
      * Sets the service name of this component, which is "broadcast" by default.
      *
@@ -200,6 +207,8 @@ public class BroadcastPlugin implements Plugin, Component {
         ComponentManager.getInstance().removeComponent(this.serviceName);
         ComponentManager.getInstance().addComponent(serviceName, this);
         this.serviceName = serviceName;
+        serviceJID =
+                new JID(serviceName + "." + XMPPServer.getInstance().getServerInfo().getName());
     }
 
     /**

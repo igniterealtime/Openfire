@@ -90,7 +90,7 @@ public class PresenceRouter extends BasicModule {
                     ChannelHandler handler = routingTable.getRoute(recipientJID);
                     handler.process(packet);
                     // Notify the PresenceUpdateHandler of the directed presence
-                    updateHandler.directedPresenceSent(packet, handler);
+                    updateHandler.directedPresenceSent(packet, handler, recipientJID.toString());
                 }
 
             }

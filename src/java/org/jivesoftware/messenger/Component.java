@@ -11,7 +11,7 @@
 
 package org.jivesoftware.messenger;
 
-import org.xmpp.packet.Packet;
+
 
 /**
  * Interface for Components.
@@ -19,12 +19,16 @@ import org.xmpp.packet.Packet;
  * @see ComponentManager
  * @author Derek DeMoro
  */
-public interface Component {
+public interface Component extends RoutableChannelHandler {
 
     /**
-     * Processes an incoming packet addressed to this component.
+     * Returns the service name of this component. The service name is usually the part before the
+     * dot before the server address in a JID. For example, given this JID jdoe@broadcast.localhost
+     * the service name would be broadcast.<p>
      *
-     * @param packet the packet.
+     * This information is useful when adding or removing the component from the ComponentManager.
+     *
+     * @return the service name of this component.
      */
-    void processPacket(Packet packet);
+    public String getServiceName();
 }

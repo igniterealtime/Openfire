@@ -11,18 +11,18 @@
 
 package org.jivesoftware.messenger;
 
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.JID;
+import org.dom4j.Element;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.handler.IQHandler;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
-import org.dom4j.Element;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,6 +40,7 @@ public class IQRouter extends BasicModule {
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
     private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
     private SessionManager sessionManager;
+    private ComponentManager componentManager;
 
     /**
      * Creates a packet router.
@@ -76,12 +77,7 @@ public class IQRouter extends BasicModule {
         else {
             packet.setTo(sessionManager.getSession(packet.getFrom()).getAddress());
             packet.setError(PacketError.Condition.not_authorized);
-            try {
-                sessionManager.getSession(packet.getFrom()).process(packet);
-            }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
-            }
+            sessionManager.getSession(packet.getFrom()).process(packet);
         }
     }
 
@@ -128,8 +124,15 @@ public class IQRouter extends BasicModule {
         routingTable = server.getRoutingTable();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
+        componentManager = ComponentManager.getInstance();
     }
 
+    /**
+     * A JID is considered local if:
+     * 1) is null or
+     * 2) has no domain or domain is empty or
+     * 3) has no resource or resource is empty
+     */
     private boolean isLocalServer(JID recipientJID) {
         return recipientJID == null || recipientJID.getDomain() == null
                 || "".equals(recipientJID.getDomain()) || recipientJID.getResource() == null
@@ -139,8 +142,17 @@ public class IQRouter extends BasicModule {
     private void handle(IQ packet) {
         JID recipientJID = packet.getTo();
         try {
-            if (isLocalServer(recipientJID)) {
-
+            // Check for registered components
+            Component component = null;
+            if (recipientJID != null) {
+                component = componentManager.getComponent(packet.getTo().toBareJID());
+            }
+            if (component != null) {
+                // A component was found that can handle the Packet
+                component.process(packet);
+            }
+            else if (isLocalServer(recipientJID)) {
+                // Let the server handle the Packet
                 Element childElement = packet.getChildElement();
                 String namespace = null;
                 if (childElement != null) {
@@ -158,7 +170,8 @@ public class IQRouter extends BasicModule {
                             // Answer an error since the server can't handle the requested namespace
                             reply.setError(PacketError.Condition.service_unavailable);
                         }
-                        else if (recipientJID.getNode() == null || "".equals(recipientJID.getNode())) {
+                        else if (recipientJID.getNode() == null ||
+                                "".equals(recipientJID.getNode())) {
                             // Answer an error if JID is of the form <domain>
                             reply.setError(PacketError.Condition.feature_not_implemented);
                         }

@@ -31,17 +31,10 @@ public class PacketRouter extends BasicModule {
     private MessageRouter messageRouter;
 
     /**
-     * Initialize ComponentManager to handle delegation of packets.
-     */
-    private ComponentManager componentManager;
-
-    /**
      * Constructs a packet router.
      */
     public PacketRouter() {
         super("XMPP Packet Router");
-
-        componentManager = ComponentManager.getInstance();
     }
 
     /**
@@ -52,13 +45,8 @@ public class PacketRouter extends BasicModule {
      * any accesses to class resources.
      *
      * @param packet The packet to route
-     * @throws NullPointerException If the packet is null or the packet could not be routed
      */
     public void route(Packet packet) {
-        if(hasRouted(packet)){
-            return;
-        }
-
         if (packet instanceof Message) {
             route((Message)packet);
         }
@@ -74,34 +62,15 @@ public class PacketRouter extends BasicModule {
     }
 
     public void route(IQ packet) {
-        if (!hasRouted(packet)){
-          iqRouter.route(packet);
-        }
+        iqRouter.route(packet);
     }
 
     public void route(Message packet) {
-        if (!hasRouted(packet)){
-           messageRouter.route(packet);
-        }
+        messageRouter.route(packet);
     }
 
     public void route(Presence packet) {
-        if (!hasRouted(packet)) {
-          presenceRouter.route(packet);
-        }
-    }
-
-    public boolean hasRouted(Packet packet){
-        if (packet.getTo() == null) {
-            return false;
-        }
-         // Check for registered components
-        Component component = componentManager.getComponent(packet.getTo().toBareJID());
-        if (component != null) {
-            component.processPacket(packet);
-            return true;
-        }
-        return false;
+        presenceRouter.route(packet);
     }
 
     public void initialize(XMPPServer server) {

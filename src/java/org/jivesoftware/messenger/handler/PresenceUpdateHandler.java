@@ -11,22 +11,19 @@
 
 package org.jivesoftware.messenger.handler;
 
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.roster.Roster;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.roster.RosterManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.SessionImpl;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.roster.Roster;
-import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -70,7 +67,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler {
 
-    private Map<String, Set> directedPresences = new ConcurrentHashMap<String, Set>();
+    private Map<String, WeakHashMap<ChannelHandler, Set<String>>> directedPresences;
 
     private RosterManager rosterManager;
     private XMPPServer localServer;
@@ -81,12 +78,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     public PresenceUpdateHandler() {
         super("Presence update handler");
+        directedPresences = new ConcurrentHashMap<String, WeakHashMap<ChannelHandler, Set<String>>>();
     }
 
     public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
         Presence presence = (Presence)xmppPacket;
         try {
-            Session session = sessionManager.getSession(presence.getFrom());
+            ClientSession session = sessionManager.getSession(presence.getFrom());
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
@@ -101,7 +99,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             }
             else if (Presence.Type.unavailable == type) {
                 broadcastUpdate(presence.createCopy());
-                broadcastUnavailableForDirectedPresences(presence.createCopy());
+                broadcastUnavailableForDirectedPresences(presence);
                 if (session != null) {
                     session.setPresence(presence);
                 }
@@ -285,12 +283,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * @param update  the directed Presence sent by the user to an entity.
      * @param handler the handler that routed the presence to the entity.
+     * @param jid     the jid that the handler has processed
      */
-    public void directedPresenceSent(Presence update, ChannelHandler handler) {
+    public void directedPresenceSent(Presence update, ChannelHandler handler, String jid) {
         if (update.getFrom() == null) {
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
+            WeakHashMap<ChannelHandler, Set<String>> map;
             String name = update.getFrom().getNode();
             try {
                 if (name != null && !"".equals(name)) {
@@ -298,32 +298,42 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     Roster roster = rosterManager.getRoster(name);
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
-                    // be able to send the unavialable presence to the entity
+                    // be able to send the unavailable presence to the entity
                     if (!roster.isRosterItem(update.getTo())) {
-                        Set set = (Set)directedPresences.get(update.getFrom().toString());
-                        if (set == null) {
-                            // We are using a set to avoid duplicate handlers in case the user
-                            // sends several directed presences to the same entity
-                            set = new CopyOnWriteArraySet();
-                            directedPresences.put(update.getFrom().toString(), set);
+                        map = directedPresences.get(update.getFrom().toString());
+                        if (map == null) {
+                            // We are using a set to avoid duplicate jids in case the user
+                            // sends several directed presences to the same handler. The Map also
+                            // ensures that if the user sends several presences to the same handler
+                            // we will have only one entry in the Map
+                            map = new WeakHashMap<ChannelHandler,Set<String>>();
+                            map.put(handler, new HashSet<String>());
+                            directedPresences.put(update.getFrom().toString(), map);
                         }
                         if (Presence.Type.unavailable.equals(update.getType())) {
-                            // It's a directed unavailable presence so remove the target entity
-                            // from the registry
-                            if (handler instanceof SessionImpl) {
-                                set.remove(new HandlerWeakReference(handler));
-                                if (set.isEmpty()) {
+                            // It's a directed unavailable presence
+                            if (handler instanceof ClientSession) {
+                                // Client sessions will receive only presences to the same JID (the
+                                // address of the session) so remove the handler from the map
+                                map.remove(handler);
+                                if (map.isEmpty()) {
                                     // Remove the user from the registry since the list of directed
                                     // presences is empty
                                     directedPresences.remove(update.getFrom().toString());
                                 }
+                            }
+                            else {
+                                // A service may receive presences for many JIDs so in this case we
+                                // just need to remove the jid that has received a directed
+                                // unavailable presence
+                                map.get(handler).remove(jid);
                             }
                         }
                         else {
                             // Add the handler to the list of handler that processed the directed
                             // presence sent by the user. This handler will be used to send
                             // the unavailable presence when the user goes offline
-                            set.add(new HandlerWeakReference(handler));
+                            map.get(handler).add(jid);
                         }
                     }
                 }
@@ -348,21 +358,15 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
-            Set set = (Set)directedPresences.get(update.getFrom().toString());
-            if (set != null) {
-                RoutableChannelHandler handler;
+            Map<ChannelHandler, Set<String>> map = directedPresences.get(update.getFrom().toString());
+            if (map != null) {
                 // Iterate over all the entities that the user sent a directed presence
-                for (Iterator it = set.iterator(); it.hasNext();) {
-                    // It is assumed that any type of PacketHandler (besides SessionImpl) will be
-                    // responsible for sending/processing the offline presence to ALL the entities
-                    // were the user has sent a directed presence. This is a consequence of using
-                    // a set in order to prevent duplicte handlers.
-                    // e.g. MultiUserChatServerImpl will remove the user from ALL the rooms
-                    handler = (RoutableChannelHandler)((HandlerWeakReference)it.next()).get();
-                    if (handler != null) {
-                        update.setTo(handler.getAddress());
+                for (ChannelHandler handler : map.keySet()) {
+                    for (String jid : map.get(handler)) {
+                        Presence presence = update.createCopy();
+                        presence.setTo(new JID(jid));
                         try {
-                            handler.process(update);
+                            handler.process(presence);
                         }
                         catch (UnauthorizedException ue) {
                             Log.error(ue);
@@ -383,47 +387,5 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         deliverer = server.getPacketDeliverer();
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
-    }
-
-    /**
-     * A WeakReference that redefines #equals(Object) so that the referent objects
-     * could be compared as if the weak reference does not exists.
-     *
-     * @author Gaston Dombiak
-     */
-    private class HandlerWeakReference extends WeakReference {
-
-        /**
-         * We need to store the hash code separately since the referent
-         * could be removed by the GC.
-         */
-        private int hash;
-
-        public HandlerWeakReference(Object referent) {
-            super(referent);
-            hash = referent.hashCode();
-        }
-
-        public int hashCode() {
-            return hash;
-        }
-
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object instanceof HandlerWeakReference) {
-                Object t = this.get();
-                Object u = ((HandlerWeakReference)object).get();
-                if ((t == null) || (u == null)) return false;
-                if (t == u) return true;
-                return t.equals(u);
-            }
-            else {
-                Object t = this.get();
-                if (t == null || (object == null)) return false;
-                if (t == object) return true;
-                return t.equals(object);
-
-            }
-        }
     }
 }

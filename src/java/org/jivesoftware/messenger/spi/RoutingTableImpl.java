@@ -52,7 +52,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
         routeLock.writeLock().lock();
         try {
-            if (routes.isEmpty()) {
+            if (routes.isEmpty() || destination instanceof Component) {
                 routes.put(node.getDomain(), destination);
             }
             else {

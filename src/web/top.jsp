@@ -24,13 +24,15 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out); %>
 
+<%  String path = request.getContextPath(); %>
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 
 <html>
 <head>
     <title><%= AdminConsole.getAppName() %> Admin Console<%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
     <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-    <link rel="stylesheet" type="text/css" href="style/global.css">
+    <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
 
 <body id="jive-body">

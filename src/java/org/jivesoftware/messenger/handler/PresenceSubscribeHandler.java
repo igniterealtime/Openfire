@@ -16,7 +16,6 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.chatbot.ChatbotManager;
@@ -93,7 +92,17 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 routingTable.getRoute(recipientJID).process((IQ)presence.createDeepCopy());
             }
             else {
-                deliverer.deliver((XMPPPacket)presence.createDeepCopy());
+                try {
+                    // Try to obtain a handler for the packet based on the routes. If the handler is
+                    // a module, the module will be able to handle the packet. If the handler is a
+                    // Session the packet will be routed to the client. If a route cannot be found
+                    // then the packet will be delivered based on its recipient and sender.
+                    ChannelHandler handler = routingTable.getRoute(recipientJID);
+                    handler.process((XMPPPacket)presence.createDeepCopy());
+                }
+                catch (NoSuchRouteException e) {
+                    deliverer.deliver((XMPPPacket)presence.createDeepCopy());
+                }
             }
         }
         catch (Exception e) {
@@ -114,7 +123,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             try {
                 if (chatbotManager != null) {
                     if (chatbotManager.isChatbot(address)) {
-                        userID = new Long(chatbotManager.getChatbotID(address.getNamePrep()));
+                        userID = chatbotManager.getChatbotID(address.getNamePrep());
                     }
                 }
             }
@@ -123,7 +132,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             }
             try {
                 if (userID == null && userManager != null) {
-                    userID = new Long(userManager.getUserID(address.getNamePrep()));
+                    userID = userManager.getUserID(address.getNamePrep());
                 }
             }
             catch (UserNotFoundException e) {
@@ -134,7 +143,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 roster = (Roster)CacheManager.getCache("userid2roster").get(userID);
                 if (roster == null) {
                     // Not in cache so load a new one:
-                    roster = new CachedRosterImpl(userID.longValue(), address.getNamePrep());
+                    roster = new CachedRosterImpl(userID, address.getNamePrep());
                     CacheManager.getCache("userid2roster").put(userID, roster);
                 }
             }

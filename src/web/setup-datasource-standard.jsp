@@ -47,7 +47,7 @@
         }
         else {
             try {
-                Class c = loadClass(driver);
+                loadClass(driver);
             }
             catch (Throwable t) {
                 errors.put("driver","Unable to load specified JDBC driver. Please verify the " +
@@ -182,7 +182,7 @@ distribution at <tt>[MESSENGER_HOME]/resources/database</tt>.
     List presets = new ArrayList();
     presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://[host-name]:3306/[database-name]"});
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@[host-name]:1521:[SID]"});
-    presets.add(new String[]{"MSSQL","com.microsoft.jdbc.sqlserver.SQLServerDriver","jdbc:microsoft:sqlserver://[host-name]:1433"});
+    presets.add(new String[]{"MSSQL","com.microsoft.jdbc.sqlserver.SQLServerDriver","jdbc:microsoft:sqlserver://[host-name]:1433;databasename=[database-name]"});
     presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://[host-name]:5432/[database-name]"});
     presets.add(new String[]{"IBM DB2","COM.ibm.db2.jdbc.app.DB2Driver","jdbc:db2:[database-name]"});
 %>

@@ -83,7 +83,7 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                 Element childElement = packet.getChildElement();
                 String namespace = null;
                 if (childElement != null) {
-                    childElement.getNamespaceURI();
+                    namespace = childElement.getNamespaceURI();
                 }
                 if (namespace == null) {
                     // Do nothing. We can't handle queries outside of a valid namespace

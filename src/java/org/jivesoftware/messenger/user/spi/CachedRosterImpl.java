@@ -197,15 +197,14 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
     }
 
-    public synchronized RosterItem deleteRosterItem(JID user) throws UnauthorizedException {
-
+    public RosterItem deleteRosterItem(JID user) throws UnauthorizedException {
         // Note that the super cache will always only hold cached roster items
         CachedRosterItem item = (CachedRosterItem)super.deleteRosterItem(user);
         if (item != null) {
             // If removing the user was successful, remove the user from the backend store
             rosterItemProvider.deleteItem(username, item.getID());
 
-            // broadcast the update to the user
+            // Broadcast the update to the user
             Roster roster = new Roster();
             roster.setType(IQ.Type.set);
             roster.addItem(user, Roster.Subscription.remove);
@@ -213,8 +212,6 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
         return item;
     }
-
-
 
     private void broadcast(Roster roster) throws UnauthorizedException {
         if (server == null) {

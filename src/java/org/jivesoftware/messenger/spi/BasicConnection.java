@@ -25,6 +25,7 @@ import java.util.Map;
  * @author Iain Shigeoka
  */
 abstract public class BasicConnection implements Connection {
+
     private Map listeners = new HashMap();
 
     public void init(Session session) {

@@ -210,27 +210,19 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
 
         if (user != null) {
-            synchronized (onlineUsers) {
-                onlineUsers.put(user.getUsername(), presence);
-            }
+            onlineUsers.put(user.getUsername(), presence);
         }
         else {
-            synchronized (onlineGuests) {
-                onlineGuests.put(presence.getID(), presence);
-            }
+            onlineGuests.put(presence.getID(), presence);
         }
     }
 
     public void setOffline(Presence presence) {
         if (presence.getFrom().getNode() != null) {
-            synchronized (onlineUsers) {
-                onlineUsers.remove(presence.getFrom().getNode());
-            }
+            onlineUsers.remove(presence.getFrom().getNode());
         }
         else {
-            synchronized (onlineGuests) {
-                onlineGuests.remove(presence.getID());
-            }
+            onlineGuests.remove(presence.getID());
         }
     }
 

@@ -9,13 +9,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.messenger.container.ServiceLookup,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory,
-                 org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.messenger.auth.AuthToken,
+<%@ page import="org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.util.ClassUtils,
                  org.jivesoftware.messenger.XMPPServer,
-                 org.jivesoftware.messenger.user.*"
+                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.messenger.spi.BasicServer"
 %>
 
 <%	// Security check
@@ -40,9 +38,7 @@
     }
 
     // Check to see if we're in "setup" mode:
-    ServiceLookup lookup = ServiceLookupFactory.getLookup();
-    Container container = (Container)lookup.lookup(Container.class);
-    if (container.isSetupMode()) {
+    if (BasicServer.getInstance().isSetupMode()) {
       response.sendRedirect("setup-index.jsp");
       return;
     }
@@ -52,10 +48,10 @@
     boolean isSystemAdmin = true;
 
     // Otherwise, get the xmpp server
-    XMPPServer xmppServer = (XMPPServer)lookup.lookup(XMPPServer.class);
+    XMPPServer xmppServer = BasicServer.getInstance();
 
     // The user object of the logged-in user
-    UserManager userManager = (UserManager)lookup.lookup(UserManager.class);
+    UserManager userManager = xmppServer.getUserManager();
     User pageUser = null;  
     try {
         pageUser = userManager.getUser(authToken.getUsername());

@@ -2,10 +2,7 @@ package org.jivesoftware.messenger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
-import org.jivesoftware.messenger.spi.PacketRouterImpl;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
@@ -116,14 +113,9 @@ public class ComponentManager {
      */
     public void sendPacket(Packet packet) {
         PacketRouter router;
-        try {
-            router = (PacketRouterImpl)ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
-            if (router != null) {
-                router.route(packet);
-            }
-        }
-        catch (UnauthorizedException e) {
-            Log.error(e);
+        router = BasicServer.getInstance().getPacketRouter();
+        if (router != null) {
+            router.route(packet);
         }
     }
 

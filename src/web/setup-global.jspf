@@ -12,8 +12,7 @@
                  java.sql.Statement,
                  java.sql.SQLException,
                  java.util.Map,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory"
+                 org.jivesoftware.util.ClassUtils"
 %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />

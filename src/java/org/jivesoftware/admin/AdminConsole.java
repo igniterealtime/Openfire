@@ -14,8 +14,7 @@ package org.jivesoftware.admin;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -135,15 +134,8 @@ public class AdminConsole {
         }
         else {
             // Default to the Jive Messenger version if none has been provided via XML.
-            try {
-                XMPPServer xmppServer = (XMPPServer)ServiceLookupFactory.getLookup().lookup(
-                        XMPPServer.class);
-                return xmppServer.getServerInfo().getVersion().getVersionString();
-            }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
-                return null;
-            }
+            XMPPServer xmppServer = BasicServer.getInstance();
+            return xmppServer.getServerInfo().getVersion().getVersionString();
         }
     }
 

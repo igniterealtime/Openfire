@@ -13,11 +13,10 @@ package org.jivesoftware.messenger.user.spi;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.spi.BasicServer;
 
 /**
  * An class that defines the logic to iterate through an array of long unique ID's of Jive objects.
@@ -49,8 +48,7 @@ public class UserIterator implements Iterator {
     /**
      * Creates a new UserIterator.
      */
-    public UserIterator(String[] elements)
-            throws UnauthorizedException {
+    public UserIterator(String[] elements) {
         this.elements = elements;
 
         // Create an objectFactory to load users.
@@ -60,9 +58,8 @@ public class UserIterator implements Iterator {
     private class UserDOFactory {
         private UserManager userManager;
 
-        public UserDOFactory() throws UnauthorizedException {
-            userManager =
-                    (UserManager)ServiceLookupFactory.getLookup().lookup(UserManager.class);
+        public UserDOFactory() {
+            userManager = BasicServer.getInstance().getUserManager();
         }
 
         public Object loadObject(String username) {

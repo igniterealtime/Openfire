@@ -25,6 +25,7 @@ import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.disco.ServerItemsProvider;
 import org.jivesoftware.messenger.handler.*;
 import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.messenger.transport.TransportHandler;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.user.UserManager;
@@ -55,6 +56,8 @@ import java.util.*;
  */
 public class BasicServer implements XMPPServer {
 
+    private static BasicServer instance;
+
     private String name;
     private Version version;
     private Date startDate;
@@ -84,10 +87,22 @@ public class BasicServer implements XMPPServer {
             "org.jivesoftware.messenger.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
+
+    /**
+     * Returns a singleton instance of BasicServer.
+     *
+     * @return an instance.
+     */
+    public static BasicServer getInstance() {
+        return instance;
+    }
+
+
     /**
      * Creates a server and starts it.
      */
     public BasicServer() {
+        instance = this;
         start();
     }
 
@@ -275,8 +290,7 @@ public class BasicServer implements XMPPServer {
             if (isRestartable()) {
                 try {
                     Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
-                    Method stopMethod = wrapperClass.getMethod("stop",
-                            new Class[]{Integer.TYPE});
+                    Method stopMethod = wrapperClass.getMethod("stop", new Class[]{Integer.TYPE});
                     stopMethod.invoke(null, new Object[]{0});
                 }
                 catch (Exception e) {
@@ -291,6 +305,10 @@ public class BasicServer implements XMPPServer {
                 shutdownThread.start();
             }
         }
+    }
+
+    public boolean isSetupMode() {
+        return setupMode;
     }
 
     private boolean isRestartable() {
@@ -322,8 +340,7 @@ public class BasicServer implements XMPPServer {
         java.sql.Connection conn = null;
         try {
             conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT count(*) FROM jiveID");
+            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM jiveID");
             ResultSet rs = stmt.executeQuery();
             rs.next();
             rs.close();
@@ -619,5 +636,9 @@ public class BasicServer implements XMPPServer {
 
     public PrivateStorage getPrivateStorage() {
         return (PrivateStorage) modules.get(PrivateStorage.class);
+    }
+
+    public MultiUserChatServer getMultiUserChatServer() {
+        return (MultiUserChatServer) modules.get(MultiUserChatServerImpl.class);
     }
 }

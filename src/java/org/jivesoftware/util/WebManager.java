@@ -11,12 +11,8 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ServiceLookup;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.RosterManager;
@@ -25,6 +21,7 @@ import org.jivesoftware.messenger.PrivateStorage;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.group.GroupManager;
 
 import java.util.LinkedHashMap;
@@ -63,7 +60,7 @@ public class WebManager extends WebBean {
      * Returns the XMPP server object -- can get many config items from here.
      */
     public XMPPServer getXMPPServer() {
-        final XMPPServer xmppServer = (XMPPServer)getServiceLookup().lookup(XMPPServer.class);
+        final XMPPServer xmppServer = BasicServer.getInstance();
         if (xmppServer == null) {
             // Show that the server is down
             showServerDown();
@@ -97,7 +94,7 @@ public class WebManager extends WebBean {
     }
 
     public MultiUserChatServer getMultiUserChatServer() {
-        return getXMPPServer().getMultiUserChatServer;
+        return getXMPPServer().getMultiUserChatServer();
     }
 
     public XMPPServerInfo getServerInfo() {
@@ -132,9 +129,9 @@ public class WebManager extends WebBean {
     /**
      * Restarts the container then sleeps for 3 seconds.
      */
-    /*public void restart(Container container) {
+    /*public void restart(XMPPServer server) {
         try {
-            container.restart();
+            server.restart();
         }
         catch (Exception e) {
             Log.error(e);
@@ -145,7 +142,7 @@ public class WebManager extends WebBean {
     /**
      * Stops the server then sleeps for 3 seconds.
      */
-    public void stop(XMPPServer server) {
+    /*public void stop(XMPPServer server) {
         try {
             server.stop();
         }
@@ -153,7 +150,7 @@ public class WebManager extends WebBean {
             Log.error(e);
         }
         sleep();
-    }
+    }*/
 
     public WebManager getManager() {
         return this;

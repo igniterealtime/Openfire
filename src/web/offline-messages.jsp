@@ -57,8 +57,7 @@
     int quota = ParamUtils.getIntParameter(request,"quota",0);
 
     // Get the offline message manager
-    OfflineMessageStrategy manager
-            = (OfflineMessageStrategy)admin.getServiceLookup().lookup(OfflineMessageStrategy.class);
+    OfflineMessageStrategy manager = admin.getXMPPServer().getOfflineMessageStrategy();
 
     // Update the session kick policy if requested
     Map errors = new HashMap();

@@ -8,10 +8,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.JiveGlobals,
-                 java.util.*,
-                 org.jivesoftware.messenger.container.ServiceLookup,
-                 org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory" %>
+                 java.util.*" %>
 
 <%! // Global vars, methods, etc
 

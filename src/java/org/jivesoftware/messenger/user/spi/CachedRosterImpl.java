@@ -18,8 +18,8 @@ import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.RoutingTable;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.user.BasicRoster;
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.CachedRoster;
@@ -99,8 +99,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
     public void broadcastPresence(Presence packet) {
         try {
             if (routingTable == null) {
-                routingTable =
-                        (RoutingTable)ServiceLookupFactory.getLookup().lookup(RoutingTable.class);
+                routingTable = BasicServer.getInstance().getRoutingTable();
             }
             if (routingTable == null) {
                 return;
@@ -185,7 +184,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         if (cachedItem.getSubStatus() == RosterItem.SUB_BOTH
                 || cachedItem.getSubStatus() == RosterItem.SUB_TO) {
             if (presenceManager == null) {
-                presenceManager = (PresenceManager)ServiceLookupFactory.getLookup().lookup(PresenceManager.class);
+                presenceManager = BasicServer.getInstance().getPresenceManager();
             }
             presenceManager.probePresence(username, cachedItem.getJid());
         }
@@ -218,7 +217,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
     private void broadcast(IQRoster roster) throws UnauthorizedException {
         if (server == null) {
-            server = (XMPPServer)ServiceLookupFactory.getLookup().lookup(XMPPServer.class);
+            server = BasicServer.getInstance();
         }
         JID recipient = server.createJID(username, null);
         roster.setTo(recipient);

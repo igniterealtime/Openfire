@@ -46,7 +46,7 @@
     String logTimeout = ParamUtils.getParameter(request,"logTimeout");
 
     // Get an audit manager:
-    AuditManager auditManager = (AuditManager)admin.getServiceLookup().lookup(AuditManager.class);
+    AuditManager auditManager = admin.getXMPPServer().getAuditManager();
 
     Map errors = new HashMap();
     if (update) {

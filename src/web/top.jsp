@@ -9,10 +9,7 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.messenger.container.ServiceLookup,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory,
-                 org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.util.StringUtils,
+<%@ page import="org.jivesoftware.util.StringUtils,
                  org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>

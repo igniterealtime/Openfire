@@ -35,7 +35,7 @@
     boolean logSettingSuccess = request.getParameter("logSettingSuccess") != null;
 
 	// Get muc server
-    MultiUserChatServer mucServer = (MultiUserChatServer)admin.getServiceLookup().lookup(MultiUserChatServer.class);
+    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
 
     Map errors = new HashMap();
     // Handle an update of the kicking task settings

@@ -15,6 +15,7 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.xmpp.packet.Message;
 import org.dom4j.io.SAXReader;
 import org.dom4j.DocumentFactory;
@@ -44,15 +45,13 @@ public class OfflineMessageStore extends BasicModule {
     private static final String DELETE_OFFLINE =
         "DELETE FROM jiveOffline WHERE username=?";
 
-    private static OfflineMessageStore instance;
-
     /**
-     * Returns a singleton instance of OfflineMessageStore.
+     * Returns the instance of <CODE>OfflineMessageStore</CODE> being used by the XMPPServer.
      *
-     * @return an instance.
+     * @return the instance of <CODE>OfflineMessageStore</CODE> being used by the XMPPServer.
      */
     public static OfflineMessageStore getInstance() {
-        return instance;
+        return BasicServer.getInstance().getOfflineMessageStore();
     }
 
     private SAXReader saxReader = new SAXReader();
@@ -60,7 +59,6 @@ public class OfflineMessageStore extends BasicModule {
 
     public OfflineMessageStore() {
         super("Offline Message Store");
-        instance = this;
     }
 
     /**

@@ -7,9 +7,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.messenger.container.ServiceLookup,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.JiveGlobals,
                  java.util.Map,

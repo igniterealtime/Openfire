@@ -29,7 +29,7 @@
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
 
 	// Get muc server
-    MultiUserChatServer mucServer = (MultiUserChatServer)admin.getServiceLookup().lookup(MultiUserChatServer.class);
+    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
 
     // Handle a save
     Map errors = new HashMap();

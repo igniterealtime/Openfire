@@ -38,7 +38,7 @@
     int numMessages = ParamUtils.getIntParameter(request,"numMessages",0);
 
 	// Get muc history
-    MultiUserChatServer mucServer = (MultiUserChatServer)admin.getServiceLookup().lookup(MultiUserChatServer.class);
+    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
     HistoryStrategy historyStrat = mucServer.getHistoryStrategy();
 
     Map errors = new HashMap();

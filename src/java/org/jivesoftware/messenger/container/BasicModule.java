@@ -14,40 +14,10 @@ package org.jivesoftware.messenger.container;
 import org.jivesoftware.messenger.XMPPServer;
 
 /**
- * <p>A skeleton Module implementation that takes care of the most
- * common Module housekeeping chores.</p>
- * <p>The basic module manages the lookup registration for the
- * service but requires a small amount of help. In order to know
- * what services should be registered, the basic module will go
- * through the following during start()</p>
- * <ul>
- * <li>Call getServices(). If the result is not null, all services
- * in the list are registered.</li>
- * <li>Call getService(). If the result is not null, the service
- * is registered.</li>
- * <li>Call getServiceItemss(). If the result is not null, all service items
- * in the list are registered.</li>
- * <li>Call getServiceItem(). If the result is not null, the service item
- * is registered.</li>
- * </ul>
- * <p>It is critical that inheriting classes overriding the module
- * lifecycle methods call the parent life cycle
- * methods in order to ensure these housekeeping tasks occur.</p>
- * <p/>
- * <h2>Tracker</h2>
- * <p>The basic module can manage a ServiceTracker for inheriting classes. To
- * use the built-in tracker, you must do the following:</p>
- * <ol>
- * <li>Override getTrackInfo() - and return an array of classes that you want
- * the service tracker to track.</li>
- * <li>Override addService() and removeService() - to receive services that are
- * being added or removed from the lookup. It is important to react to both.
- * Removal should result in the removal of any references to the service object
- * so the garbage collector can clean up the service. It is also dangerous
- * (e.g. throw NPE) to use services that have been removed from the lookup.</li>
- * </ol>
+ * A default Module implementation that basically avoids subclasses having to implement the whole
+ * Module interface.</p>
  *
- * @author Iain Shigeoka
+ * @author Gaston Dombiak
  */
 public class BasicModule implements Module {
 

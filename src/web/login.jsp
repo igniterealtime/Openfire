@@ -9,9 +9,6 @@
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory,
-                 org.jivesoftware.messenger.container.ServiceLookup,
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.admin.AdminConsole"

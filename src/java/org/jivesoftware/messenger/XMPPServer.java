@@ -23,6 +23,7 @@ import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.disco.ServerItemsProvider;
 import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
 
 import java.util.List;
 
@@ -65,6 +66,8 @@ public interface XMPPServer {
      */
     public JID createJID(String username, String resource);
 
+    public boolean isSetupMode();
+    
     public ConnectionManager getConnectionManager();
 
     public RoutingTable getRoutingTable();
@@ -110,4 +113,6 @@ public interface XMPPServer {
     public IQDiscoInfoHandler getIQDiscoInfoHandler();
 
     public PrivateStorage getPrivateStorage();
+
+    public MultiUserChatServer getMultiUserChatServer();
 }

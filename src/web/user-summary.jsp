@@ -43,7 +43,7 @@
     int userCount = webManager.getUserManager().getUserCount();
 
     // Get the presence manager
-    PresenceManager presenceManager = (PresenceManager)webManager.getServiceLookup().lookup(PresenceManager.class);
+    PresenceManager presenceManager = webManager.getPresenceManager();
 
     // paginator vars
     int numPages = (int)Math.ceil((double)userCount/(double)range);

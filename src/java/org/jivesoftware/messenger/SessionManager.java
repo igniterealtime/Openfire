@@ -30,6 +30,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.spi.SessionImpl;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
@@ -58,37 +59,17 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private int conflictLimit;
     private Random randomResource = new Random();
 
-    private static SessionManager singleton;
-    private static final Object LOCK = new Object();
-
     /**
-     * Returns the singleton instance of <CODE>SessionManagerImpl</CODE>,
-     * <p/>
-     * creating it if necessary.
-     * <p/>
-     * <p/>
+     * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      *
-     * @return the singleton instance of <Code>SessionManagerImpl</CODE>
+     * @return the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      */
     public static SessionManager getInstance() {
-        // Synchronize on LOCK to ensure that we don't end up creating
-        // two singletons.
-        synchronized (LOCK) {
-            if (null == singleton) {
-                SessionManager manager = new SessionManager();
-                singleton = manager;
-                return manager;
-            }
-        }
-        return singleton;
+        return BasicServer.getInstance().getSessionManager();
     }
 
     public SessionManager() {
         super("Session Manager");
-        if (singleton != null) {
-            throw new IllegalStateException();
-        }
-        singleton = this;
         if (JiveGlobals.getBooleanProperty("xmpp.audit.active")) {
             streamIDFactory = new AuditStreamIDFactory();
         }

@@ -13,12 +13,10 @@
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.AuthToken,
-                 org.jivesoftware.messenger.container.ServiceLookup,
-                 org.jivesoftware.messenger.container.ServiceLookupFactory,
-                 org.jivesoftware.messenger.container.Container,
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.messenger.auth.spi.DbAuthProvider,
-                 org.jivesoftware.messenger.user.spi.UserManagerImpl" %>
+                 org.jivesoftware.messenger.user.spi.UserManagerImpl,
+                 org.jivesoftware.messenger.spi.BasicServer" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -76,55 +74,35 @@
         }
         // if no errors, continue:
         if (errors.size() == 0) {
-            AuthToken auth = null;
             try {
-                auth = AuthFactory.getAuthToken("admin", password);
-                try {
-                    ServiceLookup lookup = ServiceLookupFactory.getLookup(auth);
-                    Container container = (Container)lookup.lookup(Container.class);
-                    
-                    // Start the user manager service
-                    container.startService(UserManager.class);
+                // Get the service
+                UserManager userManager = new UserManagerImpl();
+                userManager.initialize(BasicServer.getInstance());
 
+                User adminUser = userManager.getUser("admin");
 
-                    // Get the service
-                    UserManager userManager = (UserManager)lookup.lookup(UserManager.class);
-                    if(userManager == null) {
-                        userManager = new UserManagerImpl();
-                        userManager.initialize(container);
-                    }
-
-
-                    User adminUser = userManager.getUser("admin");
-                   
-                    adminUser.setPassword(newPassword);
-                    if (email != null) {
-                        adminUser.getInfo().setEmail(email);
-                    }
-                    Date now = new Date();
-                    adminUser.getInfo().setCreationDate(now);
-                    adminUser.getInfo().setModificationDate(now);
-                    adminUser.saveInfo();
-
-                    // TODO: Check for Plugin
-
-                    // setup is finished, indicate so:
-                    setSetupFinished(session);
-                    // All good so redirect
-                    response.sendRedirect("setup-finished.jsp");
-                    return;
+                adminUser.setPassword(newPassword);
+                if (email != null) {
+                    adminUser.getInfo().setEmail(email);
                 }
-                catch (Exception e) {
-                    System.err.println("Could not find UserManager");
-                    errors.put("general","There was an unexpected error encountered when "
-                            + "setting the new admin information. Please check your error "
-                            + "logs and try to remedy the problem.");
-                }
+                Date now = new Date();
+                adminUser.getInfo().setCreationDate(now);
+                adminUser.getInfo().setModificationDate(now);
+                adminUser.saveInfo();
+
+                // TODO: Check for Plugin
+
+                // setup is finished, indicate so:
+                setSetupFinished(session);
+                // All good so redirect
+                response.sendRedirect("setup-finished.jsp");
+                return;
             }
-            catch (UnauthorizedException ue) {
-                errors.put("password", "The value you supplied for the current password field "
-                        + "does not appear to be the valid password for the admin account. "
-                        + "Try again with the correct password.");
+            catch (Exception e) {
+                System.err.println("Could not find UserManager");
+                errors.put("general","There was an unexpected error encountered when "
+                        + "setting the new admin information. Please check your error "
+                        + "logs and try to remedy the problem.");
             }
         }
     }

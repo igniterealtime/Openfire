@@ -34,7 +34,7 @@
     boolean openPerms = ParamUtils.getBooleanParameter(request,"openPerms");
 
 	// Get muc server
-    MultiUserChatServer mucServer = (MultiUserChatServer)admin.getServiceLookup().lookup(MultiUserChatServer.class);
+    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
 
     // Handle a save
     Map errors = new HashMap();

@@ -60,18 +60,17 @@ public class ServerStarter {
             String libDirString = System.getProperty("messenger.lib.dir");
 
             File libDir;
-            if(libDirString != null) {
-                // if the lib directory property has been specified and it actually
+            if (libDirString != null) {
+                // If the lib directory property has been specified and it actually
                 // exists use it, else use the default
-
                 libDir = new File(libDirString);
-                if(!libDir.exists()) {
-                    Log.warn("lib directory "+libDirString+
-                            " does not exist defaulting to "+DEFAULT_LIB_DIR);
+                if (!libDir.exists()) {
+                    Log.warn("Lib directory " + libDirString +
+                            " does not exist. Using default " + DEFAULT_LIB_DIR);
                     libDir = new File(DEFAULT_LIB_DIR);
                 }
-
-            } else {
+            }
+            else {
                 libDir = new File(DEFAULT_LIB_DIR);
             }
 

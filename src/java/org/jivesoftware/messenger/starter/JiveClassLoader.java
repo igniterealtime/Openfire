@@ -39,7 +39,7 @@ class JiveClassLoader extends URLClassLoader {
      * @throws java.net.MalformedURLException if the libDir path is not valid.
      */
     JiveClassLoader(ClassLoader parent, File libDir) throws MalformedURLException {
-        super(new URL[]{libDir.toURL()}, parent);
+        super(new URL[] { libDir.toURL() }, parent);
 
         File[] jars = libDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {

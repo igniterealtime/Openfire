@@ -68,17 +68,17 @@
 %>
         <html>
         <head>
-            <title><fmt:message key="title" /> <fmt:message key="setup.env.check.setup" /></title>
+            <title><fmt:message key="title" /> <fmt:message key="setup.title" /></title>
             <link rel="stylesheet" type="text/css" href="style.css">
         </head>
         <body>
 
         <p class="jive-setup-page-header">
-        <fmt:message key="title" /> <fmt:message key="setup.env.check.setup" />
+        <fmt:message key="title" /> <fmt:message key="setup.title" />
         </p>
 
         <p class="jive-setup-error-text">
-        <fmt:message key="setup.env.check.error" /> <fmt:message key="title" /> <fmt:message key="setup.env.check.setup" />.
+        <fmt:message key="setup.env.check.error" /> <fmt:message key="title" /> <fmt:message key="setup.title" />.
         </p>
 
         <p>

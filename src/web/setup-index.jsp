@@ -48,23 +48,6 @@
         }
     }
 
-    // Error checking
-    Map messengerHomeErrors = new HashMap();
-    // Get a handle on the messengerHome directory
-    File messengerHomeDir = new File(JiveGlobals.getMessengerHome());
-    // Validate it:
-    if (messengerHomeDir == null || !messengerHomeDir.exists()) {
-        messengerHomeErrors.put("exists","exists");
-    }
-    else {
-        if (!messengerHomeDir.canRead()) {
-            messengerHomeErrors.put("read","read");
-        }
-        if (!messengerHomeDir.canWrite()) {
-            messengerHomeErrors.put("write","write");
-        }
-    }
-
     Locale locale = JiveGlobals.getLocale();
 %>
 

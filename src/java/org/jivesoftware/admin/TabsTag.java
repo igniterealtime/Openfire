@@ -124,7 +124,7 @@ public class TabsTag extends BodyTagSupport {
             pageID = pageInfo.getPageID();
         }
         // Get root items from the data model:
-        Collection items = AdminConsole.getItems();
+        Collection<AdminConsole.Item> items = AdminConsole.getItems();
         if (items.size() > 0) {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)
@@ -133,8 +133,8 @@ public class TabsTag extends BodyTagSupport {
             String body = getBodyContent().getString();
             // For each root item, print out an LI
             AdminConsole.Item root = AdminConsole.getRootByChildID(pageID);
-            for (Iterator iter=items.iterator(); iter.hasNext(); ) {
-                AdminConsole.Item item = (AdminConsole.Item)iter.next();
+            for (Iterator<AdminConsole.Item> iter=items.iterator(); iter.hasNext(); ) {
+                AdminConsole.Item item = iter.next();
                 String value = body;
                 if (value != null) {
                     value = StringUtils.replace(value, "[id]", clean(item.getId()));

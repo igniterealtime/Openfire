@@ -25,7 +25,7 @@ import org.jdesktop.jdic.tray.TrayIcon;
 import org.jdesktop.jdic.tray.SystemTray;
 
 /**
- * Launcher for Jive Messenger.
+ * Graphical launcher for Jive Messenger.
  *
  * @author Matt Tucker
  */
@@ -133,28 +133,27 @@ public class Launcher {
             public void actionPerformed(ActionEvent e) {
                 if (e.getActionCommand().equals("Start")) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    // Adjust button and menu items.
                     startApplication();
                     startButton.setEnabled(false);
                     stopButton.setEnabled(true);
                     startMenuItem.setEnabled(false);
                     stopMenuItem.setEnabled(true);
+                    // Change to the "on" icon.
+                    frame.setIconImage(onIcon.getImage());
+                    trayIcon.setIcon(onIcon);
+                    // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
                         public void run() {
-                            try {
-                                sleep(8000);
-                            }
-                            catch (Exception e) {
-                            }
-
-                            // Enable the Launch Admin button/menu item only if the server has started
+                            try {  sleep(8000);  }
+                            catch (Exception e) { }
+                            // Enable the Launch Admin button/menu item only if the
+                            // server has started.
                             if (stopButton.isEnabled()) {
-                                frame.setIconImage(onIcon.getImage());
-                                trayIcon.setIcon(onIcon);
                                 browserButton.setEnabled(true);
                                 browserMenuItem.setEnabled(true);
+                                frame.setCursor(Cursor.getDefaultCursor());
                             }
-
-                            frame.setCursor(Cursor.getDefaultCursor());
                         }
                     };
 
@@ -162,8 +161,10 @@ public class Launcher {
                 }
                 else if (e.getActionCommand().equals("Stop")) {
                     stopApplication();
+                    // Change to the "off" button.
                     frame.setIconImage(offIcon.getImage());
                     trayIcon.setIcon(offIcon);
+                    // Adjust buttons and menu items.
                     frame.setCursor(Cursor.getDefaultCursor());
                     browserButton.setEnabled(false);
                     startButton.setEnabled(true);
@@ -243,9 +244,7 @@ public class Launcher {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param args DOCUMENT ME!
+     * Creates a new GUI launcher instance.
      */
     public static void main(String[] args) {
         new Launcher();

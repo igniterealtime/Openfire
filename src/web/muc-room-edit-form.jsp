@@ -279,7 +279,7 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("muc.room.edit.form.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     if (create) {
         pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?create=true"));
         pageinfo.setPageID("muc-room-create");

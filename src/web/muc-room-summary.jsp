@@ -27,7 +27,7 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("muc.room.summary.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-summary.jsp"));
     pageinfo.setPageID("muc-room-summary");
 %>

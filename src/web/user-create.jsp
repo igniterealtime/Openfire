@@ -96,7 +96,7 @@
 <%   // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("user.create.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-create.jsp"));
     pageinfo.setPageID("user-create");
 %>

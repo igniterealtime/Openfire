@@ -210,7 +210,7 @@
 <% // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("group.edit.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
     pageinfo.setSubPageID("group-edit");
     pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));

@@ -10,7 +10,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.admin.AdminConsole"
+                 org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.util.LocaleUtils"
     errorPage="error.jsp"
 %>
 
@@ -76,7 +77,7 @@
                         </div>
                     </td>
                     <td width="1%" id="jive-logout" nowrap>
-                        <a href="<%= path %>/index.jsp?logout=true">Logout [<%= StringUtils.escapeHTMLTags(admin.getUser().getUsername()) %>]</a>
+                        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(admin.getUser().getUsername()) %>]</a>
                         &nbsp;&nbsp;&nbsp;
                     </td>
                 </tr>

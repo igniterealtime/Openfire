@@ -73,7 +73,7 @@
 <%
     String title = LocaleUtils.getLocalizedString("plugin.admin.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "plugin-admin.jsp"));
     pageinfo.setPageID("plugin-settings");    
 %>

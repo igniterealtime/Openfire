@@ -25,7 +25,7 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("private.data.settings.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "private-data-settings.jsp"));
     pageinfo.setPageID("server-data-settings");
 %>

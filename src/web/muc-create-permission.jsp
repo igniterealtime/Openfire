@@ -86,8 +86,8 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("muc.create.permission.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-create-permission.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
     pageinfo.setPageID("muc-perms");
 %>
 <jsp:include page="top.jsp" flush="true" />

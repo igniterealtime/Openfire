@@ -96,9 +96,9 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("server.props.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Server Properties", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Edit", "server-props.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("index.properties"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-props.jsp"));
     pageinfo.setPageID("server-settings");
 %>
 <jsp:include page="top.jsp" flush="true" />

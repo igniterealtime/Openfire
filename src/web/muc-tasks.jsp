@@ -110,8 +110,8 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("muc.tasks.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Other Settings", "muc-tasks.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-tasks.jsp"));
     pageinfo.setPageID("muc-tasks");
 %>
 <jsp:include page="top.jsp" flush="true" />

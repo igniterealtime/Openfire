@@ -59,7 +59,7 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("user.password.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
             "user-password.jsp?username="+URLEncoder.encode(username, "UTF-8")));
     pageinfo.setSubPageID("user-password");

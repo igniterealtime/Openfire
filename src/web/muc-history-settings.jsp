@@ -90,8 +90,8 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("groupchat.history.settings.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat History", "muc-history-settings.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-history-settings.jsp"));
     pageinfo.setPageID("muc-history");
 %>
 <jsp:include page="top.jsp" flush="true" />

@@ -50,7 +50,7 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("group.delete.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-delete.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
     pageinfo.setSubPageID("group-delete");
     pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));

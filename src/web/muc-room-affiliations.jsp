@@ -108,8 +108,8 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("muc.room.affiliations.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-room-affiliations.jsp?roomName="+roomName));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-affiliations.jsp?roomName="+roomName));
     pageinfo.setSubPageID("muc-room-affiliations");
     pageinfo.setExtraParams("roomName="+roomName);
 %>

@@ -30,8 +30,8 @@
 <%  // Title of this page and breadcrumbs
     String title = LocaleUtils.getLocalizedString("session.conflict.title");
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Session Conflict", "session-conflict.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-conflict.jsp"));
     pageinfo.setPageID("server-session-conflict");
 %>
 

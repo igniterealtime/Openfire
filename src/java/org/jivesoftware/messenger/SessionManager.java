@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.Iterator;
+import java.util.Collection;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -111,7 +112,7 @@ public interface SessionManager {
      * @return An iterator over the sessions (never null)
      * @throws UnauthorizedException If caller doesn't have permission to access this method
      */
-    public Iterator getSessions(String username) throws UnauthorizedException;
+    public Collection<Session> getSessions(String username) throws UnauthorizedException;
 
     /**
      * <p>Obtain a count of the number of sessions on the server, including unauthenticated

@@ -75,15 +75,7 @@
 
 <%  } %>
 
-<%
-    String maxSession = "Unlimited";
-    int maxSessions = -1;
-    if(maxSessions != -1){
-        maxSession = ""+maxSessions;
-    }
-%>
 Active Sessions: <b><%= sessionCount %></b>,
-Maximum Allowable Sessions: <%= maxSession %>
 
 <%  if (numPages > 1) { %>
 

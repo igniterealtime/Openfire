@@ -38,8 +38,16 @@ public class PresenceManagerProxy implements PresenceManager {
         this.permissions = permissions;
     }
 
-    public boolean isAvailable(User user) throws UnauthorizedException {
+    public boolean isAvailable(User user) {
         return manager.isAvailable(user);
+    }
+
+    public Presence getPresence(User user) {
+        return manager.getPresence(user);
+    }
+
+    public Collection<Presence> getPresences(User user) {
+        return manager.getPresences(user);
     }
 
     public int getOnlineGuestCount() {

@@ -652,19 +652,15 @@ public class MUCRoomImpl implements MUCRoom {
         Presence presence = new PresenceImpl();
         presence.setSender(role.getRoleAddress());
         switch (presenceStatus) {
-        case Presence.STATUS_INVISIBLE:
-            presence.setAvailable(true);
-            presence.setVisible(false);
-            break;
-        case Presence.STATUS_ONLINE:
-            presence.setAvailable(true);
-            presence.setVisible(true);
-            break;
-        case Presence.STATUS_OFFLINE:
-            presence.setAvailable(false);
-            presence.setVisible(false);
-            break;
-        default:
+            case Presence.STATUS_ONLINE:
+                presence.setAvailable(true);
+                presence.setVisible(true);
+                break;
+            case Presence.STATUS_OFFLINE:
+                presence.setAvailable(false);
+                presence.setVisible(false);
+                break;
+            default:
         }
         return presence;
     }

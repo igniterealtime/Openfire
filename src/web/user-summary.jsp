@@ -10,7 +10,8 @@
                  org.jivesoftware.messenger.user.UserManager,
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.PresenceManager"
+                 org.jivesoftware.messenger.PresenceManager,
+                 org.jivesoftware.messenger.Presence"
 %>
 
 <%-- Define Administration Bean --%>
@@ -62,7 +63,7 @@ Total Users: <%= webManager.getUserManager().getUserCount() %>,
     Showing <%= (start+1) %>-<%= (start+range) %>,
 
 <%  } %>
-Sorted by User ID
+Sorted by Username
 </p>
 
 <%  if (numPages > 1) { %>
@@ -85,7 +86,6 @@ Sorted by User ID
 <%  } %>
 
 <table  cellpadding="3" cellspacing="0" border="0" width="600">
-<tr class="tableHeader"><td colspan="7" align="left">List Of Users</td></tr>
 </table>
 <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
 <tr >
@@ -114,18 +114,33 @@ Sorted by User ID
         User user = (User)users.next();
         i++;
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+    <tr class="jive-<%= (((i%2)==0) ? "odd" : "odd") %>">
         <td width="1%">
             <%= i %>
         </td>
-        <td width="1%" align="center">
-            <%  if (presenceManager.isAvailable(user)) { %>
-
-                <img src="images/online.gif" width="13" height="17" border="0">
+        <td width="1%" align="center" valign="middle">
+            <%  if (presenceManager.isAvailable(user)) {
+                    Presence presence = presenceManager.getPresence(user);
+            %>
+                <% if (presence.getShow() == Presence.SHOW_NONE) { %>
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_XA) { %>
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_DND) { %>
+                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
+                <% } %>
 
             <%  } else { %>
 
-                <img src="images/offline.gif" width="8" height="17" border="0">
+                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="Offline">
 
             <%  } %>
         </td>

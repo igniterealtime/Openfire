@@ -5,7 +5,7 @@
 --%>
 <%@ taglib uri="core" prefix="c"%>
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.messenger.*,
                  java.text.DateFormat,
                  java.text.NumberFormat,
@@ -46,7 +46,7 @@
     }
 
     // See if there are multiple sessions for this user:
-    Iterator sessions = null;
+    Collection<Session> sessions = null;
     int sessionCount = sessionManager.getSessionCount(address.getName());
     if (!isAnonymous && sessionCount > 1) {
         sessions = sessionManager.getSessions(address.getName());
@@ -258,8 +258,7 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
 
     <%  int count = 0;
         String linkURL = "session-details.jsp";
-        while (sessions.hasNext()) {
-            Session sess = (Session) sessions.next();
+        for (Session sess : sessions) {
             count++;
             boolean current = sess.getAddress().equals(address);
     %>

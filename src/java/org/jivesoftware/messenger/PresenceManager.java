@@ -13,7 +13,6 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
-import java.util.Iterator;
 import java.util.Collection;
 
 /**
@@ -39,10 +38,28 @@ public interface PresenceManager {
     /**
      * <p>Returns the availability of the user.<p>
      *
-     * @param user The user who's availability is in question
-     * @return True if the user as available for messaging (1 or more available sessions)
+     * @param user the user who's availability is in question
+     * @return true if the user as available for messaging (1 or more available sessions)
      */
-    public boolean isAvailable(User user) throws UnauthorizedException;
+    public boolean isAvailable(User user);
+
+    /**
+     * Returns the user's current presence, or <tt>null</tt> if the user is unavailable.
+     * If the user is connected with more than one session, the user's "most available"
+     * presence status is returned.
+     *
+     * @param user the user.
+     * @return the user's current presence.
+     */
+    public Presence getPresence(User user);
+
+    /**
+     * Returns all presences for the user, or <tt>null</tt> if the user is unavailable.
+     *
+     * @param user the user.
+     * @return the Presence packets for all the users's connected sessions.
+     */
+    public Collection<Presence> getPresences(User user);
 
     /**
      * Returns the number of guests who are currently online. Guests with a

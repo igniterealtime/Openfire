@@ -22,6 +22,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -79,7 +80,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
      * Map of priority ordered SessionMap objects with username (toLowerCase) as key.
      * The map and its contents should NOT be persisted to disk.
      */
-    private HashMap sessions = new HashMap();
+    private Map<String, SessionMap> sessions = new ConcurrentHashMap<String, SessionMap>();
 
     /**
      * <p>Session manager must maintain the routing table as sessions are added and
@@ -624,9 +625,9 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         try {
             Iterator users = getSessionUsers();
             while (users.hasNext()) {
-                Iterator sessionItr = getSessions((String)users.next());
-                while (sessionItr.hasNext()) {
-                    sessions.add(sessionItr.next());
+                Collection<Session> usrSessions = getSessions((String)users.next());
+                for (Session session : usrSessions) {
+                    sessions.add(session);
                 }
             }
         }
@@ -656,13 +657,12 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         return Arrays.asList(anonymousSessions.values().toArray()).iterator();
     }
 
-    public Iterator getSessions(String username) {
-
-        LinkedList sessionList = new LinkedList();
+    public Collection<Session> getSessions(String username) {
+        List<Session> sessionList = new ArrayList<Session>();
         if (username != null) {
             copyUserSessions(username, sessionList);
         }
-        return sessionList.iterator();
+        return sessionList;
     }
 
     public int getTotalSessionCount() throws UnauthorizedException {

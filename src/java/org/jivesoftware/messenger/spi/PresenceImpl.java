@@ -223,11 +223,6 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
                 xmlSerializer.writeCharacters("dnd");
                 xmlSerializer.writeEndElement();
                 break;
-            case Presence.SHOW_INVISIBLE:
-                xmlSerializer.writeStartElement("jabber:client", "show");
-                xmlSerializer.writeCharacters("invisible");
-                xmlSerializer.writeEndElement();
-                break;
         }
         if (status != null && status.length() > 0) {
             xmlSerializer.writeStartElement("jabber:client", "status");

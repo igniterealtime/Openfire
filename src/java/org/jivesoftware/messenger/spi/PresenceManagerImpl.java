@@ -66,10 +66,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         foreignUserCache = new Cache("Foreign Users", foreignCacheSize, HOUR);
     }
 
-    public boolean isAvailable(User user) throws UnauthorizedException {
-        return sessionManager.getSessionCount(user.getUsername()) > 0;
-    }
-
     public int getOnlineGuestCount() {
         int count = 0;
         for (Presence presence : onlineGuests.values()) {
@@ -225,14 +221,11 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void setOffline(XMPPAddress jid) throws UnauthorizedException {
     }
 
-    public boolean isOnline(User user) {
-        if (user == null) {
-            return false;
+    public boolean isAvailable(User user) {
+        try {
+            return sessionManager.getSessionCount(user.getUsername()) > 0;
         }
-        Presence presence = (Presence)onlineUsers.get(user.getUsername());
-        if (presence != null) {
-            return presence.isAvailable();
-        }
+        catch (UnauthorizedException ue) {  }
         return false;
     }
 
@@ -240,15 +233,33 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         if (user == null) {
             return null;
         }
-        // try getting the presence obj from the online user cache:
-        Presence userPresence = (Presence)onlineUsers.get(user.getUsername());
-        if (userPresence != null) {
-            return userPresence;
+        Presence presence = null;
+        try {
+            for (Session session : sessionManager.getSessions(user.getUsername())) {
+                if (presence == null) {
+                    presence = session.getPresence();
+                }
+                else if (presence.getShow() > session.getPresence().getShow()) {
+                    presence = session.getPresence();
+                }
+            }
         }
-        else {
-            // Load up the presence from the db
-            return new PresenceImpl(user, null);
+        catch (UnauthorizedException ue) {  }
+        return presence;
+    }
+
+    public Collection<Presence> getPresences(User user) {
+        if (user == null) {
+            return null;
         }
+        List<Presence> presences = new ArrayList<Presence>();
+        try {
+            for (Session session : sessionManager.getSessions(user.getUsername())) {
+                presences.add(session.getPresence());
+            }
+        }
+        catch (UnauthorizedException ue) {  }
+        return Collections.unmodifiableCollection(presences);
     }
 
     public Presence getPresence(String presenceID) {
@@ -280,10 +291,11 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
                 if (probee.getNamePrep() != null && !"".equals(probee.getNamePrep())) {
-                    Iterator sessionIter = sessionManager.getSessions(probee.getNamePrep());
-                    while (sessionIter.hasNext()) {
-                        Session session = (Session)sessionIter.next();
-                        Presence presencePacket = (Presence)session.getPresence().createDeepCopy();
+                    Collection<Session> sessions =
+                            sessionManager.getSessions(probee.getNamePrep());
+                    for (Session session : sessions) {
+                        Presence presencePacket =
+                                (Presence)session.getPresence().createDeepCopy();
                         presencePacket.setSender(session.getAddress());
                         try {
                             sessionManager.userBroadcast(prober, presencePacket);
@@ -327,10 +339,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void probePresence(XMPPAddress prober, XMPPAddress probee) {
         try {
             if (server.isLocal(probee)) {
-                Iterator sessionIter =
+                Collection<Session> sessions =
                         sessionManager.getSessions(probee.getName().toLowerCase());
-                while (sessionIter.hasNext()) {
-                    Session session = (Session)sessionIter.next();
+                for (Session session : sessions) {
                     Presence presencePacket =
                             (Presence)session.getPresence().createDeepCopy();
                     presencePacket.setSender(session.getAddress());

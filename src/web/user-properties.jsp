@@ -7,7 +7,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  java.text.DateFormat,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.*"
 %>
@@ -101,26 +101,37 @@ send the user a message (if they're online) or delete the user.
 
 <tr class="jive-even">
     <td wrap width="1%">
-        Online Status:
+        Status:
     </td>
-    <td>
-        <%  if (admin.getPresenceManager().isAvailable(user)) {
-                // Get the user's session (or the first one available if there are multiple)
-                Iterator sessions = admin.getSessionManager().getSessions(user.getUsername());
-                // Should be at least one session, so grab first one. Just need to pass in one
-                // of the user's sessions to the session details page - that page will display
-                // all that exist.
-                Session sess = (Session)sessions.next();
-        %>
+<td valign="middle">
+  <%  if (presenceManager.isAvailable(user)) {
+                     Presence presence = presenceManager.getPresence(user);
+             %>
+                 <% if (presence.getShow() == Presence.SHOW_NONE) { %>
+                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
+                 Available
+                 <% } %>
+                 <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
+                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
+                 Available to Chat
+                 <% } %>
+                 <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
+                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
+                 Away
+                 <% } %>
+                 <% if (presence.getShow() == Presence.SHOW_XA) { %>
+                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
+                 Extended Away
+                 <% } %>
+                 <% if (presence.getShow() == Presence.SHOW_DND) { %>
+                 <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
+                 Do not Disturb
+                 <% } %>
 
-            <img src="images/online.gif" width="13" height="17" border="0" hspace="3"
-             title="User is online.">
-            (Online - see <a href="session-details.jsp?jid=<%= sess.getAddress().toString() %>">user session(s)</a>.)
 
         <%  } else { %>
 
-            <img src="images/offline.gif" width="8" height="17" border="0" hspace="3"
-             title="User is offline.">
+            <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="Offline">
             (Offline)
 
         <%  } %>

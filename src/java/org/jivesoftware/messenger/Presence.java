@@ -65,8 +65,6 @@ public interface Presence extends XMPPPacket {
 
     public static final int STATUS_IDLE = 1;
 
-    public static final int STATUS_INVISIBLE = 2;
-
     public static final int STATUS_OFFLINE = 4;
 
     public static final int STATUS_PROBE = -1;
@@ -91,10 +89,6 @@ public interface Presence extends XMPPPacket {
      * Do not disturb show state
      */
     public static final int SHOW_DND = 104;
-    /**
-     * Invisible show state (user not shown)
-     */
-    public static final int SHOW_INVISIBLE = 110;
 
     /**
      * The online/offline status of the user. Being available indicates that the node can be

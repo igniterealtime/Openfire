@@ -16,6 +16,7 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.Iterator;
+import java.util.Collection;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -96,7 +97,7 @@ public class SessionManagerProxy implements SessionManager {
         }
     }
 
-    public Iterator getSessions(String username) throws UnauthorizedException {
+    public Collection<Session> getSessions(String username) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             return sessionManager.getSessions(username);
         }

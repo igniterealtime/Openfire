@@ -17,7 +17,13 @@ echo.
 goto end
 
 :run
+if "%1" == "-debug" goto debug
 start "Jive Messenger" "%JAVA_HOME%\bin\java" -jar ..\lib\startup.jar
 goto end
 
+:debug
+start "Jive Messenger" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar ..\lib\startup.jar
+goto end
 :end
+
+

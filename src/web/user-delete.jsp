@@ -51,7 +51,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Change Password";
+    String title = "Delete User";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-password.jsp?username="+username));
@@ -72,7 +72,7 @@ Are you sure you want to delete the user
 from the system?
 </p>
 
-<c:if test="${admin.user.ID == param.userID}">
+<c:if test="${admin.user.username == param.username}">
     <p class="jive-warning-text">
     Warning! You are about to delete your <b>own</b> user account. Are you sure you want to
     do this? Doing so will log you out of the system immediately.

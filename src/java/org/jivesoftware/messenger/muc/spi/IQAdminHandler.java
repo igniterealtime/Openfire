@@ -64,8 +64,10 @@ public class IQAdminHandler {
      * @throws ForbiddenException If the user is not allowed to perform his request.
      * @throws ConflictException If the desired room nickname is already reserved for the room or
      *                           if the room was going to lose all of its owners.
+     * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */
-    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException {
+    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException,
+            NotAllowedException {
         IQ reply = packet.createResult();
         Element element = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
 
@@ -99,9 +101,10 @@ public class IQAdminHandler {
      * @throws ForbiddenException If the user is not allowed to perform his request.
      * @throws ConflictException If the desired room nickname is already reserved for the room or
      *                           if the room was going to lose all of its owners.
+     * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */
     private void handleItemsElement(MUCRole senderRole, List itemsList, IQ reply)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, NotAllowedException {
         Element item;
         String affiliation = null;
         String roleAttribute = null;
@@ -120,16 +123,13 @@ public class IQAdminHandler {
                         .get("query", "http://jabber.org/protocol/muc#admin")));
 
                 MetaDataFragment metaData;
-                MUCRole role;
                 if ("outcast".equals(affiliation)) {
                     // The client is requesting the list of outcasts
                     if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
                             && MUCRole.OWNER != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    String jid;
-                    for (Iterator<String> it = room.getOutcasts(); it.hasNext();) {
-                        jid = it.next();
+                    for (String jid : room.getOutcasts()) {
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:affiliation", "outcast");
@@ -148,16 +148,14 @@ public class IQAdminHandler {
                             && MUCRole.OWNER != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    String jid;
-                    for (Iterator<String> it = room.getMembers(); it.hasNext();) {
-                        jid = it.next();
+                    for (String jid : room.getMembers()) {
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:affiliation", "member");
                         metaData.setProperty("item:jid", jid);
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            role = roles.get(0);
+                            MUCRole role = roles.get(0);
                             metaData.setProperty("item:role", role.getRoleAsString());
                             metaData.setProperty("item:nick", role.getNickname());
                         }
@@ -176,8 +174,7 @@ public class IQAdminHandler {
                             && MUCRole.OWNER != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    for (Iterator<MUCRole> roles = room.getModerators(); roles.hasNext();) {
-                        role = roles.next();
+                    for (MUCRole role : room.getModerators()) {
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:role", "moderator");
@@ -196,8 +193,7 @@ public class IQAdminHandler {
                     if (MUCRole.MODERATOR != senderRole.getRole()) {
                         throw new ForbiddenException();
                     }
-                    for (Iterator<MUCRole> roles = room.getParticipants(); roles.hasNext();) {
-                        role = roles.next();
+                    for (MUCRole role : room.getParticipants()) {
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:role", "participant");
@@ -300,9 +296,6 @@ public class IQAdminHandler {
                         else {
                             reply.setError(XMPPError.Code.BAD_REQUEST);
                         }
-                    }
-                    catch (NotAllowedException e) {
-                        reply.setError(XMPPError.Code.NOT_ALLOWED);
                     }
                     finally {
                         room.lock.writeLock().unlock();

@@ -57,13 +57,13 @@ Below is the status of your <fmt:message key="short.title" bundle="${lang}" /> s
       
     <%  if (serverOn) { %>
       <td>
-      <img src="images/greenlight-24x24.jpg" />
+      <img src="images/greenlight-24x24.gif" width="24" height="24" border="0" />
       
         </td>
 
     <%  } else { %>
 <td>
-     <img src="images/redlight-24x24.jpg" />
+     <img src="images/redlight-24x24.gif" width="24" height="24" border="0" />
     
         </td>
         

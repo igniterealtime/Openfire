@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.XMPPAddress;
+import org.xmpp.packet.JID;
 
 /**
  * <p>A simple service that allows components to retrieve a roster based solely on the ID of the owner.</p>
@@ -40,5 +41,5 @@ public interface RosterManager {
      *
      * @param user the user to remove his roster.
      */
-    void deleteRoster(XMPPAddress user);
+    void deleteRoster(JID user);
 }

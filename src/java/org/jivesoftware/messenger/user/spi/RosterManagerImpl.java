@@ -16,7 +16,7 @@ import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.XMPPAddress;
+import org.xmpp.packet.JID;
 
 import java.util.Iterator;
 
@@ -47,9 +47,9 @@ public class RosterManagerImpl extends BasicModule implements RosterManager {
         return roster;
     }
 
-    public void deleteRoster(XMPPAddress user) {
+    public void deleteRoster(JID user) {
         try {
-            String username = user.getNamePrep();
+            String username = user.getNode();
             // Get the roster of the deleted user
             Roster roster = (Roster)CacheManager.getCache("username2roster").get(username);
             if (roster == null) {
@@ -66,7 +66,7 @@ public class RosterManagerImpl extends BasicModule implements RosterManager {
 
             // Get the rosters that have a reference to the deleted user
             RosterItemProvider rosteItemProvider = UserProviderFactory.getRosterItemProvider();
-            Iterator<String> usernames = rosteItemProvider.getUsernames(user.toBareStringPrep());
+            Iterator<String> usernames = rosteItemProvider.getUsernames(user.toBareJID());
             while (usernames.hasNext()) {
                 username = usernames.next();
                 // Get the roster that has a reference to the deleted user

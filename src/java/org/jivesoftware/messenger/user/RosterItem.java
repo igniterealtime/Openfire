@@ -11,9 +11,9 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.IntEnum;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 
@@ -163,7 +163,7 @@ public interface RosterItem {
      *
      * @return The address of the item
      */
-    public XMPPAddress getJid();
+    public JID getJid();
 
     /**
      * <p>Obtain the current nickname for the item.</p>

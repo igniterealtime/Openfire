@@ -12,11 +12,8 @@
 package org.jivesoftware.messenger.forms.spi;
 
 import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.util.ConcurrentHashSet;
 
 import java.util.*;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -54,7 +51,6 @@ public class XDataFormImpl {
     private List fields = new ArrayList();
     private List reportedFields = new ArrayList();
     private List reportedItems = new ArrayList();
-    private Set fragments = new ConcurrentHashSet();
 
     public XDataFormImpl() {
         super();
@@ -156,70 +152,6 @@ public class XDataFormImpl {
         // Do nothing
     }
 
-    public void send(XMLStreamWriter xmlSerializer, int version) throws XMLStreamException {
-        xmlSerializer.writeStartElement("jabber:x:data", "x");
-        xmlSerializer.writeNamespace("", "jabber:x:data");
-        if (getType() != null) {
-            xmlSerializer.writeAttribute("type", getType());
-        }
-        if (getTitle() != null) {
-            xmlSerializer.writeStartElement("jabber:x:data", "title");
-            xmlSerializer.writeCharacters(getTitle());
-            xmlSerializer.writeEndElement();
-        }
-        if (instructions.size() > 0) {
-            Iterator instrItr = getInstructions();
-            while (instrItr.hasNext()) {
-                xmlSerializer.writeStartElement("jabber:x:data", "instructions");
-                xmlSerializer.writeCharacters((String)instrItr.next());
-                xmlSerializer.writeEndElement();
-            }
-        }
-        // Append the list of fields returned from a search
-        if (reportedFields.size() > 0) {
-            xmlSerializer.writeStartElement("jabber:x:data", "reported");
-            Iterator fieldsItr = reportedFields.iterator();
-            while (fieldsItr.hasNext()) {
-                XFormFieldImpl field = (XFormFieldImpl)fieldsItr.next();
-                field.send(xmlSerializer, version);
-            }
-            xmlSerializer.writeEndElement();
-        }
-
-        // Append the list of items returned from a search
-        // Note: each item contains a List of XFormFieldImpls
-        if (reportedItems.size() > 0) {
-            xmlSerializer.writeStartElement("jabber:x:data", "item");
-            Iterator itemsItr = reportedItems.iterator();
-            while (itemsItr.hasNext()) {
-                List fields = (List)itemsItr.next();
-                Iterator fieldsItr = fields.iterator();
-                while (fieldsItr.hasNext()) {
-                    XFormFieldImpl field = (XFormFieldImpl)fieldsItr.next();
-                    field.send(xmlSerializer, version);
-                }
-            }
-            xmlSerializer.writeEndElement();
-        }
-
-        if (fields.size() > 0) {
-            Iterator fieldsItr = getFields();
-            while (fieldsItr.hasNext()) {
-                XFormFieldImpl field = (XFormFieldImpl)fieldsItr.next();
-                field.send(xmlSerializer, version);
-            }
-        }
-
-        // Loop through all the values and append them to the stream writer
-
-        Iterator frags = fragments.iterator();
-        while (frags.hasNext()) {
-            XMPPFragment frag = (XMPPFragment)frags.next();
-            frag.send(xmlSerializer, version);
-        }
-        xmlSerializer.writeEndElement();
-    }
-
     public Element asXMLElement() {
         Element x = DocumentHelper.createElement(QName.get("x", "jabber:x:data"));
         if (getType() != null) {
@@ -267,62 +199,7 @@ public class XDataFormImpl {
             }
         }
 
-        // Loop through all the values and append them to the stream writer
-        /*Iterator frags = fragments.iterator();
-        while (frags.hasNext()){
-            XMPPFragment frag = (XMPPFragment) frags.next();
-            frag.send(xmlSerializer,version);
-        }*/
-
         return x;
-    }
-
-    public XMPPFragment createDeepCopy() {
-        XDataFormImpl copy = new XDataFormImpl(type);
-        copy.title = this.title;
-        copy.instructions = (List)((ArrayList)this.instructions).clone();
-
-        Iterator fieldsIter = getFields();
-        while (fieldsIter.hasNext()) {
-            copy.addField((XFormFieldImpl) ((XFormFieldImpl) fieldsIter.next()).createDeepCopy());
-        }
-        
-        Iterator fragmentIter = getFragments();
-        while (fragmentIter.hasNext()) {
-            copy.addFragment(((XMPPFragment)fragmentIter.next()).createDeepCopy());
-        }
-        return copy;
-    }
-
-    public void addFragment(XMPPFragment fragment) {
-        fragments.add(fragment);
-    }
-
-    public Iterator getFragments() {
-        return fragments.iterator();
-    }
-
-    public XMPPFragment getFragment(String name, String namespace) {
-        if (fragments == null) {
-            return null;
-        }
-        XMPPFragment frag;
-        for (Iterator frags = fragments.iterator(); frags.hasNext();) {
-            frag = (XMPPFragment)frags.next();
-            if (name.equals(frag.getName()) && namespace.equals(frag.getNamespace())) {
-                return frag;
-            }
-        }
-        return null;
-    }
-
-    public void clearFragments() {
-        fragments.clear();
-    }
-
-    public int getSize() {
-        // TODO Is this OK? Shouldn't we need to consider the instance variables?
-        return fragments.size();
     }
 
     public void parse(Element formElement) {

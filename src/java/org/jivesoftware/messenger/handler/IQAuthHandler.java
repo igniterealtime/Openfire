@@ -25,36 +25,34 @@ import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * Implements the TYPE_IQ jabber:iq:auth protocol (plain only). Clients
- * use this protocol to authenticate with the server.
- * A 'get' query runs an authentication probe with a given user name.
- * Return the authentication form or an error indicating the user
- * is not registered on the server.
+ * use this protocol to authenticate with the server. A 'get' query
+ * runs an authentication probe with a given user name. Return the
+ * authentication form or an error indicating the user is not
+ * registered on the server.<p>
+ *
  * A 'set' query authenticates with information given in the
  * authentication form. An authenticated session may reset their
  * authentication information using a 'set' query.
- * <p/>
+ *
  * <h2>Assumptions</h2>
  * This handler assumes that the request is addressed to the server.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
- * <h2>Warning</h2>
- * There should be a way of determining whether a session has
- * authorization to access this feature. I'm not sure it is a good
- * idea to do authorization in each handler. It would be nice if
- * the framework could assert authorization policies across channels.
  *
  * @author Iain Shigeoka
  */
 public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
-    private Element probeResponse;
-    // TODO: this won't work with independent servers in the same JVM
     private static boolean anonymousAllowed;
+
+    private Element probeResponse;
     private IQHandlerInfo info;
 
     /**
@@ -76,29 +74,27 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         anonymousAllowed = "true".equals(JiveGlobals.getProperty("xmpp.auth.anonymous"));
     }
 
-    public synchronized IQ handleIQ(IQ packet) throws
-            UnauthorizedException, PacketException {
+    public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             Session session = packet.getOriginatingSession();
             IQ response = null;
             try {
-                Element iq = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
+                Element iq = packet.getElement();
 
-                if (IQ.GET == packet.getType()) {
+                if (IQ.Type.get == packet.getType()) {
                     String username = iq.element("username").getTextTrim();
                     probeResponse.element("username").setText(username);
-                    response = packet.createResult(probeResponse);
+                    response = IQ.createResultIQ(new IQ(probeResponse));
                 }
-                else { // set query
-
+                // Otherwise set query
+                else {
                     if (iq.elements().isEmpty()) {
                         // Anonymous authentication
                         response = anonymousLogin(session, packet);
                     }
                     else {
                         String username = iq.element("username").getTextTrim();
-
-                        // login authentication
+                        // Login authentication
                         String password = null;
                         if (iq.element("password") != null) {
                             password = iq.element("password").getTextTrim();
@@ -120,12 +116,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 }
             }
             catch (UserNotFoundException e) {
-                response = packet.createResult();
-                response.setError(XMPPError.Code.UNAUTHORIZED);
+                response = IQ.createResultIQ(packet);
+                response.setError(PacketError.Condition.not_authorized);
             }
             catch (UnauthorizedException e) {
-                response = packet.createResult();
-                response.setError(XMPPError.Code.UNAUTHORIZED);
+                response = IQ.createResultIQ(packet);
+                response.setError(PacketError.Condition.not_authorized);
             }
             deliverer.deliver(response);
         }
@@ -135,15 +131,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         return null;
     }
 
-    private IQ login(String username,
-                     Element iq,
-                     IQ packet,
-                     IQ response,
-                     String password,
-                     Session session,
-                     String digest)
-            throws UnauthorizedException, UserNotFoundException {
-        XMPPAddress jid = localServer.createJID(username, iq.element("resource").getTextTrim());
+    private IQ login(String username, Element iq, IQ packet, IQ response, String password,
+            Session session, String digest) throws UnauthorizedException, UserNotFoundException
+    {
+        JID jid = localServer.createJID(username, iq.element("resource").getTextTrim());
 
 
         // If a session already exists with the requested JID, then check to see
@@ -161,8 +152,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     }
                 }
                 else {
-                    response = packet.createResult();
-                    response.setError(XMPPError.Code.FORBIDDEN);
+                    response = IQ.createResultIQ(packet);
+                    response.setError(PacketError.Condition.forbidden);
                 }
             }
             catch (Exception e) {
@@ -183,18 +174,16 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             }
             else {
                 session.setAuthToken(token, userManager, jid.getResource());
-                packet.setSender(session.getAddress());
-                response = packet.createResult();
+                packet.setFrom(session.getAddress());
+                response = IQ.createResultIQ(packet);
             }
         }
         return response;
     }
 
-    private IQ passwordReset(String password,
-                             IQ packet,
-                             String username,
-                             Session session)
-            throws UnauthorizedException {
+    private IQ passwordReset(String password, IQ packet, String username, Session session)
+            throws UnauthorizedException
+    {
         IQ response;
         if (password == null || password.length() == 0) {
             throw new UnauthorizedException();
@@ -202,7 +191,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         else {
             try {
                 userManager.getUser(username).setPassword(password);
-                response = packet.createResult();
+                response = IQ.createResultIQ(packet);
                 List params = new ArrayList();
                 params.add(username);
                 params.add(session.toString());
@@ -215,20 +204,15 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         return response;
     }
 
-    private IQ anonymousLogin(Session session,
-                              IQ packet)
-            throws UnauthorizedException {
-        IQ response;
+    private IQ anonymousLogin(Session session, IQ packet) throws UnauthorizedException {
+        IQ response = IQ.createResultIQ(packet);;
         if (anonymousAllowed) {
             session.setAnonymousAuth();
-            MetaDataFragment meta = new MetaDataFragment("jabber:iq:auth", "query");
-            meta.setProperty("query.resource", session.getAddress().getResource());
-            response = packet.createResult();
-            response.addFragment(meta);
+            Element auth = response.setChildElement("query", "jabber:iq:auth");
+            auth.addElement("resource").setText(session.getAddress().getResource());
         }
         else {
-            response = packet.createResult();
-            response.setError(XMPPError.Code.FORBIDDEN);
+            response.setError(PacketError.Condition.forbidden);
         }
         return response;
     }

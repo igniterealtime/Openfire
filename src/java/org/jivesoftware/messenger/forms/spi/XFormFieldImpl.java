@@ -12,8 +12,6 @@
 package org.jivesoftware.messenger.forms.spi;
 
 import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.messenger.XMPPFragment;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -29,7 +27,7 @@ import org.dom4j.Element;
  *
  * @author gdombiak
  */
-public class XFormFieldImpl implements XMPPFragment, FormField {
+public class XFormFieldImpl implements FormField {
 
     private String description;
     private boolean required = false;
@@ -38,7 +36,6 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
     private String type;
     private List<Option> options = new ArrayList<Option>();
     private List<String> values = new ArrayList<String>();
-    private ConcurrentHashSet fragments = new ConcurrentHashSet();
 
     public XFormFieldImpl() {
         super();
@@ -66,50 +63,6 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
     public void setName(String name) {
         // Is someone sending this message?
         // Do nothing
-    }
-
-    public void send(XMLStreamWriter xmlSerializer, int version) throws XMLStreamException {
-        xmlSerializer.writeStartElement("jabber:x:data", "field");
-        if (getLabel() != null) {
-            xmlSerializer.writeAttribute("label", getLabel());
-        }
-        if (getVariable() != null) {
-            xmlSerializer.writeAttribute("var", getVariable());
-        }
-        if (getType() != null) {
-            xmlSerializer.writeAttribute("type", getType());
-        }
-        if (getDescription() != null) {
-            xmlSerializer.writeStartElement("jabber:x:data", "desc");
-            xmlSerializer.writeCharacters(getDescription());
-            xmlSerializer.writeEndElement();
-        }
-        if (isRequired()) {
-            xmlSerializer.writeStartElement("jabber:x:data", "required");
-            xmlSerializer.writeEndElement();
-        }
-        // Loop through all the values and append them to the stream writer
-        if (values.size() > 0) {
-            Iterator<String> valuesItr = getValues();
-            while (valuesItr.hasNext()) {
-                xmlSerializer.writeStartElement("jabber:x:data", "value");
-                xmlSerializer.writeCharacters(valuesItr.next());
-                xmlSerializer.writeEndElement();
-            }
-        }
-        // Loop through all the options and append them to the stream writer
-        if (options.size() > 0) {
-            Iterator<Option> optionsItr = getOptions();
-            while (optionsItr.hasNext()) {
-                (optionsItr.next()).send(xmlSerializer, version);
-            }
-        }
-        Iterator frags = fragments.iterator();
-        while (frags.hasNext()) {
-            XMPPFragment frag = (XMPPFragment)frags.next();
-            frag.send(xmlSerializer, version);
-        }
-        xmlSerializer.writeEndElement();
     }
 
     public Element asXMLElement() {
@@ -153,53 +106,6 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
         }*/
 
         return field;
-    }
-
-    public XMPPFragment createDeepCopy() {
-        XFormFieldImpl copy = new XFormFieldImpl(variable);
-        copy.description = this.description;
-        copy.required = this.required;
-        copy.label = this.label;
-        copy.type = this.type;
-        copy.options = (List<Option>)((ArrayList)this.options).clone();
-        copy.values = (List<String>)((ArrayList)this.values).clone();
-
-        Iterator fragmentIter = getFragments();
-        while (fragmentIter.hasNext()) {
-            copy.addFragment(((XMPPFragment)fragmentIter.next()).createDeepCopy());
-        }
-        return copy;
-    }
-
-    public void addFragment(XMPPFragment fragment) {
-        fragments.add(fragment);
-    }
-
-    public Iterator getFragments() {
-        return fragments.iterator();
-    }
-
-    public XMPPFragment getFragment(String name, String namespace) {
-        if (fragments == null) {
-            return null;
-        }
-        XMPPFragment frag;
-        for (Iterator frags = fragments.iterator(); frags.hasNext();) {
-            frag = (XMPPFragment)frags.next();
-            if (name.equals(frag.getName()) && namespace.equals(frag.getNamespace())) {
-                return frag;
-            }
-        }
-        return null;
-    }
-
-    public void clearFragments() {
-        fragments.clear();
-    }
-
-    public int getSize() {
-        // TODO Is this OK? Shouldn't we need to consider the instance variables?
-        return fragments.size();
     }
 
     public void addValue(String value) {

@@ -11,8 +11,9 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public interface Roster {
      * @param user the user object to check.
      * @return true if the specified user is a member of the roster, false otherwise.
      */
-    public boolean isRosterItem(XMPPAddress user);
+    public boolean isRosterItem(JID user);
 
     /**
      * Returns an iterator of users in this roster.
@@ -64,7 +65,7 @@ public interface Roster {
      * @return The roster item associated with the user XMPPAddress
      * @throws UnauthorizedException If not the user or an administrator
      */
-    public RosterItem getRosterItem(XMPPAddress user) throws UnauthorizedException, UserNotFoundException;
+    public RosterItem getRosterItem(JID user) throws UnauthorizedException, UserNotFoundException;
 
     /**
      * Create a new item to the roster. Roster items may not be created that contain the same user address
@@ -73,7 +74,7 @@ public interface Roster {
      * @param user the item to add to the roster.
      * @throws UnauthorizedException if not the item or an administrator.
      */
-    public RosterItem createRosterItem(XMPPAddress user) throws UnauthorizedException, UserAlreadyExistsException;
+    public RosterItem createRosterItem(JID user) throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Create a new item to the roster. Roster items may not be created that contain the same user address
@@ -85,7 +86,7 @@ public interface Roster {
      * @throws UnauthorizedException      if not the item or an administrator.
      * @throws UserAlreadyExistsException If a roster item already exists for the given user
      */
-    public RosterItem createRosterItem(XMPPAddress user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException;
+    public RosterItem createRosterItem(JID user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Create a new item to the roster based as a copy of the given item.
@@ -114,5 +115,5 @@ public interface Roster {
      * @return The roster item being removed or null if none existed
      * @throws UnauthorizedException if not the user or an administrator.
      */
-    public RosterItem deleteRosterItem(XMPPAddress user) throws UnauthorizedException;
+    public RosterItem deleteRosterItem(JID user) throws UnauthorizedException;
 }

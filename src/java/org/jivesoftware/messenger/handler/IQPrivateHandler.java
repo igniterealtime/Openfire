@@ -15,10 +15,10 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.dom4j.Element;
+import org.xmpp.packet.IQ;
 
 /**
  * Implements the TYPE_IQ jabber:iq:private protocol. Clients
@@ -58,28 +58,21 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
 
         IQ replyPacket = null;
-        try {
-            Element dataElement = (Element)((XMPPDOMFragment)packet.getChildFragment()).getRootElement().elementIterator().next();
-            if (dataElement != null) {
-                if (IQ.GET.equals(packet.getType())) {
-                    replyPacket = packet.createResult();
-                    PayloadFragment frag = new PayloadFragment("jabber:iq:private", "query");
-                    frag.addFragment(new XMPPDOMFragment(privateStorage.get(packet.getOriginatingSession().getUsername(), dataElement)));
-                    replyPacket.setChildFragment(frag);
-                }
-                else {
-                    privateStorage.add(packet.getOriginatingSession().getUsername(), dataElement);
-                    replyPacket = packet.createResult();
-                }
+        Element dataElement = packet.getChildElement();
+        if (dataElement != null) {
+            if (IQ.Type.get.equals(packet.getType())) {
+                replyPacket = IQ.createResultIQ(packet);
+                Element privateData = replyPacket.setChildElement("query", "jabber:iq:private");
+                privateData.add(privateStorage.get(packet.getFrom().getNode(), dataElement));
             }
             else {
-                replyPacket = packet.createResult();
-                PayloadFragment frag = new PayloadFragment("jabber:iq:private", "query");
-                replyPacket.setChildFragment(frag);
+                privateStorage.add(packet.getFrom().getNode(), dataElement);
+                replyPacket = IQ.createResultIQ(packet);
             }
         }
-        catch (UserNotFoundException e) {
-            throw new UnauthorizedException(e);
+        else {
+            replyPacket = IQ.createResultIQ(packet);
+            replyPacket.setChildElement("query", "jabber:iq:private");
         }
         return replyPacket;
     }

@@ -24,17 +24,29 @@
 <%@ include file="setup-env-check.jspf" %>
 
 <%  // Get parameters
-    // Handle a continue:
-    if (request.getParameter("continue") != null) {
-        // update the sidebar status
-        session.setAttribute("jive.setup.sidebar.1","done");
-        session.setAttribute("jive.setup.sidebar.2","in_progress");
-        // redirect
-        response.sendRedirect("setup-host-settings.jsp");
-        return;
-    }
+    String localeCode = ParamUtils.getParameter(request,"localeCode");
+    boolean save = request.getParameter("save") != null;
 
     Map errors = new HashMap();
+
+    if (save) {
+        Locale newLocale = null;
+        if (localeCode != null) {
+            newLocale = LocaleUtils.localeCodeToLocale(localeCode.trim());
+            if (newLocale == null) {
+                errors.put("localeCode","");
+            }
+            else {
+                JiveGlobals.setLocale(newLocale);
+                // update the sidebar status
+                session.setAttribute("jive.setup.sidebar.1","done");
+                session.setAttribute("jive.setup.sidebar.2","in_progress");
+                // redirect
+                response.sendRedirect("setup-host-settings.jsp");
+                return;
+            }
+        }
+    }
 
     // Error checking
     Map messengerHomeErrors = new HashMap();
@@ -52,6 +64,8 @@
             messengerHomeErrors.put("write","write");
         }
     }
+
+    Locale locale = JiveGlobals.getLocale();
 %>
 
 <%@ include file="setup-header.jspf" %>
@@ -74,112 +88,62 @@
 
 <%  } %>
 
-<table cellpadding="3" cellspacing="2" border="0" width="100%">
-<tr>
-    <th width="98%">&nbsp;</th>
-    <th width="1%" nowrap class="jive-setup-checklist-box"><fmt:message key="setup.index.success" /> </th>
-    <th width="1%" nowrap class="jive-setup-checklist-box"><fmt:message key="setup.index.error" /></th>
-</tr>
-<tr>
-    <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="setup.index.vm" />
-    </td>
-</tr>
-<tr>
-    <td class="jive-setup-category">
-        <fmt:message key="setup.index.jdk" />
-        <br>
-        <span class="jive-info">
-        <fmt:message key="setup.index.found" /> <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>
-        </span>
-    </td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-</tr>
-<tr>
-    <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" /> <fmt:message key="setup.index.class" />
-    </td>
-</tr>
-<tr>
-    <td class="jive-setup-category">
-        messenger.jar
-        <br>
-        <span class="jive-info">
-        <fmt:message key="title" /> <fmt:message key="setup.index.class" />.
-        </span>
-    </td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-</tr>
-<tr>
-    <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" /> <fmt:message key="setup.index.con_file" />
-    </td>
-</tr>
-<tr>
-    <td class="jive-setup-category">
-        <fmt:message key="setup.index.dir" />
-        <br>
-        <span class="jive-info">
-        <%  boolean messengerHomeOK = true;
-            if (messengerHomeErrors.size() == 0) {
-        %>
+<br/>
 
-            <fmt:message key="setup.index.valid_conf" />
+<b>System Summary</b>
 
-        <%  } else {
-                messengerHomeOK = false;
-        %>
+<ul>
+JDK: <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>,
+Appserver: <%= application.getServerInfo() %>.
+</ul>
 
-            <%  if (messengerHomeErrors.get("exists") != null) { %>
+<br/>
 
-                <fmt:message key="setup.index.unable_locate_dir" />
+<form action="setup-index.jsp" name="sform">
 
-            <%  } else if (messengerHomeErrors.get("read") != null) { %>
+<b>Choose Language</b>
 
-                <fmt:message key="setup.index.not_permission" />
+<%  boolean usingPreset = false;
+    Locale[] locales = Locale.getAvailableLocales();
+    for (int i=0; i<locales.length; i++) {
+        usingPreset = locales[i].equals(locale);
+        if (usingPreset) { break; }
+    }
+%>
 
-            <%  } else if (messengerHomeErrors.get("write") != null) { %>
-
-                <fmt:message key="setup.index.not_write_permission" />
-
-           
-
-            <%  } %>
-
-        <%  } %>
-        </span>
-    </td>
-    <%  if (messengerHomeOK) { %>
-
-        <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
-        <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-
-    <%  } else { %>
-
-        <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-        <td align="center" class="jive-setup-checklist-box"><img src="images/x.gif" width="13" height="13" border="0"></td>
-
-    <%  } %>
-</tr>
+<ul>
+<table cellpadding="4" cellspacing="0" border="0">
+<tbody>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="en" <%= ("en".equals(locale.toString()) ? "checked" : "") %>
+             id="loc01" />
+        </td>
+        <td colspan="2">
+            <label for="loc01">English (en)</label>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
+             id="loc02" />
+        </td>
+        <td>
+            <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
+        </td>
+        <td>
+            <label for="loc02">Simplified Chinese (zh_CN)</label>
+        </td>
+    </tr>
+</tbody>
 </table>
+</ul>
 
-<br><br>
-
+<br/>
 <hr size="0">
 
-<form action="setup-index.jsp">
 <div align="right">
-<%  if (!messengerHomeOK) { %>
-
-    <input type="submit" value=" Continue " disabled onclick="return false;">
-
-<%  } else {  %>
-
-    <input type="submit" name="continue" value=" Continue ">
-
-<%  } %>
+<input type="submit" name="save" value=" Continue ">
 </div>
 </form>
 

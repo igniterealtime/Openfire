@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+    <title>Jive Messenger Protocol Support</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<h1>Jive Messenger Protocol Support</h1>
+
+<a name="top"></a>
+
+<p>
+Jive Messenger implements the XMPP protocol as well as many extensions to XMPP
+through the JEP process at jabber.org. This document provides a summary of that
+protocol support and is updated for every Jive Messenger release.
+</p>
+
+<h2>Core XMPP Spport</h2>
+
+<p>A major goal of the Jive Messenger project is to provide full support for the XMPP
+specifications, <a href="http://www.xmpp.org/specs/rfc3920.html">RFC 3920</a> and
+<a href="http://www.xmpp.org/specs/rfc3921.html">RFC 3921</a>. Jive Messenger has
+full support for XMPP, <b>except</b> for the items listed below:
+
+<ul>
+    <li><b>TLS</b> (<a href="http://www.xmpp.org/specs/rfc3920.html#tls">RFC3920.5</a>)  -- Jive
+    Messenger provides support for a dedicated TLS/SSL port (5223) as used by the older "Jabber"
+    protocol but does not currently support  TLS stream-negotiation as described in XMPP.</li>
+
+    <li><b>SASL</b> (<a href="http://www.xmpp.org/specs/rfc3920.html#sasl">RFC33920.6</a>)  --
+    Jive Messenger currently relies on non-SASL authentication (JEP-0078) for authentication.</li>
+
+    <li><b>S2S</b> (<a href="http://www.xmpp.org/specs/rfc3920.html#rules">RFC3920.10.2</a>,
+    <a href="http://www.xmpp.org/specs/rfc3920.html#dialback">RFC33920.8</a>)  --
+    Server-to-Server (S2S) communication is not currently supported.</a></li>
+
+    <li><b>Privacy Lists</b> (<a href="http://www.xmpp.org/specs/rfc3921.html#privacy">RFC3921.10</a>) </li>
+
+</ul>
+
+<h2>JEP Support</h2>
+
+The <a href="http://www.jabber.org">Jabber Software Foundation</a> has a standards process
+for approving <a href="http://www.jabber.org/jeps/">extensions</a> (JEPs) to the XMPP protocol.
+Jive Messenger's support for these JEPs is detailed below. Some JEPs do not require direct
+server support and are only implemented by clients; such JEPs are not included in this list.
+
+<ul>
+    <li>Data Forms (<a href="http://www.jabber.org/jeps/jep-0004.html">JEP-0004</a>)</li>
+    <li>Service Discovery (<a href="http://www.jabber.org/jeps/jep-0030.html">JEP-0030</a>)</li>
+    <li>Multi-User Chat (<a href="http://www.jabber.org/jeps/jep-0045.html">JEP-0045</a>)</li>
+    <li>Private XML Storage (<a href="http://www.jabber.org/jeps/jep-0049.html">JEP-0049</a>)</li>
+    <li>vcard-temp (<a href="http://www.jabber.org/jeps/jep-0054.html">JEP-0054</a>)</li>
+    <li>Jabber Search (<a href="http://www.jabber.org/jeps/jep-0055.html">JEP-0055</a>) --
+        supported provided via the <a href="http://www.jivesoftware.org/messenger/plugins.jsp">Search
+        plugin</a>.</li>
+    <li>In-Band Registration (<a href="http://www.jabber.org/jeps/jep-0077.html">JEP-0077</a>)</li>
+    <li>Non-SASL Authentication (<a href="http://www.jabber.org/jeps/jep-0078.html">JEP-0078</a>)</li>
+    <li>Entity Time (<a href="http://www.jabber.org/jeps/jep-0090.html">JEP-0090</a>)</li>
+    <li>Delayed Delivery (<a href="http://www.jabber.org/jeps/jep-0091.html">JEP-0091</a>)</li>
+    <li>Software Version (<a href="http://www.jabber.org/jeps/jep-0092.html">JEP-0092</a>)</li>
+</ul>
+
+
+<br><br>
+
+</body>
+</html>

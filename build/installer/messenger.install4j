@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.2">
-  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.1" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <directoryPresets config="" />
+  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
       <envVar name="JDK_HOME" />
     </searchSequence>
     <variables>
-      <variable name="RELEASE_DIR" value="jive_messenger_2_1_1" />
+      <variable name="VERSION_MAJOR" value="" />
+      <variable name="VERSION_MINOR" value="" />
+      <variable name="VERSION_REVISION" value="" />
+      <variable name="RELEASE_DIR" value="jive_messenger_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" />
     </variables>
   </application>
   <files>

@@ -1,15 +1,23 @@
-<%@ taglib uri="core" prefix="c"%>
-  <%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
-<P>
-  <%@ page import="org.jivesoftware.messenger.audit.AuditManager,
+
+<%@ page import="org.jivesoftware.messenger.audit.AuditManager,
                    org.jivesoftware.admin.*,
                    org.jivesoftware.util.*,
-                   java.util.*"%>
- 
+                   java.util.*"
+    errorPage="error.jsp"
+%>
+
+<%@ taglib uri="core" prefix="c"%>
+
   <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>

@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.muc.MUCRole;
@@ -56,13 +57,13 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String UPDATE_ROOM = 
-        "UPDATE mucRoom SET name=?, description=?, canChangeSubject=?, maxUsers=?, publicRoom=?, " +
-        "moderated=?, invitationRequired=?, canInvite=?, password=?, " +
+        "UPDATE mucRoom SET name=?, modificationDate=?, description=?, canChangeSubject=?, maxUsers=?, " +
+        "publicRoom=?, moderated=?, invitationRequired=?, canInvite=?, password=?, " +
         "canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, inMemory=? WHERE roomID=?";
     private static final String ADD_ROOM = 
-        "INSERT INTO mucRoom (roomID, name, description, canChangeSubject, maxUsers, publicRoom, " +
-        "moderated, invitationRequired, canInvite, password, canDiscoverJID, " +
-        "logEnabled, subject, rolesToBroadcast, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, description, canChangeSubject, " +
+        "maxUsers, publicRoom, moderated, invitationRequired, canInvite, password, canDiscoverJID, " +
+        "logEnabled, subject, rolesToBroadcast, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_IN_MEMORY =
@@ -282,31 +283,15 @@ public class MUCPersistenceManager {
      * @param room The room to save its configuration.
      */
     public static void saveToDB(MUCRoom room) {
+        long now = System.currentTimeMillis();
+        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
-                pstmt.setString(1, room.getName());
-                pstmt.setString(2, room.getDescription());
-                pstmt.setInt(3, (room.canOccupantsChangeSubject() ? 1 : 0));
-                pstmt.setInt(4, room.getMaxUsers());
-                pstmt.setInt(5, (room.isPublicRoom() ? 1 : 0));
-                pstmt.setInt(6, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(7, (room.isInvitationRequiredToEnter() ? 1 : 0));
-                pstmt.setInt(8, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setString(9, room.getPassword());
-                pstmt.setInt(10, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(11, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setInt(12, marshallRolesToBroadcast(room));
-                pstmt.setInt(13, 1);
-                pstmt.setLong(14, room.getID());
-                pstmt.executeUpdate();
-            }
-            else {
-                pstmt = con.prepareStatement(ADD_ROOM);
-                pstmt.setLong(1, room.getID());
+                pstmt.setString(1, StringUtils.dateToMillis(nowDate));
                 pstmt.setString(2, room.getName());
                 pstmt.setString(3, room.getDescription());
                 pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
@@ -318,9 +303,30 @@ public class MUCPersistenceManager {
                 pstmt.setString(10, room.getPassword());
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(13, room.getSubject());
-                pstmt.setInt(14, marshallRolesToBroadcast(room));
-                pstmt.setInt(15, 1); // the room starts always "in memory"
+                pstmt.setInt(13, marshallRolesToBroadcast(room));
+                pstmt.setInt(14, 1);
+                pstmt.setLong(15, room.getID());
+                pstmt.executeUpdate();
+            }
+            else {
+                pstmt = con.prepareStatement(ADD_ROOM);
+                pstmt.setLong(1, room.getID());
+                pstmt.setString(2, StringUtils.dateToMillis(nowDate));
+                pstmt.setString(3, StringUtils.dateToMillis(nowDate));
+                pstmt.setString(4, room.getName());
+                pstmt.setString(5, room.getDescription());
+                pstmt.setInt(6, (room.canOccupantsChangeSubject() ? 1 : 0));
+                pstmt.setInt(7, room.getMaxUsers());
+                pstmt.setInt(8, (room.isPublicRoom() ? 1 : 0));
+                pstmt.setInt(9, (room.isModerated() ? 1 : 0));
+                pstmt.setInt(10, (room.isInvitationRequiredToEnter() ? 1 : 0));
+                pstmt.setInt(11, (room.canOccupantsInvite() ? 1 : 0));
+                pstmt.setString(12, room.getPassword());
+                pstmt.setInt(13, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(14, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setString(15, room.getSubject());
+                pstmt.setInt(16, marshallRolesToBroadcast(room));
+                pstmt.setInt(17, 1); // the room starts always "in memory"
                 pstmt.execute();
             }
         }

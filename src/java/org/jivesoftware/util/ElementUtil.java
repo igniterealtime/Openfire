@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.StringTokenizer;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.dom4j.DocumentHelper;
 
 /**
- * <p>Storage of generic meta-data.</p>
- * <p>Meta-data is expected to be stored as XML. We use a simple
+ * <p>We use a simple
  * naming convention of meta-data key names: data is stored
  * heirarchically separated by dots. The last name may contain
  * a colon ':' character that is read as name:attribute.
@@ -34,7 +32,7 @@ import org.dom4j.DocumentHelper;
  * <p>Some XML cannot be built or accessed using this naming
  * convention (e.g. a typical Roster reset packet). More complex XML
  * packet should be represented using the XMPPDOMFragment. The
- * MetaDataFragment class is designed to provide 80% of XML
+ * Element class is designed to provide 80% of XML
  * manipulation capabilities with the simplest 20% of code and API size
  * making it convenient for meta-data, simple IQ packets, etc.</p>
  */

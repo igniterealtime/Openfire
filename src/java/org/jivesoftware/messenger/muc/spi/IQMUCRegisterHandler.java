@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -31,6 +29,7 @@ import org.jivesoftware.messenger.muc.MUCRoom;
 import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQHandler;
@@ -139,15 +138,15 @@ public class IQMUCRegisterHandler extends IQHandler {
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
                 Element currentRegistration = probeResult.createCopy();
-                currentRegistration.setProperty("query.registered", null);
-                XDataFormImpl form = (XDataFormImpl) currentRegistration.getFragment("x",
-                        "jabber:x:data");
+                ElementUtil.setProperty(currentRegistration, "query.registered", null);
+                XDataFormImpl form = new XDataFormImpl();
+                form.parse(currentRegistration);
                 form.getField("muc#register_roomnick").addValue(nickname);
-                reply.setChildFragment(currentRegistration);
+                reply.getElement().add(currentRegistration);
             }
             else {
                 // The user is not registered with the room so answer an empty form
-                reply.setChildFragment(probeResult);
+                reply.getElement().add(probeResult);
             }
         }
         else if (IQ.Type.set ==  packet.getType()) {
@@ -155,18 +154,16 @@ public class IQMUCRegisterHandler extends IQHandler {
                 // Keep a registry of the updated presences
                 List<Presence> presences = new ArrayList<Presence>();
 
-                reply = packet.createResult();
-                XMPPFragment iq = packet.getChildFragment();
-                MetaDataFragment metaData = MetaDataFragment.convertToMetaData(iq);
+                reply = IQ.createResultIQ(packet);
+                Element iq = packet.getChildElement();
 
-                if (metaData.includesProperty("query.remove")) {
+                if (ElementUtil.includesProperty(iq, "query.remove")) {
                     // The user is deleting his registration
-                    presences.addAll(room.addNone(packet.getSender().toBareStringPrep(),
-                            room.getRole()));
+                    presences.addAll(room.addNone(packet.getFrom().toBareJID(), room.getRole()));
                 }
                 else {
                     // The user is trying to register with a room
-                    Element formElement = ((XMPPDOMFragment)iq).getRootElement().element("x");
+                    Element formElement = iq.element("x");
                     // Check if a form was used to provide the registration info
                     if (formElement != null) {
                         // Get the sent form
@@ -182,12 +179,12 @@ public class IQMUCRegisterHandler extends IQHandler {
                         // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
 
                         // Add the new member to the members list
-                        presences.addAll(room.addMember(packet.getSender().toBareStringPrep(),
+                        presences.addAll(room.addMember(packet.getTo().toBareJID(),
                                 nickname,
                                 room.getRole()));
                     }
                     else {
-                        reply.setError(XMPPError.Code.BAD_REQUEST);
+                        reply.setError(PacketError.Condition.bad_request);
                     }
                 }
                 // Send the updated presences to the room occupants
@@ -197,12 +194,12 @@ public class IQMUCRegisterHandler extends IQHandler {
 
             }
             catch (ForbiddenException e) {
-                reply = packet.createResult();
-                reply.setError(XMPPError.Code.FORBIDDEN);
+                reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.forbidden);
             }
             catch (ConflictException e) {
-                reply = packet.createResult();
-                reply.setError(XMPPError.Code.CONFLICT);
+                reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.conflict);
             }
             catch (Exception e) {
                 Log.error(e);

@@ -11,14 +11,12 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
-import org.xmpp.packet.Packet;
-
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.Packet;
 
 /**
  * A channel provides a mechanism to queue work units for processing. Each work unit is
@@ -83,18 +81,14 @@ public class Channel<T extends Packet> {
                 }
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    try {
+                   
                         try {
                             Session session = SessionManager.getInstance().getSession(packet.getFrom());
                             session.getConnection().close();
                         }
-                        catch (SessionNotFoundException e1) {
-                            e1.printStackTrace();
+                        catch (Exception e1) {
+                           Log.error(e1);
                         }
-                    }
-                    catch (UnauthorizedException e1) {
-                        // do nothing
-                    }
                 }
             }
         };

@@ -38,7 +38,9 @@
         </classpath>
     </taskdef>
 
+    <!--
     <taskdef resource="clovertasks" />
+    -->
 
     <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
@@ -113,7 +115,7 @@
         <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
         <fileset dir="${lib.build.dir}" includes="junit.jar" />
         <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
-        <fileset dir="${ant.home}/lib" includes="clover.jar" />
+        <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
     </path>
 
     <path id="plugin.dependencies">
@@ -350,6 +352,7 @@
 
     </target>
 
+    <!--
     <target name="with-clover">
         <clover-setup initString="${target.dir}/test/messenger-coverage.db" />
     </target>
@@ -362,6 +365,7 @@
             </current>
         </clover-report>
     </target>
+    -->
 
     <!-- test ================================================================================== -->
     <target name="test" depends="jar" description="Compiles and runs test cases">

@@ -223,11 +223,11 @@
         <root url="jar://$PROJECT_DIR$/build/lib/dist/postgres.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/dist/hsqldb.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/wls_stax.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/servlet.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/junit.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/jasper-compiler.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/jasper-runtime.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/commons-el.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/dist/servlet.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

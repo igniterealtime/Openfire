@@ -17,7 +17,8 @@
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.PresenceManager,
                  org.xmpp.packet.Presence,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 org.jivesoftware.messenger.JiveGlobals"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -80,6 +81,7 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)userCount/(double)range);
     int curPage = (start/range) + 1;
+    System.err.println("curPage: " + curPage);
 
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
@@ -88,6 +90,13 @@
 <p>
 <fmt:message key="user.summary.info" />
 </p>
+
+<style type="text/css">
+.jive-current {
+    font-weight : bold;
+    text-decoration : none;
+}
+</style>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
@@ -105,10 +114,13 @@
 <%  } %>
 
 <p>
-<fmt:message key="user.summary.total_user" />: <%= webManager.getUserManager().getUserCount() %>,
+<fmt:message key="user.summary.total_user" />:
+<%= LocaleUtils.getLocalizedNumber(webManager.getUserManager().getUserCount()) %> --
+
 <%  if (numPages > 1) { %>
 
-    <fmt:message key="user.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>,
+    <fmt:message key="user.summary.showing" />
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range) %>,
 
 <%  } %>
 <fmt:message key="user.summary.sorted" />
@@ -131,7 +143,19 @@
     <p>
     <fmt:message key="user.summary.pages" />:
     [
-    <%  for (int i=0; i<numPages; i++) {
+    <%  int num = 15 + curPage;
+        int s = curPage-1;
+        if (s > 5) {
+            s -= 5;
+        }
+        if (s > 2) {
+    %>
+        <a href="user-summary.jsp?start=0&range=<%= range %>">1</a> ...
+
+    <%
+        }
+        int i = 0;
+        for (i=s; i<numPages && i<num; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
@@ -140,6 +164,13 @@
          ><%= (i+1) %></a><%= sep %>
 
     <%  } %>
+
+    <%  if (i < numPages) { %>
+
+        ... <a href="user-summary.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
+
+    <%  } %>
+
     ]
 
     </p>
@@ -240,16 +271,36 @@
     <p>
     <fmt:message key="user.summary.pages" />:
     [
-    <%  for (i=0; i<numPages; i++) {
+    <%  int num = 15 + curPage;
+        int s = curPage-1;
+        if (s > 5) {
+            s -= 5;
+        }
+        if (s > 2) {
+    %>
+        <a href="user-summary.jsp?start=0&range=<%= range %>">1</a> ...
+
+    <%
+        }
+        i = 0;
+        for (i=s; i<numPages && i<num; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="user-summary.jsp?start=<%= (i*range) %>"
+        <a href="user-summary.jsp?start=<%= (i*range) %>&range=<%= range %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 
     <%  } %>
+
+    <%  if (i < numPages) { %>
+
+        ... <a href="user-summary.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
+
+    <%  } %>
+
     ]
+
     </p>
 
 <%  } %>

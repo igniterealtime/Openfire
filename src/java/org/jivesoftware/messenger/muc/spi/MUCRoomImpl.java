@@ -785,9 +785,11 @@ public class MUCRoomImpl implements MUCRoom {
                 router.route(message);
             }
             if (isLogEnabled()) {
-                MUCRole senderRole;
-                JID senderAddress;
-                senderRole = occupants.get(message.getTo().getResource());
+                MUCRole senderRole = null;
+                JID senderAddress = null;
+                if (message.getTo().getResource() != null) {
+                    senderRole = occupants.get(message.getTo().getResource());
+                }
                 if (senderRole == null) {
                     // The room itself is sending the message
                     senderAddress = getRole().getRoleAddress();

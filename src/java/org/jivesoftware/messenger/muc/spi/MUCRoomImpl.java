@@ -1247,9 +1247,13 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void nicknameChanged(String oldNick, String newNick) {
         // Associate the existing MUCRole with the new nickname
-        occupants.put(newNick.toLowerCase(), occupants.get(oldNick.toLowerCase()));
-        // Remove the old nickname
-        occupants.remove(oldNick.toLowerCase());
+        MUCRole occupant = occupants.get(oldNick.toLowerCase());
+        // Check that we still have an occupant for the old nickname
+        if (occupant != null) {
+            occupants.put(newNick.toLowerCase(), occupant);
+            // Remove the old nickname
+            occupants.remove(oldNick.toLowerCase());
+        }
     }
 
     public void changeSubject(Message packet, MUCRole role) throws ForbiddenException {

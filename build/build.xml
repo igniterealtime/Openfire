@@ -64,12 +64,15 @@
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes" />
     <property name="test.results.dest.dir" value="${test.dest.dir}/results" />
     <property name="webapp.dest.dir" value="${target.dir}/webapp" />
+    <property name="war.name" value="messenger.war" />
+    <property name="war.dest.dir" value="${target.dir}/war" />
     <property name="release.dest.dir" value="${target.dir}/release" />
     <property name="version.major" value="2" />
     <property name="version.minor" value="0" />
     <property name="version.revision" value="0" />
     <property name="version.extra" value="beta" />
     <property name="dist.prefix" value="jive_messenger" />
+    <property name="overwrite" value="false" />
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -203,7 +206,30 @@
     </target>
 
     <!-- war =================================================================================== -->
-    <target name="war" description="Creates a WAR of the Messenger app">
+    <target name="war" depends="jar" description="Creates a WAR of Messenger">
+        <mkdir dir="${war.dest.dir}" />
+        <mkdir dir="${war.dest.dir}/build" />
+        <!-- Make a new web.xml file in the build dir -->
+        <loadfile property="startup-def" srcFile="${web.dir}/WEB-INF/web.xml.startup.servlet" />
+        <copy file="${web.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}">
+            <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
+                <filter token="STARTUP-SERVLET" value="${startup-def}" />
+            </filterset>
+        </copy>
+        <!-- Make the war -->
+        <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
+                webxml="${war.dest.dir}/build/web.xml"
+                excludes="WEB-INF/web.xml.startup.servlet, WEB-INF/lib/jasper*.jar">
+            <patternset refid="web.sources" />
+        </war>
+        <!-- Create a Messenger home -->
+        <copy todir="${war.dest.dir}/messengerHome">
+            <fileset dir="${target.dir}">
+                <include name="conf/**/*.*" />
+            </fileset>
+        </copy>
+        <!-- Force create the logs dir (will be empty) -->
+        <mkdir dir="${war.dest.dir}/messengerHome/logs" />
     </target>
 
     <!-- javadoc =============================================================================== -->

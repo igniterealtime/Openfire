@@ -6,7 +6,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
                  java.util.Date,

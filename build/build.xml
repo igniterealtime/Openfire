@@ -95,6 +95,7 @@
     <property name="deploy.jar.dir" value="${jar.dest.dir}" />
     <property name="installer.install4j.home" value="" />
     <property name="installer.src" value="${basedir}/build/installer" />
+    <property name="installer.dest.dir" value="${release.dest.dir}" />
     <property name="installer.install4j.srcfile" value="${installer.src}/messenger.install4j" />
 
     <!-- ======================================================================================= -->
@@ -565,10 +566,10 @@
         <copy todir="${release.src.out.dir}/documentation">
             <fileset dir="${docs.dir}/docs/licenses" />
         </copy>
-        <copy todir="${release.out.dir}/documentation/images">
+        <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
             <fileset dir="${docs.dir}/docs/images" />
         </copy>
-        <copy todir="${release.src.out.dir}/documentation/images">
+        <copy todir="${release.src.out.dir}/documentation/images" filtering="false" overwrite="true">
             <fileset dir="${docs.dir}/docs/images" />
         </copy>
 
@@ -652,11 +653,17 @@
 
     <!-- installer ============================================================================= -->
     <target name="installer" description="Creates an Install4j installer">
+
+        <condition property="install4j.not.ok" value="true"><not><available file="${installer.install4j.home}/bin/install4j.jar" /></not></condition>
+        <fail if="install4j.not.ok" message="Path to Install4j not set, see build.properties.template file." />
+
         <taskdef name="install4j"
                 classname="com.install4j.Install4JTask"
                 classpath="${installer.install4j.home}/bin/install4j.jar" />
+
         <install4j projectfile="${installer.install4j.srcfile}"
-            destination="" />
+            destination="${install.dest.dir}" />
+
     </target>
 
     <!-- plugins =============================================================================== -->

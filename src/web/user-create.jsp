@@ -80,7 +80,6 @@
                 return;
             }
             catch (UserAlreadyExistsException e) {
-                e.printStackTrace();
                 errors.put("usernameAlreadyExists","");
             }
             catch (Exception e) {
@@ -108,14 +107,33 @@
 <c:set var="submit" value="${param.create}"/>
 <c:set var="errors" value="${errors}"/>
 
-<%  if (errors.get("general") != null) { %>
+<%  if (!errors.isEmpty()) { %>
 
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
-            <td class="jive-icon-label">Error creating the user account. Please check your error logs.</td>
+            <td class="jive-icon-label">
+
+            <% if (errors.get("general") != null) { %>
+                Error creating the user account. Please check your error logs.
+            <% } else if (errors.get("username") != null) { %>
+                Invalid username.
+            <% } else if (errors.get("usernameAlreadyExists") != null) { %>
+                Username already exists - please choose a different one.
+            <% } else if (errors.get("name") != null) { %>
+                Invalid name.
+            <% } else if (errors.get("email") != null) { %>
+                Invalid email.
+            <% } else if (errors.get("password") != null) { %>
+                Invalid password.
+            <% } else if (errors.get("passwordMatch") != null) { %>
+                Passwords don't match.
+            <% } else if (errors.get("passwordConfirm") != null) { %>
+                Invalid password confirmation.
+            <% } %>
+            </td>
         </tr>
     </tbody>
     </table>
@@ -149,11 +167,6 @@
         <td width="99%">
             <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
              id="usernametf" autocomplete="off">
-            <%   if (errors.get("username") != null) { %>
-                <span class="jive-error-text">Invalid username. </span>
-            <%   } else if (errors.get("usernameAlreadyExists") != null) { %>
-                <span class="jive-error-text">Username already exists - please choose a different one.</span>
-            <%   } %>
         </td>
     </tr>
     <tr>
@@ -163,9 +176,6 @@
         <td width="99%">
             <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
              id="nametf">
-            <%   if (errors.get("name") != null) { %>
-                <span class="jive-error-text">Invalid name. </span>
-            <%   } %>
         </td>
     </tr>
     <tr>
@@ -174,9 +184,6 @@
         <td width="99%">
             <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
              id="emailtf">
-            <%   if (errors.get("email") != null) { %>
-                <span class="jive-error-text">Invalid email. </span>
-            <%   } %>
         </td>
     </tr>
     <tr>
@@ -186,11 +193,6 @@
         <td width="99%">
             <input type="password" name="password" value="" size="20" maxlength="75"
              id="passtf">
-            <%   if (errors.get("password") != null) { %>
-                <span class="jive-error-text">Invalid password. </span>
-            <%   } else if (errors.get("passwordMatch") != null) { %>
-                <span class="jive-error-text">Passwords don't match. </span>
-            <%   } %>
         </td>
     </tr>
     <tr>
@@ -200,9 +202,6 @@
         <td width="99%">
             <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
              id="confpasstf">
-            <%   if (errors.get("passwordConfirm") != null) { %>
-                <span class="jive-error-text">Invalid password confirmation. </span>
-            <%   } %>
         </td>
     </tr>
     </tbody>

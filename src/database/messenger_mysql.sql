@@ -109,7 +109,7 @@ CREATE TABLE mucRoom (
   maxUsers            INTEGER       NOT NULL,
   publicRoom          TINYINT       NOT NULL,
   moderated           TINYINT       NOT NULL,
-  invitationRequired  TINYINT       NOT NULL,
+  membersOnly         TINYINT       NOT NULL,
   canInvite           TINYINT       NOT NULL,
   password            VARCHAR(50)   NULL,
   canDiscoverJID      TINYINT       NOT NULL,

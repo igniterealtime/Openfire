@@ -98,7 +98,12 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 }
                 // Check to see if the database schema needs to be upgraded.
                 else {
-                    upgradeDatabase();
+                    try {
+                        upgradeDatabase();
+                    }
+                    catch (Exception e) {
+                        Log.error(e);
+                    }
                 }
             }
             catch (IOException ioe) {

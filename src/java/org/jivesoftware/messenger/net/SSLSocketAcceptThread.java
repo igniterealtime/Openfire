@@ -72,7 +72,10 @@ public class SSLSocketAcceptThread extends Thread {
         int port = SSLSocketAcceptThread.DEFAULT_PORT;
         String portName = JiveGlobals.getProperty("xmpp.socket.ssl.port");
         if (portName != null) {
-            port = Integer.parseInt(portName);
+            int portValue = Integer.parseInt(portName);
+            if (portValue > 0) {
+                 port = Integer.parseInt(portName);
+            }
         }
 
         String interfaceName = JiveGlobals.getProperty("xmpp.socket.ssl.interface");

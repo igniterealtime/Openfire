@@ -92,6 +92,29 @@
       </java>
       <includedFiles />
     </launcher>
+    <launcher name="messenger" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="messenger" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="false" fileVersion="" companyName="" fileDescription="" legalCopyright="" productVersion="" internalName="" />
+      </executable>
+      <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
+        <text>
+          <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+        </text>
+      </splashScreen>
+      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="-DmessengerHome=$app_home -Dmessenger.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false">
+        <searchSequence>
+          <registry />
+          <envVar name="JAVA_HOME" />
+          <envVar name="JDK_HOME" />
+        </searchSequence>
+        <classPath>
+          <scanDirectory location="lib" failOnError="true" />
+        </classPath>
+        <nativeLibraryDirectories />
+      </java>
+      <includedFiles />
+    </launcher>
   </launchers>
   <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="false" useCustomHeaderImage="false" customHeaderImage="" customSize="false" customWidth="500" customHeight="390">
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="false" postUninstallActionClass="" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="" />
@@ -129,8 +152,8 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
-        <entry location="bin/startup.bat" launcher="false" />
-        <entry location="bin/startup.sh" launcher="false" />
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
       </exclude>
       <variables />
       <excludedScreenIds />
@@ -138,7 +161,21 @@
         <entry name="Readme" target="README.html" icon="" />
       </additionalStartMenuEntries>
     </win32>
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/jive_messenger" allLaunchers="false" includedJRE="linux-x86-1.5.0" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+      <selectedLaunchers>
+        <launcher id="22" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/startup.bat" launcher="false" />
+        <entry location="bin/startup.sh" launcher="false" />
+      </exclude>
+      <variables />
+      <customScriptLines />
+    </linuxRPM>
   </mediaSets>
-  <buildIds buildAll="true" />
+  <buildIds buildAll="true">
+    <mediaSet refId="18" />
+  </buildIds>
 </install4j>
 

@@ -104,7 +104,6 @@ public class XMPPServer {
         return instance;
     }
 
-
     /**
      * Creates a server and starts it.
      */

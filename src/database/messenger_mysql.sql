@@ -124,6 +124,12 @@ CREATE TABLE jiveID (
   PRIMARY KEY (idType)
 );
 
+CREATE TABLE jiveProperty (
+  name        VARCHAR(100) NOT NULL,
+  propValue   TEXT NOT NULL,
+  PRIMARY KEY (name)
+);
+
 # MUC Tables
 
 CREATE TABLE mucRoom (

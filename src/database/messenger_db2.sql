@@ -129,11 +129,18 @@ CREATE TABLE jiveGroupUser (
   CONSTRAINT jiveGrpUser PRIMARY KEY (groupID, userID, administrator)
 );
 
-
+ 
 CREATE TABLE jiveID (
   idType                INTEGER         NOT NULL,
   id                    INTEGER         NOT NULL,
   CONSTRAINT jiveID_pk PRIMARY KEY (idType)
+);
+
+
+CREATE TABLE jiveProperty (
+  name        VARCHAR(100) NOT NULL,
+  propValue   VARCHAR(3000) NOT NULL,
+  CONSTRAINT jiveProperty_pk PRIMARY KEY (name)
 );
 
 -- MUC tables

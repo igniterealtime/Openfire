@@ -161,6 +161,12 @@ CREATE TABLE jiveID (
   CONSTRAINT jiveID_pk PRIMARY KEY (idType)
 );
 
+CREATE TABLE jiveProperty (
+  name        VARCHAR(100) NOT NULL,
+  propValue   VARCHAR(4000) NOT NULL,
+  CONSTRAINT jiveProperty_pk PRIMARY KEY (name)
+);
+
 -- MUC Tables
 
 CREATE TABLE mucRoom (

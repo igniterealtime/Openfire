@@ -93,7 +93,7 @@ public class PluginServlet extends HttpServlet {
      * @param webXML the web.xml file containing JSP page names to servlet class file
      *      mappings.
      */
-    public static void registerServlets(Plugin plugin, File webXML) {
+    public static void registerServlets(PluginManager manager, Plugin plugin, File webXML) {
         if (!webXML.exists()) {
             Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +
                     " does not exist.");
@@ -112,7 +112,7 @@ public class PluginServlet extends HttpServlet {
                 Element servletElement = (Element)classes.get(i);
                 String name = servletElement.element("servlet-name").getTextTrim();
                 String className = servletElement.element("servlet-class").getTextTrim();
-                classMap.put(name, plugin.getClass().getClassLoader().loadClass(className));
+                classMap.put(name, manager.loadClass(className, plugin));
             }
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");

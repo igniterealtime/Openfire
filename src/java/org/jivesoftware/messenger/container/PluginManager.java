@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.container;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XMLProperties;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.admin.AdminConsole;
 import org.dom4j.Document;
@@ -39,6 +38,7 @@ public class PluginManager {
 
     private File pluginDirectory;
     private Map<String,Plugin> plugins;
+    private Map<Plugin,PluginClassLoader> classloaders;
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
 
@@ -50,6 +50,7 @@ public class PluginManager {
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
         plugins = new HashMap<String,Plugin>();
+        classloaders = new HashMap<Plugin,PluginClassLoader>();
     }
 
     /**
@@ -114,10 +115,11 @@ public class PluginManager {
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
                 plugin.initialize(this, pluginDir);
                 plugins.put(pluginDir.getName(), plugin);
+                classloaders.put(plugin, pluginLoader);
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "web.xml");
                 if (webXML.exists()) {
-                    PluginServlet.registerServlets(plugin, webXML);
+                    PluginServlet.registerServlets(this, plugin, webXML);
                 }
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
@@ -139,6 +141,13 @@ public class PluginManager {
         catch (Exception e) {
             Log.error("Error loading plugin", e);
         }
+    }
+
+    public Class loadClass(String className, Plugin plugin) throws ClassNotFoundException,
+            IllegalAccessException, InstantiationException
+    {
+        PluginClassLoader loader = classloaders.get(plugin);
+        return loader.loadClass(className);
     }
 
     /**

@@ -931,7 +931,7 @@ public class MUCPersistenceManager {
      * @return an integer based on the binary representation of the roles to broadcast.
      */
     private static int marshallRolesToBroadcast(MUCRoom room) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append((room.canBroadcastPresence("moderator") ? "1" : "0"));
         buffer.append((room.canBroadcastPresence("participant") ? "1" : "0"));
         buffer.append((room.canBroadcastPresence("visitor") ? "1" : "0"));

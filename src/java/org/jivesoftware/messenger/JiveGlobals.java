@@ -733,7 +733,7 @@ public class JiveGlobals {
             // If still null, finding messengerHome failed.
             if (messengerHome == null) {
                 failedLoading = true;
-                StringBuffer msg = new StringBuffer();
+                StringBuilder msg = new StringBuilder();
                 msg.append("Critical Error! The messengerHome directory could not be loaded, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
                 msg.append("You must set messengerHome in one of four ways:\n");

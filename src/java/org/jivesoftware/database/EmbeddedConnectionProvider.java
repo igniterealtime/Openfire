@@ -137,7 +137,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             con = connectionPool.getConnection();
             boolean done = false;
             while (!done) {
-                StringBuffer command = new StringBuffer();
+                StringBuilder command = new StringBuilder();
                 while (true) {
                     String line = in.readLine();
                     if (line == null) {

@@ -304,7 +304,7 @@ public class LdapUserProvider implements UserProvider {
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
-            StringBuffer filter = new StringBuffer();
+            StringBuilder filter = new StringBuilder();
             if (fields.size() > 1) {
                 filter.append("(|");
             }

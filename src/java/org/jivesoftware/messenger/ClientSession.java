@@ -96,7 +96,7 @@ public class ClientSession extends Session {
 
         Writer writer = connection.getWriter();
         // Build the start packet response
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");

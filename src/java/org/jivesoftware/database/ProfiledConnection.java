@@ -11,10 +11,6 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.database.AbstractConnection;
-import org.jivesoftware.database.CallableStatementWrapper;
-import org.jivesoftware.database.PreparedStatementWrapper;
-
 import java.sql.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -397,7 +393,7 @@ public class ProfiledConnection extends AbstractConnection {
             return _sql;
         }
 
-        StringBuffer sql = new StringBuffer(_sql);
+        StringBuilder sql = new StringBuilder(_sql);
         boolean inValue = false;
         boolean afterEquals = false;
         boolean hasQuotes = false;
@@ -565,7 +561,7 @@ public class ProfiledConnection extends AbstractConnection {
     private static String reformatQuery(String _sql) {
         int length = _sql.length();
         int charAdded = 0;
-        StringBuffer sql = new StringBuffer(_sql);
+        StringBuilder sql = new StringBuilder(_sql);
 
         for (int x = 0; x < length; x++) {
             char c = _sql.charAt(x);

@@ -143,7 +143,7 @@ public class IQvCardHandler extends IQHandler {
      * @return The name concatenating the values with the ':' character
      */
     private String createName(List nameStack) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         Iterator iter = nameStack.iterator();
         while (iter.hasNext()) {
             if (buf.length() > 0) {

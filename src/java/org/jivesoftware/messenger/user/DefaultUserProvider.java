@@ -412,7 +412,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
+            StringBuilder sql = new StringBuilder();
             sql.append("SELECT username FROM jiveUser WHERE");
             boolean first = true;
             if (fields.contains("Username")) {

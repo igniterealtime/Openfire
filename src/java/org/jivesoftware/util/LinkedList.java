@@ -124,7 +124,7 @@ public class LinkedList {
      */
     public String toString() {
         LinkedListNode node = head.next;
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         while (node != head) {
             buf.append(node.toString()).append(", ");
             node = node.next;

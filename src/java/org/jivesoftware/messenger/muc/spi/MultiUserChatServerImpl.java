@@ -1009,7 +1009,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * @return a comma delimtted String of the array values.
      */
     private static String fromArray(String [] array) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i=0; i<array.length; i++) {
             buf.append(array[i]);
             if (i != array.length-1) {

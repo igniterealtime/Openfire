@@ -57,7 +57,7 @@ public class ComponentSession extends Session {
 
         Writer writer = connection.getWriter();
         // Default answer header in case of an error
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
@@ -120,7 +120,7 @@ public class ComponentSession extends Session {
 
         try {
             // Build the start packet response
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
@@ -143,7 +143,7 @@ public class ComponentSession extends Session {
             if (!anticipatedDigest.equalsIgnoreCase(digest)) {
                 //  The credentials supplied by the initiator are not valid (answer an error
                 // and close the connection)
-                sb = new StringBuffer();
+                sb = new StringBuilder();
                 // Include the conflict error in the response
                 sb.append("<stream:error>");
                 sb.append("<not-authorized xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");

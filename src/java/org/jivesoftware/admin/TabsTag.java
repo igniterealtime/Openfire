@@ -129,7 +129,7 @@ public class TabsTag extends BodyTagSupport {
         if (tabs.size() > 0) {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("<ul>");
             String body = getBodyContent().getString();
             // For each tab, print out an <LI>.

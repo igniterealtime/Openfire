@@ -649,7 +649,7 @@ public class DbConnectionManager {
                         new DbConnectionManager().getClass().getResourceAsStream(resourceName)));
                 boolean done = false;
                 while (!done) {
-                    StringBuffer command = new StringBuffer();
+                    StringBuilder command = new StringBuilder();
                     while (true) {
                         String line = in.readLine();
                         if (line == null) {

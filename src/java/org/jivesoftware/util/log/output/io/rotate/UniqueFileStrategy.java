@@ -59,7 +59,7 @@ public class UniqueFileStrategy
      * @return File the calculated file name
      */
     public File nextFile() {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         sb.append(m_baseFile);
         if (m_formatter == null) {
             sb.append(System.currentTimeMillis());

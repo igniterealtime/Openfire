@@ -275,7 +275,7 @@ public class BroadcastPlugin implements Plugin, Component {
      *      to all users.
      */
     public void setGlobalAllowedUsers(Collection<String> allowedUsers) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (String jid : allowedUsers) {
             buf.append(jid).append(",");
         }

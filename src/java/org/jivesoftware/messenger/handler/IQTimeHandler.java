@@ -71,7 +71,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         Element response = responseElement.createCopy();
         Date current = new Date();
         response.element("utc").setText(UTC_FORMAT.format(current));
-        StringBuffer display = new StringBuffer(DATE_FORMAT.format(current));
+        StringBuilder display = new StringBuilder(DATE_FORMAT.format(current));
         display.append(' ');
         display.append(TIME_FORMAT.format(current));
         response.element("display").setText(display.toString());

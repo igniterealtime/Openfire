@@ -51,7 +51,7 @@ public class StringUtils {
             char[] string2 = string.toCharArray();
             char[] newString2 = newString.toCharArray();
             int oLength = oldString.length();
-            StringBuffer buf = new StringBuffer(string2.length);
+            StringBuilder buf = new StringBuilder(string2.length);
             buf.append(string2, 0, i).append(newString2);
             i += oLength;
             int j = i;
@@ -88,7 +88,7 @@ public class StringUtils {
             char[] line2 = line.toCharArray();
             char[] newString2 = newString.toCharArray();
             int oLength = oldString.length();
-            StringBuffer buf = new StringBuffer(line2.length);
+            StringBuilder buf = new StringBuilder(line2.length);
             buf.append(line2, 0, i).append(newString2);
             i += oLength;
             int j = i;
@@ -128,7 +128,7 @@ public class StringUtils {
             char[] line2 = line.toCharArray();
             char[] newString2 = newString.toCharArray();
             int oLength = oldString.length();
-            StringBuffer buf = new StringBuffer(line2.length);
+            StringBuilder buf = new StringBuilder(line2.length);
             buf.append(line2, 0, i).append(newString2);
             i += oLength;
             int j = i;
@@ -165,7 +165,7 @@ public class StringUtils {
             char[] line2 = line.toCharArray();
             char[] newString2 = newString.toCharArray();
             int oLength = oldString.length();
-            StringBuffer buf = new StringBuffer(line2.length);
+            StringBuilder buf = new StringBuilder(line2.length);
             buf.append(line2, 0, i).append(newString2);
             i += oLength;
             int j = i;
@@ -198,7 +198,7 @@ public class StringUtils {
         int last = 0;
         char[] input = in.toCharArray();
         int len = input.length;
-        StringBuffer out = new StringBuffer((int)(len * 1.3));
+        StringBuilder out = new StringBuilder((int)(len * 1.3));
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
@@ -245,7 +245,7 @@ public class StringUtils {
         int last = 0;
         char[] input = in.toCharArray();
         int len = input.length;
-        StringBuffer out = new StringBuffer((int)(len * 1.3));
+        StringBuilder out = new StringBuilder((int)(len * 1.3));
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
@@ -336,7 +336,7 @@ public class StringUtils {
      * @return generated hex string
      */
     public static final String encodeHex(byte[] bytes) {
-        StringBuffer buf = new StringBuffer(bytes.length * 2);
+        StringBuilder buf = new StringBuilder(bytes.length * 2);
         int i;
 
         for (i = 0; i < bytes.length; i++) {
@@ -451,7 +451,7 @@ public class StringUtils {
     public static String encodeBase64(byte[] data) {
         int c;
         int len = data.length;
-        StringBuffer ret = new StringBuffer(((len / 3) + 1) * 4);
+        StringBuilder ret = new StringBuilder(((len / 3) + 1) * 4);
         for (int i = 0; i < len; ++i) {
             c = (data[i] >> 2) & 0x3f;
             ret.append(cvt.charAt(c));
@@ -509,7 +509,7 @@ public class StringUtils {
     public static String decodeBase64(byte[] data) {
         int c, c1;
         int len = data.length;
-        StringBuffer ret = new StringBuffer((len * 3) / 4);
+        StringBuilder ret = new StringBuilder((len * 3) / 4);
         for (int i = 0; i < len; ++i) {
             c = cvt.indexOf(data[i]);
             ++i;
@@ -717,7 +717,7 @@ public class StringUtils {
             locale = JiveGlobals.getLocale();
         }
 
-        StringBuffer buf = new StringBuffer(input);
+        StringBuilder buf = new StringBuilder(input);
         boolean endOfLine = false;
         int lineStart = 0;
 
@@ -789,13 +789,13 @@ public class StringUtils {
         int i = 0;
         int last = 0;
         int len = input.length;
-        StringBuffer out = null;
+        StringBuilder out = null;
         for (; i < len; i++) {
             ch = input[i];
 
             if (ch == '\'') {
                 if (out == null) {
-                     out = new StringBuffer(len + 2);
+                     out = new StringBuilder(len + 2);
                 }
                 if (i > last) {
                     out.append(input, last, i - last);
@@ -831,7 +831,7 @@ public class StringUtils {
         int last = 0;
         char[] input = string.toCharArray();
         int len = input.length;
-        StringBuffer out = new StringBuffer((int)(len * 1.3));
+        StringBuilder out = new StringBuilder((int)(len * 1.3));
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
@@ -902,7 +902,7 @@ public class StringUtils {
         if (string == null || string.length() > length) {
             return string;
         }
-        StringBuffer buf = new StringBuffer(length);
+        StringBuilder buf = new StringBuilder(length);
         buf.append(zeroArray, 0, length - string.length()).append(string);
         return buf.toString();
     }

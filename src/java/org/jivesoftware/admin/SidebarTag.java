@@ -186,7 +186,7 @@ public class SidebarTag extends BodyTagSupport {
                 // Top level menu items
                 if (AdminConsole.getModel().elements().size() > 0) {
                     JspWriter out = pageContext.getOut();
-                    StringBuffer buf = new StringBuffer();
+                    StringBuilder buf = new StringBuilder();
 
                     Element current = null;
                     Element subcurrent = null;

@@ -296,7 +296,7 @@ public class SocketReadThread extends Thread {
         }
         else {
             Writer writer = connection.getWriter();
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");

@@ -111,7 +111,7 @@ public class LdapManager {
             this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
         }
         else {
-            StringBuffer filter = new StringBuffer();
+            StringBuilder filter = new StringBuilder();
             filter.append("(").append(usernameField).append("={0})");
             this.searchFilter = filter.toString();
         }
@@ -739,7 +739,7 @@ public class LdapManager {
      */
     public void setSearchFilter(String searchFilter) {
     	if (searchFilter == null || "".equals(searchFilter)) {
-            StringBuffer filter = new StringBuffer();
+            StringBuilder filter = new StringBuilder();
             filter.append("(").append(usernameField).append("={0})");
             this.searchFilter = filter.toString();
             JiveGlobals.deleteXMLProperty("ldap.searchFilter");

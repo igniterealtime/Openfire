@@ -80,7 +80,7 @@ public class AuthCheckFilter implements Filter {
     }
 
     private String getRedirectURL(HttpServletRequest request, String optionalParams) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         try {
             StringBuffer rURL = request.getRequestURL();
             int pos = rURL.lastIndexOf("/");

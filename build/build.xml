@@ -357,6 +357,14 @@
             <fileset dir="${src.dir}" includes="plugins/**/*.*" />
         </copy>
 
+        <!-- Copy security resources -->
+        <copy todir="${prepare.out.dir}">
+            <fileset dir="${src.dir}">
+                <include name="security/jive*" />
+                <include name="security/*store" />
+            </fileset>
+        </copy>
+
         <!-- Copy admin plugin resources -->
         <copy todir="${prepare.out.dir}/plugins/admin/webapp">
             <!-- All web resources minus jsp's and jspf's - those are precompiled -->

@@ -113,6 +113,7 @@ CREATE TABLE mucRoom(
   naturalName         VARCHAR2(255) NOT NULL,
   description         VARCHAR2(255),
   lockedDate          CHAR(15)      NOT NULL,
+  emptyDate           CHAR(15)      NULL,
   canChangeSubject    INTEGER       NOT NULL,
   maxUsers            INTEGER       NOT NULL,
   publicRoom          INTEGER       NOT NULL,

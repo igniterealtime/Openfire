@@ -239,6 +239,9 @@ public class Launcher {
         GraphicUtils.centerWindowOnScreen(frame);
 
         frame.setVisible(true);
+
+        // Start the app.
+        startButton.doClick();
     }
 
     /**

@@ -1743,7 +1743,7 @@ public class MUCRoomImpl implements MUCRoom {
     public void unlockRoom(MUCRole senderRole) {
         roomLocked = false;
         this.lockedTime = 0;
-        // Send to the occupant the unlocked the room a message saying so  
+        // Send to the occupant that unlocked the room a message saying so  
         Message message = new MessageImpl();
         message.setType(Message.GROUP_CHAT);
         message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));

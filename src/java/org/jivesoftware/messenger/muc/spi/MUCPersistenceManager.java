@@ -62,12 +62,12 @@ public class MUCPersistenceManager {
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
         "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
-        "inMemory=? WHERE roomID=?";
+        "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
         "description, canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, " +
         "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "lastActiveDate, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "lastActiveDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String DELETE_ROOM =
@@ -159,7 +159,7 @@ public class MUCPersistenceManager {
             room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
             room.setLogEnabled(rs.getInt(14) == 1 ? true : false);
             room.setSubject(rs.getString(15));
-            List rolesToBroadcast = new ArrayList();
+            List<String> rolesToBroadcast = new ArrayList<String>();
             String roles = Integer.toBinaryString(rs.getInt(16));
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
@@ -257,8 +257,7 @@ public class MUCPersistenceManager {
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setInt(13, marshallRolesToBroadcast(room));
-                pstmt.setInt(14, 1);
-                pstmt.setLong(15, room.getID());
+                pstmt.setLong(14, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -281,7 +280,6 @@ public class MUCPersistenceManager {
                 pstmt.setString(16, room.getSubject());
                 pstmt.setInt(17, marshallRolesToBroadcast(room));
                 pstmt.setString(18, StringUtils.dateToMillis(new Date()));
-                pstmt.setInt(19, 1); // the room starts always "in memory"
                 pstmt.executeUpdate();
             }
         }
@@ -371,7 +369,7 @@ public class MUCPersistenceManager {
                 room.setCanAnyoneDiscoverJID(rs.getInt(14) == 1 ? true : false);
                 room.setLogEnabled(rs.getInt(15) == 1 ? true : false);
                 room.setSubject(rs.getString(16));
-                List rolesToBroadcast = new ArrayList();
+                List<String> rolesToBroadcast = new ArrayList<String>();
                 String roles = Integer.toBinaryString(rs.getInt(17));
                 if (roles.charAt(0) == '1') {
                     rolesToBroadcast.add("moderator");

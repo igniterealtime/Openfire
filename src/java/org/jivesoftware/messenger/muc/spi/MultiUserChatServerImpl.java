@@ -593,15 +593,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return totalChatTime;
     }
 
-    public void roomRenamed(String oldName, String newName) {
-        MUCRoom room = null;
-        synchronized (rooms) {
-            room = rooms.get(oldName);
-            rooms.put(newName, room);
-            rooms.remove(oldName);
-        }
-    }
-
     public void logConversation(MUCRoom room, Message message, XMPPAddress sender) {
         logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
     }
@@ -655,7 +646,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             if (room != null && room.isPublicRoom()) {
                 Element identity = DocumentHelper.createElement("identity");
                 identity.addAttribute("category", "conference");
-                identity.addAttribute("name", room.getName());
+                identity.addAttribute("name", room.getNaturalLanguageName());
                 identity.addAttribute("type", "text");
 
                 identities.add(identity);
@@ -801,7 +792,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     if (room.isPublicRoom()) {
                         item = DocumentHelper.createElement("item");
                         item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
-                        item.addAttribute("name", room.getName());
+                        item.addAttribute("name", room.getNaturalLanguageName());
 
                         answer.add(item);
                     }
@@ -817,7 +808,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     room = (MUCRoom)it.next();
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
-                    item.addAttribute("name", room.getName());
+                    item.addAttribute("name", room.getNaturalLanguageName());
 
                     answer.add(item);
                 }

@@ -44,7 +44,7 @@ public class AdminConsole {
     }
 
     private static void init() {
-        overrideModels = new HashMap<String,Element>();
+        overrideModels = new LinkedHashMap<String,Element>();
         load();
     }
 
@@ -273,8 +273,11 @@ public class AdminConsole {
                     // Make sure that the URL on the tab is set. If not, default to the
                     // url of the first item.
                     if (tab.attributeValue("url") == null) {
-                        tab.addAttribute("url", ((Element)tab.selectSingleNode(
-                                "//item[@url]")).attributeValue("url"));
+                        Element firstItem = (Element)tab.selectSingleNode(
+                                "//item[@url]");
+                        if (firstItem != null) {
+                            tab.addAttribute("url", firstItem.attributeValue("url"));
+                        }
                     }
                     generatedModel.add(tab.createCopy());
                 }
@@ -331,7 +334,7 @@ public class AdminConsole {
             if (existingEntry == null) {
                 sidebar.add(entry.createCopy());
             }
-            // More complex case -- a sidebar with the same id already exists.
+            // More complex case -- an entry with the same id already exists.
             // In this case, we have to overrite only the difference between
             // the two elements.
             else {

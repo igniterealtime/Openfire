@@ -179,11 +179,13 @@ public class XDataFormImpl {
         // Append the list of items returned from a search
         // Note: each item contains a List of XFormFieldImpls
         if (reportedItems.size() > 0) {
-            Element itemElement = x.addElement("item");
             Iterator itemsItr = reportedItems.iterator();
             while (itemsItr.hasNext()) {
+                // Add a new item element for this list of fields
+                Element itemElement = x.addElement("item");
                 List fields = (List)itemsItr.next();
                 Iterator fieldsItr = fields.iterator();
+                // Iterate on the fields and add them to the new item
                 while (fieldsItr.hasNext()) {
                     XFormFieldImpl field = (XFormFieldImpl)fieldsItr.next();
                     itemElement.add(field.asXMLElement());

@@ -17,18 +17,21 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.xmpp.packet.Message;
 import org.dom4j.io.SAXReader;
+import org.dom4j.Element;
 
 import java.util.*;
+import java.util.Date;
 import java.sql.*;
 import java.sql.Connection;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 
 /**
- * Represents the user's offline message storage. A message store holds messages that were sent
- * to the user while they were unavailable. The user can retrieve their messages by setting
- * their presence to "available". The messages will then be delivered normally.
- * Offline message storage is optional in which case, a null implementation is returned that
- * always throws UnauthorizedException adding messages to the store.
+ * Represents the user's offline message storage. A message store holds messages that were
+ * sent to the user while they were unavailable. The user can retrieve their messages by
+ * setting their presence to "available". The messages will then be delivered normally.
+ * Offline message storage is optional, in which case a null implementation is returned that
+ * always throws UnauthorizedException when adding messages to the store.
  *
  * @author Iain Shigeoka
  */
@@ -38,16 +41,20 @@ public class OfflineMessageStore extends BasicModule {
         "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-        "SELECT message FROM jiveOffline WHERE username=?";
+        "SELECT message, creationDate FROM jiveOffline WHERE username=?";
     private static final String SELECT_SIZE_OFFLINE =
         "SELECT SUM(messageSize) FROM jiveOffline WHERE username=?";
+    private static final String SELECT_SIZE_ALL_OFFLINE =
+        "SELECT SUM(messageSize) FROM jiveOffline";
     private static final String DELETE_OFFLINE =
         "DELETE FROM jiveOffline WHERE username=?";
 
+    private SimpleDateFormat dateFormat;
+
     /**
-     * Returns the instance of <CODE>OfflineMessageStore</CODE> being used by the XMPPServer.
+     * Returns the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
      *
-     * @return the instance of <CODE>OfflineMessageStore</CODE> being used by the XMPPServer.
+     * @return the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
      */
     public static OfflineMessageStore getInstance() {
         return XMPPServer.getInstance().getOfflineMessageStore();
@@ -55,8 +62,13 @@ public class OfflineMessageStore extends BasicModule {
 
     private SAXReader saxReader = new SAXReader();
 
+    /**
+     * Constructs a new offline message store.
+     */
     public OfflineMessageStore() {
         super("Offline Message Store");
+        dateFormat = new SimpleDateFormat("yyyyMMdd'T'hh:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     /**
@@ -122,7 +134,15 @@ public class OfflineMessageStore extends BasicModule {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                messages.add(new Message(saxReader.read(new StringReader(msgXML)).getRootElement()));
+                Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
+                Message message = new Message(saxReader.read(new StringReader(msgXML)).getRootElement());
+                // Add a delayed delivery (JEP-0091) element to the message.
+                Element delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addElement("from").setText(XMPPServer.getInstance().getServerInfo().getName());
+                synchronized (dateFormat) {
+                    delay.addElement("stamp").setText(dateFormat.format(creationDate));
+                }
+                messages.add(message);
             }
             rs.close();
             pstmt.close();
@@ -158,6 +178,37 @@ public class OfflineMessageStore extends BasicModule {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_SIZE_OFFLINE);
             pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                size = rs.getInt(1);
+            }
+            rs.close();
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return size;
+    }
+
+    /**
+     * Returns the approximate size (in bytes) of the XML messages stored for all
+     * users.
+     *
+     * @return the approximate size of all stored messages (in bytes).
+     */
+    public int getSize() {
+        int size = 0;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SELECT_SIZE_ALL_OFFLINE);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 size = rs.getInt(1);

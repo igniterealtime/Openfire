@@ -244,7 +244,7 @@ public class XFormFieldImpl implements FormField {
         }
 
         public Element asXMLElement() {
-            Element option = DocumentHelper.createElement("option");
+            Element option = DocumentHelper.createElement(QName.get("option", "jabber:x:data"));
             if (getLabel() != null) {
                 option.addAttribute("label", getLabel());
             }

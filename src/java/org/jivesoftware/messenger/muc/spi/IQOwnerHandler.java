@@ -350,7 +350,7 @@ public class IQOwnerHandler {
             field = completedForm.getField("muc#roomconfig_roomname");
             if (field != null) {
                 values = field.getValues();
-                room.setName((values.hasNext() ? (String)values.next() : " "));
+                room.setNaturalLanguageName((values.hasNext() ? (String)values.next() : " "));
             }
 
             field = completedForm.getField("muc#roomconfig_roomdesc");
@@ -507,7 +507,7 @@ public class IQOwnerHandler {
         try {
             FormField field = configurationForm.getField("muc#roomconfig_roomname");
             field.clearValues();
-            field.addValue(room.getName());
+            field.addValue(room.getNaturalLanguageName());
 
             field = configurationForm.getField("muc#roomconfig_roomdesc");
             field.clearValues();

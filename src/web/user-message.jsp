@@ -101,12 +101,12 @@
     // Get all sessions associated with this user:
     int numSessions = -1;
     Session sess = null;
-    Iterator sessions = null;
+    Collection<Session> sessions = null;
     if (user != null) {
         numSessions = sessionManager.getSessionCount(user.getUsername());
         sessions = sessionManager.getSessions(user.getUsername());
         if (numSessions == 1) {
-            sess = (Session)sessions.next();
+            sess = (Session)sessions.iterator().next();
         }
     }
 %>
@@ -204,8 +204,9 @@ function updateSelect(el) {
 
                 <select size="2" name="jid" multiple>
 
-                <%  while (sessions.hasNext()) {
-                        sess = (Session)sessions.next();
+                <%   Iterator iter = sessions.iterator();
+                     while (iter.hasNext()) {
+                        sess = (Session)iter.next();
                 %>
                     <option value="<%= sess.getAddress().toString() %>"><%= sess.getAddress().toString() %></option>
 

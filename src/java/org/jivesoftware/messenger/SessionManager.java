@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -58,7 +57,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private JID serverAddress;
     private UserManager userManager;
     private int conflictLimit;
-    private Random randomResource = new Random();
 
     private Map<String, Session> preAuthenticatedSessions = new ConcurrentHashMap<String, Session>();
 
@@ -296,9 +294,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      */
     public boolean addSession(Session session) {
         boolean success = false;
-        sessionLock.writeLock().lock();
         String username = session.getAddress().getNode().toLowerCase();
         SessionMap resources = null;
+        sessionLock.writeLock().lock();
         try {
             resources = sessions.get(username);
             if (resources == null) {
@@ -324,7 +322,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         if (success) {
             Session defaultSession = resources.getDefaultSession();
             JID node = new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), null);
+            // Add route to default session (used when no resource is specified)
             routingTable.addRoute(node, defaultSession);
+            // Add route to the new session
             routingTable.addRoute(session.getAddress(), session);
         }
         return success;
@@ -841,8 +841,10 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             router.route(offline);
         }
         if (session.getAddress() != null && routingTable != null && session.getAddress().toBareJID().trim().length() != 0) {
+            // Remove route to the removed session
             routingTable.removeRoute(session.getAddress());
             if (sessionMap != null) {
+                // If all the user sessions are gone then remove the route to the default session
                 if (sessionMap.isEmpty()) {
                     // Remove the route for the session's BARE address
                     routingTable.removeRoute(new JID(session.getAddress().getNode(), session.getAddress().getDomain(), ""));
@@ -859,17 +861,18 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public void addAnonymousSession(Session session) {
         try {
-            JID newAddress = new JID(session.getAddress().getNode(), session.getAddress().getDomain(),
-                    Integer.toHexString(randomResource.nextInt()));
-            session.setAddress(newAddress);
             anonymousSessionLock.writeLock().lock();
             try {
                 anonymousSessions.put(session.getAddress().getResource(), session);
                 session.getConnection().registerCloseListener(this, session);
+                // Remove the session from the pre-Authenticated sessions list
+                preAuthenticatedSessions.remove(session.getAddress().toString());
             }
             finally {
                 anonymousSessionLock.writeLock().unlock();
             }
+            // Anonymous session always have resources so we only need to add one route. That is
+            // the route to the anonymous session
             routingTable.addRoute(session.getAddress(), session);
         }
         catch (UnauthorizedException e) {

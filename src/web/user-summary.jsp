@@ -107,12 +107,12 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th><fmt:message key="session.details.online" /></th>
-        <th><fmt:message key="user.create.username" /></th>
-        <th><fmt:message key="user.create.name" /></th>
-        <th><fmt:message key="User.Summary.created" /></th>
-        <th><fmt:message key="User.Summary.edit" /></th>
-        <th><fmt:message key="User.Summary.delete" /></th>
+        <th nowrap><fmt:message key="session.details.online" /></th>
+        <th nowrap><fmt:message key="user.create.username" /></th>
+        <th nowrap><fmt:message key="user.create.name" /></th>
+        <th nowrap><fmt:message key="User.Summary.created" /></th>
+        <th nowrap><fmt:message key="User.Summary.edit" /></th>
+        <th nowrap><fmt:message key="User.Summary.delete" /></th>
     </tr>
 </thead>
 <tbody>

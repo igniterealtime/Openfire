@@ -108,12 +108,12 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th><fmt:message key="muc.room.summary.room" /></th>
-        <th><fmt:message key="muc.room.summary.description" /></th>
-        <th><fmt:message key="muc.room.summary.persistent" /></th>
-        <th><fmt:message key="muc.room.summary.users" /></th>
-        <th><fmt:message key="muc.room.summary.edit" /></th>
-        <th><fmt:message key="muc.room.summary.destroy" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.room" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.description" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.persistent" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.users" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.edit" /></th>
+        <th nowrap><fmt:message key="muc.room.summary.destroy" /></th>
     </tr>
 </thead>
 <tbody>

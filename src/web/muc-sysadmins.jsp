@@ -127,7 +127,7 @@
     <thead>
         <tr>
             <th width="99%"><fmt:message key="groupchat.admins.column_user" /></th>
-            <th width="1%"><fmt:message key="groupchat.admins.column_remove" /></th>
+            <th width="1%" nowrap><fmt:message key="groupchat.admins.column_remove" /></th>
         </tr>
     </thead>
     <tbody>

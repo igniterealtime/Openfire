@@ -100,11 +100,11 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th><fmt:message key="group.summary.page_name" /></th>
-        <th><fmt:message key="group.summary.page_member" /></th>
-        <th><fmt:message key="group.summary.page_admin" /></th>
-        <th><fmt:message key="group.summary.page_edit" /></th>
-        <th><fmt:message key="group.summary.page_delete" /></th>
+        <th nowrap><fmt:message key="group.summary.page_name" /></th>
+        <th nowrap><fmt:message key="group.summary.page_member" /></th>
+        <th nowrap><fmt:message key="group.summary.page_admin" /></th>
+        <th nowrap><fmt:message key="group.summary.page_edit" /></th>
+        <th nowrap><fmt:message key="group.summary.page_delete" /></th>
     </tr>
 </thead>
 <tbody>

@@ -274,7 +274,7 @@
 
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
-                <td  width="1%">
+                <td  width="1%" nowrap>
                     <fmt:message key="group.edit.group_name" />
                 </td>
                 <% if(!edit) { %>
@@ -295,7 +295,7 @@
                 <% } %>
             </tr>
             <tr>
-                <td width="1%">
+                <td width="1%" nowrap>
                     <fmt:message key="group.edit.group_description" />
                 </td>
                 <% if(!edit) { %>
@@ -450,7 +450,9 @@
         <input type="hidden" name="group" value="<%= groupName %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
             <tr>
-                <th><fmt:message key="group.edit.username" /></th><th width="1%"><fmt:message key="group.edit.admin" /></th><th width="1%"><fmt:message key="group.edit.remove" /></th>
+                <th nowrap><fmt:message key="group.edit.username" /></th>
+                <th width="1%" nowrap><fmt:message key="group.edit.admin" /></th>
+                <th width="1%" nowrap><fmt:message key="group.edit.remove" /></th>
             </tr>
             <!-- Add admins first -->
 <%

@@ -117,8 +117,8 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th><fmt:message key="session.details.name" /></th>
-        <th><fmt:message key="session.details.resource" /></th>
+        <th nowrap><fmt:message key="session.details.name" /></th>
+        <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>

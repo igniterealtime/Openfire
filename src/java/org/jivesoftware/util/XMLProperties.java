@@ -58,6 +58,17 @@ public class XMLProperties {
     }
 
     /**
+     * Loads XML properties from a stream.
+     *
+     * @param in the input stream of XML.
+     * @throws IOException if an exception occurs when reading the stream.
+     */
+    public XMLProperties(InputStream in) throws IOException {
+        Reader reader = new BufferedReader(new InputStreamReader(in));
+        buildDoc(reader);
+    }
+
+    /**
      * Creates a new XMLProperties object.
      *
      * @param file the file that properties should be read from and written to.
@@ -92,21 +103,9 @@ public class XMLProperties {
         if (!file.canWrite()) {
             throw new IOException("XML properties file must be writable: " + file.getName());
         }
-        FileReader reader = null;
-        try {
-            reader = new FileReader(file);
-            SAXReader xmlReader = new SAXReader();
-            document = xmlReader.read(reader);
-        }
-        catch (Exception e) {
-            Log.error("Error reading XML properties file " + file.getName() + ".", e);
-            throw new IOException(e.getMessage());
-        }
-        finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
+
+        FileReader reader = new FileReader(file);
+        buildDoc(reader);
     }
 
     /**
@@ -235,6 +234,38 @@ public class XMLProperties {
             props.add(((Element)iter.next()).getName());
         }
         return props.iterator();
+    }
+
+    /**
+     * Returns the value of the attribute of the given property name or <tt>null</tt>
+     * if it doesn't exist. Note, this
+     *
+     * @param name the property name to lookup - ie, "foo.bar"
+     * @param attribute the name of the attribute, ie "id"
+     * @return the value of the attribute of the given property or <tt>null</tt> if
+     *      it doesn't exist.
+     */
+    public String getAttribute(String name, String attribute) {
+        if (name == null || attribute == null) {
+            return null;
+        }
+        String[] propName = parsePropertyName(name);
+        // Search for this property by traversing down the XML heirarchy.
+        Element element = document.getRootElement();
+        for (int i = 0; i < propName.length; i++) {
+            String child = propName[i];
+            element = element.element(child);
+            if (element == null) {
+                // This node doesn't match this part of the property name which
+                // indicates this property doesn't exist so return empty array.
+                break;
+            }
+        }
+        if (element != null) {
+            // Get its attribute values
+            return element.attributeValue(attribute);
+        }
+        return null;
     }
 
     /**
@@ -371,6 +402,25 @@ public class XMLProperties {
         element.remove(element.element(propName[propName.length - 1]));
         // .. then write to disk.
         saveProperties();
+    }
+
+    /**
+     * Builds the document XML model up based the given reader of XML data.
+     */
+    private void buildDoc(Reader in) throws IOException {
+        try {
+            SAXReader xmlReader = new SAXReader();
+            document = xmlReader.read(in);
+        }
+        catch (Exception e) {
+            Log.error("Error reading XML properties", e);
+            throw new IOException(e.getMessage());
+        }
+        finally {
+            if (in != null) {
+                in.close();
+            }
+        }
     }
 
     /**

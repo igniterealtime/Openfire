@@ -11,7 +11,8 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.group.Group"
+                 org.jivesoftware.messenger.group.Group,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -27,7 +28,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("group-properties.jsp?group=" + groupName);
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8"));
         return;
     }
 
@@ -49,16 +50,16 @@
     String title = "Delete Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-delete.jsp?group="+groupName));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-delete.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
     pageinfo.setSubPageID("group-delete");
-    pageinfo.setExtraParams("group="+groupName);
+    pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
 Are you sure you want to delete the group
-<b><a href="group-properties.jsp?group=<%= group.getName() %>"><%= group.getName() %></a></b>
+<b><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>"><%= group.getName() %></a></b>
 from the system?
 </p>
 

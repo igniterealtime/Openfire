@@ -146,16 +146,17 @@ import="java.text.DateFormat,
     }
     success = groupInfoChanged || "true".equals(request.getParameter("success")) ||
             "true".equals(request.getParameter("deletesuccess")) ||
-            "true".equals(request.getParameter("updatesuccess"));
+            "true".equals(request.getParameter("updatesuccess")) ||
+            "true".equals(request.getParameter("creategroupsuccess"));
 %>
     <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <% // Title of this page and breadcrumbs
     String title = "Edit Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp"));
-    pageinfo.setPageID("group-summary");
-    pageinfo.setExtraParams("group="+groupName);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
+    pageinfo.setSubPageID("group-edit");
+    pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
 %>
     <jsp:include page="top.jsp" flush="true"/>
     <jsp:include page="title.jsp" flush="true"/>
@@ -189,6 +190,8 @@ import="java.text.DateFormat,
             User(s) deleted successfully.
         <% } else if ("true".equals(request.getParameter("updatesuccess"))) { %>
             User(s) updated successfully.
+         <% } else if ("true".equals(request.getParameter("creategroupsuccess"))) { %>
+            Group created successfully.
         <%
             }
         %>

@@ -83,7 +83,7 @@ errorPage="error.jsp"%>
                     }
                 }
                 // Successful, so redirect
-                response.sendRedirect("group-properties.jsp?success=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
+                response.sendRedirect("group-edit.jsp?creategroupsuccess=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
                 return;
             }
             catch (GroupAlreadyExistsException e) {

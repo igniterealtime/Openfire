@@ -312,7 +312,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // remove its route from the sessions set. We hand the session back
             // to ourselves in the message.
             session.getConnection().registerCloseListener(this, session);
-            preAuthenticatedSessions.remove(session.getAddress().toString());
+            // Remove the pre-Authenticated session but remember to use the temporary JID as the key
+            preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
+                    session.getStreamID().toString()).toString());
             success = true;
         }
         catch (UnauthorizedException e) {

@@ -387,7 +387,7 @@
 
         <!-- Copy database scripts -->
         <copy todir="${prepare.out.dir}/resources">
-            <fileset dir="${src.dir}" includes="database/**/*.*"></fileset>
+            <fileset dir="${src.dir}" includes="database/*.*"></fileset>
         </copy>
 
         <!-- Copy security resources -->
@@ -494,8 +494,12 @@
 
         <!-- Copy source -->
         <copy todir="${release.src.out.dir}/src">
-            <fileset dir="${src.dir}" />
+            <fileset dir="${src.dir}">
+                <exclude name="database/upgrade/**/*.*" />
+            </fileset>
         </copy>
+        <!-- Weird.. have to delete the "empty" upgrade dir -->
+        <delete dir="${release.src.out.dir}/src/database/upgrade" />
 
         <!-- Copy build -->
         <copy todir="${release.src.out.dir}/build">

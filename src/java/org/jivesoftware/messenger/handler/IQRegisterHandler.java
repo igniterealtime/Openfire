@@ -33,9 +33,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -72,7 +70,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     private SessionManager sessionManager;
 
     private IQHandlerInfo info;
-    private Map delegates = new HashMap();
 
     /**
      * <p>Basic constructor does nothing.</p>
@@ -139,15 +136,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     }
 
     public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
-        // Look for a delegate for this packet
-        IQHandler delegate = getDelegate(packet.getTo());
-        // We assume that the registration packet was meant to the server if delegate is
-        // null
-        if (delegate != null) {
-            // Pass the packet to the real packet handler
-            return delegate.handleIQ(packet); 
-        }
-
         ClientSession session = sessionManager.getSession(packet.getFrom());
         IQ reply = null;
         // If inband registration is not allowed, return an error.
@@ -333,26 +321,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         JiveGlobals.setProperty("register.inband", enabled ? "true" : "false");
     }
     
-    private IQHandler getDelegate(JID recipientJID) {
-        if (recipientJID == null) {
-            return null;
-        }
-        return (IQHandler) delegates.get(recipientJID.getDomain());
-    }
-    
-    public void addDelegate(String serviceName, IQHandler delegate) {
-        // TODO As long as we only add delegates during server startup there is no need to make
-        // the iv "delegates" thread-safe. In the future, when we implement the component JEP we 
-        // must remove all this idea of the delegates since IQRouter will directly send the IQ 
-        // packet to the correct IQHandler. In that time, this class will only be an
-        // IQHandler that creates or removes user accounts and not a generic IQRegisterHandler.  
-        delegates.put(serviceName, delegate);
-    }
-
-    public void removeDelegate(String serviceName) {
-        delegates.remove(serviceName);
-    }
-
     public IQHandlerInfo getInfo() {
         return info;
     }

@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.disco;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.handler.IQHandler;
-import org.jivesoftware.messenger.handler.IQHandler;
 
 /**
  * Base class for handling disco request. So far this class is not of much help since practically
@@ -30,6 +29,10 @@ public abstract class IQDiscoHandler extends IQHandler {
         super(name);
     }
 
-
+    protected TrackInfo getTrackInfo() {
+        TrackInfo trackInfo = super.getTrackInfo();
+        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
+        return trackInfo;
+    }
 
 }

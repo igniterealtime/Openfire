@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.PageContext;
 
 public abstract class WebBean {
 
@@ -42,5 +43,13 @@ public abstract class WebBean {
         this.response = response;
         this.session = session;
         this.application = app;
+    }
+
+    public void init(PageContext pageContext){
+        this.request = (HttpServletRequest)pageContext.getRequest();
+        this.response = (HttpServletResponse)pageContext.getResponse();
+        this.session = (HttpSession)pageContext.getSession();
+        this.application = (ServletContext)pageContext.getServletContext();
+        this.out = (JspWriter)pageContext.getOut();
     }
 }

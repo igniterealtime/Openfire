@@ -200,7 +200,8 @@ public class PluginManager {
             try {
                 File [] jars = pluginDirectory.listFiles(new FileFilter() {
                     public boolean accept(File pathname) {
-                        return pathname.getName().toLowerCase().endsWith(".jar");
+                        String fileName = pathname.getName().toLowerCase();
+                        return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
                     }
                 });
 

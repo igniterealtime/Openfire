@@ -69,6 +69,56 @@ Jive Messenger Changelog
 </div>
 
 <p>
+<b>2.1.2</b> -- March 6, 2005
+<p>
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-69'>JM-69</a>] - Plugins can now be managed in the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-122'>JM-122</a>] - Added search capabilities to UserManager. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-130'>JM-130</a>] - Added LDAP search filters. <b>(6 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-146'>JM-146</a>] - Added disco support for components. <b>(3 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-156'>JM-156</a>] - Full resource bundle support is now included, along with a Chinese translation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-161'>JM-161</a>] - Users loaded from LDAP can now be sorted, either server-side or client-side with a property enabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-176'>JM-176</a>] - Improved plugin API and management.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-178'>JM-178</a>] - The admin console now supports https connections. <b>(1 vote)</b></li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-182'>JM-182</a>] - Preferred language can now be selected during setup.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-183'>JM-183</a>] - The last unavailable presence value for users is now stored. <b>(2 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-185'>JM-185</a>] - Improved UI of the user browser in the admin console.</li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-58'>JM-58</a>] - Plugin build process failed with multiple plugins.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-86'>JM-86</a>] - Extended presence info is now preserved in group chats.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-126'>JM-126</a>] - Improved Linux install process.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-145'>JM-145</a>] - Server was not sending closing &lt;/stream&gt;.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-147'>JM-147</a>] - Offline messages had incorrect jabber:x:delay information.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-148'>JM-148</a>] - Shared groups that were publicly visible were having problem seeing other shared groups. <b>(3 votes)</b></li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-150'>JM-150</a>] - Group names did not allow spaces.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-152'>JM-152</a>] - Fixed LDAP SSL support.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-153'>JM-153</a>] - Fixed exception on auditor close.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-155'>JM-155</a>] - Improved the "Illegal JID format" error.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-157'>JM-157</a>] - The option element in data forms had an empty namespace in the XML representation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-158'>JM-158</a>] - Shared group members were not showing corectly in some cases.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-159'>JM-159</a>] - Admin console port was not being read from the XML config file.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-162'>JM-162</a>] - Fixed bug preventing Psi clients from connecting to the server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-164'>JM-164</a>] - Plugins could fail due to external DTD validation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-165'>JM-165</a>] - Encoding of log files was wrong.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-166'>JM-166</a>] - Directed presences was not working for anonymous users.</li> 
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-167'>JM-167</a>] - Server was hanging under load due to trying to read a resource bundle when creating a new connection.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-168'>JM-168</a>] - Adding a new contact to the roster was not honoring the contact's domain.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-174'>JM-174</a>] - The from attribute of presence probes is now a full JID.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-175'>JM-175</a>] - Improved plugin build process to copy .jar.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-177'>JM-177</a>] - Fixed bug where stopping the server when users are connected was generating an exception.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-179'>JM-179</a>] - Shared groups no longer send packets for subscription type FROM.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-181'>JM-181</a>] - Add resources\i18n directory to release.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-186'>JM-186</a>] - Fixed bug where renaming nickname of a group chat occupant was generating an error.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-187'>JM-187</a>] - Viewing the session details of an anonymous session was causing an exception.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-188'>JM-188</a>] - Removing roster items for a foreign contact was generating an error.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-190'>JM-190</a>] - Presence subscriptions were not being cancelled when removing a roster item.</li>
+</ul>
+
+<p>
 <b>2.1.1</b> -- January 30, 2005
 <p>
 <h2>New Features</h2>

@@ -27,7 +27,6 @@ import java.util.zip.ZipFile;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
@@ -51,7 +50,7 @@ public class PluginManager {
      */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
-        plugins = new ConcurrentHashMap<String,Plugin>();
+        plugins = new HashMap<String,Plugin>();
         classloaders = new HashMap<Plugin,PluginClassLoader>();
     }
 
@@ -219,10 +218,12 @@ public class PluginManager {
                     // needs to be unloaded and then reloaded.
                     else if (jarFile.lastModified() > dir.lastModified()) {
                         unloadPlugin(pluginName);
-                        if (!deleteDir(dir)) {
+                        // Ask the system to clean up references.
+                        System.gc();
+                        while (!deleteDir(dir)) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
-                                    "You must manually delete the plugin directory.");
-                            continue;
+                                    "Will attempt again momentarily.");
+                            Thread.sleep(5000);
                         }
                         // Now unzip the plugin.
                         unzipPlugin(pluginName, jarFile, dir);
@@ -257,21 +258,28 @@ public class PluginManager {
                     }
                 }
 
-                // Finally see if any currently running plugins need to be unloaded
+                // See if any currently running plugins need to be unloaded
                 // due to its JAR file being deleted (ignore admin plugin).
                 if (plugins.size() > jars.length + 1) {
+                    // Build a list of plugins to delete first so that the plugins
+                    // keyset is modified as we're iterating through it.
+                    List<String> toDelete = new ArrayList<String>();
                     for (String pluginName : plugins.keySet()) {
                         if (pluginName.equals("admin")) {
                             continue;
                         }
                         File file = new File(pluginDirectory, pluginName + ".jar");
                         if (!file.exists()) {
-                            unloadPlugin(pluginName);
-                            if (!deleteDir(new File(pluginDirectory, pluginName))) {
-                                Log.error("Error unloading plugin " + pluginName + ". " +
-                                        "You must manually delete the plugin directory.");
-                                continue;
-                            }
+                            toDelete.add(pluginName);
+                        }
+                    }
+                    for (String pluginName : toDelete) {
+                        unloadPlugin(pluginName);
+                        System.gc();
+                        while (!deleteDir(new File(pluginDirectory, pluginName))) {
+                            Log.error("Error unloading plugin " + pluginName + ". " +
+                                    "Will attempt again momentarily.");
+                            Thread.sleep(5000);
                         }
                     }
                 }
@@ -319,6 +327,8 @@ public class PluginManager {
                         zin.close();
                     }
                 }
+                zipFile.close();
+                zipFile = null;
             }
             catch (Exception e) {
                 Log.error(e);

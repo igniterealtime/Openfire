@@ -25,6 +25,11 @@
         <url-pattern>*.jsp</url-pattern>
     </filter-mapping>
 
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <servlet-name>PluginServlet</servlet-name>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>PluginServlet</servlet-name>
         <servlet-class>org.jivesoftware.messenger.container.PluginServlet</servlet-class>

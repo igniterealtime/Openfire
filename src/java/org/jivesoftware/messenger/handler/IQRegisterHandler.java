@@ -18,7 +18,6 @@ import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.Permissions;
 import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
@@ -34,7 +33,6 @@ import org.dom4j.QName;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -68,7 +66,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     private UserManager userManager;
     private RosterManager rosterManager;
-    private PresenceUpdateHandler presenceHandler;
     private SessionManager sessionManager;
 
     private IQHandlerInfo info;
@@ -86,7 +83,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         super.initialize(server);
         userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
-        presenceHandler = server.getPresenceUpdateHandler();
         sessionManager = server.getSessionManager();
 
         if (probeResult == null) {
@@ -204,13 +200,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                        // Send an unavailable presence to the user's subscribers
-                        // Note: This gives us a chance to send an unavailable presence to the 
-                        // entities that the user sent directed presences
-                        Presence presence = new Presence();
-                        presence.setType(Presence.Type.unavailable);
-                        presence.setFrom(packet.getFrom());
-                        presenceHandler.process(presence);
                         // Delete the user
                         userManager.deleteUser(userManager.getUser(session.getUsername()));
                         // Delete the roster of the user

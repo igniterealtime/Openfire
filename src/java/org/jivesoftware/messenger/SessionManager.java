@@ -33,6 +33,7 @@ import org.jivesoftware.messenger.spi.SessionImpl;
 import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -52,6 +53,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
 
+    private PresenceUpdateHandler presenceHandler;
     private PacketRouter router;
     private String serverName;
     private JID serverAddress;
@@ -898,6 +900,16 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     public void onConnectionClose(Object handback) {
         try {
             Session session = (Session)handback;
+            if (session.getPresence().isAvailable()) {
+                // Send an unavailable presence to the user's subscribers
+                // Note: This gives us a chance to send an unavailable presence to the
+                // entities that the user sent directed presences
+                Presence presence = new Presence();
+                presence.setType(Presence.Type.unavailable);
+                presence.setFrom(session.getAddress());
+                presenceHandler.process(presence);
+            }
+            // Remove the session
             removeSession(session);
         }
         catch (UnauthorizedException e) {
@@ -911,6 +923,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
+        presenceHandler = server.getPresenceUpdateHandler();
         router = server.getPacketRouter();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();

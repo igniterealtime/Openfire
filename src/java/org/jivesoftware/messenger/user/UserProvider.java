@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.user;
 
 import java.util.Date;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Provider interface for the user system.
@@ -164,7 +165,7 @@ public interface UserProvider {
      * returned must support wild-card and keyword searching. For example, an
      * implementation might send back the set {"Username", "Name", "Email"}. Any of
      * those three fields can then be used in a search with the
-     * {@link #findUsers(String,String)} method.<p>
+     * {@link #findUsers(Set,String)} method.<p>
      *
      * This method should throw an UnsupportedOperationException if this
      * operation is not supported by the backend user store.
@@ -173,24 +174,31 @@ public interface UserProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<String> getSearchFields() throws UnsupportedOperationException;
+    public Set<String> getSearchFields() throws UnsupportedOperationException;
 
     /**
-     * Searches for users based on a field an query string. The field must be one
-     * of the values returned by {@link #getSearchFields()}. The query can include
-     * wildcards. For example, a search on the field "Name" with a query of "Ma*"
+     * Searches for users based on a set of fields and a query string. The fields must
+     * be taken from the values returned by {@link #getSearchFields()}. The query can
+     * include wildcards. For example, a search on the field "Name" with a query of "Ma*"
      * might return user's with the name "Matt", "Martha" and "Madeline".<p>
      *
      * This method should throw an UnsupportedOperationException if this
      * operation is not supported by the backend user store. 
      *
-     * @param field the field to search on.
+     * @param fields the fields to search on.
      * @param query the query string.
      * @return a Collection of users that match the search.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(String field, String query)
+    public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException;
 
+    /**
+     * Returns true if the UserProvider is read-only. When read-only, that means that
+     * users can not be created, deleted, or modified.
+     *
+     * @return true if the user provider is read-only.
+     */
+    public boolean isReadOnly();
 }

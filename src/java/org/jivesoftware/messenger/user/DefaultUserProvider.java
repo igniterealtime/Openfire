@@ -384,13 +384,18 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
-    public Collection<String> getSearchFields() throws UnsupportedOperationException {
-        return Arrays.asList("Username", "Name", "Email");
+    public Set<String> getSearchFields() throws UnsupportedOperationException {
+        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
     }
 
-    public Collection<User> findUsers(String field, String query) throws UnsupportedOperationException {
-        if (!getSearchFields().contains(field)) {
-            throw new IllegalArgumentException("Search field " + field + " is invalid.");
+    public Collection<User> findUsers(Set<String> fields, String query)
+            throws UnsupportedOperationException
+    {
+        if (fields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (!getSearchFields().containsAll(fields)) {
+            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
         }
         // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
         // Therefore, we do a best approximiation by replacing '*' with '%' and then
@@ -401,25 +406,33 @@ public class DefaultUserProvider implements UserProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> usernames = new ArrayList<String>(500);
+        List<String> usernames = new ArrayList<String>(50);
         Connection con = null;
-        PreparedStatement pstmt = null;
+        Statement stmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            if (field.equals("Username")) {
-                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE username LIKE ?");
+            stmt = con.createStatement();
+            StringBuffer sql = new StringBuffer();
+            sql.append("SELECT username FROM jiveUser WHERE");
+            boolean first = true;
+            if (fields.contains("Username")) {
+                sql.append(" username LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
+                first = false;
             }
-            else if (field.equals("Name")) {
-                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE name LIKE ?");
+            if (fields.contains("Name")) {
+                if (!first) {
+                    sql.append(" AND");
+                }
+                sql.append(" name LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
+                first = false;
             }
-            else {
-                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE email LIKE ?");
+            if (fields.contains("Email")) {
+                if (!first) {
+                    sql.append(" AND");
+                }
+                sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
             }
-            pstmt.setString(1, query);
-            ResultSet rs = pstmt.executeQuery();
-            // Set the fetch size. This will prevent some JDBC drivers from trying
-            // to load the entire result set into memory.
-            DbConnectionManager.setFetchSize(rs, 500);
+            ResultSet rs = stmt.executeQuery(sql.toString());
             while (rs.next()) {
                 usernames.add(rs.getString(1));
             }
@@ -429,11 +442,15 @@ public class DefaultUserProvider implements UserProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
+            try { if (stmt != null) { stmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+    }
+
+    public boolean isReadOnly() {
+        return false;
     }
 }

@@ -20,6 +20,7 @@ import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Manages users, including loading, creating and deleting.
@@ -84,6 +85,9 @@ public class UserManager {
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
+        if (provider.isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
         // Make sure that the username is valid.
         try {
             username = Stringprep.nodeprep(username);
@@ -102,6 +106,10 @@ public class UserManager {
      * @param user the user to delete.
      */
     public void deleteUser(User user) {
+        if (provider.isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         String username = user.getUsername();
         // Make sure that the username is valid.
         try {
@@ -182,7 +190,7 @@ public class UserManager {
      * returned must support wild-card and keyword searching. For example, an
      * implementation might send back the set {"Username", "Name", "Email"}. Any of
      * those three fields can then be used in a search with the
-     * {@link #findUsers(String,String)} method.<p>
+     * {@link #findUsers(Set,String)} method.<p>
      *
      * This method should throw an UnsupportedOperationException if this
      * operation is not supported by the backend user store.
@@ -191,28 +199,28 @@ public class UserManager {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<String> getSearchFields() throws UnsupportedOperationException {
+    public Set<String> getSearchFields() throws UnsupportedOperationException {
         return provider.getSearchFields();
     }
 
     /**
-     * Searches for users based on a field an query string. The field must be one
-     * of the values returned by {@link #getSearchFields()}. The query can include
-     * wildcards. For example, a search on the field "Name" with a query of "Ma*"
+     * earches for users based on a set of fields and a query string. The fields must
+     * be taken from the values returned by {@link #getSearchFields()}. The query can
+     * include wildcards. For example, a search on the field "Name" with a query of "Ma*"
      * might return user's with the name "Matt", "Martha" and "Madeline".<p>
      *
      * This method should throw an UnsupportedOperationException if this
      * operation is not supported by the backend user store.
      *
-     * @param field the field to search on.
+     * @param fields the fields to search on.
      * @param query the query string.
      * @return a Collection of users that match the search.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(String field, String query)
+    public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {
-        return provider.findUsers(field, query);
+        return provider.findUsers(fields, query);
     }
 }

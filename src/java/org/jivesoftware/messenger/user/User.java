@@ -92,6 +92,10 @@ public class User implements Cacheable {
      * @param password the new password for the user.
      */
     public void setPassword(String password) {
+        if (UserManager.getUserProvider().isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         try {
             UserManager.getUserProvider().setPassword(username, password);
         }
@@ -105,6 +109,10 @@ public class User implements Cacheable {
     }
 
     public void setName(String name) {
+        if (UserManager.getUserProvider().isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         try {
             UserManager.getUserProvider().setName(username, name);
             this.name = name;
@@ -119,6 +127,10 @@ public class User implements Cacheable {
     }
 
     public void setEmail(String email) {
+        if (UserManager.getUserProvider().isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         try {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
@@ -133,6 +145,10 @@ public class User implements Cacheable {
     }
 
     public void setCreationDate(Date creationDate) {
+        if (UserManager.getUserProvider().isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         try {
             UserManager.getUserProvider().setCreationDate(username, creationDate);
             this.creationDate = creationDate;
@@ -147,6 +163,10 @@ public class User implements Cacheable {
     }
 
     public void setModificationDate(Date modificationDate) {
+        if (UserManager.getUserProvider().isReadOnly()) {
+            throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
         try {
             UserManager.getUserProvider().setCreationDate(username, modificationDate);
             this.modificationDate = modificationDate;

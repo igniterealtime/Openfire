@@ -35,7 +35,7 @@ public class LdapUserProvider implements UserProvider {
 
     public LdapUserProvider() {
         manager = LdapManager.getInstance();
-        searchFields = new HashMap<String,String>();
+        searchFields = new LinkedHashMap<String,String>();
         String fieldList = JiveGlobals.getXMLProperty("ldap.searchFields");
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
@@ -261,16 +261,18 @@ public class LdapUserProvider implements UserProvider {
         throw new UnsupportedOperationException();
     }
 
-    public Collection<String> getSearchFields() throws UnsupportedOperationException {
-        return Collections.unmodifiableCollection(searchFields.keySet());
+    public Set<String> getSearchFields() throws UnsupportedOperationException {
+        return Collections.unmodifiableSet(searchFields.keySet());
     }
 
-    public Collection<User> findUsers(String field, String query)
+    public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {
-        String searchAttribute = searchFields.get(field);
-        if (searchAttribute == null) {
-            throw new IllegalArgumentException("Search field " + field + " is invalid.");
+        if (fields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (!searchFields.keySet().containsAll(fields)) {
+            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
         }
         List<String> usernames = new ArrayList<String>();
         LdapContext ctx = null;
@@ -286,8 +288,15 @@ public class LdapUserProvider implements UserProvider {
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
-            String filter = "(" + searchAttribute + "=" + query + ")";
-            NamingEnumeration answer = ctx.search("", filter, constraints);
+            StringBuffer filter = new StringBuffer();
+            for (String field:fields) {
+                String attribute = searchFields.get(field);
+                if (filter.length() != 0) {
+                    filter.append(" || ");
+                }
+                filter.append("(").append(attribute).append("=").append(query).append(")");
+            }
+            NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
                 usernames.add(
@@ -315,5 +324,9 @@ public class LdapUserProvider implements UserProvider {
             catch (Exception ignored) { }
         }
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+    }
+
+    public boolean isReadOnly() {
+        return true;
     }
 }

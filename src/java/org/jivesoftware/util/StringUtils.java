@@ -771,6 +771,51 @@ public class StringUtils {
     }
 
     /**
+     * Escapes all necessary characters in the String so that it can be used in SQL
+     *
+     * @param string the string to escape.
+     * @return the string with appropriate characters escaped.
+     */
+    public static final String escapeForSQL(String string) {
+        if (string == null) {
+            return null;
+        }
+        else if (string.length() == 0) {
+            return string;
+        }
+
+        char ch;
+        char[] input = string.toCharArray();
+        int i = 0;
+        int last = 0;
+        int len = input.length;
+        StringBuffer out = null;
+        for (; i < len; i++) {
+            ch = input[i];
+
+            if (ch == '\'') {
+                if (out == null) {
+                     out = new StringBuffer(len + 2);
+                }
+                if (i > last) {
+                    out.append(input, last, i - last);
+                }
+                last = i + 1;
+                out.append('\'').append('\'');
+            }
+        }
+
+        if (out == null) {
+            return string;
+        }
+        else if (i > last) {
+            out.append(input, last, i - last);
+        }
+
+        return out.toString();
+    }
+
+    /**
      * Escapes all necessary characters in the String so that it can be used
      * in an XML doc.
      *

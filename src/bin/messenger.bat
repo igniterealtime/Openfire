@@ -18,7 +18,7 @@ goto end
 
 :run
 if "%1" == "-debug" goto debug
-start "Jive Messenger" "%JAVA_HOME%\bin\java" -jar ..\lib\startup.jar
+start "Jive Messenger" "%JAVA_HOME%\bin\java" -server -jar ..\lib\startup.jar
 goto end
 
 :debug

@@ -41,16 +41,16 @@ import org.jivesoftware.util.StringUtils;
 public class MUCPersistenceManager {
 
     private static final String LOAD_ROOM_SURROGATES =
-        "SELECT roomID, name, naturalName, description, canChangeSubject, maxUsers, " +
-        "moderated, invitationRequired, canInvite, " +
+        "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
+        "canChangeSubject, maxUsers, moderated, invitationRequired, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
-        "SELECT roomID, naturalName, description, canChangeSubject, maxUsers, " +
-        "publicRoom, moderated, invitationRequired, canInvite, password, " +
-        "canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
+        "SELECT roomID, creationDate, modificationDate, naturalName, description, " +
+        "canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, canInvite, " +
+        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid,affiliation FROM mucAffiliation WHERE roomID=?";
@@ -106,21 +106,23 @@ public class MUCPersistenceManager {
             ResultSet rs = pstmt.executeQuery();
             MUCPersistentRoomSurrogate room = null;
             while (rs.next()) {
-                room = new MUCPersistentRoomSurrogate(chatserver, rs.getString(2), packetRouter);
+                room = new MUCPersistentRoomSurrogate(chatserver, rs.getString(4), packetRouter);
                 room.setID(rs.getLong(1));
-                room.setNaturalLanguageName(rs.getString(3));
-                room.setDescription(rs.getString(4));
-                room.setCanOccupantsChangeSubject(rs.getInt(5) == 1 ? true : false);
-                room.setMaxUsers(rs.getInt(6));
-                room.setModerated(rs.getInt(7) == 1 ? true : false);
-                room.setInvitationRequiredToEnter(rs.getInt(8) == 1 ? true : false);
-                room.setCanOccupantsInvite(rs.getInt(9) == 1 ? true : false);
-                room.setPassword(rs.getString(10));
-                room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
-                room.setSubject(rs.getString(13));
+                room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
+                room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
+                room.setNaturalLanguageName(rs.getString(5));
+                room.setDescription(rs.getString(6));
+                room.setCanOccupantsChangeSubject(rs.getInt(7) == 1 ? true : false);
+                room.setMaxUsers(rs.getInt(8));
+                room.setModerated(rs.getInt(9) == 1 ? true : false);
+                room.setInvitationRequiredToEnter(rs.getInt(10) == 1 ? true : false);
+                room.setCanOccupantsInvite(rs.getInt(11) == 1 ? true : false);
+                room.setPassword(rs.getString(12));
+                room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(14) == 1 ? true : false);
+                room.setSubject(rs.getString(15));
                 List rolesToBroadcast = new ArrayList();
-                String roles = Integer.toBinaryString(rs.getInt(14));
+                String roles = Integer.toBinaryString(rs.getInt(16));
                 if (roles.charAt(0) == '1') {
                     rolesToBroadcast.add("moderator");
                 }
@@ -200,20 +202,22 @@ public class MUCPersistenceManager {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
             room.setID(rs.getLong(1));
-            room.setNaturalLanguageName(rs.getString(2));
-            room.setDescription(rs.getString(3));
-            room.setCanOccupantsChangeSubject(rs.getInt(4) == 1 ? true : false);
-            room.setMaxUsers(rs.getInt(5));
-            room.setPublicRoom(rs.getInt(6) == 1 ? true : false);
-            room.setModerated(rs.getInt(7) == 1 ? true : false);
-            room.setInvitationRequiredToEnter(rs.getInt(8) == 1 ? true : false);
-            room.setCanOccupantsInvite(rs.getInt(9) == 1 ? true : false);
-            room.setPassword(rs.getString(10));
-            room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
-            room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
-            room.setSubject(rs.getString(13));
+            room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
+            room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
+            room.setNaturalLanguageName(rs.getString(4));
+            room.setDescription(rs.getString(5));
+            room.setCanOccupantsChangeSubject(rs.getInt(6) == 1 ? true : false);
+            room.setMaxUsers(rs.getInt(7));
+            room.setPublicRoom(rs.getInt(8) == 1 ? true : false);
+            room.setModerated(rs.getInt(9) == 1 ? true : false);
+            room.setInvitationRequiredToEnter(rs.getInt(10) == 1 ? true : false);
+            room.setCanOccupantsInvite(rs.getInt(11) == 1 ? true : false);
+            room.setPassword(rs.getString(12));
+            room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
+            room.setLogEnabled(rs.getInt(14) == 1 ? true : false);
+            room.setSubject(rs.getString(15));
             List rolesToBroadcast = new ArrayList();
-            String roles = Integer.toBinaryString(rs.getInt(14));
+            String roles = Integer.toBinaryString(rs.getInt(16));
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
@@ -287,15 +291,13 @@ public class MUCPersistenceManager {
      * @param room The room to save its configuration.
      */
     public static void saveToDB(MUCRoom room) {
-        long now = System.currentTimeMillis();
-        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
-                pstmt.setString(1, StringUtils.dateToMillis(nowDate));
+                pstmt.setString(1, StringUtils.dateToMillis(room.getModificationDate()));
                 pstmt.setString(2, room.getNaturalLanguageName());
                 pstmt.setString(3, room.getDescription());
                 pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
@@ -315,8 +317,8 @@ public class MUCPersistenceManager {
             else {
                 pstmt = con.prepareStatement(ADD_ROOM);
                 pstmt.setLong(1, room.getID());
-                pstmt.setString(2, StringUtils.dateToMillis(nowDate));
-                pstmt.setString(3, StringUtils.dateToMillis(nowDate));
+                pstmt.setString(2, StringUtils.dateToMillis(room.getCreationDate()));
+                pstmt.setString(3, StringUtils.dateToMillis(room.getModificationDate()));
                 pstmt.setString(4, room.getName());
                 pstmt.setString(5, room.getNaturalLanguageName());
                 pstmt.setString(6, room.getDescription());
@@ -331,7 +333,7 @@ public class MUCPersistenceManager {
                 pstmt.setInt(15, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setString(16, room.getSubject());
                 pstmt.setInt(17, marshallRolesToBroadcast(room));
-                pstmt.setString(18, StringUtils.dateToMillis(nowDate));
+                pstmt.setString(18, StringUtils.dateToMillis(new Date()));
                 pstmt.setInt(19, 1); // the room starts always "in memory"
                 pstmt.executeUpdate();
             }
@@ -400,14 +402,12 @@ public class MUCPersistenceManager {
             return;
         }
 
-        long now = System.currentTimeMillis();
-        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_IN_MEMORY);
-            pstmt.setString(1, StringUtils.dateToMillis(nowDate));
+            pstmt.setString(1, StringUtils.dateToMillis(new Date()));
             pstmt.setBoolean(2, inMemory);
             pstmt.setLong(3, room.getID());
             pstmt.executeUpdate();
@@ -429,14 +429,12 @@ public class MUCPersistenceManager {
      * the service is starting up (again).
      */
     public static void resetRoomInMemory() {
-        long now = System.currentTimeMillis();
-        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(RESET_IN_MEMORY);
-            pstmt.setString(1, StringUtils.dateToMillis(nowDate));
+            pstmt.setString(1, StringUtils.dateToMillis(new Date()));
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.muc;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Date;
 
 import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
 import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
@@ -58,6 +59,36 @@ public interface MUCRoom extends ChatDeliverer {
      * the DB.
      */
     void setID(long roomID);
+
+    /**
+     * Returns the date when the room was created.
+     *
+     * @return the date when the room was created.
+     */
+    Date getCreationDate();
+
+    /**
+     * Sets the date when the room was created.
+     *
+     * @param creationDate the date when the room was created.
+     */
+    void setCreationDate(Date creationDate);
+
+    /**
+     * Returns the last date when the room's configuration was modified. If the room's configuration
+     * was never modified then the creation date will be returned.
+     *
+     * @return the last date when the room's configuration was modified.
+     */
+    Date getModificationDate();
+
+    /**
+     * Sets the last date when the room's configuration was modified. If the room's configuration
+     * was never modified then the initial value will be the same as the creation date.
+     *
+     * @param modificationDate the last date when the room's configuration was modified.
+     */
+    void setModificationDate(Date modificationDate);
 
     /**
      * Obtain the role of the chat server (mainly for addressing messages and presence).

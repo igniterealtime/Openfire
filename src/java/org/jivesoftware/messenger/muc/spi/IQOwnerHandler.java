@@ -455,7 +455,11 @@ public class IQOwnerHandler {
                 booleanValue = (values.hasNext() ? values.next() : "1");
                 room.setLogEnabled(("1".equals(booleanValue) ? true : false));
             }
-            
+
+            // Update the modification date to reflect the last time when the room's configuration
+            // was modified
+            room.setModificationDate(new Date());
+
             if (room.isPersistent()) {
                 room.saveToDB();
             }

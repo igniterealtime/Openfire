@@ -11,10 +11,7 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.jivesoftware.messenger.muc.*;
 import org.jivesoftware.util.NotFoundException;
@@ -142,6 +139,16 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
     private long roomID = -1;
 
     /**
+     * The date when the room was created.
+     */
+    private Date creationDate;
+
+    /**
+     * The last date when the room's configuration was modified.
+     */
+    private Date modificationDate;
+
+    /**
      * Create a new chat room.
      *
      * @param chatserver the server hosting the room.
@@ -166,6 +173,22 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
 
     public void setID(long roomID) {
         this.roomID = roomID;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public Date getModificationDate() {
+        return modificationDate;
+    }
+
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
     }
 
     public MUCRole getRole() throws UnauthorizedException {

@@ -235,7 +235,17 @@ public class MUCRoomImpl implements MUCRoom {
      * will always be -1. Otherwise a value will be obtained from the database.
      */
     private long roomID = -1;
-    
+
+    /**
+     * The date when the room was created.
+     */
+    private Date creationDate;
+
+    /**
+     * The last date when the room's configuration was modified.
+     */
+    private Date modificationDate;
+
     /**
      * Indicates if the room is present in the database.
      */
@@ -255,6 +265,8 @@ public class MUCRoomImpl implements MUCRoom {
         this.description = roomname;
         this.router = packetRouter;
         this.startTime = System.currentTimeMillis();
+        this.creationDate = new Date(startTime);
+        this.modificationDate = new Date(startTime);
         // TODO Allow to set the history strategy from the configuration form?
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(server.getHistoryStrategy()));
         role = new RoomRole(this);
@@ -295,6 +307,22 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void setID(long roomID) {
         this.roomID = roomID;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public Date getModificationDate() {
+        return modificationDate;
+    }
+
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
     }
 
     public MUCRole getRole() {

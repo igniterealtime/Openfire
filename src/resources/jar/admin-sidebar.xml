@@ -110,19 +110,19 @@
 
         <sidebar name="Group Chat Settings">
 
-            <item id="muc-server-props" name="Group Chat Properties"
+            <item id="muc-server-props" name="Service Properties"
                     url="muc-server-props-edit-form.jsp"
                     description="" />
 
-            <item id="muc-history" name="Group Chat History Settings"
+            <item id="muc-history" name="History Settings"
                     url="muc-history-settings.jsp"
                     description="" />
 
-            <item id="muc-sysadmin" name="Group Chat System Admins"
+            <item id="muc-sysadmin" name="Administrators"
                     url="muc-sysadmins.jsp"
                     description="" />
 
-            <item id="muc-perms" name="Group Chat Room Permissions"
+            <item id="muc-perms" name="Room Creation Permissions"
                     url="muc-create-permission.jsp"
                     description="" />
         </sidebar>

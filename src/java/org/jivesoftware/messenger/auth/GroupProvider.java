@@ -3,11 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.auth;
 
 import org.jivesoftware.util.BasicResultFilter;
@@ -15,15 +16,13 @@ import org.jivesoftware.util.LongList;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 
 /**
- * <p>The group permission interface to implement when creating an
- * authentication service plug-in.</p>
- * <p/>
- * <p>Implementations of group provider handles the persistent
- * storage access for group in Messenger. Groups are associated with
- * Entities (users or chatbots) strictly by the long ID for the
- * entities. This allows groups to be handled by Jive while the user
+ * The group permission interface to implement when creating an
+ * authentication service plug-in. Implementations of group provider
+ * handles the persistent storage access for group in Messenger. Groups
+ * are associated with Entities (users or chatbots) strictly by the long ID
+ * for the entities. This allows groups to be handled by Jive while the user
  * store is in another backend system, or groups can be handled
- * separately from a native Jive user table.</p>
+ * separately from a native Jive user table.
  *
  * @author Iain Shigeoka
  */

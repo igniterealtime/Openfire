@@ -3,17 +3,17 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.forms;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 
 /**
  * Represents a form that could be use for gathering data as well as for reporting data

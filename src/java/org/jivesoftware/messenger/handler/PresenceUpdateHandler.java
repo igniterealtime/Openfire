@@ -3,11 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.handler;
 
 import org.jivesoftware.messenger.container.TrackInfo;
@@ -24,7 +25,6 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import javax.xml.stream.XMLStreamException;
-
 
 /**
  * Implements the presence protocol. Clients use this protocol to

@@ -1,13 +1,14 @@
-/*
+/**
  * $RCSfile$
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.container.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.dom4j.Document;
-
 
 /**
  * <p>The initial container that hosts all other modules (and containers).</p>

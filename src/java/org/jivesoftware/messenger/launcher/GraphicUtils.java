@@ -1,13 +1,14 @@
-/*
- * @(#)GraphicUtils.java
+/**
+ * $RCSfile$
+ * $Revision$
+ * $Date$
  *
- * Copyright 2003-2004 by Jive Software,
- * 135 W 29th St, Suite 802, New York, NY 10001,  U.S.A.
- * All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the confidential and proprietary information
- * of Jive Software.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.launcher;
 
 import java.awt.*;

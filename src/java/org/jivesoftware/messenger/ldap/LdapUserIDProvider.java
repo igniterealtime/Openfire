@@ -1,14 +1,14 @@
 /**
- *
  * $RCSfile$
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2003 JiveSoftware. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of Jive Software.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.database.DbConnectionManager;
@@ -32,7 +32,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-
 
 /**
  * <p>Ldap implementation of the UserIDProvider interface.</p>

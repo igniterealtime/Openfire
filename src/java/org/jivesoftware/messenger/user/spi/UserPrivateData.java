@@ -1,3 +1,14 @@
+/**
+ * $RCSfile$
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2004 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.messenger.PrivateStore;
@@ -15,6 +26,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 
 final public class UserPrivateData {
+
     private final Map settings = new HashMap();
     private List elementList = new ArrayList();
     private PrivateStore privateStore;

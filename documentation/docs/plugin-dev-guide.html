@@ -169,6 +169,26 @@ as the page. You can override existing tabs, sections, and items by using
 the existing id attribute values in your own <tt>&lt;adminconsole&gt;</tt> defintion.
 </p>
 
+<h3>Admin Console Best Practices</h3>
+
+There are several best practices to consider when making changes to
+the Jive Messenger admin console via a plugin. The general theme is
+that plugins should integrate seamlessly:
+
+<ul>
+		<li>Integrate into existing tabs and sidebar sections whenever possible
+        instead of creating your own. Only create new tabs for very
+				significant new functionality.
+		<li>Don't use the word "plugin" in names of tabs, sidebars and items.
+				For example, instead of having an item called "Gateway Plugin", it
+				could be called "Gateway Settings". 
+		<li>Try to match the UI of the existing admin console in your custom
+		    plugin pages.
+		<li>There is no need to create an admin console entry to show plugin
+	      meta-data. Instead, let Jive Messenger inform the user about which
+				plugins are installed and provide plugin management.
+</ul> 
+
 <h2>Using the Jive Messenger Build Script</h2>
 				   
 <p>

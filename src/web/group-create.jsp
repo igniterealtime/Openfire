@@ -31,8 +31,8 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
-<jsp:useBean id="errors" class="java.util.HashMap"/>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<jsp:useBean id="errors" class="java.util.HashMap" />
 
 <%  webManager.init(request, response, session, application, out); %>
 
@@ -79,9 +79,14 @@
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-                if ("onlyGroup".equals(showGroup) || "everybody".equals(showGroup)) {
+                if (enableRosterGroups) {
+                    if ("spefgroups".equals(showGroup)) {
+                        showGroup = "onlyGroup";
+                    }
                     newGroup.getProperties().put("sharedRoster.showInRoster", showGroup);
-                    newGroup.getProperties().put("sharedRoster.displayName", groupDisplayName);
+                    if (groupDisplayName != null) {
+                        newGroup.getProperties().put("sharedRoster.displayName", groupDisplayName);
+                    }
                     newGroup.getProperties().put("sharedRoster.groupList", toList(groupNames));
                 }
                 else {
@@ -93,7 +98,7 @@
                 if (users.length() > 0){
                     StringTokenizer tokenizer = new StringTokenizer(users, ",");
                     while (tokenizer.hasMoreTokens()) {
-                        String username = tokenizer.nextToken();
+                        String username = tokenizer.nextToken().trim();
                         try {
                             UserManager.getInstance().getUser(username);
                             newGroup.getMembers().add(username);
@@ -115,6 +120,10 @@
                 Log.error(e);
             }
         }
+    }
+
+    if (errors.size() == 0) {
+
     }
 %>
 
@@ -153,7 +162,10 @@
 
 <%  } %>
 
-<p>Use the form below to create a new group.</p>
+<p>
+You can use the form below to show this group in users' rosters. Select from one of three options
+for who should see this group in their rosters.
+</p>
 
 <form name="f" action="group-create.jsp" method="post">
 
@@ -274,7 +286,7 @@
                 <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb201">Disable roster groups</label>
+                <label for="rb201">Disable sharing group in rosters</label>
             </td>
         </tr>
         <tr>
@@ -282,7 +294,7 @@
                 <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb202">Enable roster groups</label>
+                <label for="rb202">Enable sharing group in rosters</label>
             </td>
         </tr>
         <tr>
@@ -295,7 +307,7 @@
                 <tbody>
                     <tr>
                         <td width="1%" nowrap>
-                            Group Display Name *
+                            Group Display Name
                         </td>
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
@@ -309,18 +321,9 @@
                 <tbody>
                     <tr>
                         <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="onlyGroup" checked id="rb001"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
-                        </td>
-                        <td width="99%">
-                            <label for="rb001"
-                             >Show group in group members' rosters</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
                             <input type="radio" name="showGroup" value="everybody" id="rb002"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
                             <label for="rb002"
@@ -329,12 +332,24 @@
                     </tr>
                     <tr>
                         <td width="1%" nowrap>
+                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= ("onlyGroup".equals(showGroup) ? "checked" : "") %>>
+                        </td>
+                        <td width="99%">
+                            <label for="rb001"
+                             >Show group in group members' rosters</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="1%" nowrap>
                             <input type="radio" name="showGroup" value="spefgroups" id="rb003"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
                         </td>
                         <td width="99%">
                             <label for="rb003"
-                             >Show groups to members of these groups:</label>
+                             >Show group to members' rosters of these groups:</label>
                         </td>
                     </tr>
                     <tr>
@@ -344,14 +359,15 @@
                         <td width="99%">
                             <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
                              multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-                            <%
-                                Collection<Group> groups = webManager.getGroupManager().getGroups();
-                                for (Group group : groups) {
-                            %>
-                                <option value="<%= java.net.URLEncoder.encode(group.getName(), "UTF-8") %>"
+
+                            <%  for (Group group : webManager.getGroupManager().getGroups()) { %>
+
+                                <option value="<%= URLEncoder.encode(group.getName(), "UTF-8") %>"
+                                 <%= (contains(groupNames, group.getName()) ? "selected" : "") %>
                                  ><%= group.getName() %></option>
 
                             <%  } %>
+
                             </select>
                         </td>
                     </tr>
@@ -394,5 +410,17 @@ document.f.name.focus();
             sep = ",";
         }
         return buf.toString();
+    }
+
+    private static boolean contains(String[] array, String item) {
+        if (array == null || array.length == 0 || item == null) {
+            return false;
+        }
+        for (int i=0; i<array.length; i++) {
+            if (item.equals(array[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 %>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  This file stores default properties for the given module..
+  Property names must be in the format: "prop.name.is.blah=value"
+  That will be stored as:
+        <prop>
+            <name>
+                <is>
+                    <blah>value</blah>
+                </is>
+            </name>
+        </prop>
+
+  All properties must be under the "jive" element.
+
+  This file should live in the root of the plug-in's subdirectory.
+-->
+<!-- root element, all properties must be under this element -->
+<jive>
+    <module>org.jivesoftware.container.spi.JettyModule</module>
+</jive>

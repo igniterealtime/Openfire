@@ -76,7 +76,7 @@ public class Launcher {
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
                 String fileName = file.getName();
-                if (fileName.endsWith(".jar")) {
+                if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                     installPlugin(file);
                 }
             }

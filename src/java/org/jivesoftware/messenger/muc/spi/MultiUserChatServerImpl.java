@@ -64,7 +64,7 @@ import org.xmpp.component.ComponentManager;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServerImpl extends BasicModule implements MultiUserChatServer,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
+        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
 
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
     static {
@@ -110,6 +110,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Map<JID, MUCUser> users = new ConcurrentHashMap<JID, MUCUser>();
     private HistoryStrategy historyStrategy;
 
+    private RoutingTable routingTable = null;
     /**
      * The packet router for the server.
      */
@@ -189,6 +190,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return null;
     }
 
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
+        // TODO Remove this method when moving MUC as a component and removing module code
+        processPacket(packet);
+    }
+
     public void processPacket(Packet packet) {
         try {
             MUCUser user = getChatUser(packet.getFrom());
@@ -207,10 +213,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     }
 
-
-
     public String getServiceDomain() {
         return chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getName();
+    }
+
+    public JID getAddress() {
+        return new JID(null, getServiceDomain(), null);
     }
 
     /**
@@ -680,12 +688,21 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         cleanupTask = new CleanupTask();
         timer.schedule(cleanupTask, cleanup_frequency, cleanup_frequency);
 
+        routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
+        // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
+        registerHandler = server.getIQRegisterHandler();
+        registerHandler.addDelegate(getServiceDomain(), new IQMUCRegisterHandler(this));
     }
 
     public void start() {
         super.start();
-        InternalComponentManager.getInstance().addComponent(chatServiceName, this);
+        // Add the route to this service
+        routingTable.addRoute(getAddress(), this);
+        ArrayList params = new ArrayList();
+        params.clear();
+        params.add(getServiceDomain());
+        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
         for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(),
                 router)) {
@@ -696,7 +713,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         // Remove the route to this service
-        InternalComponentManager.getInstance().removeComponent(chatServiceName);
+        routingTable.removeRoute(getAddress());
         timer.cancel();
         logAllConversation();
         if (registerHandler != null) {

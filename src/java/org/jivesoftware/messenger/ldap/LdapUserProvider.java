@@ -99,6 +99,7 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public int getUserCount() {
+        // TODO: cache result for X minutes
         int count = 0;
         DirContext ctx = null;
         try {
@@ -184,6 +185,13 @@ public class LdapUserProvider implements UserProvider {
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            // Limit results to those we'll need to process unless client-side sorting
+            // is turned on.
+            if (!Boolean.valueOf(JiveGlobals.getXMLProperty(
+                    "ldap.clientSideSorting")).booleanValue())
+            {
+                constraints.setCountLimit(startIndex+numResults);
+            }
             String filter = "(" + manager.getUsernameField() + "=*)";
             NamingEnumeration answer = ctx.search("", filter, constraints);
             // If client-side sorting is enabled, read in all results, sort, then get a sublist.

@@ -149,15 +149,15 @@
     <!-- Sessions -->
     <tab id="tab-session" name="${tab.tab-session}" url="session-summary.jsp" description="${tab.tab-session.descr}">
 
-        <sidebar id="sidebar-session" name="Sessions">
+        <sidebar id="sidebar-session" name="${tab.tab-session}">
 
-            <item id="session-summary" name="View Current Sessions"
+            <item id="session-summary" name="${sidebar.session-summary}"
                     url="session-summary.jsp"
-                    description="Click to manage XMPP sessions" />
+                    description="${sidebar.session-summary.descr}" />
 
-            <item id="user-message" name="Send Message"
+            <item id="user-message" name="${sidebar.user-message}"
                     url="user-message.jsp"
-                    description="Click to send a message" />
+                    description="${sidebar.user-message.descr}" />
         </sidebar>
     </tab>
 

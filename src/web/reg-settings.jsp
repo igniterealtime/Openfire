@@ -103,7 +103,7 @@
                  <%= ((!inbandEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Disabled</b></label> - Users can not automatically create new accounts.
+                <label for="rb02"><b><fmt:message key="reg.settings.disable" /></b></label> - <fmt:message key="reg.settings.not_auto_create" />
             </td>
         </tr>
     </tbody>
@@ -114,12 +114,10 @@
 <br><br>
 
 <fieldset>
-    <legend>Anonymous Login</legend>
+    <legend><fmt:message key="reg.settings.anonymous_login" /></legend>
     <div>
     <p>
-    You can choose to enable or disable anonymous user login. If it is enabled, anyone can
-    connect to the server and create a new session. If it is disabled only users who have
-    accounts will be able to connect.
+    <fmt:message key="reg.settings.anonymous_login_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -129,7 +127,7 @@
              <%= ((anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Enabled</b></label> - Anyone may login to the server.
+                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b></label> - <fmt:message key="reg.settings.anyone_login" />
             </td>
         </tr>
         <tr>
@@ -138,7 +136,7 @@
              <%= ((!anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb04"><b>Disabled</b></label> - Only registered users may login.
+                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b></label> - <fmt:message key="reg.settings.only_registered_login" />
             </td>
         </tr>
     </tbody>

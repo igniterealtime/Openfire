@@ -1,8 +1,6 @@
-
- * $RCSfile$
- * $Revision$
- * $Date$
- */
+/* $RCSfile$ */
+/* $Revision$                          */
+/* $Date$               */
 
 CREATE TABLE jiveUser (
   username              NVARCHAR(32)    NOT NULL,

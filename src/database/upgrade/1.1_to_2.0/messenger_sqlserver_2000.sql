@@ -1,8 +1,6 @@
-/*
- * $RCSfile$
- * $Revision$
- * $Date$
- */
+/* $RCSfile$ */
+/* $Revision$                           */
+/* $Date$               */
 
 /* upgrades from Messenger 1.1.x to 2.0.x */
 

@@ -466,29 +466,6 @@ public class MUCRoomImpl implements MUCRoom {
             joinRole =
                     new MUCRoleImpl(server, this, nickname, role, affiliation, (MUCUserImpl) user,
                             presence, router);
-
-            // Send presence of existing occupants to new occupant
-            for (MUCRole occupantsRole : occupants.values()) {
-                Presence occupantsPresence = occupantsRole.getPresence().createCopy();
-                // Skip to the next occupant if we cannot send presence of this occupant
-                if (hasToCheckRoleToBroadcastPresence()) {
-                    Element frag = occupantsPresence.getChildElement("x",
-                            "http://jabber.org/protocol/muc#user");
-                    // Check if we can broadcast the presence for this role
-                    if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
-                        continue;
-                    }
-                }
-                // Don't include the occupant's JID if the room is semi-anon and the new occupant
-                // is not a moderator
-                if (!canAnyoneDiscoverJID() && MUCRole.MODERATOR != joinRole.getRole()) {
-                    Element frag = occupantsPresence.getChildElement(
-                            "x",
-                            "http://jabber.org/protocol/muc#user");
-                    frag.element("item").addAttribute("jid", null);
-                }
-                joinRole.send(occupantsPresence);
-            }
             // Add the new user as an occupant of this room
             occupants.put(nickname.toLowerCase(), joinRole);
             // Update the tables of occupants based on the bare and full JID
@@ -503,67 +480,95 @@ public class MUCRoomImpl implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
-        if (joinRole != null) {
-            // It is assumed that the room is new based on the fact that it's locked and
-            // that it was locked when it was created.
-            boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
-            try {
-                // Send the presence of this new occupant to existing occupants
-                Presence joinPresence = joinRole.getPresence().createCopy();
-                if (isRoomNew) {
-                    Element frag = joinPresence.getChildElement(
-                            "x", "http://jabber.org/protocol/muc#user");
-                    frag.addElement("status").addAttribute("code", "201");
-                }
-                broadcastPresence(joinPresence);
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-            // If the room has just been created send the "room locked until configuration is
-            // confirmed" message
+        // Send presence of existing occupants to new occupant
+        sendInitialPresences(joinRole);
+        // It is assumed that the room is new based on the fact that it's locked and
+        // that it was locked when it was created.
+        boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
+        try {
+            // Send the presence of this new occupant to existing occupants
+            Presence joinPresence = joinRole.getPresence().createCopy();
             if (isRoomNew) {
-                Message message = new Message();
-                message.setType(Message.Type.groupchat);
-                message.setBody(LocaleUtils.getLocalizedString("muc.new"));
-                message.setFrom(role.getRoleAddress());
-                message.setTo(user.getAddress());
-                router.route(message);
+                Element frag = joinPresence.getChildElement(
+                        "x", "http://jabber.org/protocol/muc#user");
+                frag.addElement("status").addAttribute("code", "201");
             }
-            else if (isLocked()) {
-                // Warn the owner that the room is locked but it's not new
-                Message message = new Message();
-                message.setType(Message.Type.groupchat);
-                message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
-                message.setFrom(role.getRoleAddress());
-                message.setTo(user.getAddress());
-                router.route(message);
+            broadcastPresence(joinPresence);
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        // If the room has just been created send the "room locked until configuration is
+        // confirmed" message
+        if (isRoomNew) {
+            Message message = new Message();
+            message.setType(Message.Type.groupchat);
+            message.setBody(LocaleUtils.getLocalizedString("muc.new"));
+            message.setFrom(role.getRoleAddress());
+            joinRole.send(message);
+        }
+        else if (isLocked()) {
+            // Warn the owner that the room is locked but it's not new
+            Message message = new Message();
+            message.setType(Message.Type.groupchat);
+            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
+            message.setFrom(role.getRoleAddress());
+            joinRole.send(message);
+        }
+        else if (canAnyoneDiscoverJID()) {
+            // Warn the new occupant that the room is non-anonymous (i.e. his JID will be
+            // public)
+            Message message = new Message();
+            message.setType(Message.Type.groupchat);
+            message.setBody(LocaleUtils.getLocalizedString("muc.warnnonanonymous"));
+            message.setFrom(role.getRoleAddress());
+            Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
+            frag.addElement("status").addAttribute("code", "100");
+            joinRole.send(message);
+        }
+        if (historyRequest == null) {
+            Iterator history = roomHistory.getMessageHistory();
+            while (history.hasNext()) {
+                joinRole.send((Message) history.next());
             }
-            else if (canAnyoneDiscoverJID()) {
-                // Warn the new occupant that the room is non-anonymous (i.e. his JID will be
-                // public)
-                Message message = new Message();
-                message.setType(Message.Type.groupchat);
-                message.setBody(LocaleUtils.getLocalizedString("muc.warnnonanonymous"));
-                message.setFrom(role.getRoleAddress());
-                message.setTo(user.getAddress());
-                Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
-                frag.addElement("status").addAttribute("code", "100");
-                router.route(message);
+        }
+        else {
+            historyRequest.sendHistory(joinRole, roomHistory);
+        }
+        // Update the date when the last occupant left the room
+        setEmptyDate(null);
+        return joinRole;
+    }
+
+    /**
+     * Sends presence of existing occupants to new occupant.
+     *
+     * @param joinRole the role of the new occupant in the room.
+     */
+    private void sendInitialPresences(MUCRoleImpl joinRole) {
+        for (MUCRole occupant : occupants.values()) {
+            if (occupant == joinRole) {
+                continue;
             }
-            if (historyRequest == null) {
-                Iterator history = roomHistory.getMessageHistory();
-                while (history.hasNext()) {
-                    joinRole.send((Message) history.next());
+            Presence occupantPresence = occupant.getPresence().createCopy();
+            // Skip to the next occupant if we cannot send presence of this occupant
+            if (hasToCheckRoleToBroadcastPresence()) {
+                Element frag = occupantPresence.getChildElement("x",
+                        "http://jabber.org/protocol/muc#user");
+                // Check if we can broadcast the presence for this role
+                if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
+                    continue;
                 }
             }
-            else {
-                historyRequest.sendHistory(joinRole, roomHistory);
+            // Don't include the occupant's JID if the room is semi-anon and the new occupant
+            // is not a moderator
+            if (!canAnyoneDiscoverJID() && MUCRole.MODERATOR != joinRole.getRole()) {
+                Element frag = occupantPresence.getChildElement("x",
+                        "http://jabber.org/protocol/muc#user");
+                frag.element("item").addAttribute("jid", null);
             }
-            // Update the date when the last occupant left the room
-            setEmptyDate(null);
+            joinRole.send(occupantPresence);
         }
-        return joinRole;
     }
 
     public void leaveRoom(String nickname) throws UserNotFoundException {
@@ -588,7 +593,6 @@ public class MUCRoomImpl implements MUCRoom {
             // not persistent
             if (occupants.isEmpty() && !isPersistent()) {
                 endTime = System.currentTimeMillis();
-
                 server.removeChatRoom(name);
             }
             if (occupants.isEmpty()) {
@@ -600,28 +604,30 @@ public class MUCRoomImpl implements MUCRoom {
             lock.writeLock().unlock();
         }
 
-        if (leaveRole != null) {
-            try {
-                Presence presence = leaveRole.getPresence().createCopy();
-                // Switch the presence to OFFLINE
-                presence.setType(Presence.Type.unavailable);
-                presence.setStatus(null);
-                broadcastPresence(presence);
-                leaveRole.kick();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+        try {
+            // Inform the rest of the room occupants that the user has left the room
+            Presence presence = leaveRole.getPresence().createCopy();
+            presence.setType(Presence.Type.unavailable);
+            presence.setStatus(null);
+            broadcastPresence(presence);
+        }
+        catch (Exception e) {
+            Log.error(e);
         }
     }
 
     /**
-     * @param leaveRole
+     * Removes the role of the occupant from all the internal occupants collections. The role will
+     * also be removed from the user's roles.
+     *
+     * @param leaveRole the role to remove.
      */
     private void removeOccupantRole(MUCRole leaveRole) {
         occupants.remove(leaveRole.getNickname().toLowerCase());
 
         MUCUser user = leaveRole.getChatUser();
+        // Notify the user that he/she is no longer in the room
+        user.removeRole(getName());
         // Update the tables of occupants based on the bare and full JID
         List list = occupantsByBareJID.get(user.getAddress().toBareJID());
         if (list != null) {
@@ -635,6 +641,7 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void destroyRoom(String alternateJID, String reason) {
         MUCRole leaveRole = null;
+        Collection<MUCRole> removedRoles = new ArrayList<MUCRole>();
         lock.writeLock().lock();
         try {
             // Remove each occupant
@@ -642,40 +649,14 @@ public class MUCRoomImpl implements MUCRoom {
                 leaveRole = occupants.remove(nickname);
 
                 if (leaveRole != null) {
-                    try {
-                        // Send a presence stanza of type "unavailable" to the occupant
-                        Presence presence = createPresence(Presence.Type.unavailable);
-                        presence.setFrom(leaveRole.getRoleAddress());
-                        presence.setTo(leaveRole.getChatUser().getAddress());
-
-                        // A fragment containing the x-extension for room destruction.
-                        Element fragment = presence.addChildElement("x",
-                                "http://jabber.org/protocol/muc#user");
-                        Element item = fragment.addElement("item");
-                        item.addAttribute("affiliation", "none");
-                        item.addAttribute("role", "none");
-                        if (alternateJID != null && alternateJID.length() > 0) {
-                            fragment.addElement("destroy").addAttribute("jid", alternateJID);
-                        }
-                        if (reason != null && reason.length() > 0) {
-                            Element destroy = fragment.element("destroy");
-                            if (destroy == null) {
-                                destroy = fragment.addElement("destroy");
-                            }
-                            destroy.addElement("reason").setText(reason);
-                        }
-
-                        router.route(presence);
-                        leaveRole.kick();
-                    }
-                    catch (Exception e) {
-                        Log.error(e);
-                    }
+                    // Add the removed occupant to the list of removed occupants. We are keeping a
+                    // list of removed occupants to process later outside of the lock.
+                    removedRoles.add(leaveRole);
+                    removeOccupantRole(leaveRole);
                 }
             }
             endTime = System.currentTimeMillis();
-
-            MUCPersistenceManager.deleteFromDB(this);
+            // Removes the room from the list of rooms hosted in the server
             server.removeChatRoom(name);
             // Set that the room has been destroyed
             isDestroyed = true;
@@ -683,6 +664,37 @@ public class MUCRoomImpl implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
+        // Send an unavailable presence to each removed occupant
+        for (MUCRole removedRole : removedRoles) {
+            try {
+                // Send a presence stanza of type "unavailable" to the occupant
+                Presence presence = createPresence(Presence.Type.unavailable);
+                presence.setFrom(removedRole.getRoleAddress());
+
+                // A fragment containing the x-extension for room destruction.
+                Element fragment = presence.addChildElement("x",
+                        "http://jabber.org/protocol/muc#user");
+                Element item = fragment.addElement("item");
+                item.addAttribute("affiliation", "none");
+                item.addAttribute("role", "none");
+                if (alternateJID != null && alternateJID.length() > 0) {
+                    fragment.addElement("destroy").addAttribute("jid", alternateJID);
+                }
+                if (reason != null && reason.length() > 0) {
+                    Element destroy = fragment.element("destroy");
+                    if (destroy == null) {
+                        destroy = fragment.addElement("destroy");
+                    }
+                    destroy.addElement("reason").setText(reason);
+                }
+                removedRole.send(presence);
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+        }
+        // Remove the room from the DB if the room was persistent
+        MUCPersistenceManager.deleteFromDB(this);
     }
 
     public Presence createPresence(Presence.Type presenceType) throws UnauthorizedException {
@@ -716,8 +728,7 @@ public class MUCRoomImpl implements MUCRoom {
         MUCRole occupant = occupants.get(resource.toLowerCase());
         if (occupant != null) {
             message.setFrom(senderRole.getRoleAddress());
-            message.setTo(occupant.getChatUser().getAddress());
-            router.route(message);
+            occupant.send(message);
         }
         else {
             throw new NotFoundException();
@@ -742,14 +753,20 @@ public class MUCRoomImpl implements MUCRoom {
         router.route(packet);
     }
 
+    /**
+     * Broadcasts the specified presence to all room occupants. If the presence belongs to a
+     * user whose role cannot be broadcast then the presence will only be sent to the presence's
+     * user. On the other hand, the JID of the user that sent the presence won't be included if the
+     * room is semi-anon and the target occupant is not a moderator.
+     *
+     * @param presence the presence to broadcast.
+     */
     private void broadcastPresence(Presence presence) {
         if (presence == null) {
             return;
         }
-
         Element frag = null;
         String jid = null;
-
         if (hasToCheckRoleToBroadcastPresence()) {
             frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
             // Check if we can broadcast the presence for this role
@@ -757,8 +774,7 @@ public class MUCRoomImpl implements MUCRoom {
                 // Just send the presence to the sender of the presence
                 try {
                     MUCRole occupant = getOccupant(presence.getFrom().getResource());
-                    presence.setTo(occupant.getChatUser().getAddress());
-                    router.route(presence);
+                    occupant.send(presence);
                 }
                 catch (UserNotFoundException e) {
                     // Do nothing
@@ -776,7 +792,6 @@ public class MUCRoomImpl implements MUCRoom {
             jid = frag.element("item").attributeValue("jid");
         }
         for (MUCRole occupant : occupants.values()) {
-            presence.setTo(occupant.getChatUser().getAddress());
             // Don't include the occupant's JID if the room is semi-anon and the new occupant
             // is not a moderator
             if (!canAnyoneDiscoverJID()) {
@@ -787,37 +802,30 @@ public class MUCRoomImpl implements MUCRoom {
                     frag.element("item").addAttribute("jid", null);
                 }
             }
-            router.route(presence);
+            occupant.send(presence);
         }
     }
 
     private void broadcast(Message message) {
-        lock.readLock().lock();
-        try {
-            for (MUCRole occupant : occupants.values()) {
-                message.setTo(occupant.getChatUser().getAddress());
-                router.route(message);
-            }
-            if (isLogEnabled()) {
-                MUCRole senderRole = null;
-                JID senderAddress = null;
-                if (message.getTo() != null && message.getTo().getResource() != null) {
-                    senderRole = occupants.get(message.getTo().getResource());
-                }
-                if (senderRole == null) {
-                    // The room itself is sending the message
-                    senderAddress = getRole().getRoleAddress();
-                }
-                else {
-                    // An occupant is sending the message
-                    senderAddress = senderRole.getChatUser().getAddress();
-                }
-                // Log the conversation
-                server.logConversation(this, message, senderAddress);
-            }
+        for (MUCRole occupant : occupants.values()) {
+            occupant.send(message);
         }
-        finally {
-            lock.readLock().unlock();
+        if (isLogEnabled()) {
+            MUCRole senderRole = null;
+            JID senderAddress = null;
+            if (message.getTo() != null && message.getTo().getResource() != null) {
+                senderRole = occupants.get(message.getTo().getResource());
+            }
+            if (senderRole == null) {
+                // The room itself is sending the message
+                senderAddress = getRole().getRoleAddress();
+            }
+            else {
+                // An occupant is sending the message
+                senderAddress = senderRole.getChatUser().getAddress();
+            }
+            // Log the conversation
+            server.logConversation(this, message, senderAddress);
         }
     }
 
@@ -868,9 +876,6 @@ public class MUCRoomImpl implements MUCRoom {
 
         public String getNickname() {
             return null;
-        }
-
-        public void kick() {
         }
 
         public MUCUser getChatUser() {
@@ -1475,7 +1480,6 @@ public class MUCRoomImpl implements MUCRoom {
             kickedRole.send(kickPresence);
             // Remove the occupant from the room's occupants lists
             removeOccupantRole(kickedRole);
-            kickedRole.kick();
         }
     }
 
@@ -1646,8 +1650,7 @@ public class MUCRoomImpl implements MUCRoom {
             message.setType(Message.Type.groupchat);
             message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
             message.setFrom(getRole().getRoleAddress());
-            message.setTo(senderRole.getChatUser().getAddress());
-            router.route(message);
+            senderRole.send(message);
         }
     }
 
@@ -1666,8 +1669,7 @@ public class MUCRoomImpl implements MUCRoom {
             message.setType(Message.Type.groupchat);
             message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
             message.setFrom(getRole().getRoleAddress());
-            message.setTo(senderRole.getChatUser().getAddress());
-            router.route(message);
+            senderRole.send(message);
         }
     }
 

@@ -90,8 +90,8 @@ public class LdapManager {
      * constructor is private.
      */
     private LdapManager() {
-        this.host = JiveGlobals.getProperty("ldap.host");
-        String portStr = JiveGlobals.getProperty("ldap.port");
+        this.host = JiveGlobals.getXMLProperty("ldap.host");
+        String portStr = JiveGlobals.getXMLProperty("ldap.port");
         if (portStr != null) {
             try {
                 this.port = Integer.parseInt(portStr);
@@ -99,23 +99,23 @@ public class LdapManager {
             catch (NumberFormatException nfe) {
             }
         }
-        if (JiveGlobals.getProperty("ldap.usernameField") != null) {
-            this.usernameField = JiveGlobals.getProperty("ldap.usernameField");
+        if (JiveGlobals.getXMLProperty("ldap.usernameField") != null) {
+            this.usernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
         }
-        if (JiveGlobals.getProperty("ldap.baseDN") != null) {
-            this.baseDN = JiveGlobals.getProperty("ldap.baseDN");
+        if (JiveGlobals.getXMLProperty("ldap.baseDN") != null) {
+            this.baseDN = JiveGlobals.getXMLProperty("ldap.baseDN");
         }
-        if (JiveGlobals.getProperty("ldap.nameField") != null) {
-            this.nameField = JiveGlobals.getProperty("ldap.nameField");
+        if (JiveGlobals.getXMLProperty("ldap.nameField") != null) {
+            this.nameField = JiveGlobals.getXMLProperty("ldap.nameField");
         }
-        if (JiveGlobals.getProperty("ldap.emailField") != null) {
-            this.emailField = JiveGlobals.getProperty("ldap.emailField");
+        if (JiveGlobals.getXMLProperty("ldap.emailField") != null) {
+            this.emailField = JiveGlobals.getXMLProperty("ldap.emailField");
         }
-        this.adminDN = JiveGlobals.getProperty("ldap.adminDN");
-        this.adminPassword = JiveGlobals.getProperty("ldap.adminPassword");
-        this.debugEnabled = "true".equals(JiveGlobals.getProperty("ldap.debugEnabled"));
-        this.sslEnabled = "true".equals(JiveGlobals.getProperty("ldap.sslEnabled"));
-        String modeStr = JiveGlobals.getProperty("ldap.mode");
+        this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
+        this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
+        this.debugEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.debugEnabled"));
+        this.sslEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.sslEnabled"));
+        String modeStr = JiveGlobals.getXMLProperty("ldap.mode");
         if (modeStr != null) {
             try {
                 this.mode = Integer.parseInt(modeStr);
@@ -283,7 +283,7 @@ public class LdapManager {
      */
     public void setHost(String host) {
         this.host = host;
-        JiveGlobals.setProperty("ldap.host", host);
+        JiveGlobals.setXMLProperty("ldap.host", host);
     }
 
     /**
@@ -304,7 +304,7 @@ public class LdapManager {
      */
     public void setPort(int port) {
         this.port = port;
-        JiveGlobals.setProperty("ldap.port", "" + port);
+        JiveGlobals.setXMLProperty("ldap.port", "" + port);
     }
 
     /**
@@ -327,7 +327,7 @@ public class LdapManager {
      */
     public void setDebugEnabled(boolean debugEnabled) {
         this.debugEnabled = debugEnabled;
-        JiveGlobals.setProperty("ldap.debuggingEnabled", "" + debugEnabled);
+        JiveGlobals.setXMLProperty("ldap.debuggingEnabled", "" + debugEnabled);
     }
 
     /**
@@ -368,10 +368,10 @@ public class LdapManager {
     public void setUsernameField(String usernameField) {
         this.usernameField = usernameField;
         if (usernameField == null) {
-            JiveGlobals.deleteProperty("ldap.usernameField");
+            JiveGlobals.deleteXMLProperty("ldap.usernameField");
         }
         else {
-            JiveGlobals.setProperty("ldap.usernameField", usernameField);
+            JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
         }
     }
 
@@ -394,10 +394,10 @@ public class LdapManager {
     public void setNameField(String nameField) {
         this.nameField = nameField;
         if (nameField == null) {
-            JiveGlobals.deleteProperty("ldap.nameField");
+            JiveGlobals.deleteXMLProperty("ldap.nameField");
         }
         else {
-            JiveGlobals.setProperty("ldap.nameField", nameField);
+            JiveGlobals.setXMLProperty("ldap.nameField", nameField);
         }
     }
 
@@ -422,10 +422,10 @@ public class LdapManager {
     public void setEmailField(String emailField) {
         this.emailField = emailField;
         if (emailField == null) {
-            JiveGlobals.deleteProperty("ldap.emailField");
+            JiveGlobals.deleteXMLProperty("ldap.emailField");
         }
         else {
-            JiveGlobals.setProperty("ldap.emailField", emailField);
+            JiveGlobals.setXMLProperty("ldap.emailField", emailField);
         }
     }
 
@@ -447,7 +447,7 @@ public class LdapManager {
      */
     public void setBaseDN(String baseDN) {
         this.baseDN = baseDN;
-        JiveGlobals.setProperty("ldap.baseDN", baseDN);
+        JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
     }
 
     /**
@@ -468,7 +468,7 @@ public class LdapManager {
      */
     public void setAdminDN(String adminDN) {
         this.adminDN = adminDN;
-        JiveGlobals.setProperty("ldap.adminDN", adminDN);
+        JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
     }
 
     /**
@@ -489,7 +489,7 @@ public class LdapManager {
      */
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
-        JiveGlobals.setProperty("ldap.adminPassword", adminPassword);
+        JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
     }
 
     /**
@@ -514,6 +514,6 @@ public class LdapManager {
      */
     public void setMode(int mode) {
         this.mode = mode;
-        JiveGlobals.setProperty("ldap.mode", "" + mode);
+        JiveGlobals.setXMLProperty("ldap.mode", "" + mode);
     }
 }

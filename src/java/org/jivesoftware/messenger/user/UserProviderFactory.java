@@ -106,7 +106,7 @@ public class UserProviderFactory {
                         for (int i = 0; i < classNames.length; i++) {
                             String className = classNames[i];
                             //See if the classname has been set as a Jive property.
-                            String classNameProp = JiveGlobals.getProperty(propNames[i]);
+                            String classNameProp = JiveGlobals.getXMLProperty(propNames[i]);
                             if (classNameProp != null) {
                                 className = classNameProp;
                             }

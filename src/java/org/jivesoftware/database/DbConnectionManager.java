@@ -15,11 +15,8 @@ package org.jivesoftware.database;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.database.ConnectionProvider;
 
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.sql.*;
 
 /**
@@ -35,6 +32,21 @@ import java.sql.*;
  * @see org.jivesoftware.database.ConnectionProvider
  */
 public class DbConnectionManager {
+
+     private static final String CHECK_VERSION =
+            "SELECT majorVersion, minorVersion FROM jiveVersion";
+
+    /**
+     * Database schema major version. The schema version corresponds to the
+     * product release version, but may not exactly match in the case that
+     * the product version has advanced without schema changes.
+     */
+    private static final int CURRENT_MAJOR_VERSION = 2;
+
+    /**
+     * Database schema minor version.
+     */
+    private static final int CURRENT_MINOR_VERSION = 1;
 
     private static ConnectionProvider connectionProvider;
     private static Object providerLock = new Object();
@@ -57,7 +69,7 @@ public class DbConnectionManager {
     // True if the database supports batch updates.
     private static boolean batchUpdatesSupported;
 
-    private static DatabaseType databaseType = DatabaseType.OTHER;
+    private static DatabaseType databaseType = DatabaseType.unknown;
 
     /**
      * Returns a database connection from the currently active connection
@@ -157,7 +169,6 @@ public class DbConnectionManager {
         catch (Exception e) {
             Log.error(e);
         }
-
     }
 
     /**
@@ -203,7 +214,7 @@ public class DbConnectionManager {
      * the feature, the cursor will be moved directly. Otherwise, we scroll through results one by
      * one manually by calling <tt>rs.next()</tt>.
      *
-     * @param rs        the ResultSet object to scroll.
+     * @param rs the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
      * @throws SQLException if an error occurs.
      */
@@ -255,16 +266,21 @@ public class DbConnectionManager {
             try {
                 con = connectionProvider.getConnection();
                 setMetaData(con);
+
+                // Check to see if the database schema needs to be upgraded.
+                try {
+                    upgradeDatabase(con);
+                }
+                catch (Exception e) {
+                    Log.error("Database upgrade failed. Please manually upgrade your database.", e);
+                }
             }
             catch (Exception e) {
                 Log.error(e);
             }
             finally {
-                try {
-                    con.close();
-                }
-                catch (Exception e) {
-                }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
         // Remember what connection provider we want to use for restarts.
@@ -277,7 +293,7 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * retrieving large text values.
      *
-     * @param rs          the ResultSet to retrieve the text field from.
+     * @param rs the ResultSet to retrieve the text field from.
      * @param columnIndex the column in the ResultSet of the text field.
      * @return the String value of the text field.
      */
@@ -323,12 +339,13 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * setting large text values.
      *
-     * @param pstmt          the PreparedStatement to set the text field in.
+     * @param pstmt the PreparedStatement to set the text field in.
      * @param parameterIndex the index corresponding to the text field.
-     * @param value          the String to set.
+     * @param value the String to set.
      */
-    public static void setLargeTextField(PreparedStatement pstmt,
-                                         int parameterIndex, String value) throws SQLException {
+    public static void setLargeTextField(PreparedStatement pstmt, int parameterIndex,
+            String value) throws SQLException
+    {
         if (isStreamTextRequired()) {
             Reader bodyReader = null;
             try {
@@ -352,7 +369,7 @@ public class DbConnectionManager {
      * statement. The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param stmt    the Statement to set the max number of rows for.
+     * @param stmt the Statement to set the max number of rows for.
      * @param maxRows the max number of rows to return.
      */
     public static void setMaxRows(Statement stmt, int maxRows) {
@@ -376,7 +393,7 @@ public class DbConnectionManager {
      * The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param rs        the ResultSet to set the fetch size for.
+     * @param rs the ResultSet to set the fetch size for.
      * @param fetchSize the fetchSize.
      */
     public static void setFetchSize(ResultSet rs, int fetchSize) {
@@ -421,7 +438,7 @@ public class DbConnectionManager {
 
         // Oracle properties.
         if (dbName.indexOf("oracle") != -1) {
-            databaseType = DatabaseType.ORACLE;
+            databaseType = DatabaseType.oracle;
             streamTextRequired = true;
             // The i-net AUGURO JDBC driver
             if (driverName.indexOf("auguro") != -1) {
@@ -432,31 +449,38 @@ public class DbConnectionManager {
         }
         // Postgres properties
         else if (dbName.indexOf("postgres") != -1) {
-            databaseType = DatabaseType.POSTGRES;
+            databaseType = DatabaseType.postgres;
             // Postgres blows, so disable scrolling result sets.
             scrollResultsSupported = false;
             fetchSizeSupported = false;
         }
         // Interbase properties
         else if (dbName.indexOf("interbase") != -1) {
+            databaseType = DatabaseType.interbase;
             fetchSizeSupported = false;
             maxRowsSupported = false;
         }
         // SQLServer, JDBC driver i-net UNA properties
         else if (dbName.indexOf("sql server") != -1 &&
-                driverName.indexOf("una") != -1) {
+                driverName.indexOf("una") != -1)
+        {
+            databaseType = DatabaseType.sqlserver;
             fetchSizeSupported = true;
             maxRowsSupported = false;
         }
         // MySQL properties
         else if (dbName.indexOf("mysql") != -1) {
-            databaseType = DatabaseType.MYSQL;
+            databaseType = DatabaseType.mysql;
             transactionsSupported = false;
         }
         // HSQL properties
         else if (dbName.indexOf("hsql") != -1) {
-            databaseType = DatabaseType.HSQL;
+            databaseType = DatabaseType.hsqldb;
             scrollResultsSupported = false;
+        }
+        // DB2 properties.
+        else if (dbName.indexOf("db2") != 1) {
+            databaseType = DatabaseType.db2;
         }
     }
 
@@ -537,16 +561,146 @@ public class DbConnectionManager {
      * there are certain cases where it's critical to know the database for
      * performance reasons.
      */
-    public static class DatabaseType {
+    public static enum DatabaseType {
 
-        public static final DatabaseType ORACLE = new DatabaseType();
-        public static final DatabaseType POSTGRES = new DatabaseType();
-        public static final DatabaseType MYSQL = new DatabaseType();
-        public static final DatabaseType HSQL = new DatabaseType();
-        public static final DatabaseType OTHER = new DatabaseType();
+        oracle,
 
-        private DatabaseType() {
-            /* do nothing */
+        postgres,
+
+        mysql,
+
+        hsqldb,
+
+        db2,
+
+        sqlserver,
+
+        interbase,
+
+        unknown;
+    }
+
+    /**
+     * Checks to see if the database needs to be upgraded. This method should be
+     * called once every time the application starts up.
+     *
+     * @throws SQLException if an error occured.
+     */
+    private static boolean upgradeDatabase(Connection con) throws Exception {
+        int majorVersion;
+        int minorVersion;
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = con.prepareStatement(CHECK_VERSION);
+            ResultSet rs = pstmt.executeQuery();
+            // If no results, assume the version is 2.0.
+            if (!rs.next()) {
+                majorVersion = 2;
+                minorVersion = 0;
+            }
+            majorVersion = rs.getInt(1);
+            minorVersion = rs.getInt(2);
+            rs.close();
         }
+        catch (SQLException sqle) {
+            // If the table doesn't exist, an error will be thrown. Therefore
+            // assume the version is 2.0.
+            majorVersion = 2;
+            minorVersion = 0;
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        if (minorVersion == CURRENT_MINOR_VERSION) {
+            return false;
+        }
+        // The database is an old version that needs to be upgraded.
+        Log.info("Found old database schema (" + majorVersion + "." + minorVersion + "). " +
+                "Upgrading to latest schema.");
+        if (databaseType == DatabaseType.unknown) {
+            Log.info("Warning: database type unknown. You must manually upgrade your database.");
+            return false;
+        }
+        else if (databaseType == DatabaseType.interbase) {
+            Log.info("Warning: automatic upgrades of Interbase are not supported. You " +
+                    "must manually upgrade your database.");
+            return false;
+        }
+        // Run all upgrade scripts until we're up to the latest schema.
+        for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
+            BufferedReader in = null;
+            Statement stmt = null;
+            try {
+                // Resource will be like "/database/upgrade/2.0_to_2.1/messenger_hsqldb.sql"
+                String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
+                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/messenger_" +
+                        databaseType + ".sql";
+                in = new BufferedReader(new InputStreamReader(
+                        new DbConnectionManager().getClass().getResourceAsStream(resourceName)));
+                boolean done = false;
+                while (!done) {
+                    StringBuffer command = new StringBuffer();
+                    while (true) {
+                        String line = in.readLine();
+                        if (line == null) {
+                            done = true;
+                            break;
+                        }
+                        // Ignore comments and blank lines.
+                        if (isSQLCommandPart(line)) {
+                            command.append(line);
+                        }
+                        if (line.endsWith(";")) {
+                            break;
+                        }
+                    }
+                    // Send command to database.
+                    if (!done && command != null) {
+                        stmt = con.createStatement();
+                        stmt.execute(command.toString());
+                        stmt.close();
+                    }
+                }
+            }
+            finally {
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                if (in != null) {
+                    try { in.close(); }
+                    catch (Exception e) { }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if a line from a SQL schema is a valid command part.
+     *
+     * @param line the line of the schema.
+     * @return true if a valid command part.
+     */
+    public static boolean isSQLCommandPart(String line) {
+        line = line.trim();
+        if (line.equals("")) {
+            return false;
+        }
+        // Check to see if the line is a comment. Valid comment types:
+        //   "//" is HSQLDB
+        //   "--" is DB2 and Postgres
+        //   "#" is MySQL
+        //   "REM" is Oracle
+        //   "/*" is SQLServer
+        if (line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
+                line.startsWith("REM") || line.startsWith("/*"))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private DbConnectionManager() {
+        // Not instantiable.
     }
 }

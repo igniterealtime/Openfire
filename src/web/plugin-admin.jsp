@@ -52,7 +52,11 @@
             pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".war");
         }
         pluginJar.delete();
-        response.sendRedirect("plugin-admin.jsp?deletesuccess=false");
+        try {
+            Thread.sleep(1500L);
+        }
+        catch (Exception ignored) {}
+        response.sendRedirect("plugin-admin.jsp?deletesuccess=true");
         return;
 	}
 	
@@ -155,14 +159,15 @@
 
     for (int i=0; i<plugins.size(); i++) {
         Plugin plugin = plugins.get(i);
-        String dirName = pluginManager.getPluginDirectory(pluginManager.getPlugin(deletePlugin)).getName();
-        String pluginName = pluginManager.getName(plugin);
-        String pluginDescription = pluginManager.getDescription(plugin);
-        String pluginAuthor = pluginManager.getAuthor(plugin);
-        String pluginVersion = pluginManager.getVersion(plugin);
+        String dirName = pluginManager.getPluginDirectory(plugin).getName();
+        if (!"admin".equals(dirName)) {
+            String pluginName = pluginManager.getName(plugin);
+            String pluginDescription = pluginManager.getDescription(plugin);
+            String pluginAuthor = pluginManager.getAuthor(plugin);
+            String pluginVersion = pluginManager.getVersion(plugin);
 %>
 
-	    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+	    <tr class="jive-<%= (((i%2)==1) ? "even" : "odd") %>">
 	        <td width="1%">
 	            <%= i+1 %>
 	        </td>
@@ -172,7 +177,7 @@
 	        <td width="60%">
 	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;
 	        </td>
-	        <td width="5%">
+	        <td width="5%" align="center">
 	             <%= pluginVersion != null ? pluginVersion : "" %>  &nbsp;
 	        </td>
 	        <td width="15%">
@@ -190,7 +195,7 @@
 	        </td>
 	    </tr>
 <%		    
-
+        }
     }
 %>
 </tbody>

@@ -13,9 +13,7 @@ package org.jivesoftware.messenger.plugin;
 
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
@@ -70,11 +68,7 @@ public class BroadcastPlugin implements Plugin, Component {
     }
 
     public void initialize(PluginManager manager, File pluginDirectory) {
-        try {
-            sessionManager = (SessionManager)ServiceLookupFactory.getLookup().lookup(
-                    SessionManager.class);
-        }
-        catch (UnauthorizedException ue) { }
+        sessionManager = SessionManager.getInstance();
 
         // Register as a component.
         ComponentManager.getInstance().addComponent(serviceName, this);

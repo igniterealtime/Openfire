@@ -11,16 +11,20 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import org.jivesoftware.messenger.muc.*;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.messenger.muc.MUCRole;
+import org.jivesoftware.messenger.muc.MUCRoom;
+import org.jivesoftware.messenger.muc.MUCUser;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.muc.NotAllowedException;
+import org.jivesoftware.util.ElementUtil;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
-import org.dom4j.Element;
+import org.xmpp.packet.Presence;
 
 /**
  * Simple in-memory implementation of a role in a chatroom
@@ -104,7 +108,7 @@ public class MUCRoleImpl implements MUCRole {
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
-        extendedInformation = new MetaDataFragment("http://jabber.org/protocol/muc#user", "x");
+        extendedInformation = DocumentHelper.createElement("x").addNamespace("", "http://jabber.org/protocol/muc#user");
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceName(), nick);
         setPresence(room.createPresence(null));
@@ -240,9 +244,8 @@ public class MUCRoleImpl implements MUCRole {
      * The information to add contains the user's jid, affiliation and role.
      */
     private void calculateExtendedInformation() {
-
-        extendedInformation.setProperty("x.item:jid", user.getAddress().toString());
-        extendedInformation.setProperty("x.item:affiliation", getAffiliationAsString());
-        extendedInformation.setProperty("x.item:role", getRoleAsString());
+        ElementUtil.setProperty(extendedInformation, "x.item:jid", user.getAddress().toString());
+        ElementUtil.setProperty(extendedInformation, "x.item:affiliation", getAffiliationAsString());
+        ElementUtil.setProperty(extendedInformation, "x.item:role", getRoleAsString());
     }
 }

@@ -35,12 +35,16 @@ public class Launcher {
     private String configFile = JiveGlobals.getMessengerHome() + File.separator + "conf" + File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 
+    private ImageIcon offIcon;
+    private ImageIcon onIcon;
+    private TrayIcon trayIcon;
+
     /**
      * Creates a new Launcher object.
      */
     public Launcher() {
         // Initialize the SystemTray now (to avoid a bug!)
-        SystemTray tray = SystemTray.getDefaultSystemTray();
+        final SystemTray tray = SystemTray.getDefaultSystemTray();
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -49,7 +53,7 @@ public class Launcher {
             e.printStackTrace();
         }
 
-        String title = "Jive Messenger Server Launcher";
+        String title = "Jive Messenger";
         final JFrame frame = new JFrame(title);
 
         ImageIcon splash = null;
@@ -57,10 +61,12 @@ public class Launcher {
 
         // Set the icon.
         try {
-            ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("messenger-16x16.gif"));
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
             splashLabel = new JLabel("", splash, JLabel.LEFT);
-            frame.setIconImage(icon.getImage());
+
+            onIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_on-16x16.gif"));
+            offIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_off-16x16.gif"));
+            frame.setIconImage(offIcon.getImage());
         }
         catch (Exception e) {
         }
@@ -144,6 +150,8 @@ public class Launcher {
 
                             // Enable the Launch Admin button/menu item only if the server has started
                             if (stopButton.isEnabled()) {
+                                frame.setIconImage(onIcon.getImage());
+                                trayIcon.setIcon(onIcon);
                                 browserButton.setEnabled(true);
                                 browserMenuItem.setEnabled(true);
                             }
@@ -156,6 +164,9 @@ public class Launcher {
                 }
                 else if (e.getActionCommand().equals("Stop")) {
                     stopApplication();
+                    frame.setIconImage(offIcon.getImage());
+                    trayIcon.setIcon(offIcon);
+                    frame.setCursor(Cursor.getDefaultCursor());
                     browserButton.setEnabled(false);
                     startButton.setEnabled(true);
                     stopButton.setEnabled(false);
@@ -201,11 +212,11 @@ public class Launcher {
         showMenuItem.addActionListener(actionListener);
 
         // Set the system tray icon with the menu
-        ImageIcon i = new ImageIcon(getClass().getClassLoader().getResource("messenger-16x16.gif"));
-        TrayIcon ti = new TrayIcon(i, "Jive Messenger", menu);
-        ti.setIconAutoSize(true);
-        ti.addActionListener(actionListener);
-        tray.addTrayIcon(ti);
+        trayIcon = new TrayIcon(offIcon, "Jive Messenger", menu);
+        trayIcon.setIconAutoSize(true);
+        trayIcon.addActionListener(actionListener);
+
+        tray.addTrayIcon(trayIcon);
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {

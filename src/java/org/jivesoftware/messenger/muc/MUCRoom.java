@@ -11,9 +11,9 @@
 
 package org.jivesoftware.messenger.muc;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Date;
+import java.util.Collection;
 
 import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
 import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
@@ -128,9 +128,9 @@ public interface MUCRoom extends ChatDeliverer {
     /**
      * Obtain the roles of all users in the chatroom.
      *
-     * @return Iterator over all users in the chatroom
+     * @return a collection with all users in the chatroom
      */
-    Iterator<MUCRole> getOccupants();
+    Collection<MUCRole> getOccupants();
 
     /**
      * Returns the number of occupants in the chatroom at the moment.
@@ -399,11 +399,9 @@ public interface MUCRoom extends ChatDeliverer {
      *  
      * @param packet the sent packet to change the room's subject.
      * @param role the role of the user that is trying to change the subject.
-     * @throws UnauthorizedException If the user doesn't have permision to change the subject.
      * @throws ForbiddenException If the user is not allowed to change the subject.
      */
-    public void changeSubject(Message packet, MUCRole role) throws UnauthorizedException,
-            ForbiddenException;
+    public void changeSubject(Message packet, MUCRole role) throws ForbiddenException;
 
     /**
      * Returns the last subject that some occupant set to the room.
@@ -427,12 +425,10 @@ public interface MUCRoom extends ChatDeliverer {
      * 
      * @param message The message to send.
      * @param senderRole the role of the user that is trying to send a public message.
-     * @throws UnauthorizedException Thrown if unauthorized
      * @throws ForbiddenException If the user is not allowed to send a public message (i.e. does not
      *             have voice in the room).
      */
-    public void sendPublicMessage(Message message, MUCRole senderRole) throws UnauthorizedException,
-            ForbiddenException;
+    public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException;
 
     /**
      * Sends a private message to a selected occupant. 
@@ -461,54 +457,55 @@ public interface MUCRoom extends ChatDeliverer {
     public IQAdminHandler getIQAdminHandler();
 
     /**
-     * Returns an iterator over the current list of owners. The iterator contains the bareJID of the
-     * users with owner affiliation.
+     * Returns a collection with the current list of owners. The collection contains the bareJID of
+     * the users with owner affiliation.
      *
-     * @return an iterator over the current list of owners.
+     * @return a collection with the current list of owners.
      */
-    public Iterator<String> getOwners();
+    public Collection<String> getOwners();
 
     /**
-     * Returns an iterator over the current list of admins. The iterator contains the bareJID of the
-     * users with admin affiliation.
+     * Returns a collection with the current list of admins. The collection contains the bareJID of
+     * the users with admin affiliation.
      *
-     * @return an iterator over the current list of admins.
+     * @return a collection with the current list of admins.
      */
-    public Iterator<String> getAdmins();
+    public Collection<String> getAdmins();
 
     /**
-     * Returns an iterator over the current list of room members. The iterator contains the bareJID
-     * of the users with member affiliation. If the room is not members-only then the list will
-     * contain the users that registered with the room and therefore they may have reserved a
+     * Returns a collection with the current list of room members. The collection contains the
+     * bareJID of the users with member affiliation. If the room is not members-only then the list
+     * will contain the users that registered with the room and therefore they may have reserved a
      * nickname.
      *
-     * @return an iterator over the current list of members.
+     * @return a collection with the current list of members.
      */
-    public Iterator<String> getMembers();
+    public Collection<String> getMembers();
 
     /**
-     * Returns an iterator over the current list of outcast users. An outcast user is not allowed to
-     * join the room again. The iterator contains the bareJID of the users with outcast affiliation.
+     * Returns a collection with the current list of outcast users. An outcast user is not allowed
+     * to join the room again. The collection contains the bareJID of the users with outcast
+     * affiliation.
      *
-     * @return an iterator over the current list of outcast users.
+     * @return a collection with the current list of outcast users.
      */
-    public Iterator<String> getOutcasts();
+    public Collection<String> getOutcasts();
 
     /**
-     * Returns an iterator over the current list of room moderators. The iterator contains the
+     * Returns a collection with the current list of room moderators. The collection contains the
      * MUCRole of the occupants with moderator role.
      *
-     * @return an iterator over the current list of moderators.
+     * @return a collection with the current list of moderators.
      */
-    public Iterator<MUCRole> getModerators();
+    public Collection<MUCRole> getModerators();
 
     /**
-     * Returns an iterator over the current list of room participants. The iterator contains the
+     * Returns a collection with the current list of room participants. The collection contains the
      * MUCRole of the occupants with participant role.
      *
-     * @return an iterator over the current list of moderators.
+     * @return a collection with the current list of moderators.
      */
-    public Iterator<MUCRole> getParticipants();
+    public Collection<MUCRole> getParticipants();
 
     /**
      * Returns true if every presence packet will include the JID of every occupant. This
@@ -746,7 +743,7 @@ public interface MUCRoom extends ChatDeliverer {
      * 
      * @return the list of roles of which presence will be broadcasted to the rest of the occupants.
      */
-    public Iterator getRolesToBroadcastPresence();
+    public List<String> getRolesToBroadcastPresence();
 
     /**
      * Sets the list of roles of which presence will be broadcasted to the rest of the occupants.
@@ -755,7 +752,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @param rolesToBroadcastPresence the list of roles of which presence will be broadcasted to 
      * the rest of the occupants.
      */
-    public void setRolesToBroadcastPresence(List rolesToBroadcastPresence);
+    public void setRolesToBroadcastPresence(List<String> rolesToBroadcastPresence);
 
     /**
      * Returns true if the presences of the requested role will be broadcasted.

@@ -163,7 +163,7 @@ public class MUCRoomImpl implements MUCRoom {
      * List of roles of which presence will be broadcasted to the rest of the occupants. This
      * feature is useful for implementing "invisible" occupants.
      */
-    private List rolesToBroadcastPresence = new ArrayList();
+    private List<String> rolesToBroadcastPresence = new ArrayList<String>();
 
     /**
      * A public room means that the room is searchable and visible. This means that the room can be
@@ -345,8 +345,8 @@ public class MUCRoomImpl implements MUCRoom {
         throw new UserNotFoundException();
     }
 
-    public Iterator<MUCRole> getOccupants() {
-        return occupants.values().iterator();
+    public Collection<MUCRole> getOccupants() {
+        return Collections.unmodifiableCollection(occupants.values());
     }
 
     public int getOccupantsCount() {
@@ -696,8 +696,7 @@ public class MUCRoomImpl implements MUCRoom {
         broadcast(message);
     }
 
-    public void sendPublicMessage(Message message, MUCRole senderRole)
-            throws UnauthorizedException, ForbiddenException {
+    public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException {
         // Check that if the room is moderated then the sender of the message has to have voice
         if (isModerated() && senderRole.getRole() > MUCRole.PARTICIPANT) {
             throw new ForbiddenException();
@@ -1279,8 +1278,7 @@ public class MUCRoomImpl implements MUCRoom {
         occupants.remove(oldNick.toLowerCase());
     }
 
-    public void changeSubject(Message packet, MUCRole role) throws UnauthorizedException,
-            ForbiddenException {
+    public void changeSubject(Message packet, MUCRole role) throws ForbiddenException {
         if ((canOccupantsChangeSubject() && role.getRole() < MUCRole.VISITOR) ||
                 MUCRole.MODERATOR == role.getRole()) {
             // Do nothing if the new subject is the same as the existing one
@@ -1379,40 +1377,40 @@ public class MUCRoomImpl implements MUCRoom {
         return iqAdminHandler;
     }
 
-    public Iterator<String> getOwners() {
-        return Collections.unmodifiableList(owners).iterator();
+    public Collection<String> getOwners() {
+        return Collections.unmodifiableList(owners);
     }
 
-    public Iterator<String> getAdmins() {
-        return Collections.unmodifiableList(admins).iterator();
+    public Collection<String> getAdmins() {
+        return Collections.unmodifiableList(admins);
     }
 
-    public Iterator<String> getMembers() {
-        return Collections.unmodifiableMap(members).keySet().iterator();
+    public Collection<String> getMembers() {
+        return Collections.unmodifiableMap(members).keySet();
     }
 
-    public Iterator<String> getOutcasts() {
-        return Collections.unmodifiableList(outcasts).iterator();
+    public Collection<String> getOutcasts() {
+        return Collections.unmodifiableList(outcasts);
     }
 
-    public Iterator<MUCRole> getModerators() {
+    public Collection<MUCRole> getModerators() {
         List<MUCRole> moderators = new ArrayList<MUCRole>();
         for (MUCRole role : occupants.values()) {
             if (MUCRole.MODERATOR == role.getRole()) {
                 moderators.add(role);
             }
         }
-        return moderators.iterator();
+        return moderators;
     }
 
-    public Iterator<MUCRole> getParticipants() {
+    public Collection<MUCRole> getParticipants() {
         List<MUCRole> participants = new ArrayList<MUCRole>();
         for (MUCRole role : occupants.values()) {
             if (MUCRole.PARTICIPANT == role.getRole()) {
                 participants.add(role);
             }
         }
-        return participants.iterator();
+        return participants;
     }
 
     public Presence addModerator(String fullJID, MUCRole senderRole) throws ForbiddenException {
@@ -1645,11 +1643,11 @@ public class MUCRoomImpl implements MUCRoom {
         this.publicRoom = publicRoom;
     }
 
-    public Iterator getRolesToBroadcastPresence() {
-        return rolesToBroadcastPresence.iterator();
+    public List<String> getRolesToBroadcastPresence() {
+        return Collections.unmodifiableList(rolesToBroadcastPresence);
     }
 
-    public void setRolesToBroadcastPresence(List rolesToBroadcastPresence) {
+    public void setRolesToBroadcastPresence(List<String> rolesToBroadcastPresence) {
         // TODO If the list changes while there are occupants in the room we must send available or
         // unavailable presences of the affected occupants to the rest of the occupants
         this.rolesToBroadcastPresence = rolesToBroadcastPresence;
@@ -1672,13 +1670,15 @@ public class MUCRoomImpl implements MUCRoom {
     public void unlockRoom(MUCRole senderRole) {
         roomLocked = false;
         this.lockedTime = 0;
-        // Send to the occupant that unlocked the room a message saying so  
-        Message message = new MessageImpl();
-        message.setType(Message.GROUP_CHAT);
-        message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
-        message.setSender(getRole().getRoleAddress());
-        message.setRecipient(senderRole.getChatUser().getAddress());
-        router.route(message);
+        if (senderRole.getChatUser() != null) {
+            // Send to the occupant that unlocked the room a message saying so
+            Message message = new MessageImpl();
+            message.setType(Message.GROUP_CHAT);
+            message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
+            message.setSender(getRole().getRoleAddress());
+            message.setRecipient(senderRole.getChatUser().getAddress());
+            router.route(message);
+        }
     }
 
     public List<Presence> addAdmins(List<String> newAdmins, MUCRole senderRole)

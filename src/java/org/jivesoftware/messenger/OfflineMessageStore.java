@@ -49,6 +49,7 @@ public class OfflineMessageStore extends BasicModule {
     private static final String DELETE_OFFLINE =
         "DELETE FROM jiveOffline WHERE username=?";
 
+    private Cache sizeCache;
     private SimpleDateFormat dateFormat;
 
     /**
@@ -69,6 +70,7 @@ public class OfflineMessageStore extends BasicModule {
         super("Offline Message Store");
         dateFormat = new SimpleDateFormat("yyyyMMdd'T'hh:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sizeCache = new Cache("Offline Message Size Cache", 1024*100, JiveConstants.HOUR*12);
     }
 
     /**
@@ -113,6 +115,13 @@ public class OfflineMessageStore extends BasicModule {
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
+        }
+
+        // Update the cached size if it exists.
+        if (sizeCache.containsKey(username)) {
+            int size = (Integer)sizeCache.get(username);
+            size += msgXML.length();
+            sizeCache.put(username, size);
         }
     }
 
@@ -171,6 +180,10 @@ public class OfflineMessageStore extends BasicModule {
      * @return the approximate size of stored messages (in bytes).
      */
     public int getSize(String username) {
+        // See if the size is cached.
+        if (sizeCache.containsKey(username)) {
+            return (Integer)sizeCache.get(username);
+        }
         int size = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -183,6 +196,8 @@ public class OfflineMessageStore extends BasicModule {
                 size = rs.getInt(1);
             }
             rs.close();
+            // Add the value to cache.
+            sizeCache.put(username, size);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

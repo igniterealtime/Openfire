@@ -70,11 +70,10 @@
     <!-- init ================================================================================== -->
     <target name="init">
         <!-- Check for min build requirements -->
-        <!-- TODO - this doesn't work for some reason -->
         <condition property="ant.not.ok" value="true"><not><contains string="${ant.version}" substring="1.6" /></not></condition>
         <condition property="java.not.ok" value="true"><not><contains string="${ant.java.version}" substring="1.5" /></not></condition>
-        <fail if="${ant.not.ok}" message="Must use Ant 1.6.x to build Jive Messenger" />
-        <fail if="${java.not.ok}" message="Must use JDK 1.5.x to build Jive Messenger" />
+        <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Jive Messenger" />
+        <fail if="java.not.ok" message="Must use JDK 1.5.x to build Jive Messenger" />
 
         <tstamp />
         <mkdir dir="${target.dir}" />

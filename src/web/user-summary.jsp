@@ -133,7 +133,7 @@ Sorted by Username
         User user = (User)users.next();
         i++;
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "odd" : "odd") %>">
+    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
         <td width="1%">
             <%= i %>
         </td>

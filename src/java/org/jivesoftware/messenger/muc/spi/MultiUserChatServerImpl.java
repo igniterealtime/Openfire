@@ -755,7 +755,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (name != null && node == null) {
             // Answer the extended info of a given room
             // TODO lock the room while gathering this info???
-            // TODO Do not generate a form each time. Keep it as static or instance variable
             MUCRoom room = getChatRoom(name);
             if (room != null && room.isPublicRoom()) {
                 XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);

@@ -222,7 +222,14 @@ public class DbConnectionManager {
         // If the driver supports scrollable result sets, use that feature.
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
-                rs.setFetchDirection(ResultSet.FETCH_FORWARD);
+                // Newer oracle JDBC driver do not like fetch-foward result sets to
+                // use absolute(int) or relative(int) calls, so special-case.
+                if (getDatabaseType() == DatabaseType.oracle) {
+                    rs.setFetchDirection(ResultSet.TYPE_SCROLL_INSENSITIVE);
+                }
+                else {
+                    rs.setFetchDirection(ResultSet.FETCH_FORWARD);
+                }
                 rs.relative(rowNumber);
             }
         }

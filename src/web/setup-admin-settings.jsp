@@ -146,20 +146,21 @@ function checkClick() {
 <table cellpadding="3" cellspacing="2" border="0">
 <tr valign="top">
     <td class="jive-label">
-        Current Password:
+        <fmt:message key="setup.admin.settings.current_password" />
     </td>
     <td>
         <input type="password" name="password" size="20" maxlength="50"
-         value="<%= ((password!=null) ? password : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.admin.settings.install" /><fmt:message key="short.title" /> <fmt:message key="setup.admin.settings.install1" /> <b><fmt:message key="setup.admin.settings.install2" /></b>.
-        </span>
+         value="<%= ((password!=null) ? password : "") %>"><br>
+
         <%  if (errors.get("password") != null) { %>
             <span class="jive-error-text">
-            <br><fmt:message key="setup.admin.settings.password" />
+            <fmt:message key="setup.admin.settings.current_password_error" />
             </span>
-        <%  } %>
+        <%  } else { %>
+            <span class="jive-description">
+            <fmt:message key="setup.admin.settings.current_password_description" />
+            </span>
+        <% } %>
     </td>
 </tr>
 <tr valign="top">
@@ -168,16 +169,17 @@ function checkClick() {
     </td>
     <td>
         <input type="text" name="email" size="40" maxlength="150"
-         value="<%= ((email!=null) ? email : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.admin.settings.valid_email" />
-        </span>
+         value="<%= ((email!=null) ? email : "") %>"><br>
+
         <%  if (errors.get("email") != null) { %>
             <span class="jive-error-text">
-            <br><fmt:message key="setup.admin.settings.enter_email" />
+            <fmt:message key="setup.admin.settings.email_error" />
             </span>
-        <%  } %>
+        <%  } else { %>
+            <span class="jive-description">
+            <fmt:message key="setup.admin.settings.email_description" />
+            </span>
+        <% } %>
     </td>
 </tr>
 <tr valign="top">
@@ -186,17 +188,15 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPassword" size="20" maxlength="50"
-         value="<%= ((newPassword!=null) ? newPassword : "") %>">
-        <span class="jive-description">
+         value="<%= ((newPassword!=null) ? newPassword : "") %>"><br>
 
-        </span>
         <%  if (errors.get("newPassword") != null) { %>
             <span class="jive-error-text">
-            <br><fmt:message key="setup.admin.settings.valid_new_password" />
+            <fmt:message key="setup.admin.settings.valid_new_password" />
             </span>
         <%  } else if (errors.get("match") != null) { %>
             <span class="jive-error-text">
-            <br><fmt:message key="setup.admin.settings.not_new_password" />
+            <fmt:message key="setup.admin.settings.not_new_password" />
             </span>
         <%  } %>
     </td>
@@ -207,13 +207,10 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPasswordConfirm" size="20" maxlength="50"
-         value="<%= ((newPasswordConfirm!=null) ? newPasswordConfirm : "") %>">
-        <span class="jive-description">
-
-        </span>
+         value="<%= ((newPasswordConfirm!=null) ? newPasswordConfirm : "") %>"><br>
         <%  if (errors.get("newPasswordConfirm") != null) { %>
             <span class="jive-error-text">
-            <br><fmt:message key="setup.admin.settings.valid_confirm" />
+            <fmt:message key="setup.admin.settings.valid_confirm" />
             </span>
         <%  } %>
     </td>

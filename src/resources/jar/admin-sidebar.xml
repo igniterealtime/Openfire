@@ -144,6 +144,10 @@
             <item id="muc-perms" name="Room Creation Permissions"
                     url="muc-create-permission.jsp"
                     description="" />
+
+            <item id="muc-tasks" name="Tasks Settings"
+                    url="muc-tasks.jsp"
+                    description="" />
         </sidebar>
     </tab>
 

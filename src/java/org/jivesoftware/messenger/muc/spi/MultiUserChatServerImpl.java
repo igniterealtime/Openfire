@@ -28,9 +28,9 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQRegisterHandler;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
-import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -143,13 +143,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can 
      * create a room. 
      */
-    private Collection<String> allowedToCreate = new LinkedList<String>();
+    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<String>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
      * permissions as a room owner. 
      */
-    private Collection<String> sysadmins = new LinkedList<String>();
+    private Collection<String> sysadmins = new CopyOnWriteArrayList<String>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.

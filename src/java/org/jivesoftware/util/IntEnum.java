@@ -3,14 +3,15 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.util;
 
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * <p>A type safe enumeration object that is keyed by an Int
@@ -25,7 +26,9 @@ import java.util.Hashtable;
  * @author Iain Shigeoka
  */
 public class IntEnum extends Enum {
+
     private int value;
+    protected static Hashtable enumTypes = new Hashtable();
 
     protected IntEnum(String name, int val) {
         super(name);
@@ -53,17 +56,15 @@ public class IntEnum extends Enum {
         }
     }
 
-    protected static Hashtable enumTypes = new Hashtable();
-
     /**
      * <p>Checks in an enum for use in the getEnumFromInt() method.</p>
      *
      * @param enumeration The enum to be registered
      */
     protected static void register(IntEnum enumeration) {
-        LongHashMap enums = (LongHashMap)enumTypes.get(enumeration.getClass());
+        Map enums = (Map)enumTypes.get(enumeration.getClass());
         if (enums == null) {
-            enums = new LongHashMap();
+            enums = new HashMap<Integer,Object>();
             enumTypes.put(enumeration.getClass(), enums);
         }
         enums.put(enumeration.getValue(), enumeration);
@@ -77,7 +78,7 @@ public class IntEnum extends Enum {
      * @return The associated enum or null if no matching enum exists
      */
     protected static IntEnum getEnumFromInt(Class enumClass, int value) {
-        LongHashMap enums = (LongHashMap)enumTypes.get(enumClass);
+        Map enums = (Map)enumTypes.get(enumClass);
         if (enums != null) {
             return (IntEnum)enums.get(value);
         }

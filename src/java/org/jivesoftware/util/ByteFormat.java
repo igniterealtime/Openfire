@@ -3,10 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2002 Jive Software. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.util;
 
 import java.text.DecimalFormat;
@@ -21,25 +23,6 @@ import java.text.ParsePosition;
  * @author Bill Lynch
  */
 public class ByteFormat extends Format {
-
-//    private long numBytes = 0;
-
-    public ByteFormat() {
-    }
-
-//    public ByteFormat(int numBytes) {
-//        this.numBytes = numBytes;
-//    }
-//
-//    public long getNumBytes() {
-//        return numBytes;
-//    }
-//
-//    public void setNumBytes(long numBytes) {
-//        this.numBytes = numBytes;
-//    }
-
-    // Implemented from the Format class
 
     /**
      * Formats a long which represent a number of bytes.

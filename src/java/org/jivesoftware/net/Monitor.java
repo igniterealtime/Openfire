@@ -3,37 +3,36 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.net;
 
 import java.util.Date;
 
 /**
- * <p>Monitors a network usage.</p>
+ * Monitors a network usage. Monitors measure sample totals, and sample rate
+ * (samples per second). Monitor information is used at runtime to adjust
+ * server behavior as well as to generate reports on server history.<p>
  *
- * <p>Monitors measure sample totals, and sample rate (samples per second).
- * Monitor information is used at runtime to adjust server behavior as well
- * as to generate reports on server history.</p>
- *
- * <p>Based in part on the DataMonitor from Java Distributed Computing, Jim Farley,
- * O'Reilly.</p>
+ * Based in part on the DataMonitor from Java Distributed Computing, Jim Farley,
+ * O'Reilly.
  *
  * @author Iain Shigeoka
  */
 public interface Monitor {
 
     /**
-     * <p>Add the number of samples that occured between the given start and
-     * end times.</p>
+     * Add the number of samples that occured between the given start and
+     * end times.<p>
      *
-     * <p>The monitor does not check for overlapping sample times. It is
+     * The monitor does not check for overlapping sample times. It is
      * the caller's responsibility to ensure samples don't overlap. Failure
      * to prevent overlapping sample times may result in elapsed time
-     * being falsely counted and reported.</p>
+     * being falsely counted and reported.
      *
      * @param quantity The number of samples that occurred during the sample period
      * @param startTime The beginning of the sample period

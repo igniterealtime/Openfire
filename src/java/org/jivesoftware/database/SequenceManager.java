@@ -13,13 +13,13 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LongHashMap;
-import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Manages sequences of unique ID's that get stored in the database. Database support for sequences
@@ -51,10 +51,10 @@ public class SequenceManager {
             "UPDATE jiveID SET id=? WHERE idType=? AND id=?";
 
     // Statically startup a sequence manager for each of the sequence counters.
-    private static LongHashMap managers;
+    private static Map<Integer,Object> managers;
 
     static {
-        managers = new LongHashMap();
+        managers = new HashMap<Integer,Object>();
         new SequenceManager(JiveConstants.USER, 1);
         new SequenceManager(JiveConstants.GROUP, 1);
         new SequenceManager(JiveConstants.ROSTER, 5);

@@ -11,31 +11,18 @@
 package org.jivesoftware.util;
 
 import org.jivesoftware.messenger.container.ModuleContext;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheFactory;
 
 import java.util.Hashtable;
 
 /**
- * <p>A centralized, JVM static manager of Jive caches.</p>
- * <p/>
- * <p>Caches are essential for scalability of Jive software. Only Jive objects should access the cache!
- * 3rd parties are discouraged from modifying or using the Jive caches without consulting with Jive
- * engineers on consequences.</p>
+ * A centralized, JVM static manager of Jive caches. Caches are essential for
+ * scalability.
  *
  * @author Iain Shigeoka
- *         <p/>
  */
 public class CacheManager {
 
-    /**
-     * <p>The map for accessing the caches.</p>
-     */
     private static Hashtable caches = new Hashtable();
-    /**
-     * <p>The max lifetime of items in any cache.</p>
-     */
     private static long maxLifetime = JiveConstants.HOUR * 6;
 
     /**
@@ -63,15 +50,15 @@ public class CacheManager {
                 catch (NumberFormatException e) { /* ignore */
                 }
             }
-            caches.put(name, CacheFactory.createCache(name, maxCacheSize, maxLifetime));
+            caches.put(name, new Cache(name, maxCacheSize, maxLifetime));
         }
     }
 
     /**
-     * <p>Obtain a cache by name.</p>
+     * Returns the cache specified by name.
      *
-     * @param name The name of the cache to retrieve
-     * @return The cache found, or null if no cache by that name has been initialized
+     * @param name the name of the cache to return.
+     * @return the cache found, or null if no cache by that name has been initialized.
      */
     public static Cache getCache(String name) {
         return (Cache)caches.get(name);

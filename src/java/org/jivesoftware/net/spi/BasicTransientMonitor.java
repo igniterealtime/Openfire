@@ -3,11 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.net.spi;
 
 import org.jivesoftware.net.Monitor;
@@ -18,29 +19,21 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * <p>Implements a transient (in-memory) generic monitor.</p>
+ * Implements a transient (in-memory) generic monitor.
  *
  * @author Iain Shigeoka
  */
 public class BasicTransientMonitor implements Monitor {
 
-    /** <p>Total sample quantity.</p> */
-    private long totalSamples;
-    /** <p>The total sampling time</p> */
-    private long totalTime;
-    /** <p>The time of the last sample end time.</p> */
-    private long lastSampleTime = -1;
-    /** <p>The time of the first sample taken.</p> */
-    private long firstSampleTime = -1;
-    /** <p>The time the monitor was created.</p> */
-    private Date startUpTime;
-    /** <p>The size of a sample frame in sample events.</p> */
-    private int frameSize;
-    /** <p>The default size of a sample frame (20 events). </p> */
     private static final int DEFAULT_FRAME_SIZE = 20;
-    /** <p>Frame data stored in a circular list.</p> */
+
+    private long totalSamples;
+    private long totalTime;
+    private long lastSampleTime = -1;
+    private long firstSampleTime = -1;
+    private Date startUpTime;
+    private int frameSize;
     private CircularLinkedList frameList = new CircularLinkedList();
-    /** <p>lock on the frame list</p> */
     private ReadWriteLock frameLock = new ReentrantReadWriteLock();
 
     public BasicTransientMonitor(){

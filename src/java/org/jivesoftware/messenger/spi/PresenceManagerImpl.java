@@ -69,9 +69,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
         // create caches - no size limit and never expire for presence caches
         long HOUR = JiveConstants.HOUR;
-        onlineGuestCache = new DefaultCache("Online Guests", -1, -1);
-        onlineUserCache = new DefaultCache("Online Users", -1, -1);
-        foreignUserCache = new DefaultCache("Foreign Users", foreignCacheSize, HOUR);
+        onlineGuestCache = new Cache("Online Guests", -1, -1);
+        onlineUserCache = new Cache("Online Users", -1, -1);
+        foreignUserCache = new Cache("Foreign Users", foreignCacheSize, HOUR);
     }
 
     public boolean isAvailable(User user) throws UnauthorizedException {

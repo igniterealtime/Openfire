@@ -3,11 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.net.policies;
 
 import org.jivesoftware.net.AcceptPolicy;
@@ -15,13 +16,13 @@ import org.jivesoftware.net.Connection;
 import org.jivesoftware.net.AcceptPolicy;
 
 /**
- * <p>Performs a bitwise logical XOR (exclusive OR) evaluation on
+ * Performs a bitwise logical XOR (exclusive OR) evaluation on
  * child policies (e.g. if both policies evaluate to true or false
- * the XOR result is false).</p>
+ * the XOR result is false).<p>
  *
- * <p>This policy is useful for combining simpler policies to create
+ * This policy is useful for combining simpler policies to create
  * complex policy decisions. The comparison is done using the bitwise
- * XOR operation so both policies will always be evaluated.</p>
+ * XOR operation so both policies will always be evaluated.
  *
  * @author Iain Shigeoka
  */
@@ -31,7 +32,7 @@ public class XorPolicy implements AcceptPolicy {
     private AcceptPolicy policy2;
 
     /**
-     * <p>Create an AND policy with the given two child policies.</p>
+     * Create an AND policy with the given two child policies.
      *
      * @param firstPolicy The first policy that will be evaluated
      * @param secondPolicy The first policy that will be evaluated

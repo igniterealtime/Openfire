@@ -19,12 +19,12 @@ import java.util.Map;
  * such as;
  * <p/>
  * <ul>
- * <li>user      -&gt;fred</li>
- * <li>hostname  -&gt;helm.realityforge.org</li>
+ * <li>user -&gt;fred</li>
+ * <li>hostname -&gt;helm.realityforge.org</li>
  * <li>ipaddress -&gt;1.2.3.4</li>
  * <li>interface -&gt;127.0.0.1</li>
- * <li>caller    -&gt;com.biz.MyCaller.method(MyCaller.java:18)</li>
- * <li>source    -&gt;1.6.3.2:33</li>
+ * <li>caller -&gt;com.biz.MyCaller.method(MyCaller.java:18)</li>
+ * <li>source -&gt;1.6.3.2:33</li>
  * </ul>
  * The context is bound to a thread (and inherited by sub-threads) but
  * it can also be added to by LogTargets.

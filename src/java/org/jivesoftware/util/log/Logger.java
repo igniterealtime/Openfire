@@ -244,7 +244,7 @@ public class Logger {
     }
 
     /**
-     * Determine if messages of priority  will be logged.
+     * Determine if messages of priority will be logged.
      *
      * @return true if messages will be logged
      */

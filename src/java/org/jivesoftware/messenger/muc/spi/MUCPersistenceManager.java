@@ -41,15 +41,15 @@ import org.jivesoftware.util.StringUtils;
 public class MUCPersistenceManager {
 
     private static final String LOAD_ROOM_SURROGATES =
-        "SELECT roomID, name, description, canChangeSubject, maxUsers, " +
+        "SELECT roomID, name, naturalLanguageRoom, description, canChangeSubject, maxUsers, " +
         "moderated, invitationRequired, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
-        "SELECT roomID, description, canChangeSubject, maxUsers, publicRoom, " +
-        "moderated, invitationRequired, canInvite, password, " +
+        "SELECT roomID, naturalLanguageRoom, description, canChangeSubject, maxUsers, " +
+        "publicRoom, moderated, invitationRequired, canInvite, password, " +
         "canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
@@ -57,14 +57,15 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String UPDATE_ROOM = 
-        "UPDATE mucRoom SET modificationDate=?, name=?, description=?, canChangeSubject=?, maxUsers=?, " +
-        "publicRoom=?, moderated=?, invitationRequired=?, canInvite=?, password=?, " +
-        "canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, inMemory=? WHERE roomID=?";
+        "UPDATE mucRoom SET modificationDate=?, naturalLanguageRoom=?, description=?, " +
+        "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
+        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
+        "inMemory=? WHERE roomID=?";
     private static final String ADD_ROOM = 
-        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, description, canChangeSubject, " +
-        "maxUsers, publicRoom, moderated, invitationRequired, canInvite, password, canDiscoverJID, " +
-        "logEnabled, subject, rolesToBroadcast, lastActiveDate, inMemory) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalLanguageRoom, " +
+        "description, canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, " +
+        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "lastActiveDate, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_IN_MEMORY =
@@ -107,18 +108,19 @@ public class MUCPersistenceManager {
             while (rs.next()) {
                 room = new MUCPersistentRoomSurrogate(chatserver, rs.getString(2), packetRouter);
                 room.setID(rs.getLong(1));
-                room.setDescription(rs.getString(3));
-                room.setCanOccupantsChangeSubject(rs.getInt(4) == 1 ? true : false);
-                room.setMaxUsers(rs.getInt(5));
-                room.setModerated(rs.getInt(6) == 1 ? true : false);
-                room.setInvitationRequiredToEnter(rs.getInt(7) == 1 ? true : false);
-                room.setCanOccupantsInvite(rs.getInt(8) == 1 ? true : false);
-                room.setPassword(rs.getString(9));
-                room.setCanAnyoneDiscoverJID(rs.getInt(10) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(11) == 1 ? true : false);
-                room.setSubject(rs.getString(12));
+                room.setNaturalLanguageName(rs.getString(3));
+                room.setDescription(rs.getString(4));
+                room.setCanOccupantsChangeSubject(rs.getInt(5) == 1 ? true : false);
+                room.setMaxUsers(rs.getInt(6));
+                room.setModerated(rs.getInt(7) == 1 ? true : false);
+                room.setInvitationRequiredToEnter(rs.getInt(8) == 1 ? true : false);
+                room.setCanOccupantsInvite(rs.getInt(9) == 1 ? true : false);
+                room.setPassword(rs.getString(10));
+                room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
+                room.setSubject(rs.getString(13));
                 List rolesToBroadcast = new ArrayList();
-                String roles = Integer.toBinaryString(rs.getInt(13));
+                String roles = Integer.toBinaryString(rs.getInt(14));
                 if (roles.charAt(0) == '1') {
                     rolesToBroadcast.add("moderator");
                 }
@@ -198,19 +200,20 @@ public class MUCPersistenceManager {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
             room.setID(rs.getLong(1));
-            room.setDescription(rs.getString(2));
-            room.setCanOccupantsChangeSubject(rs.getInt(3) == 1 ? true : false);
-            room.setMaxUsers(rs.getInt(4));
-            room.setPublicRoom(rs.getInt(5) == 1 ? true : false);
-            room.setModerated(rs.getInt(6) == 1 ? true : false);
-            room.setInvitationRequiredToEnter(rs.getInt(7) == 1 ? true : false);
-            room.setCanOccupantsInvite(rs.getInt(8) == 1 ? true : false);
-            room.setPassword(rs.getString(9));
-            room.setCanAnyoneDiscoverJID(rs.getInt(10) == 1 ? true : false);
-            room.setLogEnabled(rs.getInt(11) == 1 ? true : false);
-            room.setSubject(rs.getString(12));
+            room.setNaturalLanguageName(rs.getString(2));
+            room.setDescription(rs.getString(3));
+            room.setCanOccupantsChangeSubject(rs.getInt(4) == 1 ? true : false);
+            room.setMaxUsers(rs.getInt(5));
+            room.setPublicRoom(rs.getInt(6) == 1 ? true : false);
+            room.setModerated(rs.getInt(7) == 1 ? true : false);
+            room.setInvitationRequiredToEnter(rs.getInt(8) == 1 ? true : false);
+            room.setCanOccupantsInvite(rs.getInt(9) == 1 ? true : false);
+            room.setPassword(rs.getString(10));
+            room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
+            room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
+            room.setSubject(rs.getString(13));
             List rolesToBroadcast = new ArrayList();
-            String roles = Integer.toBinaryString(rs.getInt(13));
+            String roles = Integer.toBinaryString(rs.getInt(14));
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
@@ -293,7 +296,7 @@ public class MUCPersistenceManager {
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
                 pstmt.setString(1, StringUtils.dateToMillis(nowDate));
-                pstmt.setString(2, room.getName());
+                pstmt.setString(2, room.getNaturalLanguageName());
                 pstmt.setString(3, room.getDescription());
                 pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
                 pstmt.setInt(5, room.getMaxUsers());
@@ -315,21 +318,22 @@ public class MUCPersistenceManager {
                 pstmt.setString(2, StringUtils.dateToMillis(nowDate));
                 pstmt.setString(3, StringUtils.dateToMillis(nowDate));
                 pstmt.setString(4, room.getName());
-                pstmt.setString(5, room.getDescription());
-                pstmt.setInt(6, (room.canOccupantsChangeSubject() ? 1 : 0));
-                pstmt.setInt(7, room.getMaxUsers());
-                pstmt.setInt(8, (room.isPublicRoom() ? 1 : 0));
-                pstmt.setInt(9, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(10, (room.isInvitationRequiredToEnter() ? 1 : 0));
-                pstmt.setInt(11, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setString(12, room.getPassword());
-                pstmt.setInt(13, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(14, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(15, room.getSubject());
-                pstmt.setInt(16, marshallRolesToBroadcast(room));
-                pstmt.setString(17, StringUtils.dateToMillis(nowDate));
-                pstmt.setInt(18, 1); // the room starts always "in memory"
-                pstmt.execute();
+                pstmt.setString(5, room.getNaturalLanguageName());
+                pstmt.setString(6, room.getDescription());
+                pstmt.setInt(7, (room.canOccupantsChangeSubject() ? 1 : 0));
+                pstmt.setInt(8, room.getMaxUsers());
+                pstmt.setInt(9, (room.isPublicRoom() ? 1 : 0));
+                pstmt.setInt(10, (room.isModerated() ? 1 : 0));
+                pstmt.setInt(11, (room.isInvitationRequiredToEnter() ? 1 : 0));
+                pstmt.setInt(12, (room.canOccupantsInvite() ? 1 : 0));
+                pstmt.setString(13, room.getPassword());
+                pstmt.setInt(14, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(15, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setString(16, room.getSubject());
+                pstmt.setInt(17, marshallRolesToBroadcast(room));
+                pstmt.setString(18, StringUtils.dateToMillis(nowDate));
+                pstmt.setInt(19, 1); // the room starts always "in memory"
+                pstmt.executeUpdate();
             }
         }
         catch (SQLException sqle) {
@@ -359,17 +363,17 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
-            pstmt.execute();
+            pstmt.executeUpdate();
             pstmt.close();
 
             pstmt = con.prepareStatement(DELETE_MEMBERS);
             pstmt.setLong(1, room.getID());
-            pstmt.execute();
+            pstmt.executeUpdate();
             pstmt.close();
 
             pstmt = con.prepareStatement(DELETE_ROOM);
             pstmt.setLong(1, room.getID());
-            pstmt.execute();
+            pstmt.executeUpdate();
 
             // Update the room (in memory) to indicate the it's no longer in the database.
             room.setSavedToDB(false);
@@ -464,7 +468,7 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(UPDATE_SUBJECT);
             pstmt.setString(1, subject);
             pstmt.setLong(2, room.getID());
-
+            pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -504,7 +508,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.setString(3, nickname);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -526,7 +530,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.setInt(3, newAffiliation);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -550,7 +554,7 @@ public class MUCPersistenceManager {
                     pstmt.setString(1, nickname);
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -572,7 +576,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(DELETE_AFFILIATION);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                     pstmt.close();
 
                     // Add them as a member.
@@ -580,7 +584,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.setString(3, nickname);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -601,14 +605,14 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(DELETE_MEMBER);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                     pstmt.close();
 
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.setInt(3, newAffiliation);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -630,7 +634,7 @@ public class MUCPersistenceManager {
                     pstmt.setInt(1, newAffiliation);
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -663,7 +667,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(DELETE_MEMBER);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -684,7 +688,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(DELETE_AFFILIATION);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.execute();
+                    pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
                     Log.error(sqle);
@@ -717,7 +721,7 @@ public class MUCPersistenceManager {
             pstmt.setString(4, StringUtils.dateToMillis(entry.getDate()));
             pstmt.setString(5, entry.getSubject());
             pstmt.setString(6, entry.getBody());
-            pstmt.execute();
+            pstmt.executeUpdate();
             return true;
         }
         catch (SQLException sqle) {

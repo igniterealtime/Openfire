@@ -9,9 +9,13 @@
 
         <sidebar name="Server Manager">
 
-            <item id="server-props" name="Server Properties"
+            <item id="server-settings" name="System Settings"
                     url="index.jsp"
-                    description="Click to see server properties" />
+                    description="Click to manage system settings" />
+
+            <item id="server-props" name="Server Properties"
+                    url="server-properties.jsp"
+                    description="Click to manage server properties" />
 
             <item id="server-db" name="Database"
                     url="server-db.jsp"

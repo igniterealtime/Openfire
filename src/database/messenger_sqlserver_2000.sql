@@ -160,7 +160,7 @@ CREATE TABLE mucMember (
 
 CREATE TABLE mucConversationLog (
   roomID              INT            NOT NULL,
-  sender              NVARCHAR(3000) NOT NULL,
+  sender              NVARCHAR(1024) NOT NULL,
   nickname            NVARCHAR(255)  NULL,
   time                CHAR(15)       NOT NULL,
   subject             NVARCHAR(255)  NULL,

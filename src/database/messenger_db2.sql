@@ -44,7 +44,7 @@ CREATE TABLE jiveOffline (
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
   username              VARCHAR(32)     NOT NULL,
-  jid                   VARCHAR(2000)   NOT NULL,
+  jid                   VARCHAR(1024)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
@@ -141,21 +141,21 @@ CREATE INDEX mucRoom_roomid_idx ON mucRoom (roomID);
 
 CREATE TABLE mucAffiliation (
   roomID              INTEGER       NOT NULL,
-  jid                 VARCHAR(2000) NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   affiliation         INTEGER       NOT NULL,
   CONSTRAINT mucAffiliation_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucMember (
   roomID              INTEGER       NOT NULL,
-  jid                 VARCHAR(2000) NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucConversationLog (
   roomID              INTEGER       NOT NULL,
-  sender              VARCHAR(2000) NOT NULL,
+  sender              VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,

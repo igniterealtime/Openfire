@@ -65,7 +65,7 @@ CREATE TABLE jiveOffline (
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(32)     NOT NULL,
-  jid                   VARCHAR(1024)   NOT NULL,
+  jid                   TEXT            NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
   recv                  TINYINT         NOT NULL,
@@ -96,8 +96,8 @@ CREATE TABLE jiveID (
 );
 
 CREATE TABLE jiveProperty (
-  name        VARCHAR(100) NOT NULL,
-  propValue   TEXT NOT NULL,
+  name        VARCHAR(100)              NOT NULL,
+  propValue   TEXT                      NOT NULL,
   PRIMARY KEY (name)
 );
 
@@ -129,21 +129,21 @@ CREATE TABLE mucRoom (
 
 CREATE TABLE mucAffiliation (
   roomID              BIGINT        NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
+  jid                 TEXT          NOT NULL,
   affiliation         TINYINT       NOT NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 
 CREATE TABLE mucMember (
   roomID              BIGINT        NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
+  jid                 TEXT          NOT NULL,
   nickname            VARCHAR(255)  NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 
 CREATE TABLE mucConversationLog (
   roomID              BIGINT        NOT NULL,
-  sender              VARCHAR(1024) NOT NULL,
+  sender              TEXT          NOT NULL,
   nickname            VARCHAR(255)  NULL,
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,

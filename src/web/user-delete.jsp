@@ -87,8 +87,8 @@
 
 <form action="user-delete.jsp">
 <input type="hidden" name="username" value="<%= username %>">
-<input type="submit" name="delete" value="Delete User">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" name="delete" value="<fmt:message key="user.delete.delete" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

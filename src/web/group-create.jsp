@@ -351,8 +351,8 @@
 
 <br><br>
 
-<input type="submit" name="create" value="Create Group">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" name="create" value="<fmt:message key="group.create.create" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 

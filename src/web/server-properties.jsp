@@ -351,8 +351,8 @@ function dodelete(propName) {
 <tfoot>
     <tr>
         <td colspan="2">
-            <input type="submit" name="save" value="Save Property">
-            <input type="submit" name="cancel" value="Cancel">
+            <input type="submit" name="save" value="<fmt:message key="global.save_property" />">
+            <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
         </td>
     </tr>
 </tfoot>

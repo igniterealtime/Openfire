@@ -216,9 +216,9 @@
 
 <br><br>
 
-<input type="submit" name="create" value="Create User">
-<input type="submit" name="another" value="Create &amp; Create Another">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
+<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 

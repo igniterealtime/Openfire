@@ -70,7 +70,7 @@
           <input type="text" name="username" value="<%= ((username!=null) ? username : "") %>" size="30" maxlength="75"/>
         </td>
       </tr>
-     <tr><td colspan="2" nowrap><input type="submit" name="search" value="Search!"/><input type="submit" name="cancel" value="Cancel"/></td>
+     <tr><td colspan="2" nowrap><input type="submit" name="search" value="<fmt:message key="user.search.search" />"/><input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"/></td>
      </tr>
     </table>
   </fieldset>

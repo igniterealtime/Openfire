@@ -185,7 +185,7 @@
         <option value="member"><fmt:message key="muc.room.affiliations.member" /></option>
         <option value="outcast"><fmt:message key="muc.room.affiliations.outcast" /></option>
     </select>
-    <input type="submit" value="Add">
+    <input type="submit" value="<fmt:message key="global.add" />">
     </p>
 
     <div class="jive-table" style="width:400px;">

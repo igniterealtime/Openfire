@@ -336,7 +336,12 @@ public class RosterItemProvider {
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);
                 pstmt.setString(3, (String)iter.next());
-                pstmt.executeUpdate();
+                try {
+                    pstmt.executeUpdate();
+                }
+                catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
         finally {

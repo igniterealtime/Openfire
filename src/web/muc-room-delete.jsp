@@ -106,8 +106,8 @@
 
 <br><br>
 
-<input type="submit" name="delete" value="Destroy Room">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" name="delete" value="<fmt:message key="muc.room.delete.destroy_room" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

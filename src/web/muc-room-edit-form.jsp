@@ -524,8 +524,8 @@
         </fieldset>
         </tr>
          <tr align="center">
-            <td colspan="2"><input type="submit" name="Submit" value="Save changes">
-            <input type="submit" name="cancel" value="Cancel"></td>
+            <td colspan="2"><input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />">
+            <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
         </tr>
     </tbody>
     </table>

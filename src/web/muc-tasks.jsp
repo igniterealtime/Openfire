@@ -201,7 +201,7 @@
 
 <br><br>
 
-<input type="submit" value="Save Settings">
+<input type="submit" value="<fmt:message key="global.save_settings" />">
 
 </form>
 
@@ -237,7 +237,7 @@
 
 <br><br>
 
-<input type="submit" value="Save Settings">
+<input type="submit" value="<fmt:message key="global.save_settings" />">
 
 </form>
 

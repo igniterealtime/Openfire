@@ -422,8 +422,8 @@
     <br>
 
     <%  if (edit) { %>
-        <input type="submit" name="save" value="Save Settings">
-        <input type="submit" name="cancel" value="Cancel">
+        <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+        <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
     <%  } %>
 
                     </form>
@@ -440,7 +440,7 @@
                 </td>
                 <td nowrap class="c1" align="left">
                     <input type="text" size="40" name="users"/>
-                    &nbsp;<input type="submit" name="addbutton" value="Add">
+                    &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                 </td>
             </tr>
         </table>

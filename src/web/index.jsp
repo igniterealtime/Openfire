@@ -118,9 +118,9 @@
                 started <%= formatter.format(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
 
                 <% if (webManager.getXMPPServer().isStandAlone()){ %>
-                        &nbsp;&nbsp;<input type="submit" value="Stop" name="stop" <%= ((serverOn) ? "" : "disabled") %>>
+                        &nbsp;&nbsp;<input type="submit" value="<fmt:message key="global.stop" />" name="stop" <%= ((serverOn) ? "" : "disabled") %>>
                     <% if (webManager.getXMPPServer().isRestartable()){ %>
-                        &nbsp;&nbsp;<input type="submit" value="Restart" name="restart" <%= ((serverOn) ? "" : "disabled") %>>
+                        &nbsp;&nbsp;<input type="submit" value="<fmt:message key="global.restart" />" name="restart" <%= ((serverOn) ? "" : "disabled") %>>
                     <% } %>
                 <% } %>
 
@@ -235,7 +235,7 @@
 <br>
 
 <form action="server-props.jsp">
-<input type="submit" value="Edit Properties">
+<input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

@@ -66,8 +66,8 @@
 
 <form action="group-delete.jsp">
 <input type="hidden" name="group" value="<%= groupName %>">
-<input type="submit" name="delete" value="Delete Group">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

@@ -120,7 +120,7 @@
 <br>
 
 <input type="submit" value="Save and Return">
-<input type="submit" value="Cancel" onclick="location.href='session-summary.jsp';">
+<input type="submit" value="<fmt:message key="global.cancel" />" onclick="location.href='session-summary.jsp';">
 
 </form>
 

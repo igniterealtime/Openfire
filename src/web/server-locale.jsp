@@ -82,7 +82,7 @@
     <div style="padding-top:0.5em;">
 
         <p>
-        Current Locale: <%= locale.getDisplayName() %> (<%= locale %>)
+        <fmt:message key="locale.current" />: <%= locale.getDisplayName() %> (<%= locale %>)
         </p>
 
         <%  boolean usingPreset = false;
@@ -93,7 +93,7 @@
             }
         %>
 
-        <label for="sel01">Choose new locale:</label>
+        <label for="sel01"><fmt:message key="locale.choose" />:</label>
 
         <select size="1" name="localeCode" style="font-family:courier new; font-size:9pt;"
          id="sel01" onchange="this.form.localeChoice[0].checked=true;">
@@ -121,7 +121,7 @@
 
 <br><br>
 
-<input type="submit" name="save" value="Save Settings">
+<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 
 </form>
 

@@ -166,7 +166,7 @@
         </tbody>
         </table>
         <br>
-        <input type="submit" value="Save Settings">
+        <input type="submit" value="<fmt:message key="global.save_settings" />">
     </div>
 </fieldset>
 

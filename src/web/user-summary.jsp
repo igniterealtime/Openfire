@@ -34,7 +34,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("User.Summary.title");
+    String title = LocaleUtils.getLocalizedString("user.summary.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
@@ -86,7 +86,7 @@
 %>
 
 <p>
-<fmt:message key="User.Summary.info" />
+<fmt:message key="user.summary.info" />
 </p>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -96,7 +96,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        <fmt:message key="User.Summary.deleted" />
+        <fmt:message key="user.summary.deleted" />
         </td></tr>
     </tbody>
     </table>
@@ -105,15 +105,15 @@
 <%  } %>
 
 <p>
-<fmt:message key="User.Summary.total_user" />: <%= webManager.getUserManager().getUserCount() %>,
+<fmt:message key="user.summary.total_user" />: <%= webManager.getUserManager().getUserCount() %>,
 <%  if (numPages > 1) { %>
 
-    <fmt:message key="User.Summary.showing" /> <%= (start+1) %>-<%= (start+range) %>,
+    <fmt:message key="user.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>,
 
 <%  } %>
-<fmt:message key="User.Summary.sorted" />
+<fmt:message key="user.summary.sorted" />
 
-- Users per page:
+- <fmt:message key="user.summary.users_per_page" />:
 <select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
     <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
@@ -129,7 +129,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="User.Summary.pages" />:
+    <fmt:message key="user.summary.pages" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -154,9 +154,9 @@
         <th nowrap><fmt:message key="session.details.online" /></th>
         <th nowrap><fmt:message key="user.create.username" /></th>
         <th nowrap><fmt:message key="user.create.name" /></th>
-        <th nowrap><fmt:message key="User.Summary.created" /></th>
-        <th nowrap><fmt:message key="User.Summary.edit" /></th>
-        <th nowrap><fmt:message key="User.Summary.delete" /></th>
+        <th nowrap><fmt:message key="user.summary.created" /></th>
+        <th nowrap><fmt:message key="user.summary.edit" /></th>
+        <th nowrap><fmt:message key="user.summary.delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -167,7 +167,7 @@
 %>
     <tr>
         <td align="center" colspan="7">
-            <fmt:message key="User.Summary.not_user" />
+            <fmt:message key="user.summary.not_user" />
         </td>
     </tr>
 
@@ -218,12 +218,12 @@
         </td>
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-             title="<fmt:message key="User.Summary.click_edit" />"
+             title="<fmt:message key="user.summary.click_edit" />"
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-             title="<fmt:message key="User.Summary.click_delete" />"
+             title="<fmt:message key="user.summary.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
@@ -238,7 +238,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="User.Summary.pages" />:
+    <fmt:message key="user.summary.pages" />:
     [
     <%  for (i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";

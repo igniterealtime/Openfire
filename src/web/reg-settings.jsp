@@ -146,7 +146,7 @@
 
 <br><br>
 
-<input type="submit" name="save" value="Save Settings">
+<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 
 </form>
 

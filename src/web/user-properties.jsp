@@ -213,7 +213,7 @@
 
 <form action="user-edit-form.jsp">
 <input type="hidden" name="username" value="<%= user.getUsername() %>">
-<input type="submit" value="Edit Properties">
+<input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

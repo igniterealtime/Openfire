@@ -139,8 +139,8 @@
 
 <br><br>
 
-<input type="submit" value="Update Password" name="update">
-<input type="submit" value="Cancel" name="cancel">
+<input type="submit" value="<fmt:message key="user.password.update_pwd" />" name="update">
+<input type="submit" value="<fmt:message key="global.cancel" />" name="cancel">
 </form>
 
 <script lang="JavaScript" type="text/javascript">

@@ -253,8 +253,8 @@ function updateSelect(el) {
 
 <br>
 
-<input type="submit" value="Send Message">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" value="<fmt:message key="user.message.send_message" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 

@@ -153,8 +153,8 @@
 
 <br><br>
 
-<input type="submit" value="Save User Properties">
-<input type="submit" name="cancel" value="Cancel">
+<input type="submit" value="<fmt:message key="global.save_properties" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 

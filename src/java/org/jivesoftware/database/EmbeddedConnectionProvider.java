@@ -18,9 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
@@ -32,8 +30,23 @@ import java.sql.Statement;
  */
 public class EmbeddedConnectionProvider implements ConnectionProvider {
 
-    private ConnectionPool connectionPool = null;
+    private static final String CHECK_VERSION =
+            "SELECT majorVersion, minorVersion FROM jiveVersion";
 
+    /**
+     * Database schema major version. The schema version corresponds to the
+     * product release version, but may not exactly match in the case that
+     * the product version has advanced without schema changes.
+     */
+    private static final int CURRENT_MAJOR_VERSION = 2;
+
+    /**
+     * Database schema minor version.
+     */
+    private static final int CURRENT_MINOR_VERSION = 1;
+
+
+    private ConnectionPool connectionPool = null;
     private Object initLock = new Object();
 
     public boolean isPooled() {
@@ -82,6 +95,10 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 // Create initial tables if they don't already exist.
                 if (initData) {
                     initializeDatabase();
+                }
+                // Check to see if the database schema needs to be upgraded.
+                else {
+                    upgradeDatabase();
                 }
             }
             catch (IOException ioe) {
@@ -156,6 +173,92 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             if (con != null) {
                 try { con.close(); }
                 catch (Exception e) { }
+            }
+        }
+    }
+
+    private void upgradeDatabase() {
+        int majorVersion;
+        int minorVersion;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(CHECK_VERSION);
+            ResultSet rs = pstmt.executeQuery();
+            // If no results, assume the version is 2.0.
+            if (!rs.next()) {
+                majorVersion = 2;
+                minorVersion = 0;
+            }
+            majorVersion = rs.getInt(1);
+            minorVersion = rs.getInt(2);
+            rs.close();
+        }
+        catch (SQLException sqle) {
+            // If the table doesn't exist, an error will be thrown. Therefore
+            // assume the version is 2.0.
+            majorVersion = 2;
+            minorVersion = 0;
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        if (minorVersion == CURRENT_MINOR_VERSION) {
+            return;
+        }
+        // The database is an old version that needs to be upgraded.
+        Log.info("Found old database schema (" + majorVersion + "." + minorVersion + "). " +
+                "Upgrading to latest schema.");
+        // Run all upgrade scripts until we're up to the latest schema.
+        for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
+            BufferedReader in = null;
+            try {
+                // Resource will be like "/database/upgrade/2.0_to_2.1/messenger_hsqldb.sql"
+                String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
+                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/messenger_hsqldb.sql";
+                in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(
+                        resourceName)));
+                con = getConnection();
+                boolean done = false;
+                while (!done) {
+                    StringBuffer command = new StringBuffer();
+                    while (true) {
+                        String line = in.readLine();
+                        if (line == null) {
+                            done = true;
+                            break;
+                        }
+                        // Ignore comments and blank lines.
+                        if (isCommandPart(line)) {
+                            command.append(line);
+                        }
+                        if (line.endsWith(";")) {
+                            break;
+                        }
+                    }
+                    // Send command to database.
+                    Statement stmt = con.createStatement();
+                    stmt.execute(command.toString());
+                    stmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+                e.printStackTrace();
+            }
+            finally {
+                if (in != null) {
+                    try { in.close(); }
+                    catch (Exception e) { }
+                }
+                if (con != null) {
+                    try { con.close(); }
+                    catch (Exception e) { }
+                }
             }
         }
     }

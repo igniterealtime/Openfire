@@ -24,10 +24,7 @@ import org.dom4j.io.XMLWriter;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.Date;
 import java.util.Queue;
 import java.util.Timer;
@@ -170,7 +167,7 @@ public class AuditorImpl implements Auditor {
             }
         }
 
-        writer = new FileWriter(currentAuditFile);
+        writer = new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8");
         writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
         xmlWriter = new XMLWriter(writer);
     }

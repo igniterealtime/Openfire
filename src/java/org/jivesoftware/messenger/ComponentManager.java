@@ -2,10 +2,12 @@ package org.jivesoftware.messenger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.util.StringUtils;
 
 public class ComponentManager {
-    private Map<String, Component> components = new HashMap<String, Component>();
+    private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
 
     static private ComponentManager singleton;
     private final static Object LOCK = new Object();

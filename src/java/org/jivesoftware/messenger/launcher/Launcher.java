@@ -21,6 +21,8 @@ import java.io.FileNotFoundException;
 import javax.swing.*;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.XMLProperties;
+import org.jdesktop.jdic.tray.TrayIcon;
+import org.jdesktop.jdic.tray.SystemTray;
 
 /**
  * Launcher for Jive Messenger.
@@ -37,6 +39,8 @@ public class Launcher {
      * Creates a new Launcher object.
      */
     public Launcher() {
+        // Initialize the SystemTray now (to avoid a bug!)
+        SystemTray tray = SystemTray.getDefaultSystemTray();
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -47,12 +51,6 @@ public class Launcher {
 
         String title = "Jive Messenger Server Launcher";
         final JFrame frame = new JFrame(title);
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                stopApplication();
-                System.exit(0);
-            }
-        });
 
         ImageIcon splash = null;
         JLabel splashLabel = null;
@@ -94,8 +92,38 @@ public class Launcher {
         }
 
         mainPanel.add(toolbar, BorderLayout.SOUTH);
-        browserButton.setEnabled(false);
 
+        // create the main menu of the system tray icon
+        JPopupMenu menu = new JPopupMenu("Messenger Menu");
+
+        menu.addSeparator();
+
+        final JMenuItem showMenuItem = new JMenuItem("Hide");
+        showMenuItem.setActionCommand("Hide/Show");
+        menu.add(showMenuItem);
+
+        final JMenuItem startMenuItem = new JMenuItem("Start");
+        startMenuItem.setActionCommand("Start");
+        menu.add(startMenuItem);
+
+        final JMenuItem stopMenuItem = new JMenuItem("Stop");
+        stopMenuItem.setActionCommand("Stop");
+        menu.add(stopMenuItem);
+
+        final JMenuItem browserMenuItem = new JMenuItem("Launch Admin");
+        browserMenuItem.setActionCommand("Launch Admin");
+        menu.add(browserMenuItem);
+
+        menu.addSeparator();
+
+        final JMenuItem quitMenuItem = new JMenuItem("Quit");
+        quitMenuItem.setActionCommand("Quit");
+        menu.add(quitMenuItem);
+
+        browserButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        browserMenuItem.setEnabled(false);
+        stopMenuItem.setEnabled(false);
 
         ActionListener actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -104,6 +132,8 @@ public class Launcher {
                     startApplication();
                     startButton.setEnabled(false);
                     stopButton.setEnabled(true);
+                    startMenuItem.setEnabled(false);
+                    stopMenuItem.setEnabled(true);
                     Thread thread = new Thread() {
                         public void run() {
                             try {
@@ -112,7 +142,11 @@ public class Launcher {
                             catch (Exception e) {
                             }
 
-                            browserButton.setEnabled(true);
+                            // Enable the Launch Admin button/menu item only if the server has started
+                            if (stopButton.isEnabled()) {
+                                browserButton.setEnabled(true);
+                                browserMenuItem.setEnabled(true);
+                            }
 
                             frame.setCursor(Cursor.getDefaultCursor());
                         }
@@ -124,7 +158,10 @@ public class Launcher {
                     stopApplication();
                     browserButton.setEnabled(false);
                     startButton.setEnabled(true);
-                    stopButton.setEnabled(true);
+                    stopButton.setEnabled(false);
+                    browserMenuItem.setEnabled(false);
+                    startMenuItem.setEnabled(true);
+                    stopMenuItem.setEnabled(false);
                 }
                 else if (e.getActionCommand().equals("Launch Admin")) {
                     launchBrowser();
@@ -132,6 +169,20 @@ public class Launcher {
                 else if (e.getActionCommand().equals("Quit")) {
                     stopApplication();
                     System.exit(0);
+                }
+                else if (e.getActionCommand().equals("Hide/Show") || e.getActionCommand().equals("PressAction")) {
+                    // Hide/Unhide the window if the user clicked in the system tray icon or
+                    // selected the menu option
+                    if (frame.isVisible()) {
+                        frame.setVisible(false);
+                        frame.setState(Frame.ICONIFIED);
+                        showMenuItem.setText("Show");
+                    }
+                    else {
+                        frame.setVisible(true);
+                        frame.setState(Frame.NORMAL);
+                        showMenuItem.setText("Hide");
+                    }
                 }
             }
         };
@@ -141,6 +192,33 @@ public class Launcher {
         stopButton.addActionListener(actionListener);
         browserButton.addActionListener(actionListener);
         quitButton.addActionListener(actionListener);
+
+        // Register a listener for the menu items.
+        quitMenuItem.addActionListener(actionListener);
+        browserMenuItem.addActionListener(actionListener);
+        stopMenuItem.addActionListener(actionListener);
+        startMenuItem.addActionListener(actionListener);
+        showMenuItem.addActionListener(actionListener);
+
+        // Set the system tray icon with the menu
+        ImageIcon i = new ImageIcon(getClass().getClassLoader().getResource("messenger-16x16.gif"));
+        TrayIcon ti = new TrayIcon(i, "Jive Messenger", menu);
+        ti.setIconAutoSize(true);
+        ti.addActionListener(actionListener);
+        tray.addTrayIcon(ti);
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                stopApplication();
+                System.exit(0);
+            }
+
+            public void windowIconified(WindowEvent e) {
+                // Make the window disappear when minimized
+                frame.setVisible(false);
+                showMenuItem.setText("Show");
+            }
+        });
 
         frame.getContentPane().add(mainPanel);
         frame.pack();

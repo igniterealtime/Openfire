@@ -84,23 +84,25 @@ public class SubDirInfoTask extends Task {
         StringBuffer buf = new StringBuffer();
         String value = null;
         String sep = "";
-        for (int i=0; i<subdirs.length; i++) {
-            File subdir = subdirs[i];
-            boolean add = false;
-            if (subdir.isDirectory()) {
-                if (getIfexists() != null) {
-                    File file = new File(subdir, getIfexists());
-                    if (file.exists()) {
+        if (subdirs != null) {
+            for (int i=0; i<subdirs.length; i++) {
+                File subdir = subdirs[i];
+                boolean add = false;
+                if (subdir.isDirectory()) {
+                    if (getIfexists() != null) {
+                        File file = new File(subdir, getIfexists());
+                        if (file.exists()) {
+                            add = true;
+                        }
+                    }
+                    else {
                         add = true;
                     }
                 }
-                else {
-                    add = true;
+                if (add && !subdir.getName().equals(except)) {
+                    buf.append(sep).append(subdir.getName());
+                    sep = getDelimiter();
                 }
-            }
-            if (add && !subdir.getName().equals(except)) {
-                buf.append(sep).append(subdir.getName());
-                sep = getDelimiter();
             }
         }
         if (buf.length() > 0) {

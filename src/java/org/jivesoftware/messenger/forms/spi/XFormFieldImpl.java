@@ -202,6 +202,9 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
     }
 
     public void addValue(String value) {
+        if (value == null) {
+            value = "";
+        }
         synchronized (values) {
             values.add(value);
         }

@@ -47,9 +47,9 @@ public class AuthProviderFactory {
      * The default class to instantiate is database implementation.
      */
     private static String authClassName =
-            "org.jivesoftware.xmpp.auth.spi.DbAuthProvider";
+            "org.jivesoftware.messenger.auth.spi.DbAuthProvider";
     private static String groupClassName =
-            "org.jivesoftware.xmpp.auth.spi.DbGroupProvider";
+            "org.jivesoftware.messenger.auth.spi.DbGroupProvider";
 
     private static AuthProvider authProvider = null;
     private static GroupProvider groupProvider = null;

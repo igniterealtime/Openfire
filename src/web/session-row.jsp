@@ -8,7 +8,7 @@
 
 <%--
   - This page is meant to be included in other pages. It assumes 2 variables:
-  -     * 'sess', a org.jivesoftware.xmpp.Session object
+  -     * 'sess', a org.jivesoftware.messenger.Session object
   -     * 'count', an int representing the row number we're on.
   -     * 'current', a boolean which indicates the current row the user is looking (pass in
   -       false if there is no current row.

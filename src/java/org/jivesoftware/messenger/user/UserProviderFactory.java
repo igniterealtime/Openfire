@@ -50,11 +50,11 @@ public class UserProviderFactory {
     /**
      * The default class to instantiate is database implementation.
      */
-    private static String[] classNames = {"org.jivesoftware.xmpp.user.spi.DbUserIDProvider",
-                                          "org.jivesoftware.xmpp.user.spi.DbUserPropertiesProvider",
-                                          "org.jivesoftware.xmpp.user.spi.DbUserInfoProvider",
-                                          "org.jivesoftware.xmpp.user.spi.DbUserAccountProvider",
-                                          "org.jivesoftware.xmpp.user.spi.DbRosterItemProvider"};
+    private static String[] classNames = {"org.jivesoftware.messenger.user.spi.DbUserIDProvider",
+                                          "org.jivesoftware.messenger.user.spi.DbUserPropertiesProvider",
+                                          "org.jivesoftware.messenger.user.spi.DbUserInfoProvider",
+                                          "org.jivesoftware.messenger.user.spi.DbUserAccountProvider",
+                                          "org.jivesoftware.messenger.user.spi.DbRosterItemProvider"};
 
     private static String[] propNames = {"UserProvider.id.className",
                                          "UserProvider.properties.className",

@@ -41,14 +41,14 @@
     catch (ClassNotFoundException cnfe) {}
     // Check that the Messenger jar are installed:
     try {
-        loadClass("org.jivesoftware.xmpp.XMPPServer");
+        loadClass("org.jivesoftware.messenger.XMPPServer");
         jiveJarsInstalled = true;
     }
     catch (ClassNotFoundException cnfe) {}
 
     // Try to determine what the jiveHome directory is:
     try {
-        Class jiveGlobalsClass = loadClass("org.jivesoftware.xmpp.JiveGlobals");
+        Class jiveGlobalsClass = loadClass("org.jivesoftware.messenger.JiveGlobals");
         Method getJiveHomeMethod = jiveGlobalsClass.getMethod("getJiveHome", null);
         String jiveHomeProp = (String)getJiveHomeMethod.invoke(jiveGlobalsClass, null);
         if (jiveHomeProp != null) {

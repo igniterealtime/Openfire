@@ -36,6 +36,6 @@ public class XMPPServerStarter extends ServerStarter {
 
 
     protected String getBootContainerClassName() {
-        return "org.jivesoftware.xmpp.XMPPBootContainer";
+        return "org.jivesoftware.messenger.XMPPBootContainer";
     }
 }

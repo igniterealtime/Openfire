@@ -416,8 +416,9 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     public Object startService(Class service) throws UnauthorizedException {
         Object instance = lookup.lookup(service);
         if (instance == null) {
-            if (service.getName().equals("org.jivesoftware.xmpp.user.UserManager")) {
-                loadCorePlugins(new String[]{ "org.jivesoftware.xmpp.user.spi.UserManagerImpl"});
+            if (service.getName().equals("org.jivesoftware.messenger.user.UserManager")) {
+                loadCorePlugins(new String[]{
+                    "org.jivesoftware.messenger.user.spi.UserManagerImpl"});
                 instance = lookup.lookup(service);
             }
         }

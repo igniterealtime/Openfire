@@ -84,7 +84,7 @@
 <p>
 <fmt:message key="session.details.info">
     <fmt:param value="<%= "<b>"+address.toString()+"</b>" %>" />
-    <fmt:param value="<%= "<b>"+address.getNode()+"</b>" %>" />
+    <fmt:param value="<%= address.getNode() == null ? "" : "<b>"+address.getNode()+"</b>" %>" />
 </fmt:message>
 
 </p>

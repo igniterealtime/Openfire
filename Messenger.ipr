@@ -231,6 +231,7 @@
         <root url="jar://$PROJECT_DIR$/build/lib/merge/whack.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/jdic.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/xpp3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/merge/jmdns.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

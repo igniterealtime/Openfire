@@ -31,6 +31,7 @@ import org.jivesoftware.util.Version;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.net.MulticastDNSService;
 import org.dom4j.io.SAXReader;
 import org.dom4j.Document;
 
@@ -253,6 +254,7 @@ public class XMPPServer {
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(MultiUserChatServerImpl.class.getName());
+        loadModule(MulticastDNSService.class.getName());
     }
 
     /**

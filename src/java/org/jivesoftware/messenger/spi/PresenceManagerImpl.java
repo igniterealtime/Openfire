@@ -11,18 +11,20 @@
 
 package org.jivesoftware.messenger.spi;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.container.TrackInfo;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -31,8 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
 
-    private Map<String,Presence> onlineGuests;
-    private Map<String,Presence> onlineUsers;
+    private Map<String, Presence> onlineGuests;
+    private Map<String, Presence> onlineUsers;
 
     /**
      * table: key jid.getUserJid().toLowerCase() (String); value Presence
@@ -59,8 +61,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
         // create caches - no size limit and never expire for presence caches
         long HOUR = JiveConstants.HOUR;
-        onlineGuests = new ConcurrentHashMap<String,Presence>();
-        onlineUsers = new ConcurrentHashMap<String,Presence>();
+        onlineGuests = new ConcurrentHashMap<String, Presence>();
+        onlineUsers = new ConcurrentHashMap<String, Presence>();
         foreignUserCache = new Cache("Foreign Users", foreignCacheSize, HOUR);
     }
 
@@ -110,50 +112,53 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
 
         switch (sortField) {
-            case PresenceManager.SORT_ONLINE_TIME: {
-                Collections.sort(presences, new Comparator() {
-                    public int compare(Object object1, Object object2) {
-                        Presence presence1 = (Presence)object1;
-                        Presence presence2 = (Presence)object2;
-                        if (ascending) {
-                            return presence1.getLoginTime().compareTo(presence2.getLoginTime());
+            case PresenceManager.SORT_ONLINE_TIME:
+                {
+                    Collections.sort(presences, new Comparator() {
+                        public int compare(Object object1, Object object2) {
+                            Presence presence1 = (Presence)object1;
+                            Presence presence2 = (Presence)object2;
+                            if (ascending) {
+                                return presence1.getLoginTime().compareTo(presence2.getLoginTime());
+                            }
+                            else {
+                                return presence2.getLoginTime().compareTo(presence1.getLoginTime());
+                            }
                         }
-                        else {
-                            return presence2.getLoginTime().compareTo(presence1.getLoginTime());
+                    });
+                    break;
+                }
+            case PresenceManager.SORT_USERNAME:
+                {
+                    Collections.sort(presences, new Comparator() {
+                        public int compare(Object object1, Object object2) {
+                            Presence presence1 = (Presence)object1;
+                            Presence presence2 = (Presence)object2;
+                            String presenceUser1 = "";
+                            String presenceUser2 = "";
+                            try {
+                                presenceUser1 =
+                                        userManager.getUser(presence1.getUsername()).getUsername();
+                                presenceUser2 =
+                                        userManager.getUser(presence2.getUsername()).getUsername();
+                            }
+                            catch (UserNotFoundException e) {
+                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                            }
+                            if (ascending) {
+                                return presenceUser1.compareTo(presenceUser2);
+                            }
+                            else {
+                                return presenceUser2.compareTo(presenceUser1);
+                            }
                         }
-                    }
-                });
-                break;
-            }
-            case PresenceManager.SORT_USERNAME: {
-                Collections.sort(presences, new Comparator() {
-                    public int compare(Object object1, Object object2) {
-                        Presence presence1 = (Presence)object1;
-                        Presence presence2 = (Presence)object2;
-                        String presenceUser1 = "";
-                        String presenceUser2 = "";
-                        try {
-                            presenceUser1 =
-                                    userManager.getUser(presence1.getUsername()).getUsername();
-                            presenceUser2 =
-                                    userManager.getUser(presence2.getUsername()).getUsername();
-                        }
-                        catch (UserNotFoundException e) {
-                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                        }
-                        if (ascending) {
-                            return presenceUser1.compareTo(presenceUser2);
-                        }
-                        else {
-                            return presenceUser2.compareTo(presenceUser1);
-                        }
-                    }
-                });
-                break;
-            }
-            default: {
-                // ignore invalid sort field
-            }
+                    });
+                    break;
+                }
+            default:
+                {
+                    // ignore invalid sort field
+                }
         }
 
         List<User> users = new ArrayList<User>();
@@ -272,14 +277,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public void probePresence(String prober, XMPPAddress probee) {
         try {
+            Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
                 if (probee.getNamePrep() != null && !"".equals(probee.getNamePrep())) {
-                    Iterator sessionIter =
-                            sessionManager.getSessions(probee.getNamePrep());
+                    Iterator sessionIter = sessionManager.getSessions(probee.getNamePrep());
                     while (sessionIter.hasNext()) {
                         Session session = (Session)sessionIter.next();
-                        Presence presencePacket =
-                                (Presence)session.getPresence().createDeepCopy();
+                        Presence presencePacket = (Presence)session.getPresence().createDeepCopy();
                         presencePacket.setSender(session.getAddress());
                         try {
                             sessionManager.userBroadcast(prober, presencePacket);
@@ -290,9 +294,15 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     }
                 }
             }
+            else if (component != null) {
+                Presence presence = new PresenceImpl();
+                presence.setType(Presence.PROBE);
+                presence.setSender(server.createAddress(prober, ""));
+                presence.setRecipient(probee);
+                component.processPacket(presence);
+            }
             else {
-                Presence presence =
-                        (Presence)foreignUserCache.get(probee.toBareStringPrep());
+                Presence presence = (Presence)foreignUserCache.get(probee.toBareStringPrep());
                 if (presence != null) {
                     Presence presencePacket = (Presence)presence.createDeepCopy();
                     presencePacket.setSender(probee);
@@ -302,6 +312,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     catch (Exception e) {
                         Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     }
+                }
+                else {
+                    XMPPAddress proberAddress = server.createAddress(prober, "");
+                    componentManager.addPresenceRequest(proberAddress, probee);
                 }
             }
         }
@@ -367,10 +381,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         return trackInfo;
     }
 
-     public Component getPresenceComponent(XMPPAddress probee){
-         // Check for registered components
+    public Component getPresenceComponent(XMPPAddress probee) {
+        // Check for registered components
         Component component = componentManager.getComponent(probee.toBareStringPrep());
-        if(component != null){
+        if (component != null) {
             return component;
         }
         return null;

@@ -1,12 +1,15 @@
 package org.jivesoftware.messenger;
 
 import java.util.Map;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.messenger.spi.PresenceImpl;
 
 public class ComponentManager {
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
+    private Map<XMPPAddress, XMPPAddress> presenceMap = new ConcurrentHashMap<XMPPAddress, XMPPAddress>();
 
     static private ComponentManager singleton;
     private final static Object LOCK = new Object();
@@ -38,6 +41,9 @@ public class ComponentManager {
     public void addComponent(String jid, Component component){
         jid = validateJID(jid);
         components.put(jid, component);
+
+        // Check for potential interested users.
+        checkPresences();
     }
 
     public void removeComponent(String jid){
@@ -62,5 +68,23 @@ public class ComponentManager {
     private String validateJID(String jid){
         jid = jid.trim().toLowerCase();
         return jid;
+    }
+
+    public void addPresenceRequest(XMPPAddress prober, XMPPAddress probee){
+        presenceMap.put(prober, probee);
+    }
+
+    private void checkPresences(){
+        for(XMPPAddress prober : presenceMap.keySet()){
+            XMPPAddress probee = presenceMap.get(prober);
+
+            Component component = getComponent(probee.toBareStringPrep());
+            if(component != null){
+                Presence presence = new PresenceImpl();
+                presence.setSender(prober);
+                presence.setRecipient(probee);
+                component.processPacket(presence);
+            }
+        }
     }
 }

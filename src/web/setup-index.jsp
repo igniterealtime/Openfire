@@ -101,6 +101,33 @@
             <label for="loc02">Simplified Chinese</label> (zh_CN)
         </td>
     </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="cs_CZ" <%= ("cs_CZ".equals(locale.toString()) ? "checked" : "") %>
+             id="loc03" />
+        </td>
+        <td colspan="2">
+            <label for="loc03">Czech (cs_CZ)</label>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="de" <%= ("de".equals(locale.toString()) ? "checked" : "") %>
+             id="loc04" />
+        </td>
+        <td colspan="2">
+            <label for="loc04">Deutsch (de)</label>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %>
+             id="loc05" />
+        </td>
+        <td colspan="2">
+            <label for="loc05">Nederlands (nl)</label>
+        </td>
+    </tr>
 </tbody>
 </table>
 </ul>

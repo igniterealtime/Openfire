@@ -17,7 +17,7 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <!-- @@ JSPC DEFINED SERVLET PLACEHOLDER @@ -->
+    <!--@@JSPC-SERVLETS@@-->
 
     <taglib>
         <taglib-uri>core</taglib-uri>

@@ -23,6 +23,16 @@
     </description>
 
     <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFS                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/xmltask.jar"/>
+        </classpath>
+    </taskdef>
+
+    <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
@@ -44,6 +54,7 @@
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
     <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java" />
     <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes" />
+    <property name="webapp.dest.dir" value="${target.dir}/webapp" />
     <property name="release.dest.dir" value="${target.dir}/release" />
 
     <!-- ======================================================================================= -->
@@ -132,6 +143,7 @@
         <mkdir dir="${jspc.java.dest.dir}" />
         <mkdir dir="${jspc.classes.dest.dir}" />
 
+        <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
         <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
             <classpath id="jspc.classpath">
                 <pathelement location="${java.home}/../lib/tools.jar" />
@@ -140,25 +152,21 @@
             </classpath>
         </taskdef>
 
-        <!-- todo - try standard jspc task, use jasper2 compiler -->
-
+        <!-- JSP to JAVA -->
         <jasper2
                 validateXml="false"
                 uriroot="${web.dir}"
                 outputDir="${jspc.java.dest.dir}"
                 package="org.jivesoftware.messenger.admin"
-                webXmlFragment="${jspc.dest.dir}/web.tmp.xml" />
-<!--            <include name="**/*.jsp" />-->
-<!--            <exclude name="session-row.jsp" />-->
-<!--        </jasper2>-->
+                webXmlFragment="${jspc.dest.dir}/web.partial.xml" />
 
+        <!-- Compile java source -->
         <javac
             destdir="${jspc.classes.dest.dir}"
             includeAntRuntime="no"
             debug="on"
             source="1.5"
             includes="org/jivesoftware/messenger/admin/**/*.java"
-            excludes="**/*.smap"
         >
             <src path="${jspc.java.dest.dir}" />
             <classpath>
@@ -167,22 +175,15 @@
             </classpath>
         </javac>
 
-<!--            <classpath>-->
-<!--                <pathelement path="${compile.dir}" />-->
-<!--                <path refid="compile.dependencies" />-->
-<!--            </classpath>-->
-<!--        </jasper2>-->
+        <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
+        <mkdir dir="${webapp.dest.dir}" />
+        <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" />
+        <copy file="${web.dir}/WEB-INF/web.xml" toFile="${webapp.dest.dir}/WEB-INF/web.xml">
+            <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
+                <filter token="JSPC-SERVLETS" value="${servlet-xml}" />
+            </filterset>
+        </copy>
 
-<!--        <jspc srcdir="${web.dir}"-->
-<!--                destdir="${jspc.java.dest.dir}"-->
-<!--                package="com.jivesoftware.messenger.admin"-->
-<!--                webinc="${jspc.dest.dir}/web.tmp.xml">-->
-<!--            <include name="**/*.jsp" />-->
-<!--            <classpath>-->
-<!--                <pathelement path="${compile.dir}" />-->
-<!--                <path refid="compile.dependencies" />-->
-<!--            </classpath>-->
-<!--        </jspc>-->
     </target>
 
     <!-- jspcjar =============================================================================== -->
@@ -201,6 +202,11 @@
     <!-- clean ================================================================================= -->
     <target name="clean" description="Cleans up all build-generated output">
         <delete dir="${target.dir}" />
+    </target>
+
+    <!-- clean-jspc ============================================================================ -->
+    <target name="clean-jspc" description="Cleans all JSPC output">
+        <delete dir="${jspc.dest.dir}" />
     </target>
 
 </project>

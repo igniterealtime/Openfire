@@ -27,6 +27,8 @@
         JiveGlobals.setXMLProperty("setup","true");
         // update the sidebar status
         session.setAttribute("jive.setup.sidebar.4","done");
+        // Indicate a server is required:
+        session.setAttribute("jive.setup.requireRestart","true");
     }
 %>
 

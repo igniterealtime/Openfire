@@ -25,6 +25,12 @@
         return;
     }
 
+    // Is a restart required?
+    if ("true".equals(session.getAttribute("jive.setup.requireRestart"))) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+
     // embedded mode?
     boolean embeddedMode = false;
     try {

@@ -10,7 +10,8 @@ import="java.text.DateFormat,
         java.net.URLEncoder,
         java.net.URLDecoder,
         org.jivesoftware.messenger.user.UserManager,
-        org.jivesoftware.messenger.user.UserNotFoundException"%>
+        org.jivesoftware.messenger.user.UserNotFoundException,
+        org.jivesoftware.stringprep.Stringprep"%>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%
@@ -29,16 +30,23 @@ import="java.text.DateFormat,
     boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
     String newName = ParamUtils.getParameter(request, "newName");
     String newDescription = ParamUtils.getParameter(request, "newDescription");
+    boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     Group group = groupManager.getGroup(groupName);
+    boolean success = false;
+    StringBuffer errorBuf = new StringBuffer();
 
-    boolean groupInfoChanged = false;
+
     if (newName != null && newName.length() > 0) {
         group.setName(newName);
         group.setDescription(newDescription);
         groupName = newName;
         groupInfoChanged = true;
+         // Get admin list and compare it the admin posted list.
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
+        return;
     }
+
 
     if (update) {
         Set adminIDSet = new HashSet();
@@ -75,26 +83,37 @@ import="java.text.DateFormat,
         int count = 0;
         while (tokenizer.hasMoreTokens()) {
             String username = tokenizer.nextToken();
+            username = username.trim();
+            username = username.toLowerCase();
+
             // Add to group as member by default.
             if (!group.getMembers().contains(username) && !group.getAdmins().contains(username)) {
                 // Ensure that the user is valid
                 try {
-                    UserManager.getInstance().getUser(username);
                     group.getMembers().add(username);
                     count++;
                 }
-                catch (UserNotFoundException unfe) { }
+                catch (IllegalArgumentException unfe) {
+                  errorBuf.append("<br>"+username + " is not a registered user.");
+                }
+            }
+            else {
+                errorBuf.append("<br>"+username+" is already in group.");
             }
         }
         if (count > 0) {
             response.sendRedirect("group-edit.jsp?group=" +
                     URLEncoder.encode(groupName, "UTF-8") + "&success=true");
+            return;
         }
         else {
-            response.sendRedirect("group-edit.jsp?group=" +
-                    URLEncoder.encode(groupName, "UTF-8") + "&success=false&add=true");
+            success = false;
+            add = true;
         }
-        return;
+
+    }
+    else if(add && users == null){
+        add = false;
     }
     else if (delete) {
         for (int i = 0; i < deleteMembers.length; i++) {
@@ -105,7 +124,7 @@ import="java.text.DateFormat,
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true");
         return;
     }
-    boolean success = groupInfoChanged || "true".equals(request.getParameter("success")) ||
+    success = groupInfoChanged || "true".equals(request.getParameter("success")) ||
             "true".equals(request.getParameter("deletesuccess")) ||
             "true".equals(request.getParameter("updatesuccess"));
 %>
@@ -149,7 +168,7 @@ import="java.text.DateFormat,
     </div><br>
 <%
     }
-    else if(request.getParameter("success") != null && request.getParameter("success").equals("false")) {
+    else if(!success && add){
 %>
  <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -158,6 +177,7 @@ import="java.text.DateFormat,
         <td class="jive-icon-label">
         <% if(add) { %>
         User(s) not added successfully.
+        <%= errorBuf %>
         <% } %>
         </td></tr>
     </tbody>

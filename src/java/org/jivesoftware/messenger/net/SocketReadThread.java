@@ -195,13 +195,9 @@ public class SocketReadThread extends Thread {
                 catch(IllegalArgumentException e) {
                     // The original packet contains a malformed JID so answer an error
                     Message reply = new Message();
-                    if (doc.attributeValue("id") != null) {
-                        reply.setID(doc.attributeValue("id"));
-                    }
+                    reply.setID(doc.attributeValue("id"));
                     reply.setTo(session.getAddress());
-                    if (doc.attributeValue("to") != null) {
-                        reply.getElement().addAttribute("from", doc.attributeValue("to"));
-                    }
+                    reply.getElement().addAttribute("from", doc.attributeValue("to"));
                     reply.setError(PacketError.Condition.jid_malformed);
                     session.process(reply);
                     continue;
@@ -219,13 +215,9 @@ public class SocketReadThread extends Thread {
                 catch(IllegalArgumentException e) {
                     // The original packet contains a malformed JID so answer an error
                     Presence reply = new Presence();
-                    if (doc.attributeValue("id") != null) {
-                        reply.setID(doc.attributeValue("id"));
-                    }
+                    reply.setID(doc.attributeValue("id"));
                     reply.setTo(session.getAddress());
-                    if (doc.attributeValue("to") != null) {
-                        reply.getElement().addAttribute("from", doc.attributeValue("to"));
-                    }
+                    reply.getElement().addAttribute("from", doc.attributeValue("to"));
                     reply.setError(PacketError.Condition.jid_malformed);
                     session.process(reply);
                     continue;
@@ -248,9 +240,7 @@ public class SocketReadThread extends Thread {
                     if (!doc.elements().isEmpty()) {
                         reply.setChildElement(((Element) doc.elements().get(0)).createCopy());
                     }
-                    if (doc.attributeValue("id") != null) {
-                        reply.setID(doc.attributeValue("id"));
-                    }
+                    reply.setID(doc.attributeValue("id"));
                     reply.setTo(session.getAddress());
                     if (doc.attributeValue("to") != null) {
                         reply.getElement().addAttribute("from", doc.attributeValue("to"));

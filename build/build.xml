@@ -180,7 +180,7 @@
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class" />
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
-            <fileset dir="${src.dir}/database" includes="*.sql" />
+            <fileset dir="${src.dir}" includes="database/*.sql" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
@@ -346,8 +346,16 @@
         </copy>
 
         <!-- Copy database scripts -->
-        <copy todir="${prepare.out.dir}">
+        <copy todir="${prepare.out.dir}/resources">
             <fileset dir="${src.dir}" includes="database/**/*.*"></fileset>
+        </copy>
+
+        <!-- Copy security resources -->
+        <copy todir="${prepare.out.dir}/resources">
+            <fileset dir="${src.dir}">
+                <include name="security/*" />
+                <include name="security/*.*" />
+            </fileset>
         </copy>
 
         <!-- Copy bin dir -->
@@ -361,14 +369,6 @@
         <!-- Copy plugins -->
         <copy todir="${prepare.out.dir}">
             <fileset dir="${src.dir}" includes="plugins/**/*.*" />
-        </copy>
-
-        <!-- Copy security resources -->
-        <copy todir="${prepare.out.dir}">
-            <fileset dir="${src.dir}">
-                <include name="security/*" />
-                <include name="security/*.*" />
-            </fileset>
         </copy>
 
         <!-- Copy admin plugin resources -->
@@ -459,7 +459,15 @@
 
     </target>
 
-    <!-- release =============================================================================== -->
+    <!-- quickrelease ========================================================================== -->
+    <target name="quickrelease" description="Makes an unpackaged release without Javadocs">
+        <antcall target="release">
+            <param name="no.javadoc" value="true" />
+            <param name="no.package" value="true" />
+        </antcall>
+    </target>
+
+    <!-- release-package ======================================================================= -->
     <target name="release-package" unless="no.package" description="Packages a release">
 
         <property name="package.dest.dir" value="${release.dest.dir}" />

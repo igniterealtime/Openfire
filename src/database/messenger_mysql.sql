@@ -23,7 +23,7 @@ CREATE TABLE jiveUserProp (
 CREATE TABLE jiveGroup (
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  PRIMARY KEY (name),
+  PRIMARY KEY (name)
 );
 
 CREATE TABLE jiveGroupProp (

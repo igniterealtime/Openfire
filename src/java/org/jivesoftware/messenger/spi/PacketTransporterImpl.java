@@ -17,14 +17,14 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.transport.TransportHandler;
-import javax.xml.stream.XMLStreamException;
+import org.xmpp.packet.Packet;
 
 /**
  * In-memory implementation of the packet transporter service.
  *
  * @author Iain Shigeoka
  */
-public class PacketTransporterImpl extends BasicModule implements PacketTransporter {
+public class PacketTransporterImpl extends BasicModule  {
 
     /**
      * The handler that does the actual delivery (could be a channel instead)
@@ -71,13 +71,12 @@ public class PacketTransporterImpl extends BasicModule implements PacketTranspor
      * @throws NullPointerException If the packet is null or the
      *                              packet could not be routed
      */
-    public void deliver(XMPPPacket packet)
-            throws UnauthorizedException, PacketException, XMLStreamException {
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (packet == null) {
             throw new NullPointerException();
         }
 
-        if (xmppServer != null && xmppServer.isLocal(packet.getRecipient())) {
+        if (xmppServer != null && xmppServer.isLocal(packet.getTo())) {
             deliverer.deliver(packet);
         }
         else if (transportHandler != null) {

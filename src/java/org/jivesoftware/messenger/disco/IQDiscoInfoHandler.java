@@ -12,16 +12,18 @@
 package org.jivesoftware.messenger.disco;
 
 import org.jivesoftware.messenger.container.TrackInfo;
-import org.jivesoftware.messenger.forms.XDataForm;
+import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.JID;
 
 /**
  * IQDiscoInfoHandler is responsible for handling disco#info requests. This class holds a map with
@@ -59,40 +61,40 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, XMLStreamException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // TODO Let configure an authorization policy (ACL?). Currently anyone can discover info.
         
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
-        IQ reply = (IQ)packet.createDeepCopy();
-        reply.setType(IQ.RESULT);
-        reply.setRecipient(packet.getSender());
-        reply.setSender(packet.getRecipient());
+        IQ reply = IQ.createResultIQ(packet);
+        reply.setType(IQ.Type.result);
+        reply.setTo(packet.getFrom());
+        reply.setFrom(packet.getTo());
 
         // Look for a DiscoInfoProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoInfoProvider responsibility to provide information about the JID's name together 
         // with any possible requested node.  
-        DiscoInfoProvider infoProvider = getProvider(packet.getRecipient().getHost());
+        DiscoInfoProvider infoProvider = getProvider(packet.getTo().getDomain());
         if (infoProvider != null) {
             // Get the JID's name
-            String name = packet.getRecipient().getName();
+            String name = packet.getTo().getNode();
             if (name == null || name.trim().length() == 0) {
                 name = null;
             }
             // Get the requested node
-            XMPPFragment iq = packet.getChildFragment();
-            MetaDataFragment metaData = MetaDataFragment.convertToMetaData(iq);
-            String node = metaData.getProperty("query:node");
+            Element iq = packet.getChildElement();
+            String node = iq.attributeValue("node");
+            //String node = metaData.getProperty("query:node");
             
             // Check if we have information about the requested name and node
-            if (infoProvider.hasInfo(name, node, packet.getSender())) {
-                Element queryElement = ((XMPPDOMFragment)reply.getChildFragment()).getRootElement();
+            if (infoProvider.hasInfo(name, node, packet.getFrom())) {
+                Element queryElement = reply.getChildElement();
 
                 // Add to the reply all the identities provided by the DiscoInfoProvider
                 Element identity;
-                Iterator identities = infoProvider.getIdentities(name, node, packet.getSender());
+                Iterator identities = infoProvider.getIdentities(name, node, packet.getFrom());
                 while (identities.hasNext()) {
                     identity = (Element)identities.next();
                     queryElement.add((Element)identity.clone());
@@ -100,7 +102,7 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
                 
                 // Add to the reply all the features provided by the DiscoInfoProvider
                 Element featureElement;
-                Iterator features = infoProvider.getFeatures(name, node, packet.getSender());
+                Iterator features = infoProvider.getFeatures(name, node, packet.getFrom());
                 while (features.hasNext()) {
                     featureElement = DocumentHelper.createElement("feature");
                     featureElement.addAttribute("var", (String)features.next());
@@ -108,7 +110,7 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
                 }
 
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
-                XDataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getSender());
+                XDataFormImpl dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
                     queryElement.add(dataForm.asXMLElement());
                 }
@@ -116,12 +118,12 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
             else {
                 // If the DiscoInfoProvider has no information for the requested name and node 
                 // then answer a not found error
-                reply.setError(XMPPError.Code.NOT_FOUND);
+                reply.setError(PacketError.Condition.item_not_found);
             }
         }
         else {
             // If we didn't find a DiscoInfoProvider then answer a not found error
-            reply.setError(XMPPError.Code.NOT_FOUND);
+            reply.setError(PacketError.Condition.item_not_found);
         }
 
         return reply;
@@ -213,7 +215,7 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
             ArrayList identities = new ArrayList();
             ArrayList features = new ArrayList();
 
-            public Iterator getIdentities(String name, String node, XMPPAddress senderJID) {
+            public Iterator getIdentities(String name, String node, JID senderJID) {
                 synchronized (identities) {
                     if (identities.isEmpty()) {
                         Element identity = DocumentHelper.createElement("identity");
@@ -227,16 +229,16 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
                 return identities.iterator();
             }
 
-            public Iterator getFeatures(String name, String node, XMPPAddress senderJID) {
+            public Iterator getFeatures(String name, String node, JID senderJID) {
                 return serverFeatures.iterator();
             }
 
-            public boolean hasInfo(String name, String node, XMPPAddress senderJID)
+            public boolean hasInfo(String name, String node, JID senderJID)
                     throws UnauthorizedException {
                 return name == null && node == null;
             }
 
-            public XDataForm getExtendedInfo(String name, String node, XMPPAddress senderJID) {
+            public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
                 return null;
             }
         };

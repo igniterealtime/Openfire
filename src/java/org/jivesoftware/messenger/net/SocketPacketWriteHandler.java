@@ -15,6 +15,10 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
 
 /**
  * This ChannelHandler writes packet data to connections.
@@ -32,11 +36,11 @@ public class SocketPacketWriteHandler implements ChannelHandler {
         this.messageStrategy = messageStrategy;
     }
 
-     public void process(XMPPPacket packet) throws UnauthorizedException, PacketException {
+     public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
-            XMPPAddress recipient = packet.getRecipient();
-            Session senderSession = packet.getOriginatingSession();
-            if (recipient == null || (recipient.getName() == null && recipient.getResource() == null)) {
+            JID recipient = packet.getTo();
+            Session senderSession = sessionManager.getSession(packet.getFrom());
+            if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
                 if (senderSession != null && !senderSession.getConnection().isClosed()) {
                     senderSession.getConnection().deliver(packet);
                 }
@@ -79,7 +83,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
      *
      * @param packet The packet being dropped
      */
-    private void dropPacket(XMPPPacket packet) {
+    private void dropPacket(Packet packet) {
         Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" + packet.toString());
     }
 }

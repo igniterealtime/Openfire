@@ -13,10 +13,6 @@ package org.jivesoftware.messenger.user;
 
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -51,30 +47,6 @@ public class IQRoster extends IQ implements Roster {
         return "query";
     }
 
-    public void send(XMLStreamWriter xmlSerializer, int version) throws
-            XMLStreamException {
-        try {
-            super.sendRoot(xmlSerializer, version, "iq", null);
-            xmlSerializer.setPrefix("", "jabber:iq:roster");
-            xmlSerializer.writeStartElement("query");
-            xmlSerializer.writeDefaultNamespace("jabber:iq:roster");
-            Iterator items = basicRoster.getRosterItems();
-            while (items.hasNext()) {
-                Object item = items.next();
-                if (item instanceof IQRosterItem) {
-                    ((IQRosterItem)item).send(xmlSerializer, version);
-                }
-                else {
-                    new IQRosterItemImpl((RosterItem)item).send(xmlSerializer, version);
-                }
-            }
-            xmlSerializer.writeEndElement();
-            xmlSerializer.writeEndElement();
-        }
-        catch (UnauthorizedException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-    }
 
     public void parse(Document doc) {
         Element root = doc.getRootElement();
@@ -111,31 +83,7 @@ public class IQRoster extends IQ implements Roster {
         }
     }
 
-    public void parse(XMLStreamReader xpp) throws XMLStreamException {
-        // We're one past the root iq-element
-        int event = xpp.getEventType();
-        Document doc = null;
-        // The one query element or the error element
-        if (event == XMLStreamConstants.START_ELEMENT) {
-            if ("query".equals(xpp.getLocalName())) {
-
-            }
-            else {
-                // error, we'll punt and implement later
-                throw new XMLStreamException("Error packets not supported yet");
-            }
-            try {
-                doc = XPPReader.parseDocument(xpp);
-                this.setChildElement(doc.getRootElement().getName(), doc.getRootElement().getNamespaceURI());
-            }
-            catch (DocumentException e) {
-                throw new XMLStreamException();
-            }
-        }
-        while (event != XMLStreamConstants.END_ELEMENT) {
-            event = xpp.next();
-        }
-    }
+   
 
     // ##################################################################################
     // Basic Roster usage - the downside of single inheritance

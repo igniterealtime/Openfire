@@ -11,18 +11,20 @@
 
 package org.jivesoftware.messenger.disco;
 
-import org.jivesoftware.messenger.container.TrackInfo;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.StringUtils;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.messenger.IQHandlerInfo;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.TrackInfo;
+import org.jivesoftware.util.StringUtils;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * IQDiscoItemsHandler is responsible for handling disco#items requests. This class holds a map with
@@ -62,20 +64,20 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, XMLStreamException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // TODO Let configure an authorization policy (ACL?). Currently anyone can discover items.
         
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error
-        IQ reply = (IQ)packet.createDeepCopy();
-        reply.setType(IQ.RESULT);
-        reply.setRecipient(packet.getSender());
-        reply.setSender(packet.getRecipient());
+        IQ reply = IQ.createResultIQ(packet);
+        reply.setType(IQ.Type.result);
+        reply.setTo(packet.getFrom());
+        reply.setFrom(packet.getFrom());
         
         // TODO Implement publishing client items
-        if (IQ.SET == packet.getType()) {
-            reply.setError(XMPPError.Code.NOT_IMPLEMENTED);
+        if (IQ.Type.set == packet.getType()) {
+            reply.setError(PacketError.Condition.feature_not_implemented);
             return reply;
         }
 
@@ -83,22 +85,22 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
         // together with any possible requested node.  
-        DiscoItemsProvider itemsProvider = getProvider(packet.getRecipient().getHost());
+        DiscoItemsProvider itemsProvider = getProvider(packet.getTo().getDomain());
         if (itemsProvider != null) {
             // Get the JID's name
-            String name = packet.getRecipient().getName();
+            String name = packet.getTo().getNode();
             if (name == null || name.trim().length() == 0) {
                 name = null;
             }
             // Get the requested node
-            XMPPFragment iq = packet.getChildFragment();
-            MetaDataFragment metaData = MetaDataFragment.convertToMetaData(iq);
-            String node = metaData.getProperty("query:node");
+            Element iq = packet.getChildElement();
+            String node = iq.attributeValue("node");
+            //String node = metaData.getProperty("query:node");
             
             // Check if we have items associated with the requested name and node
-            Iterator itemsItr = itemsProvider.getItems(name, node, packet.getSender());
+            Iterator itemsItr = itemsProvider.getItems(name, node, packet.getFrom());
             if (itemsItr != null) {
-                Element queryElement = ((XMPPDOMFragment)reply.getChildFragment()).getRootElement();
+                Element queryElement = reply.getChildElement();
 
                 // Add to the reply all the items provided by the DiscoItemsProvider
                 Element item;
@@ -111,12 +113,12 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
             else {
                 // If the DiscoItemsProvider has no items for the requested name and node 
                 // then answer a not found error
-                reply.setError(XMPPError.Code.NOT_FOUND);
+                reply.setError(PacketError.Condition.item_not_found);
             }
         }
         else {
             // If we didn't find a DiscoItemsProvider then answer a not found error
-            reply.setError(XMPPError.Code.NOT_FOUND);
+           reply.setError(PacketError.Condition.item_not_found);
         }
 
         return reply;
@@ -239,7 +241,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
 
     private DiscoItemsProvider getServerItemsProvider() {
         DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
-            public Iterator getItems(String name, String node, XMPPAddress senderJID)
+            public Iterator getItems(String name, String node, JID senderJID)
                     throws UnauthorizedException {
                 return serverItems.iterator();
             }

@@ -396,7 +396,7 @@ public class BasicModule implements Module {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            Log.error(e);
         }
         ;
         return found;

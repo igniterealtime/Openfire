@@ -1,6 +1,9 @@
 package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.messenger.PrivateStore;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,6 +45,7 @@ final public class UserPrivateData {
             }
         }
         catch (Exception ex) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), ex);
         }
     }
 
@@ -93,7 +97,7 @@ final public class UserPrivateData {
             privateStore.add(this.ID, element);
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), ex);
         }
     }
 }

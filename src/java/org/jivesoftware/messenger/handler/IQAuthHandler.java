@@ -130,7 +130,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             deliverer.deliver(response);
         }
         catch (Exception e) {
-            e.printStackTrace();
+            Log.error("Error handling authentication IQ packet", e);
         }
         return null;
     }
@@ -166,7 +166,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 }
             }
             catch (Exception e) {
-                e.printStackTrace(); //
+                Log.error("Error during login", e);
             }
         }
         // If the connection was not refused due to conflict, log the user in

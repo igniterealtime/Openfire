@@ -24,7 +24,9 @@
                  java.io.PrintStream,
                  org.dom4j.xpath.DefaultXPath,
                  org.dom4j.*,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 org.jivesoftware.stringprep.Stringprep,
+                 org.jivesoftware.stringprep.StringprepException"
     errorPage="error.jsp"
 %>
 
@@ -55,6 +57,15 @@
         // Validate
         if (username == null) {
             errors.put("username","");
+        }
+        else {
+            try {
+                username = username.trim().toLowerCase();
+                username = Stringprep.nodeprep(username);
+            }
+            catch (StringprepException se) {
+                errors.put("username", "");
+            }
         }
         if (password == null) {
             errors.put("password","");

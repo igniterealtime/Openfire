@@ -82,7 +82,7 @@
     <div style="padding-top:0.5em;">
 
         <p>
-        <fmt:message key="locale.current" />: <%= locale.getDisplayName() %> (<%= locale %>)
+        <fmt:message key="locale.current" />: <%= locale.getDisplayName() %>
         </p>
 
         <%  boolean usingPreset = false;
@@ -99,11 +99,11 @@
         <tbody>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="en_US" <%= ("en_US".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="en" <%= ("en".equals(locale.toString()) ? "checked" : "") %>
                      id="loc01" />
                 </td>
                 <td colspan="2">
-                    <label for="loc01">English (en_US)</label>
+                    <label for="loc01">English (en)</label>
                 </td>
             </tr>
             <tr>
@@ -112,10 +112,10 @@
                      id="loc02" />
                 </td>
                 <td>
-                    <label for="loc02">Chinese Simplified (zh_CN)</label>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
                 </td>
                 <td>
-                    <img src="images/language_zh_CN.gif" border="0" />
+                    <label for="loc02">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

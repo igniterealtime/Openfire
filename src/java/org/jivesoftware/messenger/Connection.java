@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.Writer;
 
 /**
  * <p>Represents a connection on the server.</p>
@@ -63,6 +64,8 @@ public interface Connection {
      * @throws UnauthorizedException If caller doesn't have permission to access this resource
      */
     XMLWriter getSerializer() throws UnauthorizedException;
+
+    Writer getWriter() throws UnauthorizedException;
 
     /**
      * Close this session including associated socket connection.

@@ -14,11 +14,10 @@ package org.jivesoftware.messenger.net;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Writer;
 import java.net.Socket;
 import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.io.XMLWriter;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.Connection;
 import org.jivesoftware.messenger.PacketRouter;
@@ -237,21 +236,10 @@ public class SocketReadThread extends Thread {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
         }
 
-        // Flush this to the Connection to start up.
-        XMLWriter xser = connection.getSerializer();
-        String s = "<stream:stream to=\"jivesoftware.com\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\" >";
-        Element streamElement = null;
-        try {
-            streamElement = DocumentHelper.createElement(s);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        streamElement.addAttribute("from", serverName);
-        streamElement.addAttribute("id", session.getStreamID().toString());
-        xser.write(streamElement);
-        xser.flush();
-
+        Writer writer = connection.getWriter();
+        String startPacket = "<?xml version='1.0' encoding='"+charset+"'?><stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\""+serverName+"\" id=\""+session.getStreamID().toString()+"\">";
+        writer.write(startPacket);
+        writer.flush();
         // TODO: check for SASL support in opening stream tag
     }
 

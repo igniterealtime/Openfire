@@ -11,18 +11,14 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.util.ConcurrentHashSet;
+import java.util.Iterator;
+import java.util.List;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.IQRosterItem;
 import org.jivesoftware.messenger.user.RosterItem;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
+import org.jivesoftware.util.ConcurrentHashSet;
 import org.xmpp.packet.JID;
 
 public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
@@ -82,48 +78,6 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
 
     public void setName(String name) {
         // do nothing
-    }
-
-    public void send(XMLStreamWriter xmlSerializer, int version) throws XMLStreamException {
-        xmlSerializer.writeStartElement("jabber:iq:roster", "item");
-        xmlSerializer.writeAttribute("jid", jid.toBareJID());
-        xmlSerializer.writeAttribute("subscription", subStatus.getName());
-        if (askStatus != ASK_NONE) {
-            xmlSerializer.writeAttribute("ask", askStatus.getName());
-        }
-        if (nickname != null) {
-            if (nickname.trim().length() > 0) {
-                xmlSerializer.writeAttribute("name", nickname.trim());
-            }
-        }
-        if (groups != null) {
-            Iterator groupsItr = groups.iterator();
-            while (groupsItr.hasNext()) {
-                xmlSerializer.writeStartElement("jabber:iq:roster", "group");
-                xmlSerializer.writeCharacters((String)groupsItr.next());
-                xmlSerializer.writeEndElement();
-            }
-        }
-        Iterator frags = fragments.iterator();
-        while (frags.hasNext()) {
-            Element frag = (Element)frags.next();
-            frag.send(xmlSerializer, version);
-        }
-        xmlSerializer.writeEndElement();
-    }
-
-    public IQRosterItem createDeepCopy() {
-        IQRosterItemImpl item = new IQRosterItemImpl(new JID(jid.getNode(), jid.getDomain(), jid.getResource()));
-        item.subStatus = subStatus;
-        item.askStatus = askStatus;
-        item.recvStatus = recvStatus;
-        item.nickname = nickname;
-        if (groups != null) {
-            item.groups = new ArrayList(groups.size());
-            Collections.copy(item.groups, groups);
-        }
-        item.fragments = (ConcurrentHashSet)fragments.clone();
-        return item;
     }
 
     private ConcurrentHashSet fragments = new ConcurrentHashSet();

@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.io.IOException;
+import java.io.Writer;
 
 public class ServerSession implements Session {
 
@@ -142,6 +143,10 @@ public class ServerSession implements Session {
 
         public XMLWriter getSerializer() throws UnauthorizedException {
             // todo: implement so this loops back
+            return null;
+        }
+
+        public Writer getWriter() throws UnauthorizedException {
             return null;
         }
 

@@ -89,9 +89,8 @@ public class AuditorImpl implements Auditor {
         if (xmlWriter != null) {
             try {
                 xmlWriter.flush();
-                xmlWriter.close();
                 writer.write("</jive>");
-                writer.close();
+                xmlWriter.close();
                 writer = null;
             }
             catch (Exception e) {

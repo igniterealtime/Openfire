@@ -67,13 +67,13 @@ all other properties are optional:
 <li><font color="red"><b>*</b></font> provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
 <li><font color="red"><b>*</b></font> ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
 <li>ldap.port -- LDAP server port number. If this property is not set, the default value is 389.</li>
-<li><font color="red"><b>*</b></font> ldap.baseDN -- the starting DN that searches for users will performed with. The entire subtree
-    under the base DN will be searched for user accounts.
+<li><font color="red"><b>*</b></font> ldap.baseDN -- the starting DN that searches for users will performed with. The entire   subtree under the base DN will be searched for user accounts.
 </li>
+<li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the alternate base DN will be used for authentication and loading single users, but will not be used to display a list of users (due to technical limitations).
 <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
     with this account. The admin must be able to perform searches and load user records. The user does
     not need to be able to make changes to the directory, as Jive Messenger treats the directory as read-only.
-		If this property is not set, an anonymous login to the server will be attempted.
+    If this property is not set, an anonymous login to the server will be attempted.
 </li>
 <li>ldap.adminPassword -- the password for the directory administrator.</li>
 <li>ldap.usernameField -- the field name that the username lookups will be performed on. If this property is not set,

@@ -82,6 +82,9 @@ all other properties are optional:
     <tt>cn</tt></li>
 <li>ldap.emailField -- the field name that holds the user's email address. If this property is not set,
     the default value is <tt>mail</tt>.</li>
+<li>ldap.searchFilter -- the search filter that should be used when loading users. If this property
+    is not set, the default search will be for users that have the attribute specified by
+		ldap.usernameField.
 <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
     information about buffers sent and received by the LDAP provider is written to System.out</li>
 <li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If you
@@ -143,8 +146,32 @@ property. For example, to let the usersnames "joe" and "jane" login to the admin
 &lt;/jive&gt;
 </code></pre>
 
+<p><a name=""><h2>Custom Searh Filter</h2></a></p>
 
-<p><a name="debugging"><h2>Custom Inital Context Factory</h2></a></p>
+<p>By default, Jive Messenger will load all objects under the baseDN that
+have the attribute specified by <tt>ldap.usernameField</tt>. In the
+case that the username field is set to "uid", the search for all users
+would be "(uid=*)". However, there are cases when this logic does
+not work -- for example, when a directory contains other objects besides
+users but all objects share "uid" as a unique identifier field. In that
+case, you may need to specify a custom search filter using 
+<tt>ldap.searchFilter</tt>. As an example, a search filter for all users 
+with a "uid" and a "cn" value of "joe" would
+be:</p>
+
+<pre>(&(uid={0})(cn=joe))</pre>
+
+<p>The "{0}" value in the filter above is a token that should be present in
+all custom search filters. It will be dynamically replaced with "*" when
+loading the list of all users or a username when loading a single user.</p>
+
+<p>Some custom search filters may include reserved XML entities such as
+"&". In that case, you must enter the search filter into the jive-messenger.xml
+file using CDATA:
+
+<pre>&lt;searchFilter&gt;&lt;![CDATA[(&(sAMAccountName={0})(|(givenName=GEORGE)(givenName=admin)))]]&gt;&lt;/searchFilter&gt;</pre> 
+ 
+<p><a name="ctxFactory"><h2>Custom Inital Context Factory</h2></a></p>
 
 <p>
 Some LDAP servers or application servers may require that a different LDAP

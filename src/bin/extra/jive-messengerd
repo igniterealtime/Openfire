@@ -2,11 +2,11 @@
 
 # Script used to start jive messenger as daemon
 # The script has currently been tested on Redhat Fedora Core 3,
-# but should theoretically work on most *NIX like systems (with tweaking)
+# but should theoretically work on most UNIX like systems
 #
-# before running this script make sure $MESSENGER_HOME/bin/startup.sh is
+# before running this script make sure $MESSENGER_HOME/bin/messenger is
 # executable by the user you want to run messenger as
-# (chmod +x $MESSENGER_HOME/bin/startup.sh)
+# (chmod +x $MESSENGER_HOME/bin/messenger)
 #
 # This script should be copied into /etc/init.d and linked into
 # your default runlevel directory.
@@ -17,48 +17,50 @@
 # cd /etc/rc<num>.d
 # ln -s ../init.d/jive-messengerd $90jive-messengerd
 #
-# Before using this script you need to specify two variables below:
 
-#set this to tell this script where messenger lives
+# Set this to tell this script where messenger lives
+# If this is not set the script will look for /opt/jive_messenger, then /usr/local/jive_messenger
 #export MESSENGER_HOME=
 
-#set this to tell which user to run messenger daemon as
+# Set this to tell which user to run messenger daemon as
+# If this is not set the script will default to the user "root"
 #export MESSENGER_USER=
 
 # -----------------------------------------------------------------
-export PID_FILE=/var/run/jive-messengerd.pid
 
-#determine which ps command to use to find the pid
-case `uname` in
-	SunOS)
-		#todo mention other sys 5 os here
-		PS="ps -ef"
-		;;
-	*)
-		PS="ps aux"
-		;;
-esac
+# If a messenger home variable has not been specified, try to determine it
+if [ ! $MESSENGER_HOME ]; then 
+	if [ -d "/opt/jive_messenger" ]; then
+		MESSENGER_HOME="/opt/jive_messenger"
+	elif [ -d "/usr/local/jive_messenger" ]; then
+		MESSENGER_HOME="/usr/local/jive_messenger"
+	else
+		echo "Could not find Jive Messenger installation under /opt or /usr/local" 
+		echo "Please specify the Jive Messenger installation location in environment variable MESSENGER_HOME"
+		exit 1
+	fi
+fi
+
+# If no messenger user has been specified use root
+if [ ! $MESSENGER_USER ]; then
+	MESSENGER_USER="root"
+fi
+
+function execCommand() {
+	OLD_PWD=`pwd`
+	cd $MESSENGER_HOME/bin
+	CMD="./messenger $1"
+	su -c"$CMD" $MESSENGER_USER &
+	cd $OLD_PWD
+}
+
 
 start() {
-	CMD="nohup $MESSENGER_HOME/bin/startup.sh >> $MESSENGER_HOME/logs/nohup.out 2>&1 &"
-	su -c"$CMD" $MESSENGER_USER
-	sleep 1
-
-	pid=`$PS | grep java | grep startup.jar | awk '{print$2}'`
-	if [ $pid ]; then
-		echo "$pid" > $PID_FILE
-		echo "Starting Jive Messenger daemon"
-		echo
-	else 
-		echo "$START_MSG"
-		echo "Jive Messenger daemon Failed to start"
-		echo
-	fi
+	execCommand "start"
 }
 
 stop() {
-	kill `cat $PID_FILE`
-	rm $PID_FILE
+	execCommand "stop"
 }
 
 

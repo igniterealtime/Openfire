@@ -72,7 +72,7 @@
         if (_show == Presence.SHOW_AWAY) {
     %>
         <td width="1%"
-            ><img src="images/status-away.gif" width="14" height="14" border="0" title="Away"
+            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -89,7 +89,7 @@
     <%  } else if (_show == Presence.SHOW_CHAT) { %>
 
         <td width="1%"
-            ><img src="images/status-chat.gif" width="14" height="14" border="0" title="Available to Chat"
+            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat"
             ></td>
         <td width="46%">
             Available to Chat
@@ -98,7 +98,7 @@
     <%  } else if (_show == Presence.SHOW_DND) { %>
 
         <td width="1%"
-            ><img src="images/status-dnd.gif" width="14" height="14" border="0" title="Do Not Disturb"
+            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do Not Disturb"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -112,24 +112,10 @@
             <%  } %>
         </td>
 
-    <%  } else if (_show == Presence.SHOW_INVISIBLE) { %>
-
-        <td colspan="2" width="47%">
-            <%  if (_stat != null) { %>
-
-                <%= sess.getPresence().getStatus() %>
-
-            <%  } else { %>
-
-                Invisible
-
-            <%  } %>
-        </td>
-
     <%  } else if (_show == Presence.SHOW_NONE) { %>
 
         <td width="1%"
-            ><img src="images/status-online.gif" width="14" height="14" border="0" title="Online"
+            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online"
             ></td>
         <td width="46%">
             Online
@@ -138,7 +124,7 @@
     <%  } else if (_show == Presence.SHOW_XA) { %>
 
         <td width="1%"
-            ><img src="images/status-xaway.gif" width="14" height="14" border="0" title="Extended Away"
+            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -168,6 +154,6 @@
         <a href="session-summary.jsp?jid=<%= sess.getAddress() %>&close=true"
          title="Click to kill session..."
          onclick="return confirm('Are you sure you want to close this connection?');"
-         ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
+         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
     </td>
 </tr>

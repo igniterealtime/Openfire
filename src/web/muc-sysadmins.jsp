@@ -155,7 +155,7 @@ Total Users: <%= userCount %>.
             <a href="muc-sysadmins.jsp?userJID=<%= userJID %>&delete=true"
              title="Click to delete..."
              onclick="return confirm('Are you sure you want to remove this user from the list?');"
-             ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
 <%

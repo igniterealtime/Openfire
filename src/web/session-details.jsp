@@ -157,36 +157,35 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
             int show = currentSess.getPresence().getShow();
             if (show == Presence.SHOW_AWAY) {
         %>
+
+            <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
             Away - <%= currentSess.getPresence().getStatus() %>
 
         <%
             } else if (show == Presence.SHOW_CHAT) {
         %>
 
+            <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
             Available to Chat
-
         <%
             } else if (show == Presence.SHOW_DND) {
         %>
 
+            <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
             Do Not Disturb - <%= currentSess.getPresence().getStatus() %>
-
-        <%
-            } else if (show == Presence.SHOW_INVISIBLE) {
-        %>
-
-            Invisible - <%= currentSess.getPresence().getStatus() %>
 
         <%
             } else if (show == Presence.SHOW_NONE) {
         %>
 
+            <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
             Online
 
         <%
             } else if (show == Presence.SHOW_XA) {
         %>
 
+            <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">
             Extended Away - <%= currentSess.getPresence().getStatus() %>
 
         <%

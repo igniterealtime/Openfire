@@ -53,21 +53,21 @@
             <tr>
             <%  if (INCOMPLETE.equals(items[i])) { %>
 
-                <td width="1%"><img src="images/red.gif" width="20" height="20" border="0"></td>
+                <td width="1%"><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0"></td>
                 <td width="99%">
                         <%= names[i] %>
                 </td>
 
             <%  } else if (IN_PROGRESS.equals(items[i])) { %>
 
-                <td width="1%"><img src="images/yellow.gif" width="20" height="20" border="0"></td>
+                <td width="1%"><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0"></td>
                 <td width="99%">
                         <a href="<%= links[i] %>"><%= names[i] %></a>
                 </td>
 
             <%  } else { %>
 
-                <td width="1%"><img src="images/green.gif" width="20" height="20" border="0"></td>
+                <td width="1%"><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0"></td>
                 <td width="99%">
                         <a href="<%= links[i] %>"><%= names[i] %></a>
                 </td>

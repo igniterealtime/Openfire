@@ -146,7 +146,7 @@ Sorted by User ID
         <td width="1%" align="center">
             <a href="user-delete.jsp?username=<%= user.getUsername() %>"
              title="Click to delete..."
-             ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
 

@@ -128,7 +128,7 @@ These certificates identify the server to connecting clients.
     <td class="jive-label" width="1%" align="center">
     <a href="ssl-delete.jsp?alias=<%= alias %>&type=server"
              title="Click to delete..."
-             ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
     </td><td width="99%">
     <pre>
     <%= keyStore.getCertificate(alias).toString() %>
@@ -161,7 +161,7 @@ is often empty.
     <td class="jive-label" width="1%" align="center">
     <a href="ssl-delete.jsp?alias=<%= alias %>&type=client"
              title="Click to delete..."
-             ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
+             ><img src="images/delete-16x6.gif" width="16" height="16" border="0"></a>
     </td><td width="99%">
     <pre>
     <%= trustStore.getCertificate(alias).toString() %>

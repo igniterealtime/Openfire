@@ -181,6 +181,7 @@ Below is a list of sessions on this server.
 
 <%  } %>
 
+<br>
 <p>
 List last updated: <%= dateFormatter.format(new Date()) %>
 </p>

@@ -143,5 +143,5 @@ if $cygwin; then
   esac
 fi
 
-messenger_exec_command="exec \"$JAVACMD\" $MESSENGER_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$MESSENGER_LIB\"/startup.jar"
+messenger_exec_command="exec \"$JAVACMD\" -server $MESSENGER_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$MESSENGER_LIB\"/startup.jar"
 eval $messenger_exec_command

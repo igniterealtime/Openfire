@@ -268,7 +268,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException {
         MUCRoom room = null;
-        synchronized (rooms) {
+        synchronized (roomName.intern()) {
             room = rooms.get(roomName.toLowerCase());
             if (room == null) {
                 room = new MUCRoomImpl(this, roomName, router);
@@ -347,7 +347,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             throw new IllegalStateException("Not initialized");
         }
         MUCUser user = null;
-        synchronized (users) {
+        synchronized (userjid.toString().intern()) {
             user = users.get(userjid);
             if (user == null) {
                 user = new MUCUserImpl(this, router, userjid);

@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.muc;
 import org.jivesoftware.messenger.MetaDataFragment;
 import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.XMPPAddress;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 /**
  * Defines the permissions and actions that a MUCUser may use in
@@ -73,10 +72,8 @@ public interface MUCRole extends ChatDeliverer {
      * Obtain the current presence status of a user in a chatroom.
      *
      * @return The presence of the user in the room.
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to know this
-     *                               user's presence.
      */
-    Presence getPresence() throws UnauthorizedException;
+    Presence getPresence();
 
     /**
      * Returns the extended presence information that includes information about roles,
@@ -84,19 +81,15 @@ public interface MUCRole extends ChatDeliverer {
      *
      * @return the extended presence information that includes information about roles,
      *         affiliations.
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to know this
-     *                               user's presence.
      */
-    MetaDataFragment getExtendedPresenceInformation() throws UnauthorizedException;
+    MetaDataFragment getExtendedPresenceInformation();
 
     /**
      * Set the current presence status of a user in a chatroom.
      *
      * @param presence The presence of the user in the room.
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to know this
-     *                               user's presence.
      */
-    void setPresence(Presence presence) throws UnauthorizedException;
+    void setPresence(Presence presence);
 
     /**
      * Call this method to promote or demote a user's role in a chatroom.
@@ -107,12 +100,10 @@ public interface MUCRole extends ChatDeliverer {
      * Owning ChatUsers should have their membership roles updated.
      *
      * @param newRole The new role that the user will play.
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to know this
-     *                               user's presence.
      * @throws NotAllowedException   Thrown if trying to change the moderator role to an owner or
      *                               administrator.
      */
-    void setRole(int newRole) throws UnauthorizedException, NotAllowedException;
+    void setRole(int newRole) throws NotAllowedException;
 
     /**
      * Obtain the role state of the user.
@@ -133,12 +124,9 @@ public interface MUCRole extends ChatDeliverer {
      * Call this method to promote or demote a user's affiliation in a chatroom.
      *
      * @param newAffiliation The new affiliation that the user will play.
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to set the
-     *                               user's affiliation.
      * @throws NotAllowedException   Thrown if trying to ban an owner or an administrator.
      */
-    public void setAffiliation(int newAffiliation) throws UnauthorizedException,
-            NotAllowedException;
+    public void setAffiliation(int newAffiliation) throws NotAllowedException;
 
     /**
      * Obtain the affiliation state of the user.
@@ -166,11 +154,8 @@ public interface MUCRole extends ChatDeliverer {
      * An event callback for kicks (being removed from a room). This provides the user an
      * opportunity to react to the kick (although the chat user has already been kicked when this
      * method is called). Remove users from a chatroom by calling ChatRoom.leaveRoom().
-     *
-     * @throws UnauthorizedException Thrown if the caller doesn't have permission to know this
-     *                               user's presence.
      */
-    void kick() throws UnauthorizedException;
+    void kick();
 
     /**
      * Changes the nickname of the occupant within the room to the new nickname.

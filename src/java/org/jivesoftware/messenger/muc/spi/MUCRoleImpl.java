@@ -19,6 +19,8 @@ import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 
 /**
  * Simple in-memory implementation of a role in a chatroom
@@ -111,22 +113,22 @@ public class MUCRoleImpl implements MUCRole {
         setPresence(room.createPresence(Presence.STATUS_ONLINE));
     }
 
-    public Presence getPresence() throws UnauthorizedException {
+    public Presence getPresence() {
         return presence;
     }
 
-    public MetaDataFragment getExtendedPresenceInformation() throws UnauthorizedException {
+    public MetaDataFragment getExtendedPresenceInformation() {
         return extendedInformation;
     }
 
-    public void setPresence(Presence newPresence) throws UnauthorizedException {
+    public void setPresence(Presence newPresence) {
         this.presence = newPresence;
         if (extendedInformation != null) {
             presence.addFragment(extendedInformation);
         }
     }
 
-    public void setRole(int newRole) throws UnauthorizedException, NotAllowedException {
+    public void setRole(int newRole) throws NotAllowedException {
         // Don't allow to change the role to an owner or admin unless the new role is moderator
         if (MUCRole.OWNER == affiliation || MUCRole.ADMINISTRATOR == affiliation) {
             if (MUCRole.MODERATOR != newRole) {
@@ -142,8 +144,13 @@ public class MUCRoleImpl implements MUCRole {
 
         role = newRole;
         if (MUCRole.NONE_ROLE == role) {
-            presence.setAvailable(false);
-            presence.setVisible(false);
+            try {
+                presence.setAvailable(false);
+                presence.setVisible(false);
+            }
+            catch (UnauthorizedException e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
         }
         calculateExtendedInformation();
     }
@@ -165,8 +172,7 @@ public class MUCRoleImpl implements MUCRole {
         return "none";
     }
 
-    public void setAffiliation(int newAffiliation) throws UnauthorizedException,
-            NotAllowedException {
+    public void setAffiliation(int newAffiliation) throws NotAllowedException {
         // Don't allow to ban an owner or an admin
         if (MUCRole.OWNER == affiliation || MUCRole.ADMINISTRATOR == affiliation) {
             if (MUCRole.OUTCAST == newAffiliation) {
@@ -202,7 +208,7 @@ public class MUCRoleImpl implements MUCRole {
         return nick;
     }
 
-    public void kick() throws UnauthorizedException {
+    public void kick() {
         getChatUser().removeRole(room.getName());
     }
 

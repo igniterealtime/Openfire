@@ -311,9 +311,6 @@ public class MUCUserImpl implements MUCUser {
                             sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
                         }
                     }
-                    catch (UnauthorizedException e) {
-                        sendErrorPacket(packet, XMPPError.Code.UNAUTHORIZED);
-                    }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
                     }

@@ -831,18 +831,18 @@ public class MUCRoomImpl implements MUCRoom {
             this.room = room;
         }
 
-        public Presence getPresence() throws UnauthorizedException {
+        public Presence getPresence() {
             return null;
         }
 
-        public MetaDataFragment getExtendedPresenceInformation() throws UnauthorizedException {
+        public MetaDataFragment getExtendedPresenceInformation() {
             return null;
         }
 
-        public void setPresence(Presence presence) throws UnauthorizedException {
+        public void setPresence(Presence presence) {
         }
 
-        public void setRole(int newRole) throws UnauthorizedException {
+        public void setRole(int newRole) {
         }
 
         public int getRole() {
@@ -853,7 +853,7 @@ public class MUCRoomImpl implements MUCRoom {
             return "moderator";
         }
 
-        public void setAffiliation(int newAffiliation) throws UnauthorizedException {
+        public void setAffiliation(int newAffiliation) {
         }
 
         public int getAffiliation() {
@@ -868,7 +868,7 @@ public class MUCRoomImpl implements MUCRoom {
             return null;
         }
 
-        public void kick() throws UnauthorizedException {
+        public void kick() {
         }
 
         public MUCUser getChatUser() {
@@ -932,19 +932,14 @@ public class MUCRoomImpl implements MUCRoom {
         MUCRole role;
         // Collect all the updated presences of these roles
         for (Iterator it = roles.iterator(); it.hasNext();) {
-            try {
-                role = (MUCRole) it.next();
-                // Update the presence with the new affiliation and role
-                role.setAffiliation(newAffiliation);
-                role.setRole(newRole);
-                // Prepare a new presence to be sent to all the room occupants
-                Presence presence = (Presence) role.getPresence().createDeepCopy();
-                presence.setSender(role.getRoleAddress());
-                presences.add(presence);
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
-            }
+            role = (MUCRole) it.next();
+            // Update the presence with the new affiliation and role
+            role.setAffiliation(newAffiliation);
+            role.setRole(newRole);
+            // Prepare a new presence to be sent to all the room occupants
+            Presence presence = (Presence) role.getPresence().createDeepCopy();
+            presence.setSender(role.getRoleAddress());
+            presences.add(presence);
         }
         // Answer all the updated presences
         return presences;
@@ -963,17 +958,12 @@ public class MUCRoomImpl implements MUCRoom {
         // Try looking the role in the bare JID list
         MUCRole role = occupantsByFullJID.get(fullJID);
         if (role != null) {
-            try {
-                // Update the presence with the new role
-                role.setRole(newRole);
-                // Prepare a new presence to be sent to all the room occupants
-                Presence presence = (Presence) role.getPresence().createDeepCopy();
-                presence.setSender(role.getRoleAddress());
-                return presence;
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
-            }
+            // Update the presence with the new role
+            role.setRole(newRole);
+            // Prepare a new presence to be sent to all the room occupants
+            Presence presence = (Presence) role.getPresence().createDeepCopy();
+            presence.setSender(role.getRoleAddress());
+            return presence;
         }
         return null;
     }
@@ -1516,12 +1506,7 @@ public class MUCRoomImpl implements MUCRoom {
             kickedRole.send(kickPresence);
             // Remove the occupant from the room's occupants lists
             removeOccupantRole(kickedRole);
-            try {
-                kickedRole.kick();
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
-            }
+            kickedRole.kick();
         }
     }
 

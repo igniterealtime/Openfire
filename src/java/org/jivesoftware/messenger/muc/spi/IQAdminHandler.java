@@ -139,7 +139,7 @@ public class IQAdminHandler {
                 else if ("member".equals(affiliation)) {
                     // The client is requesting the list of members
                     // In a members-only room members can get the list of members
-                    if (!room.isInvitationRequiredToEnter()
+                    if (!room.isMembersOnly()
                             && MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
                             && MUCRole.OWNER != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
@@ -241,7 +241,7 @@ public class IQAdminHandler {
                             presences.addAll(room.addMember(jid.toBareJID(), null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
-                            if (!hadAffiliation && room.isInvitationRequiredToEnter()) {
+                            if (!hadAffiliation && room.isMembersOnly()) {
                                 room.sendInvitation(jid, null, senderRole);
                             }
                         }

@@ -716,7 +716,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 features.add("http://jabber.org/protocol/muc");
                 // Always add public since only public rooms can be discovered
                 features.add("muc_public");
-                if (room.isInvitationRequiredToEnter()) {
+                if (room.isMembersOnly()) {
                     features.add("muc_membersonly");
                 }
                 else {

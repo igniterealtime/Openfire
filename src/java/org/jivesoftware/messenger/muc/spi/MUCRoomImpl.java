@@ -188,7 +188,7 @@ public class MUCRoomImpl implements MUCRoom {
      * Any user that is not a member of the room won't be able to join the room unless the user
      * decides to register with the room (thus becoming a member).
      */
-    private boolean invitationRequiredToEnter = false;
+    private boolean membersOnly = false;
 
     /**
      * Some rooms may restrict the occupants that are able to send invitations. Sending an 
@@ -448,7 +448,7 @@ public class MUCRoomImpl implements MUCRoom {
             }
             else {
                 // The user has no affiliation (i.e. NONE). Set the role accordingly.
-                if (isInvitationRequiredToEnter()) {
+                if (isMembersOnly()) {
                     // The room is members-only and the user is not a member. Raise a
                     // "Registration Required" exception.
                     throw new RegistrationRequiredException();
@@ -1038,7 +1038,7 @@ public class MUCRoomImpl implements MUCRoom {
     public List<Presence> addMember(String bareJID, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
         int oldAffiliation = (members.containsKey(bareJID) ? MUCRole.MEMBER : MUCRole.NONE);
-        if (isInvitationRequiredToEnter()) {
+        if (isMembersOnly()) {
             if (!canOccupantsInvite()) {
                 if (MUCRole.ADMINISTRATOR != sendRole.getAffiliation()
                         && MUCRole.OWNER != sendRole.getAffiliation()) {
@@ -1195,14 +1195,14 @@ public class MUCRoomImpl implements MUCRoom {
         // Update the presence with the new affiliation and inform all occupants
         try {
             int newRole;
-            if (isInvitationRequiredToEnter() && wasMember) {
+            if (isMembersOnly() && wasMember) {
                 newRole = MUCRole.NONE_ROLE;
             }
             else {
                 newRole = isModerated() ? MUCRole.VISITOR : MUCRole.PARTICIPANT;
             }
             updatedPresences = changeOccupantAffiliation(bareJID, MUCRole.NONE, newRole);
-            if (isInvitationRequiredToEnter() && wasMember) {
+            if (isMembersOnly() && wasMember) {
                 // If the room is members-only, remove the user from the room including a status
                 // code of 321 to indicate that the user was removed because of an affiliation
                 // change
@@ -1276,7 +1276,7 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void sendInvitation(JID to, String reason, MUCRole senderRole)
             throws ForbiddenException {
-        if (!isInvitationRequiredToEnter() || canOccupantsInvite()
+        if (!isMembersOnly() || canOccupantsInvite()
                 || MUCRole.ADMINISTRATOR == senderRole.getAffiliation()
                 || MUCRole.OWNER == senderRole.getAffiliation()) {
             // If the room is not members-only OR if the room is members-only and anyone can send
@@ -1506,13 +1506,13 @@ public class MUCRoomImpl implements MUCRoom {
         this.description = description;
     }
 
-    public boolean isInvitationRequiredToEnter() {
-        return invitationRequiredToEnter;
+    public boolean isMembersOnly() {
+        return membersOnly;
     }
 
-    public List<Presence> setInvitationRequiredToEnter(boolean invitationRequiredToEnter) {
+    public List<Presence> setMembersOnly(boolean membersOnly) {
         List<Presence> presences = new ArrayList<Presence>();
-        if (invitationRequiredToEnter && !this.invitationRequiredToEnter) {
+        if (membersOnly && !this.membersOnly) {
             // If the room was not members-only and now it is, kick occupants that aren't member
             // of the room
             for (MUCRole occupant : occupants.values()) {
@@ -1527,7 +1527,7 @@ public class MUCRoomImpl implements MUCRoom {
                 }
             }
         }
-        this.invitationRequiredToEnter = invitationRequiredToEnter;
+        this.membersOnly = membersOnly;
         return presences;
     }
 

@@ -42,7 +42,7 @@ public class MUCPersistenceManager {
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, " +
-        "canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, canInvite, " +
+        "canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
@@ -54,7 +54,7 @@ public class MUCPersistenceManager {
         "WHERE time>? AND roomID=? AND (nickname != \"\" OR subject IS NOT NULL) ORDER BY time";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
-        "canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, canInvite, " +
+        "canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom";
     private static final String LOAD_ALL_AFFILIATIONS =
@@ -66,12 +66,12 @@ public class MUCPersistenceManager {
         "WHERE time>? AND (nickname != \"\" OR subject IS NOT NULL) ORDER BY time";
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
-        "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
+        "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
-        "description, canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, " +
+        "description, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast)" +
         "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
@@ -159,7 +159,7 @@ public class MUCPersistenceManager {
             room.setMaxUsers(rs.getInt(7));
             room.setPublicRoom(rs.getInt(8) == 1 ? true : false);
             room.setModerated(rs.getInt(9) == 1 ? true : false);
-            room.setInvitationRequiredToEnter(rs.getInt(10) == 1 ? true : false);
+            room.setMembersOnly(rs.getInt(10) == 1 ? true : false);
             room.setCanOccupantsInvite(rs.getInt(11) == 1 ? true : false);
             room.setPassword(rs.getString(12));
             room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
@@ -283,7 +283,7 @@ public class MUCPersistenceManager {
                 pstmt.setInt(5, room.getMaxUsers());
                 pstmt.setInt(6, (room.isPublicRoom() ? 1 : 0));
                 pstmt.setInt(7, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(8, (room.isInvitationRequiredToEnter() ? 1 : 0));
+                pstmt.setInt(8, (room.isMembersOnly() ? 1 : 0));
                 pstmt.setInt(9, (room.canOccupantsInvite() ? 1 : 0));
                 pstmt.setString(10, room.getPassword());
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
@@ -304,7 +304,7 @@ public class MUCPersistenceManager {
                 pstmt.setInt(8, room.getMaxUsers());
                 pstmt.setInt(9, (room.isPublicRoom() ? 1 : 0));
                 pstmt.setInt(10, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(11, (room.isInvitationRequiredToEnter() ? 1 : 0));
+                pstmt.setInt(11, (room.isMembersOnly() ? 1 : 0));
                 pstmt.setInt(12, (room.canOccupantsInvite() ? 1 : 0));
                 pstmt.setString(13, room.getPassword());
                 pstmt.setInt(14, (room.canAnyoneDiscoverJID() ? 1 : 0));
@@ -394,7 +394,7 @@ public class MUCPersistenceManager {
                 room.setMaxUsers(rs.getInt(8));
                 room.setPublicRoom(rs.getInt(9) == 1 ? true : false);
                 room.setModerated(rs.getInt(10) == 1 ? true : false);
-                room.setInvitationRequiredToEnter(rs.getInt(11) == 1 ? true : false);
+                room.setMembersOnly(rs.getInt(11) == 1 ? true : false);
                 room.setCanOccupantsInvite(rs.getInt(12) == 1 ? true : false);
                 room.setPassword(rs.getString(13));
                 room.setCanAnyoneDiscoverJID(rs.getInt(14) == 1 ? true : false);

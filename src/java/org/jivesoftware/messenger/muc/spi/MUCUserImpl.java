@@ -221,7 +221,7 @@ public class MUCUserImpl implements MUCUser {
 
                                     // Add the user as a member of the room if the room is
                                     // members only
-                                    if (room.isInvitationRequiredToEnter()) {
+                                    if (room.isMembersOnly()) {
                                         room.lock.writeLock().lock();
                                         try {
                                             room.addMember(info.attributeValue("to"), null, role);

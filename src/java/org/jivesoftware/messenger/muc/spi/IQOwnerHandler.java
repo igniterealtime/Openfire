@@ -251,7 +251,7 @@ public class IQOwnerHandler {
                             presences.addAll(room.addMember(bareJID, null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
-                            if (!hadAffiliation && room.isInvitationRequiredToEnter()) {
+                            if (!hadAffiliation && room.isMembersOnly()) {
                                 room.sendInvitation(new JID(bareJID), null, senderRole);
                             }
                         }
@@ -422,11 +422,11 @@ public class IQOwnerHandler {
                 room.setModerated(("1".equals(booleanValue) ? true : false));
             }
 
-            field = completedForm.getField("muc#roomconfig_inviteonly");
+            field = completedForm.getField("muc#roomconfig_membersonly");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                presences.addAll(room.setInvitationRequiredToEnter(("1".equals(booleanValue) ?
+                presences.addAll(room.setMembersOnly(("1".equals(booleanValue) ?
                         true : false)));
             }
 
@@ -557,9 +557,9 @@ public class IQOwnerHandler {
             field.clearValues();
             field.addValue((room.isModerated() ? "1" : "0"));
 
-            field = configurationForm.getField("muc#roomconfig_inviteonly");
+            field = configurationForm.getField("muc#roomconfig_membersonly");
             field.clearValues();
-            field.addValue((room.isInvitationRequiredToEnter() ? "1" : "0"));
+            field.addValue((room.isMembersOnly() ? "1" : "0"));
 
             field = configurationForm.getField("muc#roomconfig_allowinvites");
             field.clearValues();
@@ -668,9 +668,9 @@ public class IQOwnerHandler {
         field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom"));
         configurationForm.addField(field);
 
-        field = new XFormFieldImpl("muc#roomconfig_inviteonly");
+        field = new XFormFieldImpl("muc#roomconfig_membersonly");
         field.setType(FormField.TYPE_BOOLEAN);
-        field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_inviteonly"));
+        field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_membersonly"));
         configurationForm.addField(field);
 
         field = new XFormFieldImpl();

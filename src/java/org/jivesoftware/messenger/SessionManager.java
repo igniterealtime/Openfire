@@ -59,6 +59,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private int conflictLimit;
     private Random randomResource = new Random();
 
+    private Map<String, Session> preAuthenticatedSessions = new HashMap<String, Session>();
+
     /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      *
@@ -271,6 +273,12 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     private StreamIDFactory streamIDFactory;
 
+    /**
+     * Creates a new <code>Session</code>
+     * @param conn the connection to create the session from.
+     * @return
+     * @throws UnauthorizedException
+     */
     public Session createSession(Connection conn) throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
@@ -279,6 +287,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         Session session = new SessionImpl(serverName, conn, id);
         conn.init(session);
         conn.registerCloseListener(this, session);
+
+        // Add to pre-authenticated sessions.
+        preAuthenticatedSessions.put(session.getAddress().toBareJID(), session);
         return session;
     }
 
@@ -301,6 +312,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // remove its route from the sessions set. We hand the session back
             // to ourselves in the message.
             session.getConnection().registerCloseListener(this, session);
+            preAuthenticatedSessions.remove(session.getAddress().toBareJID());
             success = true;
         }
         catch (UnauthorizedException e) {
@@ -311,8 +323,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
         if (success) {
             Session defaultSession = resources.getDefaultSession();
-            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
-                    defaultSession);
+            JID node = new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), null);
+            routingTable.addRoute(node, defaultSession);
             routingTable.addRoute(session.getAddress(), session);
         }
         return success;
@@ -450,6 +462,13 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      */
     public Session getSession(JID from) {
         Session session = null;
+
+        // Initially Check preAuthenticated Sessions
+        session = preAuthenticatedSessions.get(from.toBareJID());
+        if(session != null){
+            return session;
+        }
+
         String resource = from.getResource();
         if (resource == null) {
             return null;

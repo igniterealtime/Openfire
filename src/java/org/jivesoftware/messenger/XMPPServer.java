@@ -233,10 +233,10 @@ public class XMPPServer {
         loadModule(ConnectionManagerImpl.class.getName());
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
-        loadModule(PacketRouterImpl.class.getName());
+        loadModule(PacketRouter.class.getName());
         loadModule(IQRouter.class.getName());
-        loadModule(MessageRouterImpl.class.getName());
-        loadModule(PresenceRouterImpl.class.getName());
+        loadModule(MessageRouter.class.getName());
+        loadModule(PresenceRouter.class.getName());
         loadModule(PacketTransporterImpl.class.getName());
         loadModule(PacketDelivererImpl.class.getName());
         loadModule(TransportHandler.class.getName());
@@ -681,7 +681,7 @@ public class XMPPServer {
      * @return the <code>PacketRouter</code> registered with this server.
      */
     public PacketRouter getPacketRouter() {
-        return (PacketRouter) modules.get(PacketRouterImpl.class);
+        return (PacketRouter) modules.get(PacketRouter.class);
     }
 
     /**
@@ -773,7 +773,7 @@ public class XMPPServer {
      * @return the <code>MessageRouter</code> registered with this server.
      */
     public MessageRouter getMessageRouter() {
-        return (MessageRouter) modules.get(MessageRouterImpl.class);
+        return (MessageRouter) modules.get(MessageRouter.class);
     }
 
     /**
@@ -784,7 +784,7 @@ public class XMPPServer {
      * @return the <code>PresenceRouter</code> registered with this server.
      */
     public PresenceRouter getPresenceRouter() {
-        return (PresenceRouter) modules.get(PresenceRouterImpl.class);
+        return (PresenceRouter) modules.get(PresenceRouter.class);
     }
 
     /**

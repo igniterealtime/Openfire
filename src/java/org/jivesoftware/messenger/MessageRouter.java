@@ -12,6 +12,11 @@
 package org.jivesoftware.messenger;
 
 import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.BasicModule;
 
 /**
  * <p>Route message packets throughout the server.</p>
@@ -22,7 +27,19 @@ import org.xmpp.packet.Message;
  *
  * @author Iain Shigeoka
  */
-public interface MessageRouter {
+public class MessageRouter extends BasicModule {
+
+    private OfflineMessageStrategy messageStrategy;
+    private RoutingTable routingTable;
+    private SessionManager sessionManager;
+
+    /**
+     * Constructs a message router.
+     */
+    public MessageRouter() {
+        super("XMPP Message Router");
+    }
+
     /**
      * <p>Performs the actual packet routing.</p>
      * <p>You routing is considered 'quick' and implementations may not take
@@ -36,5 +53,46 @@ public interface MessageRouter {
      * @param packet The packet to route
      * @throws NullPointerException If the packet is null
      */
-    public void route(Message packet);
+    public void route(Message packet) {
+        if (packet == null) {
+            throw new NullPointerException();
+        }
+        Session session = sessionManager.getSession(packet.getFrom());
+        if (session == null
+                || session.getStatus() == Session.STATUS_AUTHENTICATED)
+        {
+            JID recipientJID = packet.getTo();
+
+            try {
+                routingTable.getBestRoute(recipientJID).process(packet);
+            }
+            catch (Exception e) {
+                try {
+                    messageStrategy.storeOffline(packet);
+                }
+                catch (Exception e1) {
+                    Log.error(e1);
+                }
+            }
+
+        }
+        else {
+            packet.setTo(session.getAddress());
+            packet.setFrom((JID)null);
+            packet.setError(PacketError.Condition.not_authorized);
+            try {
+                session.process(packet);
+            }
+            catch (UnauthorizedException ue) {
+                Log.error(ue);
+            }
+        }
+    }
+
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        messageStrategy = server.getOfflineMessageStrategy();
+        routingTable = server.getRoutingTable();
+        sessionManager = server.getSessionManager();
+    }
 }

@@ -11,22 +11,24 @@
 
 package org.jivesoftware.messenger.net;
 
+import org.dom4j.io.XMLWriter;
+import org.jivesoftware.messenger.PacketDeliverer;
+import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.interceptor.InterceptorManager;
+import org.jivesoftware.messenger.interceptor.PacketRejectedException;
+import org.jivesoftware.messenger.spi.BasicConnection;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.Packet;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
-import org.dom4j.io.XMLWriter;
-import org.jivesoftware.messenger.PacketDeliverer;
-import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.BasicConnection;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Packet;
 
 /**
  * An object to track the state of a Jabber client-server session.
@@ -57,10 +59,6 @@ public class SocketConnection extends BasicConnection {
      */
     private PacketDeliverer deliverer;
 
-    /**
-     * Audits packets
-     */
-    private Auditor auditor;
     private Session session;
     private boolean secure;
     private XMLWriter xmlSerializer;
@@ -70,20 +68,18 @@ public class SocketConnection extends BasicConnection {
      * Create a new session using the supplied socket.
      *
      * @param deliverer The packet deliverer this connection will use
-     * @param auditor   Auditor that will audit outgoing packets
      * @param socket    The socket to represent
      * @param isSecure  True if this is a secure connection
      * @throws NullPointerException If the socket is null
      */
-    public SocketConnection(PacketDeliverer deliverer, Auditor auditor, Socket socket,
-            boolean isSecure) throws IOException
+    public SocketConnection(PacketDeliverer deliverer, Socket socket, boolean isSecure)
+            throws IOException
     {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
         }
 
         this.secure = isSecure;
-        this.auditor = auditor;
         sock = socket;
         writer = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream(), charset));
         this.deliverer = deliverer;
@@ -180,21 +176,29 @@ public class SocketConnection extends BasicConnection {
             deliverer.deliver(packet);
         }
         else {
-            synchronized (writer) {
-                try {
-                    xmlSerializer.write(packet.getElement());
-                    if (flashClient) {
-                        writer.write('\0');
+            try {
+                // Invoke the interceptors before we send the packet
+                InterceptorManager.getInstance().invokeInterceptors(packet, session, false, false);
+                synchronized (writer) {
+                    try {
+                        xmlSerializer.write(packet.getElement());
+                        if (flashClient) {
+                            writer.write('\0');
+                        }
+                        xmlSerializer.flush();
                     }
-                    xmlSerializer.flush();
+                    catch (IOException e) {
+                        Log.error(e);
+                        close();
+                    }
                 }
-                catch (IOException e) {
-                    Log.error(e);
-                    close();
-                }
+                // Invoke the interceptors after we have sent the packet
+                InterceptorManager.getInstance().invokeInterceptors(packet, session, false, true);
+                session.incrementServerPacketCount();
             }
-            auditor.audit(packet, session);
-            session.incrementServerPacketCount();
+            catch (PacketRejectedException e) {
+                // An interceptor rejected the packet so do nothing
+            }
         }
     }
 

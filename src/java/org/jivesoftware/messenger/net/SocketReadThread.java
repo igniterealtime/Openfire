@@ -14,8 +14,9 @@ package org.jivesoftware.messenger.net;
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.audit.Auditor;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.interceptor.InterceptorManager;
+import org.jivesoftware.messenger.interceptor.PacketRejectedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -54,10 +55,6 @@ public class SocketReadThread extends Thread {
      * Router used to route incoming packets to the correct channels.
      */
     private PacketRouter router;
-    /**
-     * Audits incoming data
-     */
-    private Auditor auditor;
     private boolean clearSignout = false;
     XPPPacketReader reader = null;
 
@@ -76,16 +73,13 @@ public class SocketReadThread extends Thread {
      *
      * @param router     The router for sending packets that were read
      * @param serverName The name of the server this socket is working for
-     * @param auditor    The audit manager that will audit incoming packets
      * @param sock       The socket to read from
      * @param conn       The connection being read
      */
-    public SocketReadThread(PacketRouter router, String serverName, Auditor auditor, Socket sock,
-                            Connection conn) {
+    public SocketReadThread(PacketRouter router, String serverName, Socket sock, Connection conn) {
         super("SRT reader");
         this.serverName = serverName;
         this.router = router;
-        this.auditor = auditor;
         this.connection = conn;
         this.sock = sock;
     }
@@ -203,9 +197,25 @@ public class SocketReadThread extends Thread {
                     continue;
                 }
                 packet.setFrom(session.getAddress());
-                auditor.audit(packet, session);
-                router.route(packet);
-                session.incrementClientPacketCount();
+                try {
+                    // Invoke the interceptors before we process the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            false);
+                    router.route(packet);
+                    // Invoke the interceptors after we have processed the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            true);
+                    session.incrementClientPacketCount();
+                }
+                catch (PacketRejectedException e) {
+                    // An interceptor rejected this packet so answer a not_allowed error
+                    Message reply = new Message();
+                    reply.setID(packet.getID());
+                    reply.setTo(session.getAddress());
+                    reply.setFrom(packet.getTo());
+                    reply.setError(PacketError.Condition.not_allowed);
+                    session.process(reply);
+                }
             }
             else if ("presence".equals(tag)) {
                 Presence packet = null;
@@ -223,11 +233,27 @@ public class SocketReadThread extends Thread {
                     continue;
                 }
                 packet.setFrom(session.getAddress());
-                auditor.audit(packet, session);
-                router.route(packet);
-                session.incrementClientPacketCount();
-                // Update the flag that indicates if the user made a clean sign out
-                clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
+                try {
+                    // Invoke the interceptors before we process the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            false);
+                    router.route(packet);
+                    // Invoke the interceptors after we have processed the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            true);
+                    session.incrementClientPacketCount();
+                    // Update the flag that indicates if the user made a clean sign out
+                    clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
+                }
+                catch (PacketRejectedException e) {
+                    // An interceptor rejected this packet so answer a not_allowed error
+                    Presence reply = new Presence();
+                    reply.setID(packet.getID());
+                    reply.setTo(session.getAddress());
+                    reply.setFrom(packet.getTo());
+                    reply.setError(PacketError.Condition.not_allowed);
+                    session.process(reply);
+                }
             }
             else if ("iq".equals(tag)) {
                 IQ packet = null;
@@ -250,9 +276,26 @@ public class SocketReadThread extends Thread {
                     continue;
                 }
                 packet.setFrom(session.getAddress());
-                auditor.audit(packet, session);
-                router.route(packet);
-                session.incrementClientPacketCount();
+                try {
+                    // Invoke the interceptors before we process the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            false);
+                    router.route(packet);
+                    // Invoke the interceptors after we have processed the read packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
+                            true);
+                    session.incrementClientPacketCount();
+                }
+                catch (PacketRejectedException e) {
+                    // An interceptor rejected this packet so answer a not_allowed error
+                    IQ reply = new IQ();
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setID(packet.getID());
+                    reply.setTo(session.getAddress());
+                    reply.setFrom(packet.getTo());
+                    reply.setError(PacketError.Condition.not_allowed);
+                    session.process(reply);
+                }
             }
             else {
                 throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);

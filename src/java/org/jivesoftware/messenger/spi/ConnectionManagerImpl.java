@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.net.SSLSocketAcceptThread;
 import org.jivesoftware.messenger.net.SocketAcceptThread;
@@ -35,7 +34,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private SSLSocketAcceptThread sslSocketThread;
     private ArrayList<ServerPort> ports;
 
-    private AuditManager auditManager;
     private SessionManager sessionManager;
     private PacketDeliverer deliverer;
     private PacketRouter router;
@@ -48,9 +46,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void createSocket() {
-        if (!isStarted ||  isSocketStarted || auditManager == null ||
-                sessionManager == null || deliverer == null ||
-                router == null || serverName == null)
+        if (!isStarted || isSocketStarted || sessionManager == null || deliverer == null ||
+                router == null ||
+                serverName == null)
         {
             return;
         }
@@ -109,12 +107,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void addSocket(Socket sock, boolean isSecure)  {
         try {
             // the order of these calls is critical (stupid huh?)
-            Connection conn = new SocketConnection(deliverer,
-                    auditManager.getAuditor(),
-                    sock,
-                    isSecure);
-            SocketReadThread reader = new SocketReadThread(router, serverName,
-                    auditManager.getAuditor(), sock, conn);
+            Connection conn = new SocketConnection(deliverer, sock, isSecure);
+            SocketReadThread reader = new SocketReadThread(router, serverName, sock, conn);
             reader.setDaemon(true);
             reader.start();
         }
@@ -128,7 +122,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         this.server = server;
         router = server.getPacketRouter();
         deliverer = server.getPacketDeliverer();
-        auditManager = server.getAuditManager();
         sessionManager = server.getSessionManager();
     }
 

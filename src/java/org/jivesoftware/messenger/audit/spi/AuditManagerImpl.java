@@ -11,13 +11,19 @@
 
 package org.jivesoftware.messenger.audit.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.interceptor.InterceptorManager;
+import org.jivesoftware.messenger.interceptor.PacketInterceptor;
+import org.xmpp.packet.Packet;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class AuditManagerImpl extends BasicModule implements AuditManager {
 
@@ -34,6 +40,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_FILE_COUNT = 10;
     private static final int DEFAULT_LOG_TIMEOUT = 120000;
+    private AuditorInterceptor interceptor;
 
     public AuditManagerImpl() {
         super("Audit Manager");
@@ -46,6 +53,13 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         JiveGlobals.setProperty("xmpp.audit.active", enabled ? "true" : "false");
+        // Add or remove the auditor interceptor depending on the enabled status
+        if (enabled) {
+            InterceptorManager.getInstance().addInterceptor(interceptor);
+        }
+        else {
+            InterceptorManager.getInstance().removeInterceptor(interceptor);
+        }
     }
 
     public Auditor getAuditor() {
@@ -163,11 +177,25 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxSize, maxCount);
         auditor.setLogTimeout(logTimeout);
+
+        interceptor = new AuditorInterceptor();
+        if (enabled) {
+            InterceptorManager.getInstance().addInterceptor(interceptor);
+        }
     }
 
     public void stop() {
         if (auditor != null) {
             auditor.stop();
+        }
+    }
+
+    private class AuditorInterceptor implements PacketInterceptor {
+
+        public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
+            if (!processed) {
+                auditor.audit(packet, session);
+            }
         }
     }
 }

@@ -8,8 +8,16 @@
 package org.jivesoftware.messenger.plugin;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
+import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -38,8 +46,10 @@ import org.xmpp.packet.Packet;
  *
  * The basic functionality is to query an information repository 
  * regarding the possible search fields, to send a search query, 
- * and to receive search results. This implementation below uses the
- * <a href="http://www.jabber.org/jeps/jep-0004.html">Data Forms</a>.
+ * and to receive search results. This implementation below primarily uses
+ * <a href="http://www.jabber.org/jeps/jep-0004.html">Data Forms</a>, but 
+ * limited support for non-datforms searches has been added to support the
+ * Miranda client.
  * <p/>
  * 
  * @author Ryan Graham 
@@ -51,13 +61,18 @@ public class SearchPlugin implements Component, Plugin {
     private PluginManager pluginManager;
 
     private static final String SERVICE_NAME = "search";
+    private static String serverName;
 
+    private static String instructions = "The following fields are available for search. "
+        + "Wildcard (*) characters are allowed as part the of query.";
+    
     private static Element probeResult;
 
     private Collection<String> searchFields;
 
     public SearchPlugin() {
         server = XMPPServer.getInstance();
+        serverName = server.getServerInfo().getName();
         // See if the installed provider supports searching. If not, workaround
         // by providing our own searching.
         UserManager manager = UserManager.getInstance();
@@ -101,18 +116,23 @@ public class SearchPlugin implements Component, Plugin {
         if (probeResult == null) {
             probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
 
+            //non-data form
+            probeResult.addElement("instructions").addText(instructions);
+            
             XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
             searchForm.setTitle("User Search");
-            searchForm.addInstruction("The following fields are available for search. "
-                            + "Wildcard (*) characters are allowed as part the of query.");
+            searchForm.addInstruction(instructions);
             
             Iterator iter = searchFields.iterator();
             while (iter.hasNext()) {
                 String searchField = (String) iter.next();
+                
+                //non-data form
+                probeResult.addElement(searchField.toLowerCase());
 
                 XFormFieldImpl field = new XFormFieldImpl(searchField);
                 field.setType(FormField.TYPE_TEXT_SINGLE);
-                field.setLabel(initCap(searchField));
+                field.setLabel(searchField);
                 field.setRequired(false);
                 searchForm.addField(field);
             }
@@ -215,54 +235,120 @@ public class SearchPlugin implements Component, Plugin {
     }
 
     private IQ processSetPacket(IQ packet) {
+        List<User> users = new ArrayList<User>();
+        
+        Element incomingForm = packet.getChildElement();
+        boolean isDataFormQuery = (incomingForm.element(QName.get("x", "jabber:x:data")) != null);
+        
+        Hashtable<String, String> searchList = extractSearchQuery(incomingForm);
+        Enumeration<String> searchIter = searchList.keys();
+        while (searchIter.hasMoreElements()) {
+            String field = (String) searchIter.nextElement();
+            String query = (String) searchList.get(field);
+            
+            Iterator foundIter = null;
+            if (userManager != null) {
+                if (query.length() > 0 && !query.equals("jabber:iq:search")) {
+                    foundIter = userManager.findUsers(new HashSet<String>(
+                            Arrays.asList((field))), query).iterator();
+                }
+            }
+            else {
+                foundIter = findUsers(field, query).iterator();
+            }
+            
+            // Filter out all duplicate users.
+            if (foundIter != null) {
+                while (foundIter.hasNext()) {
+                    User user = (User) foundIter.next();
+                    if (!users.contains(user)) {
+                        users.add(user);
+                    }
+                }
+            }
+        }
+        
+        if (isDataFormQuery) {
+            return replyDataFormResult(users, packet);
+        } else {
+            return replyNonDataFormResult(users, packet);
+        }
+    }
+    
+    /**
+     * nick, first, last, email fields have been hardcoded to support Miranda which does not
+     * follow the JEP-0055 spec by requesting a list of searchable fields. If/when Miranda
+     * is updated to follow the spect the hardcoded field checks can be removed and replaced
+     * with the commented code below.
+     */
+    private  Hashtable<String, String> extractSearchQuery(Element incomingForm) {
+        Hashtable<String, String> searchList = new Hashtable<String, String>();
+        Element form = incomingForm.element(QName.get("x", "jabber:x:data"));
+        if (form == null) {
+            Element name = incomingForm.element("name");
+            if (name != null) {
+                searchList.put("Name", name.getTextTrim());
+            }
+            
+            Element nick = incomingForm.element("nick");
+            if (nick != null) {
+                searchList.put("Username", nick.getTextTrim());
+            }
+            
+            Element first = incomingForm.element("first");
+            if (first != null) {
+                searchList.put("Name", first.getTextTrim());
+            }
+            
+            Element last = incomingForm.element("last");
+            if (last != null) {
+                searchList.put("Name", last.getTextTrim());
+            }
+            
+            Element email = incomingForm.element("email");
+            if (email != null) {
+                searchList.put("Email", email.getTextTrim());
+            }
+            
+            /*
+            Iterator iter = searchFields.iterator();
+            while (iter.hasNext()) {
+                String field = (String) iter.next();
+                Element e = incomingForm.element(field);
+                if (field != null) {
+                    searchList.put(field, e.getTextTrim());
+                }
+            }
+            */
+        }
+        else {
+            Iterator fields = form.elementIterator("field");
+            while (fields.hasNext()) {
+                Element searchField = (Element) fields.next();
+
+                Iterator iter = searchField.elementIterator("value");
+                while (iter.hasNext()) {
+                    Element queryField = (Element) iter.next();
+                    String query = queryField.getTextTrim();
+                    searchList.put(searchField.attributeValue("var"), query);
+                }
+            }
+        }
+        
+        return searchList;
+    }
+    
+    private IQ replyDataFormResult(List users, IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
         
         XFormFieldImpl field = new XFormFieldImpl("jid");
         field.setLabel("JID");
         searchResults.addReportedField(field);
-        
-        for (String fieldName: searchFields) {
+
+        for (String fieldName : searchFields) {
             field = new XFormFieldImpl(fieldName);
-            field.setLabel(initCap(fieldName));
+            field.setLabel(fieldName);
             searchResults.addReportedField(field);
-        }
-
-        List<User> users = new ArrayList<User>();
-
-        Element incomingForm = packet.getChildElement();
-        Element form = incomingForm.element(QName.get("x", "jabber:x:data"));
-        Iterator fields = form.elementIterator("field");
-        while (fields.hasNext()) {
-            Element searchField = (Element) fields.next();
-
-            Iterator iter = searchField.elementIterator("value");
-            while (iter.hasNext()) {
-                Element queryField = (Element) iter.next();
-
-                Iterator foundIter = null;
-                if (userManager != null) {                    
-                    String query = queryField.getTextTrim();
-                    //psi returns every field even if it is empty
-                    if (query.length() > 0) {
-                        foundIter = userManager.findUsers(new HashSet<String>(
-                                Arrays.asList(searchField.attributeValue("var"))), query).iterator();
-                    }
-                }
-                else {
-                    foundIter = findUsers(searchField.attributeValue("var"),
-                        queryField.getTextTrim()).iterator();
-                }
-                
-                // Filter out all duplicate users.
-                if (foundIter != null) {
-                    while (foundIter.hasNext()) {
-                        User user = (User) foundIter.next();
-                        if (!users.contains(user)) {
-                            users.add(user);
-                        }
-                    }
-                }
-            }
         }
 
         Iterator userIter = users.iterator();
@@ -271,11 +357,11 @@ public class SearchPlugin implements Component, Plugin {
             String username = user.getUsername();
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
-
-            XFormFieldImpl fieldJID = new XFormFieldImpl("jid");
-            fieldJID.addValue(username + "@" + server.getServerInfo().getName());
-            items.add(fieldJID);
             
+            XFormFieldImpl fieldJID = new XFormFieldImpl("jid");
+            fieldJID.addValue(username + "@" + serverName);
+            items.add(fieldJID);
+
             XFormFieldImpl fieldUsername = new XFormFieldImpl("Username");
             fieldUsername.addValue(username);
             items.add(fieldUsername);
@@ -296,25 +382,32 @@ public class SearchPlugin implements Component, Plugin {
 
         IQ replyPacket = IQ.createResultIQ(packet);
         replyPacket.setChildElement(reply);
-
+        
         return replyPacket;
     }
 
-    private static String initCap(String s) {
-        if (s == null) {
-            return null;
-        }
+    private IQ replyNonDataFormResult(List users, IQ packet) {
+        Element replyQuery = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
+        String serverName = XMPPServer.getInstance().getServerInfo().getName();
+        Iterator userIter = users.iterator();
+        while (userIter.hasNext()) {
+            User user = (User) userIter.next();
 
-        StringTokenizer st = new StringTokenizer(s);
-        StringBuffer sb = new StringBuffer();
-        while (st.hasMoreTokens()) {
-            String t = st.nextToken();
-            String first = t.substring(0, 1).toUpperCase();
-            String rest = t.substring(1).toLowerCase();
-            sb.append(first + rest);
+            Element item = DocumentHelper.createElement("item");
+            Attribute jib = DocumentHelper.createAttribute(item, "jid", user.getUsername() + "@" + serverName);
+            item.add(jib);
+            Element nick = DocumentHelper.createElement("nick");
+            nick.addText(user.getName());
+            item.add(nick);
+            Element email = DocumentHelper.createElement("email");
+            email.addText(user.getEmail());
+            item.add(email);
+            replyQuery.add(item);
         }
-
-        return sb.toString().trim();
+        IQ replyPacket = IQ.createResultIQ(packet);
+        replyPacket.setChildElement(replyQuery);
+        
+        return replyPacket;
     }
 
     /**
@@ -352,16 +445,15 @@ public class SearchPlugin implements Component, Plugin {
                     try {
                         foundUsers.add(userManager.getUser(query));
                         return foundUsers;
-                    } catch (UserNotFoundException e) {
+                    }
+                    catch (UserNotFoundException e) {
                         Log.error("Error getting user", e);
                     }
-
                 }
                 else if (field.equals("Name")) {
                     if (query.equalsIgnoreCase(user.getName())) {
                         foundUsers.add(user);
                     }
-
                 }
                 else if (field.equals("Email")) {
                     if (user.getEmail() != null) {

@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>Jive Messenger Plugin Guide</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<a name="top"></a>
+
+<h1>Jive Messenger Plugin Developer Guide</h1>
+
+<h2>Introduction</h2>
+
+<p>
+Plugins enhance the functionality of Jive Messenger. This document is a
+developer's guide for creating plugins.</p>
+
+<h2>Structure of a Plugin</h2>
+
+Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. If
+a plugin is deployed as a JAR file, it will be automatically expanded into
+a directory. The files in a plugin directory are as follows:
+
+<pre>
+plugin.xml
+classes/
+lib/
+web/
+  |
+  -- web.xml
+  -- images/</pre>
+	
+The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
+file might look like the following:
+
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;plugin&gt;
+    &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
+&lt;/plugin&gt;
+</pre>
+
+<p>Your plugin class must be implement the Plugin interface from the Jive 
+Messenger API. The Plugin interface has methods for initializing and 
+destroying the plugin, as well as methods for retrieving meta-data such as 
+the plugin name, description, version, and author.</p>
+
+<p>The <tt>classes</tt> and <tt>lib</tt> directories contain resources
+that will be loaded into the classpath of the plugin.</p>
+
+<p>The <tt>web</tt> directory exists for plugins that need to add content
+to the Jive Messenger admin console. Further details are below.</p>
+
+<h2>Modifying the Admin Console</h2>
+
+<p>Plugins can add tabs, sections, and pages to the admin console. There
+are a several steps to accomplishing this: 
+
+<ul>
+		<li>An &lt;adminconsole/&gt; section must be added to the 
+				<tt>plugin.xml</tt> file.
+		</li>
+		<li>JSP files must be compiled and put into the classpath of the
+			  plugin. A <tt>web.xml</tt> file containing the compiled JSP
+				servlet entries must be put into the <tt>web/</tt> directory
+				of the plugin. <i>Note:</i> the Jive Messenger build script
+				can assist with compiling JSPs and creating the web.xml. This
+				is detailed later in the developer guide.
+		</li>
+		<li>Any images required by your JSP pages must live in <tt>web/images/</tt>
+				directory. Only GIF and PNG images are supported.
+		</li>
+</ul> 
+
+<p>The &lt;adminconsole/&gt; section of <tt>plugin.xml</tt> defines additional 
+tabs, sections and entries in the Admin Console framework. A sample 
+<tt>plugin.xml</tt> file might look like the following:</p> 
+
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;plugin&gt;
+    &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
+    &lt;tab id="example" name="Example" description="Click to try the example tab"&gt;
+        &lt;sidebar name="Test Section"&gt;
+            &lt;item id="test-page" name="Test Page" url="test.jsp" description="Test page" /&gt;
+        &lt;/sidebar&gt;
+    &lt;/tab&gt;
+&lt;/plugin&gt;
+</pre> 
+
+<p>In this example, we've defined a new tab "Example", a sidebar section 
+"Test Section" and a page "Test Page". We've registered <tt>test.jsp</tt>
+as the page.				
+				   
+ 
+</body>
+</html>

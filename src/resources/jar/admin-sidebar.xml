@@ -36,7 +36,7 @@
                     url="session-conflict.jsp"
                     description="" />
 
-            <item id="server-offline-messages" name="Offline Message Policy"
+            <item id="server-offline-messages" name="Offline Messages"
                     url="offline-messages.jsp"
                     description="" />
 
@@ -46,10 +46,6 @@
 
             <item id="server-data-settings" name="Private Data Storage"
                     url="private-data-settings.jsp"
-                    description="" />
-
-            <item id="server-chatroom-history" name="Chatroom History Settings"
-                    url="chatroom-history-settings.jsp"
                     description="" />
 
             <item id="server-ssl" name="SSL Settings"

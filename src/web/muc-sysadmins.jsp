@@ -69,7 +69,7 @@
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="1">
-Below is the list of system administrators of the Multi-User Chat service. System administrators can
+Below is the list of system administrators of the group chat service. System administrators can
 enter any groupchat room and their permissions are the same as the room owner.</td></tr>
 </table>
 

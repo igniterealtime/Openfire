@@ -9,19 +9,11 @@
                  org.jivesoftware.messenger.*,
                  java.text.DateFormat,
                  java.text.NumberFormat,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.user.User" %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Session Details"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="Session Summary" value="session-summary.jsp" />
-<c:set target="${breadcrumbs}" property="Summary Details" value="session-details.jsp" />
-<c:set var="sbar" value="session" scope="page" />
-<jsp:include page="top.jsp" flush="true" />
 
 <%  // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
@@ -33,18 +25,18 @@
     }
 
     // Get the session & address objects
-    SessionManager sessionManager = admin.getSessionManager();
+    SessionManager sessionManager = webManager.getSessionManager();
     XMPPAddress address = XMPPAddress.parseJID(jid);
     Session currentSess = sessionManager.getSession(address);
     boolean isAnonymous = address.getName() == null || "".equals(address.getName());
 
     // Get a presence manager
-    PresenceManager presenceManager = admin.getPresenceManager();
+    PresenceManager presenceManager = webManager.getPresenceManager();
 
     // Get user object
     User user = null;
     if (!isAnonymous) {
-        user = admin.getUserManager().getUser(address.getName());
+        user = webManager.getUserManager().getUser(address.getName());
     }
 
     // Handle a "message" click:
@@ -67,6 +59,16 @@
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
 
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Session Details";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-details.jsp"));
+    pageinfo.setSubPageID("session-details");
+%>
+<%@ include file="top.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 
 <p>

@@ -31,20 +31,11 @@
 %>
 
 
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<% webManager.init(request, response, session, application, out ); %>
+<% webManager.init(pageContext); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Send Administrative Message";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
-    pageinfo.setPageID("user-message");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
 
 
 <%
@@ -100,8 +91,10 @@
                     sessionManager.sendServerMessage(XMPPAddress.parseJID(jid),null,message);
                 }
             }
-            response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
-            return;
+            if(username != null){
+              response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
+            }
+                return;
         }
     }
 
@@ -117,15 +110,23 @@
         }
     }
 %>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Send Administrative Message";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
+    pageinfo.setPageID("user-message");
+%>
+<%@ include file="top.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 
 
-<%  if (tabs) { %>
-
+<%  if (tabs && username != null) { %>
     <br>
     <c:set var="tab" value="message" />
     <%@ include file="user-tabs.jsp" %>
-    
 
 <%  } %>
 
@@ -158,7 +159,9 @@ function updateSelect(el) {
 </script>
 
 <form action="user-message.jsp" method="post" name="f">
+<% if(username != null){ %>
 <input type="hidden" name="username" value="<%= username %>">
+<% } %>
 <input type="hidden" name="tabs" value="<%= tabs %>">
 <input type="hidden" name="send" value="true">
 <%  if (sess != null) { %>

@@ -6,4 +6,5 @@ REM # $Revision$
 REM # $Date$
 REM #
 
-java -jar ..\lib\messengerd.jar
+java -jar ..\lib\startup.jar 
+

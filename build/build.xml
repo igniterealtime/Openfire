@@ -41,7 +41,8 @@
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib" />
     <property name="target.dir" value="${basedir}/target" />
     <property name="compile.dir" value="${basedir}/target/classes" />
-    <property name="jar.name" value="messengerd.jar" />
+    <property name="jar.name" value="messenger.jar" />
+    <property name="jar.starter.name" value="startup.jar" />
     <property name="jar.dest.dir" value="${target.dir}/lib" />
     <property name="javadoc.src.dir" value="${src.dir}/javadoc" />
     <property name="javadoc.dest.dir" value="${basedir}/target/javadoc" />
@@ -152,10 +153,20 @@
         <mkdir dir="${jar.dest.dir}" />
         <!-- Make main Messenger jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}">
-            <fileset dir="${compile.dir}" includes="**/*.class" />
+            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class" />
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <manifest>
+                <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
+            </manifest>
+        </jar>
+        <!-- Make startup jar -->
+        <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
+            <fileset dir="${compile.dir}">
+                <include name="org/jivesoftware/messenger/starter/ServerStarter.class" />
+                <include name="org/jivesoftware/messenger/starter/JiveClassLoader*.class" />
+            </fileset>
             <manifest>
                 <attribute name="Main-Class" value="org.jivesoftware.messenger.starter.ServerStarter" />
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>

@@ -28,6 +28,7 @@
     <servlet>
         <servlet-name>PluginServlet</servlet-name>
         <servlet-class>org.jivesoftware.messenger.container.PluginServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
     </servlet>
 
     <!--@@STARTUP-SERVLET@@-->

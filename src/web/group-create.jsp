@@ -121,6 +121,10 @@
             }
         }
     }
+
+    if (errors.size() == 0) {
+        showGroup = "everybody";
+    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
@@ -159,8 +163,7 @@
 <%  } %>
 
 <p>
-You can use the form below to show this group in users' rosters. Select from one of three options
-for who should see this group in their rosters.
+Use the form below to create a group.
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
@@ -231,6 +234,11 @@ for who should see this group in their rosters.
 
     <br>
     <p><b>Shared Roster Groups</b></p>
+
+    <p>
+    You can use the form below to show this group in users' rosters. Select from one of three
+    options for who should see this group in their rosters.
+    </p>
 
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>

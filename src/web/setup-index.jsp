@@ -41,7 +41,7 @@
 
     // Error checking
     Map messengerHomeErrors = new HashMap();
-    // Get a handle on the jiveHome directory
+    // Get a handle on the messengerHome directory
     File messengerHomeDir = new File(JiveGlobals.getMessengerHome());
     // Validate it:
     if (messengerHomeDir == null || !messengerHomeDir.exists()) {
@@ -105,7 +105,7 @@ below.
         <br>
         <span class="jive-info">
         Appserver: <%= application.getServerInfo() %>,
-        Supports Servlet 2.2 API and JSP 1.2.
+        Supports Servlet 2.3 API and JSP 1.2.
         </span>
     </td>
     <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
@@ -118,7 +118,7 @@ below.
 </tr>
 <tr>
     <td class="jive-setup-category">
-        jive-xmpp.jar
+        messenger.jar
         <br>
         <span class="jive-info">
         <fmt:message key="title" bundle="${lang}" /> classes.
@@ -134,7 +134,7 @@ below.
 </tr>
 <tr>
     <td class="jive-setup-category">
-        jiveHome Directory
+        messengerHome Directory
         <br>
         <span class="jive-info">
         <%  boolean messengerHomeOK = true;
@@ -150,7 +150,7 @@ below.
             <%  if (messengerHomeErrors.get("exists") != null) { %>
 
                 Unable to locate valid messengerHome directory. Please refer to the installation
-                documentation for the correct way to set the jiveHome directory.
+                documentation for the correct way to set the messengerHome directory.
 
             <%  } else if (messengerHomeErrors.get("read") != null) { %>
 

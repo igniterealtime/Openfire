@@ -86,16 +86,16 @@
                 conProvider.setUsername(username);
                 conProvider.setPassword(password);
 
-                 JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
-        JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
-        JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
-        JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
+                JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
+                JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
+                JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
+                JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
 
-        JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
-                Integer.toString(minConnections));
-        JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
-                Integer.toString(maxConnections));
-        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
+                JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
+                        Integer.toString(minConnections));
+                JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
+                        Integer.toString(maxConnections));
+                JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
             }
             catch (Exception e) {
@@ -106,16 +106,6 @@
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);
             if (testConnection(errors)) {
-                // Update with XMPPSettings
-                Map xmppSettings = (Map)session.getAttribute("xmppSettings");
-                Iterator iter = xmppSettings.keySet().iterator();
-                while(iter.hasNext()){
-                    String name = (String)iter.next();
-                    String value = (String)xmppSettings.get(name);
-                    JiveGlobals.setProperty(name, value);
-
-                }
-
                 // update the sidebar status
                 session.setAttribute("jive.setup.sidebar.3","done");
                 session.setAttribute("jive.setup.sidebar.4","in_progress");
@@ -185,7 +175,7 @@ information about this process please see the database documentation distributed
 
 <%  // DB preset data
     List presets = new ArrayList();
-    presets.add(new String[]{"MySQL","org.gjt.mm.mysql.Driver","jdbc:mysql://[host-name]:3306/[database-name]"});
+    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://[host-name]:3306/[database-name]"});
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@[host-name]:1521:[SID]"});
     presets.add(new String[]{"MSSQL","com.microsoft.jdbc.sqlserver.SQLServerDriver","jdbc:microsoft:sqlserver://[host-name]:1433"});
     presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://[host-name]:5432/[database-name]"});

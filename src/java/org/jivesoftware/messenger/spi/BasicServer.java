@@ -29,9 +29,7 @@ import java.util.*;
  *
  * @author Iain Shigeoka
  */
-public class BasicServer
-        extends BasicModule
-        implements XMPPServer, BasicServerMBean {
+public class BasicServer extends BasicModule implements XMPPServer, BasicServerMBean {
 
     private String name;
     private Version version;
@@ -120,9 +118,9 @@ public class BasicServer
         Log.info("--------------------------------------------------------------------");
         System.out.println(startupBanner);
 
-        params.clear();
-        params.add(name);
-        Log.info(LocaleUtils.getLocalizedString("startup.starting", params));
+//        params.clear();
+//        params.add(name);
+//        Log.info(LocaleUtils.getLocalizedString("startup.starting", params));
 
         // Register the server as an MBean.
 //            MBeanManager.registerMBean(this, ("Server:Name=" + getName()));

@@ -10,7 +10,9 @@
                  org.jivesoftware.messenger.container.Container,
                  org.jivesoftware.messenger.container.ServiceLookup,
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
-                 org.jivesoftware.messenger.auth.UnauthorizedException"
+                 org.jivesoftware.messenger.auth.UnauthorizedException,
+                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.messenger.XMPPBootContainer"
 %>
 
 <%  boolean showSidebar = false; %>
@@ -24,7 +26,7 @@
 <p>
 This installation of <fmt:message key="title" bundle="${lang}" /> is now complete. Please close this window and
 restart your server.
-Launch the admin using either the launcher or start as a service to enter the admin tool.
+Launch the admin using either the launcher or start as a service to enter the admin console.
 
 </p>
 

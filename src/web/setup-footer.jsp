@@ -16,8 +16,7 @@
 </table><br>
 
 <div class="jive-setup-footer">
-&copy; <a href="http://www.jivesoftware.com" target="_blank">Jive Software</a>,
-2000-<%= (Calendar.getInstance()).get(Calendar.YEAR) %>
+&copy; <a href="http://www.jivesoftware.org" target="_blank">Jive Software</a>, 2004
 </div>
 
 </body>

@@ -17,10 +17,7 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -107,19 +104,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     protected abstract String[] getStandardModuleNames();
 
     /**
-     * <p>Obtain the short filename to be used in the license and
-     * configuration full filename.</p>
-     * <p/>
-     * <p>The file name is typically the 'bare' product name (e.g.
-     * messenger, nntp, etc). The license file name will become
-     * <tt>jive_name.license</tt> and the config file <tt>jive-name.xml</tt> and are
-     * located in the <tt>config</tt> directory.</p>
-     *
-     * @return The name used to generate
-     */
-    protected abstract String getFileCoreName();
-
-    /**
      * The lookup for the bootstrap container.
      */
     private ServiceLookup lookup;
@@ -132,7 +116,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     /**
      * All modules loaded by this container
      */
-    private List modules = new ArrayList();
+    private List<Module> modules = new ArrayList<Module>();
 
     /**
      * Location of the messengerHome directory. All configuration files should be
@@ -166,7 +150,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      */
     private void start() {
         try {
-            // Let's specify jive_messenger.xml as the new config file.
             locateMessenger();
             if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
                 setupMode = false;
@@ -285,18 +268,15 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * start them.</p>
      */
     private void startCorePlugins() {
-        Iterator modIter = modules.iterator();
-        while (modIter.hasNext()) {
+        for (Module module : modules) {
             boolean started = false;
-            Module mod = null;
             try {
-                mod = (Module)modIter.next();
-                mod.start();
+                module.start();
             }
             catch (Exception e) {
-                if (started && mod != null) {
-                    mod.stop();
-                    mod.destroy();
+                if (started && module != null) {
+                    module.stop();
+                    module.destroy();
                 }
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
@@ -541,7 +521,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * @throws FileNotFoundException If jiveHome could not be located
      */
     private void locateMessenger() throws FileNotFoundException {
-        String jiveConfigName = "conf" + File.separator + "jive-" + getFileCoreName() + ".xml";
+        String jiveConfigName = "conf" + File.separator + "jive-messenger.xml";
         // First, try to load it jiveHome as a system property.
         if (messengerHome == null) {
             String homeProperty = System.getProperty("messengerHome");
@@ -560,9 +540,11 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         // by looking for the config file
         if (messengerHome == null) {
             try {
-                messengerHome = verifyHome("..", jiveConfigName);
+                messengerHome = verifyHome("..", jiveConfigName).getCanonicalFile();
             }
             catch (FileNotFoundException fe) {
+            }
+            catch (IOException ie) {
             }
         }
 

@@ -10,10 +10,10 @@
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.database.EmbeddedConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
-                 java.util.HashMap,
                  org.jivesoftware.database.ConnectionProvider,
                  org.jivesoftware.database.ConnectionProvider,
-                 org.jivesoftware.database.DbConnectionManager" %>
+                 org.jivesoftware.database.DbConnectionManager,
+                 java.util.*" %>
 
 <%! // Global vars
 
@@ -31,6 +31,15 @@
     // handle a mode redirect
     Map errors = new HashMap();
     if (next) {
+        // First, update with XMPPSettings
+        Map xmppSettings = (Map)session.getAttribute("xmppSettings");
+        Iterator iter = xmppSettings.keySet().iterator();
+        while(iter.hasNext()){
+            String name = (String)iter.next();
+            String value = (String)xmppSettings.get(name);
+            JiveGlobals.setProperty(name, value);
+        }
+        
         if (STANDARD.equals(mode)) {
             response.sendRedirect("setup-datasource-standard.jsp");
             return;

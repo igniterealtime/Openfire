@@ -37,7 +37,7 @@
     // Check to see if we're in "setup" mode:
     ServiceLookup lookup = ServiceLookupFactory.getLookup();
     Container container = (Container)lookup.lookup(Container.class);
-    if( container.isSetupMode() ) {
+    if (container.isSetupMode()) {
       response.sendRedirect("setup-index.jsp");
       return;
     }
@@ -45,7 +45,6 @@
     // Should only be set to true if logged in user is an admin.
     // Since anyone that logged in is an admin, it's redundant to recheck.
     boolean isSystemAdmin = true;
-
 
     // Otherwise, get the xmpp server
     XMPPServer xmppServer = (XMPPServer)lookup.lookup(XMPPServer.class);

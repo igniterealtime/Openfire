@@ -15,15 +15,10 @@
 
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
-    String chatDomain = ParamUtils.getParameter(request,"chatDomain");
+    String chatService = ParamUtils.getParameter(request,"chatService");
     int port = ParamUtils.getIntParameter(request,"port",-1);
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
     int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
-    String storeType = ParamUtils.getParameter(request,"storeType",true);
-    String keystore = ParamUtils.getParameter(request,"keystore",true);
-    String keypass = ParamUtils.getParameter(request,"keypass",true);
-    String truststore = ParamUtils.getParameter(request,"truststore",true);
-    String trustpass = ParamUtils.getParameter(request,"trustpass",true);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled");
 
     boolean doContinue = request.getParameter("continue") != null;
@@ -35,8 +30,8 @@
         if (domain == null) {
             errors.put("domain","domain");
         }
-        if (chatDomain == null) {
-            errors.put("chatDomain","chatDomain");
+        if (chatService == null || chatService.indexOf('.') >= 0) {
+            errors.put("chatService","chatService");
         }
         if (port < 0) {
             errors.put("port","port");
@@ -54,19 +49,13 @@
             Map xmppSettings = new HashMap();
 
             xmppSettings.put("xmpp.domain",domain);
-            xmppSettings.put("xmpp.chat.domain",chatDomain);
+            xmppSettings.put("xmpp.muc.service",chatService);
             xmppSettings.put("xmpp.socket.plain.port",Integer.toString(port));
             xmppSettings.put("embedded-web.port",Integer.toString(embeddedPort));
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
             xmppSettings.put("xmpp.socket.ssl.port",Integer.toString(sslPort));
             xmppSettings.put("xmpp.auth.anonymous", "true" );
             session.setAttribute("xmppSettings", xmppSettings);
-
-            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.storeType",storeType);
-            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.keystore",keystore);
-            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.keypass",keypass);
-            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.truststore",truststore);
-            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.trustpass",trustpass);
 
             // update the sidebar status
             session.setAttribute("jive.setup.sidebar.2","done");
@@ -81,12 +70,7 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
-        chatDomain = JiveGlobals.getProperty("xmpp.chat.domain");
-        // storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType");
-        // keystore = JiveGlobals.getProperty("xmpp.socket.ssl.keystore");
-        // keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass");
-        // truststore = JiveGlobals.getProperty("xmpp.socket.ssl.truststore");
-        // trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass");
+        chatService = JiveGlobals.getProperty("xmpp.muc.service");
         try {
             port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port"));
         } catch (Exception ignored) {}
@@ -101,8 +85,8 @@
         // If the domain and chat domain are still blank, guess at their values:
         if (domain == null) {
             domain = InetAddress.getLocalHost().getHostName();
-            if (domain != null && chatDomain == null) {
-                chatDomain = "chat." + domain;
+            if (domain != null && chatService == null) {
+                chatService = "conference";
             }
         }
     }
@@ -115,17 +99,9 @@ Server Settings
 </p>
 
 <p>
-Below are host and port settings for this server. Note, Setup has suggested values for the
-domain and chat domain fields based on the network settings for this machine.
+Below are host and port settings for this server. Note, the suggested value for the
+domain is based on the network settings of this machine.
 </p>
-
-<script language="JavaScript" type="text/javascript">
-function fillChatDomain(el) {
-    if (el.chatDomain.value == '' && el.domain.value != '') {
-        el.chatDomain.value = 'chat.' + el.domain.value;
-    }
-}
-</script>
 
 <style type="text/css">
 LABEL { font-weight : normal; }
@@ -136,11 +112,6 @@ LABEL { font-weight : normal; }
 <script langauge="JavaScript" type="text/javascript">
 function toggle(form,disabled) {
     form.sslPort.disabled = disabled;
-    // form.storeType.disabled = disabled;
-    // form.keystore.disabled = disabled;
-    // form.keypass.disabled = disabled;
-    // form.truststore.disabled = disabled;
-    // form.trustpass.disabled = disabled;
 }
 </script>
 
@@ -158,7 +129,6 @@ function toggle(form,disabled) {
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="domain"
-         onblur="fillChatDomain(this.form);"
          value="<%= ((domain != null) ? domain : "") %>">
         <span class="jive-description">
         <br>
@@ -169,20 +139,20 @@ function toggle(form,disabled) {
 <tr valign="top">
     <td width="1%" nowrap>
         Chat Domain:
-        <%  if (errors.get("chatDomain") != null) { %>
+        <%  if (errors.get("chatService") != null) { %>
 
             <span class="jive-error-text"><br>
-            Invalid chat domain.
+            Invalid multi-user chat service name.
             </span>
 
         <%  } %>
     </td>
     <td width="99%">
-        <input type="text" size="30" maxlength="150" name="chatDomain"
-         value="<%= ((chatDomain != null) ? chatDomain : "") %>">
+        <input type="text" size="30" maxlength="150" name="chatService"
+         value="<%= ((chatService != null) ? chatService : "conference") %>">
         <span class="jive-description">
         <br>
-        Hostname or IP address of the chat server.
+        Multi-user chat service name. Default is "conference".
         </span>
     </td>
 </tr>
@@ -199,7 +169,7 @@ function toggle(form,disabled) {
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="port"
-         value="<%= ((port != -1) ? ""+port : "") %>">
+         value="<%= ((port != -1) ? ""+port : "5222") %>">
         <span class="jive-description">
         <br>
         Port number this server listens to. Default XMPP port is 5222.
@@ -208,7 +178,7 @@ function toggle(form,disabled) {
 </tr>
 <tr valign="top">
     <td width="1%" nowrap>
-        Embedded Web Server Port:
+        Admin Console Port:
         <%  if (errors.get("embeddedPort") != null) { %>
 
             <span class="jive-error-text"><br>
@@ -219,7 +189,7 @@ function toggle(form,disabled) {
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="embeddedPort"
-         value="<%= ((embeddedPort != -1) ? ""+embeddedPort : "") %>">
+         value="<%= ((embeddedPort != -1) ? ""+embeddedPort : "9090") %>">
         <span class="jive-description">
         <br>
         Port number for the web-based admin console. Default port is 9090.
@@ -262,73 +232,6 @@ function toggle(form,disabled) {
         </span>
     </td>
 </tr>
-<!--
-<tr valign="top">
-    <td width="1%" nowrap>
-        Server Certificate Store Type:
-    </td>
-    <td width="99%">
-        <input type="text" size="30" maxlength="150" name="storeType"
-         value="<%= ((storeType != null) ? storeType : "") %>">
-        <span class="jive-description">
-        <br>
-        A code for the type of key store. Default is 'JKS' for Java Key Store (Sun's implmentation).
-        </span>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        Server Certificate Store:
-    </td>
-    <td width="99%">
-        <input type="text" size="30" maxlength="150" name="keystore"
-         value="<%= ((keystore != null) ? keystore : "") %>">
-        <span class="jive-description">
-        <br>
-        Filename (relative to meessengerHome directory) of the certificate used for this server.
-        </span>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        Server Store Password:
-    </td>
-    <td width="99%">
-        <input type="password" size="15" maxlength="50" name="keypass"
-         value="<%= ((keypass != null) ? keypass : "") %>">
-        <span class="jive-description">
-        <br>
-        Password for the server's certificate.
-        </span>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        Client Certificate Store:
-    </td>
-    <td width="99%">
-        <input type="text" size="30" maxlength="150" name="truststore"
-         value="<%= ((truststore != null) ? truststore : "") %>">
-        <span class="jive-description">
-        <br>
-        Filename (relative to messengerHome directory) of the store used for client certificates.
-        </span>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        Client Store Password:
-    </td>
-    <td width="99%">
-        <input type="password" size="15" maxlength="50" name="trustpass"
-         value="<%= ((trustpass != null) ? trustpass : "") %>">
-        <span class="jive-description">
-        <br>
-        Password for the client certificate store.
-        </span>
-    </td>
-</tr>
--->
 </table>
 
 <br><br>

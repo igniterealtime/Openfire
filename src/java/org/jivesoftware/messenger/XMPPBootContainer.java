@@ -88,8 +88,4 @@ public class XMPPBootContainer extends BootstrapContainer {
             IQDiscoItemsHandler.class.getName(),
             MultiUserChatServerImpl.class.getName()};
     }
-
-    protected String getFileCoreName() {
-        return "messenger";
-    }
 }

@@ -43,8 +43,8 @@ public class BasicStreamIDFactory implements StreamIDFactory {
             this.id = id;
         }
 
-        public long getID() {
-            return -1;
+        public String getID() {
+            return id;
         }
 
         public String toString() {

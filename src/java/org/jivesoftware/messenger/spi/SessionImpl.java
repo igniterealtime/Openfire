@@ -81,7 +81,8 @@ public class SessionImpl implements Session {
         conn = connection;
         this.streamID = streamID;
         this.serverName = serverName;
-        this.address = new JID(null, serverName, null);
+        String id = streamID.getID();
+        this.address = new JID(null, serverName, id);
         presence = new Presence();
 
         this.sessionManager = SessionManager.getInstance();

@@ -24,5 +24,5 @@ public interface StreamID {
      *
      * @return The unique ID for this stream
      */
-    public long getID();
+    public String getID();
 }

@@ -33,7 +33,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Roster;
-import org.xmpp.packet.Packet;
 
 /**
  * @author Derek DeMoro
@@ -127,9 +126,7 @@ public class SocketReadThread extends Thread {
                         Presence packet = presence.createCopy();
                         packet.setType(Presence.Type.unavailable);
                         packet.setFrom(session.getAddress());
-
-                        CompositePacket compPacket = new CompositePacket(packet, session);
-                        router.route(compPacket);
+                        router.route(packet);
                         clearSignout = true;
                     }
                 }
@@ -181,36 +178,33 @@ public class SocketReadThread extends Thread {
             if (document != null) {
                 Element doc = document.getRootElement();
 
-                Packet packet = null;
                 String tag = doc.getName();
                 if ("message".equals(tag)) {
-                    packet = new Message(doc);
+                    Message packet = new Message(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
                 }
                 else if ("presence".equals(tag)) {
-                    packet = new Presence(doc);
-
-                    Presence.Type type = ((Presence)packet).getType();
+                    Presence packet = new Presence(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
                     // Update the flag that indicates if the user made a clean sign out
-                    clearSignout = (Presence.Type.unavailable == type ? true : false);
+                    clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
                 }
                 else if ("iq".equals(tag)) {
-                    packet = getIQ(doc);
+                    IQ packet = getIQ(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
                 }
                 else {
                     throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
                 }
-
-                // Create the composite packet
-                CompositePacket compositePacket = new CompositePacket(packet, session);
-
-                // Route to the Packet Auditor
-                auditor.audit(compositePacket);
-
-                // Route to PacketRouter
-                router.route(compositePacket);
-
-                // Increment number of sessions.
-                session.incrementClientPacketCount();
             }
         }
     }

@@ -72,8 +72,8 @@ public class MUCPersistenceManager {
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
         "description, canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, " +
-        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "lastActiveDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast)" +
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String DELETE_ROOM =
@@ -311,7 +311,6 @@ public class MUCPersistenceManager {
                 pstmt.setInt(15, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setString(16, room.getSubject());
                 pstmt.setInt(17, marshallRolesToBroadcast(room));
-                pstmt.setString(18, StringUtils.dateToMillis(new Date()));
                 pstmt.executeUpdate();
             }
         }

@@ -88,7 +88,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Group Chat History Settings";
+    String title = LocaleUtils.getLocalizedString("groupchat.history.settings.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat History", "muc-history-settings.jsp"));
@@ -98,8 +98,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Group chat rooms can replay conversation histories to provide context to new members joining a room.
-There are several options for controlling how much history to store for each room.
+<fmt:message key="groupchat.history.settings.introduction" />
 </p>
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
@@ -109,7 +108,7 @@ There are several options for controlling how much history to store for each roo
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="groupchat.history.settings.saved_successfully" />
         </td></tr>
     </tbody>
     </table>
@@ -120,7 +119,7 @@ There are several options for controlling how much history to store for each roo
 <form action="muc-history-settings.jsp" method="post">
 
 <fieldset>
-    <legend>History Settings</legend>
+    <legend><fmt:message key="groupchat.history.settings.legend" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -130,8 +129,8 @@ There are several options for controlling how much history to store for each roo
             </td>
             <td width="99%">
                 <label for="rb01">
-                <b>Don't Show History</b>
-                </label>- Do not show a chat history to users joining a room.
+                <b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
+                </label><fmt:message key="groupchat.history.settings.label2_no_history" />
             </td>
         </tr>
         <tr valign="middle">
@@ -140,8 +139,8 @@ There are several options for controlling how much history to store for each roo
             </td>
             <td width="99%">
                 <label for="rb02">
-                <b>Show Entire Chat History</b>
-                </label>- Show the entire chat history to users joining a room.
+                <b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
+                </label><fmt:message key="groupchat.history.settings.label2_entire_history" />
             </td>
         </tr>
         <tr valign="top">
@@ -150,14 +149,14 @@ There are several options for controlling how much history to store for each roo
             </td>
             <td width="99%">
                 <label for="rb03">
-                <b>Show a Specific Number of Messages</b>
-                </label>- Show a specific number of the most recent messages in the chat. Use the box below to specify that number.
+                <b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
+                </label><fmt:message key="groupchat.history.settings.label2_number_messages" />
             </td>
         </tr>
         <tr valign="middle" class="">
             <td width="1%" nowrap>&nbsp;</td>
             <td width="99%">
-                <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> messages
+                <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
             </td>
         </tr>
     </tbody>
@@ -167,7 +166,7 @@ There are several options for controlling how much history to store for each roo
 
 <br><br>
 
-<input type="submit" name="update" value="Save Settings"/>
+<input type="submit" name="update" value="<fmt:message key="groupchat.history.settings.save" />"/>
 
 </form>
 

@@ -49,8 +49,7 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
     public XMPPServerInfo getServerInfo() {
         Iterator ports;
         if (connectionManager == null) {
-            connectionManager =
-                    (ConnectionManager)lookup.lookup(ConnectionManager.class);
+            connectionManager = (ConnectionManager)lookup.lookup(ConnectionManager.class);
         }
         if (connectionManager == null) {
             ports = Collections.EMPTY_LIST.iterator();
@@ -76,9 +75,8 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
         return new XMPPAddress(username, name, resource);
     }
 
-    private Session serverSession =
-            new ServerSession(new XMPPAddress(null, name, null),
-                    new BasicStreamIDFactory().createStreamID(name));
+    private Session serverSession = new ServerSession(new XMPPAddress(null, name, null),
+            new BasicStreamIDFactory().createStreamID(name));
 
     public Session getSession() {
         return serverSession;
@@ -113,9 +111,7 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
         params.add(version.getVersionString());
         params.add(formatter.format(new Date()));
         String startupBanner = LocaleUtils.getLocalizedString("startup.name", params);
-        Log.info("####################################################################");
         Log.info(startupBanner);
-        Log.info("--------------------------------------------------------------------");
         System.out.println(startupBanner);
 
 //        params.clear();

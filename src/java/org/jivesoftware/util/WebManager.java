@@ -11,7 +11,6 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.chat.ChatServer;
 import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.container.ServiceLookup;
 import org.jivesoftware.messenger.container.ServiceLookupFactory;
@@ -93,10 +92,6 @@ public class WebManager extends WebBean {
 
     public SessionManager getSessionManager() {
         return (SessionManager)getServiceLookup().lookup(SessionManager.class);
-    }
-
-    public ChatServer getChatServer() {
-        return (ChatServer)getServiceLookup().lookup(ChatServer.class);
     }
 
     public MultiUserChatServer getMultiUserChatServer() {

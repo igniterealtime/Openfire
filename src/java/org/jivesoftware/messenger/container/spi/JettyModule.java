@@ -73,6 +73,7 @@ public class JettyModule implements Module {
             webAppContext = jetty.addWebApplication("/", JiveGlobals.getMessengerHome() +
                     File.separator + "plugins" + File.separator +  "admin" +
                     File.separator + "webapp");
+            webAppContext.setWelcomeFiles(new String[]{"index.jsp"});
         }
         catch (Exception e) {
             Log.error("Trouble initializing Jetty", e);
@@ -82,7 +83,7 @@ public class JettyModule implements Module {
     public void start() {
         try {
             jetty.start();
-            webAppContext.setWelcomeFiles(new String[]{"index.jsp", "index.html"});
+
             ServiceItem serverItem = new ServiceItem(null, this, null);
             reg = serverContainer.getServiceLookup().register(serverItem);
             Log.info("Started embedded web server on port: " + port);

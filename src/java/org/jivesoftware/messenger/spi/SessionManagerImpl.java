@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.spi;
 
-import org.jivesoftware.messenger.chat.ChatServer;
 import org.jivesoftware.messenger.container.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -40,10 +39,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
      * Total number of sessions being managed
      */
     private int sessionCount = 0;
-    /**
-     * Message for users logging in with too many users
-     */
-    private Message sessionMaxExceededMessagePacket;
 
     public XMPPServer server;
     /**
@@ -55,7 +50,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
      */
     public PacketTransporter transporter;
     /**
-     * Name of the local server *
+     * Name of the local server
      */
     private String serverName;
     private XMPPAddress serverAddress;
@@ -64,11 +59,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
      * Sets the conflict limit of the server.
      */
     private int conflictLimit;
-
-    /**
-     * Set of all known chat servers
-     */
-    public List chatServers = new LinkedList();
 
     /**
      * Random resource name generation
@@ -268,14 +258,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         conn.init(session);
         conn.registerCloseListener(this, session);
         return session;
-    }
-
-    private void validateMaxExceededPacket() {
-        if (sessionMaxExceededMessagePacket == null) {
-            sessionMaxExceededMessagePacket = packetFactory.getMessage();
-            sessionMaxExceededMessagePacket.setBody(LocaleUtils.getLocalizedString("user.license"));
-            sessionMaxExceededMessagePacket.setError(XMPPError.Code.SERVICE_UNAVAILABLE);
-        }
     }
 
     /**
@@ -814,22 +796,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
 
         Presence presence = session.getPresence();
         if (presence == null || presence.isAvailable()) {
-
-            Iterator servers = chatServers.iterator();
-            while (servers.hasNext()) {
-                Presence packet = packetFactory.getPresence();
-                packet.setOriginatingSession(session);
-                packet.setSender(session.getAddress());
-                packet.setRecipient(new XMPPAddress(null, ((ChatServer)servers.next()).getChatServerName(), null));
-                packet.setAvailable(false);
-                try {
-                    transporter.deliver(packet);
-                }
-                catch (XMLStreamException e) {
-                    // do nothing
-                }
-            }
-
             Presence offline = packetFactory.getPresence();
             offline.setOriginatingSession(session);
             offline.setSender(session.getAddress());
@@ -906,7 +872,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
-        trackInfo.getTrackerClasses().put(ChatServer.class, "chatServers");
         trackInfo.getTrackerClasses().put(PacketTransporter.class, "transporter");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.chat.spi.ChatServerImpl;
 import org.jivesoftware.messenger.container.spi.BootstrapContainer;
 import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
 import org.jivesoftware.messenger.disco.IQDiscoItemsHandler;
@@ -72,7 +71,6 @@ public class XMPPBootContainer extends BootstrapContainer {
 
     protected String[] getStandardModuleNames() {
         return new String[]{
-            IQAgentsHandler.class.getName(),
             IQAuthHandler.class.getName(),
             IQPrivateHandler.class.getName(),
             IQRegisterHandler.class.getName(),
@@ -83,7 +81,6 @@ public class XMPPBootContainer extends BootstrapContainer {
             PresenceSubscribeHandler.class.getName(),
             PresenceUpdateHandler.class.getName(),
 
-            ChatServerImpl.class.getName(),
             IQDiscoInfoHandler.class.getName(),
             IQDiscoItemsHandler.class.getName(),
             MultiUserChatServerImpl.class.getName()};

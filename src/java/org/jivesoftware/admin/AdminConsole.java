@@ -24,19 +24,19 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
- * A model for admin tab and sidebar info. This class loads in xml definitions of the data and
- * produces an in-memory model.<p>
+ * A model for admin tab and sidebar info. This class loads in xml definitions of the
+ * data and produces an in-memory model.<p>
  *
- * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed to be in
- * the main application jar file. In addition, it will load files from
- * <tt>META-INF/admin-sidebar.xml</tt> if they're found. This allows developers to extend the
- * functionality of the admin console to provide more options. See the main
- * <tt>admin-sidebar.xml</tt> file for documentation of its format.<p>
+ * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed
+ * to be in the main application jar file. In addition, it will load files from
+ * <tt>META-INF/admin-sidebar.xml</tt> if they're found. This allows developers to
+ * extend the functionality of the admin console to provide more options. See the main
+ * <tt>admin-sidebar.xml</tt> file for documentation of its format.
  */
 public class AdminConsole {
 
     private static Element coreModel;
-    private static List<Element> overrideModels;
+    private static Map<String,Element> overrideModels;
     private static Element generatedModel;
 
     static {
@@ -44,7 +44,7 @@ public class AdminConsole {
     }
 
     private static void init() {
-        overrideModels = new ArrayList<Element>();
+        overrideModels = new HashMap<String,Element>();
         load();
     }
 
@@ -55,23 +55,35 @@ public class AdminConsole {
     /**
      * Adds XML stream to the tabs/sidebar model.
      *
+     * @param name the name.
      * @param in the XML input stream.
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
-    public static void addModel(InputStream in) throws Exception {
+    public static void addModel(String name, InputStream in) throws Exception {
         SAXReader saxReader = new SAXReader();
         Document doc = saxReader.read(in);
-        addModel((Element)doc.selectSingleNode("/adminconsole"));
+        addModel(name, (Element)doc.selectSingleNode("/adminconsole"));
     }
 
     /**
      * Adds an &lt;adminconsole&gt; Element to the tabs/sidebar model.
      *
+     * @param name the name.
      * @param element the Element
      * @throws Exception if an error occurs.
      */
-    public static void addModel(Element element) throws Exception {
-        overrideModels.add(element);
+    public static void addModel(String name, Element element) throws Exception {
+        overrideModels.put(name, element);
+        rebuildModel();
+    }
+
+    /**
+     * Removes an &lt;adminconsole&gt; Element from the tabs/sidebar model.
+     *
+     * @param name the name.
+     */
+    public static void removeModel(String name) {
+        overrideModels.remove(name);
         rebuildModel();
     }
 
@@ -190,7 +202,7 @@ public class AdminConsole {
                         url = (URL)e.nextElement();
                         try {
                             in = url.openStream();
-                            addModel(in);
+                            addModel("admin", in);
                         }
                         finally {
                             try { if (in != null) { in.close(); } }
@@ -219,7 +231,7 @@ public class AdminConsole {
         doc.add(generatedModel);
 
         // Add in all overrides.
-        for (Element element : overrideModels) {
+        for (Element element : overrideModels.values()) {
             // See if global settings are overriden.
             Element appName = (Element)element.selectSingleNode("//adminconsole/global/appname");
             if (appName != null) {

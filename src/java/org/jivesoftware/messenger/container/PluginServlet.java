@@ -97,6 +97,7 @@ public class PluginServlet extends HttpServlet {
     /**
      * Registers all JSP page servlets for a plugin.
      *
+     * @param manager the plugin manager.
      * @param plugin the plugin.
      * @param webXML the web.xml file containing JSP page names to servlet class file
      *      mappings.
@@ -139,6 +140,41 @@ public class PluginServlet extends HttpServlet {
                 else {
                     Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
                 }
+            }
+        }
+        catch (Throwable e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Unregisters all JSP page servlets for a plugin.
+     *
+     * @param webXML the web.xml file containing JSP page names to servlet class file
+     *      mappings.
+     */
+    public static void unregisterServlets(File webXML) {
+        if (!webXML.exists()) {
+            Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() +
+                    " does not exist.");
+            return;
+        }
+        // Find the name of the plugin directory given that the webXML file
+        // lives in plugins/[pluginName]/web/web.xml
+        String pluginName = webXML.getParentFile().getParentFile().getName();
+        try {
+            SAXReader saxReader = new SAXReader();
+            Document doc = saxReader.read(webXML);
+            // Find all <servelt-mapping> entries to discover name to URL mapping.
+            List names = doc.selectNodes("//servlet-mapping");
+            for (int i=0; i<names.size(); i++) {
+                Element nameElement = (Element)names.get(i);
+                String url = nameElement.element("url-pattern").getTextTrim();
+                // Destroy the servlet than remove from servlets map.
+                HttpServlet servlet = servlets.get(pluginName + url);
+                servlet.destroy();
+                servlets.remove(pluginName + url);
+                servlet = null;
             }
         }
         catch (Throwable e) {

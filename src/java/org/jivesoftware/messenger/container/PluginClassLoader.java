@@ -69,7 +69,6 @@ class PluginClassLoader {
             urlArray[i] = (URL)urls.next();
         }
         classLoader = new URLClassLoader(urlArray, findParentClassLoader());
-        Thread.currentThread().setContextClassLoader(classLoader);
     }
 
     /**
@@ -86,6 +85,13 @@ class PluginClassLoader {
             InstantiationException, SecurityException
     {
         return classLoader.loadClass(name);
+    }
+
+    /**
+     * Destroys this class loader.
+     */
+    public void destroy() {
+        classLoader = null;
     }
 
     /**

@@ -23,8 +23,6 @@
 <%@ taglib uri="core" prefix="c" %>
 <%@ taglib uri="fmt" prefix="fmt" %>
 
-<%@ include file="global.jsp" %>
-
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 

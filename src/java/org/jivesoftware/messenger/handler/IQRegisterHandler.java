@@ -156,12 +156,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             return delegate.handleIQ(packet); 
         }
 
-        Session session = null;
-        try {
-            session = sessionManager.getSession(packet.getFrom());
-        }
-        catch (Exception e) {
-        }
+        Session session = sessionManager.getSession(packet.getFrom());
         IQ reply = null;
         if (!enabled) {
             reply = IQ.createResultIQ(packet);
@@ -169,19 +164,31 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
         else if (IQ.Type.get.equals(packet.getType())) {
             reply = IQ.createResultIQ(packet);
+            probeResult.setParent(null);
             if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                 try {
                     User user = userManager.getUser(session.getUsername());
                     Element currentRegistration = probeResult.createCopy();
-                    currentRegistration.element("registered").setText(null);
+                    currentRegistration.addElement("registered");
                     currentRegistration.element("username").setText(user.getUsername());
-                    currentRegistration.element("password").setText(null);
+                    currentRegistration.element("password").setText("");
                     currentRegistration.element("email").setText(user.getInfo().getEmail());
                     
                     Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                    form.element("username").setText(user.getUsername());
-                    form.element("name").setText(user.getInfo().getName());
-                    form.element("email").setText(user.getInfo().getEmail());
+                    Iterator fields = form.elementIterator("field");
+                    Element field;
+                    while (fields.hasNext()) {
+                        field = (Element) fields.next();
+                        if ("username".equals(field.attributeValue("var"))) {
+                            field.addElement("value").addText(user.getUsername());
+                        }
+                        else if ("name".equals(field.attributeValue("var"))) {
+                            field.addElement("value").addText(user.getInfo().getName());
+                        }
+                        else if ("email".equals(field.attributeValue("var"))) {
+                            field.addElement("value").addText(user.getInfo().getEmail());
+                        }
+                    }
                     reply.setChildElement(currentRegistration);
                 }
                 catch (UserNotFoundException e) {

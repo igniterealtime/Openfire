@@ -66,6 +66,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         versionElement.setText(localServer.getServerInfo().getVersion().getVersionString());
         IQ result = null;
         result = IQ.createResultIQ(packet);
+        bodyElement.setParent(null);
         result.setChildElement(bodyElement.createCopy());
         return result;
     }

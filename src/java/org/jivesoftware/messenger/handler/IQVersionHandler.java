@@ -61,7 +61,6 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        localServer = server;
     }
 
     public IQHandlerInfo getInfo() {

@@ -27,17 +27,17 @@ import org.jivesoftware.messenger.*;
 public interface MultiUserChatServer {
 
     /**
-     * Obtain the name of this chat server.
+     * Obtain the name of this chat service.
      * 
      * @return The chat server name (host name).
      */
-    String getChatServerName();
+    String getServiceName();
 
     /**
-     * Set the name of this chat server. The new name won't go into effect until the server is
+     * Set the name of this chat service. The new name won't go into effect until the server is
      * restarted.
      * 
-     * @param name The chat server name (host name).
+     * @param name The chat service name (host name).
      */
     void setServiceName(String name);
 

@@ -107,7 +107,7 @@ public class MUCRoleImpl implements MUCRole {
         this.affiliation = affiliation;
         extendedInformation = new MetaDataFragment("http://jabber.org/protocol/muc#user", "x");
         calculateExtendedInformation();
-        rJID = new XMPPAddress(room.getName(), server.getChatServerName(), nick);
+        rJID = new XMPPAddress(room.getName(), server.getServiceName(), nick);
         setPresence(room.createPresence(Presence.STATUS_ONLINE));
     }
 
@@ -208,7 +208,7 @@ public class MUCRoleImpl implements MUCRole {
 
     public void changeNickname(String nickname) {
         this.nick = nickname;
-        rJID = new XMPPAddress(room.getName(), server.getChatServerName(), nick);
+        rJID = new XMPPAddress(room.getName(), server.getServiceName(), nick);
     }
 
     public MUCUser getChatUser() {

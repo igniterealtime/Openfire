@@ -76,10 +76,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      */
     private static int LOG_BATCH_SIZE = 50;
     /**
-     * the chat server's hostname
+     * the chat service's hostname
      */
-    private String chatServerName = null;
-    private XMPPAddress chatServerAddress = null;
+    private String chatServiceName = null;
+    private XMPPAddress chatServiceAddress = null;
 
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
@@ -188,7 +188,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     // can just simulate that the user sent an unavailable presence to each room 
                     // that he/she previously joined
                     // TODO Analyze the side effect caused by PresenceManager.probePresence
-                    presenceManager.probePresence(chatServerAddress, user.getAddress());
+                    presenceManager.probePresence(chatServiceAddress, user.getAddress());
                 }
             }
             catch (Exception e) {
@@ -303,8 +303,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public String getChatServerName() {
-        return chatServerName;
+    public String getServiceName() {
+        return chatServiceName;
     }
 
     public HistoryStrategy getHistoryStrategy() {
@@ -371,24 +371,19 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public void serviceAdded(Object service) {
         if (service instanceof RoutingTable) {
-            ((RoutingTable)service).addRoute(chatServerAddress, this);
+            ((RoutingTable)service).addRoute(chatServiceAddress, this);
             ArrayList params = new ArrayList();
             params.clear();
-            params.add(chatServerName);
+            params.add(chatServiceName);
             Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         }
         else if (service instanceof IQRegisterHandler) {
             ((IQRegisterHandler) service).addDelegate(
-                    getChatServerName(),
+                    getServiceName(),
                     new IQMUCRegisterHandler(this));
         }
     }
 
-    /**
-     * Set the name of the MUC service.
-     *
-     * @param name the new service name.
-     */
     public void setServiceName(String name) {
         JiveGlobals.setProperty("xmpp.muc.service", name);
     }
@@ -440,7 +435,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void initialize(Container container) {
         super.initialize(container);
 
-        chatServerName = JiveGlobals.getProperty("xmpp.muc.service");
+        chatServiceName = JiveGlobals.getProperty("xmpp.muc.service");
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext("xmpp.muc.history");
         // Load the list of JIDs that are sysadmins of the MUC service
@@ -487,8 +482,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 Log.error("Wrong number format of property xmpp.muc.tasks.log.batchsize", e);
             }
         }
-        if (chatServerName == null) {
-            chatServerName = "conference";
+        if (chatServiceName == null) {
+            chatServiceName = "conference";
         }
         String serverName = null;
         try {
@@ -505,9 +500,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             Log.error(e);
         }
         if (serverName != null) {
-            chatServerName += "." + serverName;
+            chatServiceName += "." + serverName;
         }
-        chatServerAddress = new XMPPAddress(null, chatServerName, null);
+        chatServiceAddress = new XMPPAddress(null, chatServiceName, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         timer.schedule(new UserTimeoutTask(), USER_TIMEOUT, USER_TIMEOUT);
@@ -523,10 +518,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void start() {
         super.start();
         routingTable = (RoutingTable)lookup.lookup(RoutingTable.class);
-        routingTable.addRoute(chatServerAddress, this);
+        routingTable.addRoute(chatServiceAddress, this);
         ArrayList params = new ArrayList();
         params.clear();
-        params.add(chatServerName);
+        params.add(chatServiceName);
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
     }
 
@@ -534,15 +529,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         super.stop();
         timer.cancel();
         if (registerHandler != null) {
-            registerHandler.removeDelegate(getChatServerName());
+            registerHandler.removeDelegate(getServiceName());
         }
     }
 
     public XMPPAddress getAddress() {
-        if (chatServerAddress == null) {
+        if (chatServiceAddress == null) {
             throw new IllegalStateException("Not initialized");
         }
-        return chatServerAddress;
+        return chatServiceAddress;
     }
 
     public void process(XMPPPacket packet) {
@@ -577,7 +572,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
         items.add(new DiscoServerItem() {
             public String getJID() {
-                return chatServerName;
+                return chatServiceName;
             }
 
             public String getName() {

@@ -933,7 +933,7 @@ public class MUCRoomImpl implements MUCRoom {
 
         public XMPPAddress getRoleAddress() {
             if (crJID == null) {
-                crJID = new XMPPAddress(room.getName(), server.getChatServerName(), "");
+                crJID = new XMPPAddress(room.getName(), server.getServiceName(), "");
             }
             return crJID;
         }

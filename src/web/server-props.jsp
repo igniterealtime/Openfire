@@ -85,7 +85,7 @@ Below is a list of information for this <fmt:message key="short.title" bundle="$
           Multi User Chat Server Name:
       </td>
       <td colspan=2>
-        <c:out value="${admin.multiUserChatServer.chatServerName}" />
+        <c:out value="${admin.multiUserChatServer.serviceName}" />
       </td>
   </tr>
 </c:if>

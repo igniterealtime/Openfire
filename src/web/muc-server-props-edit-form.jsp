@@ -51,14 +51,14 @@
             errors.put("mucname","mucname");
         }
         if (errors.size() == 0) {
-            admin.getMultiUserChatServer().setChatServerName(muc);
+            admin.getMultiUserChatServer().setServiceName(muc);
             success = true;
         }
            name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
     }
     else {
         name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
-        muc = admin.getMultiUserChatServer().getChatServerName() == null  ? "" : admin.getMultiUserChatServer().getChatServerName();
+        muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
     }
 %>
 

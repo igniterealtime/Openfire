@@ -59,7 +59,7 @@
         }
         if (errors.size() == 0) {
             admin.getChatServer().setChatServerName(chat);
-            admin.getMultiUserChatServer().setChatServerName(muc);
+            admin.getMultiUserChatServer().setServiceName(muc);
             admin.getXMPPServer().getServerInfo().setName(name);
             success = true;
         }
@@ -69,8 +69,8 @@
                 ? "" : admin.getServerInfo().getName();
         chat = admin.getChatServer().getChatServerName() == null
                 ? "" : admin.getChatServer().getChatServerName();
-        muc = admin.getMultiUserChatServer().getChatServerName() == null
-                ? "" : admin.getMultiUserChatServer().getChatServerName();
+        muc = admin.getMultiUserChatServer().getServiceName() == null
+                ? "" : admin.getMultiUserChatServer().getServiceName();
     }
 %>
 

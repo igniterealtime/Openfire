@@ -143,6 +143,11 @@ CREATE TABLE mucMember (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
+  firstName           VARCHAR(100)  NULL,
+  lastName            VARCHAR(100)  NULL,
+  url                 VARCHAR(100)  NULL,
+  email               VARCHAR(100)  NULL,
+  faqentry            VARCHAR(100)  NULL,
   CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
 

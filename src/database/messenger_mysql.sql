@@ -131,6 +131,11 @@ CREATE TABLE mucMember (
   roomID              BIGINT        NOT NULL,
   jid                 TEXT          NOT NULL,
   nickname            VARCHAR(255)  NULL,
+  firstName           VARCHAR(100)  NULL,
+  lastName            VARCHAR(100)  NULL,
+  url                 VARCHAR(100)  NULL,
+  email               VARCHAR(100)  NULL,
+  faqentry            VARCHAR(100)  NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 

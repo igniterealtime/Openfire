@@ -58,7 +58,7 @@
             buf.append("<span class=\"hilite\">").append(input).append("</span>");
             return buf.toString();
         }
-        else if (input.startsWith(" --- ") && input.endsWith(" --- ")) {
+        else if (input.trim().startsWith("---") && input.trim().endsWith("---")) {
             StringBuffer buf = new StringBuffer();
             buf.append("<span class=\"hilite-marker\">").append(input).append("</span>");
             return buf.toString();

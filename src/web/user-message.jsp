@@ -8,6 +8,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.Iterator,
                  org.jivesoftware.messenger.*,
+                 org.jivesoftware.admin.*,
                  java.util.Date,
                  java.text.DateFormat,
                  java.util.HashMap,
@@ -31,16 +32,19 @@
 
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Send Administrative Message"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="test" />
-<c:set var="sbar" value="session" scope="page" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Send Administrative Message";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
+    pageinfo.setPageID("user-message");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 
 <%
@@ -60,11 +64,11 @@
     // Get the user - a user might not be passed in if this is a system-wide message
     User user = null;
     if (username != null) {
-        user = admin.getUserManager().getUser(username);
+        user = webManager.getUserManager().getUser(username);
     }
 
     // Get the session manager
-    SessionManager sessionManager = admin.getSessionManager();
+    SessionManager sessionManager = webManager.getSessionManager();
 
     // Handle the request to send a message:
     Map errors = new HashMap();

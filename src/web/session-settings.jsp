@@ -8,6 +8,7 @@
                  java.util.Iterator,
                  org.jivesoftware.messenger.*,
                  java.util.Date,
+                 org.jivesoftware.admin.*,
                  java.text.DateFormat,
                  org.jivesoftware.messenger.handler.IQAuthHandler" %>
 
@@ -15,14 +16,16 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Session Settings"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="session-settings.jsp" />
-<c:set var="sbar" value="session" scope="page" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Session Settings";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-settings.jsp"));
+    pageinfo.setPageID("session-settings");
+%>
 <jsp:include page="top.jsp" flush="true" />
-
+<jsp:include page="title.jsp" flush="true" />
 <c:set var="success" value="${param.success}" />
 
 
@@ -54,7 +57,7 @@
 <form action="session-settings.jsp" method="post">
 
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="3" align="left">Anonymous Logins</td></tr>
+
 <tr><td colspan=3 class="text">
 
 

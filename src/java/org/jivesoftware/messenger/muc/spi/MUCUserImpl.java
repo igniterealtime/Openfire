@@ -92,7 +92,7 @@ public class MUCUserImpl implements MUCUser {
      * 
      * @param packet the packet to be bounced.
      */
-    private void sendErrorPacket(Packet packet, PacketError error) {
+    private void sendErrorPacket(Packet packet, PacketError.Condition error) {
         packet = packet.createCopy();
         packet.setError(error);
         packet.setFrom(packet.getTo());
@@ -161,30 +161,30 @@ public class MUCUserImpl implements MUCUser {
                     if (declinedInvitation) {
                         Element info = userInfo.element("decline");
                         server.getChatRoom(group).sendInvitationRejection(
-                            info.attributeValue("to"),
+                            new JID(info.attributeValue("to")),
                             info.elementTextTrim("reason"),
                             packet.getFrom());
                     }
                     else {
                         // The sender is not an occupant of the room
-                        sendErrorPacket(packet, XMPPError.Code.NOT_ACCEPTABLE);
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                     }
                 }
                 else {
                     // The sender is not an occupant of a NON-EXISTENT room!!!
-                    sendErrorPacket(packet, XMPPError.Code.NOT_FOUND);
+                    sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
                 }
             }
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getSender())) {
-                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                    sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
                     try {
                         if (packet.getSubject() != null && packet.getSubject().trim().length() > 0
-                                && Message.GROUP_CHAT == packet.getType()) {
+                                && Message.Type.groupchat == packet.getType()) {
                             // An occupant is trying to change the room's subject
                             role.getChatRoom().changeSubject(packet, role);
 
@@ -193,32 +193,31 @@ public class MUCUserImpl implements MUCUser {
                             // An occupant is trying to send a private, send public message,
                             // invite someone to the room or reject an invitation
                             Message.Type type = packet.getType();
-                            String resource = packet.getRecipient().getResource();
+                            String resource = packet.getTo().getResource();
                             if (resource == null || resource.trim().length() == 0) {
                                 resource = null;
                             }
-                            if (resource == null && Message.GROUP_CHAT == type) {
+                            if (resource == null && Message.Type.groupchat == type) {
                                 // An occupant is trying to send a public message
                                 role.getChatRoom().sendPublicMessage(packet, role);
                             }
                             else if (resource != null
-                                    && (Message.CHAT == type || Message.NORMAL == type)) {
+                                    && (Message.Type.chat == type || Message.Type.normal == type)) {
                                 // An occupant is trying to send a private message
                                 role.getChatRoom().sendPrivateMessage(packet, role);
                             }
-                            else if (resource == null && Message.NORMAL == type) {
+                            else if (resource == null && Message.Type.normal == type) {
                                 // An occupant could be sending an invitation or declining an
                                 // invitation
-                                XMPPDOMFragment userInfo = (XMPPDOMFragment) packet.getFragment(
+                                Element userInfo = packet.getChildElement(
                                     "x",
                                     "http://jabber.org/protocol/muc#user");
                                 // Real real real UGLY TRICK!!! Will and MUST be solved when
                                 // persistence will be added. Replace locking with transactions!
                                 MUCRoomImpl room = (MUCRoomImpl) role.getChatRoom();
-                                if (userInfo != null
-                                        && userInfo.getRootElement().element("invite") != null) {
+                                if (userInfo != null && userInfo.element("invite") != null) {
                                     // An occupant is sending an invitation
-                                    Element info = userInfo.getRootElement().element("invite");
+                                    Element info = userInfo.element("invite");
 
                                     // Add the user as a member of the room if the room is
                                     // members only
@@ -233,35 +232,33 @@ public class MUCUserImpl implements MUCUser {
                                     }
 
                                     // Send the invitation to the user
-                                    room.sendInvitation(info.attributeValue("to"), info
-                                            .elementTextTrim("reason"), role, packet
-                                            .getOriginatingSession());
+                                    room.sendInvitation(new JID(info.attributeValue("to")),
+                                            info.elementTextTrim("reason"), role);
                                 }
                                 else if (userInfo != null
-                                        && userInfo.getRootElement().element("decline") != null) {
+                                        && userInfo.element("decline") != null) {
                                     // An occupant has declined an invitation
-                                    Element info = userInfo.getRootElement().element("decline");
-                                    room.sendInvitationRejection(info.attributeValue("to"), info
-                                            .elementTextTrim("reason"), packet.getSender(), packet
-                                            .getOriginatingSession());
+                                    Element info = userInfo.element("decline");
+                                    room.sendInvitationRejection(new JID(info.attributeValue("to")),
+                                            info.elementTextTrim("reason"), packet.getFrom());
                                 }
                                 else {
-                                    sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
+                                    sendErrorPacket(packet, PacketError.Condition.bad_request);
                                 }
                             }
                             else {
-                                sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
+                                sendErrorPacket(packet, PacketError.Condition.bad_request);
                             }
                         }
                     }
                     catch (ForbiddenException e) {
-                        sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
+                        sendErrorPacket(packet, PacketError.Condition.forbidden);
                     }
                     catch (NotFoundException e) {
-                        sendErrorPacket(packet, XMPPError.Code.NOT_FOUND);
+                        sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
                     }
                     catch (ConflictException e) {
-                        sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                        sendErrorPacket(packet, PacketError.Condition.conflict);
                     }
                 }
             }
@@ -270,8 +267,8 @@ public class MUCUserImpl implements MUCUser {
 
     public void process(IQ packet) {
         lastPacketTime = System.currentTimeMillis();
-        XMPPAddress recipient = packet.getRecipient();
-        String group = recipient.getName();
+        JID recipient = packet.getTo();
+        String group = recipient.getNode();
         if (group == null) {
             // Ignore packets to the groupchat server
             // In the future, we'll need to support TYPE_IQ queries to the server for MUC
@@ -287,33 +284,33 @@ public class MUCUserImpl implements MUCUser {
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getSender())) {
-                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                    sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
                     try {
-                        if ("query".equals(packet.getChildName())
+                        if ("query".equals(packet.getElement().getNamespacePrefix())
                                 && "http://jabber.org/protocol/muc#owner".equals(packet
-                                        .getChildNamespace())) {
+                                        .getElement().getNamespaceURI())) {
                             role.getChatRoom().getIQOwnerHandler().handleIQ(packet, role);
                         }
-                        else if ("query".equals(packet.getChildName())
+                        else if ("query".equals(packet.getElement().getNamespacePrefix())
                                 && "http://jabber.org/protocol/muc#admin".equals(packet
-                                        .getChildNamespace())) {
+                                        .getElement().getNamespaceURI())) {
                             role.getChatRoom().getIQAdminHandler().handleIQ(packet, role);
                         }
                         else {
-                            sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
+                            sendErrorPacket(packet, PacketError.Condition.bad_request);
                         }
                     }
                     catch (ForbiddenException e) {
-                        sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
+                        sendErrorPacket(packet, PacketError.Condition.forbidden);
                     }
                     catch (ConflictException e) {
-                        sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                        sendErrorPacket(packet, PacketError.Condition.conflict);
                     }
                     catch (NotAllowedException e) {
-                        sendErrorPacket(packet, XMPPError.Code.NOT_ALLOWED);
+                        sendErrorPacket(packet, PacketError.Condition.not_allowed);
                     }
                 }
             }
@@ -322,11 +319,11 @@ public class MUCUserImpl implements MUCUser {
 
     public void process(Presence packet) {
         lastPacketTime = System.currentTimeMillis();
-        XMPPAddress recipient = packet.getRecipient();
-        String group = recipient.getNamePrep();
+        JID recipient = packet.getTo();
+        String group = recipient.getNode();
         if (group == null) {
-            if (Presence.UNAVAILABLE == packet.getType()) {
-                server.removeUser(packet.getSender());
+            if (Presence.Type.unavailable == packet.getType()) {
+                server.removeUser(packet.getFrom());
             }
         }
         else {
@@ -336,20 +333,19 @@ public class MUCUserImpl implements MUCUser {
                 // properly addressed and we drop it silently
                 if (recipient.getResource() != null
                         && recipient.getResource().trim().length() > 0) {
-                    if (packet.getType() == Presence.AVAILABLE
-                            || Presence.INVISIBLE == packet.getType()) {
+                    if (packet.isAvailable()) {
                         try {
                             // Get or create the room
-                            MUCRoom room = server.getChatRoom(group, packet.getSender());
+                            MUCRoom room = server.getChatRoom(group, packet.getFrom());
                             // User must support MUC in order to create a room
-                            MetaDataFragment mucInfo = (MetaDataFragment) packet.getFragment("x",
+                            Element mucInfo = packet.getChildElement("x",
                                     "http://jabber.org/protocol/muc");
                             HistoryRequest historyRequest = null;
                             String password = null;
                             // Check for password & requested history if client supports MUC
                             if (mucInfo != null) {
-                                password = mucInfo.getProperty("x.password");
-                                if (mucInfo.includesProperty("x.history")) {
+                                password = mucInfo.elementTextTrim("password");
+                                if (mucInfo.element("history") != null) {
                                     historyRequest = new HistoryRequest(mucInfo);
                                 }
                             }
@@ -366,25 +362,25 @@ public class MUCUserImpl implements MUCUser {
                             }
                         }
                         catch (UnauthorizedException e) {
-                            sendErrorPacket(packet, XMPPError.Code.UNAUTHORIZED);
+                            sendErrorPacket(packet, PacketError.Condition.not_authorized);
                         }
                         catch (NotAllowedException e) {
-                            sendErrorPacket(packet, XMPPError.Code.NOT_ALLOWED);
+                            sendErrorPacket(packet, PacketError.Condition.not_allowed);
                         }
                         catch (UserAlreadyExistsException e) {
-                            sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                            sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                         catch (RoomLockedException e) {
-                            sendErrorPacket(packet, XMPPError.Code.NOT_FOUND);
+                            sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
                         }
                         catch (ForbiddenException e) {
-                            sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
+                            sendErrorPacket(packet, PacketError.Condition.forbidden);
                         }
                         catch (RegistrationRequiredException e) {
-                            sendErrorPacket(packet, XMPPError.Code.REGISTRATION_REQUIRED);
+                            sendErrorPacket(packet, PacketError.Condition.registration_required);
                         }
                         catch (ConflictException e) {
-                            sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                            sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                     }
                     else {
@@ -393,10 +389,9 @@ public class MUCUserImpl implements MUCUser {
                     }
                 }
                 else {
-                    if (packet.getType() == Presence.AVAILABLE
-                            || Presence.INVISIBLE == packet.getType()) {
+                    if (packet.isAvailable()) {
                         // A resource is required in order to join a room
-                        sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
+                        sendErrorPacket(packet, PacketError.Condition.bad_request);
                     }
                     // TODO: send error message to user (can't send packets to group you haven't
                     // joined)
@@ -405,11 +400,11 @@ public class MUCUserImpl implements MUCUser {
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getSender())) {
-                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                    sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
-                    if (Presence.UNAVAILABLE == packet.getType()) {
+                    if (Presence.Type.unavailable == packet.getType()) {
                         try {
                             roles.remove(group.toLowerCase());
                             role.getChatRoom().leaveRoom(role.getNickname());
@@ -431,8 +426,8 @@ public class MUCUserImpl implements MUCUser {
                                 // Occupant has changed his availability status
                                 role.setPresence(packet);
                                 Presence presence = (Presence) role.getPresence()
-                                        .createDeepCopy();
-                                presence.setSender(role.getRoleAddress());
+                                        .createCopy();
+                                presence.setFrom(role.getRoleAddress());
                                 role.getChatRoom().send(presence);
                             }
                             else {
@@ -441,23 +436,19 @@ public class MUCUserImpl implements MUCUser {
 
                                 // Answer a conflic error if the new nickname is taken
                                 if (role.getChatRoom().hasOccupant(resource)) {
-                                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                                    sendErrorPacket(packet, PacketError.Condition.conflict);
                                 }
                                 else {
                                     // Send "unavailable" presence for the old nickname
-                                    Presence presence = (Presence) role.getPresence()
-                                            .createDeepCopy();
+                                    Presence presence = (Presence) role.getPresence().createCopy();
                                     // Switch the presence to OFFLINE
-                                    presence.setVisible(false);
-                                    presence.setAvailable(false);
-                                    presence.setSender(role.getRoleAddress());
+                                    presence.setType(Presence.Type.unavailable);
+                                    presence.setFrom(role.getRoleAddress());
                                     // Add the new nickname and status 303 as properties
-                                    MetaDataFragment frag = (MetaDataFragment) presence
-                                            .getFragment(
-                                                    "x",
-                                                    "http://jabber.org/protocol/muc#user");
-                                    frag.setProperty("x.item:nick", resource);
-                                    frag.setProperty("x.status:code", "303");
+                                    Element frag = presence.getChildElement("x",
+                                            "http://jabber.org/protocol/muc#user");
+                                    frag.element("item").addAttribute("nick", resource);
+                                    frag.element("status").addAttribute("code", "303");
                                     role.getChatRoom().send(presence);
 
                                     // Send availability presence for the new nickname
@@ -465,8 +456,8 @@ public class MUCUserImpl implements MUCUser {
                                     role.setPresence(packet);
                                     role.changeNickname(resource);
                                     role.getChatRoom().nicknameChanged(oldNick, resource);
-                                    presence = (Presence) role.getPresence().createDeepCopy();
-                                    presence.setSender(role.getRoleAddress());
+                                    presence = (Presence) role.getPresence().createCopy();
+                                    presence.setFrom(role.getRoleAddress());
                                     role.getChatRoom().send(presence);
                                 }
                             }

@@ -22,6 +22,8 @@ import java.util.TimeZone;
 
 import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
+import org.dom4j.Element;
+import org.xmpp.packet.Message;
 
 /**
  * Represents the amount of history requested by an occupant while joining a room. There are 
@@ -48,21 +50,22 @@ public class HistoryRequest {
     private int seconds = -1;
     private Date since;
 
-    public HistoryRequest(MetaDataFragment userFragment) {
-        if (userFragment.includesProperty("x.history")) {
-            if (userFragment.includesProperty("x.history:maxchars")) {
-                this.maxChars = Integer.parseInt(userFragment.getProperty("x.history:maxchars"));
+    public HistoryRequest(Element userFragment) {
+        Element history = userFragment.element("history");
+        if (history != null) {
+            if (history.attribute("maxchars") != null) {
+                this.maxChars = Integer.parseInt(history.attributeValue("maxchars"));
             }
-            if (userFragment.includesProperty("x.history:maxstanzas")) {
-                this.maxStanzas = Integer.parseInt(userFragment.getProperty("x.history:maxstanzas"));
+            if (history.attribute("maxstanzas") != null) {
+                this.maxStanzas = Integer.parseInt(history.attributeValue("maxstanzas"));
             }
-            if (userFragment.includesProperty("x.history:seconds")) {
-                this.seconds = Integer.parseInt(userFragment.getProperty("x.history:seconds"));
+            if (history.attribute("seconds") != null) {
+                this.seconds = Integer.parseInt(history.attributeValue("seconds"));
             }
-            if (userFragment.includesProperty("x.history:since")) {
+            if (history.attribute("since") != null) {
                 try {
                     // parse utc into Date
-                    this.since = formatter.parse(userFragment.getProperty("x.history:since"));
+                    this.since = formatter.parse(history.attributeValue("since"));
                 }
                 catch(ParseException pe) {
                     Log.error("Error parsing date from history management", pe);
@@ -142,7 +145,7 @@ public class HistoryRequest {
             Message message;
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
-            MetaDataFragment delayInformation;
+            Element delayInformation;
             LinkedList historyToSend = new LinkedList();
             ListIterator iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
@@ -161,13 +164,10 @@ public class HistoryRequest {
                 }
 
                 if (getSeconds() > -1 || getSince() != null) {
-                    delayInformation = (MetaDataFragment) message.getFragment(
-                            "x",
-                            "jabber:x:delay");
+                    delayInformation = message.getChildElement("x", "jabber:x:delay");
                     try {
                         // Get the date when the historic message was sent
-                        Date delayedDate = delayedFormatter.parse(delayInformation
-                                .getProperty("x:stamp"));
+                        Date delayedDate = delayedFormatter.parse(delayInformation.attributeValue("stamp"));
                         if (getSince() != null && delayedDate.before(getSince())) {
                             // Stop collecting history since we have exceded a limit
                             break;

@@ -39,7 +39,7 @@
     Map errors = new HashMap();
     if (add) {
         // do validation
-        if (userJID == null) {
+        if (userJID == null || userJID.indexOf('@') == -1) {
             errors.put("userJID","userJID");
         }
         if (errors.size() == 0) {
@@ -198,7 +198,7 @@ Total Users: <%= userCount %>.
     <%  if (errors.get("userJID") != null) { %>
 
         <span class="jive-error-text">
-        Please enter a valid bare JID.
+        Please enter a valid bare JID (e.g. johndoe@company.org).
         </span>
 
     <%  } %>

@@ -195,9 +195,9 @@
             String glist = group.getProperties().get("sharedRoster.groupList");
             List l = new ArrayList();
             if (glist != null) {
-                StringTokenizer tokenizer = new StringTokenizer(glist,", \t\n\r\f");
+                StringTokenizer tokenizer = new StringTokenizer(glist,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
-                    String tok = tokenizer.nextToken();
+                    String tok = tokenizer.nextToken().trim();
                     l.add(tok.trim());
                 }
             }

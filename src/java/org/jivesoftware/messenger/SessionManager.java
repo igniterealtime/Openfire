@@ -37,7 +37,6 @@ public interface SessionManager {
      */
     public Session createSession(Connection conn) throws UnauthorizedException;
 
-
     /**
      * Change the priority of a session associated with the sender.
      *
@@ -82,28 +81,27 @@ public interface SessionManager {
             throws UnauthorizedException, SessionNotFoundException;
 
     /**
-     * <p>Obtain an iterator of all sessions on the server.</p>
+     * Returns the Collection of all sessions on the server.
      *
-     * @return An iterator over the sessions (never null)
+     * @return the Collection of all sessions.
      */
-    public Iterator getSessions() throws UnauthorizedException;
+    public Collection<Session> getSessions();
 
     /**
-     * <p>Obtain an iterator of all sessions on the server.</p>
+     * Returns a Collection of all sessions on the server given the
+     * specified ResultFilter.
      *
-     * @param filter The result filter to apply to the search
-     * @return An iterator over the sessions (never null)
+     * @param filter the result filter to apply to the search.
+     * @return the Collection of all sessions.
      */
-    public Iterator getSessions(SessionResultFilter filter) throws UnauthorizedException;
+    public Collection<Session> getSessions(SessionResultFilter filter);
 
     /**
      * <p>Obtain an iterator of all anonymous sessions on the server.</p>
      *
      * @return An iterator over the anonynmous sessions (never null)
-     * @throws UnauthorizedException
-     * @throws UnauthorizedException If caller doesn't have permission to access this method
      */
-    public Iterator getAnonymousSessions() throws UnauthorizedException;
+    public Iterator getAnonymousSessions();
 
     /**
      * <p>Obtain an iterator of all sessions for a given user on the server.</p>

@@ -52,7 +52,6 @@ public class AuthProviderFactory {
             "org.jivesoftware.messenger.auth.spi.DbGroupProvider";
 
     private static AuthProvider authProvider = null;
-    private static GroupProvider groupProvider = null;
 
     /**
      * Returns a concrete AuthProvider. By default, the implementation
@@ -85,38 +84,5 @@ public class AuthProviderFactory {
             }
         }
         return authProvider;
-    }
-
-    /**
-     * <p>Obtains a concrete GroupProvider.<p>
-     * <p/>
-     * <p>By default, the implementation used will be an instance
-     * of DbGroupProvider -- the standard database implementation
-     * that uses the Jive group table. A different GroupProvider can be
-     * specified by setting the Jive property "GroupProvider.className".
-     * However, you must restart Jive for any change to take effect.</p>
-     */
-    public static GroupProvider getGroupProvider() {
-        if (groupProvider == null) {
-            // Use className as a convenient object to get a lock on.
-            synchronized (groupClassName) {
-                if (groupProvider == null) {
-                    //See if the classname has been set as a Jive property.
-                    String classNameProp =
-                            JiveGlobals.getProperty("GroupProvider.className");
-                    if (classNameProp != null) {
-                        groupClassName = classNameProp;
-                    }
-                    try {
-                        Class c = ClassUtils.forName(groupClassName);
-                        groupProvider = (GroupProvider)c.newInstance();
-                    }
-                    catch (Exception e) {
-                        Log.error("Exception loading class: " + groupClassName, e);
-                    }
-                }
-            }
-        }
-        return groupProvider;
     }
 }

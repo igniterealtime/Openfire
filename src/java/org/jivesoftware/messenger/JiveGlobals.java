@@ -346,6 +346,42 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns a local property. Local properties are stored in the file
+     * <tt>jive-messenger.xml</tt> that exists in the <tt>jiveMessenger/conf</tt> directory.
+     * Properties are always specified as "foo.bar.prop", which would map to
+     * the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     * If the specified property can't be found, the <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue the default value for the property.
+     * @return the property value specified by name.
+     */
+    public static String getXMLProperty(String name, String defaultValue) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
+        }
+
+        // messengerHome not loaded?
+        if (xmlProperties == null) {
+            return null;
+        }
+
+        String value = xmlProperties.getProperty(name);
+        if (value == null) {
+            value = defaultValue;
+        }
+        return value;
+    }
+
+    /**
      * Returns an integer value local property. Local properties are stored in the file
      * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to

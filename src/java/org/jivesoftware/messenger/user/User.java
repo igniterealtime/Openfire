@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.Group;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.Iterator;
@@ -25,8 +24,6 @@ import java.util.Iterator;
  * <p>Security for User objects is provide by UserProxy protection proxy objects.</p>
  *
  * @author Iain Shigeoka
- *
- * @see Group
  */
 public interface User {
 

@@ -72,30 +72,28 @@ CREATE TABLE jiveVCard (
 
 
 CREATE TABLE jiveGroup (
-  groupID               INTEGER         NOT NULL,
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveGroup_pk PRIMARY KEY (groupID)
+  CONSTRAINT jiveGroup_pk PRIMARY KEY (name)
 );
 CREATE INDEX jiveGrp_cDate_idx ON jiveGroup (creationDate ASC);
-CREATE INDEX jiveGrp_name_idx ON jiveGroup (name);
 
 
 CREATE TABLE jiveGroupProp (
-  groupID               INTEGER         NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveGrpProp_pk PRIMARY KEY (groupID, name)
+  CONSTRAINT jiveGrpProp_pk PRIMARY KEY (groupName, name)
 );
 
 
 CREATE TABLE jiveGroupUser (
-  groupID               INTEGER         NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   username              VARCHAR(32)     NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGrpUser PRIMARY KEY (groupID, username, administrator)
+  CONSTRAINT jiveGrpUser PRIMARY KEY (groupName, username, administrator)
 );
 
  
@@ -163,8 +161,6 @@ CREATE TABLE mucConversationLog (
 
 
 -- Finally, insert default table values
-INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);

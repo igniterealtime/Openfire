@@ -83,30 +83,28 @@ CREATE TABLE jiveDomain (
 
 
 CREATE TABLE jiveGroup (
-  groupID               BIGINT          NOT NULL,
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
   creationDate          VARCHAR(15)     NOT NULL,
   modificationDate      VARCHAR(15)     NOT NULL,
-  CONSTRAINT jiveGroup_pk PRIMARY KEY (groupID)
+  CONSTRAINT jiveGroup_pk PRIMARY KEY (name)
 );
 CREATE INDEX jiveGroup_cDate_idx ON jiveGroup (creationDate);
-CREATE INDEX jiveGroup_name_idx ON jiveGroup (name);
 
 
 CREATE TABLE jiveGroupProp (
-  groupID               BIGINT          NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(4000)   NOT NULL,
-  CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupID, name)
+  CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupName, name)
 );
 
 
 CREATE TABLE jiveGroupUser (
-  groupID               BIGINT          NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   username              VARCHAR(32)     NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupID, username, administrator)
+  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
 
 
@@ -174,14 +172,10 @@ CREATE TABLE mucConversationLog (
 
 // Finally, insert default table values.
 
-// Unique ID entry for user, group
-// The User ID entry starts at 2 (after admin user entry).
-INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-// Entry for admin user -- password is "admin"
+// Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

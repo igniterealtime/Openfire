@@ -9,33 +9,33 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.messenger.group;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * Thrown when unable to find a group.
+ * Thrown when attempting to create a group that already exists.
  *
  * @author Iain Shigeoka
  */
-public class GroupNotFoundException extends Exception {
+public class GroupAlreadyExistsException extends Exception {
 
     private Throwable nestedThrowable = null;
 
-    public GroupNotFoundException() {
+    public GroupAlreadyExistsException() {
         super();
     }
 
-    public GroupNotFoundException(String msg) {
+    public GroupAlreadyExistsException(String msg) {
         super(msg);
     }
 
-    public GroupNotFoundException(Throwable nestedThrowable) {
+    public GroupAlreadyExistsException(Throwable nestedThrowable) {
         this.nestedThrowable = nestedThrowable;
     }
 
-    public GroupNotFoundException(String msg, Throwable nestedThrowable) {
+    public GroupAlreadyExistsException(String msg, Throwable nestedThrowable) {
         super(msg);
         this.nestedThrowable = nestedThrowable;
     }

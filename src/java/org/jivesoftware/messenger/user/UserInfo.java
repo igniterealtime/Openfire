@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.auth.Group;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Cacheable;
 
@@ -29,7 +28,6 @@ import java.util.Date;
  * <p>Security for UserInfo objects is provide by UserInfoProxy protection proxy objects.</p>
  *
  * @author Iain Shigeoka
- * @see Group
  */
 public interface UserInfo extends Cacheable {
 

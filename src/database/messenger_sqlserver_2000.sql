@@ -75,33 +75,28 @@ CREATE TABLE jiveVCard (
 
 
 CREATE TABLE jiveGroup (
-  groupID               INTEGER         NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
   description           NVARCHAR(255),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT group_pk PRIMARY KEY (groupID)
+  CONSTRAINT group_pk PRIMARY KEY (name)
 );
 CREATE INDEX jiveGroup_cDate_idx ON jiveGroup (creationDate);
-CREATE INDEX jiveGroup_name_idx ON jiveGroup (name);
 
 
 CREATE TABLE jiveGroupProp (
-   groupID              INTEGER         NOT NULL,
+   groupName            NVARCHAR(100)   NOT NULL,
    name                 NVARCHAR(100)   NOT NULL,
    propValue            NVARCHAR(3900)  NOT NULL,
-   CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupID, name)
+   CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupName, name)
 );
-/* Commented out since this will cause a third party user system to break */
-/* If you do not use a third part user system, uncomment these constraints */
-/* ALTER TABLE jiveGroupProp ADD CONSTRAINT jiveGroupProp_groupID_fk FOREIGN KEY (groupID) REFERENCES jiveGroup; */
 
 
 CREATE TABLE jiveGroupUser (
-  groupID               INTEGER         NOT NULL,
+  groupName             NVARCHAR(100)   NOT NULL,
   username              NVARCHAR(32)    NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupID, username, administrator)
+  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
 
  
@@ -168,10 +163,6 @@ CREATE TABLE mucConversationLog (
 
 /* Finally, insert default table values. */
 
-/* Unique ID entry for user, group */
-/* The User ID entry starts at 2 (after admin user entry). */
-INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);

@@ -71,13 +71,11 @@ public class UserManagerProxy implements UserManager {
     }
 
     public Iterator users() throws UnauthorizedException {
-        Iterator iterator = userManager.users();
-        return new UserGroupIteratorProxy(JiveConstants.USER, iterator, auth, permissions);
+        return userManager.users();
     }
 
     public Iterator users(int startIndex, int numResults) throws UnauthorizedException {
-        Iterator iterator = userManager.users(startIndex, numResults);
-        return new UserGroupIteratorProxy(JiveConstants.USER, iterator, auth, permissions);
+        return userManager.users(startIndex, numResults);
     }
 
     public String getName() {

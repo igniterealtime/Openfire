@@ -70,31 +70,16 @@ public class SessionManagerProxy implements SessionManager {
         }
     }
 
-    public Iterator getSessions() throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return sessionManager.getSessions();
-        }
-        else {
-            throw new UnauthorizedException();
-        }
+    public Collection<Session> getSessions() {
+        return sessionManager.getSessions();
     }
 
-    public Iterator getSessions(SessionResultFilter filter) throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return sessionManager.getSessions(filter);
-        }
-        else {
-            throw new UnauthorizedException();
-        }
+    public Collection<Session> getSessions(SessionResultFilter filter) {
+        return sessionManager.getSessions(filter);
     }
 
-    public Iterator getAnonymousSessions() throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return sessionManager.getAnonymousSessions();
-        }
-        else {
-            throw new UnauthorizedException();
-        }
+    public Iterator getAnonymousSessions() {
+        return sessionManager.getAnonymousSessions();
     }
 
     public Collection<Session> getSessions(String username) throws UnauthorizedException {

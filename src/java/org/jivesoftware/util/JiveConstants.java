@@ -16,9 +16,6 @@ package org.jivesoftware.util;
  */
 public class JiveConstants {
 
-    public static final int USER = 3;
-    public static final int GROUP = 4;
-
     public static final int SYSTEM = 17;
     public static final int ROSTER = 18;
     public static final int OFFLINE = 19;

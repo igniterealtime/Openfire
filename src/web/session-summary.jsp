@@ -10,7 +10,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.messenger.*,
                  java.util.Date,
                  org.jivesoftware.admin.*,
@@ -129,8 +129,8 @@ Below is a list of sessions on this server.
         SessionResultFilter filter = new SessionResultFilter();
         filter.setStartIndex(start);
         filter.setNumResults(range);
-        Iterator sessions = sessionManager.getSessions(filter);
-        if (!sessions.hasNext()) {
+        Collection<Session> sessions = sessionManager.getSessions(filter);
+        if (sessions.isEmpty()) {
     %>
         <tr>
             <td colspan="8">
@@ -145,8 +145,7 @@ Below is a list of sessions on this server.
     <%  int count = start;
         boolean current = false; // needed in session-row.jspf
         String linkURL = "session-details.jsp";
-        while (sessions.hasNext()) {
-            Session sess = (Session)sessions.next();
+        for (Session sess : sessions) {
             count++;
     %>
         <%@ include file="session-row.jspf" %>

@@ -55,8 +55,6 @@ public class SequenceManager {
 
     static {
         managers = new HashMap<Integer,Object>();
-        new SequenceManager(JiveConstants.USER, 1);
-        new SequenceManager(JiveConstants.GROUP, 1);
         new SequenceManager(JiveConstants.ROSTER, 5);
         new SequenceManager(JiveConstants.OFFLINE, 1);
         new SequenceManager(JiveConstants.MUC_ROOM, 1);

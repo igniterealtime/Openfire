@@ -421,7 +421,7 @@ public class SessionResultFilter {
      *
      * @return A comparator that sorts Sessions matching the sort order for this filter.
      */
-    public Comparator getSortComparator() {
+    public Comparator<Session> getSortComparator() {
         return new SessionComparator();
     }
 

@@ -21,28 +21,26 @@ CREATE TABLE jiveUserProp (
 );
 
 CREATE TABLE jiveGroup (
-  groupID               BIGINT          NOT NULL,
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  PRIMARY KEY (groupID),
-  INDEX jiveGroup_cDate_idx (creationDate),
-  INDEX jiveGroup_name_idx (name(10))
+  PRIMARY KEY (name),
+  INDEX jiveGroup_cDate_idx (creationDate)
 );
 
 CREATE TABLE jiveGroupProp (
-  groupID               BIGINT          NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
-  PRIMARY KEY (groupID, name)
+  PRIMARY KEY (groupName, name)
 );
 
 CREATE TABLE jiveGroupUser (
-  groupID               BIGINT          NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   username              VARCHAR(32)     NOT NULL,
   administrator         TINYINT         NOT NULL,
-  PRIMARY KEY (groupID, username, administrator)
+  PRIMARY KEY (groupName, username, administrator)
 );
 
 CREATE TABLE jivePrivate (
@@ -151,10 +149,6 @@ CREATE TABLE mucConversationLog (
 
 # Finally, insert default table values.
 
-# Unique ID entry for user, group
-# The User ID entry starts at 2 (after admin user entry).
-INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);

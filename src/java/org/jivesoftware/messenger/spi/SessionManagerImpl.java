@@ -36,34 +36,15 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         ConnectionCloseListener
  {
 
-    /**
-     * Total number of sessions being managed
-     */
     private int sessionCount = 0;
 
     public XMPPServer server;
-    /**
-     * Packet deliverer
-     */
     public PacketRouter router;
-    /**
-     * Packet router
-     */
     public PacketTransporter transporter;
-    /**
-     * Name of the local server
-     */
     private String serverName;
     private XMPPAddress serverAddress;
     public UserManager userManager;
-    /**
-     * Sets the conflict limit of the server.
-     */
     private int conflictLimit;
-
-    /**
-     * Random resource name generation
-     */
     private Random randomResource = new Random();
 
     public SessionManagerImpl() {
@@ -458,20 +439,18 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         return session;
     }
 
-    public Iterator getSessions() throws UnauthorizedException {
-        LinkedList allSessions = new LinkedList();
+    public Collection<Session> getSessions() {
+        List<Session> allSessions = new ArrayList<Session>();
         copyUserSessions(allSessions);
         copyAnonSessions(allSessions);
-        return allSessions.iterator();
+        return allSessions;
     }
 
 
-    public Iterator getSessions(SessionResultFilter filter) throws UnauthorizedException {
-        Iterator resultIterator = null;
+    public Collection<Session> getSessions(SessionResultFilter filter) {
+        List<Session> results = new ArrayList<Session>();
         if (filter != null) {
-
             // Grab all the possible matching sessions by user
-            LinkedList results = new LinkedList();
             if (filter.getUsername() == null) {
                 // No user id filtering
                 copyAnonSessions(results);
@@ -479,7 +458,8 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
             }
             else {
                 try {
-                    copyUserSessions(userManager.getUser(filter.getUsername()).getUsername(), results);
+                    copyUserSessions(userManager.getUser(filter.getUsername()).getUsername(),
+                            results);
                 }
                 catch (UserNotFoundException e) {
                 }
@@ -490,20 +470,11 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
             Date activityMin = filter.getLastActivityDateRangeMin();
             Date activityMax = filter.getLastActivityDateRangeMax();
 
-            // Stores the sorted results of the filtering
-            // We defer sorting until we have the final list
-            // I'm not sure if this is faster than just dumping everything into
-            // the sorted tree set from the beginning...
-            TreeSet sortedResults = new TreeSet(filter.getSortComparator());
-
             // Now we have a copy of the references so we can spend some time
             // doing the rest of the filtering without locking out session access
             // so let's iterate and filter each session one by one
-
-            // Should this checking be done in the session class instead?
-            Iterator resultIter = results.iterator();
-            while (resultIter.hasNext()) {
-                Session session = (Session)resultIter.next();
+            List<Session> filteredResults = new ArrayList<Session>();
+            for (Session session : results) {
                 // Now filter on creation date if needed
                 if (createMin != null || createMax != null) {
                     if (!isBetweenDates(session.getCreationDate(), createMin, createMax)) {
@@ -531,28 +502,32 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
                     }
                 }
                 if (session != null) {
-                    sortedResults.add(session);
+                    filteredResults.add(session);
                 }
             }
 
+            // Sort list.
+            Collections.sort(filteredResults, filter.getSortComparator());
+
             int maxResults = filter.getNumResults();
             if (maxResults == SessionResultFilter.NO_RESULT_LIMIT) {
-                maxResults = sortedResults.size();
+                maxResults = filteredResults.size();
             }
+
             // Now generate the final list. I believe it's faster to to build up a new
             // list than it is to remove items from head and tail of the sorted tree
-            LinkedList finalResults = new LinkedList();
-            Iterator sortedIter = sortedResults.iterator();
+            List<Session> finalResults = new ArrayList<Session>();
             int startIndex = filter.getStartIndex();
+            Iterator<Session> sortedIter = filteredResults.iterator();
             for (int i = 0; sortedIter.hasNext() && finalResults.size() < maxResults; i++) {
-                Object result = sortedIter.next();
+                Session result = sortedIter.next();
                 if (i >= startIndex) {
                     finalResults.add(result);
                 }
             }
-            resultIterator = finalResults.iterator();
+            return finalResults;
         }
-        return resultIterator;
+        return results;
     }
 
     /**
@@ -653,7 +628,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         }
     }
 
-    public Iterator getAnonymousSessions() throws UnauthorizedException {
+    public Iterator getAnonymousSessions() {
         return Arrays.asList(anonymousSessions.values().toArray()).iterator();
     }
 
@@ -961,9 +936,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
         super.stop();
         try {
-            Iterator sIter = this.getSessions();
-            while (sIter.hasNext()) {
-                Session session = (Session)sIter.next();
+            for (Session session : getSessions()) {
                 try {
                     session.getConnection().close();
                 }

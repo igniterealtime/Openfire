@@ -19,6 +19,9 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.PresenceSubscribeHandler;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * Generic presence routing base class.
@@ -43,16 +46,16 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
         if (packet == null) {
             throw new NullPointerException();
         }
-        if (packet.getOriginatingSession() == null
-                || packet.getOriginatingSession().getStatus() == Session.STATUS_AUTHENTICATED) {
+        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
             handle(packet);
         }
         else {
-            packet.setRecipient(packet.getOriginatingSession().getAddress());
-            packet.setSender(null);
-            packet.setError(XMPPError.Code.UNAUTHORIZED);
+            packet.setTo(session.getAddress());
+            packet.setFrom((JID)null);
+            packet.setError(PacketError.Condition.not_authorized);
             try {
-                packet.getOriginatingSession().process(packet);
+                session.process(packet);
             }
             catch (UnauthorizedException ue) {
                 Log.error(ue);
@@ -61,21 +64,16 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
     }
 
     private void handle(Presence packet) {
-        XMPPAddress recipientJID = packet.getRecipient();
+        JID recipientJID = packet.getTo();
         try {
-            XMPPPacket.Type type = packet.getType();
+            Presence.Type type = packet.getType();
             // Presence updates (null is 'available')
-            if (type == null
-                    || Presence.UNAVAILABLE == type
-                    || Presence.INVISIBLE == type
-                    || Presence.AVAILABLE == type) {
-
-
-                // ridiculously long check for local server target
+            if (type == null || Presence.Type.unavailable == type) {
+                // check for local server target
                 if (recipientJID == null
-                        || recipientJID.getHost() == null
-                        || "".equals(recipientJID.getHost())
-                        || (recipientJID.getName() == null && recipientJID.getResource() == null)) {
+                        || recipientJID.getDomain() == null
+                        || "".equals(recipientJID.getDomain())
+                        || (recipientJID.getNode() == null && recipientJID.getResource() == null)) {
 
                     updateHandler.process(packet);
                 }
@@ -88,11 +86,11 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
                 }
 
             }
-            else if (Presence.SUBSCRIBE == type // presence subscriptions
-                    || Presence.UNSUBSCRIBE == type
-                    || Presence.SUBSCRIBED == type
-                    || Presence.UNSUBSCRIBED == type) {
-
+            else if (Presence.Type.subscribe == type // presence subscriptions
+                    || Presence.Type.unsubscribe == type
+                    || Presence.Type.subscribed == type
+                    || Presence.Type.unsubscribed == type)
+            {
                 subscribeHandler.process(packet);
             }
             else {
@@ -107,7 +105,7 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             try {
-                Session session = packet.getOriginatingSession();
+                Session session = SessionManager.getInstance().getSession(packet.getFrom());
                 if (session != null) {
                     Connection conn = session.getConnection();
                     if (conn != null) {

@@ -67,17 +67,14 @@ public class OfflineMessageStrategy extends BasicModule {
 
     public void storeOffline(Message message) throws UnauthorizedException, UserNotFoundException {
         if (message != null) {
-            Session senderSession = null;
-            try {
-                senderSession = sessionManager.getSession(message.getFrom());
-            }
-            catch (SessionNotFoundException e) {
-                Log.error(e);
+            Session senderSession = sessionManager.getSession(message.getFrom());
+            if (senderSession == null) {
+                return;
             }
             JID sender = senderSession.getAddress();
 
             // server messages and anonymous messages can be silently dropped
-            if (sender == null || sender.getNode() == null || senderSession == null) {
+            if (sender == null || sender.getNode() == null) {
                 // silently drop the server message
             }
             else {
@@ -127,7 +124,7 @@ public class OfflineMessageStrategy extends BasicModule {
     private void bounce(Message message) {
         // Generate a rejection response to the sender
         try {
-            Message response = packetFactory.getMessage();
+            Message response = new Message();
             response.setTo(message.getFrom());
             response.setFrom(xmppServer.createJID(null, null));
             response.setBody("Message could not be delivered to " + message.getTo() + ". User is offline or unreachable.");
@@ -136,7 +133,8 @@ public class OfflineMessageStrategy extends BasicModule {
             session.getConnection().deliver(response);
 
             Message errorResponse = message.createCopy();
-            errorResponse.setError(new PacketError(PacketError.Type.continue_processing, PacketError.Condition.item_not_found));
+            errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
+                    PacketError.Type.continue_processing));
             session.getConnection().deliver(errorResponse);
         }
         catch (Exception e) {

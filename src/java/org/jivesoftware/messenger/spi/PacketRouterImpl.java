@@ -14,6 +14,10 @@ package org.jivesoftware.messenger.spi;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.IQ;
 
 /**
  * Generic packet routing base class.
@@ -49,7 +53,7 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      * @param packet The packet to route
      * @throws NullPointerException If the packet is null or the packet could not be routed
      */
-    public void route(XMPPPacket packet) {
+    public void route(Packet packet) {
         if(hasRouted(packet)){
             return;
         }
@@ -86,12 +90,12 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
         }
     }
 
-    public boolean hasRouted(XMPPPacket packet){
-        if(packet.getRecipient() == null){
+    public boolean hasRouted(Packet packet){
+        if(packet.getTo() == null){
             return false;
         }
          // Check for registered components
-        Component component = componentManager.getComponent(packet.getRecipient().toBareStringPrep());
+        Component component = componentManager.getComponent(packet.getTo().toBareJID());
         if(component != null){
             component.processPacket(packet);
             return true;

@@ -16,6 +16,8 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.net.SocketPacketWriteHandler;
+import org.xmpp.packet.Packet;
+
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -37,7 +39,7 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         super("Packet Delivery");
     }
 
-    public void deliver(XMPPPacket packet) throws UnauthorizedException, PacketException, XMLStreamException {
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
         if (packet == null) {
             throw new PacketException("Packet was null");
         }

@@ -16,6 +16,9 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * Generic message routing base class.
@@ -38,9 +41,11 @@ public class MessageRouterImpl extends BasicModule implements MessageRouter {
         if (packet == null) {
             throw new NullPointerException();
         }
-        if (packet.getOriginatingSession() == null
-                || packet.getOriginatingSession().getStatus() == Session.STATUS_AUTHENTICATED) {
-            XMPPAddress recipientJID = packet.getRecipient();
+        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        if (session == null
+                || session.getStatus() == Session.STATUS_AUTHENTICATED)
+        {
+            JID recipientJID = packet.getTo();
 
             try {
                 routingTable.getBestRoute(recipientJID).process(packet);
@@ -57,11 +62,11 @@ public class MessageRouterImpl extends BasicModule implements MessageRouter {
 
         }
         else {
-            packet.setRecipient(packet.getOriginatingSession().getAddress());
-            packet.setSender(null);
-            packet.setError(XMPPError.Code.UNAUTHORIZED);
+            packet.setTo(session.getAddress());
+            packet.setFrom((JID)null);
+            packet.setError(PacketError.Condition.not_authorized);
             try {
-                packet.getOriginatingSession().process(packet);
+                session.process(packet);
             }
             catch (UnauthorizedException ue) {
                 Log.error(ue);

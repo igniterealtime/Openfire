@@ -15,6 +15,8 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.Packet;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import javax.xml.stream.XMLStreamException;
@@ -116,7 +118,7 @@ public class ConnectionProxy implements Connection {
         }
     }
 
-    public void deliver(XMPPPacket packet) throws UnauthorizedException,
+    public void deliver(Packet packet) throws UnauthorizedException,
             PacketException, XMLStreamException {
         //if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
         // | Permissions.USER_ADMIN)) {

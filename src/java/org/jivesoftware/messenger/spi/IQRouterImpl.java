@@ -22,6 +22,10 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+import org.dom4j.Element;
 
 /**
  * Generic presence routing base class.
@@ -47,9 +51,9 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         if (packet == null) {
             throw new NullPointerException();
         }
-        if (packet.getOriginatingSession() == null
-                || packet.getOriginatingSession().getStatus() == Session.STATUS_AUTHENTICATED
-                || (isLocalServer(packet.getRecipient())
+        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED
+                || (isLocalServer(packet.getTo())
                 && ("jabber:iq:auth".equals(packet.getChildNamespace())
                 || "jabber:iq:register".equals(packet.getChildNamespace())))
         ) {
@@ -68,20 +72,22 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         }
     }
 
-    private boolean isLocalServer(XMPPAddress recipientJID) {
-        return recipientJID == null || recipientJID.getHost() == null
-                || "".equals(recipientJID.getHost()) || recipientJID.getResource() == null
+    private boolean isLocalServer(JID recipientJID) {
+        return recipientJID == null || recipientJID.getDomain() == null
+                || "".equals(recipientJID.getDomain()) || recipientJID.getResource() == null
                 || "".equals(recipientJID.getResource());
     }
 
     private void handle(IQ packet) {
-
-        XMPPAddress recipientJID = packet.getRecipient();
-
+        JID recipientJID = packet.getTo();
         try {
             if (isLocalServer(recipientJID)) {
 
-                String namespace = packet.getChildNamespace();
+                Element childElement = packet.getChildElement();
+                String namespace = null;
+                if (childElement != null) {
+                    childElement.getNamespaceURI();
+                }
                 if (namespace == null) {
                     // Do nothing. We can't handle queries outside of a valid namespace
                     Log.warn("Unknown packet " + packet);
@@ -90,8 +96,8 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                     IQHandler handler = getHandler(namespace);
                     if (handler == null) {
                         // Answer an error if JID is of the form <domain>
-                        if (recipientJID.getName() == null || "".equals(recipientJID.getName())) {
-                            packet.setError(XMPPError.Code.NOT_IMPLEMENTED);
+                        if (recipientJID.getNode() == null || "".equals(recipientJID.getNode())) {
+                            packet.setError(PacketError.Condition.feature_not_implemented);
                         }
                         else {
                             // JID is of the form <node@domain>
@@ -109,7 +115,7 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                                 // do nothing
                             }
                             // Answer an error since the server can't handle packets sent to a node
-                            packet.setError(XMPPError.Code.SERVICE_UNAVAILABLE);
+                            packet.setError(PacketError.Condition.service_unavailable);
                         }
                         Session session = packet.getOriginatingSession();
                         if (session != null) {

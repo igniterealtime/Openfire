@@ -57,7 +57,7 @@ abstract public class ServerStarter {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
             // TODO: Possibly load this lib dir as a java property?
-            File libDir = new File("lib");
+            File libDir = new File("../lib");
             ClassLoader loader = new JiveClassLoader(parent, libDir);
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(getBootContainerClassName());

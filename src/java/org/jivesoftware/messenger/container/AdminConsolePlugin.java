@@ -28,7 +28,7 @@ import org.mortbay.log.*;
  */
 public class AdminConsolePlugin implements Plugin {
 
-    private Server jetty = null;
+    private static Server jetty = null;
     private String port = null;
 
     /**
@@ -70,7 +70,6 @@ public class AdminConsolePlugin implements Plugin {
             log.add(logSink);
 
             jetty = new Server();
-            
 
             // Configure HTTP socket listener
             port = JiveGlobals.getXMLProperty("adminConsole.port", "9090");
@@ -102,5 +101,14 @@ public class AdminConsolePlugin implements Plugin {
         catch (InterruptedException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+    }
+
+    /**
+     * Returns the Jetty instance started by this plugin.
+     *
+     * @return the Jetty server instance.
+     */
+    public static Server getJettyServer() {
+        return jetty;
     }
 }

@@ -50,16 +50,18 @@ public class JettyModule implements Module {
     public void initialize(Container container) {
         try {
             // Configure logging to a file, creating log dir if needed
-//            File logDir = new File(JiveGlobals.getMessengerHome(), "logs");
-//            if (!logDir.exists()) {
-//                logDir.mkdirs();
-//            }
-//            File logFile = new File(logDir, "admin_console.log");
-//            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
-//            logSink.start();
-//            LogImpl log = (LogImpl)Factory.getFactory().getInstance("");
-//            log.reset();
-//            log.add(logSink);
+            System.setProperty("org.apache.commons.logging.LogFactory","org.mortbay.log.Factory");
+            File logDir = new File(JiveGlobals.getMessengerHome(), "logs");
+            if (!logDir.exists()) {
+                logDir.mkdirs();
+            }
+            File logFile = new File(logDir, "admin-console.log");
+            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
+            logSink.start();
+            LogImpl log = (LogImpl)Factory.getFactory().getInstance("");
+            // Ignore INFO logs.
+            log.setVerbose(-1);
+            log.add(logSink);
 
             jetty = new Server();
 

@@ -11,12 +11,11 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  java.text.DateFormat,
-                 java.util.HashMap,
-                 java.util.Map,
                  org.jivesoftware.messenger.XMPPServerInfo,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.JiveGlobals"
+                 org.jivesoftware.messenger.JiveGlobals,
+                 java.util.*"
     errorPage="error.jsp"
 %>
 
@@ -45,7 +44,6 @@
     Map errors = new HashMap();
     if (save) {
         // do validation
-        System.err.println("muc: " + muc);
         if (muc == null  || muc.indexOf('.') >= 0) {
             errors.put("mucname","mucname");
         }
@@ -118,13 +116,12 @@ a server restart.
 
 <%  } %>
 
-<input type="hidden" name="save" value="true">
+<form action="muc-server-props-edit-form.jsp?save" method="post">
 
 <fieldset>
     <legend>Set Conflict Policy</legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0">
-    <form action="muc-server-props-edit-form.jsp" method="post">
     <tr>
         <td class="c1">
             Server name:
@@ -153,9 +150,9 @@ a server restart.
     </div>
 </fieldset>
 
-<br>
+<br><br>
 
-<input type="submit" name="save" value="Save Properties">
+<input type="submit" value="Save Properties">
 
 </form>
 

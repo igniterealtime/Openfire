@@ -67,7 +67,7 @@
 
 <p>
 Below is the list of system administrators of the group chat service. System administrators can
-enter any groupchat room and their permissions are the same as the room owner.
+enter any group chat room and their permissions are the same as the room owner.
 </p>
 
 <%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
@@ -83,9 +83,7 @@ enter any groupchat room and their permissions are the same as the room owner.
     </table>
     </div><br>
 
-<%  } %>
-
-<%  if ("true".equals(request.getParameter("addsuccess"))) { %>
+<%  } else if ("true".equals(request.getParameter("addsuccess"))) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -98,26 +96,32 @@ enter any groupchat room and their permissions are the same as the room owner.
     </table>
     </div><br>
 
+<%  } else if (errors.size() > 0) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error adding the admin. Please verify the JID is correct.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
 <%  } %>
 
-<form action="muc-sysadmins.jsp" method="post">
-
-<fieldset>
-    <legend>Add Admin User</legend>
-    <div>
-    User (enter JID):
-    <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>">
-    <input type="submit" name="add" value="Add">
-    </div>
-</fieldset>
-
-</form>
-
-<br>
+<form action="muc-sysadmins.jsp?add" method="post">
 
 <fieldset>
     <legend>Admin Users</legend>
     <div>
+    <label for="userJIDtf">Add Admin (JID):</label>
+    <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+     id="userJIDtf">
+    <input type="submit"s value="Add">
+    <br><br>
+
     <div class="jive-table" style="width:400px;">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
@@ -157,5 +161,7 @@ enter any groupchat room and their permissions are the same as the room owner.
     </div>
     </div>
 </fieldset>
+
+</form>
 
 <jsp:include page="bottom.jsp" flush="true" />

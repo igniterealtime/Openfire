@@ -94,7 +94,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Use the form below to set the policy for who can create chat rooms.
+Use the form below to configure the policy for who can create group chat rooms.
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -137,7 +137,7 @@ Use the form below to set the policy for who can create chat rooms.
 
 <%  } %>
 
-<form action="muc-create-permission.jsp" method="post">
+<form action="muc-create-permission.jsp?save" method="post">
 
 <fieldset>
     <legend>Permission Policy</legend>
@@ -166,7 +166,7 @@ Use the form below to set the policy for who can create chat rooms.
         </tbody>
         </table>
         <br>
-        <input type="submit" name="save" value="Save Settings">
+        <input type="submit" value="Save Settings">
     </div>
 </fieldset>
 
@@ -176,16 +176,16 @@ Use the form below to set the policy for who can create chat rooms.
 
 <%  if (mucServer.isRoomCreationRestricted()) { %>
 
-    <form action="muc-create-permission.jsp" method="post">
+    <form action="muc-create-permission.jsp?add" method="post">
 
     <fieldset>
         <legend>Allowed Users</legend>
         <div>
         <p>
-        Add User (enter JID):
+        <label for="userJIDtf">Add User (JID):</label>
         <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
-         onclick="this.form.openPerms[1].checked=true;">
-        <input type="submit" name="add" value="Add">
+         onclick="this.form.openPerms[1].checked=true;" id="userJIDtf">
+        <input type="submit" value="Add">
         </p>
 
         <div class="jive-table" style="width:400px;">

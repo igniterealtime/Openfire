@@ -1,8 +1,76 @@
-# $RCSfile$
-# $Revision$
-# $Date$
+REM // $RCSfile$
+REM // $Revision$
+REM // $Date$
 
-# upgrades from Messenger 1.1.x to 2.0.x
+REM // upgrades from Messenger 1.1.x to 2.0.x
+
+REM // jiveUser: Adds new column "username". Removes "nameVisible" & "emailVisible". Changes primary key
+ALTER TABLE jiveUser ADD COLUMN username VARCHAR2(32) NOT NULL;
+ALTER TABLE jiveUser DROP COLUMN nameVisible;
+ALTER TABLE jiveUser DROP COLUMN emailVisible;
+UPDATE jiveUser,jiveUserID SET jiveUser.username = jiveUserID.username where jiveUserID.objectID = jiveUser.userID;
+ALTER TABLE jiveUser DROP PRIMARY KEY;
+ALTER TABLE jiveUser ADD CONSTRAINT jiveUser_pk PRIMARY KEY (username);
+
+REM // jiveUserProp: Adds new column "username". Changes primary key
+ALTER TABLE jiveUserProp ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jiveUserProp,jiveUser SET jiveUserProp.username = jiveUser.username where jiveUserProp.userID = jiveUser.userID;
+ALTER TABLE jiveUserProp DROP PRIMARY KEY;
+ALTER TABLE jiveUserProp ADD CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name);
+
+REM // jiveGroupUser: Adds new column "username". Changes primary key
+ALTER TABLE jiveGroupUser ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jiveGroupUser,jiveUser SET jiveGroupUser.username = jiveUser.username where jiveGroupUser.userID = jiveUser.userID;
+ALTER TABLE jiveGroupUser DROP PRIMARY KEY;
+ALTER TABLE jiveGroupUser ADD CONSTRAINT jiveGroupUser PRIMARY KEY (groupID, username, administrator);
+
+REM // jivePrivate: Adds new column "username". Changes primary key
+ALTER TABLE jivePrivate ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jivePrivate,jiveUser SET jivePrivate.username = jiveUser.username where jivePrivate.userID = jiveUser.userID;
+ALTER TABLE jivePrivate DROP PRIMARY KEY;
+ALTER TABLE jivePrivate ADD CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace);
+
+REM // jiveOffline: Adds new column "username". Changes primary key
+ALTER TABLE jiveOffline ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jiveOffline ,jiveUser SET jiveOffline.username = jiveUser.username where jiveOffline.userID = jiveUser.userID;
+ALTER TABLE jiveOffline DROP PRIMARY KEY;
+ALTER TABLE jiveOffline ADD CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID);
+
+REM // jiveRoster: Adds new column "username". Replaces old index with new one
+ALTER TABLE jiveRoster ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jiveRoster,jiveUser SET jiveRoster.username = jiveUser.username where jiveRoster.userID = jiveUser.userID;
+DROP INDEX jiveRoster_userid_idx;
+CREATE INDEX jiveRoster_username_idx ON jiveRoster (username ASC);
+
+REM // jiveVCard: Adds new column "username". Changes primary key
+ALTER TABLE jiveVCard ADD COLUMN username VARCHAR2(32) NOT NULL;
+UPDATE jiveVCard ,jiveUser SET jiveVCard.username = jiveUser.username where jiveVCard.userID = jiveUser.userID;
+ALTER TABLE jiveVCard DROP PRIMARY KEY;
+ALTER TABLE jiveVCard ADD CONSTRAINT jiveVCard_pk PRIMARY KEY (username, name);
+
+REM // Drops no longer needed tables
+DROP TABLE jiveUserID;
+DROP TABLE jiveChatbot;
+DROP TABLE jiveDomain;
+DROP TABLE jiveUserPerm;
+
+REM // Deletes no longer needed entries
+DELETE FROM jiveID where idType = 0;
+DELETE FROM jiveID where idType = 1;
+DELETE FROM jiveID where idType = 2;
+DELETE FROM jiveID where idType = 13;
+DELETE FROM jiveID where idType = 14;
+
+REM // Finally remove "userID" column
+ALTER TABLE jiveUserProp DROP COLUMN userID;
+ALTER TABLE jiveUser DROP COLUMN userID;
+ALTER TABLE jiveGroupUser DROP COLUMN userID;
+ALTER TABLE jivePrivate DROP COLUMN userID;
+ALTER TABLE jiveOffline DROP COLUMN userID;
+ALTER TABLE jiveRoster DROP COLUMN userID;
+ALTER TABLE jiveVCard DROP COLUMN userID;
+
+REM // Create new tables
 
 CREATE TABLE jiveProperty (
   name        VARCHAR2(100) NOT NULL,
@@ -59,5 +127,5 @@ CREATE TABLE mucConversationLog (
   body                VARCHAR2(4000) NULL
 );
 
-# Unique ID entry for mucRoom
+REM // Unique ID entry for mucRoom
 INSERT INTO jiveID (idType, id) VALUES (23, 1);

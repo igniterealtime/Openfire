@@ -84,6 +84,11 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
+<p>
+Use the form below to edit group chat service settings. Note, any changes will require
+a server restart.
+</p>
+
 <%  if (success) { %>
 
     <div class="jive-success">
@@ -113,47 +118,44 @@
 
 <%  } %>
 
-<p>
-Use the form below to edit group chat service settings.
-</p>
-
-
 <input type="hidden" name="save" value="true">
 
-<div>
-<table class="jive-table" cellpadding="3" cellspacing="1" border="0">
-<form action="muc-server-props-edit-form.jsp" method="post">
-<tr>
-    <td class="c1">
-        Server name:
-    </td>
-    <td>
-    <%= name %>
-    </td>
-</tr>
-<tr>
-    <td class="c1">
-        Group chat service name:
-    </td>
-    <td>
-    <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">.<%=name%>
+<fieldset>
+    <legend>Set Conflict Policy</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0">
+    <form action="muc-server-props-edit-form.jsp" method="post">
+    <tr>
+        <td class="c1">
+            Server name:
+        </td>
+        <td>
+        <%= name %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Group chat service name:
+        </td>
+        <td>
+        <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">.<%=name%>
 
-    <%  if (errors.get("mucname") != null) { %>
+        <%  if (errors.get("mucname") != null) { %>
 
-        <span class="jive-error-text">
-        <br>Please enter a valid name.
-        </span>
+            <span class="jive-error-text">
+            <br>Please enter a valid name.
+            </span>
 
-    <%  } %>
-    </td>
-</tr>
-</table>
-</div>
+        <%  } %>
+        </td>
+    </tr>
+    </table>
+    </div>
+</fieldset>
 
 <br>
 
 <input type="submit" name="save" value="Save Properties">
-<input type="submit" name="cancel" value="Cancel">
 
 </form>
 

@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.Socket;
+import java.net.SocketException;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
@@ -110,6 +112,10 @@ public class SocketReadThread extends Thread {
         }
         catch (EOFException eof) {
             // Normal disconnect
+        }
+        catch (SocketException se) {
+            // The socket was closed. The server may close the connection for several reasons (e.g.
+            // user requested to remove his account). Do nothing here. 
         }
         catch (XmlPullParserException ie) {
             // Check if the user abruptly cut the connection without sending previously an

@@ -854,6 +854,17 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>IQDiscoItemsHandler</code> registered with this server. The
+     * <code>IQDiscoItemsHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>IQDiscoItemsHandler</code> registered with this server.
+     */
+    public IQDiscoItemsHandler getIQDiscoItemsHandler() {
+        return (IQDiscoItemsHandler) modules.get(IQDiscoItemsHandler.class);
+    }
+
+    /**
      * Returns the <code>PrivateStorage</code> registered with this server. The
      * <code>PrivateStorage</code> was registered with the server as a module while starting up
      * the server.

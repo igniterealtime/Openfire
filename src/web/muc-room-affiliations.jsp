@@ -21,7 +21,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -106,7 +106,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "User Permissions";
+    String title = LocaleUtils.getLocalizedString("muc.room.affiliations.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-room-affiliations.jsp?roomName="+roomName));
@@ -117,12 +117,9 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below is the list of room owners, administrators, members and outcasts of the the room
+<fmt:message key="muc.room.affiliations.info" />
 <b><a href="muc-room-edit-form.jsp?roomName=<%= room.getName() %>"><%= room.getName() %></a></b>.
-Room owners can alter the room configuration, grant ownership and administrative privileges to users
-and destroy the room. Room administrators can ban, grant membership and moderator privileges to
-users. Room members are the only allowed users to join the room when it is configured as members-only.
-Whilst room outcasts are users who have been banned from the room.
+<fmt:message key="muc.room.affiliations.info_detail" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -134,15 +131,15 @@ Whilst room outcasts are users who have been banned from the room.
         <td class="jive-icon-label">
         <%  if (errors.containsKey("ConflictException")) { %>
 
-        Error removing the user. The room must have at least one owner.
+        <fmt:message key="muc.room.affiliations.error_removing_user" />
 
         <%  } else if (errors.containsKey("NotAllowedException")) { %>
 
-        Error banning the user. Owners or Administratos cannot be banned.
+        <fmt:message key="muc.room.affiliations.error_banning_user" />
 
         <%  } else { %>
 
-        Error adding the user. Please verify the JID is correct.
+        <fmt:message key="muc.room.affiliations.error_adding_user" />
 
         <%  } %>
         </td></tr>
@@ -159,11 +156,11 @@ Whilst room outcasts are users who have been banned from the room.
         <td class="jive-icon-label">
         <%  if (addsuccess) { %>
 
-            User added successfully.
+            <fmt:message key="muc.room.affiliations.user_added" />
 
         <%  } else if (deletesuccess) { %>
 
-            User removed successfully.
+            <fmt:message key="muc.room.affiliations.user_removed" />
 
         <%  } %>
         </td></tr>
@@ -177,16 +174,16 @@ Whilst room outcasts are users who have been banned from the room.
 <input type="hidden" name="roomName" value="<%= roomName %>">
 
 <fieldset>
-    <legend>User Permissions</legend>
+    <legend><fmt:message key="muc.room.affiliations.permission" /></legend>
     <div>
     <p>
-    <label for="memberJID">Add User (JID):</label>
+    <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
     <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
     <select name="affiliation">
-        <option value="owner">Owner</option>
-        <option value="admin">Admin</option>
-        <option value="member">Member</option>
-        <option value="outcast">Outcast</option>
+        <option value="owner"><fmt:message key="muc.room.affiliations.owner" /></option>
+        <option value="admin"><fmt:message key="muc.room.affiliations.admin" /></option>
+        <option value="member"><fmt:message key="muc.room.affiliations.member" /></option>
+        <option value="outcast"><fmt:message key="muc.room.affiliations.outcast" /></option>
     </select>
     <input type="submit" value="Add">
     </p>
@@ -195,20 +192,20 @@ Whilst room outcasts are users who have been banned from the room.
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
-            <th colspan="2">User</th>
-            <th width="1%">Delete</th>
+            <th colspan="2"><fmt:message key="muc.room.affiliations.user" /></th>
+            <th width="1%"><fmt:message key="muc.room.affiliations.delete" /></th>
         </tr>
     </thead>
     <tbody>
     <%-- Add owners section --%>
             <tr>
-                <td colspan="2"><b>Room Owners</b></td>
+                <td colspan="2"><b><fmt:message key="muc.room.affiliations.room_owner" /></b></td>
                 <td>&nbsp;</td>
             </tr>
 
         <%  if (room.getOwners().isEmpty()) { %>
             <tr>
-                <td colspan="2" align="center"><i>No Users</i></td>
+                <td colspan="2" align="center"><i><fmt:message key="muc.room.affiliations.no_users" /></i></td>
                 <td>&nbsp;</td>
             </tr>
         <%  }
@@ -222,21 +219,21 @@ Whilst room outcasts are users who have been banned from the room.
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=owner"
-                     title="Click to delete..."
-                     onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
             </tr>
         <%  } } %>
     <%-- Add admins section --%>
             <tr>
-                <td colspan="2"><b>Room Admins</b></td>
+                <td colspan="2"><b><fmt:message key="muc.room.affiliations.room_admin" /></b></td>
                 <td>&nbsp;</td>
             </tr>
 
         <%  if (room.getAdmins().isEmpty()) { %>
             <tr>
-                <td colspan="2" align="center"><i>No Users</i></td>
+                <td colspan="2" align="center"><i><fmt:message key="muc.room.affiliations.no_users" /></i></td>
                 <td>&nbsp;</td>
             </tr>
         <%  }
@@ -250,21 +247,21 @@ Whilst room outcasts are users who have been banned from the room.
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=admin"
-                     title="Click to delete..."
-                     onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
             </tr>
         <%  } } %>
     <%-- Add members section --%>
             <tr>
-                <td colspan="2"><b>Room Members</b></td>
+                <td colspan="2"><b><fmt:message key="muc.room.affiliations.room_member" /></b></td>
                 <td>&nbsp;</td>
             </tr>
 
         <%  if (room.getMembers().isEmpty()) { %>
             <tr>
-                <td colspan="2" align="center"><i>No Users</i></td>
+                <td colspan="2" align="center"><i><fmt:message key="muc.room.affiliations.no_users" /></i></td>
                 <td>&nbsp;</td>
             </tr>
         <%  }
@@ -280,21 +277,21 @@ Whilst room outcasts are users who have been banned from the room.
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=member"
-                     title="Click to delete..."
-                     onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
             </tr>
         <%  } } %>
     <%-- Add outcasts section --%>
             <tr>
-                <td colspan="2"><b>Room Outcasts</b></td>
+                <td colspan="2"><b><fmt:message key="muc.room.affiliations.room_outcast" /></b></td>
                 <td>&nbsp;</td>
             </tr>
 
         <%  if (room.getOutcasts().isEmpty()) { %>
             <tr>
-                <td colspan="2" align="center"><i>No Users</i></td>
+                <td colspan="2" align="center"><i><fmt:message key="muc.room.affiliations.no_users" /></i></td>
                 <td>&nbsp;</td>
             </tr>
         <%  }
@@ -308,8 +305,8 @@ Whilst room outcasts are users who have been banned from the room.
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=outcast"
-                     title="Click to delete..."
-                     onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
             </tr>

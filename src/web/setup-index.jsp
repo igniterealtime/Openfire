@@ -57,15 +57,14 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Setup Checklist
+<fmt:message key="setup.index.title" />
 </p>
 
 <p>
 
 
-Welcome to <fmt:message key="title" />  Setup. This tool will lead you through the initial setup or
-upgrade process. Before continuing, verify that your environment meets all the requirements
-below.
+<fmt:message key="setup.index.info" /><fmt:message key="title" />  
+<fmt:message key="setup.index.info1" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -77,20 +76,20 @@ below.
 <table cellpadding="3" cellspacing="2" border="0" width="100%">
 <tr>
     <th width="98%">&nbsp;</th>
-    <th width="1%" nowrap class="jive-setup-checklist-box">Success</th>
-    <th width="1%" nowrap class="jive-setup-checklist-box">Error</th>
+    <th width="1%" nowrap class="jive-setup-checklist-box"><fmt:message key="setup.index.success" /> </th>
+    <th width="1%" nowrap class="jive-setup-checklist-box"><fmt:message key="setup.index.error" /></th>
 </tr>
 <tr>
     <td colspan="3" class="jive-setup-category-header">
-        Java VM Support
+        <fmt:message key="setup.index.vm" />
     </td>
 </tr>
 <tr>
     <td class="jive-setup-category">
-        At least JDK 1.5
+        <fmt:message key="setup.index.jdk" />
         <br>
         <span class="jive-info">
-        Found: JVM <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>
+        <fmt:message key="setup.index.found" /> <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>
         </span>
     </td>
     <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
@@ -98,7 +97,7 @@ below.
 </tr>
 <tr>
     <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" /> Classes
+        <fmt:message key="title" /> <fmt:message key="setup.index.class" />
     </td>
 </tr>
 <tr>
@@ -106,7 +105,7 @@ below.
         messenger.jar
         <br>
         <span class="jive-info">
-        <fmt:message key="title" /> classes.
+        <fmt:message key="title" /> <fmt:message key="setup.index.class" />.
         </span>
     </td>
     <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
@@ -114,19 +113,19 @@ below.
 </tr>
 <tr>
     <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" /> Configuration Files
+        <fmt:message key="title" /> <fmt:message key="setup.index.con_file" />
     </td>
 </tr>
 <tr>
     <td class="jive-setup-category">
-        conf Directory
+        <fmt:message key="setup.index.dir" />
         <br>
         <span class="jive-info">
         <%  boolean messengerHomeOK = true;
             if (messengerHomeErrors.size() == 0) {
         %>
 
-            Valid conf directory.
+            <fmt:message key="setup.index.valid_conf" />
 
         <%  } else {
                 messengerHomeOK = false;
@@ -134,18 +133,15 @@ below.
 
             <%  if (messengerHomeErrors.get("exists") != null) { %>
 
-                Unable to locate valid conf directory. Please refer to the installation
-                documentation for the correct way to set the conf directory.
+                <fmt:message key="setup.index.unable_locate_dir" />
 
             <%  } else if (messengerHomeErrors.get("read") != null) { %>
 
-                Setup was able to find your conf directory but does not have read
-                permission on it. Please alter the directory permissions.
+                <fmt:message key="setup.index.not_permission" />
 
             <%  } else if (messengerHomeErrors.get("write") != null) { %>
 
-                Setup was able to find your conf directory but does not have write permission
-                on it. Please alter the directory permissions.
+                <fmt:message key="setup.index.not_write_permission" />
 
            
 

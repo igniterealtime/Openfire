@@ -24,7 +24,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  // Get parameters
     String username = ParamUtils.getParameter(request,"username");
     boolean send = ParamUtils.getBooleanParameter(request,"send");
@@ -118,7 +118,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Send Administrative Message";
+    String title = LocaleUtils.getLocalizedString("user.message.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
@@ -135,7 +135,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Message sent successfully.
+        <fmt:message key="user.message.send" />
         </td></tr>
     </tbody>
     </table>
@@ -172,27 +172,26 @@ function updateSelect(el) {
 <%  } %>
 
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="3" align="left">Send Administrative Message</td></tr>
+<tr class="tableHeader"><td colspan="3" align="left"><fmt:message key="user.message.send_admin_msg" /></td></tr>
 <tr><td colspan=3 class="text">
 <%   if (user == null) { %>
 
-    Use the form below to send an administrative message to all users.
+    <fmt:message key="user.message.info" />
 
 <%  } else { %>
 
-    User the form below to send an administrative message to the specified user. If the user is
-    connected from multiple sessions you will need to choose which session to message.
+    <fmt:message key="user.message.specified_user_info" />
 
 <%  } %>
 </td></tr>
 <tr>
     <td class="jive-label">
-        To:
+        <fmt:message key="user.message.to" />:
     </td>
     <td>
         <%  if (user == null) { %>
 
-            All Online Users
+            <fmt:message key="user.message.all_online_user" />
 
         <%  } else { %>
 
@@ -217,7 +216,7 @@ function updateSelect(el) {
 
                 <input type="checkbox" name="sendToAll" value="true" id="cb01"
                  onfocus="updateSelect(this);" onclick="updateSelect(this);">
-                <label for="cb01">Send to all user sessions</label>
+                <label for="cb01"><fmt:message key="user.message.send_session" /></label>
 
             <%  } %>
 
@@ -225,7 +224,7 @@ function updateSelect(el) {
 
                 <br>
                 <span class="jive-error-text">
-                Please choose a valid address.
+                <fmt:message key="user.message.valid_address" />
                 </span>
 
             <%  } %>
@@ -235,13 +234,13 @@ function updateSelect(el) {
 </tr>
 <tr valign="top">
     <td class="jive-label">
-        Message:
+        <fmt:message key="user.message.message" />:
     </td>
     <td>
         <%  if (errors.get("message") != null) { %>
 
             <span class="jive-error-text">
-            Please enter a valid message.
+            <fmt:message key="user.message.valid_message" />
             </span>
             <br>
 

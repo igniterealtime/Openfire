@@ -17,7 +17,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
@@ -25,7 +25,7 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "Database Properties";
+    String title = LocaleUtils.getLocalizedString("server.db.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-db.jsp"));
@@ -42,20 +42,20 @@
 %>
 
 <p>
-Below is a list of properties for your database and the JDBC driver.
+<fmt:message key="server.db.info" />
 </p>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-        <th colspan="2">Database Connection Info</th>
+        <th colspan="2"><fmt:message key="server.db.connect_info" /></th>
     </tr>
 </thead>
 <tbody>
     <tr>
         <td class="c1">
-            Database and Version:
+            <fmt:message key="server.db.version" />
         </td>
         <td class="c2">
             <%= metaData.getDatabaseProductName() %>
@@ -64,7 +64,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-            JDBC Driver:
+            <fmt:message key="server.db.jdbc" />
         </td>
         <td class="c2">
             <%= metaData.getDriverName() %>
@@ -72,7 +72,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-             JDBC Driver Version:
+             <fmt:message key="server.db.jdbc_driver" />
         </td>
         <td class="c2">
             <%= metaData.getDriverVersion() %>
@@ -80,7 +80,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-            DB Connection URL:
+            <fmt:message key="server.db.connect_url" />
         </td>
         <td class="c2">
             <%= metaData.getURL() %>
@@ -88,7 +88,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-            DB User:
+            <fmt:message key="server.db.user" />
         </td>
         <td class="c2">
             <%= metaData.getUserName() %>
@@ -96,7 +96,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-            Transaction Support:
+            <fmt:message key="server.db.transaction" />
         </td>
         <td class="c2">
             <%= (metaData.supportsTransactions()) ? "Yes" : "No" %>
@@ -105,7 +105,7 @@ Below is a list of properties for your database and the JDBC driver.
     <%  if (metaData.supportsTransactions()) { %>
         <tr>
             <td class="c1">
-                Transaction Isolation Level:
+                <fmt:message key="server.db.transaction_level" />
             </td>
             <td class="c2">
                 <%  if (con.getTransactionIsolation() == Connection.TRANSACTION_NONE) { %>
@@ -134,7 +134,8 @@ Below is a list of properties for your database and the JDBC driver.
     <%  } %>
     <tr>
         <td class="c1">
-            Supports multiple connections<br>open at once:
+            <fmt:message key="server.db.multiple_connect" /><br>
+            <fmt:message key="server.db.multiple_connect2" />
         </td>
         <td class="c2">
             <%= (metaData.supportsMultipleTransactions()) ? "Yes" : "No" %>
@@ -142,7 +143,7 @@ Below is a list of properties for your database and the JDBC driver.
     </tr>
     <tr>
         <td class="c1">
-            In read-only mode:
+            <fmt:message key="server.db.read_only_mode" />
         </td>
         <td class="c2">
             <%= (metaData.isReadOnly()) ? "Yes" : "No" %>

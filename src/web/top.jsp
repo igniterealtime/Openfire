@@ -15,6 +15,7 @@
 %>
 
 <%@ taglib uri="admin" prefix="admin" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="info" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
@@ -27,7 +28,7 @@
 
 <html>
 <head>
-    <title><%= AdminConsole.getAppName() %> Admin Console<%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
+    <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /><%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
     <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
     <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
@@ -39,7 +40,7 @@
 <tbody>
     <tr>
         <td>
-            <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> Admin Console">
+            <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="login.title" />">
         </td>
         <td align="right">
             <table cellpadding="0" cellspacing="0" border="0">

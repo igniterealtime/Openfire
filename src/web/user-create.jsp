@@ -29,7 +29,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -94,7 +94,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <%   // Title of this page and breadcrumbs
-    String title = "Create User";
+    String title = LocaleUtils.getLocalizedString("user.create.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-create.jsp"));
@@ -103,7 +103,7 @@
 <jsp:include page="top.jsp" flush="true"/>
 <jsp:include page="title.jsp" flush="true"/>
 
-<p>Use the form below to create a new user.</p>
+<p><fmt:message key="user.create.info" /></p>
 
 <c:set var="submit" value="${param.create}"/>
 <c:set var="errors" value="${errors}"/>
@@ -118,21 +118,21 @@
             <td class="jive-icon-label">
 
             <% if (errors.get("general") != null) { %>
-                Error creating the user account. Please check your error logs.
+                <fmt:message key="user.create.error_creating_account" />
             <% } else if (errors.get("username") != null) { %>
-                Invalid username.
+                <fmt:message key="user.create.invalid_username" />
             <% } else if (errors.get("usernameAlreadyExists") != null) { %>
-                Username already exists - please choose a different one.
+                <fmt:message key="user.create.user_exist" />
             <% } else if (errors.get("name") != null) { %>
-                Invalid name.
+                <fmt:message key="user.create.invalid_name" />
             <% } else if (errors.get("email") != null) { %>
-                Invalid email.
+                <fmt:message key="user.create.invalid_email" />
             <% } else if (errors.get("password") != null) { %>
-                Invalid password.
+                <fmt:message key="user.create.invalid_password" />
             <% } else if (errors.get("passwordMatch") != null) { %>
-                Passwords don't match.
+                <fmt:message key="user.create.invalid_match_password" />
             <% } else if (errors.get("passwordConfirm") != null) { %>
-                Invalid password confirmation.
+                <fmt:message key="user.create.invalid_password_confirm" />
             <% } %>
             </td>
         </tr>
@@ -148,7 +148,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        New user created successfully.
+        <fmt:message key="user.create.created_success" />
         </td></tr>
     </tbody>
     </table>
@@ -159,12 +159,12 @@
 <form name="f" action="user-create.jsp" method="get">
 
 <fieldset>
-    <legend>Create New User</legend>
+    <legend><fmt:message key="user.create.new_user" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
     <tr>
-        <td width="1%" nowrap><label for="usernametf">Username:</label> *</td>
+        <td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
         <td width="99%">
             <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
              id="usernametf" autocomplete="off">
@@ -172,7 +172,7 @@
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="nametf">Name:</label>
+            <label for="nametf"><fmt:message key="user.create.name" />:</label>
         </td>
         <td width="99%">
             <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
@@ -181,7 +181,7 @@
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="emailtf">Email:</label></td>
+            <label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
         <td width="99%">
             <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
              id="emailtf">
@@ -189,7 +189,7 @@
     </tr>
     <tr>
         <td nowrap>
-            <label for="passtf">Password:</label> *
+            <label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
         </td>
         <td width="99%">
             <input type="password" name="password" value="" size="20" maxlength="75"
@@ -198,7 +198,7 @@
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="confpasstf">Confirm Password:</label> *
+            <label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
         </td>
         <td width="99%">
             <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
@@ -209,7 +209,7 @@
     </table>
     <br>
     <span class="jive-description">
-    * Required fields
+    * <fmt:message key="user.create.requied" />
     </span>
     </div>
 </fieldset>

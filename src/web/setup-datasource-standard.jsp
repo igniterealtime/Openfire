@@ -24,7 +24,7 @@
 %>
 
 <%@ include file="setup-global.jspf" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  // Get parameters
     String driver = ParamUtils.getParameter(request,"driver");
     String serverURL = ParamUtils.getParameter(request,"serverURL");
@@ -149,17 +149,15 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Datasource Settings - Standard Connection
+<fmt:message key="setup.datasource.standard.title" />
 </p>
 
 <p>
-Specify a JDBC driver and connection properties to connect to your database. If you need more
-information about this process please see the database documentation distributed with <fmt:message key="title" />.
+<fmt:message key="setup.datasource.standard.info" /><b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[MESSENGER_HOME]/resources/database</tt>.<fmt:message key="title" />.
 </p>
 
 <p>
-<b>Note: </b> Database scripts for most popular databases are included in the Jive Messenger
-distribution at <tt>[MESSENGER_HOME]/resources/database</tt>.
+<fmt:message key="setup.datasource.standard.note" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -171,7 +169,7 @@ distribution at <tt>[MESSENGER_HOME]/resources/database</tt>.
 
     <%  } else { %>
 
-        Failed to establish a database connection - please see specific errors listed below.
+        <fmt:message key="setup.datasource.standard.failed_connect" />
 
     <%  } %>
     </span>
@@ -215,7 +213,7 @@ function checkSubmit() {
     <td colspan="2">
         Database Driver Presets:
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
-            <option value="">Pick Database...
+            <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
             <%  for (int i=0; i<presets.size(); i++) {
                     String[] data = (String[])presets.get(i);
             %>
@@ -227,14 +225,14 @@ function checkSubmit() {
 </tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        JDBC Driver Class:
+        <fmt:message key="setup.datasource.standard.jdbc" />
     </td>
     <td>
         <input type="text" name="driver" size="50" maxlength="150"
          value="<%= ((driver != null) ? driver : "") %>">
         <span class="jive-description">
         <br>
-        The valid classname of your JDBC driver, ie: com.mydatabase.driver.MyDriver.
+        <fmt:message key="setup.datasource.standard.jdbc_info" />
         </span>
         <%  if (errors.get("driver") != null) { %>
 
@@ -249,14 +247,14 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        Database URL:
+        <fmt:message key="setup.datasource.standard.url" />
     </td>
     <td>
         <input type="text" name="serverURL" size="50" maxlength="250"
          value="<%= ((serverURL != null) ? serverURL : "") %>">
         <span class="jive-description">
         <br>
-        The valid URL used to connect to your database, ie: jdbc:mysql://host:port/database
+        <fmt:message key="setup.datasource.standard.valid_url" />
         </span>
         <%  if (errors.get("serverURL") != null) { %>
 
@@ -271,15 +269,14 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        Username:
+        <fmt:message key="setup.datasource.standard.username" />
     </td>
     <td>
         <input type="text" name="username" size="20" maxlength="50"
          value="<%= ((username != null) ? username : "") %>">
         <span class="jive-description">
         <br>
-        The user used to connect to your database - note, this may not be required and can be left
-        blank.
+        <fmt:message key="setup.datasource.standard.username_info" />
         </span>
         <%  if (errors.get("username") != null) { %>
 
@@ -294,15 +291,14 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        Password:
+        <fmt:message key="setup.datasource.standard.password" />
     </td>
     <td>
         <input type="password" name="password" size="20" maxlength="50"
          value="<%= ((password != null) ? password : "") %>">
         <span class="jive-description">
         <br>
-        The password for the user account used for this database - note, this may not be required
-        and can be left blank.
+        <fmt:message key="setup.datasource.standard.password_info" />
         </span>
         <%  if (errors.get("password") != null) { %>
 
@@ -317,17 +313,17 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        Connections:
+        <fmt:message key="setup.datasource.standard.connect" />
     </td>
     <td>
-        Minimum: <input type="text" name="minConnections" size="5" maxlength="5"
+        <fmt:message key="setup.datasource.standard.min" /> <input type="text" name="minConnections" size="5" maxlength="5"
          value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
         &nbsp;
-        Maximum: <input type="text" name="maxConnections" size="5" maxlength="5"
+        <fmt:message key="setup.datasource.standard.max" /> <input type="text" name="maxConnections" size="5" maxlength="5"
          value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
         <span class="jive-description">
         <br>
-        The minimum and maximum number of database connections the connection pool should maintain.
+        <fmt:message key="setup.datasource.standard.pool" />
         </span>
         <%  if (errors.get("minConnections") != null) { %>
 
@@ -350,14 +346,14 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td class="jive-label" nowrap>
-        Connection Timeout:
+        <fmt:message key="setup.datasource.standard.timeout" />
     </td>
     <td>
         <input type="text" name="connectionTimeout" size="5" maxlength="5"
          value="<%= connectionTimeout %>">
         <span class="jive-description">
         <br>
-        The time (in days) before connections in the connection pool are recycled.
+        <fmt:message key="setup.datasource.standard.timeout_info" />
         </span>
         <%  if (errors.get("connectionTimeout") != null) { %>
 
@@ -378,7 +374,7 @@ function checkSubmit() {
 <div align="right">
     <input type="submit" name="continue" value=" Continue ">
     <br>
-    Note, it might take between 30-60 seconds to connect to your database.
+    <fmt:message key="setup.datasource.standard.note" />
 </div>
 
 </form>

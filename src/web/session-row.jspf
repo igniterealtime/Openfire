@@ -1,6 +1,7 @@
 <%@ page import="org.jivesoftware.messenger.Session,
                  org.xmpp.packet.Presence,
-                 java.net.URLEncoder"%>
+                 java.net.URLEncoder,
+                 org.jivesoftware.util.LocaleUtils"%>
  <%--
   -	$RCSfile$
   -	$Revision$
@@ -29,8 +30,8 @@
     <td width="1%" nowrap><%= count %></td>
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
-            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="Click for more info..."
-             ><%= ((name != null && !"".equals(name)) ? name : "<i>Anonymous</i>") %></a>
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
+             ><%= ((name != null && !"".equals(name)) ? name : "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
         <%= sess.getAddress().getResource() %>
@@ -39,30 +40,30 @@
         <%  int _status = sess.getStatus();
             if (_status == Session.STATUS_CLOSED) {
         %>
-            Closed
+            <fmt:message key="session.details.close" />
 
         <%  } else if (_status == Session.STATUS_CONNECTED) { %>
 
-            Connected
+            <fmt:message key="session.details.connect" />
 
         <%  } else if (_status == Session.STATUS_STREAMING) { %>
 
-            Streaming
+            <fmt:message key="session.details.streaming" />
 
         <%  } else if (_status == Session.STATUS_AUTHENTICATED) { %>
 
-            Authenticated
+            <fmt:message key="session.details.authenticated" />
 
         <%  } else { %>
 
-            Unknown
+            <fmt:message key="session.details.unknown" />
 
         <%  } %>
     </td>
     <%  if (sess.getConnection().isSecure()) { %>
         <td width="1%">
             <img src="images/lock.gif" width="16" height="16" border="0"
-            title="User is connected via SSL">
+            title="<fmt:message key="session.row.cliked_ssl" />">
         </td>
      <% } else { %>
         <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
@@ -73,7 +74,7 @@
         if (_show == Presence.Show.away) {
     %>
         <td width="1%"
-            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away"
+            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.away" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -82,7 +83,7 @@
 
             <%  } else { %>
 
-                Away
+                <fmt:message key="session.details.away" />
 
             <%  } %>
         </td>
@@ -90,16 +91,16 @@
     <%  } else if (_show == Presence.Show.chat) { %>
 
         <td width="1%"
-            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat"
+            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.chat_available" />"
             ></td>
         <td width="46%">
-            Available to Chat
+            <fmt:message key="session.details.chat_available" />
         </td>
 
     <%  } else if (_show == Presence.Show.dnd) { %>
 
         <td width="1%"
-            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do Not Disturb"
+            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.not_disturb" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -108,7 +109,7 @@
 
             <%  } else { %>
 
-                Do Not Disturb
+                <fmt:message key="session.details.not_disturb" />
 
             <%  } %>
         </td>
@@ -116,16 +117,16 @@
     <%  } else if (_show == null) { %>
 
         <td width="1%"
-            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online"
+            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.online" />"
             ></td>
         <td width="46%">
-            Online
+            <fmt:message key="session.details.online" />
         </td>
 
     <%  } else if (_show == Presence.Show.xa) { %>
 
         <td width="1%"
-            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Extended Away"
+            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.extended" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -134,7 +135,7 @@
 
             <%  } else { %>
 
-                Extended Away
+                <fmt:message key="session.details.extended" />
 
             <%  } %>
         </td>
@@ -142,7 +143,7 @@
     <%  } else { %>
 
         <td colspan="2" width="46%">
-            Unknown/Not Recognized
+            <fmt:message key="session.details.unknown" />
         </td>
 
     <%  } %>
@@ -153,8 +154,8 @@
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true"
-         title="Click to kill session..."
-         onclick="return confirm('Are you sure you want to close this connection?');"
+         title="<fmt:message key="session.row.cliked_kill_session" />"
+         onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
     </td>
 </tr>

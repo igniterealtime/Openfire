@@ -23,7 +23,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters
@@ -72,7 +72,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Session Details";
+    String title = LocaleUtils.getLocalizedString("session.details.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-details.jsp"));
@@ -82,8 +82,9 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below are session details for the session <b><%= address.toString() %></b>. If the
-user <b><%= address.getNode() %></b> has multiple sessions open, they will appear below.
+<fmt:message key="session.details.info" /> <b><%= address.toString() %></b>. 
+<fmt:message key="session.details.info1" /> <b><%= address.getNode() %></b> 
+<fmt:message key="session.details.info2" />
 </p>
 
 <div class="jive-table">
@@ -91,14 +92,14 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
 <thead>
     <tr>
         <th colspan="2">
-            Session Details
+            <fmt:message key="session.details.title" />
         </th>
     </tr>
 </thead>
 <tbody>
     <tr>
         <td class="c1">
-            Session ID:
+            <fmt:message key="session.details.session_id" />
         </td>
         <td>
             <%= address.toString() %>
@@ -106,13 +107,13 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            User Name &amp; Resource:
+            <fmt:message key="session.details.username" />
         </td>
         <td>
             <%  String n = address.getNode(); %>
             <%  if (n == null || "".equals(n)) { %>
 
-                <i>Anonymous</i> - <%= address.getResource()==null?"":address.getResource() %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":address.getResource() %>
 
             <%  } else { %>
 
@@ -124,38 +125,38 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            Status:
+            <fmt:message key="session.details.status" />:
         </td>
         <td>
             <%
                 int status = currentSess.getStatus();
                 if (status == Session.STATUS_CLOSED) {
             %>
-                Closed
+                <fmt:message key="session.details.close" />
 
             <%
                 } else if (status == Session.STATUS_CONNECTED) {
             %>
 
-                Connected
+                <fmt:message key="session.details.connect" />
 
             <%
                 } else if (status == Session.STATUS_STREAMING) {
             %>
 
-                Streaming
+                <fmt:message key="session.details.streaming" />
 
             <%
                 } else if (status == Session.STATUS_AUTHENTICATED) {
             %>
 
-                Authenticated
+                <fmt:message key="session.details.authenticated" />
 
             <%
                 } else {
             %>
 
-                Unknown
+                <fmt:message key="session.details.unknown" />
 
             <%
                 }
@@ -164,7 +165,7 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            Presence:
+            <fmt:message key="session.details.presence" />:
         </td>
         <td>
             <%
@@ -180,39 +181,39 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
             %>
 
                 <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
-                Away <%= statusTxt %>
+                <fmt:message key="session.details.away" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.chat) {
             %>
                 <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
-                Available to Chat <%= statusTxt %>
+                <fmt:message key="session.details.chat_available" /> <%= statusTxt %>
             <%
                 } else if (show == Presence.Show.dnd) {
             %>
 
                 <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
-                Do Not Disturb <%= statusTxt %>
+                <fmt:message key="session.details.not_disturb" /> <%= statusTxt %>
 
             <%
                 } else if (show == null) {
             %>
 
                 <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
-                Online <%= statusTxt %>
+                <fmt:message key="session.details.online" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.xa) {
             %>
 
                 <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">
-                Extended Away <%= statusTxt %>
+                <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%
                 } else {
             %>
 
-                Unknown/Not Recognized
+                <fmt:message key="session.details.unknown" />
 
             <%
                 }
@@ -221,7 +222,7 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            Session Created:
+            <fmt:message key="session.details.session_created" />:
         </td>
         <td>
             <%= dateFormatter.format(currentSess.getCreationDate()) %>
@@ -229,7 +230,7 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            Session Last Active:
+            <fmt:message key="session.details.last_active" />:
         </td>
         <td>
             <%= dateFormatter.format(currentSess.getLastActiveDate()) %>
@@ -237,16 +238,16 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     </tr>
     <tr>
         <td class="c1">
-            Session Statistics:
+            <fmt:message key="session.details.statistics" />:
         </td>
         <td>
-            Packets Received/Sent:
+            <fmt:message key="session.details.received" />:
             <%= numFormatter.format(currentSess.getNumClientPackets()) %>/<%= numFormatter.format(currentSess.getNumServerPackets()) %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            Client IP / Hostname:
+            <fmt:message key="session.details.hostname" />:
         </td>
         <td>
             <%= currentSess.getConnection().getInetAddress().getHostAddress() %>
@@ -262,19 +263,19 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
     if (sessionCount > 1) {
 %>
     <p>
-    <b>Multiple User Sessions</b>
+    <b><fmt:message key="session.details.multiple_session" /></b>
     </p>
 
     <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
         <th>&nbsp;</th>
-        <th>Name</th>
-        <th>Resource</th>
-        <th>Status</th>
-        <th nowrap colspan="2">Presence (if authenticated)</th>
-        <th nowrap>Client IP</th>
-        <th nowrap>Close Connection</th>
+        <th><fmt:message key="session.details.name" /></th>
+        <th><fmt:message key="session.details.resource" /></th>
+        <th><fmt:message key="session.details.status" /></th>
+        <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
+        <th nowrap><fmt:message key="session.details.clientip" /></th>
+        <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
 
     <%  int count = 0;
@@ -305,7 +306,7 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
         </td>
         <td width="99%">
 
-            &nbsp; = Current session details above.
+            &nbsp; = <fmt:message key="session.details.session_detail" />
 
         </td>
     </tr>

@@ -55,7 +55,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "Server Settings";
+    String title = LocaleUtils.getLocalizedString("index.title");
     pageinfo.setTitle(title);
     pageinfo.setPageID("server-settings");
 %>
@@ -65,8 +65,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below are properties for this server. Click the "Edit Properties" button below to change
-some of the server settings. Some settings can not be changed.
+<fmt:message key="index.title.info" />
 </p>
 
 <script lang="JavaScript" type="text/javascript">
@@ -82,7 +81,7 @@ some of the server settings. Some settings can not be changed.
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-        <th colspan="2">Server Properties</th>
+        <th colspan="2"><fmt:message key="index.properties" /></th>
     </tr>
 </thead>
 <tbody>
@@ -90,7 +89,7 @@ some of the server settings. Some settings can not be changed.
     <%  if (serverOn) { %>
 
          <tr>
-            <td class="c1">Server Uptime:</td>
+            <td class="c1"><fmt:message key="index.uptime" /></td>
             <td>
                 <%  DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
                     long now = System.currentTimeMillis();
@@ -131,21 +130,21 @@ some of the server settings. Some settings can not be changed.
     <%  } %>
 
     <tr>
-        <td class="c1">Version:</td>
+        <td class="c1"><fmt:message key="index.version" /></td>
         <td class="c2">
             <%= AdminConsole.getAppName() %>
             <%= AdminConsole.getVersionString() %>
         </td>
     </tr>
     <tr>
-        <td class="c1">Messenger Home:</td>
+        <td class="c1"><fmt:message key="index.home" /></td>
         <td class="c2">
             <%= JiveGlobals.getMessengerHome() %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            Server Name:
+            <fmt:message key="index.server_name" />
         </td>
         <td class="c2">
             ${webManager.serverInfo.name}
@@ -154,7 +153,7 @@ some of the server settings. Some settings can not be changed.
 </tbody>
 <thead>
     <tr>
-        <th colspan="2">Server Ports</th>
+        <th colspan="2"><fmt:message key="index.server_port" /></th>
     </tr>
 </thead>
 <tbody>
@@ -163,18 +162,18 @@ some of the server settings. Some settings can not be changed.
         <%  i++; %>
         <tr>
             <td class="c1">
-                <%= i %>: IP:Port, Security:
+                <%= i %>: <fmt:message key="index.server_ip" />
             </td>
             <td class="c2">
                 ${port.IPAddress}:${port.port},
                 <c:choose>
                     <c:when test="${empty port.securityType}">
-                        NORMAL
+                        <fmt:message key="index.port_type" />
                     </c:when>
                     <c:otherwise>
                         <c:choose>
                             <c:when test="${port.securityType == 'TLS'}">
-                                TLS (SSL)
+                                <fmt:message key="index.port_type1" />
                             </c:when>
                             <c:otherwise>
                                 <c:out value="${port.securityType}" />
@@ -186,7 +185,7 @@ some of the server settings. Some settings can not be changed.
         </tr>
         <tr valign="top">
             <td class="c1">
-                <nobr>&nbsp;&nbsp;&nbsp; Domain Name(s):</nobr>
+                <nobr>&nbsp;&nbsp;&nbsp; <fmt:message key="index.domain_name" /></nobr>
             </td>
             <td class="c2">
                 <c:set var="sep" value="" />
@@ -200,30 +199,30 @@ some of the server settings. Some settings can not be changed.
 </tbody>
 <thead>
     <tr>
-        <th colspan="2">Environment</th>
+        <th colspan="2"><fmt:message key="index.environment" /></th>
     </tr>
 </thead>
 <tbody>
     <tr>
-        <td class="c1">JVM Version and Vendor:</td>
+        <td class="c1"><fmt:message key="index.jvm" /></td>
         <td class="c2">
             <%= System.getProperty("java.version") %> <%= System.getProperty("java.vendor") %>
         </td>
     </tr>
     <tr>
-        <td class="c1">Appserver:</td>
+        <td class="c1"><fmt:message key="index.app" /></td>
         <td class="c2">
             <%= application.getServerInfo() %>
         </td>
     </tr>
     <tr>
-        <td class="c1">OS / Hardware:</td>
+        <td class="c1"><fmt:message key="index.os" /></td>
         <td class="c2">
             <%= System.getProperty("os.name") %> / <%= System.getProperty("os.arch") %>
         </td>
     </tr>
     <tr>
-        <td class="c1">Locale / Timezone:</td>
+        <td class="c1"><fmt:message key="index.local" /></td>
         <td class="c2">
             <%= JiveGlobals.getLocale() %> / <%= JiveGlobals.getTimeZone().getDisplayName(JiveGlobals.getLocale()) %>
             (<%= (JiveGlobals.getTimeZone().getRawOffset()/1000/60/60) %> GMT)

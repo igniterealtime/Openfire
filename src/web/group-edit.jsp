@@ -21,11 +21,12 @@
                  org.jivesoftware.messenger.user.UserManager,
                  org.jivesoftware.messenger.user.UserNotFoundException,
                  org.jivesoftware.stringprep.Stringprep,
-                 java.io.UnsupportedEncodingException"
+                 java.io.UnsupportedEncodingException,
+                 org.jivesoftware.util.LocaleUtils"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <jsp:useBean id="errors" class="java.util.HashMap"/>
@@ -207,7 +208,7 @@
 %>
     <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <% // Title of this page and breadcrumbs
-    String title = "Edit Group";
+    String title = LocaleUtils.getLocalizedString("group.edit.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
@@ -217,8 +218,7 @@
     <jsp:include page="top.jsp" flush="true"/>
     <jsp:include page="title.jsp" flush="true"/>
     <p>
-        Edit group settings and add or remove group members and administrators
-        using the forms below.
+        <fmt:message key="group.edit.form_info" />
     </p>
 
 <%
@@ -230,15 +230,15 @@
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
         <% if (groupInfoChanged) { %>
-        Group information updated successfully.
+        <fmt:message key="group.edit.update" />
         <% } else if ("true".equals(request.getParameter("success"))) { %>
-            User(s) added successfully.
+            <fmt:message key="group.edit.update_add_user" />
         <% } else if ("true".equals(request.getParameter("deletesuccess"))) { %>
-            User(s) deleted successfully.
+            <fmt:message key="group.edit.update_del_user" />
         <% } else if ("true".equals(request.getParameter("updatesuccess"))) { %>
-            User(s) updated successfully.
+            <fmt:message key="group.edit.update_user" />
          <% } else if ("true".equals(request.getParameter("creategroupsuccess"))) { %>
-            Group created successfully.
+            <fmt:message key="group.edit.update_success" />
         <%
             }
         %>
@@ -256,7 +256,7 @@
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
         <% if(add) { %>
-        User(s) not added successfully.
+        <fmt:message key="group.edit.not_update" />
         <%= errorBuf %>
         <% } %>
         </td></tr>
@@ -269,13 +269,13 @@
 
     <fieldset>
         <legend>
-            Group Summary
+            <fmt:message key="group.edit.group_summary" />
         </legend>
 
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td  width="1%">
-                    Name:
+                    <fmt:message key="group.edit.group_name" />
                 </td>
                 <% if(!edit) { %>
                 <td align=left nowrap width="1%">
@@ -296,11 +296,11 @@
             </tr>
             <tr>
                 <td width="1%">
-                    Description:
+                    <fmt:message key="group.edit.group_description" />
                 </td>
                 <% if(!edit) { %>
                 <td colspan="2">
-                    <%= ((group.getDescription() != null) ? group.getDescription() : "<i>No Description</i>") %>
+                    <%= ((group.getDescription() != null) ? group.getDescription() : "<i>"+LocaleUtils.getLocalizedString("group.edit.group_not_description")+"</i>") %>
                 </td>
                 <% } else { %>
 
@@ -315,11 +315,10 @@
 
 
     <br>
-    <p>Shared Roster Groups</p>
+    <p><fmt:message key="group.edit.group_share_title" /></p>
 
     <p>
-    You can use the form below to show this group in users' rosters. Select from one of three
-    options for who should see this group in their rosters.
+    <fmt:message key="group.edit.group_share_content" />
     </p>
 
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -329,7 +328,7 @@
                 <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb201">Disable sharing group in rosters</label>
+                <label for="rb201"><fmt:message key="group.edit.group_share_not_in_rosters" /></label>
             </td>
         </tr>
         <tr>
@@ -337,7 +336,7 @@
                 <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb202">Enable sharing group in rosters</label>
+                <label for="rb202"><fmt:message key="group.edit.group_share_in_rosters" /></label>
             </td>
         </tr>
         <tr>
@@ -350,7 +349,7 @@
                 <tbody>
                     <tr>
                         <td width="1%" nowrap>
-                            Group Display Name
+                            <fmt:message key="group.edit.group_display_name" />
                         </td>
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
@@ -369,8 +368,7 @@
                              <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
-                            <label for="rb002"
-                             >Show group in all users' rosters.</label>
+                            <label for="rb002"><fmt:message key="group.edit.show_groups_in_all_user" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -380,8 +378,7 @@
                              <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
-                            <label for="rb001"
-                             >Show group in group members' rosters</label>
+                            <label for="rb001"><fmt:message key="group.edit.show_groups_in_groups_members" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -391,8 +388,7 @@
                              <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
                         </td>
                         <td width="99%">
-                            <label for="rb003"
-                             >Show group to members' rosters of these groups:</label>
+                            <label for="rb003"><fmt:message key="group.edit.show_group_in_roster_group" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -440,7 +436,7 @@
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td nowrap width="1%">
-                    Add User(s):
+                    <fmt:message key="group.edit.add_user" />
                 </td>
                 <td nowrap class="c1" align="left">
                     <input type="text" size="40" name="users"/>
@@ -454,7 +450,7 @@
         <input type="hidden" name="group" value="<%= groupName %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
             <tr>
-                <th>Username</th><th width="1%">Admin</th><th width="1%">Remove</th>
+                <th><fmt:message key="group.edit.username" /></th><th width="1%"><fmt:message key="group.edit.admin" /></th><th width="1%"><fmt:message key="group.edit.remove" /></th>
             </tr>
             <!-- Add admins first -->
 <%
@@ -468,7 +464,7 @@
                 <tr>
                     <td align="center" colspan="3">
                         <br>
-                        No members in this group. Use the form above to add some.
+                        <fmt:message key="group.edit.user_hint" />
                         <br>
                         <br>
                     </td>

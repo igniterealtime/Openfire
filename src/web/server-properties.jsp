@@ -17,7 +17,7 @@
                  org.jivesoftware.admin.AdminPageBean"
     errorPage="error.jsp"
 %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%!
@@ -103,7 +103,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "System Properties";
+    String title = LocaleUtils.getLocalizedString("server.properties.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-properties.jsp"));
@@ -114,13 +114,10 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below is a list of the system properties. Values for password sensitive fields are hidden.
-Long property names and values are clipped. Hold your mouse over the property name to see
-the full value or to see both the full name and value, click the edit icon next to the
-property.
+<fmt:message key="server.properties.info" />
 </p>
 
-<p><b>System Properties</b></p>
+<p><b><fmt:message key="server.properties.system" /></b></p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -129,7 +126,7 @@ property.
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error -- creating the property failed, see below.
+        <fmt:message key="server.properties.error" />
         </td></tr>
     </tbody>
     </table>
@@ -142,7 +139,7 @@ property.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Property saved successfully.
+        <fmt:message key="server.properties.saved" />
         </td></tr>
     </tbody>
     </table>
@@ -155,7 +152,7 @@ property.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Property deleted successfully.
+        <fmt:message key="server.properties.deleted" />
         </td></tr>
     </tbody>
     </table>
@@ -170,7 +167,7 @@ property.
     <tbody>
         <tr><td class="jive-icon"><img src="images/info-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Use the form below this table to edit the property value.
+        <fmt:message key="server.properties.edit_property" />
         </td></tr>
     </tbody>
     </table>
@@ -185,7 +182,7 @@ property.
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error deleting the property.
+        <fmt:message key="server.properties.error_deleting" />
         </td></tr>
     </tbody>
     </table>
@@ -231,10 +228,10 @@ function dodelete(propName) {
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-        <th nowrap>Property Name</th>
-        <th nowrap>Property Value</th>
-        <th style="text-align:center;">Edit</th>
-        <th style="text-align:center;">Delete</th>
+        <th nowrap><fmt:message key="server.properties.name" /></th>
+        <th nowrap><fmt:message key="server.properties.value" /></th>
+        <th style="text-align:center;"><fmt:message key="server.properties.edit" /></th>
+        <th style="text-align:center;"><fmt:message key="server.properties.delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -243,7 +240,7 @@ function dodelete(propName) {
 
         <tr>
             <td colspan="4">
-                No properties set.
+                <fmt:message key="server.properties.no_property" />
             </td>
         </tr>
 
@@ -273,11 +270,11 @@ function dodelete(propName) {
                 </div>
             </td>
             <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(n,"'","''") %>');"
-                ><img src="images/edit-16x16.gif" width="16" height="16" alt="Click to edit this property" border="0"></a
+                ><img src="images/edit-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_edit" />" border="0"></a
                 >
             </td>
             <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(n,"'","''") %>');"
-                ><img src="images/delete-16x16.gif" width="16" height="16" alt="Click to delete this property" border="0"></a
+                ><img src="images/delete-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_delete" />" border="0"></a
                 >
             </td>
         </tr>
@@ -301,9 +298,9 @@ function dodelete(propName) {
     <tr>
         <th colspan="2">
             <%  if (edit) { %>
-                Edit property
+                <fmt:message key="server.properties.edit_property_title" />
             <%  } else { %>
-                Add new property
+                <fmt:message key="server.properties.new_property" />
             <%  } %>
         </th>
     </tr>
@@ -311,7 +308,7 @@ function dodelete(propName) {
 <tbody>
     <tr valign="top">
         <td>
-            Property Name:
+            <fmt:message key="server.properties.name" />:
         </td>
         <td>
             <%  if (edit) { %>
@@ -325,7 +322,7 @@ function dodelete(propName) {
 
                 <%  if (errors.containsKey("propName")) { %>
 
-                    <br><span class="jive-error-text">Please enter a property name.</span>
+                    <br><span class="jive-error-text"><fmt:message key="server.properties.enter_property_name" /></span>
 
                 <%  } %>
 
@@ -334,18 +331,18 @@ function dodelete(propName) {
     </tr>
     <tr valign="top">
         <td>
-            Property Value:
+            <fmt:message key="server.properties.value" />:
         </td>
         <td>
             <textarea cols="45" rows="5" name="propValue" wrap="virtual"><%= (propValue != null ? StringUtils.escapeHTMLTags(propValue) : "") %></textarea>
 
             <%  if (errors.containsKey("propValue")) { %>
 
-                <br><span class="jive-error-text">Please enter a property value.</span>
+                <br><span class="jive-error-text"><fmt:message key="server.properties.enter_property_value" /></span>
 
             <%  } else if (errors.containsKey("propValueLength")) { %>
 
-                <br><span class="jive-error-text">1000 character max.</span>
+                <br><span class="jive-error-text"><fmt:message key="server.properties.max_character" /></span>
 
             <%  } %>
         </td>

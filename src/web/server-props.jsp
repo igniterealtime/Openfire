@@ -94,7 +94,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "Edit Server Properties";
+    String title = LocaleUtils.getLocalizedString("server.props.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Server Properties", "index.jsp"));
@@ -111,7 +111,7 @@
 </style>
 
 <p>
-Use the form below to edit server properties.
+<fmt:message key="server.props.info" />
 </p>
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
@@ -121,8 +121,7 @@ Use the form below to edit server properties.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Server properties updated successfully. You'll need to <b>restart</b> the server to have
-        the changes take effect (see <a href="index.jsp">Server Status</a>).
+        <fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
         </td></tr>
     </tbody>
     </table>
@@ -137,14 +136,14 @@ Use the form below to edit server properties.
 <thead>
     <tr>
         <th colspan="2">
-            Server Properties
+            <fmt:message key="server.props.property" />
         </th>
     </tr>
 </thead>
 <tbody>
     <tr>
         <td class="c1">
-            Server Name:
+            <fmt:message key="server.props.name" />
         </td>
         <td class="c2">
             <input type="text" name="serverName" value="<%= (serverName != null) ? serverName : "" %>"
@@ -152,16 +151,16 @@ Use the form below to edit server properties.
             <%  if (errors.containsKey("serverName")) { %>
                 <br>
                 <span class="jive-error-text">
-                Please enter a valid server host name or
+                <fmt:message key="server.props.valid_hostname" />
                 <a href="#" onclick="document.editform.serverName.value='<%= InetAddress.getLocalHost().getHostName() %>';"
-                 >restore the default</a>.
+                 ><fmt:message key="server.props.valid_hostname1" /></a>.
                 </span>
             <%  } %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-             Port:
+             <fmt:message key="server.props.port" />
         </td>
         <td class="c2">
             <input type="text" name="port" value="<%= (port > 0 ? String.valueOf(port) : "") %>"
@@ -169,21 +168,21 @@ Use the form below to edit server properties.
             <%  if (errors.containsKey("port")) { %>
                 <br>
                 <span class="jive-error-text">
-                Please enter a valid port number or
+                <fmt:message key="server.props.valid_port" />
                 <a href="#" onclick="document.editform.port.value='5222';"
-                 >restore the default</a>.
+                 ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } else if (errors.containsKey("portsEqual")) { %>
                 <br>
                 <span class="jive-error-text">
-                Error -- this port and the SSL port can not be equal.
+                <fmt:message key="server.props.error_port" />
                 </span>
             <%  } %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-             SSL Enabled:
+              <fmt:message key="server.props.ssl" />
         </td>
         <td class="c2">
             <table cellpadding="0" cellspacing="0" border="0">
@@ -193,14 +192,14 @@ Use the form below to edit server properties.
                         <input type="radio" name="sslEnabled" value="true" <%= (sslEnabled ? "checked" : "") %>
                          id="SSL01">
                     </td>
-                    <td><label for="SSL01">Enabled</label></td>
+                    <td><label for="SSL01"><fmt:message key="server.props.enable" /></label></td>
                 </tr>
                 <tr>
                     <td>
                         <input type="radio" name="sslEnabled" value="false" <%= (!sslEnabled ? "checked" : "") %>
                          id="SSL02">
                     </td>
-                    <td><label for="SSL02">Disabled</label></td>
+                    <td><label for="SSL02"><fmt:message key="server.props.disable" /></label></td>
                 </tr>
             </tbody>
             </table>
@@ -216,16 +215,16 @@ Use the form below to edit server properties.
             <%  if (errors.containsKey("sslPort")) { %>
                 <br>
                 <span class="jive-error-text">
-                Please enter a valid SSL port number or
+                <fmt:message key="server.props.ssl_valid" />
                 <a href="#" onclick="document.editform.sslPort.value='5223';"
-                 >restore the default</a>.
+                 ><fmt:message key="server.props.ssl_valid1" /></a>.
                 </span>
             <%  } %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-             Admin Console Port:
+            <fmt:message key="server.props.admin_port" />
         </td>
         <td class="c2">
             <input type="text" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "") %>"
@@ -233,9 +232,9 @@ Use the form below to edit server properties.
             <%  if (errors.containsKey("embeddedPort")) { %>
                 <br>
                 <span class="jive-error-text">
-                Please enter a valid port number or
+                <fmt:message key="server.props.valid_port" />
                 <a href="#" onclick="document.editform.embeddedPort.value='9090';"
-                 >restore the default</a>.
+                 ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } %>
         </td>

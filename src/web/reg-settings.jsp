@@ -12,18 +12,19 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.handler.IQRegisterHandler,
                  org.jivesoftware.messenger.handler.IQAuthHandler,
-                 org.jivesoftware.admin.AdminPageBean"
+                 org.jivesoftware.admin.AdminPageBean,
+                 org.jivesoftware.util.LocaleUtils"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Registration Settings";
+    String title = LocaleUtils.getLocalizedString("reg.settings.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "reg-settings.jsp"));
@@ -58,7 +59,7 @@
 %>
 
 <p>
-Use the forms below to change various aspects of user registration and login.
+<fmt:message key="reg.settings.info" />
 </p>
 
 <form action="reg-settings.jsp">
@@ -70,7 +71,7 @@ Use the forms below to change various aspects of user registration and login.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="reg.settings.update" />
         </td></tr>
     </tbody>
     </table>
@@ -79,14 +80,10 @@ Use the forms below to change various aspects of user registration and login.
 </c:if>
 
 <fieldset>
-    <legend>Inband Account Registration</legend>
+    <legend><fmt:message key="reg.settings.inband_account" /></legend>
     <div>
     <p>
-    Inband account registration allows users to create accounts on the server automatically using most
-    clients. It does not affect the ability to create new accounts through this web administration
-    interface. Administrators may want to disable this option so users are required to register by
-    other means (e.g. sending requests to the server administrator or through your own custom web
-    interface).
+    <fmt:message key="reg.settings.inband_account_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -96,7 +93,8 @@ Use the forms below to change various aspects of user registration and login.
                  <%= ((inbandEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Enabled</b></label> - Users can automatically create new accounts.
+                <label for="rb01"><b><fmt:message key="reg.settings.enable" /></b></label> - 
+                <fmt:message key="reg.settings.auto_create_user" />
             </td>
         </tr>
         <tr>

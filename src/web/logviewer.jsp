@@ -21,7 +21,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -195,7 +195,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "Log Viewer";
+    String title = LocaleUtils.getLocalizedString("logviewer.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "logviewer.jsp?log=" + log));
@@ -249,7 +249,7 @@ IFRAME {
         <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("error".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=error"
-            >Error</a>
+            ><fmt:message key="logviewer.error" /></a>
             <span class="new">
             <%= ((newlogs.containsKey("error"))?"*":"") %>
             </span>
@@ -257,7 +257,7 @@ IFRAME {
         <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("warn".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=warn"
-            >Warn</a>
+            ><fmt:message key="logviewer.warn" /></a>
             <span class="new">
             <%= ((newlogs.containsKey("warn"))?"*":"") %>
             </span>
@@ -265,7 +265,7 @@ IFRAME {
         <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("info".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=info"
-            >Info</a>
+            ><fmt:message key="logviewer.info" /></a>
             <span class="new">
             <%= ((newlogs.containsKey("info"))?"*":"") %>
             </span>
@@ -273,7 +273,7 @@ IFRAME {
         <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("debug".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=debug"
-            >Debug</a>
+            ><fmt:message key="logviewer.debug" /></a>
             <span class="new">
             <%= ((newlogs.containsKey("debug"))?"*":"") %>
             </span>
@@ -297,25 +297,25 @@ IFRAME {
         <td>
             <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tr>
-                <td nowrap>Log File:</td>
+                <td nowrap><fmt:message key="logviewer.log" /></td>
                 <td nowrap><b><%= logFile.getName() %></b> (<%= byteFormatter.format(logFile.length()) %>)</td>
                 <td width="96%" rowspan="3">&nbsp;</td>
-                <td nowrap>Order:</td>
+                <td nowrap><fmt:message key="logviewer.order" /></td>
                 <td nowrap>
                     <input type="radio" name="mode" value="asc"<%= ("asc".equals(mode)?" checked":"") %>
                      onclick="this.form.submit();" id="rb01"
-                     ><label for="rb01">Normal</label>
+                     ><label for="rb01"><fmt:message key="logviewer.normal" /></label>
                     <input type="radio" name="mode" value="desc"<%= ("desc".equals(mode)?" checked":"") %>
                      onclick="this.form.submit();" id="rb02"
-                     ><label for="rb02">Reverse</label>
+                     ><label for="rb02"><fmt:message key="logviewer.reverse" /></label>
                 </td>
             </tr>
             <tr>
-                <td nowrap>Last Modified:</td>
+                <td nowrap><fmt:message key="logviewer.modified" /></td>
                 <td nowrap>
                     <span><%= dateFormatter.format(lastMod) %></span>
                 </td>
-                <td nowrap>Lines:</td>
+                <td nowrap><fmt:message key="logviewer.line" /></td>
                 <td nowrap>
                     <select name="lines" size="1"
                      onchange="this.form.submit();">
@@ -326,7 +326,7 @@ IFRAME {
 
                         <%  } %>
                             <option value="All"<%= (("All".equals(numLinesParam))?" selected":"") %>
-                             >All
+                             ><fmt:message key="logviewer.all" />
                     </select>
                 </td>
             </tr>
@@ -354,25 +354,25 @@ IFRAME {
                     <tbody>
                         <tr>
                             <td class="icon">
-                                <a href="#" onclick="if (confirm('Are you sure you want to clear this log file?')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"><img src="images/delete-16x16.gif" border="0" alt="Clear Log"></a>
+                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"><img src="images/delete-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_clear" />"></a>
                             </td>
                             <td class="icon-label">
-                                <a href="#" onclick="if (confirm('Are you sure you want to clear this log file?')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
-                                 >Clear</a>
+                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.clear" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
+                                 ><fmt:message key="logviewer.clear" /></a>
                             </td>
                             <td class="icon">
-                                <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="Mark Log"></a>
+                                <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_mark" />"></a>
                             </td>
                             <td class="icon-label">
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"
-                                 >Mark</a>
+                                 ><fmt:message key="logviewer.mark" /></a>
                             </td>
                         </tr>
                     </tbody>
                     </table>
                     </div>
                 </td>
-                <td nowrap>Refresh:</td>
+                <td nowrap><fmt:message key="logviewer.refresh" /></td>
                 <td nowrap>
                     <select size="1" name="refresh" onchange="this.form.submit();">
                     <%  for (int j=0; j<REFRESHES.length; j++) {
@@ -382,7 +382,7 @@ IFRAME {
 
                     <%  } %>
                     </select>
-                    (seconds)
+                    (<fmt:message key="logviewer.seconds" />)
                 </td>
             </tr>
 
@@ -394,13 +394,13 @@ IFRAME {
                         <table cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
                             <td width="1%" nowrap>
-                                Debug Log: &nbsp;
+                                <fmt:message key="logviewer.debug_log" />: &nbsp;
                             </td>
                             <td width="1%">
                                 <input type="radio" name="debugEnabled" value="true"<%= ((debugEnabled) ? " checked" : "") %> id="de01">
                             </td>
                             <td width="1%" nowrap>
-                                <label for="de01">Enabled</label> &nbsp;
+                                <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
                             </td>
                             <td width="1%">
                                 <input type="radio" name="debugEnabled" value="false"<%= ((!debugEnabled) ? " checked" : "") %> id="de02">

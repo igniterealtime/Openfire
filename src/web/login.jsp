@@ -91,7 +91,7 @@
 
 <html>
 <head>
-	<title><%= AdminConsole.getAppName() %> Admin Console</title>
+	<title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /></title>
 	<script language="JavaScript" type="text/javascript">
 		<!--
 		// break out of frames
@@ -174,7 +174,7 @@
                     ></div></td>
                 <td colspan="3"
                     ><div id="jive-login-text-image"
-                    ><img src="images/login-text.gif" width="237" height="28" border="0" alt="Admin Console Login"
+                    ><img src="images/login-text.gif" width="237" height="28" border="0" alt="<fmt:message key="login.hint" />"
                     ></div></td>
             </tr>
 
@@ -186,9 +186,7 @@
                             <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
                             <td>
                                 <div class="jive-error-text" style="padding-left:5px;">
-                                Error: You don't have JavaScript enabled. This tool uses JavaScript
-                                and much of it will not work correctly without it enabled. Please turn
-                                JavaScript back on and reload this page.
+                                <fmt:message key="login.error" />
                                 </div>
                             </td>
                         </tr>
@@ -206,8 +204,7 @@
                             <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
                             <td>
                                 <div class="jive-error-text" style="padding-left:5px;">
-                                Login failed: make sure your username and password are correct
-                                and that you're an admin or moderator.
+																<fmt:message key="login.failed" />
                                 </div>
                             </td>
                         </tr>
@@ -231,12 +228,12 @@
             <tr valign="top">
                 <td class="jive-login-label">
                     <label for="u01">
-                    username
+                    <fmt:message key="login.username" />
                     </label>
                 </td>
                 <td class="jive-login-label">
                     <label for="p01">
-                    password
+                    <fmt:message key="login.password" />
                     </label>
                 </td>
                 <td>
@@ -249,7 +246,7 @@
             <tr class="jive-footer">
                 <td colspan="3" nowrap>
                     <span style="font-size:0.8em;">
-                    <%= AdminConsole.getAppName() %>, Version: <%= AdminConsole.getVersionString() %>
+                    <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
                     </span>
                 </td>
             </tr>

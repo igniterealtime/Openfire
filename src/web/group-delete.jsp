@@ -17,6 +17,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -47,7 +48,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Delete Group";
+    String title = LocaleUtils.getLocalizedString("group.delete.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-delete.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
@@ -58,9 +59,9 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Are you sure you want to delete the group
+<fmt:message key="group.delete.hint_info" />
 <b><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>"><%= group.getName() %></a></b>
-from the system?
+<fmt:message key="group.delete.hint_info1" />
 </p>
 
 <form action="group-delete.jsp">

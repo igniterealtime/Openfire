@@ -18,10 +18,10 @@
 <div align=center>
 
 <p>
-Please restart your server and close this window. Launch the admin using either the launcher or start as a service to enter the admin tool.
+<fmt:message key="setup.pause.title" />
 </p>
 
-<a href="javascript:window.close();">Close Window</a>
+<a href="javascript:window.close();"><fmt:message key="setup.pause.close" /></a>
 </div>
 
 <%@ include file="setup-footer.jsp" %>

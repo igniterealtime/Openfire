@@ -19,7 +19,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -84,7 +84,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Room Creation Permissions";
+    String title = LocaleUtils.getLocalizedString("muc.create.permission.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-create-permission.jsp"));
@@ -94,7 +94,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Use the form below to configure the policy for who can create group chat rooms.
+<fmt:message key="muc.create.permission.info" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -104,7 +104,7 @@ Use the form below to configure the policy for who can create group chat rooms.
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error adding the user. Please verify the JID is correct.
+        <fmt:message key="muc.create.permission.error" />
         </td></tr>
     </tbody>
     </table>
@@ -119,15 +119,15 @@ Use the form below to configure the policy for who can create group chat rooms.
         <td class="jive-icon-label">
         <%  if (success) { %>
 
-            Settings updated successfully.
+            <fmt:message key="muc.create.permission.update" />
 
         <%  } else if (addsuccess) { %>
 
-            User added successfully.
+            <fmt:message key="muc.create.permission.add_user" />
 
         <%  } else if (deletesuccess) { %>
 
-            User removed successfully.
+            <fmt:message key="muc.create.permission.user_removed" />
 
         <%  } %>
         </td></tr>
@@ -140,7 +140,7 @@ Use the form below to configure the policy for who can create group chat rooms.
 <form action="muc-create-permission.jsp?save" method="post">
 
 <fieldset>
-    <legend>Permission Policy</legend>
+    <legend><fmt:message key="muc.create.permission.policy" /></legend>
     <div>
         <table cellpadding="3" cellspacing="0" border="0" width="100%">
         <tbody>
@@ -150,7 +150,7 @@ Use the form below to configure the policy for who can create group chat rooms.
                      <%= ((!mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
-                    <label for="rb01">Anyone can create a chat room.</label>
+                    <label for="rb01"><fmt:message key="muc.create.permission.anyone_created" /></label>
                 </td>
             </tr>
             <tr>
@@ -160,7 +160,7 @@ Use the form below to configure the policy for who can create group chat rooms.
                      <%= ((mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
-                    <label for="rb02">Only specific users can create a chat room.</label>
+                    <label for="rb02"><fmt:message key="muc.create.permission.specific_created" /></label>
                 </td>
             </tr>
         </tbody>
@@ -179,10 +179,10 @@ Use the form below to configure the policy for who can create group chat rooms.
     <form action="muc-create-permission.jsp?add" method="post">
 
     <fieldset>
-        <legend>Allowed Users</legend>
+        <legend><fmt:message key="muc.create.permission.allowed_users" /></legend>
         <div>
         <p>
-        <label for="userJIDtf">Add User (JID):</label>
+        <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
         <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
          onclick="this.form.openPerms[1].checked=true;" id="userJIDtf">
         <input type="submit" value="Add">
@@ -201,7 +201,7 @@ Use the form below to configure the policy for who can create group chat rooms.
 
                 <tr>
                     <td colspan="2">
-                        No allowed users, use the form above to add one.
+                        <fmt:message key="muc.create.permission.no_allowed_users" />
                     </td>
                 </tr>
 
@@ -216,8 +216,8 @@ Use the form below to configure the policy for who can create group chat rooms.
                     </td>
                     <td width="1%" align="center">
                         <a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
-                         title="Click to delete..."
-                         onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                         title="<fmt:message key="muc.create.permission.click_title" />"
+                         onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
                          ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                     </td>
                 </tr>

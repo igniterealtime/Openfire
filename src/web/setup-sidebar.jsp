@@ -5,7 +5,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%!
     final String INCOMPLETE = "incomplete";
     final String IN_PROGRESS = "in_progress";
@@ -42,7 +42,7 @@
 <tr bgcolor="#eeeeee">
     <td align="center">
         <span style="padding:6px">
-        <b>Setup Progress</b>
+        <b><fmt:message key="setup.sidebar.title" /></b>
         </span>
     </td>
 </tr>

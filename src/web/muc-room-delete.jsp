@@ -16,7 +16,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -51,7 +51,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Destroy Room";
+    String title = LocaleUtils.getLocalizedString("muc.room.delete.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-delete.jsp?roomName="+roomName));
@@ -62,23 +62,22 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Are you sure you want to destroy the room
+<fmt:message key="muc.room.delete.info" />
 <b><a href="muc-room-edit-form.jsp?roomName=<%= room.getName() %>"><%= room.getName() %></a></b>
-from the system? You may specify a reason for the room destruction and an alternative room
-address that will replace this room. This information will be sent to room occupants.
+<fmt:message key="muc.room.delete.detail" />
 </p>
 
 <form action="muc-room-delete.jsp">
 <input type="hidden" name="roomName" value="<%= roomName %>">
 
 <fieldset>
-    <legend>Destruction Details</legend>
+    <legend><fmt:message key="muc.room.delete.destructon_title" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
             <td class="c1">
-                Room ID:
+                <fmt:message key="muc.room.delete.room_id" />
             </td>
             <td>
                 <%= room.getName() %>
@@ -86,7 +85,7 @@ address that will replace this room. This information will be sent to room occup
         </tr>
         <tr>
             <td class="c1">
-                Reason:
+                <fmt:message key="muc.room.delete.reason" />
             </td>
             <td>
                 <input type="text" size="50" maxlength="150" name="reason">
@@ -94,7 +93,7 @@ address that will replace this room. This information will be sent to room occup
         </tr>
         <tr>
             <td class="c1">
-                Alternate Room Address:
+                <fmt:message key="muc.room.delete.alternate_address" />
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="alternateJID">

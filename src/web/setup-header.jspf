@@ -8,7 +8,7 @@
 
 <html>
 <head>
-	<title><fmt:message key="title" /> Setup</title>
+	<title><fmt:message key="title" /> <fmt:message key="setup.env.check.setup" /></title>
 	<link rel="stylesheet" type="text/css" href="setup-style.css">
 </head>
 
@@ -18,7 +18,7 @@
 <table cellpadding="8" cellspacing="0" border="0" width="100%">
 <tr>
     <td>
-        <fmt:message key="title" /> Setup
+        <fmt:message key="title" /> <fmt:message key="setup.env.check.setup" />
     </td>
 </tr>
 </table>

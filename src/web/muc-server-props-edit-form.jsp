@@ -88,7 +88,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-            <fmt:message key="groupchat.service.properties.saved_successfully" />
+            <fmt:message key="groupchat.service.properties.saved_successfully" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="groupchat.service.properties.saved_successfully2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
         </td></tr>
     </tbody>
     </table>

@@ -29,7 +29,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Offline Messages";
+    String title = LocaleUtils.getLocalizedString("offline.messages.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "offline-messages.jsp"));
@@ -158,7 +158,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="offline.messages.update" />
         </td></tr>
     </tbody>
     </table>
@@ -185,22 +185,18 @@
 <%  } %>
 
 <p>
-XMPP provides the option for servers to store-and-forward IM messages when they are sent to a
-user that is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient
-feature of an XMPP deployment. However, offline messages, like email, can take up a significant
-amount of space on a server. There are several options for handling offline messages; select
-the policy that best suites your needs.
+<fmt:message key="offline.messages.info" />
 </p>
 
 <p>
-Current size of all offline message:
+<fmt:message key="offline.messages.size" />
 <b><%= format.format(OfflineMessageStore.getInstance().getSize()/1024.0/1024.0) %> MB</b>
 </p>
 
 <form action="offline-messages.jsp">
 
 <fieldset>
-    <legend>Offline Message Policy</legend>
+    <legend><fmt:message key="offline.messages.policy" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -210,8 +206,7 @@ Current size of all offline message:
                  <%= ((strategy==BOUNCE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Bounce</b></label> - Never store offline messages and bounce
-                messages back to the sender.
+                <label for="rb01"><b>Bounce</b></label> - <fmt:message key="offline.messages.never_back" />
             </td>
         </tr>
         <tr valign="top">
@@ -220,8 +215,7 @@ Current size of all offline message:
                  <%= ((strategy==DROP) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Drop</b></label> - Never store offline messages and drop
-                messages so the sender is not notified.
+                <label for="rb02"><b>Drop</b></label> - <fmt:message key="offline.messages.never_store" />
             </td>
         </tr>
         <tr valign="top" class="">
@@ -230,9 +224,7 @@ Current size of all offline message:
                  <%= ((strategy==STORE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Store</b></label> - Store offline messages for later
-                retrieval. Messages will be delivered the next time the recipient logs in.
-                Choose a storage policy and storage store max size below.
+                <label for="rb03"><b>Store</b></label> - <fmt:message key="offline.messages.storage_messenger" />
             </td>
         </tr>
         <tr valign="top">
@@ -249,8 +241,7 @@ Current size of all offline message:
                          <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb05"><b>Always Store</b></label> - Always store messages,
-                        even if the max storage size has been exceeded.
+                        <label for="rb05"><b><fmt:message key="offline.messages.always_store" /></b></label> - <fmt:message key="offline.messages.always_store_info" />
                     </td>
                 </tr>
                 <tr valign="top">
@@ -260,9 +251,7 @@ Current size of all offline message:
                          <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb06"><b>Store or Bounce</b></label> - Store messages
-                        up to the max storage size. After the max size has been exceeded, bounce
-                        the message back to the sender.
+                        <label for="rb06"><b><fmt:message key="offline.messages.bounce" /></b></label> - <fmt:message key="offline.messages.bounce_info" />
                     </td>
                 </tr>
                 <tr valign="top">
@@ -272,14 +261,12 @@ Current size of all offline message:
                          <%= ((storeStrategy==STORE_AND_DROP) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb07"><b>Store or Drop</b></label> - Store messages
-                        for a user up to the max storage size. After the max size has been exceeded,
-                        silently drop messages.
+                        <label for="rb07"><b><fmt:message key="offline.messages.drop" /></b></label> - <fmt:message key="offline.messages.drop_info" />
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
-                        Per-user offline message storage limit:
+                        <fmt:message key="offline.messages.storage_limit" />
                         <input type="text" size="5" maxlength="12" name="quota"
                          value="<%= (quota>0 ? ""+format.format(quota) : "") %>"
                          onclick="this.form.strategy[2].checked=true;">

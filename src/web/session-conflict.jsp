@@ -28,7 +28,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Conflict Policy";
+    String title = LocaleUtils.getLocalizedString("session.conflict.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Session Conflict", "session-conflict.jsp"));
@@ -71,7 +71,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="session.conflict.update" />
         </td></tr>
     </tbody>
     </table>
@@ -88,19 +88,13 @@
 %>
 
 <p>
-XMPP allows multiple logins to the same user account by assigning a unique "resource name"
-to each connection. If a connection requests a resource name that is already in use, the server must
-decide how to handle the conflict. The options on this page allow you to determine if the server
-always kicks off existing connections, never kicks off existing connections, or sets the number of
-login attempts that should be rejected before kicking off an
-existing connection. The last option allows users to receive an error when logging in that
-allows them to request a different resource name.
+<fmt:message key="session.conflict.info" />
 </p>
 
 <form action="session-conflict.jsp" method="post">
 
 <fieldset>
-    <legend>Set Conflict Policy</legend>
+    <legend><fmt:message key="session.conflict.policy" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -110,8 +104,8 @@ allows them to request a different resource name.
                  <%= ((kickPolicy==0) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Always kick</b></label> - If there is a resource conflict,
-                immediately kick the other resource.
+                <label for="rb01"><b><fmt:message key="session.conflict.always_kick" /></b></label> - 
+                <fmt:message key="session.conflict.always_kick_info" />
             </td>
         </tr>
         <tr valign="middle">
@@ -120,8 +114,8 @@ allows them to request a different resource name.
                  <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Never kick</b></label> - If there is a resource conflict, don't
-                allow the new resource to log in.
+                <label for="rb02"><b><fmt:message key="session.conflict.never_kick" /></b></label> - 
+                <fmt:message key="session.conflict.never_kick_info" />
             </td>
         </tr>
         <tr valign="middle">
@@ -130,8 +124,8 @@ allows them to request a different resource name.
                  <%= ((kickPolicy==1) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb04"><b>Allow one login attempt</b></label> - If there is a resource conflict,
-                report an error one time but don't kick the existing connection.
+                <label for="rb04"><b><fmt:message key="session.conflict.allow_one" /></b></label> - 
+                <fmt:message key="session.conflict.resource_conflict" />
             </td>
         </tr>
 <%  // Figure out if the kick policy is neither 0 nor SessionManager.NEVER_KICK:
@@ -147,9 +141,9 @@ allows them to request a different resource name.
                  <%= ((assignedKickPolicy) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Assign kick value</b></label> - Specify the number of login
-                attempts allowed before conflicting resources are kicked. You must specify a
-                number greater than one.
+                <label for="rb03"><b><fmt:message key="session.conflict.kick_value" /></b></label> - 
+                <fmt:message key="session.conflict.kick_value_info" />
+                
             </td>
         </tr>
         <tr valign="middle">
@@ -159,7 +153,7 @@ allows them to request a different resource name.
             <td width="99%">
                 <%  if (errors.get("kickValue") != null) { %>
                     <span class="jive-error-text">
-                    Please enter a value greater than 1.
+                    <fmt:message key="session.conflict.enter_value" />
                     </span><br>
                 <%  } %>
                 <input type="text" name="kickValue" value="<%= ((assignedKickPolicy) ? ""+kickPolicy : "") %>"

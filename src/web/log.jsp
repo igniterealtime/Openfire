@@ -21,6 +21,7 @@
     errorPage="error.jsp"
 %>
 
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%!
@@ -183,7 +184,7 @@
 <div class="log">
 <table cellpadding="1" cellspacing="0" border="0" width="100%">
 <tr>
-    <th class="head-num">line</th>
+    <th class="head-num"><fmt:message key="log.line" /></th>
     <th>&nbsp;</th>
 </tr>
 <tr>

@@ -26,7 +26,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Chat Room History Settings";
+    String title = LocaleUtils.getLocalizedString("chatroom.history.settings.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "chatroom-history-settings.jsp"));
@@ -78,7 +78,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="chatroom.history.settings.saved_successfully" />
         </td></tr>
     </tbody>
     </table>
@@ -103,15 +103,14 @@
 %>
 
 <p>
-Chatrooms can replay conversation histories to provide context to new members joining a room.
-<fmt:message key="short.title" /> provides several options for controlling how
-much history to store for each room.
+<fmt:message key="chatroom.history.settings.info_response1" />
+<fmt:message key="short.title" /> <fmt:message key="chatroom.history.settings.info_response2" />
 </p>
 
 <form action="chatroom-history-settings.jsp" method="post">
 
 <fieldset>
-    <legend>Set Chatroom History Policy</legend>
+    <legend><fmt:message key="chatroom.history.settings.policy" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -121,8 +120,8 @@ much history to store for each room.
                  <%= ((policy==NONE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Don't Show History</b></label> - Do not show the entire chat
-                history.
+                <label for="rb01"><b><fmt:message key="chatroom.history.settings.label_show_title" /></b>
+                </label><fmt:message key="chatroom.history.settings.label_show_content" />
             </td>
         </tr>
         <tr valign="top">
@@ -131,8 +130,8 @@ much history to store for each room.
                  <%= ((policy==ALL) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Show Entire Chat History</b></label> - Show the entire chat history
-                to the user.
+                <label for="rb02"><b><fmt:message key="chatroom.history.settings.label_show_Entire_title" /></b></label>
+                <fmt:message key="chatroom.history.settings.label_show_Entire_content" />  
             </td>
         </tr>
         <tr valign="top" class="">
@@ -141,9 +140,8 @@ much history to store for each room.
                  <%= ((policy==NUMBER) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Show a Specific Number of Messages</b></label> - Show a specific
-                number of the most recent messages in the chat. Use the box below to specify
-                that number.
+                <label for="rb03"><b><fmt:message key="chatroom.history.settings.label_show_message_number_title" /></b></label> - 
+                <fmt:message key="chatroom.history.settings.label_show_message_number_content" />
         </tr>
         <tr valign="top" class="">
             <td width="1%" nowrap>

@@ -13,7 +13,7 @@
                  java.net.InetAddress" %>
 
 <%@ include file="setup-global.jspf" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
@@ -67,12 +67,11 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Server Settings
+<fmt:message key="setup.host.settings.title" />
 </p>
 
 <p>
-Below are host settings for this server. Note: the suggested value for the
-domain is based on the network settings of this machine.
+<fmt:message key="setup.host.settings.info" />
 </p>
 
 <style type="text/css">
@@ -84,11 +83,11 @@ LABEL { font-weight : normal; }
 <table cellpadding="3" cellspacing="0" border="0" width="100%">
 <tr valign="top">
     <td width="1%" nowrap>
-        Domain:
+        <fmt:message key="setup.host.settings.domain" />
         <%  if (errors.get("domain") != null) { %>
 
             <span class="jive-error-text"><br>
-            Invalid domain.
+            <fmt:message key="setup.host.settings.invalid_domain" />
             </span>
 
         <%  } %>
@@ -98,17 +97,17 @@ LABEL { font-weight : normal; }
          value="<%= ((domain != null) ? domain : "") %>">
         <span class="jive-description">
         <br>
-        Hostname or IP address of this server.
+        <fmt:message key="setup.host.settings.hostname" />
         </span>
     </td>
 </tr>
 <tr valign="top">
     <td width="1%" nowrap>
-        Admin Console Port:
+        <fmt:message key="setup.host.settings.port" />
         <%  if (errors.get("embeddedPort") != null) { %>
 
             <span class="jive-error-text"><br>
-            Invalid port number.
+            <fmt:message key="setup.host.settings.invalid_port" />
             </span>
 
         <%  } %>
@@ -118,25 +117,25 @@ LABEL { font-weight : normal; }
          value="<%= ((embeddedPort != -1) ? ""+embeddedPort : "9090") %>">
         <span class="jive-description">
         <br>
-        Port number for the web-based admin console (default is 9090).
+        <fmt:message key="setup.host.settings.port_number" />
         </span>
     </td>
 </tr>
 <tr valign="middle">
     <td width="1%" nowrap>
-        SSL Connections Enabled:
+        <fmt:message key="setup.host.settings.ssl" />
     </td>
     <td width="99%">
         <input type="radio" name="sslEnabled" value="true" id="rb01"
             <%= ((sslEnabled) ? " checked" : "") %>>
-        <label for="rb01">Yes</label>
+        <label for="rb01"><fmt:message key="setup.host.settings.yes" /></label>
         &nbsp;
         <input type="radio" name="sslEnabled" value="false" id="rb02"
             <%= ((!sslEnabled) ? " checked" : "") %>>
-        <label for="rb02">No</label>
+        <label for="rb02"><fmt:message key="setup.host.settings.no" /></label>
         <span class="jive-description">
         <br>
-        Enables or disables secure XMPP connections.
+        <fmt:message key="setup.host.settings.secure" />
         </span>
     </td>
 </tr>

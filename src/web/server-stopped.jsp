@@ -4,7 +4,8 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.admin.AdminConsole"%>
+<%@ page import="org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.util.LocaleUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -20,14 +21,14 @@
     String path = request.getContextPath();
 
     // Title of this page
-    String title = restart ? "Restarting Server" : "Server stopped";
+    String title = restart ? LocaleUtils.getLocalizedString("server.stopped.title_restarting") : LocaleUtils.getLocalizedString("server.stopped.title_stopped");
     pageinfo.setTitle(title);
 %>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 
 <html>
 <head>
- <title><%= AdminConsole.getAppName() %> Admin Console<%= (pageinfo.getTitle() != null ? (": "+pageinfo.getTitle()) : "") %></title>
+ <title><%= AdminConsole.getAppName() %> <fmt:message key="server.stopped.admin_console" /><%= (pageinfo.getTitle() != null ? (": "+pageinfo.getTitle()) : "") %></title>
  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
  <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
@@ -39,7 +40,7 @@
 <tbody>
     <tr>
      <td>
-         <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> Admin Console">
+         <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="server.stopped.admin_console" />">
      </td>
      <td align="right">
          <table cellpadding="0" cellspacing="0" border="0">
@@ -71,30 +72,28 @@
 
         <% if (restart) { %>
             <p>
-            The server is being restarted.
-            To continue:
+            <fmt:message key="server.stopped.restarted" />
             </p>
 
             <ol>
                 <li>
-                    Wait a few seconds until the server has been restarted.
+                    <fmt:message key="server.stopped.wait_time" />
                 </li>
                 <li>
-                    <a href="index.jsp">Login to the admin console</a>.
+                    <a href="index.jsp"><fmt:message key="server.stopped.login_console" /></a>.
                 </li>
             </ol>
         <% } else { %>
             <p>
-            The server is being stopped.
-            To continue:
+                   <fmt:message key="server.stopped.stop" />
             </p>
 
             <ol>
                 <li>
-                    Wait a few seconds and then <b style="font-size:1.2em;">restart</b> the server.
+                    <fmt:message key="server.stopped.wait_restarted" /> <b style="font-size:1.2em;"><fmt:message key="global.restart" /></b> <fmt:message key="server.stopped.wait_restarted2" />
                 </li>
                 <li>
-                    <a href="index.jsp">Login to the admin console</a>.
+                    <a href="index.jsp"><fmt:message key="server.stopped.login_console" /></a>.
                 </li>
             </ol>
         <% } %>

@@ -67,22 +67,22 @@
 %>
         <html>
         <head>
-            <title><fmt:message key="title" /> Setup</title>
+            <title><fmt:message key="title" /> <fmt:message key="setup.env.check.setup" /></title>
             <link rel="stylesheet" type="text/css" href="style.css">
         </head>
         <body>
 
         <p class="jive-setup-page-header">
-        <fmt:message key="title" /> Setup
+        <fmt:message key="title" /> <fmt:message key="setup.env.check.setup" />
         </p>
 
         <p class="jive-setup-error-text">
-        Error: Can not proceed with <fmt:message key="title" /> setup.
+        <fmt:message key="setup.env.check.error" /> <fmt:message key="title" /> <fmt:message key="setup.env.check.setup" />.
         </p>
 
         <p>
-        Your current installation fails to meet minimum <fmt:message key="title" /> requirements - please see
-        the checklist below:
+        <fmt:message key="setup.env.check.error_info" /> <fmt:message key="title" /> 
+        <fmt:message key="setup.env.check.error_info1" />
         </p>
 
         <ul>
@@ -92,7 +92,7 @@
             <tr>
                 <td><img src="images/check.gif" width="13" height="13" border="0"></td>
                 <td>
-                    At least JDK 1.5
+                    <fmt:message key="setup.env.check.jdk" />
                 </td>
             </tr>
 
@@ -102,7 +102,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    At least JDK 1.5
+                    <fmt:message key="setup.env.check.jdk" />
                     </span>
                 </td>
             </tr>
@@ -113,7 +113,7 @@
             <tr>
                 <td><img src="images/check.gif" width="13" height="13" border="0"></td>
                 <td>
-                    Servlet 2.2 Support
+                    <fmt:message key="setup.env.check.servlet" />
                 </td>
             </tr>
 
@@ -123,7 +123,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    Servlet 2.2 Support
+                    <fmt:message key="setup.env.check.servlet" />
                     </span>
                 </td>
             </tr>
@@ -134,7 +134,7 @@
             <tr>
                 <td><img src="images/check.gif" width="13" height="13" border="0"></td>
                 <td>
-                    JSP 1.1 Support
+                    <fmt:message key="setup.env.check.jsp" />
                 </td>
             </tr>
 
@@ -144,7 +144,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    JSP 1.1 Support
+                    <fmt:message key="setup.env.check.jsp" />
                     </span>
                 </td>
             </tr>
@@ -155,7 +155,7 @@
             <tr>
                 <td><img src="images/check.gif" width="13" height="13" border="0"></td>
                 <td>
-                    <fmt:message key="title" /> Classes
+                    <fmt:message key="title" /> <fmt:message key="setup.env.check.class" />
                 </td>
             </tr>
 
@@ -165,7 +165,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    <fmt:message key="title" /> Classes
+                    <fmt:message key="title" /> <fmt:message key="setup.env.check.class" />
                     </span>
                 </td>
             </tr>
@@ -177,7 +177,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    Jive Home Directory (<%= messengerHome.toString() %>)
+                    <fmt:message key="setup.env.check.jive" /> (<%= messengerHome.toString() %>)
                     </span>
                 </td>
             </tr>
@@ -188,7 +188,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    Messenger Home Directory - Not Set
+                    <fmt:message key="setup.env.check.not_home" />
                     </span>
                 </td>
             </tr>
@@ -198,8 +198,7 @@
         </ul>
 
         <p>
-        Please read the installation documentation and try setting up your environment again. After making
-        changes, restart your appserver and load this page again.
+        <fmt:message key="setup.env.check.doc" />
         </p>
 
         </body>

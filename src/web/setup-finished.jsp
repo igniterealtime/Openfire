@@ -33,24 +33,23 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-<fmt:message key="title" /> Setup Complete!
+<fmt:message key="title" /> <fmt:message key="setup.finished.title" />
 </p>
 
 <p>
-This installation of <fmt:message key="title" /> is now complete.
-To continue:
+<fmt:message key="setup.finished.info" /> <fmt:message key="title" /> <fmt:message key="setup.finished.info1" />
 </p>
 
 <ol>
     <li>
-        Please <b style="font-size:1.2em;">restart</b> the server.
+        <fmt:message key="setup.finished.restart" /> <b style="font-size:1.2em;"><fmt:message key="global.restart" /></b> <fmt:message key="setup.finished.restart2" />
     </li>
     <li>
         <%
             String server = request.getServerName();
             String port = JiveGlobals.getProperty("adminConsole.port");
         %>
-        <a href="http://<%= server %>:<%= port %>/login.jsp?username=admin">Login to the admin console</a>.
+        <a href="http://<%= server %>:<%= port %>/login.jsp?username=admin"><fmt:message key="setup.finished.login" /></a>.
     </li>
 </ol>
 

@@ -19,7 +19,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -62,7 +62,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Delete User";
+    String title = LocaleUtils.getLocalizedString("user.delete.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
@@ -74,15 +74,14 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Are you sure you want to delete the user
+<fmt:message key="user.delete.info" />
 <b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a></b>
-from the system?
+<fmt:message key="user.delete.info1" />
 </p>
 
 <c:if test="${admin.user.username == param.username}">
     <p class="jive-warning-text">
-    Warning! You are about to delete your <b>own</b> user account. Are you sure you want to
-    do this? Doing so will log you out of the system immediately.
+    <fmt:message key="user.delete.warning" /> <b><fmt:message key="user.delete.warning2" /></b> <fmt:message key="user.delete.warning3" />
     </p>
 </c:if>
 

@@ -74,11 +74,12 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Datasource Settings
+<fmt:message key="setup.datasource.settings.title" />
 </p>
 
 <p>
-Choose how you would like to connect to the <fmt:message key="short.title" /> database.
+<fmt:message key="setup.datasource.settings.info" /> <fmt:message key="short.title" /> 
+<fmt:message key="setup.datasource.settings.info1" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -99,8 +100,8 @@ Choose how you would like to connect to the <fmt:message key="short.title" /> da
          <%= ((STANDARD.equals(mode)) ? "checked" : "") %>>
     </td>
     <td>
-        <label for="rb02"><b>Standard Database Connection</b></label> -
-        Use an external database with the built-in connection pool.
+        <label for="rb02"><b><fmt:message key="setup.datasource.settings.connect" /></b></label> -
+        <fmt:message key="setup.datasource.settings.connect_info" />
     </td>
 </tr>
 
@@ -112,8 +113,8 @@ Choose how you would like to connect to the <fmt:message key="short.title" /> da
              <%= ((JNDI.equals(mode)) ? "checked" : "") %>>
         </td>
         <td>
-            <label for="rb03"><b>JNDI Datasource</b></label> -
-            Use a datasource defined by your application server via JNDI.
+            <label for="rb03"><b><fmt:message key="setup.datasource.settings.jndi" /></b></label> -
+            <fmt:message key="setup.datasource.settings.jndi_info" />
         </td>
     </tr>
 
@@ -125,10 +126,8 @@ Choose how you would like to connect to the <fmt:message key="short.title" /> da
          <%= ((EMBEDDED.equals(mode)) ? "checked" : "") %>>
     </td>
     <td>
-        <label for="rb01"><b>Embedded Database</b></label> -
-        Use an embedded database, powered by HSQLDB. This option requires no external database
-        configuration and is an easy way to get running quickly. However, this is not recommended
-        for large installations.
+        <label for="rb01"><b><fmt:message key="setup.datasource.settings.embedded" /></b></label> -
+        <fmt:message key="setup.datasource.settings.embedded_info" />
     </td>
 </tr>
 </table>

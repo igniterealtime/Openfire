@@ -20,13 +20,14 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Group Summary";
+    String title = LocaleUtils.getLocalizedString("group.summary.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-summary.jsp"));
@@ -48,7 +49,7 @@
 %>             
 
 <p>
-Below is a list of the groups in the system.
+<fmt:message key="group.summary.list_group" />
 </p>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -58,7 +59,7 @@ Below is a list of the groups in the system.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Group deleted successfully.
+        <fmt:message key="group.summary.delete_group" />
         </td></tr>
     </tbody>
     </table>
@@ -67,10 +68,10 @@ Below is a list of the groups in the system.
 <%  } %>
 
 <p>
-Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
+<fmt:message key="group.summary.total_group" /> <%= webManager.getGroupManager().getGroupCount() %>,
 <%  if (numPages > 1) { %>
 
-    Showing <%= (start+1) %>-<%= (start+range) %>,
+    <fmt:message key="group.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>,
 
 <%  } %>
 </p>
@@ -78,7 +79,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="group.summary.page" />
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -99,11 +100,11 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th>Name</th>
-        <th>Members</th>
-        <th>Admins</th>
-        <th>Edit</th>
-        <th>Delete</th>
+        <th><fmt:message key="group.summary.page_name" /></th>
+        <th><fmt:message key="group.summary.page_member" /></th>
+        <th><fmt:message key="group.summary.page_admin" /></th>
+        <th><fmt:message key="group.summary.page_edit" /></th>
+        <th><fmt:message key="group.summary.page_delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -114,7 +115,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
 %>
     <tr>
         <td align="center" colspan="6">
-            No groups in the system.
+            <fmt:message key="group.summary.no_groups" />
         </td>
     </tr>
 
@@ -146,12 +147,12 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
         </td>
         <td width="1%" align="center">
             <a href="group-edit.jsp?group=<%= groupName %>"
-             title="Click to edit..."
+             title=<fmt:message key="group.summary.click_edit" />
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="group-delete.jsp?group=<%= groupName %>"
-             title="Click to delete..."
+             title=<fmt:message key="group.summary.click_delete" />
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
@@ -166,7 +167,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="group.summary.page" />
     [
     <%  for (i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";

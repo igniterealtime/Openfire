@@ -19,13 +19,13 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Group Chat Rooms";
+    String title = LocaleUtils.getLocalizedString("muc.room.summary.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-summary.jsp"));
@@ -56,8 +56,7 @@
 %>
 
 <p>
-Below is an overview of the Group Chat Rooms in the system. From here you can view the rooms, edit their
-properties, and create new rooms.
+<fmt:message key="muc.room.summary.info" />
 </p>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -67,7 +66,7 @@ properties, and create new rooms.
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Room destroyed successfully.
+        <fmt:message key="muc.room.summary.destroyed" />
         </td></tr>
     </tbody>
     </table>
@@ -76,19 +75,19 @@ properties, and create new rooms.
 <%  } %>
 
 <p>
-Total Rooms: <%= roomsCount %>,
+<fmt:message key="muc.room.summary.total_room" />: <%= roomsCount %>,
 <%  if (numPages > 1) { %>
 
-    Showing <%= (start+1) %>-<%= (maxRoomIndex) %>,
+    <fmt:message key="muc.room.summary.showing" /> <%= (start+1) %>-<%= (maxRoomIndex) %>,
 
 <%  } %>
-Sorted by Room ID
+<fmt:message key="muc.room.summary.sorted_id" />
 </p>
 
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="muc.room.summary.page" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -109,12 +108,12 @@ Sorted by Room ID
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th>Room</th>
-        <th>Description</th>
-        <th>Persistent</th>
-        <th>Users</th>
-        <th>Edit</th>
-        <th>Destroy</th>
+        <th><fmt:message key="muc.room.summary.room" /></th>
+        <th><fmt:message key="muc.room.summary.description" /></th>
+        <th><fmt:message key="muc.room.summary.persistent" /></th>
+        <th><fmt:message key="muc.room.summary.users" /></th>
+        <th><fmt:message key="muc.room.summary.edit" /></th>
+        <th><fmt:message key="muc.room.summary.destroy" /></th>
     </tr>
 </thead>
 <tbody>
@@ -125,7 +124,7 @@ Sorted by Room ID
 %>
     <tr>
         <td align="center" colspan="7">
-            No rooms in the Group Chat service.
+            <fmt:message key="muc.room.summary.no_room_in_group" />
         </td>
     </tr>
 
@@ -153,9 +152,9 @@ Sorted by Room ID
         </td>
         <td width="1%" align="center">
                 <% if (room.isPersistent()) { %>
-                <img src="images/tape.gif" width="16" height="16" border="0" alt="Room is persistent">
+                <img src="images/tape.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_persistent" />">
                 <% } else { %>
-                <img src="images/blank.gif" width="16" height="16" border="0" alt="Room is temporary">
+                <img src="images/blank.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_temporary" />">
                 <% } %>
         </td>
         <td width="1%" align="center">
@@ -163,12 +162,12 @@ Sorted by Room ID
         </td>
         <td width="1%" align="center">
             <a href="muc-room-edit-form.jsp?roomName=<%= room.getName() %>"
-             title="Click to edit..."
+             title="<fmt:message key="muc.room.summary.click_edit" />"
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="muc-room-delete.jsp?roomName=<%= room.getName() %>"
-             title="Click to delete..."
+             title="<fmt:message key="muc.room.summary.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
@@ -183,7 +182,7 @@ Sorted by Room ID
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="muc.room.summary.page" />:
     [
     <%  for (i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";

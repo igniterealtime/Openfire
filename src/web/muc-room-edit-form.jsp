@@ -22,12 +22,13 @@
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.auth.UnauthorizedException"
+                 org.jivesoftware.messenger.auth.UnauthorizedException,
+                 org.jivesoftware.util.LocaleUtils"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out); %>
 
@@ -276,7 +277,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Room Administration";
+    String title = LocaleUtils.getLocalizedString("muc.room.edit.form.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     if (create) {
@@ -301,11 +302,11 @@
         <td class="jive-icon-label">
         <%  if (success) { %>
 
-        Room settings edited successfully.
+        <fmt:message key="muc.room.edit.form.edited" />
 
         <%  } else if (addsuccess) { %>
 
-        Room creation was successfully.
+        <fmt:message key="muc.room.edit.form.created" />
 
         <%  } %>
         </td></tr>
@@ -317,16 +318,16 @@
 
 <%  if (!create) { %>
     <p>
-    Use the form below to edit the room settings.
+    <fmt:message key="muc.room.edit.form.info" />
     </p>
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
-            <th scope="col">Room ID</th>
-            <th scope="col">Users</th>
-            <th scope="col">Created On</th>
-            <th scope="col">Last Modified</th>
+            <th scope="col"><fmt:message key="muc.room.edit.form.room_id" /></th>
+            <th scope="col"><fmt:message key="muc.room.edit.form.users" /></th>
+            <th scope="col"><fmt:message key="muc.room.edit.form.on" /></th>
+            <th scope="col"><fmt:message key="muc.room.edit.form.modified" /></th>
         </tr>
     </thead>
     <tbody>
@@ -340,9 +341,9 @@
     </table>
     </div>
     <br>
-    <p>Change the room settings of this room using the form below</p>
+    <p><fmt:message key="muc.room.edit.form.change_room" /></p>
 <%  } else { %>
-    <p>Use the form below to create a new persistent room. The new room will be immediately available.</p>
+    <p><fmt:message key="muc.room.edit.form.persistent_room" /></p>
 
     <% if (errors.containsKey("room_already_exists") || errors.containsKey("not_enough_permissions")) { %>
     <div class="jive-error">
@@ -352,11 +353,11 @@
         <td class="jive-icon-label">
         <%  if (errors.containsKey("room_already_exists")) { %>
 
-        Error creating the room. A room with the request ID already exists.
+        <fmt:message key="muc.room.edit.form.error_created_id" />
 
         <%  } else if (errors.containsKey("not_enough_permissions")) { %>
 
-        Error creating the room. You do not have enough privileges to create rooms.
+        <fmt:message key="muc.room.edit.form.error_created_privileges" />
 
         <%  } %>
         </td></tr>
@@ -379,12 +380,12 @@
                 <tbody>
                 <% if (create) { %>
                 <tr>
-                    <td>Room ID:</td>
+                    <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
                     <td><input type="text" name="roomName" value="<%= roomName != null ? roomName : ""%>">
                     <%  if (errors.get("roomName") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid ID. Do not include the service name in the ID.
+                        <fmt:message key="muc.room.edit.form.valid_hint" />
                         </span>
 
                     <%  } %>
@@ -392,97 +393,97 @@
                 </tr>
                 <% } %>
                  <tr>
-                    <td>Room Name:</td>
+                    <td><fmt:message key="muc.room.edit.form.room_name" />:</td>
                     <td><input type="text" name="roomconfig_roomname" value="<%= (naturalName == null ? "" : naturalName) %>">
                     <%  if (errors.get("roomconfig_roomname") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid name.
+                        <fmt:message key="muc.room.edit.form.valid_hint_name" />
                         </span>
 
                     <%  } %>
                     </td>
                 </tr>
                  <tr>
-                    <td>Description:</td>
+                    <td><fmt:message key="muc.room.edit.form.description" />:</td>
                     <td><input name="roomconfig_roomdesc" value="<%= (description == null ? "" : description) %>" type="text" size="40">
                     <%  if (errors.get("roomconfig_roomdesc") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid description.
+                        <fmt:message key="muc.room.edit.form.valid_hint_description" />
                         </span>
 
                     <%  } %>
                     </td>
                 </tr>
                  <tr>
-                    <td>Topic:</td>
+                    <td><fmt:message key="muc.room.edit.form.topic" />:</td>
                     <td><input name="room_topic" value="<%= (roomSubject == null ? "" : roomSubject) %>" type="text" size="40">
                     <%  if (errors.get("room_topic") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid subject.
+                        <fmt:message key="muc.room.edit.form.valid_hint_subject" />
                         </span>
 
                     <%  } %>
                     </td>
                 </tr>
                  <tr>
-                    <td>Maximun Room Occupants:</td>
+                    <td><fmt:message key="muc.room.edit.form.max_room" />:</td>
                     <td><select name="roomconfig_maxusers">
                             <option value="10" <% if ("10".equals(maxUsers)) out.write("selected");%>>10</option>
                             <option value="20" <% if ("20".equals(maxUsers)) out.write("selected");%>>20</option>
                             <option value="30" <% if ("30".equals(maxUsers)) out.write("selected");%>>30</option>
                             <option value="40" <% if ("40".equals(maxUsers)) out.write("selected");%>>40</option>
                             <option value="50" <% if ("50".equals(maxUsers)) out.write("selected");%>>50</option>
-                            <option value="0" <% if ("0".equals(maxUsers)) out.write("selected");%>>None</option>
+                            <option value="0" <% if ("0".equals(maxUsers)) out.write("selected");%>><fmt:message key="muc.room.edit.form.none" /></option>
                         </select>
                         <%  if (errors.get("roomconfig_maxusers") != null) { %>
 
                             <span class="jive-error-text">
-                            Please select the maximun room occupants.
+                            <fmt:message key="muc.room.edit.form.valid_hint_max_room" />
                             </span>
 
                         <%  } %>
                     </td>
                 </tr>
                  <tr>
-                    <td valign="top">Roles for Which Presence is Broadcast:</td>
+                    <td valign="top"><fmt:message key="muc.room.edit.form.broadcast" />:</td>
                     <td><fieldset>
                         <input name="roomconfig_presencebroadcast" type="checkbox" value="true" id="moderator" <% if ("true".equals(broadcastModerator)) out.write("checked");%>>
-                        <LABEL FOR="moderator">Moderator</LABEL>
+                        <LABEL FOR="moderator"><fmt:message key="muc.room.edit.form.moderator" /></LABEL>
                         <input name="roomconfig_presencebroadcast2" type="checkbox" value="true" id="participant" <% if ("true".equals(broadcastParticipant)) out.write("checked");%>>
-                        <LABEL FOR="participant">Participant</LABEL>
+                        <LABEL FOR="participant"><fmt:message key="muc.room.edit.form.participant" /></LABEL>
                         <input name="roomconfig_presencebroadcast3" type="checkbox" value="true" id="visitor" <% if ("true".equals(broadcastVisitor)) out.write("checked");%>>
-                        <LABEL FOR="visitor">Visitor</LABEL>
+                        <LABEL FOR="visitor"><fmt:message key="muc.room.edit.form.visitor" /></LABEL>
                         </fieldset></td>
                 </tr>
                  <tr>
-                    <td>Password required to enter:</td>
+                    <td><fmt:message key="muc.room.edit.form.required_password" />:</td>
                     <td><input type="password" name="roomconfig_roomsecret" <% if(password != null) { %> value="<%= password %>" <% } %>></td>
                 </tr>
                  <tr>
-                    <td>Confirm password:</td>
+                    <td><fmt:message key="muc.room.edit.form.confirm_password" />:</td>
                     <td><input type="password" name="roomconfig_roomsecret2" <% if(confirmPassword != null) { %> value="<%= confirmPassword %>" <% } %>>
                         <%  if (errors.get("roomconfig_roomsecret2") != null) { %>
 
                             <span class="jive-error-text">
-                            Please make sure to enter the same new password.
+                            <fmt:message key="muc.room.edit.form.new_password" />
                             </span>
 
                         <%  } %>
                     </td>
                 </tr>
                  <tr>
-                    <td>Role that May Discover Real JIDs of Occupants:</td>
+                    <td><fmt:message key="muc.room.edit.form.discover_jid" />:</td>
                     <td><select name="roomconfig_whois">
-                            <option value="moderator" <% if ("moderator".equals(whois)) out.write("selected");%>>Moderator</option>
-                            <option value="anyone" <% if ("anyone".equals(whois)) out.write("selected");%>>Anyone</option>
+                            <option value="moderator" <% if ("moderator".equals(whois)) out.write("selected");%>><fmt:message key="muc.room.edit.form.moderator" /></option>
+                            <option value="anyone" <% if ("anyone".equals(whois)) out.write("selected");%>><fmt:message key="muc.room.edit.form.anyone" /></option>
                         </select>
                         <%  if (errors.get("roomconfig_whois") != null) { %>
 
                             <span class="jive-error-text">
-                            Please select a role.
+                            <fmt:message key="muc.room.edit.form.role" />
                             </span>
 
                         <%  } %>
@@ -492,32 +493,32 @@
          </table></td>
         <td width="30%" valign="top" >
         <fieldset>
-        <legend>Room Options</legend>
+        <legend><fmt:message key="muc.room.edit.form.room_options" /></legend>
         <table width="100%"  border="0">
         <tbody>
             <tr>
                 <td><input type="checkbox" name="roomconfig_publicroom" value="true" id="public" <% if ("true".equals(publicRoom)) out.write("checked");%>>
-                    <LABEL FOR="public">List Room in Directory</LABEL></td>
+                    <LABEL FOR="public"><fmt:message key="muc.room.edit.form.list_room" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_moderatedroom" value="true" id="moderated" <% if ("true".equals(moderatedRoom)) out.write("checked");%>>
-                    <LABEL FOR="moderated">Make Room Moderated</LABEL></td>
+                    <LABEL FOR="moderated"><fmt:message key="muc.room.edit.form.room_moderated" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_membersonly" value="true" id="membersOnly" <% if ("true".equals(membersOnly)) out.write("checked");%>>
-                    <LABEL FOR="membersOnly">Make Room Members-only</LABEL></td>
+                    <LABEL FOR="membersOnly"><fmt:message key="muc.room.edit.form.moderated_member_only" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_allowinvites" value="true" id="allowinvites" <% if ("true".equals(allowInvites)) out.write("checked");%>>
-                    <LABEL FOR="allowinvites">Allow Occupants to invite Others</LABEL></td>
+                    <LABEL FOR="allowinvites"><fmt:message key="muc.room.edit.form.invite_other" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_changesubject" value="true" id="changesubject" <% if ("true".equals(changeSubject)) out.write("checked");%>>
-                    <LABEL FOR="changesubject">Allow Occupants to change Subject</LABEL></td>
+                    <LABEL FOR="changesubject"><fmt:message key="muc.room.edit.form.change_subject" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" <% if ("true".equals(enableLog)) out.write("checked");%>>
-                    <LABEL FOR="enablelogging">Log Room Conversations</td>
+                    <LABEL FOR="enablelogging"><fmt:message key="muc.room.edit.form.log" /></td>
             </tr>
         </table>
         </fieldset>

@@ -19,7 +19,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -108,7 +108,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Other Settings";
+    String title = LocaleUtils.getLocalizedString("muc.tasks.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Other Settings", "muc-tasks.jsp"));
@@ -118,8 +118,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Use the forms below to configure settings for kicking idle users from group chat rooms and to
-configure the task that logs room conversations to the database.
+<fmt:message key="muc.tasks.info" />
 </p>
 
 <%  if (kickSettingSuccess || logSettingSuccess) { %>
@@ -131,11 +130,11 @@ configure the task that logs room conversations to the database.
         <td class="jive-icon-label">
         <%  if (kickSettingSuccess) { %>
 
-            Idle user settings updated successfully.
+            <fmt:message key="muc.tasks.update" />
 
         <%  } else if (logSettingSuccess) { %>
 
-            Conversation logging settings updated successfully.
+            <fmt:message key="muc.tasks.log" />
 
         <%  } %>
         </td></tr>
@@ -152,13 +151,13 @@ configure the task that logs room conversations to the database.
     <td width="99%" class="jive-error-text">
 
 		<% if (errors.get("idletime") != null) { %>
-                Please enter a valid number for max idle minutes.
+                <fmt:message key="muc.tasks.valid_idel_minutes" />
         <% }
            else if (errors.get("logfreq") != null) { %>
-                Please enter a valid number for the frequency.
+                <fmt:message key="muc.tasks.valid_frequency" />
         <%  }
             else if (errors.get("logbatchsize") != null) { %>
-                Please enter a valid number for the batch size.
+                <fmt:message key="muc.tasks.valid_batch" />
             <%  } %>
     </td>
     </tr>
@@ -169,7 +168,7 @@ configure the task that logs room conversations to the database.
 <form action="muc-tasks.jsp?kickSettings" method="post">
 
 <fieldset>
-    <legend>Idle User Settings</legend>
+    <legend><fmt:message key="muc.tasks.user_setting" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -179,7 +178,7 @@ configure the task that logs room conversations to the database.
                  <%= ((mucServer.getUserIdleTime() < 0) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01">Never kick idle users.</label>
+                <label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
             </td>
         </tr>
         <tr valign="middle">
@@ -188,11 +187,11 @@ configure the task that logs room conversations to the database.
                  <%= ((mucServer.getUserIdleTime() > -1) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                    <label for="rb02">Kick users after they have been idle for</label>
+                    <label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
                      <input type="text" name="idletime" size="5" maxlength="5"
                          onclick="this.form.kickEnabled[1].checked=true;"
                          value="<%= mucServer.getUserIdleTime() == -1 ? 30 : mucServer.getUserIdleTime() / 1000 / 60 %>">
-                     minutes.
+                     <fmt:message key="muc.tasks.minutes" />
             </td>
         </tr>
     </tbody>
@@ -211,12 +210,12 @@ configure the task that logs room conversations to the database.
 <form action="muc-tasks.jsp?logSettings" method="post">
 
 <fieldset>
-    <legend>Conversation Logging</legend>
+    <legend><fmt:message key="muc.tasks.conversation.logging" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr valign="middle">
         <td width="1%" nowrap class="c1">
-            Flush interval (seconds):
+            <fmt:message key="muc.tasks.flush" />
         </td>
         <td width="99%">
             <input type="text" name="logfreq" size="15" maxlength="50"
@@ -225,7 +224,7 @@ configure the task that logs room conversations to the database.
     </tr>
     <tr valign="middle">
         <td width="1%" nowrap class="c1">
-            Batch size:
+            <fmt:message key="muc.tasks.batch" />
         </td>
         <td width="99%">
             <input type="text" name="logbatchsize" size="15" maxlength="50"

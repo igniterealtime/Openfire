@@ -24,7 +24,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  try { %>
 
 <%-- Define Administration Bean --%>
@@ -91,7 +91,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "SSL Security Settings";
+    String title = LocaleUtils.getLocalizedString("ssl.settings.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "ssl-settings.jsp"));
@@ -107,7 +107,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="ssl.settings.update" />
         </td></tr>
     </tbody>
     </table>
@@ -120,7 +120,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Certificate uninstalled successfully.
+        <fmt:message key="ssl.settings.uninstalled" />
         </td></tr>
     </tbody>
     </table>
@@ -135,9 +135,9 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error uninstalling the certificate.
+        <fmt:message key="ssl.settings.error" />
         <%  if (e != null && e.getMessage() != null) { %>
-            Error message: <%= e.getMessage() %>
+            <fmt:message key="ssl.settings.error_messenge" />: <%= e.getMessage() %>
         <%  } %>
         </td></tr>
     </tbody>
@@ -151,7 +151,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error installing the certificate, please see the form below.
+        <fmt:message key="ssl.settings.error_certificate" />
         </td></tr>
     </tbody>
     </table>
@@ -160,12 +160,10 @@
 <%  } %>
 
 <p>
-SSL/TLS allows secure connections to be made between the server and clients.
-This page displays installed certificates. Use the form at the bottom of the page to
-install a new certificate.
+<fmt:message key="ssl.settings.info" />
 </p>
 
-<p><b>Installed Certificates</b></p>
+<p><b><fmt:message key="ssl.settings.certificate" /></b></p>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -173,13 +171,13 @@ install a new certificate.
     <tr>
         <th width="1%">&nbsp;</th>
         <th>
-            Alias (host)
+            <fmt:message key="ssl.settings.alias" />
         </th>
         <th>
-            Certificate Type
+            <fmt:message key="ssl.settings.type" />
         </th>
         <th width="1%">
-            Uninstall
+            <fmt:message key="ssl.settings.uninstall" />
         </th>
     </tr>
 </thead>
@@ -201,15 +199,15 @@ install a new certificate.
         </td>
         <td width="1" align="center">
             <a href="ssl-settings.jsp?alias=<%= a %>&type=server&uninstall=true"
-             title="Click to uninstall..."
-             onclick="return confirm('Are you sure you want to uninstall this certificate?');"
+             title="<fmt:message key="ssl.settings.click_uninstall" />"
+             onclick="return confirm('<fmt:message key="ssl.settings.confirm_uninstall" />');"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
     <tr>
         <td colspan="3">
             <span class="jive-description">
-            Public Key:
+            <fmt:message key="ssl.settings.key" />
             </span>
 <textarea cols="40" rows="3" style="width:100%;font-size:8pt;" wrap="virtual">
 <%= c.getPublicKey() %></textarea>
@@ -223,7 +221,7 @@ install a new certificate.
     <tr>
         <td colspan="4">
             <p>
-            No certificates installed. Use the form below to install one.
+            <fmt:message key="ssl.settings.no_installed" />
             </p>
         </td>
     </tr>
@@ -239,12 +237,10 @@ install a new certificate.
 <form action="ssl-settings.jsp" method="post">
 
 <fieldset>
-    <legend>Install Certificate</legend>
+    <legend><fmt:message key="ssl.settings.install_certificate" /></legend>
     <div>
     <p>
-    New X.509 certificates can be added to the system by pasting in the certificate
-    data sent to you by a Certificate Authority (e.g. Verisign) or you can
-    generate your own self-signed certificates.
+      <fmt:message key="ssl.settings.install_certificate_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -252,7 +248,7 @@ install a new certificate.
             <tr><td>&nbsp;</td>
                 <td>
                     <span class="jive-error-text">
-                    Please enter a valid alias.
+                    <fmt:message key="ssl.settings.enter_alias" />
                     </span>
                 </td>
             </tr>
@@ -260,7 +256,7 @@ install a new certificate.
             <tr><td>&nbsp;</td>
                 <td>
                     <span class="jive-error-text">
-                    Please enter a valid certificate.
+                    <fmt:message key="ssl.settings.enter_certificate" />
                     </span>
                 </td>
             </tr>
@@ -270,34 +266,34 @@ install a new certificate.
             <tr><td>&nbsp;</td>
                 <td>
                     <span class="jive-error-text">
-                    Error installing the certificate.
+                    <fmt:message key="ssl.settings.error_installing" />
                     <%  if (error != null && !"".equals(error.trim())) { %>
-                        Error reported: <%= error %>.
+                        <fmt:message key="ssl.settings.error_reported" />: <%= error %>.
                     <%  } %>
                     </span>
                 </td>
             </tr>
         <%  } %>
         <tr>
-            <td nowrap>Certificate Type:</td>
+            <td nowrap><fmt:message key="ssl.settings.type" />:</td>
             <td>
                 <select name="type" size="1">
-                    <option value="server">Server Certificate</option>
-                    <option value="client">Client Certificate</option>
+                    <option value="server"><fmt:message key="ssl.settings.server" /></option>
+                    <option value="client"><fmt:message key="ssl.settings.client" /></option>
                 </select>
             </td>
         </tr>
         <tr>
-            <td nowrap>Alias:</td>
+            <td nowrap><fmt:message key="ssl.settings.alias" />:</td>
             <td>
                 <input name="alias" type="text" size="50" maxlength="255" value="<%= (alias != null ? alias : "") %>">
             </td>
         </tr>
         <tr valign="top">
-            <td nowrap>Certificate:</td>
+            <td nowrap><fmt:message key="ssl.settings.a_certificate" />:</td>
             <td>
                 <span class="jive-description">
-                Paste in the certificate sent to you by the CA or the self-signed certificate generated via the keytool.<br>
+                <fmt:message key="ssl.settings.paste_certificate" /><br>
                 </span>
                 <textarea name="cert" cols="55" rows="7" wrap="virtual" style="font-size:8pt;"></textarea>
             </td>

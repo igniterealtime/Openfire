@@ -20,7 +20,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -63,7 +63,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Session Summary";
+    String title = LocaleUtils.getLocalizedString("session.summary.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-summary.jsp"));
@@ -75,16 +75,16 @@
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
     <p class="jive-success-text">
-    Session closed successfully.
+    <fmt:message key="session.summary.close" />
     </p>
 
 <%  } %>
 
-Active Sessions: <b><%= sessionCount %></b>
+<fmt:message key="session.summary.active" />: <b><%= sessionCount %></b>
 
 <%  if (numPages > 1) { %>
 
-    - Showing <%= (start+1) %>-<%= (start+range) %>
+    - <fmt:message key="session.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
 <%  } %>
 </p>
@@ -92,7 +92,7 @@ Active Sessions: <b><%= sessionCount %></b>
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="session.summary.page" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -109,7 +109,7 @@ Active Sessions: <b><%= sessionCount %></b>
 <%  } %>
 
 <p>
-Below is a list of sessions on this server.
+<fmt:message key="session.summary.info" />
 </p>
 
 <div class="jive-table">
@@ -117,12 +117,12 @@ Below is a list of sessions on this server.
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th>Name</th>
-        <th>Resource</th>
-        <th nowrap colspan="2">Status</th>
-        <th nowrap colspan="2">Presence</th>
-        <th nowrap>Client IP</th>
-        <th nowrap>Close Connection</th>
+        <th><fmt:message key="session.details.name" /></th>
+        <th><fmt:message key="session.details.resource" /></th>
+        <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
+        <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
+        <th nowrap><fmt:message key="session.details.clientip" /></th>
+        <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
 </thead>
 <tbody>
@@ -136,7 +136,7 @@ Below is a list of sessions on this server.
         <tr>
             <td colspan="9">
 
-                No Sessions
+                <fmt:message key="session.summary.not_session" />
 
             </td>
         </tr>
@@ -160,7 +160,7 @@ Below is a list of sessions on this server.
 <%  if (numPages > 1) { %>
 
     <p>
-    Pages:
+    <fmt:message key="session.summary.page" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -178,7 +178,7 @@ Below is a list of sessions on this server.
 
 <br>
 <p>
-List last updated: <%= dateFormatter.format(new Date()) %>
+<fmt:message key="session.summary.last_update" />: <%= dateFormatter.format(new Date()) %>
 </p>
 
 <jsp:include page="bottom.jsp" flush="true" />

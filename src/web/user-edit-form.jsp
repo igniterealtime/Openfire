@@ -16,12 +16,13 @@
                  org.jivesoftware.admin.*,
                  java.util.HashMap,
                  java.util.Map,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 org.jivesoftware.util.LocaleUtils"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters
@@ -63,7 +64,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Edit User";
+    String title = LocaleUtils.getLocalizedString("user.edit.form.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
@@ -81,7 +82,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        User edited successfully.
+        <fmt:message key="user.edit.form.update" />
         </td></tr>
     </tbody>
     </table>
@@ -90,7 +91,7 @@
 <%  } %>
 
 <p>
-Use the form below to edit user properties.
+<fmt:message key="user.edit.form.info" />
 </p>
 
 <form action="user-edit-form.jsp">
@@ -99,13 +100,13 @@ Use the form below to edit user properties.
 <input type="hidden" name="save" value="true">
 
 <fieldset>
-    <legend>User Properties</legend>
+    <legend><fmt:message key="user.edit.form.property" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
             <td class="c1">
-                Username:
+                <fmt:message key="user.create.username" />:
             </td>
             <td>
                 <%= user.getUsername() %>
@@ -113,7 +114,7 @@ Use the form below to edit user properties.
         </tr>
         <tr>
             <td class="c1">
-                Name:
+                <fmt:message key="user.create.name" />:
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
@@ -122,7 +123,7 @@ Use the form below to edit user properties.
                 <%  if (errors.get("name") != null) { %>
 
                     <span class="jive-error-text">
-                    Please enter a valid name.
+                    <fmt:message key="user.edit.form.enter_name" />
                     </span>
 
                 <%  } %>
@@ -130,7 +131,7 @@ Use the form below to edit user properties.
         </tr>
         <tr>
             <td class="c1">
-                Email:
+                <fmt:message key="user.create.email" />:
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="email"
@@ -139,7 +140,7 @@ Use the form below to edit user properties.
                 <%  if (errors.get("email") != null) { %>
 
                     <span class="jive-error-text">
-                    Please enter a valid email address.
+                    fmt:message key="user.edit.form.enter_mail" />
                     </span>
 
                 <%  } %>

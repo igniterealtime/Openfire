@@ -20,7 +20,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters //
@@ -57,7 +57,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Change Password";
+    String title = LocaleUtils.getLocalizedString("user.password.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
@@ -75,8 +75,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error setting the password. Please make sure the password you enter is valid and
-        matches the confirmation password.
+        <fmt:message key="user.password.error_set_pwd" />
         </td></tr>
     </tbody>
     </table>
@@ -89,7 +88,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Password updated successfully.
+        <fmt:message key="user.password.update" />
         </td></tr>
     </tbody>
     </table>
@@ -98,20 +97,20 @@
 <%  } %>
 
 <p>
-Use the form below to change the user's password.
+<fmt:message key="user.password.info" />
 </p>
 
 <form action="user-password.jsp" name="passform" method="post">
 <input type="hidden" name="username" value="<%= username %>">
 
 <fieldset>
-    <legend>Change Password</legend>
+    <legend><fmt:message key="user.password.change" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
             <td class="c1">
-                Username:
+                <fmt:message key="user.create.username" />:
             </td>
             <td class="c2">
                 <%= user.getUsername() %>
@@ -119,7 +118,7 @@ Use the form below to change the user's password.
         </tr>
         <tr>
             <td class="c1">
-                New Password:
+                <fmt:message key="user.password.new_pwd" />:
             </td>
             <td clas="c2">
                 <input type="password" name="password" value="" size="20" maxlength="50">
@@ -127,7 +126,7 @@ Use the form below to change the user's password.
         </tr>
         <tr>
             <td class="c1">
-                Confirm New Password:
+                <fmt:message key="user.password.confirm_new_pwd" />:
             </td>
             <td class="c2">
                 <input type="password" name="passwordConfirm" value="" size="20" maxlength="50">

@@ -12,7 +12,7 @@
                  org.jivesoftware.messenger.group.GroupNotFoundException"
     isErrorPage="true"
 %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  boolean debug = "true".equals(JiveGlobals.getProperty("skin.default.debug"));
     if (debug) {
         exception.printStackTrace();
@@ -22,24 +22,24 @@
 <%  if (exception instanceof UnauthorizedException) { %>
 
     <p>
-    You don't have admin privileges to perform this operation.
+    <fmt:message key="error.admin_privileges" />
     </p>
 
 <%  } else if (exception instanceof UserNotFoundException) {
         String username = ParamUtils.getParameter(request,"username");
 %>
         <p>
-        The requested user
+        <fmt:message key="error.requested_user" />
         <%  if (username != null) { %>
-            (username: <%= username %>)
+            (<fmt:message key="error.username" /><%= username %>)
         <%  } %>
-        was not found.
+        <fmt:message key="error.not_found" />
         </p>
 
 <%  } else if (exception instanceof GroupNotFoundException) { %>
 
     <p>
-    The requested group was not found.
+    <fmt:message key="error.not_found_group" />
     </p>
     
 <%  } %>
@@ -49,7 +49,7 @@
         PrintWriter pout = new PrintWriter(sout);
         exception.printStackTrace(pout);
 %>
-    Exception:
+    <fmt:message key="error.exception" />
     <pre>
 <%= sout.toString() %>
     </pre>

@@ -10,7 +10,7 @@
 
 <html>
 <head>
-    <title><fmt:message key="title" /> Admin</title>
+    <title><fmt:message key="title" /> <fmt:message key="header.admin" /></title>
     <meta http-equiv="content-type" content="text/html; charset=">
     <script language="JavaScript" type="text/javascript">
     <!-- // code for window popups

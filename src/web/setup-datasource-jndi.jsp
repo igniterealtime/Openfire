@@ -74,14 +74,12 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Datasource Settings - JNDI Connection
+<fmt:message key="setup.datasource.jndi.setting" />
 </p>
 
 <p>
-Choose a JNDI datasource below to connect to the <fmt:message key="short.title" /> database.
-The name varies between application servers, but it is generally of the form:
-<tt>java:comp/env/jdbc/[DataSourceName]</tt>. Please consult your application server's
-documentation for more information.
+<fmt:message key="setup.datasource.jndi.setting_info" /><fmt:message key="short.title" /> 
+<fmt:message key="setup.datasource.jndi.setting_info1" /> <tt>java:comp/env/jdbc/[DataSourceName]</tt>. <fmt:message key="setup.datasource.jndi.setting_info2" />
 </p>
 
 <%  if (errors.size() > 0 && errors.get("jndiName") == null) { %>
@@ -107,7 +105,7 @@ documentation for more information.
 
 <%  if (!isLookupNames) { %>
 
-    JNDI Datasource Name:
+    <fmt:message key="setup.datasource.jndi.name" />
     <input type="text" name="jndiName" size="30" maxlength="100"
      value="<%= ((jndiName!=null) ? jndiName : "") %>">
 
@@ -118,7 +116,7 @@ documentation for more information.
         <td><input type="radio" name="jndiNameMode" value="custom"></td>
         <td>
             <span onclick="document.jndiform.jndiName.focus();"
-            >Custom:</span>
+            ><fmt:message key="setup.datasource.jndi.custom" /></span>
             &nbsp;
             <input type="text" name="jndiName" size="30" maxlength="100"
              value="<%= ((jndiName!=null) ? jndiName : "") %>"
@@ -126,7 +124,7 @@ documentation for more information.
             <%  if (errors.get("jndiName") != null) { %>
 
                 <span class="jive-error-text"><br>
-                Please enter a valid JNDI name.
+                <fmt:message key="setup.datasource.jndi.valid_name" />
                 </span>
 
             <%  } %>
@@ -159,7 +157,7 @@ documentation for more information.
 <div align="right">
     <input type="submit" name="continue" value=" Continue ">
     <br>
-    Note, it might take between 30-60 seconds to connect to your database.
+    <fmt:message key="setup.datasource.jndi.note" />
 </div>
 
 </form>

@@ -23,7 +23,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Audit Policy";
+    String title = LocaleUtils.getLocalizedString("audit.policy.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "audit-policy.jsp"));
@@ -87,7 +87,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="audit.policy.settings.saved_successfully" />
         </td></tr>
     </tbody>
     </table>
@@ -112,18 +112,13 @@
 
 <p>
 <fmt:message key="title" />
-can audit XMPP traffic on the server and save
-the data to XML data files. The amount of data sent via an XMPP server can be substantial.
-Messenger provides several settings to control whether to audit packets, how
-audit files are created, and the types of packets to save. In most cases, logging
-Message packets will provide all of the data an enterprise requires. Presence
-and IQ packets are primarily useful for tracing and troubleshooting XMPP deployments.
+<fmt:message key="audit.policy.title_info" />
 </p>
 
 <form action="audit-policy.jsp">
 
 <fieldset>
-    <legend>Set Message Audit Policy</legend>
+    <legend><fmt:message key="audit.policy.policytitle" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -134,7 +129,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
             </td>
             <td width="99%">
                 <label for="rb01">
-                <b>Disable Message Auditing</b> -- packets are not logged.
+                <b><fmt:message key="audit.policy.label_disable_auditing" /></b> <fmt:message key="audit.policy.label_disable_auditing_info" />
                 </label>
             </td>
         </tr>
@@ -145,7 +140,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
             </td>
             <td width="99%">
                 <label for="rb02">
-                <b>Enable Message Auditing</b> -- packets are logged with the following options:
+                <b><fmt:message key="audit.policy.label_enable_auditing" /></b> <fmt:message key="audit.policy.label_enable_auditing_info" />
                 </label>
             </td>
         </tr>
@@ -157,7 +152,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 <table cellpadding="3" cellspacing="0" border="0" width="100%">
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        Maximum file size (MB):
+                        <fmt:message key="audit.policy.maxfile_size" />
                     </td>
                     <td width="99%">
                         <input type="text" size="15" maxlength="50" name="maxSize"
@@ -166,7 +161,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                     <%  if (errors.get("maxSize") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid number.
+                        <fmt:message key="audit.policy.validnumber" />
                         </span>
 
                     <%  } %>
@@ -175,7 +170,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        Maximum number of files:
+                        <fmt:message key="audit.policy.maxfile_number" />
                     </td>
                     <td width="99%">
                         <input type="text" size="15" maxlength="50" name="maxCount"
@@ -184,7 +179,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                         <%  if (errors.get("maxCount") != null) { %>
 
                             <span class="jive-error-text">
-                            Please enter a valid number.
+                            <fmt:message key="audit.policy.validnumber" />
                             </span>
 
                         <%  } %>
@@ -193,7 +188,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        Flush Interval (seconds):
+                        <fmt:message key="audit.policy.flush_interval" />
                     </td>
                     <td width="99%">
                         <input type="text" size="15" maxlength="50" name="logTimeout"
@@ -202,7 +197,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                     <%  if (errors.get("logTimeout") != null) { %>
 
                         <span class="jive-error-text">
-                        Please enter a valid number.
+                        <fmt:message key="audit.policy.validnumber" />
                         </span>
 
                     <%  } %>
@@ -211,7 +206,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        Packets to audit:
+                        <fmt:message key="audit.policy.packet_audit" />
                     </td>
                     <td width="99%">
 
@@ -224,7 +219,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                             </td>
                             <td width="99%">
                                 <label for="cb01">
-                                <b>Audit Message Packets</b>
+                                <b><fmt:message key="audit.policy.label_audit_messenge_packets" /></b>
                                 </label>
                             </td>
                         </tr>
@@ -236,7 +231,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                             </td>
                             <td width="99%">
                                 <label for="cb02">
-                                <b>Audit Presence Packets</b>
+                                <b><fmt:message key="audit.policy.label_audit_presence_packets" /></b>
                                 </label>
                             </td>
                         </tr>
@@ -248,7 +243,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                             </td>
                             <td width="99%">
                                 <label for="cb03">
-                                <b>Audit IQ Packets</b>
+                                <b><fmt:message key="audit.policy.label_audit_iq_packets" /></b>
                                 </label>
                             </td>
                         </tr>
@@ -263,7 +258,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
     <table border="0">
         <tr valign="top">
             <td width="1%" nowrap class="c1">
-                Queued packets:
+                <fmt:message key="audit.policy.queued_packets" />
             </td>
             <td width="99%">
                  <%= auditManager.getAuditor().getQueuedPacketsNumber() %>

@@ -17,13 +17,13 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Private Data";
+    String title = LocaleUtils.getLocalizedString("private.data.settings.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "private-data-settings.jsp"));
@@ -48,7 +48,7 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Settings updated successfully.
+        <fmt:message key="private.data.settings.update" />
         </td></tr>
     </tbody>
     </table>
@@ -64,16 +64,13 @@
 %>
 
 <p>
-Private data storage allows XMPP clients to store settings, bookmarks, etc. on the server. Users
-can log into their account and their settings will follow them around (as opposed to having the
-clients store the settings on the local computer where their settings will not follow them). You
-may enable or disable this feature.
+<fmt:message key="private.data.settings.info" />
 </p>
 
 <form action="private-data-settings.jsp">
 
 <fieldset>
-    <legend>Set Private Data Policy</legend>
+    <legend><fmt:message key="private.data.settings.policy" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -84,7 +81,8 @@ may enable or disable this feature.
             </td>
             <td width="99%">
                 <label for="rb01">
-                <b>Enable Private Data Storage</b> - allow clients to store information on the server.
+                <b><fmt:message key="private.data.settings.enable_storage" /></b> - 
+                <fmt:message key="private.data.settings.enable_storage_info" />
                 </label>
             </td>
         </tr>
@@ -95,7 +93,8 @@ may enable or disable this feature.
             </td>
             <td width="99%">
                 <label for="rb02">
-                <b>Disable Private Data Storage</b> - do not allow server-side storage.
+                <b><fmt:message key="private.data.settings.disable_storage" /></b> - 
+                <fmt:message key="private.data.settings.disable_storage_info" />
                 </label>
             </td>
         </tr>

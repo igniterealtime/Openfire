@@ -10,7 +10,7 @@
                  org.jivesoftware.messenger.Session" %>
 
 <%@ include file="global.jsp" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  // Check to see if the server is down.
     if (xmppServer == null) {
         response.sendRedirect("error-serverdown.jsp");
@@ -58,7 +58,7 @@
 <jsp:include page="header.jsp" flush="true" />
 
 <%  // Title of this page and breadcrumbs
-    String title = "Filter Session Summary by User";
+    String title = LocaleUtils.getLocalizedString("session.filter.title");
     String[][] breadcrumbs = {
         {"Home", "index.jsp"},
         {"Session Summary", "session-summary.jsp"},
@@ -68,14 +68,13 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-To filter the list of sessions by user, select the user from the list below or enter
-their username in the box below.
+<fmt:message key="session.filter.info" />
 </p>
 
 <%  if (errors) { %>
 
     <p class="jive-error-text">
-    Please enter a valid username or choose a username from the list.
+    <fmt:message key="session.filter.enter_username" />
     </p>
 
 <%  } %>
@@ -89,7 +88,7 @@ their username in the box below.
         <input type="radio" name="choose" value="false">
     </td>
     <td width="1%" nowrap>
-        Specify username:
+        <fmt:message key="session.filter.specify_username" />
     </td>
     <td width="98%">
         <input type="text" name="usernameTF" size="30" maxlength="100"
@@ -102,7 +101,7 @@ their username in the box below.
         <input type="radio" name="choose" value="true">
     </td>
     <td width="1%" nowrap>
-        Choose user:
+        <fmt:message key="session.filter.choose_user" />
     </td>
     <td width="98%">
         <select size="1" name="usernameSEL" onfocus="this.form.choose[1].checked=true;">

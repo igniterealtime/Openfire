@@ -107,14 +107,11 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Administrator Account
+<fmt:message key="setup.admin.settings.account" />
 </p>
 
 <p>
-Enter settings for the system administrator account (username of "admin") below. It is important to
-choose a password for the account that cannot be easily guessed -- for example, at least six
-characters long and containing a mix of letters and numbers. You can skip this step if you have
-already setup your admin account (not for first time users).
+<fmt:message key="setup.admin.settings.info" />
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -126,7 +123,7 @@ already setup your admin account (not for first time users).
 
     <%  } else { %>
 
-        There were errors when updating the admin account. Please see below.
+        <fmt:message key="setup.admin.settings.error" />
 
     <%  } %>
     </span>
@@ -156,36 +153,36 @@ function checkClick() {
          value="<%= ((password!=null) ? password : "") %>">
         <span class="jive-description">
         <br>
-        If this is a new <fmt:message key="short.title" /> installation, the current password will be <b>admin</b>.
+        <fmt:message key="setup.admin.settings.install" /><fmt:message key="short.title" /> <fmt:message key="setup.admin.settings.install1" /> <b><fmt:message key="setup.admin.settings.install2" /></b>.
         </span>
         <%  if (errors.get("password") != null) { %>
             <span class="jive-error-text">
-            <br>Please enter the correct current password.
+            <br><fmt:message key="setup.admin.settings.password" />
             </span>
         <%  } %>
     </td>
 </tr>
 <tr valign="top">
     <td class="jive-label">
-        Admin Email Address:
+        <fmt:message key="setup.admin.settings.email" />
     </td>
     <td>
         <input type="text" name="email" size="40" maxlength="150"
          value="<%= ((email!=null) ? email : "") %>">
         <span class="jive-description">
         <br>
-        A valid email address for the admin account.
+        <fmt:message key="setup.admin.settings.valid_email" />
         </span>
         <%  if (errors.get("email") != null) { %>
             <span class="jive-error-text">
-            <br>Please enter a valid email address.
+            <br><fmt:message key="setup.admin.settings.enter_email" />
             </span>
         <%  } %>
     </td>
 </tr>
 <tr valign="top">
     <td class="jive-label">
-        New Password:
+        <fmt:message key="setup.admin.settings.new_password" />
     </td>
     <td>
         <input type="password" name="newPassword" size="20" maxlength="50"
@@ -195,18 +192,18 @@ function checkClick() {
         </span>
         <%  if (errors.get("newPassword") != null) { %>
             <span class="jive-error-text">
-            <br>Please enter a valid new password.
+            <br><fmt:message key="setup.admin.settings.valid_new_password" />
             </span>
         <%  } else if (errors.get("match") != null) { %>
             <span class="jive-error-text">
-            <br>The new passwords do not match.
+            <br><fmt:message key="setup.admin.settings.not_new_password" />
             </span>
         <%  } %>
     </td>
 </tr>
 <tr valign="top">
     <td class="jive-label">
-        Confirm Password:
+        <fmt:message key="setup.admin.settings.confirm_password" />
     </td>
     <td>
         <input type="password" name="newPasswordConfirm" size="20" maxlength="50"
@@ -216,7 +213,7 @@ function checkClick() {
         </span>
         <%  if (errors.get("newPasswordConfirm") != null) { %>
             <span class="jive-error-text">
-            <br>Please enter a valid new confirmation password.
+            <br><fmt:message key="setup.admin.settings.valid_confirm" />
             </span>
         <%  } %>
     </td>

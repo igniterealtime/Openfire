@@ -45,15 +45,15 @@
 %>
 
 <p>
-The following is a summary of your <fmt:message key="short.title" /> license.
+<fmt:message key="license.details.info" /> <fmt:message key="short.title" /> <fmt:message key="license.details.info1" />
 </p>
 
 
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center"><fmt:message key="short.title" /> License Details</td></tr>
+<tr class="tableHeaderBlue"><td colspan="2" align="center"><fmt:message key="short.title" /> <fmt:message key="license.details.details" /></td></tr>
 <tr>
     <td class="jive-label">
-        License Type:
+        <fmt:message key="license.details.type" />
     </td>
     <td>
 
@@ -61,20 +61,20 @@ The following is a summary of your <fmt:message key="short.title" /> license.
 </tr>
 <tr>
     <td class="jive-label">
-        Maximum Allowable Sessions:
+        <fmt:message key="license.details.max_session" />
     </td>
     <td>
-       Unlimited
+       <fmt:message key="license.details.unlimited" />
     </td>
 </tr>
 <tr>
     <td class="jive-label">
-        Expiration Date:
+        <fmt:message key="license.details.expiration_date" />
     </td>
     <td>
 
 
-            Never
+            <fmt:message key="license.details.expiration_date_never" />
 
 
     </td>

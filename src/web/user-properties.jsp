@@ -21,7 +21,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters //
@@ -66,7 +66,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "User Properties";
+    String title = LocaleUtils.getLocalizedString("user.properties.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
@@ -78,7 +78,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below is a summary of user properties. To edit properties, click the "Edit" button below.
+<fmt:message key="user.properties.info" />
 </p>
 
 <%  if (request.getParameter("success") != null) { %>
@@ -88,7 +88,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        New user created successfully.
+        <fmt:message key="user.properties.created" />
         </td></tr>
     </tbody>
     </table>
@@ -101,7 +101,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        User properties updated successfully.
+        <fmt:message key="user.properties.update" />
         </td></tr>
     </tbody>
     </table>
@@ -114,14 +114,14 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
 <thead>
     <tr>
         <th colspan="2">
-            User Properties
+            <fmt:message key="user.properties.title" />
         </th>
     </tr>
 </thead>
 <tbody>
     <tr>
         <td class="c1">
-            Username:
+            <fmt:message key="user.create.username" />:
         </td>
         <td>
             <%= user.getUsername() %>
@@ -129,49 +129,49 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     </tr>
     <tr>
         <td class="c1">
-            Status:
+            <fmt:message key="session.details.status" />:
         </td>
         <td>
             <%  if (presenceManager.isAvailable(user)) {
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
-                    Available
+                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.available" />">
+                    <fmt:message key="user.properties.available" />
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
-                    Available to Chat
+                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.chat_available" />">
+                    <fmt:message key="session.details.chat_available" />
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
-                    Away
+                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.away" />">
+                    <fmt:message key="session.details.away" />
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
-                    Extended Away
+                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.extended" />">
+                    <fmt:message key="session.details.extended" />
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                    <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
-                    Do not Disturb
+                    <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.not_disturb" />">
+                    <fmt:message key="session.details.not_disturb" />
                 <% } %>
 
             <%  } else { %>
 
-                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="Offline">
-                (Offline)
+                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.offline" />">
+                (<fmt:message key="user.properties.offline" />)
 
             <%  } %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            Name:
+            <fmt:message key="user.create.name" />:
         </td>
         <td>
             <%  if ("".equals(user.getName())) { %>
                 <span style="color:#999">
-                <i>Not set.</i>
+                <i><fmt:message key="user.properties.not_set" /></i>
                 </span>
 
             <%  } else { %>
@@ -182,12 +182,12 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     </tr>
     <tr>
         <td class="c1">
-            Email:
+            <fmt:message key="user.create.email" />:
         </td>
         <td>
             <%  if (user.getEmail() == null) { %>
                 <span style="color:#999">
-                <i>Not set.</i>
+                <i><fmt:message key="user.properties.not_set" /></i>
                 </span>
 
             <%  } else { %>
@@ -199,7 +199,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     </tr>
     <tr>
         <td class="c1">
-            Registered:
+            <fmt:message key="user.properties.registered" />:
         </td>
         <td>
             <%= formatter.format(user.getCreationDate()) %>

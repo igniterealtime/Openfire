@@ -13,7 +13,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%   webManager.init(request, response, session, application, out ); %>
@@ -48,7 +48,7 @@
 %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <%    // Title of this page and breadcrumbs
-    String title = "User Search";
+    String title = LocaleUtils.getLocalizedString("user.search.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
@@ -57,15 +57,15 @@
 <jsp:include page="top.jsp" flush="true"/>
 <jsp:include page="title.jsp" flush="true"/>
 <%    if (errors.size() > 0) { %>
-<p class="jive-error-text">User not found. Please try a different search.</p>
+<p class="jive-error-text"><fmt:message key="user.search.not_found" /></p>
 <%    } %>
 <form name="f" action="user-search.jsp">
   <input type="hidden" name="search" value="true"/>
   <fieldset>
-    <legend>Search For User</legend>
+    <legend><fmt:message key="user.search.search_user" /></legend>
     <table cellpadding="3" cellspacing="1" border="0" width="600">
       <tr class="c1">
-        <td width="1%">Username:</td>
+        <td width="1%"><fmt:message key="user.create.username" />:</td>
         <td class="c2">
           <input type="text" name="username" value="<%= ((username!=null) ? username : "") %>" size="30" maxlength="75"/>
         </td>

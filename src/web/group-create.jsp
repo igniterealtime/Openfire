@@ -30,6 +30,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="errors" class="java.util.HashMap" />
@@ -130,7 +131,7 @@
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 
 <% // Title of this page and breadcrumbs
-    String title = "Create Group";
+    String title = LocaleUtils.getLocalizedString("group.create.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-create.jsp"));
@@ -153,7 +154,7 @@
                 <img src="images/success-16x16.gif" width="16" height="16" border="0">
             </td>
             <td class="jive-icon-label">
-                Error creating the group. Please check your error logs.
+                <fmt:message key="group.create.error" />
             </td>
         </tr>
     </tbody>
@@ -163,19 +164,19 @@
 <%  } %>
 
 <p>
-Use the form below to create a group.
+<fmt:message key="group.create.form" />
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
 
 <fieldset>
-    <legend>Create New Group</legend>
+    <legend><fmt:message key="group.create.new_group_title" /></legend>
     <div>
 
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr valign="top">
         <td width="1%" nowrap>
-            <label for="gname">Group Name:</label> *
+            <label for="gname"><fmt:message key="group.create.group_name" /></label> *
         </td>
         <td width="99%">
             <input type="text" name="name" size="30" maxlength="75"
@@ -189,9 +190,9 @@ Use the form below to create a group.
             <td width="1%" nowrap>&nbsp;</td>
             <td width="99%">
                 <%  if (errors.get("name") != null) { %>
-                    <span class="jive-error-text">Invalid group name.</span>
+                    <span class="jive-error-text"><fmt:message key="group.create.invalid_group_name" /></span>
                 <%  } else if (errors.get("groupAlreadyExists") != null) { %>
-                    <span class="jive-error-text">Group already exists - please choose a different name.</span>
+                    <span class="jive-error-text"><fmt:message key="group.create.invalid_group_info" /></span>
                 <%  } %>
             </td>
         </tr>
@@ -200,7 +201,7 @@ Use the form below to create a group.
 
     <tr valign="top">
         <td width="1%" nowrap>
-            <label for="gdesc">Description:</label>
+            <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
         </td>
         <td width="99%">
             <textarea name="description" cols="30" rows="3" id="gdesc"
@@ -215,7 +216,7 @@ Use the form below to create a group.
                 &nbsp;
             </td>
             <td width="99%">
-                <span class="jive-error-text">Invalid description.</span>
+                <span class="jive-error-text"><fmt:message key="group.create.invalid_description" /></span>
             </td>
         </tr>
 
@@ -223,7 +224,7 @@ Use the form below to create a group.
 
     <tr>
         <td nowrap width="1%" valign="top">
-            Initial Member(s):
+            <fmt:message key="group.create.label_initial_member" />
         </td>
         <td nowrap class="c1" align="left">
             <textarea name="users" cols="30" rows="3" id="gdesc"
@@ -233,11 +234,10 @@ Use the form below to create a group.
     </table>
 
     <br>
-    <p><b>Shared Roster Groups</b></p>
+    <p><b><fmt:message key="group.create.share_groups_title" /></b></p>
 
     <p>
-    You can use the form below to show this group in users' rosters. Select from one of three
-    options for who should see this group in their rosters.
+    <fmt:message key="group.create.share_groups_info" />
     </p>
 
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -247,7 +247,7 @@ Use the form below to create a group.
                 <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb201">Disable sharing group in rosters</label>
+                <label for="rb201"><fmt:message key="group.create.disable_share_group" /></label>
             </td>
         </tr>
         <tr>
@@ -255,7 +255,7 @@ Use the form below to create a group.
                 <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
             </td>
             <td width="99%">
-                <label for="rb202">Enable sharing group in rosters</label>
+                <label for="rb202"><fmt:message key="group.create.enable_share_group" /></label>
             </td>
         </tr>
         <tr>
@@ -268,7 +268,7 @@ Use the form below to create a group.
                 <tbody>
                     <tr>
                         <td width="1%" nowrap>
-                            Group Display Name
+                            <fmt:message key="group.create.group_display_name" />
                         </td>
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
@@ -276,7 +276,7 @@ Use the form below to create a group.
 
                             <%  if (errors.get("groupDisplayName") != null) { %>
 
-                                    <span class="jive-error-text">Enter a Group Display Name.</span>
+                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
 
                             <%  } %>
                         </td>
@@ -293,8 +293,7 @@ Use the form below to create a group.
                              <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
-                            <label for="rb002"
-                             >Show group in all users' rosters.</label>
+                            <label for="rb002"><fmt:message key="group.create.show_group_in_all_users" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -304,8 +303,7 @@ Use the form below to create a group.
                              <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
-                            <label for="rb001"
-                             >Show group in group members' rosters</label>
+                            <label for="rb001"><fmt:message key="group.create.show_group_in_group_members" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -315,8 +313,7 @@ Use the form below to create a group.
                              <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
                         </td>
                         <td width="99%">
-                            <label for="rb003"
-                             >Show group to members' rosters of these groups:</label>
+                            <label for="rb003"><fmt:message key="group.create.show_group_in_roster_group" /></label>
                         </td>
                     </tr>
                     <tr>
@@ -347,7 +344,7 @@ Use the form below to create a group.
     </table>
 
     <br>
-    <span class="jive-description">* Required fields </span>
+    <span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
     </div>
 
 </fieldset>

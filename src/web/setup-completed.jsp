@@ -10,7 +10,7 @@
 
 <html>
 <head>
-	<title><fmt:message key="short.title" /> Setup</title>
+	<title><fmt:message key="short.title" /> <fmt:message key="setup.completed.setup" /></title>
 
 	<link rel="stylesheet" type="text/css" href="setup-style.css">
 </head>
@@ -21,12 +21,12 @@
 <table cellpadding="8" cellspacing="0" border="0" width="100%">
 <tr>
     <td width="99%">
-        <fmt:message key="short.title" /> Setup
+        <fmt:message key="short.title" /> <fmt:message key="setup.completed.setup" />
     </td>
     <td width="1%" nowrap>
         <font size="-2" face="arial,helvetica,sans-serif" color="#ffffff">
         <b>
-        Jive Software
+        <fmt:message key="setup.completed.jive" />
         </b>
         </font>
     </td>
@@ -52,14 +52,13 @@
     <td width="98%">
 
         <p class="jive-setup-page-header">
-        Setup Already Run
+        <fmt:message key="setup.completed.run" />
         </p>
 
         <p>
-        It appears setup has already been run. To administer your community, please use the
-        <a href="index.jsp"><fmt:message key="short.title" /> Admin Tool</a>. To re-run
-        setup, you need to stop your appserver, delete the "setup" property from the
-        jive-messenger.xml file, restart Messenger then reload the setup tool.
+        <fmt:message key="setup.completed.run_info" />
+        <a href="index.jsp"><fmt:message key="short.title" /> <fmt:message key="setup.completed.run_info1" /></a>.
+        <fmt:message key="setup.completed.run_info2" />
         </p>
 
         <form action="index.jsp">

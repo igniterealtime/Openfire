@@ -15,7 +15,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate);
 
 
 CREATE TABLE jiveUserProp (
-  username              VARHCAR(32)     NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(4000)   NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)

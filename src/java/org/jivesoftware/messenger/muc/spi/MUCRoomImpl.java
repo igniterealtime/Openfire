@@ -502,8 +502,6 @@ public class MUCRoomImpl implements MUCRoom {
             // It is assumed that the room is new based on the fact that it's locked and
             // it has only one occupants (the owner).
             boolean isRoomNew = roomLocked && occupants.size() == 1;
-            List params = new ArrayList();
-            params.add(nickname);
             try {
                 // Send the presence of this new occupant to existing occupants
                 Presence joinPresence = joinRole.getPresence().createCopy();
@@ -518,10 +516,6 @@ public class MUCRoomImpl implements MUCRoom {
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-            // Send the "user has joined" message only if the presence of the occupant was sent
-            if (canBroadcastPresence(joinRole.getRoleAsString())) {
-                serverBroadcast(LocaleUtils.getLocalizedString("muc.join", params));
             }
             // If the room has just been created send the "room locked until configuration is
             // confirmed" message
@@ -596,12 +590,6 @@ public class MUCRoomImpl implements MUCRoom {
                 presence.setFrom(leaveRole.getRoleAddress());
                 broadcastPresence(presence);
                 leaveRole.kick();
-                List params = new ArrayList();
-                params.add(nickname);
-                // Send the "user has left" message only if the presence of the occupant was sent
-                if (canBroadcastPresence(leaveRole.getRoleAsString())) {
-                    serverBroadcast(LocaleUtils.getLocalizedString("muc.leave", params));
-                }
             }
             catch (Exception e) {
                 Log.error(e);

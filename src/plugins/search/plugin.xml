@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.messenger.plugin.SearchPlugin</class>
+    <name>Search</name>
+    <description>Provides support for searching for users (JEP-0055).</description>
+    <author>Ryan Graham</author>
+    <version>1.0.2</version>
+    <minServerVersion>2.1.2</minServerVersion>
+</plugin>

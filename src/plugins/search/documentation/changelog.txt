@@ -1,0 +1,13 @@
+version 1.0.1
+---------------
+* Removed plugin info jsp from admin console tab/sidebar
+
+
+version 1.0.1
+---------------
+* Fixed display issue with admin console tab/sidebar
+
+
+version 1.0
+---------------
+Initial release

@@ -68,6 +68,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      */
     private static int USER_TIMEOUT = 300000;
     /**
+     * The number of milliseconds a user must be idle before he/she gets kicked from all the rooms.
+     */
+    private static int USER_IDLE = 1800000;
+    /**
      * The time to elapse between logging the room conversations.
      */
     private static int LOG_TIMEOUT = 300000;
@@ -179,18 +183,30 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     private void checkForTimedOutUsers() throws ConcurrentModificationException {
-        final long deadline = System.currentTimeMillis() - USER_TIMEOUT;
+        // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
+        if (USER_IDLE == -1) {
+            return;
+        }
+        final long deadline = System.currentTimeMillis() - USER_IDLE;
         final Map userMap = new HashMap(users);
         final Iterator userIter = userMap.values().iterator();
         while (userIter.hasNext()) {
             try {
                 MUCUser user = (MUCUser) userIter.next();
                 if (user.getLastPacketTime() < deadline) {
-                    // TODO If the idea is to remove the user...this code does not do that. Maybe we
-                    // can just simulate that the user sent an unavailable presence to each room 
-                    // that he/she previously joined
-                    // TODO Analyze the side effect caused by PresenceManager.probePresence
-                    presenceManager.probePresence(chatServiceAddress, user.getAddress());
+                    // Kick the user from all the rooms that he/she had previuosly joined
+                    Iterator<MUCRole> roles = user.getRoles();
+                    MUCRole role;
+                    while (roles.hasNext()) {
+                        role = roles.next();
+                        try {
+                            role.getChatRoom().kickOccupant(user.getAddress().toStringPrep(), null,
+                                    null);
+                        }
+                        catch (NotAllowedException e) {
+                            // Do nothing since we cannot kick owners or admins
+                        }
+                    }
                 }
             }
             catch (Exception e) {
@@ -300,6 +316,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // persistent
             if (room.isPersistent()) {
                 persistentRoomSurrogateCache.clear();
+            }
+            else {
+                // Just force to expire old entries since the cache doesn't have a clean-up thread
+                persistentRoomSurrogateCache.size();
             }
             rooms.remove(roomName.toLowerCase());
         }
@@ -464,6 +484,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
             catch (NumberFormatException e) {
                 Log.error("Wrong number format of property xmpp.muc.tasks.user.timeout", e);
+            }
+        }
+        value = JiveGlobals.getProperty("xmpp.muc.tasks.user.idle");
+        if (value != null) {
+            try {
+                USER_IDLE = Integer.parseInt(value);
+            }
+            catch (NumberFormatException e) {
+                Log.error("Wrong number format of property xmpp.muc.tasks.user.idle", e);
             }
         }
         value = JiveGlobals.getProperty("xmpp.muc.tasks.log.timeout");

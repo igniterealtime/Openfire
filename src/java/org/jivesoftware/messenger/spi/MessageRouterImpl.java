@@ -55,8 +55,7 @@ public class MessageRouterImpl extends BasicModule implements MessageRouter {
                     messageStrategy.storeOffline(packet);
                 }
                 catch (Exception e1) {
-                    // user could not be reached. Don't bounce or they can probe for valid addresses by just sending
-                    // messages and seeing what bounces.
+                    Log.error(e1);
                 }
             }
 

@@ -149,15 +149,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             UserAlreadyExistsException {
 
         IQ returnPacket = null;
-        Session session = null;
-        try {
-            session = sessionManager.getSession(packet.getFrom());
-        }
-        catch (Exception e) {
-            IQ error = IQ.createResultIQ(packet);
-            error.setError(PacketError.Condition.internal_server_error);
-            return error;
-        }
+        Session session = sessionManager.getSession(packet.getFrom());
 
         IQ.Type type = packet.getType();
 

@@ -9,11 +9,10 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 /**
- * <p>Manages the registration and delegation of Components.</p>
- * <p/>
- * <p>The ComponentManager is responsible for managing registration and delegation of <code>Components</code>,
- * as well as offering a facade around basic server functionallity such as sending and receiving of
- * packets.
+ * Manages the registration and delegation of Components. The ComponentManager
+ * is responsible for managing registration and delegation of <code>Components</code>,
+ * as well as offering a facade around basic server functionallity such as sending and
+ * receiving of packets.
  *
  * @author Derek DeMoro
  */
@@ -22,8 +21,7 @@ public class ComponentManager {
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
 
-    static private ComponentManager singleton;
-    private final static Object LOCK = new Object();
+    private static ComponentManager instance = new ComponentManager();
 
 
     /**
@@ -34,16 +32,7 @@ public class ComponentManager {
      * @return the singleton instance of <Code>ComponentManager</CODE>
      */
     public static ComponentManager getInstance() {
-        // Synchronize on LOCK to ensure that we don't end up creating
-        // two singletons.
-        synchronized (LOCK) {
-            if (null == singleton) {
-                ComponentManager controller = new ComponentManager();
-                singleton = controller;
-                return controller;
-            }
-        }
-        return singleton;
+        return instance;
     }
 
     private ComponentManager() {

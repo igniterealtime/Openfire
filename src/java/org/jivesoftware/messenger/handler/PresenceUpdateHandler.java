@@ -25,6 +25,8 @@ import org.xmpp.packet.*;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -61,12 +63,6 @@ import java.util.*;
  * for a presence update broadcast from the other server or tracking them
  * as they are received.  Requires S2S capabilities.
  * </ul>
- * <p/>
- * <h2>Warning</h2>
- * There should be a way of determining whether a session has
- * authorization to access this feature. I'm not sure it is a good
- * idea to do authorization in each handler. It would be nice if
- * the framework could assert authorization policies across channels.
  *
  * @author Iain Shigeoka
  *
@@ -74,7 +70,7 @@ import java.util.*;
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler {
 
-    private Map<String, Set> directedPresences = new HashMap<String, Set>();
+    private Map<String, Set> directedPresences = new ConcurrentHashMap<String, Set>();
 
     private RosterManager rosterManager;
     private XMPPServer localServer;
@@ -136,7 +132,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * @param presence The presence presence to handle
      */
-    public synchronized void process(Presence presence) throws PacketException {
+    public void process(Presence presence) throws PacketException {
         try {
             process((Packet)presence);
         }
@@ -284,14 +280,15 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     /**
-     * Notification method sent to this handler when a user has sent a directed presence to an entity.
-     * If the sender of the presence is local (to this server) and the target entity does not belong
-     * to the user's roster then update the registry of sent directed presences by the user.
+     * Notification method sent to this handler when a user has sent a directed
+     * presence to an entity. If the sender of the presence is local (to this server)
+     * and the target entity does not belong to the user's roster then update the
+     * registry of sent directed presences by the user.
      *
      * @param update  the directed Presence sent by the user to an entity.
      * @param handler the handler that routed the presence to the entity.
      */
-    public synchronized void directedPresenceSent(Presence update, ChannelHandler handler) {
+    public void directedPresenceSent(Presence update, ChannelHandler handler) {
         if (update.getFrom() == null) {
             return;
         }
@@ -309,7 +306,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         if (set == null) {
                             // We are using a set to avoid duplicate handlers in case the user
                             // sends several directed presences to the same entity
-                            set = new HashSet();
+                            set = new CopyOnWriteArraySet();
                             directedPresences.put(update.getFrom().toString(), set);
                         }
                         if (Presence.Type.unavailable.equals(update.getType())) {
@@ -391,14 +388,17 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     /**
-     * A WeakReference that redefines #equals(Object) so that the referent objects could be compared
-     * as if the weak reference does not exists.
+     * A WeakReference that redefines #equals(Object) so that the referent objects
+     * could be compared as if the weak reference does not exists.
      *
      * @author Gaston Dombiak
      */
     private class HandlerWeakReference extends WeakReference {
-        //We need to store the hash code separately since the referent
-        //could be removed by the GC.
+
+        /**
+         * We need to store the hash code separately since the referent
+         * could be removed by the GC.
+         */
         private int hash;
 
         public HandlerWeakReference(Object referent) {

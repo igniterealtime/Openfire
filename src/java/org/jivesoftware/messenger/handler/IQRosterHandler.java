@@ -68,21 +68,22 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     /**
-     * Handles all roster queries.
-     * There are two major types of queries:
+     * Handles all roster queries. There are two major types of queries:
+     *
      * <ul>
-     * <li>Roster remove - A forced removal of items from a roster. Roster
-     * removals are the only roster queries allowed to
-     * directly affect the roster from another user.</li>
-     * <li>Roster management - A local user looking up or updating their
-     * roster.</li>
+     *      <li>Roster remove - A forced removal of items from a roster. Roster
+     *      removals are the only roster queries allowed to
+     *      directly affect the roster from another user.
+     *      </li>
+     *      <li>Roster management - A local user looking up or updating their
+     *      roster.
+     *      </li>
      * </ul>
      *
      * @param packet The update packet
      * @return The reply or null if no reply
      */
-    public synchronized IQ handleIQ(IQ packet) throws
-            UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             IQ returnPacket = null;
             org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
@@ -93,7 +94,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             if (recipientJID == null || recipientJID.getNode() == null) {
                 returnPacket = manageRoster(roster);
             }
-            else { // The packet must be a roster removal from a foreign domain user
+            // The packet must be a roster removal from a foreign domain user.
+            else {
                 removeRosterItem(roster);
             }
             return returnPacket;

@@ -88,7 +88,7 @@
 %>
 
 <p>
-<fmt:message key="title" /> allows multiple logins to the same user account by assigning a unique "resource name"
+XMPP allows multiple logins to the same user account by assigning a unique "resource name"
 to each connection. If a connection requests a resource name that is already in use, the server must
 decide how to handle the conflict. The options on this page allow you to determine if the server
 always kicks off existing connections, never kicks off existing connections, or sets the number of

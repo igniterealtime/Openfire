@@ -26,8 +26,8 @@ import org.xmpp.packet.PacketError;
  */
 public class OfflineMessageStrategy extends BasicModule {
 
-    private static int quota = -1;
-    private static Type type = Type.store;
+    private static int quota = 100*1024; // Default to 100 K.
+    private static Type type = Type.store_and_bounce;
     private SessionManager sessionManager;
 
     private XMPPServer xmppServer;

@@ -16,7 +16,8 @@
                  java.text.DateFormat,
                  java.util.HashMap,
                  java.util.Map,
-                 org.jivesoftware.admin.*"
+                 org.jivesoftware.admin.*,
+                 java.text.DecimalFormat"
     errorPage="error.jsp"
 %>
 
@@ -54,7 +55,8 @@
     boolean update = request.getParameter("update") != null;
     int strategy = ParamUtils.getIntParameter(request,"strategy",-1);
     int storeStrategy = ParamUtils.getIntParameter(request,"storeStrategy",-1);
-    int quota = ParamUtils.getIntParameter(request,"quota",0);
+    double quota = ParamUtils.getIntParameter(request,"quota",0);
+    DecimalFormat format = new DecimalFormat("#0.0");
 
     // Get the offline message manager
     OfflineMessageStrategy manager = admin.getXMPPServer().getOfflineMessageStrategy();
@@ -107,7 +109,7 @@
                 }
             }
 
-            manager.setQuota(quota);
+            manager.setQuota((int)(quota*1024));
 %>
 <c:set var="success" value="true" />
 <%
@@ -142,7 +144,7 @@
             }
         }
 
-        quota = manager.getQuota();
+        quota = ((double)manager.getQuota()) / (1024);
         if (quota < 0) {
             quota = 0;
         }
@@ -183,11 +185,11 @@
 <%  } %>
 
 <p>
-XMPP provides the option for servers to store-and-forward IM messages when they sent to a user that
-is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient
+XMPP provides the option for servers to store-and-forward IM messages when they are sent to a
+user that is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient
 feature of an XMPP deployment. However, offline messages, like email, can take up a significant
-amount of space on a server. <fmt:message key="title" /> provides the option to handle offline messages in a
-variety of ways. Select the offline message handling strategy that best suites your needs.
+amount of space on a server. There are several options for handling offline messages; select
+the policy that best suites your needs.
 </p>
 
 <form action="offline-messages.jsp">
@@ -203,8 +205,8 @@ variety of ways. Select the offline message handling strategy that best suites y
                  <%= ((strategy==BOUNCE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Always Bounce</b></label> - Never store the message, bounce the user
-                back to the sender.
+                <label for="rb01"><b>Bounce</b></label> - Never store offline messages and bounce
+                messages back to the sender.
             </td>
         </tr>
         <tr valign="top">
@@ -213,8 +215,8 @@ variety of ways. Select the offline message handling strategy that best suites y
                  <%= ((strategy==DROP) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Always Drop</b></label> - Never store the message, drop the message
-                so the sender is not notified.
+                <label for="rb02"><b>Drop</b></label> - Never store offline messages and drop
+                messages so the sender is not notified.
             </td>
         </tr>
         <tr valign="top" class="">
@@ -223,9 +225,9 @@ variety of ways. Select the offline message handling strategy that best suites y
                  <%= ((strategy==STORE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Store the Message</b></label> - Store the message for later. The
-                message will be delivered when the recipient next logs-in. Choose a storage policy and
-                storage store max size below.
+                <label for="rb03"><b>Store</b></label> - Store offline messages for later
+                retrieval. Messages will be delivered the next time the recipient logs in.
+                Choose a storage policy and storage store max size below.
             </td>
         </tr>
         <tr valign="top">
@@ -242,7 +244,8 @@ variety of ways. Select the offline message handling strategy that best suites y
                          <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb05"><b>Always Store</b></label> - Always save the message.
+                        <label for="rb05"><b>Always Store</b></label> - Always store messages,
+                        even if the max storage size has been exceeded.
                     </td>
                 </tr>
                 <tr valign="top">
@@ -252,8 +255,9 @@ variety of ways. Select the offline message handling strategy that best suites y
                          <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb06"><b>Always Store then Bounce</b></label> - Always save the message
-                        but bounce the message back to the sender.
+                        <label for="rb06"><b>Store or Bounce</b></label> - Store messages
+                        up to the max storage size. After the max size has been exceeded, bounce
+                        the message back to the sender.
                     </td>
                 </tr>
                 <tr valign="top">
@@ -263,25 +267,21 @@ variety of ways. Select the offline message handling strategy that best suites y
                          <%= ((storeStrategy==STORE_AND_DROP) ? "checked" : "") %>>
                     </td>
                     <td width="99%">
-                        <label for="rb07"><b>Always Store then Drop</b></label> - Always save the message
-                        but drop the message so the sender is not notified.
+                        <label for="rb07"><b>Store or Drop</b></label> - Store messages
+                        for a user up to the max storage size. After the max size has been exceeded,
+                        silently drop messages.
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
-                        Offline message storage limit (in bytes):
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
+                        Per-user offline message storage limit:
                         <input type="text" size="5" maxlength="12" name="quota"
-                         value="<%= (quota>0 ? ""+quota : "") %>"
+                         value="<%= (quota>0 ? ""+format.format(quota) : "") %>"
                          onclick="this.form.strategy[2].checked=true;">
-                        bytes (1024 bytes = 1 K, 1048576 bytes = 1 Megabyte)
+                        KB
                     </td>
                 </tr>
                 </table>
-
             </td>
         </tr>
     </tbody>

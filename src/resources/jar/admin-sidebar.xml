@@ -33,7 +33,7 @@
                     url="reg-settings.jsp"
                     description="Click to edit registration &amp; login policies" />
 
-            <item id="server-session-conflict" name="Resource Conflict Policy"
+            <item id="server-session-conflict" name="Resource Policy"
                     url="session-conflict.jsp"
                     description="" />
 

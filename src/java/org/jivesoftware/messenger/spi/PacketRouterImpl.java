@@ -84,18 +84,18 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
     }
 
     public void route(Presence packet) {
-        if(!hasRouted(packet)){
+        if (!hasRouted(packet)) {
           presenceRouter.route(packet);
         }
     }
 
     public boolean hasRouted(Packet packet){
-        if(packet.getTo() == null){
+        if (packet.getTo() == null) {
             return false;
         }
          // Check for registered components
         Component component = componentManager.getComponent(packet.getTo().toBareJID());
-        if(component != null){
+        if (component != null) {
             component.processPacket(packet);
             return true;
         }

@@ -22,6 +22,8 @@ import org.jivesoftware.messenger.user.CachedRoster;
 import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.*;
+
 import java.lang.ref.WeakReference;
 import java.util.*;
 import javax.xml.stream.XMLStreamException;
@@ -80,13 +82,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         super("Presence update handler");
     }
 
-    public void process(XMPPPacket xmppPacket) throws UnauthorizedException, PacketException {
+    public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
         Presence presence = (Presence)xmppPacket;
-        Session session = presence.getOriginatingSession();
         try {
-            XMPPPacket.Type type = presence.getType();
-            if (type == null || Presence.AVAILABLE.equals(type)) {
-                broadcastUpdate((Presence)presence.createDeepCopy());
+            Session session = SessionManager.getInstance().getSession(presence.getFrom());
+            Presence.Type type = presence.getType();
+            // Available
+            if (type == null) {
+                broadcastUpdate(presence.createCopy());
                 if (session != null) {
                     session.setPresence(presence);
                     if (!session.isInitialized()) {
@@ -95,34 +98,25 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     }
                 }
             }
-            else if (Presence.UNAVAILABLE.equals(type)) {
-                broadcastUpdate((Presence)presence.createDeepCopy());
-                broadcastUnavailableForDirectedPresences((Presence)presence.createDeepCopy());
+            else if (Presence.Type.unavailable == type) {
+                broadcastUpdate(presence.createCopy());
+                broadcastUnavailableForDirectedPresences(presence.createCopy());
                 if (session != null) {
                     session.setPresence(presence);
-                }
-            }
-            else if (Presence.INVISIBLE.equals(type)) {
-                if (session != null) {
-                    session.setPresence(presence);
-                    if (!session.isInitialized()) {
-                        initSession(session);
-                        session.setInitialized(true);
-                    }
                 }
             }
             else {
-                presence = (Presence)presence.createDeepCopy();
+                presence = presence.createCopy();
                 if (session != null) {
-                    presence.setSender(new XMPPAddress(null, session.getServerName(), null));
-                    presence.setRecipient(session.getAddress());
+                    presence.setFrom(new JID(null, session.getServerName(), null));
+                    presence.setTo(session.getAddress());
                 }
                 else {
-                    XMPPAddress sender = presence.getSender();
-                    presence.setSender(presence.getRecipient());
-                    presence.setRecipient(sender);
+                    JID sender = presence.getFrom();
+                    presence.setFrom(presence.getTo());
+                    presence.setTo(sender);
                 }
-                presence.setError(XMPPError.Code.BAD_REQUEST);
+                presence.setError(PacketError.Condition.bad_request);
                 deliverer.deliver(presence);
             }
 
@@ -139,21 +133,22 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      */
     public synchronized void process(Presence presence) throws PacketException {
         try {
-            process((XMPPPacket)presence);
-        } catch (UnauthorizedException e) {
+            process((Packet)presence);
+        }
+        catch (UnauthorizedException e) {
             try {
-                Session session = presence.getOriginatingSession();
-                presence = (Presence)presence.createDeepCopy();
+                Session session = SessionManager.getInstance().getSession(presence.getFrom());
+                presence = presence.createCopy();
                 if (session != null) {
-                    presence.setSender(new XMPPAddress(null, session.getServerName(), null));
-                    presence.setRecipient(session.getAddress());
+                    presence.setFrom(new JID(null, session.getServerName(), null));
+                    presence.setTo(session.getAddress());
                 }
                 else {
-                    XMPPAddress sender = presence.getSender();
-                    presence.setSender(presence.getRecipient());
-                    presence.setRecipient(sender);
+                    JID sender = presence.getFrom();
+                    presence.setFrom(presence.getTo());
+                    presence.setTo(sender);
                 }
-                presence.setError(XMPPError.Code.UNAUTHORIZED);
+                presence.setError(PacketError.Condition.not_authorized);
                 deliverer.deliver(presence);
             }
             catch (Exception err) {
@@ -178,8 +173,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             throws UnauthorizedException, UserNotFoundException, XMLStreamException {
 
         // Only user sessions need to be authenticated
-        if (!"".equals(session.getAddress().getName())) {
-            String username = session.getAddress().getNamePrep();
+        if (!"".equals(session.getAddress().getNode())) {
+            String username = session.getAddress().getNode();
             CachedRoster roster = rosterManager.getRoster(username);
             Iterator items = roster.getRosterItems();
             while (items.hasNext()) {
@@ -196,23 +191,21 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }
             }
             // deliver offline messages if any
-            Iterator msgs = messageStore.getMessages(username);
-            while (msgs.hasNext()) {
-                Message msg = (Message)msgs.next();
-                session.getConnection().deliver(msg);
+            Collection<Message> messages = messageStore.getMessages(username);
+            for (Message message : messages) {
+                session.getConnection().deliver(message);
             }
         }
     }
 
-    public XMPPPacket createSubscribePresence(XMPPAddress senderAddress,
-                                              boolean isSubscribe) {
+    public Presence createSubscribePresence(JID senderAddress, boolean isSubscribe) {
         Presence presence = packetFactory.getPresence();
-        presence.setSender(senderAddress);
+        presence.setFrom(senderAddress);
         if (isSubscribe) {
-            presence.setType(Presence.SUBSCRIBE);
+            presence.setType(Presence.Type.subscribe);
         }
         else {
-            presence.setType(Presence.UNSUBSCRIBE);
+            presence.setType(Presence.Type.unsubscribe);
         }
         return presence;
     }
@@ -229,16 +222,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * @param update The update to broadcast
      */
-    private void broadcastUpdate(Presence update)
-            throws PacketException {
-
-
-        if (update.getSender() == null) {
+    private void broadcastUpdate(Presence update) throws PacketException {
+        if (update.getFrom() == null) {
             return;
         }
-        if (localServer.isLocal(update.getSender())) {
+        if (localServer.isLocal(update.getFrom())) {
             // Local updates can simply run through the roster of the local user
-            String name = update.getSender().getName();
+            String name = update.getFrom().getNode();
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
@@ -258,7 +248,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // on the server
             Log.warn("Presence requested from server "
                     + localServer.getServerInfo().getName()
-                    + " by unknown user: " + update.getSender());
+                    + " by unknown user: " + update.getFrom());
             /*
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -298,11 +288,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @param handler the handler that routed the presence to the entity.
      */
     public synchronized void directedPresenceSent(Presence update, ChannelHandler handler) {
-        if (update.getSender() == null) {
+        if (update.getFrom() == null) {
             return;
         }
-        if (localServer.isLocal(update.getSender())) {
-            String name = update.getSender().getName();
+        if (localServer.isLocal(update.getFrom())) {
+            String name = update.getFrom().getNode();
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
@@ -310,15 +300,15 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavialable presence to the entity
-                    if (!roster.isRosterItem(update.getRecipient())) {
-                        Set set = (Set)directedPresences.get(update.getSender().toStringPrep());
+                    if (!roster.isRosterItem(update.getTo())) {
+                        Set set = (Set)directedPresences.get(update.getFrom().toString());
                         if (set == null) {
                             // We are using a set to avoid duplicate handlers in case the user
                             // sends several directed presences to the same entity
                             set = new HashSet();
-                            directedPresences.put(update.getSender().toStringPrep(), set);
+                            directedPresences.put(update.getFrom().toString(), set);
                         }
-                        if (Presence.UNAVAILABLE.equals(update.getType())) {
+                        if (Presence.Type.unavailable.equals(update.getType())) {
                             // It's a directed unavailable presence so remove the target entity
                             // from the registry
                             if (handler instanceof SessionImpl) {
@@ -326,7 +316,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                                 if (set.isEmpty()) {
                                     // Remove the user from the registry since the list of directed
                                     // presences is empty
-                                    directedPresences.remove(update.getSender().toStringPrep());
+                                    directedPresences.remove(update.getFrom().toString());
                                 }
                             }
                         }
@@ -355,11 +345,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @param update the unavailable presence sent by the user.
      */
     private void broadcastUnavailableForDirectedPresences(Presence update) {
-        if (update.getSender() == null) {
+        if (update.getFrom() == null) {
             return;
         }
-        if (localServer.isLocal(update.getSender())) {
-            Set set = (Set)directedPresences.get(update.getSender().toStringPrep());
+        if (localServer.isLocal(update.getFrom())) {
+            Set set = (Set)directedPresences.get(update.getFrom().toString());
             if (set != null) {
                 RoutableChannelHandler handler;
                 // Iterate over all the entities that the user sent a directed presence
@@ -371,7 +361,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // e.g. MultiUserChatServerImpl will remove the user from ALL the rooms
                     handler = (RoutableChannelHandler)((HandlerWeakReference)it.next()).get();
                     if (handler != null) {
-                        update.setRecipient(handler.getAddress());
+                        update.setTo(handler.getAddress());
                         try {
                             handler.process(update);
                         }
@@ -381,7 +371,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     }
                 }
                 // Remove the registry of directed presences of this user
-                directedPresences.remove(update.getSender().toStringPrep());
+                directedPresences.remove(update.getFrom().toString());
             }
         }
     }
@@ -391,7 +381,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public XMPPServer localServer;
     public SessionManager sessionManager;
     public PresenceManager presenceManager;
-    public PacketTransporter transporter;
     public PacketDeliverer deliverer;
     public PacketFactory packetFactory;
     public OfflineMessageStore messageStore;
@@ -403,7 +392,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(PacketTransporter.class, "transporter");
         trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
         return trackInfo;

@@ -134,7 +134,7 @@ public class SocketReadThread extends Thread {
         }
         finally {
             if (session != null) {
-                //Log.info("Logging off " + session.getAddress() + " on " + connection);
+                Log.debug("Logging off " + session.getAddress() + " on " + connection);
                 try {
                     // Allow everything to settle down after a disconnect
                     // e.g. presence updates to avoid sending double

@@ -129,7 +129,7 @@ public class SSLSocketAcceptThread extends Thread {
         while (notTerminated) {
             try {
                 Socket sock = serverSocket.accept();
-                Log.info("SSL Connect " + sock.toString());
+                Log.debug("SSL Connect " + sock.toString());
                 connManager.addSocket(sock, true);
             }
             catch (SSLException se) {

@@ -113,7 +113,7 @@ public class SocketAcceptThread extends Thread {
                 try {
                     Socket sock = serverSocket.accept();
                     if (sock != null) {
-                        Log.info("Connect " + sock.toString());
+                        Log.debug("Connect " + sock.toString());
                         connManager.addSocket(sock, false);
                     }
                 }

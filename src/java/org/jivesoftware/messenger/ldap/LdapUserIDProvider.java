@@ -20,7 +20,6 @@ import org.jivesoftware.util.LongList;
 import org.jivesoftware.messenger.user.UserIDProvider;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.spi.DbUserIDProvider;
-import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,85 +33,48 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
 /**
- * <p>Ldap implementation of the UserIDProvider interface.</p>
- * <p>The LdapUserIDProvider can operate in two modes -- in the pure LDAP mode, all user data is stored in the LDAP
- * store. This mode generally requires modifications to the LDAP schema to accommodate data that Messenger needs.</p>
- * <p>In the mixed mode, data that Messenger needs is stored locally.</p>
- * * @author Jim Berrettini
+ * LDAP implementation of the UserIDProvider interface.<p>
+ *
+ * The LdapUserIDProvider can operate in two modes -- in the pure LDAP mode,
+ * all user data is stored in the LDAP store. This mode generally requires
+ * modifications to the LDAP schema to accommodate data that Messenger needs.
+ * In the mixed mode, data that Messenger needs is stored locally.
+ *
+ * @author Jim Berrettini
  */
-
-
 public class LdapUserIDProvider implements UserIDProvider {
+
     private LdapManager manager;
     /**
-     * <p>Object type for users.</p>
+     * Object type for users.
      */
     public static final int USER_TYPE = 0;
     /**
-     * <p>Object type for chatbots.</p>
+     * Object type for chatbots.
      */
     public static final int CHATBOT_TYPE = 1;
     /**
-     * <p>The default domain id - the messenger domain.</p>
+     * The default domain id - the messenger domain.
      */
     public static final long DEFAULT_DOMAIN = 1;
 
-    private static final String GET_USERID = "SELECT objectID FROM jiveUserID WHERE username=? AND domainID=? AND objectType=?";
-    private static final String GET_USERNAME = "SELECT username FROM jiveUserID WHERE objectID=? AND domainID=? AND objectType=?";
-    private static final String USER_COUNT = "SELECT count(*) FROM jiveUser";
-    private static final String INSERT_USERID = "INSERT INTO jiveUserID (username,domainID,objectType,objectID) VALUES (?,?,?,?)";
-    private static final String ALL_USERS = "SELECT userID from jiveUser";
+    private static final String GET_USERID =
+        "SELECT objectID FROM jiveUserID WHERE username=? AND domainID=? AND objectType=?";
+    private static final String GET_USERNAME =
+        "SELECT username FROM jiveUserID WHERE objectID=? AND domainID=? AND objectType=?";
+    private static final String USER_COUNT =
+        "SELECT count(*) FROM jiveUser";
+    private static final String INSERT_USERID =
+        "INSERT INTO jiveUserID (username,domainID,objectType,objectID) VALUES (?,?,?,?)";
+    private static final String ALL_USERS =
+        "SELECT userID from jiveUser";
 
     public LdapUserIDProvider() {
         manager = LdapManager.getInstance();
     }
 
-    /**
-     * <p>Obtain the user's username from their ID.</p>
-     *
-     * @param id the userID of the user
-     * @return the name of the user with the given userID
-     * @throws UserNotFoundException if no such user exists
-     */
     public String getUsername(long id) throws UserNotFoundException {
         if (manager.getMode() == LdapManager.ALL_LDAP_MODE) {
-            // Find userDN.
-            DirContext ctx = null;
-            try {
-                ctx = manager.getContext();
-                // Search for the dn based on the username.
-                SearchControls constraints = new SearchControls();
-                constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-                constraints.setReturningAttributes(new String[]{"jiveUserID"});
-
-                StringBuffer filter = new StringBuffer();
-                filter.append("(").append("jiveUserID").append("=");
-                filter.append(id).append(")");
-
-                NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
-                if (answer == null || !answer.hasMoreElements()) {
-                    throw new UserNotFoundException("User not found: " + id);
-                }
-                String userDN = ((SearchResult)answer.next()).getName();
-                // Make sure there are no more search results. If there are, then
-                // the userID isn't unique on the LDAP server (a perfectly possible
-                // scenario since only fully qualified dn's need to be unqiue).
-                // There really isn't a way to handle this, so throw an exception.
-                // The baseDN must be set correctly so that this doesn't happen.
-                if (answer.hasMoreElements()) {
-                    throw new UserNotFoundException("LDAP username lookup matched multiple entries.");
-                }
-            }
-            catch (Exception e) {
-                throw new UserNotFoundException(e);
-            }
-            finally {
-                try {
-                    ctx.close();
-                }
-                catch (Exception e) {
-                }
-            }
             return getUsernameFromLdap(id);
         }
         else {
@@ -120,34 +82,22 @@ public class LdapUserIDProvider implements UserIDProvider {
         }
     }
 
-
-    /**
-     * <p>Obtain the user's username from their ID.</p>
-     *
-     * @param username the username to look up
-     * @return the userID corrresponding to the given username
-     * @throws UserNotFoundException
-     */
     public long getUserID(String username) throws UserNotFoundException {
         if (manager.getMode() == LdapManager.ALL_LDAP_MODE) {
             return getUserIDFromLdap(username);
         }
-
-        long id = 0L;
-        try {
-            id = getUserIDLocally(username);
+        else {
+            long id = 0L;
+            try {
+                id = getUserIDLocally(username);
+            }
+            catch (UserNotFoundException e) {
+                id = generateNewUserIDLocally(username);
+            }
+            return id;
         }
-        catch (UserNotFoundException e) {
-            id = generateNewUserIDLocally(username);
-        }
-        return id;
     }
 
-    /**
-     * <p>Obtain the total number of users on the system.</p>
-     *
-     * @return total number of users on the system.
-     */
     public int getUserCount() {
         int count = 0;
         // If using the pure LDAP mode.
@@ -173,18 +123,14 @@ public class LdapUserIDProvider implements UserIDProvider {
                 Log.error(e);
             }
             finally {
-                try {
-                    ctx.close();
-                }
-                catch (Exception e) {
-                }
+                try { if (ctx != null) { ctx.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
         // Otherwise, we're using the mixed LDAP mode.
         else {
             Connection con = null;
             PreparedStatement pstmt = null;
-
             try {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(USER_COUNT);
@@ -192,37 +138,21 @@ public class LdapUserIDProvider implements UserIDProvider {
                 if (rs.next()) {
                     count = rs.getInt(1);
                 }
+                rs.close();
             }
             catch (SQLException e) {
                 Log.error(e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
         return count;
     }
 
-    /**
-     * <p>Obtain a list all user IDs on the system.</p>
-     *
-     * @return LongList of user ID's
-     */
     public LongList getUserIDs() {
         LongList users = new LongList(500);
 
@@ -239,31 +169,20 @@ public class LdapUserIDProvider implements UserIDProvider {
                 while (rs.next()) {
                     users.add(rs.getLong(1));
                 }
+                rs.close();
             }
             catch (SQLException e) {
                 Log.error(e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
             return users;
         }
-        // else, in LDAP-only mode
+        // Otherwise, in LDAP-only mode.
         DirContext ctx = null;
         try {
             ctx = manager.getContext();
@@ -283,22 +202,12 @@ public class LdapUserIDProvider implements UserIDProvider {
             Log.error(e);
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { if (ctx != null) { ctx.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return users;
     }
 
-    /**
-     * Get paginated sublist of userID's
-     *
-     * @param startIndex index to begin sublist with.
-     * @param numResults maximum number of results to return.
-     * @return sublist of userID's.
-     */
     public LongList getUserIDs(int startIndex, int numResults) {
         LongList users = new LongList();
         if (manager.getMode() == LdapManager.LDAP_DB_MODE) { // if in mixed mode, get id's from DB.
@@ -328,22 +237,10 @@ public class LdapUserIDProvider implements UserIDProvider {
                 Log.error(e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
             return users;
         }
@@ -375,21 +272,19 @@ public class LdapUserIDProvider implements UserIDProvider {
             Log.error(e);
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { if (ctx != null) { ctx.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return users;
     }
 
     /**
-     * This is used when operating in mixed mode -- generate a new user ID for a user stored in our database.
+     * This is used when operating in mixed mode -- generate a new user ID for a
+     * user stored in our database.
      *
-     * @param username
+     * @param username the username.
      * @return id corresponding to that username
-     * @throws UserNotFoundException
+     * @throws UserNotFoundException if an error occured generating the user ID.
      */
     private long generateNewUserIDLocally(String username) throws UserNotFoundException {
         long id = -1;
@@ -410,22 +305,10 @@ public class LdapUserIDProvider implements UserIDProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return id;
     }
@@ -451,27 +334,16 @@ public class LdapUserIDProvider implements UserIDProvider {
             if (rs.next()) {
                 id = rs.getLong(1);
             }
+            rs.close();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         if (id == -1) {
             throw new UserNotFoundException();
@@ -482,9 +354,10 @@ public class LdapUserIDProvider implements UserIDProvider {
     /**
      * This method is used when operating in pure LDAP mode. Get user ID from the LDAP store.
      *
-     * @param username
+     * @param username the username.
      * @return user id corresponding to that username.
-     * @throws UserNotFoundException
+     * @throws UserNotFoundException if ther was an error loading the username
+     *      from LDAP.
      */
     private long getUserIDFromLdap(String username) throws UserNotFoundException {
         DirContext ctx = null;
@@ -500,21 +373,17 @@ public class LdapUserIDProvider implements UserIDProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { if (ctx != null) { ctx.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
-
     }
 
     /**
      * This method is used in mixed mode. Get the username that corresponds to a given ID.
      *
-     * @param id
+     * @param id the user ID.
      * @return username for that user id.
-     * @throws UserNotFoundException
+     * @throws UserNotFoundException if there was an error loading the username.
      */
     private String getUsernameFromDb(long id) throws UserNotFoundException {
         String name = null;
@@ -530,27 +399,16 @@ public class LdapUserIDProvider implements UserIDProvider {
             if (rs.next()) {
                 name = rs.getString(1);
             }
+            rs.close();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         if (name == null) {
             throw new UserNotFoundException();
@@ -559,10 +417,11 @@ public class LdapUserIDProvider implements UserIDProvider {
     }
 
     /**
-     * This method is used when operating in pure LDAP mode. Get the username that corresponds to a given ID.
+     * This method is used when operating in pure LDAP mode. Get the username
+     * that corresponds to a given ID.
      *
-     * @param id
-     * @return
+     * @param id the userID.
+     * @return ther username.
      * @throws UserNotFoundException
      */
     private String getUsernameFromLdap(long id) throws UserNotFoundException {
@@ -581,7 +440,6 @@ public class LdapUserIDProvider implements UserIDProvider {
             }
             String userDN = ((SearchResult)answer.next()).getName();
             return getUsernameFromUserDN(userDN);
-
         }
         catch (NamingException e) {
             Log.error(e);
@@ -592,13 +450,9 @@ public class LdapUserIDProvider implements UserIDProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { if (ctx != null) { ctx.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
-
     }
 
     /**
@@ -618,12 +472,8 @@ public class LdapUserIDProvider implements UserIDProvider {
             return (String)attrs.get(manager.getUsernameField()).get();
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { if (ctx != null) { ctx.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
-
     }
 }

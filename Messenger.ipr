@@ -228,6 +228,7 @@
         <root url="jar://$PROJECT_DIR$/build/lib/jasper-runtime.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/commons-el.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/dist/servlet.jar!/" />
+        <root url="file://$PROJECT_DIR$/src/resources/jar" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

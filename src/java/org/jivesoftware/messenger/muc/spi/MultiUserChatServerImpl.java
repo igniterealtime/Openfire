@@ -146,6 +146,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Timer timer = new Timer();
 
     /**
+     * Flag that indicates if the service should provide information about locked rooms when
+     * handling service discovery requests.
+     * Note: Setting this flag in false is not compliant with the spec. A user may try to join a
+     * locked room thinking that the room doesn't exist because the user didn't discover it before.
+     */
+    private boolean allowToDiscoverLockedRooms = true;
+
+    /**
      * Returns the permission policy for creating rooms. A true value means that not anyone can
      * create a room, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
      * rooms.
@@ -457,6 +465,31 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
     }
 
+    /**
+     * Returns the flag that indicates if the service should provide information about locked rooms
+     * when handling service discovery requests.
+     *
+     * @return true if the service should provide information about locked rooms.
+     */
+    public boolean isAllowToDiscoverLockedRooms() {
+        return allowToDiscoverLockedRooms;
+    }
+
+    /**
+     * Sets the flag that indicates if the service should provide information about locked rooms
+     * when handling service discovery requests.
+     * Note: Setting this flag in false is not compliant with the spec. A user may try to join a
+     * locked room thinking that the room doesn't exist because the user didn't discover it before.
+     *
+     * @param allowToDiscoverLockedRooms if the service should provide information about locked
+     *        rooms.
+     */
+    public void setAllowToDiscoverLockedRooms(boolean allowToDiscoverLockedRooms) {
+        this.allowToDiscoverLockedRooms = allowToDiscoverLockedRooms;
+        JiveGlobals.setProperty("xmpp.muc.discover.locked",
+                Boolean.toString(allowToDiscoverLockedRooms));
+    }
+
     public boolean isRoomCreationRestricted() {
         return roomCreationRestricted;
     }
@@ -501,6 +534,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 sysadmins.add(jids[i].trim().toLowerCase());
             }
         }
+        allowToDiscoverLockedRooms =
+                Boolean.parseBoolean(JiveGlobals.getProperty("xmpp.muc.discover.locked", "true"));
         roomCreationRestricted =
                 Boolean.parseBoolean(JiveGlobals.getProperty("xmpp.muc.create.anyone", "false"));
         // Load the list of JIDs that are allowed to create a MUC room
@@ -673,7 +708,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         else if (name != null && node == null) {
             // Answer the identity of a given room
             MUCRoom room = getChatRoom(name);
-            if (room != null && room.isPublicRoom()) {
+            if (room != null && canDiscoverRoom(room)) {
                 Element identity = DocumentHelper.createElement("identity");
                 identity.addAttribute("category", "conference");
                 identity.addAttribute("name", room.getNaturalLanguageName());
@@ -712,7 +747,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Answer the features of a given room
             // TODO lock the room while gathering this info???
             MUCRoom room = getChatRoom(name);
-            if (room != null && room.isPublicRoom()) {
+            if (room != null && canDiscoverRoom(room)) {
                 features.add("http://jabber.org/protocol/muc");
                 // Always add public since only public rooms can be discovered
                 features.add("muc_public");
@@ -756,7 +791,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Answer the extended info of a given room
             // TODO lock the room while gathering this info???
             MUCRoom room = getChatRoom(name);
-            if (room != null && room.isPublicRoom()) {
+            if (room != null && canDiscoverRoom(room)) {
                 XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
 
                 XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
@@ -814,7 +849,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             Element item;
             // Answer all the public rooms as items
             for (MUCRoom room : rooms.values()) {
-                if (room.isPublicRoom()) {
+                if (canDiscoverRoom(room)) {
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", room.getRole().getRoleAddress().toString());
                     item.addAttribute("name", room.getNaturalLanguageName());
@@ -826,7 +861,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         else if (name != null && node == null) {
             // Answer the room occupants as items if that info is publicly available
             MUCRoom room = getChatRoom(name);
-            if (room != null && room.isPublicRoom()) {
+            if (room != null && canDiscoverRoom(room)) {
                 Element item;
                 for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
@@ -838,6 +873,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
         }
         return answer.iterator();
+    }
+
+    private boolean canDiscoverRoom(MUCRoom room) {
+        // Check if locked rooms may be discovered
+        if (!allowToDiscoverLockedRooms && room.isLocked()) {
+            return false;
+        }
+        return room.isPublicRoom();
     }
 
     /**

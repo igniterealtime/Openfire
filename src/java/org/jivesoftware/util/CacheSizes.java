@@ -11,8 +11,8 @@
 
 package org.jivesoftware.util;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * Utility class for determining the sizes in bytes of commonly used objects.
@@ -127,13 +127,13 @@ public class CacheSizes {
     }
 
     /**
-     * Returns the size in bytes of a List object. Elements are assumed to be
+     * Returns the size in bytes of a Collection object. Elements are assumed to be
      * <tt>String</tt>s, <tt>Long</tt>s or <tt>Cacheable</tt> objects.
      *
-     * @param list the List object to determine the size of.
-     * @return the size of the List object.
+     * @param list the Collection object to determine the size of.
+     * @return the size of the Collection object.
      */
-    public static int sizeOfList(List list) {
+    public static int sizeOfCollection(Collection list) {
         if (list == null) {
             return 0;
         }

@@ -32,7 +32,6 @@ import org.jivesoftware.util.Version;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.net.MulticastDNSService;
 import org.dom4j.io.SAXReader;
 import org.dom4j.Document;
 
@@ -169,7 +168,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 1, 0, Version.ReleaseStatus.Release, -1);
+        version = new Version(2, 1, 1, Version.ReleaseStatus.Beta, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

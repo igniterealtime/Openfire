@@ -43,7 +43,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void createSocket() {
-
         if (!isStarted ||  isSocketStarted || auditManager == null ||
                 sessionManager == null || deliverer == null ||
                 router == null || serverName == null || packetFactory == null)
@@ -63,8 +62,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
 
-        // Start SSL if it's been enabled.
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active")) {
+        // Start SSL unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true)) {
             try {
                 sslSocketThread = new SSLSocketAcceptThread(this);
                 String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");

@@ -38,7 +38,7 @@ public class UserManager {
         CacheManager.initializeCache("userCache", 512 * 1024);
         CacheManager.initializeCache("username2roster", 512 * 1024);
         userCache = CacheManager.getCache("userCache");
-        // Load a group provider.
+        // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.messenger.user.DefaultUserProvider");
         try {
@@ -130,10 +130,15 @@ public class UserManager {
         catch (StringprepException se) {
             throw new IllegalArgumentException(se);
         }
-        User user = (User)userCache.get(username);
+        User user = (User) userCache.get(username);
         if (user == null) {
-            user = provider.loadUser(username);
-            userCache.put(username, user);
+            synchronized(username.intern()) {
+                user = (User) userCache.get(username);
+                if (user == null) {
+                    user = provider.loadUser(username);
+                    userCache.put(username, user);
+                }
+            }
         }
         return user;
     }

@@ -175,38 +175,40 @@ public class SocketReadThread extends Thread {
      */
     private void readStream() throws Exception {
         while (true) {
-            Document document = reader.parseDocument();
+            Element doc = reader.parseDocument().getRootElement();
 
-            if (document != null) {
-                Element doc = document.getRootElement();
+            if (doc == null) {
+                // Stop reading the stream since the client has sent an end of stream element and
+                // probably closed the connection
+                return;
+            }
 
-                String tag = doc.getName();
-                if ("message".equals(tag)) {
-                    Message packet = new Message(doc);
-                    packet.setFrom(session.getAddress());
-                    auditor.audit(packet, session);
-                    router.route(packet);
-                    session.incrementClientPacketCount();
-                }
-                else if ("presence".equals(tag)) {
-                    Presence packet = new Presence(doc);
-                    packet.setFrom(session.getAddress());
-                    auditor.audit(packet, session);
-                    router.route(packet);
-                    session.incrementClientPacketCount();
-                    // Update the flag that indicates if the user made a clean sign out
-                    clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
-                }
-                else if ("iq".equals(tag)) {
-                    IQ packet = getIQ(doc);
-                    packet.setFrom(session.getAddress());
-                    auditor.audit(packet, session);
-                    router.route(packet);
-                    session.incrementClientPacketCount();
-                }
-                else {
-                    throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
-                }
+            String tag = doc.getName();
+            if ("message".equals(tag)) {
+                Message packet = new Message(doc);
+                packet.setFrom(session.getAddress());
+                auditor.audit(packet, session);
+                router.route(packet);
+                session.incrementClientPacketCount();
+            }
+            else if ("presence".equals(tag)) {
+                Presence packet = new Presence(doc);
+                packet.setFrom(session.getAddress());
+                auditor.audit(packet, session);
+                router.route(packet);
+                session.incrementClientPacketCount();
+                // Update the flag that indicates if the user made a clean sign out
+                clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
+            }
+            else if ("iq".equals(tag)) {
+                IQ packet = getIQ(doc);
+                packet.setFrom(session.getAddress());
+                auditor.audit(packet, session);
+                router.route(packet);
+                session.incrementClientPacketCount();
+            }
+            else {
+                throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
             }
         }
     }

@@ -65,7 +65,7 @@ public class IQvCardHandler extends IQHandler {
 
     public IQvCardHandler() {
         super("XMPP vCard Handler");
-        info = new IQHandlerInfo("vcard", "vcard-temp");
+        info = new IQHandlerInfo("vCard", "vcard-temp");
     }
 
     public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
@@ -87,7 +87,7 @@ public class IQvCardHandler extends IQHandler {
                 User user = userManager.getUser(recipient.getNode());
                 result = IQ.createResultIQ(packet);
 
-                Element vcard = DocumentHelper.createElement(QName.get("VCARD", "vcard-temp"));
+                Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
                 result.setChildElement(vcard);
 
                 Iterator names = user.getVCardPropertyNames();

@@ -17,13 +17,15 @@ visit the Jive Messenger website: <a href="http://www.jivesoftware.org/messenger
 <p>In order to install Jive Messenger, you'll need a server environment
 that meets the following requirements: </p>
 <ul>
-  <li><b>JDK 1.5.0</b> (Java 5) or later. You can check your java version by typing "java
--version" at the command line. See <a href="http://java.sun.com">http://java.sun.com</a>
-for Java on your platform or download a Jive Messenger installer with
-bundled JVM for your operating system.</li>
-  <li>A supported database with a robust JDBC 2.0 compliant driver.
-Supported databases and recommended JDBC drivers are detailed in the
-database documentation below. Alternatively, you can use the embedded database.</li>
+  <li><b>JDK 1.5.0</b> (Java 5) or later. Java 5 is bundled with the 
+platform-specific Jive Messenger installers. If you are using the ".zip" or ".tar.gz" 
+distribution, you can check your java version by typing "java -version" at the 
+command line and (if necessary) upgrade your Java installation by visiting 
+<a href="http://java.sun.com">http://java.sun.com</a>.</li>
+  <li>A supported database with a robust JDBC driver, or you can
+choose to use the embedded database during the setup process. Supported 
+databases and recommended JDBC drivers are detailed in the database 
+documentation below.</li>
 </ul>
 
 <h2>Installation Overview</h2>
@@ -34,7 +36,7 @@ perform each of the following steps: </p>
 Messenger. </li>
   <li><a href="#config">Setup</a> - Use the built in web based setup
 tool to setup and verify the server configuration.</li>
-  <li><a href="#tools">Admin Tool</a> - use the web-based admin tool to
+  <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
 manage the server.</li>
 </ol>
 <h2><a name="distribution">Files in the Distribution</a></h2>
@@ -56,10 +58,8 @@ sub-directories omitted for brevity): </p>
 <ul> 
 	 <li>The <tt>conf</tt> directory is where Jive Messenger stores
 configuration files.</li>
-  <li>The <tt>bin</tt> directory contains the server executable scripts.
-Run startup.bat or startup.ssh. If you used the Jive Messenger installer, 
-native executables are also provided for your convenience. Below the base 
-directory are platform specific deployment tools for running Messenger as service, etc.</li>
+  <li>The <tt>bin</tt> directory contains the server executables. Depending
+on which distribution you installed, different executables will be available.</li>
   <li>The <tt>lib</tt> directory contains libraries necessary for
 running Jive Messenger.</li>
   <li>The <tt>plugins</tt> directory contains server plugins. By
@@ -73,15 +73,15 @@ maintains keystores to support SSL connection security.</li>
 documentation.</li>
 </ul><p>
 
-<h2><a name="database">Setting Up the Database</a></h2>
+<h2><a name="database">Setup the Database</a></h2>
 <p> <a>Jive Messenger uses a database to store it's data. To setup
-your
-database you must load the appropriate database schema. You can find
+your database you must load the appropriate database schema. You can find
 schemas in the <tt>resources/database</tt> directory of this distribution. View
 the </a><a href="database.html">database
 setup</a> documentation to learn how to install the schemas and JDBC
-drivers.</p>
-<p> Complete the database steps outlined in the database setup
+drivers. Alternatively, you can select the embedded database during
+the setup process.</p>
+<p>Complete the database steps outlined in the database setup
 documentation before proceeding further.<br>
 </p>
 <h2><a name="config"></a>Setup the Server</h2>
@@ -89,64 +89,53 @@ documentation before proceeding further.<br>
 into
 Jive Messenger. Simply launch Jive Messenger and use a web browser to
 connect to the admin console. The default port for the
-web-based admin console is 9090. If you are on the same machine as Messenger the
-following URL will
-usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>.</p>
+web-based admin console is 9090. If you are on the same machine as Messenger, the
+following URL will usually work: 
+<a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>.</p>
+
 <p>If you used the Jive Messenger installer, a shortcut for starting the
-application is provided. Starting the server using this icon starts a
-graphical launcher application. A button
-on the launcher allows you to automatically open your web browser to
-the correct URL
-to finish setting up the server. Large deployments should use the
-command line or Windows Service or *nix deployment options described
-below to properly configure JVM settings before using. If you didn't
-use the installer, you can start Jive Messenger using the startup script
-in the <tt>bin</tt> directory.
+a graphical launcher is provided. A button on the on the launcher allows 
+you to automatically open your web browser to the correct URL to finish 
+setting up the server: 
 
-<p>If you want to manually set up the server, edit the <tt>conf/jive-messenger.xml</tt>
-file. To bypass the server's normal setup mode after manually
-configuring the server, add
-a &lt;setup&gt;true&lt;/setup&gt; element to the XML file to indicate
-that the server
-has been setup.</p>
 <p>
-If you wish to use SSL, run the keytool application that ships with the
-Sun JDK to add the appropriate server certificates to the keystore
-located in the <tt>security</tt> directory. Self-signed certificates
-will work fine for testing. We've provided a dummy self-signed
-certificate for your server if it is 127.0.0.1 (the localhost).</p>
-
-<!--
-
-<h3>Windows Service</h3>
-<p>If you're running Messenger on Windows, you will eventually want to
-run Messenger as a standard Windows service.
-In order to do this, make sure the <tt>JAVA_HOME</tt> environmental
-variable is set to the base directory of your JRE/JDK directory or the <tt>jre</tt>
-sub directory of your installation if you
-installed a built-in JRE (Control Panel, System, Advanced, click on the
-"Enviromental Variables" button). Next, copy all the files
-from the <tt>bin/windows</tt> to the <tt>bin</tt> directory. Edit the
-<tt>config/wrapper.conf</tt> file to allocate the proper amount of heap
-memory
-for your deployment. On most systems, Messenger will need about 256MB
-of heap memory for each 1000 simultaneous connections (<a href="note1">1</a>).<br>
+<div align="center">
+<img src="images/launcher.png" alt="Jive Messenger Launcher" width="323" height="277" align="center">
+</div>
 </p>
 
-<p>Run <tt>install-messengerd.bat</tt> to install Messenger as a
-windows service.
-Now you can use the Control Panel, Administration Tools, Services
-applet to start, stop, and restart Messenger as well as determine if it
-starts with the server, what happens on failures, etc. Uninstall the
-Messenger windows service by running
-<tt>uninstall-messenger.bat</tt>.</p>
-<p>You can also run Messenger directly using the included <tt>messengerd.bat</tt>
-script using the same
-service wrapper code that the Windows service uses. The service wrapper
-provides quality of service tools that
-ensure high reliability operation of Messenger including detecting hung
-or failed processes and automatically
-restarting Messenger.</p>
+
+<h3>Windows Service</h3>
+<p>If you're running Messenger on Windows, you will likely want to
+run Messenger as a standard Windows service after initial setup.
+If you used the Windows installer, a <tt>messenger-service.exe</tt> file
+will be in the <tt>bin</tt> directory of the installation. You can use
+this executable to install and control the Jive Messenger service.
+</p>
+
+From a console window, you can run the following commands:
+<ul>
+		<li><tt>messenger-service /install</tt> -- installs the service.
+		<li><tt>messenger-service /uninstall</tt> -- uninstalls the service.
+		<li><tt>messenger-service /start</tt> -- starts the service
+		<li><tt>messenger-service /stop</tt> -- stops the service.
+</ul>
+
+<p>
+<div align="center">
+<img src="images/windows_service.png" alt="Windows Service" width="557" height="223" align="center">
+</div>
+</p>
+
+<p>You can also use the Services tool in the Windows Control Panel to start and
+stop the service.</p>
+
+<p>Note: the graphical launcher is not compatible with the Windows service
+at this time. If you install the service, you should use service controls
+as described above to control the server rather than the graphical launcher.</p> 
+
+
+<!--
 <h3>Solaris/Linux/MacOS X Deployment</h3>
 <p>If you are deploying Messenger on these three supported Unix
 systems, platform specific startup scripts and helper

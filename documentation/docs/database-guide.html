@@ -10,21 +10,16 @@
 <h2>Introduction</h2>
 <p>
 This document outlines the data type conventions and tables in the Jive
-Messenger 2.1 database
-schema. Some information, like column indexes and foreign keys, is
-omitted. For this, please
-read the individual schema of the database you're interested in.
+Messenger 2.1 database schema. Some information, like column indexes and foreign keys, is
+omitted. For this, please read the individual schema of the database you're interested in.
 <br>
 </p>
 <h2>Data Type Conventions</h2>
 <p>
 Date column type support varies widely across databases. Therefore,
-Jive Messenger
-specially encodes dates as VARCHAR values. Each date is a Java long
-value which
-is 0-padded to 15 characters. The long value is the internal
-representation of
-Java Date objects, which can be obtained with code such as the
+Jive Messenger specially encodes dates as VARCHAR values. Each date is a Java long
+value which is 0-padded to 15 characters. The long value is the internal
+representation of Java Date objects, which can be obtained with code such as the
 following:
 </p>
 <pre>long currentDate = new Date().getTime();</pre>

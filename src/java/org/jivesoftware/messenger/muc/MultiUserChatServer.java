@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.muc;
 
 import java.util.List;
+import java.util.Collection;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -42,12 +43,12 @@ public interface MultiUserChatServer {
     void setServiceName(String name);
 
     /**
-     * Returns the list of JIDs that are system administrators of the MUC service. A sysadmin has 
+     * Returns the collection of JIDs that are system administrators of the MUC service. A sysadmin has
      * the same permissions as a room owner. 
      * 
      * @return a list of bare JIDs.
      */
-    List getSysadmins();
+    Collection<String> getSysadmins();
 
     /**
      * Adds a new system administrator of the MUC service. A sysadmin has the same permissions as 
@@ -65,12 +66,28 @@ public interface MultiUserChatServer {
     void removeSysadmin(String userJID);
 
     /**
-     * Returns the list of JIDs that are allowed to create MUC rooms. An empty list means that
+     * Returns false if anyone can create rooms or true if only the returned JIDs in
+     * <code>getUsersAllowedToCreate</code> are allowed to create rooms.
+     *
+     * @return true if only some JIDs are allowed to create rooms.
+     */
+    boolean isRoomCreationRestricted();
+
+    /**
+     * Sets if anyone can create rooms or if only the returned JIDs in
+     * <code>getUsersAllowedToCreate</code> are allowed to create rooms.
+     *
+     * @param roomCreationRestricted whether anyone can create rooms or not.
+     */
+    void setRoomCreationRestricted(boolean roomCreationRestricted);
+
+    /**
+     * Returns the collection of JIDs that are allowed to create MUC rooms. An empty list means that
      * anyone can create a room. 
      * 
      * @return a list of bare JIDs.
      */
-    List getUsersAllowedToCreate();
+    Collection<String> getUsersAllowedToCreate();
 
     /**
      * Adds a new user to the list of JIDs that are allowed to create MUC rooms.

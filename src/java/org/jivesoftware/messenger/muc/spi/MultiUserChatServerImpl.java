@@ -133,16 +133,23 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Timer timer = new Timer();
 
     /**
+     * Returns the permission policy for creating rooms. A true value means that not anyone can
+     * create a room, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
+     * rooms.
+     */
+    private boolean roomCreationRestricted = false;
+
+    /**
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can 
      * create a room. 
      */
-    private List allowedToCreate = new LinkedList();
+    private Collection<String> allowedToCreate = new LinkedList<String>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
      * permissions as a room owner. 
      */
-    private List sysadmins = new LinkedList();
+    private Collection<String> sysadmins = new LinkedList<String>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
@@ -265,7 +272,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 // Check whether the room was just created or loaded from the database 
                 if (!room.isPersistent()) {
                     // Room creation is always allowed for sysadmin
-                    if (allowedToCreate.size() > 0 &&
+                    if (isRoomCreationRestricted() &&
                             !sysadmins.contains(userjid.toBareStringPrep())) {
                         // The room creation is only allowed for certain JIDs
                         if (!allowedToCreate.contains(userjid.toBareStringPrep())) {
@@ -415,11 +422,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         JiveGlobals.setProperty("xmpp.muc.service", name);
     }
 
-    public List getUsersAllowedToCreate() {
+    public Collection<String> getUsersAllowedToCreate() {
         return allowedToCreate;
     }
 
-    public List getSysadmins() {
+    public Collection<String> getSysadmins() {
         return sysadmins;
     }
 
@@ -437,6 +444,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         String[] jids = new String[sysadmins.size()];
         jids = (String[])sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
+    }
+
+    public boolean isRoomCreationRestricted() {
+        return roomCreationRestricted;
+    }
+
+    public void setRoomCreationRestricted(boolean roomCreationRestricted) {
+        this.roomCreationRestricted = roomCreationRestricted;
+        JiveGlobals.setProperty("xmpp.muc.create.anyone", Boolean.toString(roomCreationRestricted));
     }
 
     public void addUserAllowedToCreate(String userJID) {
@@ -474,6 +490,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 sysadmins.add(jids[i].trim().toLowerCase());
             }
         }
+        roomCreationRestricted =
+                Boolean.parseBoolean(JiveGlobals.getProperty("xmpp.muc.create.anyone", "false"));
         // Load the list of JIDs that are allowed to create a MUC room
         property = JiveGlobals.getProperty("xmpp.muc.create.jid");
         if (property != null) {

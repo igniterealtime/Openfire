@@ -20,11 +20,7 @@ import java.text.SimpleDateFormat;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.RoutableChannelHandler;
-import org.jivesoftware.messenger.RoutingTable;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.disco.DiscoInfoProvider;
@@ -67,7 +63,7 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServerImpl extends BasicModule implements MultiUserChatServer,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
+        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
 
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
     static {
@@ -381,6 +377,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return chatServiceName;
     }
 
+    public String getServiceDomain() {
+        return chatServiceAddress.getDomain();
+    }
+
     public HistoryStrategy getHistoryStrategy() {
         return historyStrategy;
     }
@@ -645,12 +645,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (chatServiceName == null) {
             chatServiceName = "conference";
         }
-        String serverName = null;
-        serverName = server.getServerInfo().getName();
+        String serverName = server.getServerInfo().getName();
+        String domain = chatServiceName;
         if (serverName != null) {
-            chatServiceName += "." + serverName;
+            domain = chatServiceName + "." + serverName;
         }
-        chatServiceAddress = new JID(null, chatServiceName, null);
+        chatServiceAddress = new JID(null, domain, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         userTimeoutTask = new UserTimeoutTask();
@@ -667,7 +667,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         router = server.getPacketRouter();
         // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
         registerHandler = server.getIQRegisterHandler();
-        registerHandler.addDelegate(getServiceName(), new IQMUCRegisterHandler(this));
+        registerHandler.addDelegate(getServiceDomain(), new IQMUCRegisterHandler(this));
     }
 
     public void start() {
@@ -676,7 +676,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         routingTable.addRoute(chatServiceAddress, this);
         ArrayList params = new ArrayList();
         params.clear();
-        params.add(chatServiceName);
+        params.add(chatServiceAddress.getDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
         for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(),
@@ -692,7 +692,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         timer.cancel();
         logAllConversation();
         if (registerHandler != null) {
-            registerHandler.removeDelegate(getServiceName());
+            registerHandler.removeDelegate(getServiceDomain());
         }
     }
 
@@ -726,7 +726,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
         items.add(new DiscoServerItem() {
             public String getJID() {
-                return chatServiceName;
+                return chatServiceAddress.getDomain();
             }
 
             public String getName() {

@@ -106,7 +106,7 @@ public class MUCRoleImpl implements MUCRole {
         extendedInformation =
                 DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         calculateExtendedInformation();
-        rJID = new JID(room.getName(), server.getServiceName(), nick);
+        rJID = new JID(room.getName(), server.getServiceDomain(), nick);
         setPresence(presence);
     }
 
@@ -181,7 +181,7 @@ public class MUCRoleImpl implements MUCRole {
 
     public void changeNickname(String nickname) {
         this.nick = nickname;
-        setRoleAddress(new JID(room.getName(), server.getServiceName(), nick));
+        setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
     }
 
     public MUCUser getChatUser() {

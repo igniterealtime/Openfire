@@ -16,6 +16,7 @@ import java.util.Collection;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.Component;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
 
@@ -26,14 +27,15 @@ import org.xmpp.packet.JID;
  * 
  * @author Gaston Dombiak
  */
-public interface MultiUserChatServer {
+public interface MultiUserChatServer extends Component {
 
     /**
-     * Obtain the name of this chat service.
+     * Obtain the domain of this chat service. The domain is composed by the service name and the
+     * name of the xmpp server where the service is running.
      * 
-     * @return The chat server name (host name).
+     * @return The chat server domain (service name + host name).
      */
-    String getServiceName();
+    String getServiceDomain();
 
     /**
      * Set the name of this chat service. The new name won't go into effect until the server is

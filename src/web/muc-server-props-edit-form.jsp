@@ -58,18 +58,11 @@
     else {
         name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
         muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
-        // Remove the server address part from the MUC domain name.
-        int index = muc.indexOf("." + name);
-        if (index > 0) {
-            muc = muc.substring(0, index);
-        }
     }
 
     name = admin.getServerInfo().getName();
     if (errors.size() == 0) {
         muc = admin.getMultiUserChatServer().getServiceName();
-        int pos = muc.lastIndexOf("." + name);
-        muc = muc.substring(0, pos);
     }
 %>
 

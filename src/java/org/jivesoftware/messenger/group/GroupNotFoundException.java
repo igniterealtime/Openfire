@@ -11,53 +11,62 @@
 
 package org.jivesoftware.messenger.group;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
 /**
- * Thrown when unable to find a group.
+ * Thrown when unable to find or load a group.
  *
- * @author Iain Shigeoka
+ * @author Matt Tucker
  */
 public class GroupNotFoundException extends Exception {
 
-    private Throwable nestedThrowable = null;
-
+    /**
+     * Constructs a new exception with null as its detail message. The cause is not
+     * initialized, and may subsequently be initialized by a call to
+     * {@link #initCause(Throwable) initCause}.
+     */
     public GroupNotFoundException() {
         super();
     }
 
-    public GroupNotFoundException(String msg) {
-        super(msg);
+    /**
+     * Constructs a new exception with the specified detail message. The cause is
+     * not initialized, and may subsequently be initialized by a call to
+     * {@link #initCause(Throwable) initCause}.
+     *
+     * @param message the detail message. The detail message is saved for later
+     *      retrieval by the {@link #getMessage()} method.
+     */
+    public GroupNotFoundException(String message) {
+        super(message);
     }
 
-    public GroupNotFoundException(Throwable nestedThrowable) {
-        this.nestedThrowable = nestedThrowable;
+    /**
+     * Constructs a new exception with the specified detail message and cause.<p>
+     *
+     * Note that the detail message associated with cause is not automatically incorporated
+     * in this exception's detail message.
+     *
+     * @param message the detail message (which is saved for later retrieval by the
+     *      {@link #getMessage()} method).
+     * @param cause the cause (which is saved for later retrieval by the
+     *      {@link #getCause()} method). (A null value is permitted, and indicates
+     *      that the cause is nonexistent or unknown.)
+     */
+    public GroupNotFoundException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public GroupNotFoundException(String msg, Throwable nestedThrowable) {
-        super(msg);
-        this.nestedThrowable = nestedThrowable;
-    }
-
-    public void printStackTrace() {
-        super.printStackTrace();
-        if (nestedThrowable != null) {
-            nestedThrowable.printStackTrace();
-        }
-    }
-
-    public void printStackTrace(PrintStream ps) {
-        super.printStackTrace(ps);
-        if (nestedThrowable != null) {
-            nestedThrowable.printStackTrace(ps);
-        }
-    }
-
-    public void printStackTrace(PrintWriter pw) {
-        super.printStackTrace(pw);
-        if (nestedThrowable != null) {
-            nestedThrowable.printStackTrace(pw);
-        }
+    /**
+     * Constructs a new exception with the specified cause and a detail message of
+     * (cause==null ? null : cause.toString()) (which typically contains the class and
+     * detail message of cause). This constructor is useful for exceptions that are
+     * little more than wrappers for other throwables (for example,
+     * java.security.PrivilegedActionException).
+     *
+     * @param cause the cause (which is saved for later retrieval by the
+     *      {@link #getCause()} method). (A null value is permitted, and indicates
+     *      that the cause is nonexistent or unknown.)
+     */
+    public GroupNotFoundException(Throwable cause) {
+        super(cause);
     }
 }

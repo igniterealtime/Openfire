@@ -436,6 +436,14 @@
             </filterset>
         </copy>
 
+        <!-- Copy docs -->
+        <copy todir="${release.out.dir}/documentation">
+            <fileset dir="${docs.dir}/docs" />
+        </copy>
+        <copy todir="${release.src.out.dir}/documentation">
+            <fileset dir="${docs.dir}/docs" />
+        </copy>
+
         <!-- Copy Javadocs -->
         <copy todir="${release.out.dir}/documentation/javadoc">
             <fileset dir="${javadoc.dest.dir}" />

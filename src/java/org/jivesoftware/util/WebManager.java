@@ -112,7 +112,7 @@ public class WebManager extends WebBean {
     }
 
     public SessionManager getSessionManager() {
-        return (SessionManager)getServiceLookup().lookup(SessionManager.class);
+        return SessionManager.getInstance();
     }
 
     public MultiUserChatServer getMultiUserChatServer() {

@@ -57,7 +57,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private Cache foreignUserCache;
 
     public UserManager userManager;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
     public RoutingTable routingTable;
     public XMPPServer server;
     public PacketDeliverer deliverer;
@@ -399,7 +399,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");

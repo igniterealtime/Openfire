@@ -260,7 +260,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
     public UserManager userManager;
     public XMPPServer localServer;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
     public PresenceManager presenceManager;
     public PacketRouter router;
     public RoutingTable routingTable;
@@ -270,7 +270,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         return trackInfo;

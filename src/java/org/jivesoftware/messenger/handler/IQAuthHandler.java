@@ -228,13 +228,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public UserManager userManager;
     public XMPPServer localServer;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = super.getTrackInfo();
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         return trackInfo;
     }
 

@@ -101,7 +101,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public AuditManager auditManager;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
     public PacketDeliverer deliverer;
     public PacketRouter router;
     private String serverName;
@@ -131,7 +131,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");

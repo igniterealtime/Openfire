@@ -378,7 +378,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     public RosterManager rosterManager;
     public XMPPServer localServer;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
     public PresenceManager presenceManager;
     public PacketDeliverer deliverer;
     public OfflineMessageStore messageStore;
@@ -387,7 +387,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(RosterManager.class, "rosterManager");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
         trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");

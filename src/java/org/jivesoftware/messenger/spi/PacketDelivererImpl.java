@@ -31,7 +31,7 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
     protected ChannelHandler deliverHandler;
 
     public OfflineMessageStrategy messageStrategy;
-    public SessionManager sessionManager;
+    private SessionManager sessionManager = SessionManager.getInstance();
 
     public PacketDelivererImpl() {
         super("Packet Delivery");
@@ -49,7 +49,6 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(OfflineMessageStrategy.class, "messageStrategy");
         return trackInfo;
     }

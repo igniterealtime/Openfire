@@ -814,6 +814,7 @@
 
                     <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
 
+                    <!--
                     <copy tofile="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" file="${plugin.dest.dir}/@{plugin}/plugin.xml"
                             overwrite="true" />
 
@@ -834,6 +835,7 @@
                     <copy tofile="${plugin.dest.dir}/@{plugin}/plugin.xml" file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml"
                             overwrite="true" />
                     <delete file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" />
+                    -->
 
                     <!-- Compile java classes -->
                     <javac

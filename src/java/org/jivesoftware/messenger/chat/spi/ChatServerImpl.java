@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.chat.spi;
 import org.jivesoftware.messenger.chat.*;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -237,31 +236,21 @@ public class ChatServerImpl extends BasicModule implements ChatServer, RoutableC
      * @param name the new server address.
      */
     public void setChatServerName(String name) {
-        if (context != null) {
-            context.setProperty("xmpp.chat.domain", name);
-        }
+        JiveGlobals.setProperty("xmpp.chat.domain", name);
     }
 
-    // #####################################################################
-    // Module management
-    // #####################################################################
-    private ModuleContext context = null;
+    public void initialize(Container container) {
+        chatServerName = JiveGlobals.getProperty("xmpp.chat.domain");
+        // Trigger the strategy to load itself from the context
+        historyStrategy.setContext("xmpp.chat.history");
 
-    public void initialize(ModuleContext modcontext, Container container) {
-        this.context = modcontext;
-        if (context != null) {
-            chatServerName = context.getProperty("xmpp.chat.domain");
-            // Trigger the strategy to load itself from the context
-            historyStrategy.setContext(context, "xmpp.chat.history");
-
-            // Pseudo MUC support for non-anonymous rooms - all or nothing setting
-            useAnonRooms = !"false".equals(context.getProperty("xmpp.chat.anonymous_rooms"));
-        }
+        // Pseudo MUC support for non-anonymous rooms - all or nothing setting
+        useAnonRooms = JiveGlobals.getBooleanProperty("xmpp.chat.anonymous_rooms");
         if (chatServerName == null) {
             chatServerName = "chat.127.0.0.1";
         }
         chatServerAddress = new XMPPAddress(null, chatServerName, null);
-        super.initialize(context, container);
+        super.initialize(container);
     }
 
     public void start() {

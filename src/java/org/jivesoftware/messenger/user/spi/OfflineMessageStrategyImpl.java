@@ -12,7 +12,6 @@ package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -31,7 +30,6 @@ public class OfflineMessageStrategyImpl extends BasicModule implements OfflineMe
 
     private static int quota = -1;
     private static Type type = Type.store;
-    private ModuleContext context;
 
     public int getQuota() {
         return quota;
@@ -39,7 +37,7 @@ public class OfflineMessageStrategyImpl extends BasicModule implements OfflineMe
 
     public void setQuota(int quota) {
         OfflineMessageStrategyImpl.quota = quota;
-        context.setProperty("xmpp.offline.quota", Integer.toString(quota));
+        JiveGlobals.setProperty("xmpp.offline.quota", Integer.toString(quota));
     }
 
     public OfflineMessageStrategy.Type getType() {
@@ -51,7 +49,7 @@ public class OfflineMessageStrategyImpl extends BasicModule implements OfflineMe
             throw new IllegalArgumentException();
         }
         OfflineMessageStrategyImpl.type = type;
-        context.setProperty("xmpp.offline.type", type.toString());
+        JiveGlobals.setProperty("xmpp.offline.type", type.toString());
     }
 
     public void storeOffline(Message message) throws UnauthorizedException, UserNotFoundException {
@@ -94,14 +92,13 @@ public class OfflineMessageStrategyImpl extends BasicModule implements OfflineMe
         messageStore.addMessage(message);
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        this.context = context;
-        String quota = context.getProperty("xmpp.offline.quota");
+    public void initialize(Container container) {
+        super.initialize(container);
+        String quota = JiveGlobals.getProperty("xmpp.offline.quota");
         if (quota != null && quota.length() > 0) {
             OfflineMessageStrategyImpl.quota = Integer.parseInt(quota);
         }
-        String type = context.getProperty("xmpp.offline.type");
+        String type = JiveGlobals.getProperty("xmpp.offline.type");
         if (type != null && type.length() > 0) {
             OfflineMessageStrategyImpl.type = Type.valueOf(type);
         }

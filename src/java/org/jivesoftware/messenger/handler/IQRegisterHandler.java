@@ -11,7 +11,6 @@
 package org.jivesoftware.messenger.handler;
 
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.forms.DataForm;
@@ -83,8 +82,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         info = new IQHandlerInfo("query", "jabber:iq:register");
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
+    public void initialize(Container container) {
+        super.initialize(container);
         if (probeResult == null) {
             // Create the basic element of the probeResult which contains the basic registration
             // information (e.g. username, passoword and email)

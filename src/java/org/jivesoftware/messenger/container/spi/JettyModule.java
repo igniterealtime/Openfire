@@ -11,12 +11,13 @@
 package org.jivesoftware.messenger.container.spi;
 
 import org.jivesoftware.messenger.container.*;
+import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import java.io.File;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
-import org.mortbay.log.OutputStreamLogSink;
+import org.mortbay.log.*;
 
 /**
  * A simple wrapper that allows Jetty to run inside the Messenger
@@ -42,30 +43,35 @@ public class JettyModule implements Module {
     }
 
     public String getName() {
-        return "Embedded Webserver";
+        return "Admin Console";
     }
 
-    public void initialize(ModuleContext context, Container container) {
+    public void initialize(Container container) {
         try {
             // Configure logging to a file, creating log dir if needed
-            File logDir = context.getLogDirectory();
-            if (!logDir.exists()) {
-                logDir.mkdirs();
-            }
-            File logFile = new File(logDir, "embedded-web.log");
-            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
-            logSink.start();
+//            File logDir = new File(JiveGlobals.getMessengerHome(), "logs");
+//            if (!logDir.exists()) {
+//                logDir.mkdirs();
+//            }
+//            File logFile = new File(logDir, "admin_console.log");
+//            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
+//            logSink.start();
+//            LogImpl log = (LogImpl)Factory.getFactory().getInstance("");
+//            log.reset();
+//            log.add(logSink);
 
             jetty = new Server();
 
             // Configure HTTP socket listener
-            port = context.getProperty("embedded-web.port");
+            port = JiveGlobals.getProperty("embedded-web.port", "9090");
             jetty.addListener(port);
             this.serverContainer = container;
 
             // Add web-app
-            webAppContext = jetty.addWebApplication("/",
-                    context.getHomeDirectory() + "/webapp/");
+            // TODO this shouldn't be hardcoded to look for the "admin" plugin.
+            webAppContext = jetty.addWebApplication("/", JiveGlobals.getMessengerHome() +
+                    File.separator + "plugins" + File.separator +  "admin" +
+                    File.separator + "webapp");
         }
         catch (Exception e) {
             Log.error("Trouble initializing Jetty", e);

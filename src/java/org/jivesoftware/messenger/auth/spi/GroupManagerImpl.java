@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.auth.spi;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.Entity;
@@ -138,11 +137,11 @@ public class GroupManagerImpl extends BasicModule implements GroupManager {
     // Module management
     // #####################################################################
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        CacheManager.initializeCache(GROUP_CACHE_NAME, 128 * 1024, context);
-        CacheManager.initializeCache(GROUP_ID_CACHE_NAME, 128 * 1024, context);
-        CacheManager.initializeCache(GROUP_MEMBER_CACHE_NAME, 16 * 1024, context);
+    public void initialize(Container container) {
+        super.initialize(container);
+        CacheManager.initializeCache(GROUP_CACHE_NAME, 128 * 1024);
+        CacheManager.initializeCache(GROUP_ID_CACHE_NAME, 128 * 1024);
+        CacheManager.initializeCache(GROUP_MEMBER_CACHE_NAME, 16 * 1024);
 
         groupCache = CacheManager.getCache(GROUP_CACHE_NAME);
         groupIDCache = CacheManager.getCache(GROUP_ID_CACHE_NAME);

@@ -16,19 +16,18 @@ import org.jivesoftware.net.policies.BasicAcceptPolicy;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 import org.jivesoftware.net.AcceptManager;
 import org.jivesoftware.net.AcceptPort;
 import org.jivesoftware.net.*;
 import org.jivesoftware.messenger.container.*;
+import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.*;
 
 public class AcceptManagerImpl extends BasicModule implements AcceptManager {
 
-    private ModuleContext context;
-    private LinkedList ports = new LinkedList();
+    private List<AcceptPort> ports = new ArrayList<AcceptPort>();
     private AcceptPolicy policy = new BasicAcceptPolicy(true);
 
     private ConnectionManager connManager;
@@ -87,14 +86,20 @@ public class AcceptManagerImpl extends BasicModule implements AcceptManager {
                 throw new AlreadyExistsException(portAddress.toString());
             }
         }
-        return new AcceptPortImpl(context.createChildProperty("accept.port"),
-                                  connManager,
-                                  portAddress);
+        AcceptPort acceptPort = new AcceptPortImpl("port" + ports.size(),
+                connManager, portAddress);
+        ports.add(acceptPort);
+        return acceptPort;
     }
 
     public void deleteAcceptPort(AcceptPort acceptPort) {
         ports.remove(acceptPort);
-        // TODO: save remaining ports
+
+        JiveGlobals.deleteProperty("acceptPorts");
+        for (int i=0; i<ports.size(); i++) {
+            ((AcceptPortImpl)ports.get(i)).setContext("acceptPorts.port" + i);
+            ((AcceptPortImpl)ports.get(i)).savePort();
+        }
 
         try {
             acceptPort.close();
@@ -109,18 +114,15 @@ public class AcceptManagerImpl extends BasicModule implements AcceptManager {
         return trackInfo;
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        this.context = context;
+    public void initialize(Container container) {
+        super.initialize(container);
     }
 
     protected void serviceAdded(Object service) {
         if (service instanceof ConnectionManager){
             connManager = (ConnectionManager) service;
-            Iterator portIter = context.getChildProperties("portIter.port");
-            while (portIter.hasNext()){
-                AcceptPort port = new AcceptPortImpl((ModuleProperties) portIter.next(),
-                                                     connManager);
+            for (String propName : JiveGlobals.getProperties("acceptPorts")) {
+                AcceptPort port = new AcceptPortImpl(propName, connManager);
                 ports.add(port);
             }
         }

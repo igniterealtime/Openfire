@@ -11,7 +11,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.XMPPServer;
@@ -68,8 +67,8 @@ public class XMPPServerProxy implements XMPPServer {
         return server.getName();
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        server.initialize(context, container);
+    public void initialize(Container container) {
+        server.initialize(container);
     }
 
     public void start() {

@@ -605,13 +605,13 @@ public class JiveGlobals {
      * @param parent the name of the parent property to return the children for.
      * @return all child property values for the given parent.
      */
-    public static List getProperties(String parent) {
+    public static List<String> getProperties(String parent) {
         if (properties == null) {
             properties = JiveProperties.getInstance();
         }
 
-        Collection propertyNames = properties.getChildrenNames(parent);
-        List values = new ArrayList();
+        Collection<String> propertyNames = properties.getChildrenNames(parent);
+        List<String> values = new ArrayList<String>();
         for (Iterator i=propertyNames.iterator(); i.hasNext(); ) {
             String propName = (String)i.next();
             String value = getProperty(propName);

@@ -12,7 +12,6 @@ package org.jivesoftware.messenger.muc.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.DiscoInfoProvider;
 import org.jivesoftware.messenger.disco.DiscoItemsProvider;
@@ -24,26 +23,24 @@ import org.jivesoftware.messenger.forms.XDataForm;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.messenger.muc.*;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQRegisterHandler;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 
 /**
- * <p>Implements the chat server as a cached memory resident chat server. The server is also
+ * Implements the chat server as a cached memory resident chat server. The server is also
  * responsible for responding Multi-User Chat disco requests as well as removing inactive users from
  * the rooms after a period of time and to maintain a log of the conversation in the rooms that 
  * require to log their conversations. The conversations log is saved to the database using a 
- * separate process</p>
+ * separate process<p>
  *
  * Rooms in memory are held in the instance variable rooms. For optimization reasons, persistent
  * rooms that don't have occupants aren't kept in memory. But a client may need to discover all the
@@ -394,9 +391,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * @param name the new server address.
      */
     public void setChatServerName(String name) {
-        if (context != null) {
-            context.setProperty("xmpp.muc.domain", name);
-        }
+        JiveGlobals.setProperty("xmpp.muc.domain", name);
     }
 
     public List getUsersAllowedToCreate() {
@@ -409,95 +404,79 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public void addSysadmin(String userJID) {
         sysadmins.add(userJID.trim().toLowerCase());
-        // Update the config file
-        if (context != null) {
-            String[] jids = new String[sysadmins.size()];
-            jids = (String[])sysadmins.toArray(jids);
-            context.setProperties("xmpp.muc.sysadmin.jid", jids);
-        }
+        // Update the config.
+        String[] jids = new String[sysadmins.size()];
+        jids = (String[])sysadmins.toArray(jids);
+        JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
     }
 
     public void removeSysadmin(String userJID) {
         sysadmins.remove(userJID.trim().toLowerCase());
-        // Update the config file
-        if (context != null) {
-            String[] jids = new String[sysadmins.size()];
-            jids = (String[])sysadmins.toArray(jids);
-            context.setProperties("xmpp.muc.sysadmin.jid", jids);
-        }
+        // Update the config.
+        String[] jids = new String[sysadmins.size()];
+        jids = (String[])sysadmins.toArray(jids);
+        JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
     }
 
     public void addUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
         // variable there is no need to restart the service
         allowedToCreate.add(userJID.trim().toLowerCase());
-        // Update the config file
-        if (context != null) {
-            String[] jids = new String[allowedToCreate.size()];
-            jids = (String[])allowedToCreate.toArray(jids);
-            context.setProperties("xmpp.muc.create.jid", jids);
-        }
+        // Update the config.
+        String[] jids = new String[allowedToCreate.size()];
+        jids = (String[])allowedToCreate.toArray(jids);
+        JiveGlobals.setProperty("xmpp.muc.create.jid", fromArray(jids));
     }
 
     public void removeUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
         // variable there is no need to restart the service
         allowedToCreate.remove(userJID.trim().toLowerCase());
-        // Update the config file
-        if (context != null) {
-            String[] jids = new String[allowedToCreate.size()];
-            jids = (String[])allowedToCreate.toArray(jids);
-            context.setProperties("xmpp.muc.create.jid", jids);
-        }
+        // Update the config.
+        String[] jids = new String[allowedToCreate.size()];
+        jids = (String[])allowedToCreate.toArray(jids);
+        JiveGlobals.setProperty("xmpp.muc.create.jid", fromArray(jids));
     }
 
-    // #####################################################################
-    // Module management
-    // #####################################################################
-    private ModuleContext context = null;
-
-    public void initialize(ModuleContext modcontext, Container container) {
-        this.context = modcontext;
-        if (context != null) {
-            chatServerName = context.getProperty("xmpp.muc.domain");
-            // Trigger the strategy to load itself from the context
-            historyStrategy.setContext(context, "xmpp.muc.history");
-            // Load the list of JIDs that are sysadmins of the MUC service
-            String[] jids = context.getProperties("xmpp.muc.sysadmin.jid");
-            for (int i = 0; i < jids.length; i++) {
-                sysadmins.add(jids[i].trim().toLowerCase());
+    public void initialize(Container container) {
+        chatServerName = JiveGlobals.getProperty("xmpp.muc.domain");
+        // Trigger the strategy to load itself from the context
+        historyStrategy.setContext("xmpp.muc.history");
+        // Load the list of JIDs that are sysadmins of the MUC service
+        String[] jids = JiveGlobals.getProperty("xmpp.muc.sysadmin.jid").split(",");
+        for (int i = 0; i < jids.length; i++) {
+            sysadmins.add(jids[i].trim().toLowerCase());
+        }
+        // Load the list of JIDs that are allowed to create a MUC room
+        jids = JiveGlobals.getProperty("xmpp.muc.create.jid").split(",");
+        for (int i = 0; i < jids.length; i++) {
+            allowedToCreate.add(jids[i].trim().toLowerCase());
+        }
+        String value = JiveGlobals.getProperty("xmpp.muc.tasks.user.timeout");
+        if (value != null) {
+            try {
+                USER_TIMEOUT = Integer.parseInt(value);
             }
-            // Load the list of JIDs that are allowed to create a MUC room
-            jids = context.getProperties("xmpp.muc.create.jid");
-            for (int i = 0; i < jids.length; i++) {
-                allowedToCreate.add(jids[i].trim().toLowerCase());
+            catch (NumberFormatException e) {
+                Log.error("Wrong number format of property xmpp.muc.tasks.user.timeout", e);
             }
-            String value = context.getProperty("xmpp.muc.tasks.user.timeout");
-            if (value != null) {
-                try {
-                    USER_TIMEOUT = Integer.parseInt(value);
-                }
-                catch (NumberFormatException e) {
-                    Log.error("Wrong number format of property xmpp.muc.tasks.user.timeout", e);
-                }
+        }
+        value = JiveGlobals.getProperty("xmpp.muc.tasks.log.timeout");
+        if (value != null) {
+            try {
+                LOG_TIMEOUT = Integer.parseInt(value);
             }
-            value = context.getProperty("xmpp.muc.tasks.log.timeout");
-            if (value != null) {
-                try {
-                    LOG_TIMEOUT = Integer.parseInt(value);
-                }
-                catch (NumberFormatException e) {
-                    Log.error("Wrong number format of property xmpp.muc.tasks.log.timeout", e);
-                }
+            catch (NumberFormatException e) {
+                Log.error("Wrong number format of property xmpp.muc.tasks.log.timeout", e);
             }
-            value = context.getProperty("xmpp.muc.tasks.log.batchsize");
-            if (value != null) {
-                try {
-                    LOG_BATCH_SIZE = Integer.parseInt(value);
-                }
-                catch (NumberFormatException e) {
-                    Log.error("Wrong number format of property xmpp.muc.tasks.log.batchsize", e);
-                }
+        }
+        value = JiveGlobals.getProperty("xmpp.muc.tasks.log.batchsize");
+        if (value != null) {
+            try {
+                LOG_BATCH_SIZE = Integer.parseInt(value);
+            }
+            catch (NumberFormatException e) {
+                Log.error("Wrong number format of property xmpp.muc.tasks.log.batchsize", e);
             }
         }
         if (chatServerName == null) {
@@ -514,7 +493,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // server went down unexpectedly
         MUCPersistenceManager.resetRoomInMemory();
         initializeCaches();
-        super.initialize(context, container);
+        super.initialize(container);
     }
 
     public void start() {
@@ -802,5 +781,22 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
         }
         return answer.iterator();
+    }
+
+    /**
+     * Converts an array to a comma-delimitted String.
+     *
+     * @param array the array.
+     * @return a comma delimtted String of the array values.
+     */
+    private static String fromArray(String [] array) {
+        StringBuffer buf = new StringBuffer();
+        for (int i=0; i<array.length; i++) {
+            buf.append(array[i]);
+            if (i != array.length-1) {
+                buf.append(",");
+            }
+        }
+        return buf.toString();
     }
 }

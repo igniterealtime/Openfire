@@ -14,9 +14,7 @@ import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.NodePrep;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
@@ -51,10 +49,10 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         super("User Manager");
     }
 
-    private void initializeCaches(ModuleContext context) {
-        CacheManager.initializeCache("username2userid", 128 * 1024, context); // 1/8 MB
-        CacheManager.initializeCache("userid2user", 521 * 1024, context); // 1/2 MB
-        CacheManager.initializeCache("userid2roster", 521 * 1024, context); // 1/2 MB
+    private void initializeCaches() {
+        CacheManager.initializeCache("username2userid", 128 * 1024); // 1/8 MB
+        CacheManager.initializeCache("userid2user", 521 * 1024); // 1/2 MB
+        CacheManager.initializeCache("userid2roster", 521 * 1024); // 1/2 MB
 
         id2userCache = CacheManager.getCache("userid2user");
         name2idCache = CacheManager.getCache("username2userid");
@@ -167,8 +165,8 @@ public class UserManagerImpl extends BasicModule implements UserManager {
     // Module management
     // #####################################################################
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        initializeCaches(context);
+    public void initialize(Container container) {
+        super.initialize(container);
+        initializeCaches();
     }
 }

@@ -10,12 +10,11 @@
  */
 package org.jivesoftware.messenger.chat;
 
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.Message;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import org.jivesoftware.messenger.JiveGlobals;
+
+import java.util.*;
 
 /**
  * <p>Chat rooms may cache history of the conversations in the room in order to
@@ -28,33 +27,16 @@ import java.util.ListIterator;
  */
 public class HistoryStrategy {
 
-    private Type type = Type.number;
-
-    /**
-     * <p>List containing the history of messages.</p>
-     */
-    private LinkedList history = new LinkedList();
     /**
      * Default max number.
      */
     private static final int DEFAULT_MAX_NUMBER = 25;
-    /**
-     * <p>The maximum number of chat history messages stored for the room.</p>
-     */
+
+    private Type type = Type.number;
+    private LinkedList history = new LinkedList();
     private int maxNumber;
-    /**
-     * <p>The parent history used for default settings, or null if no parent
-     * (chat server defaults).
-     */
     private HistoryStrategy parent;
-    /**
-     * <p>Track the latest room subject change or null if none exists yet.</p>
-     */
     private Message roomSubject = null;
-    /**
-     * <p>If set, indicates settings should be saved to the given context.</p>
-     */
-    private ModuleContext context = null;
     /**
      * <p>The string prefix to be used on the context property names
      * (do not include trailing dot).</p>
@@ -96,14 +78,14 @@ public class HistoryStrategy {
      */
     public void setMaxNumber(int max) {
         this.maxNumber = max;
-        if (context != null) {
-            context.setProperty(contextPrefix + ".maxNumber",
+        if (contextPrefix != null) {
+            JiveGlobals.setProperty(contextPrefix + ".maxNumber",
                     Integer.toString(maxNumber));
         }
     }
 
     /**
-     * <p>Set the type of history strategy being used.</p>
+     * Sets the type of history strategy being used.
      *
      * @param newType The new type of chat history to use
      */
@@ -111,13 +93,13 @@ public class HistoryStrategy {
         if (newType != null) {
             type = newType;
         }
-        if (context != null) {
-            context.setProperty(contextPrefix + ".type", type.toString());
+        if (contextPrefix != null) {
+            JiveGlobals.setProperty(contextPrefix + ".type", type.toString());
         }
     }
 
     /**
-     * <p>Obtain the type of history strategy being used.</p>
+     * Returns the type of history strategy being used.
      *
      * @return The current type of strategy being used
      */
@@ -126,10 +108,10 @@ public class HistoryStrategy {
     }
 
     /**
-     * <p>Add a message to the current chat history.</p>
-     * <p>The strategy type will determine what actually happens to the message.</p>
+     * Adds a message to this chat history. The strategy type will
+     * determine what actually happens to the message.
      *
-     * @param packet The packet to add to the chatroom's history.
+     * @param packet the packet to add to the chatroom's history.
      */
     public void addMessage(Message packet) {
         // get the conditions based on default or not
@@ -182,13 +164,13 @@ public class HistoryStrategy {
     }
 
     /**
-     * <p>Obtain the current history as an iterator of messages to play
-     * back to a new room member.</p>
+     * Returns the current history as an iterator of messages to play
+     * back to a new room member.
      *
-     * @return An iterator of Message objects to be sent to the new room member
+     * @return an iterator of Message objects to be sent to the new room member
      */
     public Iterator getMessageHistory() {
-        LinkedList list = new LinkedList(history);
+        List list = new ArrayList(history);
         return list.iterator();
     }
 
@@ -221,17 +203,14 @@ public class HistoryStrategy {
     }
 
     /**
-     * <p>Sets the context and string prefix to use for retrieving and saving
-     * settings (and also triggers an immediate loading of properties).</p>
+     * Set the prefix to use for retrieving and saving settings
      *
-     * @param newContext The context to use to read/write properties
-     * @param prefix     The prefix to use (without trailing dot) on property names
+     * @param prefix the prefix to use (without trailing dot) on property names
      */
-    public void setContext(ModuleContext newContext, String prefix) {
-        this.context = newContext;
+    public void setContext(String prefix) {
         this.contextPrefix = prefix;
-        setTypeFromString(context.getProperty(prefix + ".type"));
-        String maxNumberString = context.getProperty(prefix + ".maxNumber");
+        setTypeFromString(JiveGlobals.getProperty(prefix + ".type"));
+        String maxNumberString = JiveGlobals.getProperty(prefix + ".maxNumber");
         if (maxNumberString != null && maxNumberString.trim().length() > 0) {
             try {
                 setMaxNumber(Integer.parseInt(maxNumberString));

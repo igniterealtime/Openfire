@@ -74,8 +74,6 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
      */
     private Random randomResource = new Random();
 
-    private ModuleContext context;
-
     public SessionManagerImpl() {
         super("Session Manager");
     }
@@ -880,7 +878,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
 
     public void setConflictKickLimit(int limit) {
         conflictLimit = limit;
-        context.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+        JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
     }
 
     /**
@@ -929,20 +927,19 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
         }
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        this.context = context;
-        if ("true".equals(context.getProperty("xmpp.audit.active"))) {
+    public void initialize(Container container) {
+        super.initialize(container);
+        if (JiveGlobals.getBooleanProperty("xmpp.audit.active")) {
             streamIDFactory = new AuditStreamIDFactory();
         }
         else {
             streamIDFactory = new BasicStreamIDFactory();
         }
 
-        String conflictLimitProp = context.getProperty("xmpp.session.conflict-limit");
+        String conflictLimitProp = JiveGlobals.getProperty("xmpp.session.conflict-limit");
         if (conflictLimitProp == null) {
             conflictLimit = 0;
-            context.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+            JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
         }
         else {
             try {
@@ -950,7 +947,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
             }
             catch (NumberFormatException e) {
                 conflictLimit = 0;
-                context.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+                JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
             }
         }
     }

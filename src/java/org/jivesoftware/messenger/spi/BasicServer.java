@@ -12,7 +12,6 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.ServiceLookup;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -40,7 +39,6 @@ public class BasicServer
     private ServiceLookup lookup;
     private ConnectionManager connectionManager;
     private boolean initialized = false;
-    private ModuleContext modContext = null;
 
     /**
      * Create a default loopback test server.
@@ -64,7 +62,7 @@ public class BasicServer
         if (!initialized) {
             throw new IllegalStateException("Not initialized yet");
         }
-        return new XMPPServerInfoImpl(modContext, name, version, startDate, stopDate, ports);
+        return new XMPPServerInfoImpl(name, version, startDate, stopDate, ports);
     }
 
     public boolean isLocal(XMPPAddress jid) {
@@ -91,12 +89,11 @@ public class BasicServer
         return "XMPP Server Kernel";
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        modContext = context;
+    public void initialize(Container container) {
+        super.initialize(container);
         try {
             lookup = container.getServiceLookup();
-            name = context.getProperty("xmpp.domain");
+            name = JiveGlobals.getProperty("xmpp.domain");
             if (name == null) {
                 name = "127.0.0.1";
             }

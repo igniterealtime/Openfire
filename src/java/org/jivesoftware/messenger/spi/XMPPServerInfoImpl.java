@@ -10,9 +10,10 @@
  */
 package org.jivesoftware.messenger.spi;
 
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.messenger.XMPPServerInfo;
+import org.jivesoftware.messenger.JiveGlobals;
+
 import java.util.Date;
 import java.util.Iterator;
 
@@ -23,30 +24,25 @@ import java.util.Iterator;
  * @author Iain Shigeoka
  */
 public class XMPPServerInfoImpl implements XMPPServerInfo {
+
     private Date startDate;
     private Date stopDate;
     private String name;
     private Version ver;
     private Iterator ports;
-    private ModuleContext modContext;
 
     /**
      * Simple constructor
      *
-     * @param context    the context for the server.
      * @param serverName The server's serverName (e.g. jivesoftware.com)
      * @param version    The server's version number
      * @param startDate  The server's last start time (can be null indicating it hasn't been started)
      * @param stopDate   The server's last stop time (can be null indicating it is running or hasn't been started)
      * @param portIter   The portIter active on the server
      */
-    public XMPPServerInfoImpl(ModuleContext context,
-                              String serverName,
-                              Version version,
-                              Date startDate,
-                              Date stopDate,
-                              Iterator portIter) {
-        modContext = context;
+    public XMPPServerInfoImpl(String serverName, Version version, Date startDate, Date stopDate,
+            Iterator portIter)
+    {
         this.name = serverName;
         this.ver = version;
         this.startDate = startDate;
@@ -65,10 +61,10 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     public void setName(String serverName) {
         name = serverName;
         if (serverName == null) {
-            modContext.deleteProperty("xmpp.domain");
+            JiveGlobals.deleteProperty("xmpp.domain");
         }
         else {
-            modContext.setProperty("xmpp.domain", serverName);
+            JiveGlobals.setProperty("xmpp.domain", serverName);
         }
     }
 

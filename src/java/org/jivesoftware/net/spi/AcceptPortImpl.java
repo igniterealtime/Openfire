@@ -18,12 +18,12 @@ import java.net.InetSocketAddress;
 import java.nio.channels.*;
 
 import org.jivesoftware.net.*;
-import org.jivesoftware.messenger.container.ModuleProperties;
+import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 public class AcceptPortImpl implements AcceptPort {
 
-    private ModuleProperties properties;
+    private String context;
     private InetSocketAddress address;
     private boolean secure;
     private AcceptPolicy policy = new BasicAcceptPolicy(true);
@@ -34,21 +34,25 @@ public class AcceptPortImpl implements AcceptPort {
     private AcceptThread acceptThread = null;
     private ConnectionManager conManager;
 
-    public AcceptPortImpl(ModuleProperties props, ConnectionManager connectionManager) {
-        properties = props;
+    public AcceptPortImpl(String context, ConnectionManager connectionManager) {
+        this.context = context;
         conManager = connectionManager;
-        String hostname = properties.getProperty("port.hostname");
-        String port = properties.getProperty("port.portnumber");
+        String hostname = JiveGlobals.getProperty(context + ".hostname");
+        String port = JiveGlobals.getProperty(".portnumber");
         address = new InetSocketAddress(hostname,Integer.parseInt(port));
     }
 
-    public AcceptPortImpl(ModuleProperties props,
-                          ConnectionManager connectionManager,
-                          InetSocketAddress bindAddress) {
-        properties = props;
+    public AcceptPortImpl(String context, ConnectionManager connectionManager,
+            InetSocketAddress bindAddress)
+    {
+        this.context = context;
         conManager = connectionManager;
         address = bindAddress;
         savePort();
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 
     public boolean isSecure() {
@@ -95,9 +99,7 @@ public class AcceptPortImpl implements AcceptPort {
     }
 
     public void remove() throws IOException {
-        if (properties != null){
-            properties.deleteProperty("port");
-        }
+        JiveGlobals.deleteProperty(context);
         if (startTime > 0){
             close();
         }
@@ -119,10 +121,10 @@ public class AcceptPortImpl implements AcceptPort {
         return disconnectMonitor;
     }
 
-    private void savePort(){
-        if (properties != null && address != null){
-            properties.setProperty("port.hostname",address.getHostName());
-            properties.setProperty("port.portnumber",Integer.toString(address.getPort()));
+    public void savePort(){
+        if (address != null){
+            JiveGlobals.setProperty(context + ".hostname",address.getHostName());
+            JiveGlobals.setProperty(context + ".portnumber",Integer.toString(address.getPort()));
         }
     }
 
@@ -147,18 +149,22 @@ public class AcceptPortImpl implements AcceptPort {
                     SocketChannel socket = server.accept();
                     Connection conn = new SocketChannelConnection(socket);
                     acceptMonitor.addSample(conn);
-                    if (policy.evaluate(conn)){
+                    if (policy.evaluate(conn)) {
                         conManager.addConnection(conn);
                         connectMonitor.addSample(conn);
-                    } else {
+                    }
+                    else {
                         disconnectMonitor.addSample(conn);
                     }
-                } catch (ClosedChannelException ce){
+                }
+                catch (ClosedChannelException ce){
                     startTime = -1;
                     running = false;
-                } catch (NotYetBoundException ce){
+                }
+                catch (NotYetBoundException ce){
                     throw new IllegalStateException("Must init thread before running");
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     Log.error(e);
                 }
             }
@@ -169,7 +175,8 @@ public class AcceptPortImpl implements AcceptPort {
                 startTime = -1;
                 try {
                     server.close();
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     //
                 }
             }

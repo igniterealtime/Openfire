@@ -11,7 +11,6 @@
 package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Permissions;
@@ -105,8 +104,8 @@ public class UserManagerProxy implements UserManager {
         return null;
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        userManager.initialize(context, container);
+    public void initialize(Container container) {
+        userManager.initialize(container);
     }
 
     public void start() {

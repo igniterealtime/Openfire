@@ -514,10 +514,9 @@ public class BasicModule implements Module {
      * <p>Inheriting classes that choose to override this method MUST
      * call this initialize() method before accessing BasicModule resources.</p>
      *
-     * @param context   The context for the module
      * @param container The container hosting the module
      */
-    public void initialize(ModuleContext context, Container container) {
+    public void initialize(Container container) {
         try {
             lookup = container.getServiceLookup();
             trackInfo = getTrackInfo();

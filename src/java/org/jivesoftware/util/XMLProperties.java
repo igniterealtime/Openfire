@@ -11,10 +11,11 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.container.ModuleProperties;
 import java.io.*;
 import java.util.*;
 import org.dom4j.Element;
+import org.dom4j.Document;
+import org.dom4j.io.*;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -34,10 +35,10 @@ import org.dom4j.Element;
  * @author Derek DeMoro
  * @author Iain Shigeoka
  */
-public class XMLProperties implements ModuleProperties {
+public class XMLProperties {
 
     private File file;
-    private Element rootElement;
+    private Document document;
 
     /**
      * Parsing the XML file every time we need a property is slow. Therefore,
@@ -46,24 +47,24 @@ public class XMLProperties implements ModuleProperties {
     private Map propertyCache = new HashMap();
 
     /**
-     * <p>Creates a sub-property object rooted at the given root element.</p>
+     * Creates a new XMLProperties object.
      *
-     * @param propFile The property file this XML property should be saved to
-     * @param root     The root element for the properties
+     * @param fileName the full path the file that properties should be read from
+     *                 and written to.
+     * @throws IOException if an error occurs loading the properties.
      */
-    private XMLProperties(File propFile, Element root) {
-        file = propFile;
-        rootElement = root;
+    public XMLProperties(String fileName) throws IOException {
+        this(new File(fileName));
     }
 
     /**
      * Creates a new XMLProperties object.
      *
-     * @param fileName the full path the file that properties should be read from
-     *                 and written to.
+     * @param file the file that properties should be read from and written to.
+     * @throws IOException if an error occurs loading the properties.
      */
-    public XMLProperties(String fileName) throws IOException {
-        this.file = new File(fileName);
+    public XMLProperties(File file) throws IOException {
+        this.file = file;
         if (!file.exists()) {
             // Attempt to recover from this error case by seeing if the
             // tmp file exists. It's possible that the rename of the
@@ -72,7 +73,7 @@ public class XMLProperties implements ModuleProperties {
             File tempFile;
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
             if (tempFile.exists()) {
-                Log.error("WARNING: " + fileName + " was not found, but temp file from " +
+                Log.error("WARNING: " + file.getName() + " was not found, but temp file from " +
                         "previous write operation was. Attempting automatic recovery." +
                         " Please check file for data consistency.");
                 tempFile.renameTo(file);
@@ -81,24 +82,24 @@ public class XMLProperties implements ModuleProperties {
             // being there, so throw an error.
             else {
                 throw new FileNotFoundException("XML properties file does not exist: "
-                        + fileName);
+                        + file.getName());
             }
         }
         // Check read and write privs.
         if (!file.canRead()) {
-            throw new IOException("XML properties file must be readable: " + fileName);
+            throw new IOException("XML properties file must be readable: " + file.getName());
         }
         if (!file.canWrite()) {
-            throw new IOException("XML properties file must be writable: " + fileName);
+            throw new IOException("XML properties file must be writable: " + file.getName());
         }
         FileReader reader = null;
         try {
             reader = new FileReader(file);
-            rootElement = XPPReader.parseDocument(reader,
-                    this.getClass()).getRootElement();
+            SAXReader xmlReader = new SAXReader();
+            document = xmlReader.read(reader);
         }
         catch (Exception e) {
-            Log.error("Error reading XML properties file " + fileName + ".", e);
+            Log.error("Error reading XML properties file " + file.getName() + ".", e);
             throw new IOException(e.getMessage());
         }
         finally {
@@ -122,7 +123,7 @@ public class XMLProperties implements ModuleProperties {
 
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length; i++) {
             element = element.element(propName[i]);
             if (element == null) {
@@ -169,7 +170,7 @@ public class XMLProperties implements ModuleProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy,
         // stopping one short.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             if (element == null) {
@@ -191,25 +192,6 @@ public class XMLProperties implements ModuleProperties {
         }
         String[] childrenNames = new String[props.size()];
         return (String[])props.toArray(childrenNames);
-    }
-
-    public ModuleProperties createChildProperty(String name) {
-
-        String[] propName = parsePropertyName(name);
-        // Search for this property by traversing down the XML heirarchy.
-        Element element = rootElement;
-        for (int i = 0; i < propName.length - 1; i++) {
-            // If we don't find this part of the property in the XML heirarchy
-            // we add it as a new node
-            if (element.element(propName[i]) == null) {
-                element.addElement(propName[i]);
-            }
-            element = element.element(propName[i]);
-        }
-        element = element.addElement(propName[propName.length - 1]);
-        // write the XML properties to disk
-        saveProperties();
-        return new XMLProperties(file, element);
     }
 
     /**
@@ -237,7 +219,7 @@ public class XMLProperties implements ModuleProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy,
         // stopping one short.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             if (element == null) {
@@ -248,9 +230,9 @@ public class XMLProperties implements ModuleProperties {
         }
         // We found matching property, return names of children.
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
-        ArrayList props = new ArrayList();
+        ArrayList<String> props = new ArrayList<String>();
         while (iter.hasNext()) {
-            props.add(new XMLProperties(file, (Element)iter.next()));
+            props.add(((Element)iter.next()).getName());
         }
         return props.iterator();
     }
@@ -270,14 +252,14 @@ public class XMLProperties implements ModuleProperties {
      * &lt;/foo&gt;
      * </pre>
      *
-     * @param name   the name of the property.
-     * @param values The array of values for the property (can be empty but not null)
+     * @param name the name of the property.
+     * @param values the values for the property (can be empty but not null).
      */
-    public void setProperties(String name, String[] values) {
+    public void setProperties(String name, List<String> values) {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy,
         // stopping one short.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length - 1; i++) {
             // If we don't find this part of the property in the XML heirarchy
             // we add it as a new node
@@ -296,11 +278,9 @@ public class XMLProperties implements ModuleProperties {
         for (iter = toRemove.iterator(); iter.hasNext();) {
             element.remove((Element)iter.next());
         }
-        // Add the new children
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != null) {
-                element.addElement(childName).setText(values[i]);
-            }
+        // Add the new children.
+        for (String value : values) {
+            element.addElement(childName).setText(value);
         }
         saveProperties();
     }
@@ -318,7 +298,7 @@ public class XMLProperties implements ModuleProperties {
     public String[] getChildrenProperties(String parent) {
         String[] propName = parsePropertyName(parent);
         // Search for this property by traversing down the XML heirarchy.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length; i++) {
             element = element.element(propName[i]);
             if (element == null) {
@@ -353,7 +333,7 @@ public class XMLProperties implements ModuleProperties {
 
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length; i++) {
             // If we don't find this part of the property in the XML heirarchy
             // we add it as a new node
@@ -379,7 +359,7 @@ public class XMLProperties implements ModuleProperties {
 
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
-        Element element = rootElement;
+        Element element = document.getRootElement();
         for (int i = 0; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             // Can't find the property so return.
@@ -405,7 +385,9 @@ public class XMLProperties implements ModuleProperties {
         try {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
             writer = new FileWriter(tempFile);
-            XPPWriter.write(rootElement.getDocument(), writer);
+            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
+            xmlWriter.write(document);
         }
         catch (Exception e) {
             Log.error(e);

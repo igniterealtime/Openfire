@@ -12,7 +12,6 @@ package org.jivesoftware.messenger.muc;
 
 import java.util.List;
 
-import org.jivesoftware.messenger.muc.HistoryStrategy;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.*;
@@ -20,9 +19,7 @@ import org.jivesoftware.messenger.*;
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
  * independently from the rest of the Jive server infrastruture. This theoretically allows
- * deployment of the groupchat on a separate server from the main IM server. <p/>
- * 
- * TODO Enforce chat security and authorization using proxies
+ * deployment of the groupchat on a separate server from the main IM server.
  * 
  * @author Gaston Dombiak
  */
@@ -181,7 +178,7 @@ public interface MultiUserChatServer {
      * the logged messages in memory until the logging process saves them to the database. It's 
      * possible to configure the logging process to run every X milliseconds and also the number 
      * of messages to log on each execution. 
-     * @see org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.messenger.container.ModuleContext, org.jivesoftware.messenger.container.Container)  
+     * @see org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.messenger.container.Container)
      * 
      * @param room the room that received the message.
      * @param message the message to log as part of the conversation in the room.

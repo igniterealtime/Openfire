@@ -59,6 +59,7 @@ abstract public class ServerStarter {
             // TODO: Possibly load this lib dir as a java property?
             File libDir = new File("../lib");
             ClassLoader loader = new JiveClassLoader(parent, libDir);
+           
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(getBootContainerClassName());
             containerClass.newInstance();

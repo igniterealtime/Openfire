@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.audit.spi;
 
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
@@ -30,7 +29,6 @@ import javax.xml.stream.XMLStreamWriter;
 public class AuditorImpl implements Auditor {
 
     private AuditManager auditManager;
-    private ModuleContext moduleContext;
     private File currentAuditFile;
     private Writer writer;
     private XMLStreamWriter xmlSerializer;
@@ -39,9 +37,8 @@ public class AuditorImpl implements Auditor {
     private long maxCount;
     private boolean closed = false;
 
-    public AuditorImpl(AuditManager manager, ModuleContext context) {
+    public AuditorImpl(AuditManager manager) {
         auditManager = manager;
-        moduleContext = context;
     }
 
     public void audit(XMPPPacket packet) {
@@ -172,7 +169,8 @@ public class AuditorImpl implements Auditor {
         int i;
         // Find the next available log file name
         for (i = 0; maxCount < 1 || i < maxCount; i++) {
-            currentAuditFile = new File(moduleContext.getLogDirectory(), "jive.audit-" + i + ".log");
+            currentAuditFile = new File(JiveGlobals.getMessengerHome() + File.separator + "logs",
+                    "jive.audit-" + i + ".log");
             if (!currentAuditFile.exists()) {
                 break;
             }
@@ -191,9 +189,11 @@ public class AuditorImpl implements Auditor {
             // Rotate the files
             for (i--; i >= 0; i--) {
                 String previousName = "jive.audit-" + i + ".log";
-                File previousFile = new File(moduleContext.getLogDirectory(), previousName);
+                File previousFile = new File(JiveGlobals.getMessengerHome() + File.separator + "logs",
+                        previousName);
                 previousFile.renameTo(currentAuditFile);
-                currentAuditFile = new File(moduleContext.getLogDirectory(), previousName);
+                currentAuditFile = new File(JiveGlobals.getMessengerHome() + File.separator + "logs",
+                        previousName);
             }
         }
 

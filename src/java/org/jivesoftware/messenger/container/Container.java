@@ -107,15 +107,6 @@ public interface Container {
     void stopService(Class service) throws UnauthorizedException;
 
     /**
-     * Obtain the general module context for this container. The module context
-     * may be empty since context often is picked up on a module by module basis.
-     *
-     * @return ModuleContext the module context for the container
-     * @throws UnauthorizedException If caller doesn't have appropriate permission
-     */
-    ModuleContext getModuleContext() throws UnauthorizedException;
-
-    /**
      * Obtain a special entry that modules can use to locate or register local services in
      * the service registrar.
      * <p/>

@@ -87,16 +87,13 @@ public class JiveModuleLoader {
      *
      * @param className The fully qualified name of the class to load
      * @return The module object loaded
-     * @throws java.lang.ClassNotFoundException
-     *                                     if the class could not be loaded by this class loader.
-     * @throws java.lang.IllegalAccessException
-     *                                     if the class constructor was private or protected.
-     * @throws java.lang.InstantiationException
-     *                                     if the class could not be instantiated (initialization error).
-     * @throws java.lang.SecurityException if the custom class loader not allowed.
+     * @throws ClassNotFoundException if the class could not be loaded by this class loader.
+     * @throws IllegalAccessException if the class constructor was private or protected.
+     * @throws InstantiationException if the class could not be instantiated (initialization error).
+     * @throws SecurityException if the custom class loader not allowed.
      */
     public Module loadModule(String className) throws ClassNotFoundException, IllegalAccessException,
-                                                      InstantiationException, SecurityException
+            InstantiationException, SecurityException
     {
         Class moduleClass = classLoader.loadClass(className);
         Module mod = (Module)moduleClass.newInstance();
@@ -118,5 +115,4 @@ public class JiveModuleLoader {
         }
         return parent;
     }
-
 }

@@ -13,13 +13,12 @@ package org.jivesoftware.messenger.user.spi;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XPPReader;
 import org.jivesoftware.messenger.PrivateStore;
+import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.database.DbConnectionManager;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -45,17 +44,20 @@ import org.dom4j.Element;
  */
 public class DbPrivateStore extends BasicModule implements PrivateStore {
 
-    private static final String LOAD_PRIVATE = "SELECT value FROM jivePrivate WHERE userID=? AND namespace=?";
-    private static final String INSERT_PRIVATE = "INSERT INTO jivePrivate (value,name,userID,namespace) VALUES (?,?,?,?)";
-    private static final String UPDATE_PRIVATE = "UPDATE jivePrivate SET value=?, name=? WHERE userID=? AND namespace=?";
+    private static final String LOAD_PRIVATE =
+        "SELECT value FROM jivePrivate WHERE userID=? AND namespace=?";
+    private static final String INSERT_PRIVATE =
+        "INSERT INTO jivePrivate (value,name,userID,namespace) VALUES (?,?,?,?)";
+    private static final String UPDATE_PRIVATE =
+        "UPDATE jivePrivate SET value=?, name=? WHERE userID=? AND namespace=?";
 
     // currently no delete supported, we can detect an add of an empty element and use that to
     // signal a delete but that optimization doesn't seem necessary.
-    private static final String DELETE_PRIVATE = "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
+    private static final String DELETE_PRIVATE =
+            "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
 
     // TODO: As with IQAuthHandler, this is not multi-server safe
     private static boolean enabled;
-    private ModuleContext context;
 
     public DbPrivateStore() {
         super("Private user data storage");
@@ -67,7 +69,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
 
     public void setEnabled(boolean enabled) {
         DbPrivateStore.enabled = enabled;
-        context.setProperty("xmpp.private", enabled ? "true" : "false");
+        JiveGlobals.setProperty("xmpp.private", Boolean.toString(enabled));
     }
 
     public void add(long userID, Element data) throws UnauthorizedException {
@@ -160,9 +162,8 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
         return data;
     }
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
-        this.context = context;
-        enabled = "true".equals(context.getProperty("xmpp.private"));
+    public void initialize(Container container) {
+        super.initialize(container);
+        enabled = JiveGlobals.getBooleanProperty("xmpp.private");
     }
 }

@@ -10,9 +10,9 @@
  */
 package org.jivesoftware.messenger.muc;
 
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.Message;
+import org.jivesoftware.messenger.JiveGlobals;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -57,10 +57,6 @@ public class HistoryStrategy {
      */
     private Message roomSubject = null;
     /**
-     * If set, indicates settings should be saved to the given context.
-     */
-    private ModuleContext context = null;
-    /**
      * The string prefix to be used on the context property names
      * (do not include trailing dot).
      */
@@ -99,8 +95,8 @@ public class HistoryStrategy {
      */
     public void setMaxNumber(int max) {
         this.maxNumber = max;
-        if (context != null){
-            context.setProperty(contextPrefix + ".maxNumber",
+        if (contextPrefix != null){
+            JiveGlobals.setProperty(contextPrefix + ".maxNumber",
                                     Integer.toString(maxNumber));
         }
     }
@@ -114,8 +110,8 @@ public class HistoryStrategy {
         if (newType != null){
             type = newType;
         }
-        if (context != null){
-            context.setProperty(contextPrefix + ".type", type.toString());
+        if (contextPrefix != null){
+            JiveGlobals.setProperty(contextPrefix + ".type", type.toString());
         }
     }
 
@@ -234,17 +230,15 @@ public class HistoryStrategy {
     }
 
     /**
-     * Sets the context and string prefix to use for retrieving and saving settings (and also 
+     * Sets the prefix to use for retrieving and saving settings (and also
      * triggers an immediate loading of properties).
      *
-     * @param newContext The context to use to read/write properties.
-     * @param prefix The prefix to use (without trailing dot) on property names.
+     * @param prefix the prefix to use (without trailing dot) on property names.
      */
-    public void setContext(ModuleContext newContext, String prefix) {
-        this.context = newContext;
+    public void setContext(String prefix) {
         this.contextPrefix = prefix;
-        setTypeFromString(context.getProperty(prefix + ".type"));
-        String maxNumberString = context.getProperty(prefix + ".maxNumber");
+        setTypeFromString(JiveGlobals.getProperty(prefix + ".type"));
+        String maxNumberString = JiveGlobals.getProperty(prefix + ".maxNumber");
         if (maxNumberString != null && maxNumberString.trim().length() > 0){
             try {
                 setMaxNumber(Integer.parseInt(maxNumberString));

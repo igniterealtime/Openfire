@@ -12,9 +12,7 @@ package org.jivesoftware.messenger.container.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.container.*;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XPPReader;
+import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 
@@ -122,16 +120,12 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     protected abstract String getFileCoreName();
 
     /**
-     * <p>The root context for the server. modules will use this as
-     * a parent context to their own module context.</p>
-     */
-    private XMLModuleContext context;
-    /**
-     * <p>The lookup for the bootstrap container.</p>
+     * The lookup for the bootstrap container.
      */
     private ServiceLookup lookup;
+
     /**
-     * <p>The registration of the service with itself.</p>
+     * The registration of the service with itself.
      */
     private ServiceRegistration containerRegistration;
 
@@ -145,8 +139,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * located here.
      */
     private File messengerHome;
-    private File logDir;
-    private File configFile;
     private ClassLoader loader;
 
     /**
@@ -154,7 +146,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      */
     private boolean setupMode = true;
 
-    private static final String JIVE_LOG_DIR = "logs";
     private static final String STARTER_CLASSNAME =
             "org.jivesoftware.messenger.container.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
@@ -171,14 +162,13 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     }
 
     /**
-     * <p>Starts the container.</p>
+     * Starts the container.
      */
     private void start() {
         try {
             // Let's specify jive_messenger.xml as the new config file.
-            locateJiveHome();
-            context = new XMLModuleContext(null, configFile, messengerHome, logDir);
-            if ("true".equals(context.getProperty("setup"))) {
+            locateMessenger();
+            if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
                 setupMode = false;
             }
 
@@ -192,7 +182,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
 
             loader = Thread.currentThread().getContextClassLoader();
 
-            
             if (setupMode) {
                 loadCorePlugins(getSetupModuleNames());
             }
@@ -243,14 +232,14 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         java.sql.Connection conn = null;
         try {
             conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT userID FROM jiveUser WHERE userID=1");
+            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM jiveID");
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-            }
+            rs.next();
             rs.close();
+            stmt.close();
         }
         catch (Exception e) {
-            System.out.println("Database setup or configuration error: " +
+            System.err.println("Database setup or configuration error: " +
                     "Please verify your database settings and check the " +
                     "logs/error.log file for detailed error messages.");
             Log.error("Database could not be accessed", e);
@@ -258,12 +247,8 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         }
         finally {
             if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (SQLException e) {
-                    Log.error("Could not close open connection ", e);
-                }
+                try { conn.close(); }
+                catch (SQLException e) { Log.error(e); }
             }
         }
     }
@@ -280,7 +265,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             try {
                 Class modClass = loader.loadClass(modules[i]);
                 mod = (Module)modClass.newInstance();
-                mod.initialize(context, this);
+                mod.initialize(this);
                 isInitialized = true;
                 this.modules.add(mod);
             }
@@ -350,8 +335,8 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             File[] plugins = pluginDir.listFiles();
             for (int i = 0; i < plugins.length; i++) {
                 if (plugins[i].isDirectory()) {
+                    // Only load admin plugin if in setup mode.
                     if (setupMode) {
-                        // Only load web-admin plug-in
                         if ("admin".equals(plugins[i].getName())) {
                             loadPlugin(plugins[i]);
                         }
@@ -385,11 +370,10 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         try {
             File moduleConfig = new File(pluginDir, "module.xml");
             if (moduleConfig.exists()) {
-                ModuleContext modContext =
-                        new XMLModuleContext(context, moduleConfig, pluginDir, logDir);
+                XMLProperties moduleProps = new XMLProperties(moduleConfig);
                 JiveModuleLoader modLoader = new JiveModuleLoader(pluginDir.toString());
-                mod = modLoader.loadModule(modContext.getProperty("module"));
-                mod.initialize(modContext, this);
+                mod = modLoader.loadModule(moduleProps.getProperty("module"));
+                mod.initialize(this);
                 mod.start();
                 this.modules.add(mod);
             }
@@ -433,10 +417,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 ((Module)mod).destroy();
             }
         }
-    }
-
-    public ModuleContext getModuleContext() throws UnauthorizedException {
-        return context;
     }
 
     public Entry getLocalServerAttribute() throws UnauthorizedException {
@@ -559,7 +539,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      *
      * @throws FileNotFoundException If jiveHome could not be located
      */
-    private void locateJiveHome() throws FileNotFoundException {
+    private void locateMessenger() throws FileNotFoundException {
         String jiveConfigName = "conf" + File.separator + "jive-" + getFileCoreName() + ".xml";
         // First, try to load it jiveHome as a system property.
         if (messengerHome == null) {
@@ -574,21 +554,14 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             }
         }
 
-        // If we still don't have jiveHome, let's assume this is standalone
-        // and just look for jiveHome in a standard sub-dir location and verify
+        // If we still don't have messengerHome, let's assume this is standalone
+        // and just look for messengerHome in a standard sub-dir location and verify
         // by looking for the config file
         if (messengerHome == null) {
             try {
                 messengerHome = verifyHome("..", jiveConfigName);
             }
             catch (FileNotFoundException fe) {
-                String path = "..";
-                try {
-                    path = new File("..").getCanonicalPath();
-                }
-                catch (Exception e) {
-                    System.err.println("Could not resolve path to '..'");
-                }
             }
         }
 
@@ -637,8 +610,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         }
         else {
             JiveGlobals.messengerHome = messengerHome.toString();
-            configFile = new File(messengerHome, jiveConfigName);
-            logDir = new File(messengerHome, JIVE_LOG_DIR);
         }
     }
 }

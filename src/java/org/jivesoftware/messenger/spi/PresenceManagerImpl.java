@@ -12,7 +12,6 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.*;
@@ -434,8 +433,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     // Module management
     // #####################################################################
 
-    public void initialize(ModuleContext context, Container container) {
-        super.initialize(context, container);
+    public void initialize(Container container) {
+        super.initialize(container);
         initializeCaches();
     }
 

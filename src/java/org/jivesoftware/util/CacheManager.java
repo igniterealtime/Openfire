@@ -10,9 +10,9 @@
  */
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.container.ModuleContext;
+import org.jivesoftware.messenger.JiveGlobals;
 
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * A centralized, JVM static manager of Jive caches. Caches are essential for
@@ -22,7 +22,7 @@ import java.util.Hashtable;
  */
 public class CacheManager {
 
-    private static Hashtable caches = new Hashtable();
+    private static Map caches = new HashMap();
     private static long maxLifetime = JiveConstants.HOUR * 6;
 
     /**
@@ -35,21 +35,13 @@ public class CacheManager {
      * The property names should be "cache.name.size" where 'name' will be the same as the cache name.
      * If the property exists, that value will be used instead of the defaultMaxCacheSize.</p>
      *
-     * @param name                the name of the cache to create.
-     * @param defaultMaxCacheSize The default max size the cache can grow to, in bytes.
+     * @param name the name of the cache to create.
+     * @param defaultMaxCacheSize the default max size the cache can grow to, in bytes.
      */
-    public static void initializeCache(String name, int defaultMaxCacheSize, ModuleContext context) {
+    public static void initializeCache(String name, int defaultMaxCacheSize) {
         Cache cache = (Cache)caches.get(name);
         if (cache == null) {
-            String cacheSize = context.getProperty("cache." + name + ".size");
-            int maxCacheSize = defaultMaxCacheSize;
-            if (cacheSize != null) {
-                try {
-                    maxCacheSize = Integer.parseInt(cacheSize);
-                }
-                catch (NumberFormatException e) { /* ignore */
-                }
-            }
+            int maxCacheSize = JiveGlobals.getIntProperty("cache." + name + ".size", defaultMaxCacheSize);
             caches.put(name, new Cache(name, maxCacheSize, maxLifetime));
         }
     }

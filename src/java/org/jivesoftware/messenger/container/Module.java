@@ -47,14 +47,13 @@ public interface Module {
     String getName();
 
     /**
-     * Initialize the module with the given properties and it's container.
+     * Initialize the module with the container.
      * Modules may be initialized and never started, so modules
      * should be prepared for a call to destroy() to follow initialize().
      *
-     * @param context   Initialization properties for this module
-     * @param container The container hosting this module.
+     * @param container the container hosting this module.
      */
-    void initialize(ModuleContext context, Container container);
+    void initialize(Container container);
 
     /**
      * Start the module (must return quickly). Any long running

@@ -98,6 +98,7 @@
 
     <path id="test.dependencies">
         <path refid="compile.dependencies" />
+        <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
         <fileset dir="${lib.build.dir}" includes="junit.jar" />
     </path>
 
@@ -355,7 +356,6 @@
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>
                 <path refid="test.dependencies" />
-                <pathelement path="${compile.dir}" />
                 <pathelement path="${test.classes.dest.dir}" />
             </classpath>
 

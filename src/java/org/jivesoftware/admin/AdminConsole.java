@@ -13,6 +13,9 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -78,7 +81,7 @@ public class AdminConsole {
      * Returns the name of the application.
      */
     public static String getAppName() {
-        Element appName = (Element)generatedModel.selectSingleNode("/adminconsole/global/appname");
+        Element appName = (Element)generatedModel.selectSingleNode("//adminconsole/global/appname");
         if (appName != null) {
             return appName.getText();
         }
@@ -94,7 +97,7 @@ public class AdminConsole {
      */
     public static String getLogoImage() {
         Element globalLogoImage = (Element)generatedModel.selectSingleNode(
-                "/adminconsole/global/logo-image");
+                "//adminconsole/global/logo-image");
         if (globalLogoImage != null) {
             return globalLogoImage.getText();
         }
@@ -110,7 +113,7 @@ public class AdminConsole {
      */
     public static String getLoginLogoImage() {
         Element globalLoginLogoImage = (Element)generatedModel.selectSingleNode(
-                "/adminconsole/global/login-image");
+                "//adminconsole/global/login-image");
         if (globalLoginLogoImage != null) {
             return globalLoginLogoImage.getText();
         }
@@ -126,12 +129,21 @@ public class AdminConsole {
      */
     public static String getVersionString() {
         Element globalVersion = (Element)generatedModel.selectSingleNode(
-                "/adminconsole/global/version");
+                "//adminconsole/global/version");
         if (globalVersion != null) {
             return globalVersion.getText();
         }
         else {
-            return null;
+            // Default to the Jive Messenger version if none has been provided via XML.
+            try {
+                XMPPServer xmppServer = (XMPPServer)ServiceLookupFactory.getLookup().lookup(
+                        XMPPServer.class);
+                return xmppServer.getServerInfo().getVersion().getVersionString();
+            }
+            catch (UnauthorizedException ue) {
+                Log.error(ue);
+                return null;
+            }
         }
     }
 
@@ -218,28 +230,28 @@ public class AdminConsole {
         // Add in all overrides.
         for (Element element : overrideModels) {
             // See if global settings are overriden.
-            Element appName = (Element)element.selectSingleNode("/adminconsole/global/appname");
+            Element appName = (Element)element.selectSingleNode("//adminconsole/global/appname");
             if (appName != null) {
                 Element existingAppName = (Element)generatedModel.selectSingleNode(
-                        "/adminconsole/global/appname");
+                        "//adminconsole/global/appname");
                 existingAppName.setText(appName.getText());
             }
-            Element appLogoImage = (Element)element.selectSingleNode("/adminconsole/global/logo-image");
+            Element appLogoImage = (Element)element.selectSingleNode("//adminconsole/global/logo-image");
             if (appLogoImage != null) {
                 Element existingLogoImage = (Element)generatedModel.selectSingleNode(
-                        "/adminconsole/global/logo-image");
+                        "//adminconsole/global/logo-image");
                 existingLogoImage.setText(appLogoImage.getText());
             }
-            Element appLoginImage = (Element)element.selectSingleNode("/adminconsole/global/login-image");
-            if (appLogoImage != null) {
+            Element appLoginImage = (Element)element.selectSingleNode("//adminconsole/global/login-image");
+            if (appLoginImage != null) {
                 Element existingLoginImage = (Element)generatedModel.selectSingleNode(
-                        "/adminconsole/global/login-image");
+                        "//adminconsole/global/login-image");
                 existingLoginImage.setText(appLoginImage.getText());
             }
-            Element appVersion = (Element)element.selectSingleNode("/adminconsole/global/version");
-            if (appLogoImage != null) {
+            Element appVersion = (Element)element.selectSingleNode("//adminconsole/global/version");
+            if (appVersion != null) {
                 Element existingVersion = (Element)generatedModel.selectSingleNode(
-                        "/adminconsole/global/version");
+                        "//adminconsole/global/version");
                 existingVersion.setText(appVersion.getText());
             }
             // Tabs

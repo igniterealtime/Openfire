@@ -55,7 +55,7 @@
                     &nbsp;
                 </td>
                 <td class="info">
-                    <nobr><%= AdminConsole.getAppName() %> <%= admin.getXMPPServer().getServerInfo().getVersion().getVersionString() %></nobr>
+                    <nobr><%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %></nobr>
                 </td>
             </tr>
             </table>

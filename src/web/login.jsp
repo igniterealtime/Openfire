@@ -14,7 +14,8 @@
                  org.jivesoftware.messenger.container.ServiceLookup,
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.util.Version,
-                 org.jivesoftware.util.Log"
+                 org.jivesoftware.util.Log,
+                 org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 
@@ -95,7 +96,7 @@
 
 <html>
 <head>
-	<title>Jive Messenger Admin Console</title>
+	<title><%= AdminConsole.getAppName() %> Admin Console</title>
 	<script language="JavaScript" type="text/javascript">
 		<!--
 		// break out of frames
@@ -174,7 +175,7 @@
             <tr valign="top">
                 <td rowspan="99"
                     ><div id="jive-logo-image"
-                    ><img src="images/logo-messenger.gif" width="100" height="100" border="0" alt="Jive Messenger"
+                    ><img src="<%= AdminConsole.getLoginLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %>"
                     ></div></td>
                 <td colspan="3"
                     ><div id="jive-login-text-image"
@@ -253,8 +254,7 @@
             <tr class="jive-footer">
                 <td colspan="3" nowrap>
                     <span style="font-size:0.8em;">
-                    Jive Messenger, Version:
-                    <%= admin.getXMPPServer().getServerInfo().getVersion().getVersionString() %>
+                    <%= AdminConsole.getAppName() %>, Version: <%= AdminConsole.getVersionString() %>
                     </span>
                 </td>
             </tr>

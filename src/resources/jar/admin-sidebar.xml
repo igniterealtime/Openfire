@@ -3,6 +3,7 @@
     <global>
         <appname>Jive Messenger</appname>
         <logo-image>images/header-title.gif</logo-image>
+        <login-image>images/logo-messenger.gif</login-image>
     </global>
 
     <tab id="tab-server" name="Server" url="index.jsp" description="Click to manage server settings">

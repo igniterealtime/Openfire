@@ -125,6 +125,17 @@ public class PluginManager {
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
+                    // If global images are specified, override their URL.
+                    Element imageEl = (Element)adminElement.selectSingleNode(
+                            "/plugin/adminconsole/global/logo-image");
+                    if (imageEl != null) {
+                        imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
+                    }
+                    imageEl = (Element)adminElement.selectSingleNode(
+                            "/plugin/adminconsole/global/login-image");
+                    if (imageEl != null) {
+                        imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
+                    }
                     // Modify all the URL's in the XML so that they are passed through
                     // the plugin servlet correctly.
                     List urls = adminElement.selectNodes("//@url");

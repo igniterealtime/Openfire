@@ -12,6 +12,7 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.util.Log;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -115,7 +116,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                             ((Hashtable)resourceRoutes).get(node.getResourcePrep());
                 }
                 else {
-                    System.err.println(nameRoutes);
+                    //System.err.println(nameRoutes);
                     throw new NoSuchRouteException(node.toString());
                 }
             }
@@ -273,7 +274,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            Log.error("Error removing route", e);
         }
         finally {
             routeLock.writeLock().unlock();

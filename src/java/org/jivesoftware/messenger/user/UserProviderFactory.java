@@ -60,9 +60,9 @@ public class UserProviderFactory {
                                          "UserProvider.roster.className"};
 
     private static void setProviders(Class[] providers) throws IllegalAccessException, InstantiationException {
-        userPropertiesProvider = (UserPropertiesProvider)providers[1].newInstance();
-        userInfoProvider = (UserInfoProvider)providers[2].newInstance();
-        rosterItemProvider = (RosterItemProvider)providers[4].newInstance();
+        userPropertiesProvider = (UserPropertiesProvider)providers[0].newInstance();
+        userInfoProvider = (UserInfoProvider)providers[1].newInstance();
+        rosterItemProvider = (RosterItemProvider)providers[2].newInstance();
     }
 
     public static UserPropertiesProvider getUserPropertiesProvider() {

@@ -92,8 +92,12 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                 else {
                     IQHandler handler = getHandler(namespace);
                     if (handler == null) {
-                        // Answer an error if JID is of the form <domain>
-                        if (recipientJID.getNode() == null || "".equals(recipientJID.getNode())) {
+                        if (recipientJID == null) {
+                            // Answer an error since the server can't handle the requested namespace
+                            packet.setError(PacketError.Condition.service_unavailable);
+                        }
+                        else if (recipientJID.getNode() == null || "".equals(recipientJID.getNode())) {
+                            // Answer an error if JID is of the form <domain>
                             packet.setError(PacketError.Condition.feature_not_implemented);
                         }
                         else {

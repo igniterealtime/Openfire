@@ -68,7 +68,7 @@
             if (groupDisplayName == null) {
                 errors.put("groupDisplayName", "");
             }
-            if ("spefgroups".equals(showGroup) && groupNames == null) {
+            if ("spefgroups".equals(showGroup) && (groupNames == null || groupNames.length == 0)) {
                 errors.put("groupNames","");
             }
         }
@@ -273,6 +273,12 @@ Use the form below to create a group.
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
                              onclick="this.form.enableRosterGroups[1].checked=true;">
+
+                            <%  if (errors.get("groupDisplayName") != null) { %>
+
+                                    <span class="jive-error-text">Enter a Group Display Name.</span>
+
+                            <%  } %>
                         </td>
                     </tr>
                 </tbody>
@@ -295,7 +301,7 @@ Use the form below to create a group.
                         <td width="1%" nowrap>
                             <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
                              onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) ? "checked" : "") %>>
+                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
                             <label for="rb001"

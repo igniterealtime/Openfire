@@ -62,29 +62,24 @@ import="java.text.DateFormat,
             group.setName(newName);
             group.setDescription(newDescription);
 
-
-
                 if (enableRosterGroups) {
-                    boolean shizzledizzle = false;
                     if ("spefgroups".equals(showGroup)) {
                         showGroup = "onlyGroup";
-                        shizzledizzle = true;
+                    }
+                    else {
+                        groupNames = new String[] {};
                     }
                     group.getProperties().put("sharedRoster.showInRoster", showGroup);
                     if (groupDisplayName != null) {
                         group.getProperties().put("sharedRoster.displayName", groupDisplayName);
                     }
-                    if (shizzledizzle) {
-                        group.getProperties().put("sharedRoster.groupList", toList(groupNames));
-                    }
+                    group.getProperties().put("sharedRoster.groupList", toList(groupNames));
                 }
                 else {
                     group.getProperties().put("sharedRoster.showInRoster", "nobody");
                     group.getProperties().put("sharedRoster.displayName", "");
                     group.getProperties().put("sharedRoster.groupList", "");
                 }
-
-
 
             groupName = newName;
             groupInfoChanged = true;
@@ -183,7 +178,7 @@ import="java.text.DateFormat,
     if (errors.size() == 0) {
         enableRosterGroups = !"nobody".equals(group.getProperties().get("sharedRoster.showInRoster"));
         showGroup = group.getProperties().get("sharedRoster.showInRoster");
-        if (!"onlyGroup".equals(showGroup)) {
+        if ("onlyGroup".equals(showGroup)) {
             String glist = group.getProperties().get("sharedRoster.groupList");
             List l = new ArrayList();
             if (glist != null) {
@@ -390,7 +385,7 @@ import="java.text.DateFormat,
                         <td width="1%" nowrap>
                             <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
                              onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) ? "checked" : "") %>>
+                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
                             <label for="rb001"

@@ -12,13 +12,13 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
+import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.ServletRequest;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.io.IOException;
 
 /**
@@ -123,26 +123,32 @@ public class TabsTag extends BodyTagSupport {
         if (pageInfo != null) {
             pageID = pageInfo.getPageID();
         }
-        // Get root items from the data model:
-        Collection<AdminConsole.Item> items = AdminConsole.getItems();
-        if (items.size() > 0) {
+        // Get tabs from the model:
+        List tabs = AdminConsole.getModel().selectNodes("//tab");
+        if (tabs.size() > 0) {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)
             StringBuffer buf = new StringBuffer();
             buf.append("<ul>");
             String body = getBodyContent().getString();
-            // For each root item, print out an LI
-            AdminConsole.Item root = AdminConsole.getRootByChildID(pageID);
-            for (AdminConsole.Item item : items) {
+            // For each tab, print out an <LI>.
+            Element currentTab = null;
+            if (pageID != null) {
+                currentTab = (Element)AdminConsole.getModel().selectSingleNode(
+                            "//*[@id='" + pageID + "']/ancestor::tab");
+            }
+            for (int i=0; i<tabs.size(); i++) {
+                Element tab = (Element)tabs.get(i);
                 String value = body;
                 if (value != null) {
-                    value = StringUtils.replace(value, "[id]", clean(item.getId()));
-                    value = StringUtils.replace(value, "[url]", clean(item.getUrl()));
-                    value = StringUtils.replace(value, "[name]", clean(item.getName()));
-                    value = StringUtils.replace(value, "[description]", clean(item.getDescription()));
+                    // The URL for the tab should be the URL of the first item in the tab.
+                    value = StringUtils.replace(value, "[id]", clean(tab.attributeValue("id")));
+                    value = StringUtils.replace(value, "[url]", clean(tab.attributeValue("url")));
+                    value = StringUtils.replace(value, "[name]", clean(tab.attributeValue("name")));
+                    value = StringUtils.replace(value, "[description]", clean(tab.attributeValue("description")));
                 }
                 String css = getCss();
-                if (item.equals(root)) {
+                if (tab.equals(currentTab)) {
                     css = getCurrentcss();
                 }
                 buf.append("<li class=\"").append(css).append("\">");

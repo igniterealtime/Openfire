@@ -131,7 +131,7 @@ public class PluginManager {
                         Attribute attr = (Attribute)urls.get(i);
                         attr.setValue("/plugins/" + pluginDir.getName() + "/" + attr.getValue());
                     }
-                    AdminConsole.addXMLSource(adminElement);
+                    AdminConsole.addModel(adminElement);
                 }
             }
             else {

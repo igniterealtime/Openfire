@@ -12,6 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
+import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.JspException;
@@ -177,51 +178,51 @@ public class SidebarTag extends BodyTagSupport {
             if (subPageID != null || pageID != null) {
 
                 if (pageID == null) {
-                    pageID = AdminConsole.lookupPageID(subPageID);
+                    Element subPage = AdminConsole.getElemnetByID(subPageID);
+                    pageID = subPage.getParent().getParent().attributeValue("id");
                 }
 
                 // Top level menu items
-                if (AdminConsole.getItems().size() > 0) {
+                if (AdminConsole.getModel().elements().size() > 0) {
                     JspWriter out = pageContext.getOut();
                     StringBuffer buf = new StringBuffer();
 
-                    AdminConsole.Item current = null;
-                    AdminConsole.Item subcurrent = null;
+                    Element current = null;
+                    Element subcurrent = null;
                     if (subPageID != null) {
-                        subcurrent = AdminConsole.getItem(subPageID);
-                        // Lookup the pageID based on the subPageID:
-                        pageID = AdminConsole.lookupPageID(subPageID);
+                        subcurrent = AdminConsole.getElemnetByID(subPageID);
                     }
+                    current = AdminConsole.getElemnetByID(pageID);
 
-                    AdminConsole.Item root = AdminConsole.getRootByChildID(pageID);
-                    current = AdminConsole.getItem(pageID);
+                    Element currentTab = (Element)AdminConsole.getModel().selectSingleNode(
+                            "//*[@id='" + pageID + "']/ancestor::tab");
 
                     boolean isSubmenu = false;
-                    if (subPageID != null && current != null) {
-                        isSubmenu = AdminConsole.isSubMenItem(subcurrent);
+                    if (subcurrent != null) {
+                        isSubmenu = subcurrent.getParent().getParent().getName().equals("item");
                     }
 
                     // Loop through all items in the root, print them out
-                    if (root != null) {
-                        Collection items = root.getItems();
+                    if (currentTab != null) {
+                        Collection items = currentTab.elements();
                         if (items.size() > 0) {
                             buf.append("<ul>");
                             for (Iterator iter=items.iterator(); iter.hasNext(); ) {
-                                AdminConsole.Item item = (AdminConsole.Item)iter.next();
-                                String header = item.getName();
+                                Element sidebar = (Element)iter.next();
+                                String header = sidebar.attributeValue("name");
                                 // Print the header:
                                 String hcss = getHeadercss();
                                 if (hcss == null) {
                                     hcss = "";
                                 }
                                 buf.append("<li class=\"").append(hcss).append("\">").append(clean(header)).append("</li>");
-                                // Now print all subitems:
-                                for (Iterator subitems=item.getItems().iterator(); subitems.hasNext(); ) {
-                                    AdminConsole.Item subitem = (AdminConsole.Item)subitems.next();
-                                    String subitemID = subitem.getId();
-                                    String subitemName = subitem.getName();
-                                    String subitemURL = subitem.getUrl();
-                                    String subitemDescr = subitem.getDescription();
+                                // Now print all items:
+                                for (Iterator subitems=sidebar.elementIterator(); subitems.hasNext(); ) {
+                                    Element item = (Element)subitems.next();
+                                    String subitemID = item.attributeValue("id");
+                                    String subitemName = item.attributeValue("name");
+                                    String subitemURL = item.attributeValue("url");
+                                    String subitemDescr = item.attributeValue("description");
                                     String value = getBodyContent().getString();
                                     if (value != null) {
                                         value = StringUtils.replace(value, "[id]", clean(subitemID));
@@ -230,7 +231,7 @@ public class SidebarTag extends BodyTagSupport {
                                         value = StringUtils.replace(value, "[url]", clean(subitemURL));
                                     }
                                     String css = getCss();
-                                    boolean isCurrent = subitem.equals(current);
+                                    boolean isCurrent = item.equals(current);
                                     boolean showSubmenu = subPageID != null;
                                     if (isCurrent && !showSubmenu) {
                                         css = getCurrentcss();
@@ -239,24 +240,24 @@ public class SidebarTag extends BodyTagSupport {
 
                                     // Print out a submenu if one exists:
                                     if (isSubmenu && isCurrent) {
-                                        // Get the parent of the current item so we can get its items - those will be
-                                        // siblings of the current item:
-                                        Iterator siblings = subcurrent.getParent().getItems().iterator();
+                                        // Get the parent of the current item so we can get its
+                                        // items - those will be siblings of the current item:
+                                        Iterator siblings = subcurrent.getParent().elementIterator();
                                         boolean hadNext = siblings.hasNext();
                                         if (hadNext) {
                                             // Print out beginning UL
                                             buf.append("<ul class=\"subitems\">\n");
                                             // Print the header LI
-                                            String subheader = subcurrent.getParent().getName();
+                                            String subheader = subcurrent.getParent().attributeValue("name");
                                             buf.append("<li class=\"").append(hcss).append("\">").append(clean(subheader)).append("</li>");
                                         }
                                         String extraParams = pageInfo.getExtraParams();
                                         while (siblings.hasNext()) {
-                                            AdminConsole.Item sibling = (AdminConsole.Item)siblings.next();
-                                            String sibID = sibling.getId();
-                                            String sibName = sibling.getName();
-                                            String sibDescr = sibling.getDescription();
-                                            String sibURL = sibling.getUrl();
+                                            Element sibling = (Element)siblings.next();
+                                            String sibID = sibling.attributeValue("id");
+                                            String sibName = sibling.attributeValue("name");
+                                            String sibDescr = sibling.attributeValue("description");
+                                            String sibURL = sibling.attributeValue("url");
                                             if (extraParams != null) {
                                                 sibURL += ((sibURL.indexOf('?') > -1 ? "&" : "?") + extraParams);
                                             }

@@ -15,6 +15,7 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.DocumentFactory;
 import org.dom4j.io.SAXReader;
 
 import java.util.*;
@@ -22,32 +23,27 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
- * <p>A model for admin tab and sidebar info. This class loads in xml definitions of the data and
- * produces an in-memory model. There is an internal class, {@link Item} which is the main part
- * of the model. Items hold info like name, id, url and description as well as an arbritrary number
- * of sub items. Based on this we can make a tree model of the data.</p>
+ * A model for admin tab and sidebar info. This class loads in xml definitions of the data and
+ * produces an in-memory model.<p>
  *
- * <p>This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed to be in
+ * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed to be in
  * the main application jar file. In addition, it will load files from
  * <tt>META-INF/admin-sidebar.xml</tt> if they're found. This allows developers to extend the
  * functionality of the admin console to provide more options. See the main
- * <tt>admin-sidebar.xml</tt> file for documentation of its format.</p>
- *
- * <p>Note: IDs in the XML file must be unique because an internal mapping is kept of IDs to
- * nodes.</p>
+ * <tt>admin-sidebar.xml</tt> file for documentation of its format.<p>
  */
 public class AdminConsole {
 
-    private static Map<String,Item> items;
-    private static String appName;
-    private static String logoImage;
+    private static Element coreModel;
+    private static List<Element> overrideModels;
+    private static Element generatedModel;
 
     static {
         init();
     }
 
     private static void init() {
-        items = Collections.synchronizedMap(new LinkedHashMap<String,Item>());
+        overrideModels = new ArrayList<Element>();
         load();
     }
 
@@ -61,10 +57,10 @@ public class AdminConsole {
      * @param in the XML input stream.
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
-    public static void addXMLSource(InputStream in) throws Exception {
+    public static void addModel(InputStream in) throws Exception {
         SAXReader saxReader = new SAXReader();
         Document doc = saxReader.read(in);
-        addXMLSource((Element)doc.selectSingleNode("/adminconsole"));
+        addModel((Element)doc.selectSingleNode("/adminconsole"));
     }
 
     /**
@@ -73,276 +69,60 @@ public class AdminConsole {
      * @param element the Element
      * @throws Exception if an error occurs.
      */
-    public static void addXMLSource(Element element) throws Exception {
-        addToModel(element);
+    public static void addModel(Element element) throws Exception {
+        overrideModels.add(element);
+        rebuildModel();
     }
 
     /**
      * Returns the name of the application.
      */
     public static String getAppName() {
-        return appName;
+        Element appName = (Element)generatedModel.selectSingleNode("/adminconsole/global/appname");
+        if (appName != null) {
+            return appName.getText();
+        }
+        else {
+            return null;
+        }
     }
 
     /**
      * Returns the URL (relative or absolute) of the main logo image for the admin console.
      */
     public static String getLogoImage() {
-        return logoImage;
-    }
-
-    /**
-     * Returns all root items. Getting the iterator from this collection returns
-     * all root items (should be used as tabs in the admin tool).
-     *
-     * @return a collection of all items - the root items are returned by calling the
-     *      <tt>iterator()</tt> method.
-     */
-    public static Collection<Item> getItems() {
-        List<Item> rootItems = new ArrayList<Item>();
-        for (Item i : items.values()) {
-            if (i.getParent() == null) {
-                rootItems.add(i);
-            }
+        Element globalLogoImage = (Element)generatedModel.selectSingleNode(
+                "/adminconsole/global/logo-image");
+        if (globalLogoImage != null) {
+            return globalLogoImage.getText();
         }
-        return rootItems;
-    }
-
-    /**
-     * Returns an item given its ID or <tt>null</tt> if it can't be found.
-     *
-     * @param id the ID of the item.
-     * @return an item given its ID or <tt>null</tt> if it can't be found.
-     */
-    public static Item getItem(String id) {
-        return items.get(id);
-    }
-
-    /**
-     * Returns the root item given a child item. In other words, a lookup is done on the ID for
-     * the corresponding item - that item is assumed to be a leaf and this method returns the
-     * root ancestor of it.
-     *
-     * @param id the ID of the child item.
-     * @return the root ancestor of the specified child item.
-     */
-    public static Item getRootByChildID(String id) {
-        if (id == null) {
+        else {
             return null;
         }
-        Item child = getItem(id);
-        Item root = null;
-        if (child != null) {
-            Item parent = child.getParent();
-            root = parent;
-            while (parent != null) {
-                parent = parent.getParent();
-                if (parent != null) {
-                    root = parent;
-                }
-            }
-        }
-        return root;
     }
 
     /**
-     * Returns <tt>true</tt> if the given item is a sub-menu item.
+     * Returns the model. The model should be considered read-only.
      *
-     * @param item the item to test.
-     * @return <tt>true</tt> if the given item is a sub-menu item, <tt>false</tt> otherwise.
+     * @return the model.
      */
-    public static boolean isSubMenItem(Item item) {
-        int parentCount = 0;
-        Item parent = item.getParent();
-        while (parent != null) {
-            parentCount++;
-            parent = parent.getParent();
-        }
-        return parentCount >= 3;
+    public static Element getModel() {
+        return generatedModel;
     }
 
     /**
-     * Returns the ID of the page ID associated with this sub page ID.
-     * @param subPageID the subPageID to use to look up the page ID.
-     * @return the associated pageID or <tt>null</tt> if it can't be found.
+     * Convenience method to select an element from the model by its ID. If an
+     * element with a matching ID is not found, <tt>null</tt> will be returned.
+     *
+     * @param id the ID.
+     * @return the element.
      */
-    public static String lookupPageID(String subPageID) {
-        String pageID = null;
-        Item item = getItem(subPageID);
-        if (item != null) {
-            Item parent = item.getParent();
-            if (parent != null) {
-                parent = parent.getParent();
-                if (parent != null) {
-                    pageID = parent.getId();
-                }
-            }
-        }
-        return pageID;
-    }
-
-    /**
-     * A simple class to model an item. Each item has attributes used by the admin console to
-     * display it like ID, name, URL and description. Also, from each item you can get its parent
-     * (because an Item goes in a tree structure) and any children items it has.
-     */
-    public static class Item {
-
-        private String id;
-        private String name;
-        private String description;
-        private String url;
-        private boolean active;
-        private Map<String,Item> items;
-        private Item parent;
-        private static int idSeq = 0;
-
-        /**
-         * Creates a new item given its main attributes.
-         */
-        public Item(String id, String name, String description, String url) {
-            this.id = id;
-            this.name = name;
-            this.description = description;
-            this.url = url;
-            init();
-        }
-
-        /**
-         * Creates a new item given its main attributes and the parent item (this helps set up
-         * the tree structure).
-         */
-        public Item(String id, String name, String description, String url, Item parent) {
-            this.id = id;
-            this.name = name;
-            this.description = description;
-            this.url = url;
-            this.parent = parent;
-            init();
-        }
-
-        private void init() {
-            items = Collections.synchronizedMap(new LinkedHashMap<String,Item>());
-            if (id == null) {
-                id = String.valueOf(idSeq++);
-            }
-        }
-
-        /**
-         * Returns the ID of the item.
-         */
-        public String getId() {
-            return id;
-        }
-
-        /**
-         * Returns the name of the item - this is the display name.
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * Sets the name.
-         */
-        void setName(String name) {
-            this.name = name;
-        }
-
-        /**
-         * Returns the description of the item.
-         */
-        public String getDescription() {
-            return description;
-        }
-
-        /**
-         * Sets the description.
-         */
-        void setDescription(String description) {
-            this.description = description;
-        }
-
-        /**
-         * Returns the URL for this item.
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Sets the URL for this item.
-         */
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        /**
-         * Returns true if this items is active - in the admin console this would mean it's selected.
-         */
-        public boolean isActive() {
-            return active;
-        }
-
-        /**
-         * Sets the item as active - in the admin console this would mean it's selected.
-         */
-        public void setActive(boolean active) {
-            this.active = active;
-        }
-
-        /**
-         * Returns the parent item or <tt>null</tt> if this is a root item.
-         */
-        public Item getParent() {
-            return parent;
-        }
-
-        /**
-         * Sets the parent item.
-         */
-        public void setParent(Item parent) {
-            this.parent = parent;
-        }
-
-        public void addItem(Item item) {
-            items.put(item.getId(), item);
-        }
-
-        /**
-         * Returns the items as a collection. Use the Collection API to get/set/remove items.
-         */
-        public Collection<Item> getItems() {
-            return items.values();
-        }
-
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null) {
-                return false;
-            }
-            if (!(o instanceof Item)) {
-                return false;
-            }
-            Item i = (Item) o;
-            if (id == null || !id.equals(i.id)) {
-                return false;
-            }
-            return true;
-        }
-
-        /**
-         * Returns the ID of the item.
-         */
-        public String toString() {
-            return id;
-        }
+    public static Element getElemnetByID(String id) {
+        return (Element)generatedModel.selectSingleNode("//item[@id='" + id + "']");
     }
 
     private static void load() {
-        // Load the admin-sidebar.xml file from the jiveforums.jar file:
+        // Load the core model as the admin-sidebar.xml file from the classpath.
         InputStream in = ClassUtils.getResourceAsStream("/admin-sidebar.xml");
         if (in == null) {
             Log.error("Failed to load admin-sidebar.xml file from Jive Messenger classes - admin "
@@ -350,7 +130,9 @@ public class AdminConsole {
             return;
         }
         try {
-            addXMLSource(in);
+            SAXReader saxReader = new SAXReader();
+            Document doc = saxReader.read(in);
+            coreModel = (Element)doc.selectSingleNode("/adminconsole");
         }
         catch (Exception e) {
             Log.error("Failure when parsing main admin-sidebar.xml file", e);
@@ -369,12 +151,14 @@ public class AdminConsole {
                     Enumeration e = classLoaders[i].getResources("/META-INF/admin-sidebar.xml");
                     while (e.hasMoreElements()) {
                         url = (URL)e.nextElement();
-                        in = url.openStream();
-                        addXMLSource(in);
                         try {
-                            in.close();
+                            in = url.openStream();
+                            addModel(in);
                         }
-                        catch (Exception ignored) {}
+                        finally {
+                            try { if (in != null) { in.close(); } }
+                            catch (Exception ignored) {}
+                        }
                     }
                 }
             }
@@ -386,90 +170,115 @@ public class AdminConsole {
                 Log.warn(msg, e);
             }
         }
+        rebuildModel();
     }
 
-    private static void addToModel(Element element) throws Exception {
-        // Set any global properties
-        Element globalEl = (Element)element.selectSingleNode("/adminconsole/global/appname");
-        if (globalEl != null) {
-            appName = globalEl.getText();
-        }
-        Element globalLogoImageEl = (Element)element.selectSingleNode(
-                "/adminconsole/global/logo-image");
-        if (globalLogoImageEl != null) {
-            logoImage = globalLogoImageEl.getText();
-        }
+    /**
+     * Rebuilds the generated model.
+     */
+    private static void rebuildModel() {
+        Document doc = DocumentFactory.getInstance().createDocument();
+        generatedModel = coreModel.createCopy();
+        doc.add(generatedModel);
 
-        // Get all children of the 'tabs' element - should be 'tab' items:
-        List tabs = element.elements("tab");
-        for (int i=0; i<tabs.size(); i++) {
-            Element tab = (Element)tabs.get(i);
-
-            // Create a new top level item with data from the xml file:
-            String id = tab.attributeValue("id");
-            String name = tab.attributeValue("name");
-            String description = tab.attributeValue("description");
-            Item item = new Item(id, name, description, null);
-            // Add that item to the item collection
-            items.put(id, item);
-
-            // Delve down into this item's sidebars - build up a model of these then add into
-            // the item above.
-            List sidebars = tab.elements("sidebar");
-            for (int j=0; j<sidebars.size(); j++) {
-                Element sidebar = (Element)sidebars.get(j);
-
-                name = sidebar.attributeValue("name");
-                // Create a new item, set its name
-                Item sidebarItem = new Item(null, name, null, null);
-                // Get all items of this sidebar:
-                List subitems = sidebar.elements("item");
-                for (int k=0; k<subitems.size(); k++) {
-                    Element subitem = (Element)subitems.get(k);
-                    // Get the id, name, descr and url attributes:
-                    String subID = subitem.attributeValue("id");
-                    String subName = subitem.attributeValue("name");
-                    String subDescr = subitem.attributeValue("description");
-                    String subURL = subitem.attributeValue("url");
-                    // Build an item with this, add it to the subItem we made above
-                    Item kItem = new Item(subID, subName, subDescr, subURL, sidebarItem);
-                    items.put(kItem.getId(), kItem);
-                    sidebarItem.addItem(kItem);
-                    // Build any sub-sub menus:
-                    subAddtoModel(subitem, kItem);
-                    // If this is the first item, set the root menu item's URL as this URL:
-                    if (j==0 && k == 0) {
-                        item.setUrl(subURL);
-                    }
+        // Add in all overrides.
+        for (Element element : overrideModels) {
+            // See if global settings are overriden.
+            Element appName = (Element)element.selectSingleNode("/adminconsole/global/appname");
+            if (appName != null) {
+                Element existingAppName = (Element)generatedModel.selectSingleNode(
+                        "/adminconsole/global/appname");
+                existingAppName.setText(appName.getText());
+            }
+            Element appLogoImage = (Element)element.selectSingleNode("/adminconsole/global/logo-image");
+            if (appLogoImage != null) {
+                Element existingLogoImage = (Element)generatedModel.selectSingleNode(
+                        "/adminconsole/global/logo-image");
+                existingLogoImage.setText(appLogoImage.getText());
+            }
+            // Tabs
+            for (Iterator i=element.selectNodes("//tab").iterator(); i.hasNext(); ) {
+                Element tab = (Element)i.next();
+                String id = tab.attributeValue("id");
+                Element existingTab = getElemnetByID(id);
+                // Simple case, there is no existing tab with the same id.
+                if (existingTab == null) {
+                    generatedModel.add(tab.createCopy());
                 }
-                // Add the subItem to the item created above
-                sidebarItem.setParent(item);
-                items.put(sidebarItem.getId(), sidebarItem);
-                item.addItem(sidebarItem);
+                // More complex case -- a tab with the same id already exists.
+                // In this case, we have to overrite only the difference between
+                // the two elements.
+                else {
+                    overrideTab(existingTab, tab);
+                }
             }
         }
     }
 
-    private static void subAddtoModel(Element parentElement, Item parentItem) {
-
-        List subsidebars = parentElement.elements("subsidebar");
-        for (int i=0; i<subsidebars.size(); i++) {
-            Element subsidebar = (Element)subsidebars.get(i);
-            String subsidebarName = subsidebar.attributeValue("name");
-            Item subsidebarItem = new Item(null, subsidebarName, null, null, parentItem);
-            // Get the items under it
-            List subitems = subsidebar.elements("item");
-            for (int j=0; j<subitems.size(); j++) {
-                Element item = (Element)subitems.get(j);
-                String id = item.attributeValue("id");
-                String name = item.attributeValue("name");
-                String url = item.attributeValue("url");
-                String descr = item.attributeValue("description");
-                Item newItem = new Item(id, name, descr, url, subsidebarItem);
-                subsidebarItem.addItem(newItem);
-                items.put(id, newItem);
+    private static void overrideTab(Element tab, Element overrideTab) {
+        // Override name, url, description.
+        tab.addAttribute("name", overrideTab.attributeValue("name"));
+        tab.addAttribute("url", overrideTab.attributeValue("url"));
+        tab.addAttribute("description", overrideTab.attributeValue("description"));
+        // Override sidebar items.
+        for (Iterator i=overrideTab.elementIterator(); i.hasNext(); ) {
+            Element sidebar = (Element)i.next();
+            String id = sidebar.attributeValue("id");
+            Element existingSidebar = getElemnetByID(id);
+            // Simple case, there is no existing sidebar with the same id.
+            if (existingSidebar == null) {
+                tab.add(sidebar.createCopy());
             }
-            parentItem.addItem(subsidebarItem);
+            // More complex case -- a sidebar with the same id already exists.
+            // In this case, we have to overrite only the difference between
+            // the two elements.
+            else {
+                overrideSidebar(existingSidebar, sidebar);
+            }
+        }
+    }
+
+    private static void overrideSidebar(Element sidebar, Element overrideSidebar) {
+        // Override name.
+        sidebar.addAttribute("name", overrideSidebar.attributeValue("name"));
+        // Override entries.
+        for (Iterator i=overrideSidebar.elementIterator(); i.hasNext(); ) {
+            Element entry = (Element)i.next();
+            String id = sidebar.attributeValue("id");
+            Element existingEntry = getElemnetByID(id);
+            // Simple case, there is no existing sidebar with the same id.
+            if (existingEntry == null) {
+                sidebar.add(entry.createCopy());
+            }
+            // More complex case -- a sidebar with the same id already exists.
+            // In this case, we have to overrite only the difference between
+            // the two elements.
+            else {
+                overrideEntry(existingEntry, entry);
+            }
+        }
+    }
+
+    private static void overrideEntry(Element entry, Element overrideEntry) {
+        // Override name.
+        entry.addAttribute("name", overrideEntry.attributeValue("name"));
+        entry.addAttribute("url", overrideEntry.attributeValue("url"));
+        entry.addAttribute("description", overrideEntry.attributeValue("description"));
+        // Override any sidebars contained in the entry.
+        for (Iterator i=overrideEntry.elementIterator(); i.hasNext(); ) {
+            Element sidebar = (Element)i.next();
+            String id = sidebar.attributeValue("id");
+            Element existingSidebar = getElemnetByID(id);
+            // Simple case, there is no existing sidebar with the same id.
+            if (existingSidebar == null) {
+                entry.add(sidebar.createCopy());
+            }
+            // More complex case -- a sidebar with the same id already exists.
+            // In this case, we have to overrite only the difference between
+            // the two elements.
+            else {
+                overrideSidebar(existingSidebar, sidebar);
+            }
         }
     }
 
@@ -482,10 +291,5 @@ public class AdminConsole {
         classLoaders[1] = Thread.currentThread().getContextClassLoader();
         classLoaders[2] = ClassLoader.getSystemClassLoader();
         return classLoaders;
-    }
-
-    // Called by test classes to wipe and reload the internal data
-    private static void clear() {
-        init();
     }
 }

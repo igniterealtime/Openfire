@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.lang.reflect.Method;
 import junit.framework.TestCase;
 import org.jivesoftware.admin.AdminConsole;
+import org.dom4j.Element;
 
 public class AdminConsoleTest extends TestCase {
 
@@ -27,9 +28,9 @@ public class AdminConsoleTest extends TestCase {
      */
     public void tearDown() throws Exception {
         Class c = AdminConsole.class;
-        Method clear = c.getDeclaredMethod("clear", (Class[])null);
-        clear.setAccessible(true);
-        clear.invoke((Object)null, (Object[])null);
+        Method init = c.getDeclaredMethod("init", (Class[])null);
+        init.setAccessible(true);
+        init.invoke((Object)null, (Object[])null);
     }
 
     public void testGetGlobalProps() throws Exception {
@@ -44,7 +45,7 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-01.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addXMLSource(in);
+        AdminConsole.addModel(in);
         in.close();
         String name = AdminConsole.getAppName();
         assertEquals("Foo Bar", name);
@@ -57,18 +58,18 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addXMLSource(in);
+        AdminConsole.addModel(in);
         in.close();
-        Collection items = AdminConsole.getItems();
-        assertNotNull(items);
-        assertTrue(items.size() > 0);
+        Collection tabs = AdminConsole.getModel().selectNodes("//tab");
+        assertNotNull(tabs);
+        assertTrue(tabs.size() > 0);
         boolean found = false;
-        for (Iterator iter=items.iterator(); iter.hasNext(); ) {
-            AdminConsole.Item item = (AdminConsole.Item)iter.next();
-            if ("foobar".equals(item.getId())) {
+        for (Iterator iter=tabs.iterator(); iter.hasNext(); ) {
+            Element tab = (Element)iter.next();
+            if ("foobar".equals(tab.attributeValue("id"))) {
                 found = true;
-                assertEquals("Foo Bar", item.getName());
-                assertEquals("Click to see foo bar", item.getDescription());
+                assertEquals("Foo Bar", tab.attributeValue("name"));
+                assertEquals("Click to see foo bar", tab.attributeValue("description"));
             }
         }
         if (!found) {
@@ -81,16 +82,15 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-03.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addXMLSource(in);
+        AdminConsole.addModel(in);
         in.close();
-        Collection items = AdminConsole.getItems();
         boolean found = false;
-        for (Iterator iter=items.iterator(); iter.hasNext(); ) {
-            AdminConsole.Item item = (AdminConsole.Item)iter.next();
-            if ("server".equals(item.getId())) {
+        for (Iterator tabs=AdminConsole.getModel().selectNodes("//tab").iterator(); tabs.hasNext(); ) {
+            Element tab = (Element)tabs.next();
+            if ("server".equals(tab.attributeValue("id"))) {
                 found = true;
-                assertEquals("New Server Title", item.getName());
-                assertEquals("Testing 1 2 3", item.getDescription());
+                assertEquals("New Server Title", tab.attributeValue("name"));
+                assertEquals("Testing 1 2 3", tab.attributeValue("description"));
             }
         }
         if (!found) {

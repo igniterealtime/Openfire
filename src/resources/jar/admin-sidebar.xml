@@ -5,9 +5,9 @@
         <logo-image>images/header-title.gif</logo-image>
     </global>
 
-    <tab id="server" name="Server" description="Click to manage server settings">
+    <tab id="tab-server" name="Server" url="index.jsp" description="Click to manage server settings">
 
-        <sidebar name="Server Manager">
+        <sidebar id="sidebar-server-manager" name="Server Manager">
 
             <item id="server-settings" name="Server Settings"
                     url="index.jsp"
@@ -26,7 +26,7 @@
                     description="Click to view server logs" />
         </sidebar>
 
-        <sidebar name="Server Settings">
+        <sidebar id="sidebar-server-settings" name="Server Settings">
 
             <item id="server-reg-and-login" name="Registration &amp; Login"
                     url="reg-settings.jsp"
@@ -54,15 +54,15 @@
         </sidebar>
     </tab>
 
-    <tab id="users" name="Users" description="Click to manage users">
+    <tab id="tab-users" name="Users" url="user-summary.jsp" description="Click to manage users">
 
-        <sidebar name="Users">
+        <sidebar id="sidebar-users" name="Users">
 
             <item id="user-summary" name="User Summary"
                     url="user-summary.jsp"
                     description="Click to see a list of users in the system">
 
-                <subsidebar name="User Options">
+                <sidebar id="sidebar-users-options" name="User Options">
 
                     <item id="user-properties" name="User Properties"
                             url="user-properties.jsp"
@@ -75,7 +75,7 @@
                     <item id="user-delete" name="Delete User"
                             url="user-delete.jsp"
                             description="Click to delete the user" />
-                </subsidebar>
+                </sidebar>
             </item>
 
             <item id="user-create" name="Create New User"
@@ -88,9 +88,9 @@
         </sidebar>
     </tab>
 
-    <tab id="session" name="Sessions" description="Click to manage connected sessions">
+    <tab id="tab-session" name="Sessions" url="session-summary.jsp" description="Click to manage connected sessions">
 
-        <sidebar name="Sessions">
+        <sidebar id="sidebar-session" name="Sessions">
 
             <item id="session-summary" name="View Current Sessions"
                     url="session-summary.jsp"
@@ -102,9 +102,9 @@
         </sidebar>
     </tab>
 
-    <tab id="groupchat" name="Group Chat" description="Click to manage group chat settings">
+    <tab id="tab-groupchat" name="Group Chat" url="muc-server-props-edit-form.jsp" description="Click to manage group chat settings">
 
-        <sidebar name="Group Chat Settings">
+        <sidebar id="sidebar-groupchat-settings" name="Group Chat Settings">
 
             <item id="muc-server-props" name="Service Properties"
                     url="muc-server-props-edit-form.jsp"

@@ -78,7 +78,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                         Object item = ((Hashtable)nameRoutes).put(node.getNode(),
                                 resourceRoutes);
                         if (item instanceof ChannelHandler) {
-                            route = (ChannelHandler)item;
+                            // Associate the previous Route with the bare JID
+                            ((Hashtable)resourceRoutes).put("", item);
                         }
                     }
                     Object resourceRoute =
@@ -96,7 +97,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             routeLock.writeLock().unlock();
         }
 
-        //System.err.println(node.toString() + " added");
         return route;
     }
 
@@ -114,11 +114,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                     route = (RoutableChannelHandler)resourceRoutes;
                 }
                 else if (resourceRoutes != null) {
-                    route = (RoutableChannelHandler)
-                            ((Hashtable)resourceRoutes).get(node.getResource());
+                    String resource = node.getResource() == null ? "" : node.getResource();
+                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resource);
                 }
                 else {
-                    //System.err.println(nameRoutes);
                     throw new NoSuchRouteException(node.toString());
                 }
             }

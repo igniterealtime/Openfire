@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
@@ -25,9 +24,9 @@ import org.xmpp.packet.IQ;
  * @author Iain Shigeoka
  */
 public class PacketRouterImpl extends BasicModule implements PacketRouter {
-    public IQRouter iqRouter;
-    public PresenceRouter presenceRouter;
-    public MessageRouter messageRouter;
+    private IQRouter iqRouter;
+    private PresenceRouter presenceRouter;
+    private MessageRouter messageRouter;
 
     /**
      * Initialize ComponentManager to handle delegation of packets.
@@ -103,11 +102,10 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
         return false;
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(IQRouter.class, "iqRouter");
-        trackInfo.getTrackerClasses().put(MessageRouter.class, "messageRouter");
-        trackInfo.getTrackerClasses().put(PresenceRouter.class, "presenceRouter");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        iqRouter = server.getIQRouter();
+        messageRouter = server.getMessageRouter();
+        presenceRouter = server.getPresenceRouter();
     }
 }

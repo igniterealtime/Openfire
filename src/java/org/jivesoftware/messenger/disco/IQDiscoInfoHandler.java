@@ -11,9 +11,9 @@
 
 package org.jivesoftware.messenger.disco;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public class IQDiscoInfoHandler extends IQDiscoHandler {
+public class IQDiscoInfoHandler extends IQHandler {
 
     private HashMap entities = new HashMap();
     private List serverFeatures = new ArrayList();
@@ -170,37 +170,20 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
      *
      * @param provider the ServerFeaturesProvider that provides new server features.
      */
-    public void addServerFeaturesProvider(ServerFeaturesProvider provider) {
+    private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
         for (Iterator it = provider.getFeatures(); it.hasNext();) {
             serverFeatures.add(it.next());
         }
     }
 
-    /**
-     * Removes the features provided by the service that implements the ServerFeaturesProvider
-     * interface which is being removed. Example of features are: jabber:iq:agents,
-     * jabber:iq:time, etc.
-     *
-     * @param provider the ServerFeaturesProvider that was providing server features.
-     */
-    public void removeServerFeaturesProvider(ServerFeaturesProvider provider) {
-        for (Iterator it = provider.getFeatures(); it.hasNext();) {
-            serverFeatures.remove(it.next());
-        }
-    }
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
         // Track the implementors of ServerFeaturesProvider so that we can collect the features
         // provided by the server
-        trackInfo.getTrackerClasses().put(ServerFeaturesProvider.class, "ServerFeaturesProvider");
-        return trackInfo;
-    }
-
-    public void serviceAdded(Object service) {
-        if (service instanceof XMPPServer) {
-            setProvider(((XMPPServer)service).getServerInfo().getName(), getServerInfoProvider());
+        for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
+            addServerFeaturesProvider(provider);
         }
+        setProvider(server.getServerInfo().getName(), getServerInfoProvider());
     }
 
     /**

@@ -114,10 +114,6 @@ public class AcceptManagerImpl extends BasicModule implements AcceptManager {
         return trackInfo;
     }
 
-    public void initialize(Container container) {
-        super.initialize(container);
-    }
-
     protected void serviceAdded(Object service) {
         if (service instanceof ConnectionManager){
             connManager = (ConnectionManager) service;

@@ -14,6 +14,7 @@ package org.jivesoftware.messenger;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
+import org.jivesoftware.messenger.container.BasicModule;
 import org.xmpp.packet.Message;
 import org.dom4j.io.SAXReader;
 import org.dom4j.DocumentFactory;
@@ -31,7 +32,7 @@ import java.sql.Connection;
  *
  * @author Iain Shigeoka
  */
-public class OfflineMessageStore {
+public class OfflineMessageStore extends BasicModule {
 
     private static final String INSERT_OFFLINE =
         "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
@@ -43,7 +44,7 @@ public class OfflineMessageStore {
     private static final String DELETE_OFFLINE =
         "DELETE FROM jiveOffline WHERE username=?";
 
-    private static OfflineMessageStore instance = new OfflineMessageStore();
+    private static OfflineMessageStore instance;
 
     /**
      * Returns a singleton instance of OfflineMessageStore.
@@ -57,8 +58,9 @@ public class OfflineMessageStore {
     private SAXReader saxReader = new SAXReader();
     private DocumentFactory docFactory = new DocumentFactory();
 
-    private OfflineMessageStore() {
-        
+    public OfflineMessageStore() {
+        super("Offline Message Store");
+        instance = this;
     }
 
     /**

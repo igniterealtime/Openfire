@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
@@ -35,6 +34,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private SocketAcceptThread socketThread;
     private SSLSocketAcceptThread sslSocketThread;
     private ArrayList ports;
+
+    private AuditManager auditManager;
+    private SessionManager sessionManager;
+    private PacketDeliverer deliverer;
+    private PacketRouter router;
+    private String serverName;
+    private XMPPServer server;
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
@@ -100,13 +106,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return ports.iterator();
     }
 
-    public AuditManager auditManager;
-    private SessionManager sessionManager = SessionManager.getInstance();
-    public PacketDeliverer deliverer;
-    public PacketRouter router;
-    private String serverName;
-    public XMPPServer server;
-
     public void addSocket(Socket sock, boolean isSecure)  {
         try {
             // the order of these calls is critical (stupid huh?)
@@ -129,32 +128,19 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    public TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
-        trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(AuditManager.class, "auditManager");
-        return trackInfo;
-    }
-
-    public void serviceAdded(Object service) {
-        if (service instanceof XMPPServer) {
-            serverName = server.getServerInfo().getName();
-        }
-        createSocket();
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        this.server = server;
+        router = server.getPacketRouter();
+        deliverer = server.getPacketDeliverer();
+        auditManager = server.getAuditManager();
+        sessionManager = server.getSessionManager();
     }
 
     // Used to know if the sockets can be started (the connection manager has been started)
     private boolean isStarted = false;
     // Used to know if the sockets have been started
     private boolean isSocketStarted = false;
-
-    public void serviceRemoved(Object service) {
-        if (server == null) {
-            serverName = null;
-        }
-    }
 
     // #####################################################################
     // Module management
@@ -163,6 +149,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void start() {
         super.start();
         isStarted = true;
+        serverName = server.getServerInfo().getName();
         createSocket();
     }
 
@@ -176,5 +163,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             sslSocketThread.shutdown();
             sslSocketThread = null;
         }
+        serverName = null;
     }
 }

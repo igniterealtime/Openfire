@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.net.SocketPacketWriteHandler;
@@ -30,8 +29,8 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
      */
     protected ChannelHandler deliverHandler;
 
-    public OfflineMessageStrategy messageStrategy;
-    private SessionManager sessionManager = SessionManager.getInstance();
+    private OfflineMessageStrategy messageStrategy;
+    private SessionManager sessionManager;
 
     public PacketDelivererImpl() {
         super("Packet Delivery");
@@ -47,21 +46,19 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         deliverHandler.process(packet);
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(OfflineMessageStrategy.class, "messageStrategy");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        messageStrategy = server.getOfflineMessageStrategy();
+        sessionManager = server.getSessionManager();
     }
 
-    public void serviceAdded(Object service) {
-        if (sessionManager != null && messageStrategy != null) {
-            deliverHandler = new SocketPacketWriteHandler(sessionManager, messageStrategy);
-        }
+    public void start() throws IllegalStateException {
+        super.start();
+        deliverHandler = new SocketPacketWriteHandler(sessionManager, messageStrategy);
     }
 
-    public void serviceRemoved(Object service) {
-        if (sessionManager == null || messageStrategy == null) {
-            deliverHandler = null;
-        }
+    public void stop() {
+        super.stop();
+        deliverHandler = null;
     }
 }

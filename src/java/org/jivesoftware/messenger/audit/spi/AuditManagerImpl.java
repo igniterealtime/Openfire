@@ -12,10 +12,10 @@
 package org.jivesoftware.messenger.audit.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.XMPPServer;
 
 import java.util.*;
 
@@ -145,8 +145,8 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     // Basic module methods
     // #########################################################################
 
-    public void initialize(Container container) {
-        super.initialize(container);
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
         enabled = JiveGlobals.getBooleanProperty("xmpp.audit.active");
         auditMessage = JiveGlobals.getBooleanProperty("xmpp.audit.message");
         auditPresence = JiveGlobals.getBooleanProperty("xmpp.audit.presence");

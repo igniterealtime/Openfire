@@ -11,16 +11,9 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.ChannelHandler;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.IQRouter;
-import org.jivesoftware.messenger.PacketDeliverer;
-import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
@@ -39,9 +32,11 @@ import org.xmpp.packet.PacketError;
  */
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
-    public PacketDeliverer deliverer;
+    protected PacketDeliverer deliverer;
 
     protected IQRouter router;
+
+    private SessionManager sessionManager;
 
     /**
      * Create a basic module with the given name.
@@ -69,14 +64,14 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
                 try {
                     IQ response = IQ.createResultIQ(iq);
                     response.setError(PacketError.Condition.not_authorized);
-                    Session session = SessionManager.getInstance().getSession(iq.getFrom());
+                    Session session = sessionManager.getSession(iq.getFrom());
                     if (!session.getConnection().isClosed()) {
                         session.getConnection().deliver(response);
                     }
                 }
                 catch (Exception de) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), de);
-                    SessionManager.getInstance().getSession(iq.getFrom()).getConnection().close();
+                    sessionManager.getSession(iq.getFrom()).getConnection().close();
                 }
             }
         }
@@ -107,9 +102,9 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
      */
     public abstract IQHandlerInfo getInfo();
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        deliverer = server.getPacketDeliverer();
+        sessionManager = server.getSessionManager();
     }
 }

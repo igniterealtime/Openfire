@@ -22,12 +22,12 @@ import java.util.List;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProviderFactory;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.Cache;
@@ -291,8 +291,8 @@ public class UserManagerImpl extends BasicModule implements UserManager {
     // Module management
     // #####################################################################
 
-    public void initialize(Container container) {
-        super.initialize(container);
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
         initializeCaches();
     }
 }

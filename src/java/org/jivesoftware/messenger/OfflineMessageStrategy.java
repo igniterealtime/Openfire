@@ -13,8 +13,6 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -32,14 +30,11 @@ public class OfflineMessageStrategy extends BasicModule {
     private static Type type = Type.store;
     private SessionManager sessionManager;
 
-    public XMPPServer xmppServer;
-    public PacketDeliverer deliverer;
-    public OfflineMessageStore messageStore;
+    private XMPPServer xmppServer;
+    private OfflineMessageStore messageStore;
 
     public OfflineMessageStrategy() {
         super("Offline Message Strategy");
-
-        sessionManager = SessionManager.getInstance();
     }
 
     public int getQuota() {
@@ -107,18 +102,6 @@ public class OfflineMessageStrategy extends BasicModule {
         messageStore.addMessage(message);
     }
 
-    public void initialize(Container container) {
-        super.initialize(container);
-        String quota = JiveGlobals.getProperty("xmpp.offline.quota");
-        if (quota != null && quota.length() > 0) {
-            OfflineMessageStrategy.quota = Integer.parseInt(quota);
-        }
-        String type = JiveGlobals.getProperty("xmpp.offline.type");
-        if (type != null && type.length() > 0) {
-            OfflineMessageStrategy.type = Type.valueOf(type);
-        }
-    }
-
     private void bounce(Message message) {
         // Generate a rejection response to the sender
         try {
@@ -141,13 +124,20 @@ public class OfflineMessageStrategy extends BasicModule {
         }
     }
 
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        xmppServer = server;
+        messageStore = server.getOfflineMessageStore();
+        sessionManager = server.getSessionManager();
 
-    public TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "xmppServer");
-        trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
-        return trackInfo;
+        String quota = JiveGlobals.getProperty("xmpp.offline.quota");
+        if (quota != null && quota.length() > 0) {
+            OfflineMessageStrategy.quota = Integer.parseInt(quota);
+        }
+        String type = JiveGlobals.getProperty("xmpp.offline.type");
+        if (type != null && type.length() > 0) {
+            OfflineMessageStrategy.type = Type.valueOf(type);
+        }
     }
 
     /**

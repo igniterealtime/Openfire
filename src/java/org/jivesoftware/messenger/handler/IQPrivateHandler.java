@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -49,6 +48,7 @@ import org.xmpp.packet.IQ;
 public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvider {
 
     private IQHandlerInfo info;
+    private PrivateStorage privateStorage = null;
 
     public IQPrivateHandler() {
         super("XMPP Private Storage Handler");
@@ -77,12 +77,9 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         return replyPacket;
     }
 
-    public PrivateStorage privateStorage = null;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(PrivateStorage.class, "privateStorage");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        privateStorage = server.getPrivateStorage();
     }
 
     public IQHandlerInfo getInfo() {

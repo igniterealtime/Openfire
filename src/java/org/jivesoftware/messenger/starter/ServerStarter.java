@@ -50,7 +50,7 @@ public class ServerStarter {
            
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(
-                    "org.jivesoftware.messenger.XMPPBootContainer");
+                    "org.jivesoftware.messenger.spi.BasicServer");
             containerClass.newInstance();
         }
         catch (Exception e) {

@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
@@ -27,8 +26,9 @@ import org.xmpp.packet.PacketError;
  */
 public class MessageRouterImpl extends BasicModule implements MessageRouter {
 
-    public OfflineMessageStrategy messageStrategy;
-    public RoutingTable routingTable;
+    private OfflineMessageStrategy messageStrategy;
+    private RoutingTable routingTable;
+    private SessionManager sessionManager;
 
     /**
      * <p>Create a packet router.</p>
@@ -41,7 +41,7 @@ public class MessageRouterImpl extends BasicModule implements MessageRouter {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        Session session = sessionManager.getSession(packet.getFrom());
         if (session == null
                 || session.getStatus() == Session.STATUS_AUTHENTICATED)
         {
@@ -74,11 +74,10 @@ public class MessageRouterImpl extends BasicModule implements MessageRouter {
         }
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(OfflineMessageStrategy.class, "messageStrategy");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        messageStrategy = server.getOfflineMessageStrategy();
+        routingTable = server.getRoutingTable();
+        sessionManager = server.getSessionManager();
     }
-
 }

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PacketException;
@@ -49,6 +48,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
     private static Element bodyElement;
     private static Element versionElement;
     private IQHandlerInfo info;
+    private XMPPServer localServer;
 
     public IQVersionHandler() {
         super("XMPP Server Version Handler");
@@ -70,12 +70,9 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         return result;
     }
 
-    public XMPPServer localServer;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        localServer = server;
     }
 
     public IQHandlerInfo getInfo() {

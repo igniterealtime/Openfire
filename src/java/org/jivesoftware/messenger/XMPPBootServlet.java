@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger;
 
+import org.jivesoftware.messenger.spi.BasicServer;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -19,14 +21,14 @@ import javax.servlet.http.HttpServlet;
 
 public class XMPPBootServlet extends HttpServlet {
 
-    private XMPPBootContainer container;
-    private Object containerLock = new Object();
+    private XMPPServer server;
+    private Object serverLock = new Object();
 
     public void init(ServletConfig servletConfig) throws ServletException {
-        if (container == null) {
-            synchronized (containerLock) {
-                if (container == null) {
-                    container = new XMPPBootContainer();
+        if (server == null) {
+            synchronized (serverLock) {
+                if (server == null) {
+                    server = new BasicServer();
                 }
             }
         }

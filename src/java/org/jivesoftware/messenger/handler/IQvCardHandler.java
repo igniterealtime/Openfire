@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
@@ -62,6 +61,7 @@ import org.xmpp.packet.PacketError;
 public class IQvCardHandler extends IQHandler {
 
     private IQHandlerInfo info;
+    private UserManager userManager;
 
     public IQvCardHandler() {
         super("XMPP vCard Handler");
@@ -151,12 +151,9 @@ public class IQvCardHandler extends IQHandler {
         return buf.toString();
     }
 
-    public UserManager userManager;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        userManager = server.getUserManager();
     }
 
     public IQHandlerInfo getInfo() {

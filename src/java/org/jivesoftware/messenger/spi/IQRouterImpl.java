@@ -18,7 +18,6 @@ import java.util.Map;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -34,10 +33,8 @@ import org.dom4j.Element;
  */
 public class IQRouterImpl extends BasicModule implements IQRouter {
 
-    public XMPPServer localServer;
-    public OfflineMessageStore messageStore;
-    public RoutingTable routingTable;
-    public LinkedList iqHandlers = new LinkedList();
+    private RoutingTable routingTable;
+    private LinkedList iqHandlers = new LinkedList();
     private Map namespace2Handlers = new HashMap();
     private SessionManager sessionManager;
 
@@ -46,14 +43,13 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
      */
     public IQRouterImpl() {
         super("XMPP IQ Router");
-        sessionManager = SessionManager.getInstance();
     }
 
     public void route(IQ packet) {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        Session session = sessionManager.getSession(packet.getFrom());
         if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED
                 || (isLocalServer(packet.getTo())
                 && ("jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI())
@@ -188,13 +184,10 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         return handler;
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        trackInfo.getTrackerClasses().put(IQHandler.class, "iqHandlers");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        routingTable = server.getRoutingTable();
+        iqHandlers.addAll(server.getIQHandlers());
+        sessionManager = server.getSessionManager();
     }
-
 }

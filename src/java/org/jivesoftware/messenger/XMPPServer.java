@@ -11,8 +11,20 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.container.Module;
 import org.xmpp.packet.JID;
+import org.jivesoftware.messenger.user.RosterManager;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.handler.IQRegisterHandler;
+import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
+import org.jivesoftware.messenger.handler.PresenceSubscribeHandler;
+import org.jivesoftware.messenger.handler.IQHandler;
+import org.jivesoftware.messenger.transport.TransportHandler;
+import org.jivesoftware.messenger.audit.AuditManager;
+import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
+import org.jivesoftware.messenger.disco.ServerItemsProvider;
+import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
+
+import java.util.List;
 
 /**
  * The XMPP server definition. An interface allows us to implement the
@@ -28,7 +40,7 @@ import org.xmpp.packet.JID;
  *
  * @author Iain Shigeoka
  */
-public interface XMPPServer extends Module {
+public interface XMPPServer {
 
     /**
      * Obtain a snapshot of the server's status.
@@ -53,4 +65,49 @@ public interface XMPPServer extends Module {
      */
     public JID createJID(String username, String resource);
 
+    public ConnectionManager getConnectionManager();
+
+    public RoutingTable getRoutingTable();
+
+    public PacketDeliverer getPacketDeliverer();
+
+    public RosterManager getRosterManager();
+
+    public PresenceManager getPresenceManager();
+
+    public OfflineMessageStore getOfflineMessageStore();
+
+    public OfflineMessageStrategy getOfflineMessageStrategy();
+
+    public PacketRouter getPacketRouter();
+
+    public IQRegisterHandler getIQRegisterHandler();
+
+    public List<IQHandler> getIQHandlers();
+
+    public SessionManager getSessionManager();
+
+    public TransportHandler getTransportHandler();
+
+    public PresenceUpdateHandler getPresenceUpdateHandler();
+
+    public PresenceSubscribeHandler getPresenceSubscribeHandler();
+
+    public IQRouter getIQRouter();
+
+    public MessageRouter getMessageRouter();
+
+    public PresenceRouter getPresenceRouter();
+
+    public UserManager getUserManager();
+
+    public AuditManager getAuditManager();
+
+    public List<ServerFeaturesProvider> getServerFeaturesProviders();
+
+    public List<ServerItemsProvider> getServerItemsProviders();
+
+    public IQDiscoInfoHandler getIQDiscoInfoHandler();
+
+    public PrivateStorage getPrivateStorage();
 }

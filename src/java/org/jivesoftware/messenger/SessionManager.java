@@ -27,10 +27,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
+import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
-import org.jivesoftware.messenger.spi.PacketTransporterImpl;
 import org.jivesoftware.messenger.spi.SessionImpl;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -49,16 +47,14 @@ import org.xmlpull.v1.XmlPullParserException;
  *
  * @author Derek DeMoro
  */
-public class SessionManager implements ConnectionCloseListener {
+public class SessionManager extends BasicModule implements ConnectionCloseListener {
     private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
 
-    public XMPPServer server;
-    public PacketRouter router;
-    public PacketTransporterImpl transporter;
+    private PacketRouter router;
     private String serverName;
     private JID serverAddress;
-    public UserManager userManager;
+    private UserManager userManager;
     private int conflictLimit;
     private Random randomResource = new Random();
 
@@ -87,7 +83,12 @@ public class SessionManager implements ConnectionCloseListener {
         return singleton;
     }
 
-    private SessionManager() {
+    public SessionManager() {
+        super("Session Manager");
+        if (singleton != null) {
+            throw new IllegalStateException();
+        }
+        singleton = this;
         if (JiveGlobals.getBooleanProperty("xmpp.audit.active")) {
             streamIDFactory = new AuditStreamIDFactory();
         }
@@ -127,7 +128,7 @@ public class SessionManager implements ConnectionCloseListener {
      * <p>Session manager must maintain the routing table as sessions are added and
      * removed.</p>
      */
-    public RoutingTable routingTable;
+    private RoutingTable routingTable;
 
     /**
      * The standard Jive reader/writer lock to synchronize access to
@@ -903,29 +904,14 @@ public class SessionManager implements ConnectionCloseListener {
         }
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
-        trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        return trackInfo;
-    }
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        router = server.getPacketRouter();
+        userManager = server.getUserManager();
+        routingTable = server.getRoutingTable();
+        serverName = server.getServerInfo().getName();
+        serverAddress = new JID(serverName);
 
-    public void serviceAdded(Object service) {
-        if (service instanceof XMPPServer && server != null) {
-            serverName = server.getServerInfo().getName();
-            serverAddress = new JID(serverName);
-        }
-    }
-
-    public void serviceRemoved(Object service) {
-        if (server == null) {
-            serverName = null;
-        }
-    }
-
-    public void initialize(Container container) {
         if (JiveGlobals.getBooleanProperty("xmpp.audit.active")) {
             streamIDFactory = new AuditStreamIDFactory();
         }
@@ -986,6 +972,7 @@ public class SessionManager implements ConnectionCloseListener {
     }
 
     public void stop() {
+        serverName = null;
         sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
         try {
             for (Session session : getSessions()) {

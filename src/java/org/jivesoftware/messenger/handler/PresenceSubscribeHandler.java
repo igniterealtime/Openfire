@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.handler;
 
 import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -72,6 +71,10 @@ import java.util.Map;
  * @author Iain Shigeoka
  */
 public class PresenceSubscribeHandler extends BasicModule implements ChannelHandler {
+
+    private RoutingTable routingTable;
+    private XMPPServer localServer;
+    private PacketDeliverer deliverer;
 
     public PresenceSubscribeHandler() {
         super("Presence subscription handler");
@@ -358,18 +361,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         }
     }
 
-    public RoutingTable routingTable;
-    public UserManager userManager;
-    public XMPPServer localServer;
-    public PacketDeliverer deliverer;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        localServer = server;
+        routingTable = server.getRoutingTable();
+        deliverer = server.getPacketDeliverer();
     }
 
     public void setRouter(PresenceRouter router) {

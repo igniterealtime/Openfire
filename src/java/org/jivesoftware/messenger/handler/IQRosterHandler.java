@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -22,7 +21,6 @@ import org.jivesoftware.messenger.user.Roster;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import org.xmpp.packet.*;
 import org.dom4j.Element;
-import org.xmlpull.v1.XmlPullParserException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -60,6 +58,11 @@ import java.util.Iterator;
 public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider {
 
     private IQHandlerInfo info;
+
+    private UserManager userManager;
+    private XMPPServer localServer;
+    private SessionManager sessionManager;
+    private PacketRouter router;
 
     public IQRosterHandler() {
         super("XMPP Roster Handler");
@@ -111,7 +114,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      *
      * @param packet The packet suspected of containing a roster removal
      */
-    private void removeRosterItem(IQRoster packet) throws UnauthorizedException, XmlPullParserException {
+    private void removeRosterItem(IQRoster packet) throws UnauthorizedException {
         JID recipientJID = packet.getTo();
         JID senderJID = packet.getFrom();
         try {
@@ -144,12 +147,12 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param packet The packet that triggered this update
      * @return Either a response to the roster update or null if the packet is corrupt and the session was closed down
      */
-    private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException, XmlPullParserException {
+    private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException {
 
         IQ returnPacket = null;
         Session session = null;
         try {
-            SessionManager.getInstance().getSession(packet.getFrom());
+            sessionManager.getSession(packet.getFrom());
         }
         catch (Exception e) {
             IQ error = IQ.createResultIQ(packet);
@@ -258,21 +261,12 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         return response;
     }
 
-    public UserManager userManager;
-    public XMPPServer localServer;
-    private SessionManager sessionManager = SessionManager.getInstance();
-    public PresenceManager presenceManager;
-    public PacketRouter router;
-    public RoutingTable routingTable;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
-        trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        localServer = server;
+        userManager = server.getUserManager();
+        router = server.getPacketRouter();
+        sessionManager = server.getSessionManager();
     }
 
     public IQHandlerInfo getInfo() {

@@ -22,7 +22,6 @@ import org.dom4j.io.SAXReader;
 import java.sql.*;
 import java.sql.Connection;
 import java.io.StringWriter;
-import java.io.StringReader;
 
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems

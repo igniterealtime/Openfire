@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
@@ -30,10 +29,10 @@ import org.xmpp.packet.PacketError;
  */
 public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
 
-    public XMPPServer localServer;
-    public RoutingTable routingTable;
-    public PresenceUpdateHandler updateHandler;
-    public PresenceSubscribeHandler subscribeHandler;
+    private RoutingTable routingTable;
+    private PresenceUpdateHandler updateHandler;
+    private PresenceSubscribeHandler subscribeHandler;
+    private SessionManager sessionManager;
 
     /**
      * Create a packet router.
@@ -46,7 +45,7 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = SessionManager.getInstance().getSession(packet.getFrom());
+        Session session = sessionManager.getSession(packet.getFrom());
         if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
             handle(packet);
         }
@@ -105,7 +104,7 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             try {
-                Session session = SessionManager.getInstance().getSession(packet.getFrom());
+                Session session = sessionManager.getSession(packet.getFrom());
                 if (session != null) {
                     Connection conn = session.getConnection();
                     if (conn != null) {
@@ -119,13 +118,11 @@ public class PresenceRouterImpl extends BasicModule implements PresenceRouter {
         }
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        trackInfo.getTrackerClasses().put(PresenceUpdateHandler.class, "updateHandler");
-        trackInfo.getTrackerClasses().put(PresenceSubscribeHandler.class, "subscribeHandler");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        routingTable = server.getRoutingTable();
+        updateHandler = server.getPresenceUpdateHandler();
+        subscribeHandler = server.getPresenceSubscribeHandler();
+        sessionManager = server.getSessionManager();
     }
-
 }

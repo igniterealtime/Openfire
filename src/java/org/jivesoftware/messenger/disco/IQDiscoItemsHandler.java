@@ -19,8 +19,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -48,12 +48,12 @@ import org.xmpp.packet.PacketError;
  *
  * @author Gaston Dombiak
  */
-public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeaturesProvider {
+public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider {
 
     private HashMap entities = new HashMap();
     private List serverItems = new ArrayList();
     private IQHandlerInfo info;
-    public IQDiscoInfoHandler infoHandler;
+    private IQDiscoInfoHandler infoHandler;
 
     public IQDiscoItemsHandler() {
         super("XMPP Disco Items Handler");
@@ -165,7 +165,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
      *
      * @param provider the ServerItemsProvider that provides new server items.
      */
-    public void addServerItemsProvider(ServerItemsProvider provider) {
+    private void addServerItemsProvider(ServerItemsProvider provider) {
         DiscoServerItem discoItem;
         for (Iterator it = provider.getItems(); it.hasNext();) {
             discoItem = (DiscoServerItem)it.next();
@@ -184,51 +184,15 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
         }
     }
 
-    /**
-     * Removes the items provided by the service that implements the ServerItemsProvider
-     * interface which is being removed. Example of item is:
-     * &lt;item jid='conference.localhost' name='Public chatrooms'/&gt;
-     *
-     * @param provider the ServerItemsProvider that was providing server items.
-     */
-    public void removeServerItemsProvider(ServerItemsProvider provider) {
-        DiscoItem discoItem;
-        for (Iterator it = provider.getItems(); it.hasNext();) {
-            discoItem = (DiscoItem)it.next();
-            // Locate the element that represents the DiscoItem to remove
-            Element element = null;
-            boolean found = false;
-            for (Iterator itemsItr = serverItems.iterator(); !found && it.hasNext();) {
-                element = (Element)itemsItr.next();
-                if (discoItem.getJID().equals(element.attributeValue("jid"))) {
-                    found = true;
-                    break;
-                }
-            }
-            // If the element was found then remove it from the items provided by the server
-            if (found) {
-                serverItems.remove(element);
-            }
-            // Remove the item as a valid entity that could receive info and items disco requests
-            String host = StringUtils.parseServer(discoItem.getJID());
-            infoHandler.removeProvider(host);
-            removeProvider(host);
-        }
-    }
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
         // Track the implementors of ServerItemsProvider so that we can collect the items
         // provided by the server
-        trackInfo.getTrackerClasses().put(ServerItemsProvider.class, "ServerItemsProvider");
-        trackInfo.getTrackerClasses().put(IQDiscoInfoHandler.class, "infoHandler");
-        return trackInfo;
-    }
-
-    public void serviceAdded(Object service) {
-        if (service instanceof XMPPServer) {
-            setProvider(((XMPPServer)service).getServerInfo().getName(), getServerItemsProvider());
+        infoHandler = server.getIQDiscoInfoHandler();
+        for (ServerItemsProvider provider : server.getServerItemsProviders()) {
+            addServerItemsProvider(provider);
         }
+        setProvider(server.getServerInfo().getName(), getServerItemsProvider());
     }
 
     public Iterator getFeatures() {

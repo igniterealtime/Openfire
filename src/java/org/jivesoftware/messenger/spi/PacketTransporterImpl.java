@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -29,17 +28,17 @@ public class PacketTransporterImpl extends BasicModule  {
     /**
      * The handler that does the actual delivery (could be a channel instead)
      */
-    public TransportHandler transportHandler;
+    private TransportHandler transportHandler;
 
     /**
      * deliverer for xmpp server
      */
-    public PacketDeliverer deliverer;
+    private PacketDeliverer deliverer;
 
     /**
      * xmpp server
      */
-    public XMPPServer xmppServer;
+    private XMPPServer xmppServer;
 
     /**
      * This is a singleton, you can't create one. Be very careful not to do anything
@@ -88,11 +87,10 @@ public class PacketTransporterImpl extends BasicModule  {
         }
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "xmppServer");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(TransportHandler.class, "transportHandler");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        xmppServer = server;
+        deliverer = server.getPacketDeliverer();
+        transportHandler = server.getTransportHandler();
     }
 }

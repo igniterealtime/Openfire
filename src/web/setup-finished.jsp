@@ -12,7 +12,6 @@
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.JiveGlobals,
-                 org.jivesoftware.messenger.XMPPBootContainer,
                  java.util.Map,
                  java.util.Iterator"
 %>

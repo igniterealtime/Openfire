@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -23,7 +22,6 @@ import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -78,6 +76,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     private Map<String, Set> directedPresences = new HashMap<String, Set>();
 
+    private RosterManager rosterManager;
+    private XMPPServer localServer;
+    private PresenceManager presenceManager;
+    private PacketDeliverer deliverer;
+    private OfflineMessageStore messageStore;
+    private SessionManager sessionManager;
+
     public PresenceUpdateHandler() {
         super("Presence update handler");
     }
@@ -85,7 +90,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
         Presence presence = (Presence)xmppPacket;
         try {
-            Session session = SessionManager.getInstance().getSession(presence.getFrom());
+            Session session = sessionManager.getSession(presence.getFrom());
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
@@ -137,7 +142,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         catch (UnauthorizedException e) {
             try {
-                Session session = SessionManager.getInstance().getSession(presence.getFrom());
+                Session session = sessionManager.getSession(presence.getFrom());
                 presence = presence.createCopy();
                 if (session != null) {
                     presence.setFrom(new JID(null, session.getServerName(), null));
@@ -169,7 +174,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @throws UnauthorizedException If the caller doesn't have the right permissions
      * @throws UserNotFoundException If the user being updated does not exist
      */
-    private void initSession(Session session)  throws UnauthorizedException, UserNotFoundException, XmlPullParserException {
+    private void initSession(Session session)  throws UnauthorizedException, UserNotFoundException {
 
         // Only user sessions need to be authenticated
         if (!"".equals(session.getAddress().getNode())) {
@@ -375,22 +380,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
-
-    public RosterManager rosterManager;
-    public XMPPServer localServer;
-    private SessionManager sessionManager = SessionManager.getInstance();
-    public PresenceManager presenceManager;
-    public PacketDeliverer deliverer;
-    public OfflineMessageStore messageStore;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(RosterManager.class, "rosterManager");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        localServer = server;
+        rosterManager = server.getRosterManager();
+        presenceManager = server.getPresenceManager();
+        deliverer = server.getPacketDeliverer();
+        messageStore = server.getOfflineMessageStore();
+        sessionManager = server.getSessionManager();
     }
 
     /**

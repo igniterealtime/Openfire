@@ -23,14 +23,11 @@ import org.jivesoftware.messenger.Component;
 import org.jivesoftware.messenger.ComponentManager;
 import org.jivesoftware.messenger.PacketDeliverer;
 import org.jivesoftware.messenger.PresenceManager;
-import org.jivesoftware.messenger.RoutingTable;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -56,11 +53,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
      */
     private Cache foreignUserCache;
 
-    public UserManager userManager;
-    private SessionManager sessionManager = SessionManager.getInstance();
-    public RoutingTable routingTable;
-    public XMPPServer server;
-    public PacketDeliverer deliverer;
+    private UserManager userManager;
+    private SessionManager sessionManager;
+    private XMPPServer server;
+    private PacketDeliverer deliverer;
 
     private ComponentManager componentManager;
 
@@ -392,18 +388,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     // Module management
     // #####################################################################
 
-    public void initialize(Container container) {
-        super.initialize(container);
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        this.server = server;
+        userManager = server.getUserManager();
+        deliverer = server.getPacketDeliverer();
+        sessionManager = server.getSessionManager();
         initializeCaches();
-    }
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
-        return trackInfo;
     }
 
     public Component getPresenceComponent(JID probee) {

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
@@ -55,6 +54,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     private Element probeResponse;
     private IQHandlerInfo info;
 
+    private UserManager userManager;
+    private XMPPServer localServer;
+    private SessionManager sessionManager;
+
     /**
      * Clients are not authenticated when accessing this handler.
      */
@@ -76,7 +79,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
-            Session session = SessionManager.getInstance().getSession(packet.getFrom());
+            Session session = sessionManager.getSession(packet.getFrom());
             IQ response = null;
             try {
                 Element iq = packet.getElement();
@@ -226,15 +229,11 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         JiveGlobals.setProperty("xmpp.auth.anonymous", anonymousAllowed ? "true" : "false");
     }
 
-    public UserManager userManager;
-    public XMPPServer localServer;
-    private SessionManager sessionManager = SessionManager.getInstance();
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        localServer = server;
+        userManager = server.getUserManager();
+        sessionManager = server.getSessionManager();
     }
 
     public IQHandlerInfo getInfo() {

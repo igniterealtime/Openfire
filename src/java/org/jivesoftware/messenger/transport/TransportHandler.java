@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.transport;
 
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -32,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TransportHandler extends BasicModule implements ChannelHandler {
 
     private Map<String, Channel> transports = new ConcurrentHashMap<String, Channel>();
+
+    private PacketDeliverer deliverer;
 
     public TransportHandler() {
         super("Transport handler");
@@ -68,11 +69,8 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
         }
     }
 
-    public PacketDeliverer deliverer;
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        return trackInfo;
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        deliverer = server.getPacketDeliverer();
     }
 }

@@ -11,8 +11,6 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.forms.DataForm;
 import org.jivesoftware.messenger.forms.FormField;
@@ -67,9 +65,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     private static Element probeResult;
 
-    public UserManager userManager;
-    public RosterManager rosterManager;
-    public PresenceUpdateHandler presenceHandler;
+    private UserManager userManager;
+    private RosterManager rosterManager;
+    private PresenceUpdateHandler presenceHandler;
+    private SessionManager sessionManager;
 
     private IQHandlerInfo info;
     // TODO: this value needs to be shared across all instances but not across the entire jvm...
@@ -84,8 +83,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         info = new IQHandlerInfo("query", "jabber:iq:register");
     }
 
-    public void initialize(Container container) {
-        super.initialize(container);
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        userManager = server.getUserManager();
+        rosterManager = server.getRosterManager();
+        presenceHandler = server.getPresenceUpdateHandler();
+        sessionManager = server.getSessionManager();
+
         if (probeResult == null) {
             // Create the basic element of the probeResult which contains the basic registration
             // information (e.g. username, passoword and email)
@@ -154,7 +158,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
         Session session = null;
         try {
-            session = SessionManager.getInstance().getSession(packet.getFrom());
+            session = sessionManager.getSession(packet.getFrom());
         }
         catch (Exception e) {
         }
@@ -352,14 +356,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     public void removeDelegate(String serviceName) {
         delegates.remove(serviceName);
-    }
-
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(RosterManager.class, "rosterManager");
-        trackInfo.getTrackerClasses().put(PresenceUpdateHandler.class, "presenceHandler");
-        return trackInfo;
     }
 
     public IQHandlerInfo getInfo() {

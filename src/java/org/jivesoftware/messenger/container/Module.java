@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger.container;
 
+import org.jivesoftware.messenger.XMPPServer;
+
 /**
  * Logical, server-managed entities must implement this interface. A module
  * represents an operational unit and may contain zero or more services
@@ -52,9 +54,9 @@ public interface Module {
      * Modules may be initialized and never started, so modules
      * should be prepared for a call to destroy() to follow initialize().
      *
-     * @param container the container hosting this module.
+     * @param server the server hosting this module.
      */
-    void initialize(Container container);
+    void initialize(XMPPServer server);
 
     /**
      * Start the module (must return quickly). Any long running

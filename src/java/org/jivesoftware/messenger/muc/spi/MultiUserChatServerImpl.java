@@ -26,16 +26,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.PacketDeliverer;
 import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.RoutableChannelHandler;
 import org.jivesoftware.messenger.RoutingTable;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.DiscoInfoProvider;
 import org.jivesoftware.messenger.disco.DiscoItemsProvider;
 import org.jivesoftware.messenger.disco.DiscoServerItem;
@@ -131,21 +127,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     private RoutingTable routingTable = null;
     /**
-     * The packet deliverer for the server.
-     */
-    public PacketDeliverer deliverer = null;
-    /**
      * The packet router for the server.
      */
-    public PacketRouter router = null;
-    /**
-     * The packet manager for the server.
-     */
-    public PresenceManager presenceManager = null;
+    private PacketRouter router = null;
     /**
      * The handler of packets with namespace jabber:iq:register for the server.
      */
-    public IQRegisterHandler registerHandler = null;
+    private IQRegisterHandler registerHandler = null;
     /**
      * The total time all agents took to chat *
      */
@@ -375,36 +363,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    /**
-     * Initialize the track info for the server.
-     *
-     * @return the track information for this server.
-     */
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = new TrackInfo();
-        trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
-        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
-        // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
-        trackInfo.getTrackerClasses().put(IQRegisterHandler.class, "registerHandler");
-        return trackInfo;
-    }
-
-    public void serviceAdded(Object service) {
-        if (service instanceof RoutingTable) {
-            ((RoutingTable)service).addRoute(chatServiceAddress, this);
-            ArrayList params = new ArrayList();
-            params.clear();
-            params.add(chatServiceName);
-            Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
-        }
-        else if (service instanceof IQRegisterHandler) {
-            ((IQRegisterHandler) service).addDelegate(
-                    getServiceName(),
-                    new IQMUCRegisterHandler(this));
-        }
-    }
-
     public void setServiceName(String name) {
         JiveGlobals.setProperty("xmpp.muc.service", name);
     }
@@ -528,8 +486,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         JiveGlobals.setProperty("xmpp.muc.create.jid", fromArray(jids));
     }
 
-    public void initialize(Container container) {
-        super.initialize(container);
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
 
         chatServiceName = JiveGlobals.getProperty("xmpp.muc.service");
         // Trigger the strategy to load itself from the context
@@ -593,19 +551,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             chatServiceName = "conference";
         }
         String serverName = null;
-        try {
-            XMPPServer server = (XMPPServer)lookup.lookup(XMPPServer.class);
-            if (server != null) {
-                serverName = server.getServerInfo().getName();
-            }
-            else {
-                // Try to get serverName directly.
-                serverName = JiveGlobals.getProperty("xmpp.domain");
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
+        serverName = server.getServerInfo().getName();
         if (serverName != null) {
             chatServiceName += "." + serverName;
         }
@@ -618,11 +564,23 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // (default values)
         logConversationTask = new LogConversationTask();
         timer.schedule(logConversationTask, log_timeout, log_timeout);
+
+        routingTable = server.getRoutingTable();
+        router = server.getPacketRouter();
+        // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
+        registerHandler = server.getIQRegisterHandler();
+        registerHandler.addDelegate(getServiceName(), new IQMUCRegisterHandler(this));
+
+        // Add the route to this service
+        routingTable.addRoute(chatServiceAddress, this);
+        ArrayList params = new ArrayList();
+        params.clear();
+        params.add(chatServiceName);
+        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
     }
 
     public void start() {
         super.start();
-        routingTable = (RoutingTable)lookup.lookup(RoutingTable.class);
         routingTable.addRoute(chatServiceAddress, this);
         ArrayList params = new ArrayList();
         params.clear();
@@ -636,6 +594,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public void stop() {
         super.stop();
+        routingTable.removeRoute(chatServiceAddress);
         timer.cancel();
         logAllConversation();
         if (registerHandler != null) {

@@ -32,20 +32,15 @@ a directory. The files in a plugin directory are as follows:
 <pre>myplugin/
  |- plugin.xml     &lt;- Plugin definition file
  |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
- |- lib/           &lt;- Libraries your plugin needs
- |- src/
-     |- java       &lt;- Java source code for your plugin
-     |   |- com
-     |       |- mycompany
-     |           |- *.java
-     |- web
-         |- *.jsp      &lt;- JSPs your plugin uses for the admin console
-         |- images/    &lt;- Any images your JSP pages need (optional)
+ |- lib/           &lt;- Libraries (JAR files) your plugin needs
+ |- web            &lt;- Resources for Admin Console integration.
+     |- web.xml   
+     |- images/  
 </pre>
 </fieldset>
 
-<p>The <tt>src/web</tt> directory exists for plugins that need to add content
-to the Jive Messenger admin console. Further details are below.</p>
+<p>The <tt>web</tt> directory exists for plugins that need to add content
+to the Jive Messenger Admin Console. Further details are below.</p>
 
 <p>
 The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
@@ -167,14 +162,36 @@ tabs, sections and entries in the Admin Console framework. A sample
 <p>
 In this example, we've defined a new tab "Example", a sidebar section
 "My Plugin" and a page "My Plugin Admin". We've registered <tt>my-plugin-admin.jsp</tt>
-as the page.
+as the page. You can override existing tabs, sections, and items by using
+the existing id attribute values in your own <tt>&lt;adminconsole&gt;</tt> defintion.
 </p>
 
 <h2>Using the Jive Messenger Build Script</h2>
 				   
 <p>
-The Jive Messenger build script is designed to help you build and develop plugins.
+The Jive Messenger build script will help you build and develop plugins. It
+looks for plugin development directories in the following format:
 </p>
+
+<fieldset>
+    <legend>Plugin Structure</legend>
+<pre>myplugin/
+ |- plugin.xml     &lt;- Plugin definition file
+ |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
+ |- lib/           &lt;- Libraries your plugin needs
+ |- src/
+     |- java       &lt;- Java source code for your plugin
+     |   |- com
+     |       |- mycompany
+     |           |- *.java
+     |- web
+         |- *.jsp      &lt;- JSPs your plugin uses for the admin console
+         |- images/    &lt;- Any images your JSP pages need (optional)
+</pre>
+</fieldset>
+
+<p>The build script will compile source files and JSPs and create a valid 
+plugin structure.</p>
 
 <br><br>
 

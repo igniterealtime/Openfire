@@ -268,7 +268,7 @@ public class SearchPlugin implements Component, Plugin {
         Iterator userIter = users.iterator();
         while (userIter.hasNext()) {
             User user = (User) userIter.next();
-            String username = user.getName();
+            String username = user.getUsername();
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
 

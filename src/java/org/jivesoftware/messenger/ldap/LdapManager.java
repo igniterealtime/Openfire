@@ -28,6 +28,7 @@ import javax.naming.directory.*;
  *      <li>ldap.host</li>
  *      <li>ldap.port</li>
  *      <li>ldap.baseDN</li>
+ *      <li>ldap.alternateBaseDN</li>
  *      <li>ldap.adminDN</li>
  *      <li>ldap.adminPassword</li>
  *      <li>ldap.usernameField -- default value is "uid".</li>
@@ -51,7 +52,7 @@ public class LdapManager {
     private String emailField = "mail";
     private String baseDN = "";
     private String alternateBaseDN = null;
-    private String adminDN;
+    private String adminDN = null;
     private String adminPassword;
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
@@ -103,6 +104,9 @@ public class LdapManager {
                     JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled")).booleanValue();
         }
         this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
+        if (adminDN != null && adminDN.trim().equals("")) {
+            adminDN = null;
+        }
         this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
         this.ldapDebugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
                 "ldap.ldapDebugEnabled")).booleanValue();

@@ -1,0 +1,292 @@
+/**
+ * $RCSfile$
+ * $Revision
+ * $Date$
+ *
+ * Copyright (C) 1999-2004 Jive Software. All rights reserved.
+ *
+ * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ */
+
+package org.jivesoftware.admin;
+
+import org.jivesoftware.util.StringUtils;
+
+import javax.servlet.jsp.tagext.BodyTagSupport;
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.ServletRequest;
+import java.util.Collection;
+import java.util.Iterator;
+import java.io.IOException;
+
+public class SidebarTag extends BodyTagSupport {
+
+    private String bean;
+    private String role;
+    private String minEdition;
+    private String css;
+    private String currentcss;
+    private String headercss;
+    private SubSidebarTag subsidebarTag;
+
+    /**
+     * The name of the request attribute which holds a {@link AdminPageBean} instance.
+     */
+    public String getBean() {
+        return bean;
+    }
+
+    /**
+     * Sets the name of the request attribute to hold a {@link AdminPageBean} instance.
+     */
+    public void setBean(String bean) {
+        this.bean = bean;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getMinEdition() {
+        return minEdition;
+    }
+
+    public void setMinEdition(String minEdition) {
+        this.minEdition = minEdition;
+    }
+
+    /**
+     * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
+     */
+    public String getCss() {
+        return clean(css);
+    }
+
+    /**
+     * Sets the CSS used for tab decoration.
+     */
+    public void setCss(String css) {
+        this.css = css;
+    }
+
+    /**
+     * Returns the value of the CSS class to be used for the currently selected LI (tab). If not set will
+     * return a blank string.
+     */
+    public String getCurrentcss() {
+        return clean(currentcss);
+    }
+
+    /**
+     * Sets the CSS class value for the currently selected tab.
+     */
+    public void setCurrentcss(String currentcss) {
+        this.currentcss = currentcss;
+    }
+
+    /**
+     * Returns the value of the CSS class to be used for sidebar header sections.
+     */
+    public String getHeadercss() {
+        return headercss;
+    }
+
+    /**
+     * Sets the CSS value used for the sidebar header sections.
+     */
+    public void setHeadercss(String headercss) {
+        this.headercss = headercss;
+    }
+
+    /**
+     * Returns the subsidebar tag - should be declared in the body of this tag (see class description).
+     */
+    public SubSidebarTag getSubsidebarTag() {
+        return subsidebarTag;
+    }
+
+    /**
+     * Sets the subsidebar tag - used by the container.
+     */
+    public void setSubSidebar(SubSidebarTag subsidebarTag) {
+        this.subsidebarTag = subsidebarTag;
+    }
+
+    /**
+     * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
+     */
+    public int doStartTag() throws JspException {
+        return EVAL_BODY_BUFFERED;
+    }
+
+    /**
+     * Gets the {@link AdminPageBean} instance from the request. If it doesn't exist then execution is stopped
+     * and nothing is printed. If it exists, retrieve values from it and render the sidebar items. The body content
+     * of the tag is assumed to have an A tag in it with tokens to replace (see class description) as well
+     * as having a subsidebar tag..
+     *
+     * @return {@link #EVAL_PAGE} after rendering the tabs.
+     * @throws JspException if an exception occurs while rendering the sidebar items.
+     */
+    public int doEndTag() throws JspException {
+        // Start by getting the request from the page context
+        ServletRequest request = pageContext.getRequest();
+
+        // Check for body of this tag and the child tag
+        if (getBodyContent().getString() == null) {
+            throw new JspException("Error, no template (body value) set for the sidebar tag.");
+        }
+        if (subsidebarTag.getBody() == null) {
+            throw new JspException("Error, no template (body value) set for the subsidebar tag");
+        }
+
+        // Get the page data bean from the request:
+        AdminPageBean pageInfo = (AdminPageBean)request.getAttribute(getBean());
+
+        // If the page info bean is not in the request then no tab will be selected - so, it'll fail gracefully
+        if (pageInfo != null) {
+
+            // Get the initial subpage and page IDs
+            String subPageID = pageInfo.getSubPageID();
+            String pageID = pageInfo.getPageID();
+
+            // If the pageID is null, use the subPageID to set it. If both the pageID and subPageIDs are null,
+            // return because these are key to execution of the tag.
+            if (subPageID != null || pageID != null) {
+
+                if (pageID == null) {
+                    pageID = AdminConsole.lookupPageID(subPageID);
+                }
+
+                // Top level menu items
+                if (AdminConsole.getItems().size() > 0) {
+                    JspWriter out = pageContext.getOut();
+                    StringBuffer buf = new StringBuffer();
+
+                    AdminConsole.Item current = null;
+                    AdminConsole.Item subcurrent = null;
+                    if (subPageID != null) {
+                        subcurrent = AdminConsole.getItem(subPageID);
+                        // Lookup the pageID based on the subPageID:
+                        pageID = AdminConsole.lookupPageID(subPageID);
+                    }
+
+                    AdminConsole.Item root = AdminConsole.getRootByChildID(pageID);
+                    current = AdminConsole.getItem(pageID);
+
+                    boolean isSubmenu = false;
+                    if (subPageID != null && current != null) {
+                        isSubmenu = AdminConsole.isSubMenItem(subcurrent);
+                    }
+
+                    // Loop through all items in the root, print them out
+                    if (root != null) {
+                        Collection items = root.getItems();
+                        if (items.size() > 0) {
+                            buf.append("<ul>");
+                            for (Iterator iter=items.iterator(); iter.hasNext(); ) {
+                                AdminConsole.Item item = (AdminConsole.Item)iter.next();
+                                String header = item.getName();
+                                // Print the header:
+                                String hcss = getHeadercss();
+                                if (hcss == null) {
+                                    hcss = "";
+                                }
+                                buf.append("<li class=\"").append(hcss).append("\">").append(clean(header)).append("</li>");
+                                // Now print all subitems:
+                                for (Iterator subitems=item.getItems().iterator(); subitems.hasNext(); ) {
+                                    AdminConsole.Item subitem = (AdminConsole.Item)subitems.next();
+                                    String subitemID = subitem.getId();
+                                    String subitemName = subitem.getName();
+                                    String subitemURL = subitem.getUrl();
+                                    String subitemDescr = subitem.getDescription();
+                                    String value = getBodyContent().getString();
+                                    if (value != null) {
+                                        value = StringUtils.replace(value, "[id]", clean(subitemID));
+                                        value = StringUtils.replace(value, "[name]", clean(subitemName));
+                                        value = StringUtils.replace(value, "[description]", clean(subitemDescr));
+                                        value = StringUtils.replace(value, "[url]", clean(subitemURL));
+                                    }
+                                    String css = getCss();
+                                    boolean isCurrent = subitem.equals(current);
+                                    boolean showSubmenu = subPageID != null;
+                                    if (isCurrent && !showSubmenu) {
+                                        css = getCurrentcss();
+                                    }
+                                    buf.append("<li class=\"").append(css).append("\">").append(value).append("</li>");
+
+                                    // Print out a submenu if one exists:
+                                    if (isSubmenu && isCurrent) {
+                                        // Get the parent of the current item so we can get its items - those will be
+                                        // siblings of the current item:
+                                        Iterator siblings = subcurrent.getParent().getItems().iterator();
+                                        boolean hadNext = siblings.hasNext();
+                                        if (hadNext) {
+                                            // Print out beginning UL
+                                            buf.append("<ul class=\"subitems\">\n");
+                                            // Print the header LI
+                                            String subheader = subcurrent.getParent().getName();
+                                            buf.append("<li class=\"").append(hcss).append("\">").append(clean(subheader)).append("</li>");
+                                        }
+                                        String extraParams = pageInfo.getExtraParams();
+                                        while (siblings.hasNext()) {
+                                            AdminConsole.Item sibling = (AdminConsole.Item)siblings.next();
+                                            String sibID = sibling.getId();
+                                            String sibName = sibling.getName();
+                                            String sibDescr = sibling.getDescription();
+                                            String sibURL = sibling.getUrl();
+                                            if (extraParams != null) {
+                                                sibURL += ((sibURL.indexOf('?') > -1 ? "&" : "?") + extraParams);
+                                            }
+                                            boolean isSubCurrent = sibling.equals(subcurrent);
+                                            String subcss = getCss();
+                                            if (isSubCurrent) {
+                                                subcss = getCurrentcss();
+                                            }
+                                            String svalue = getSubsidebarTag().getBody();
+                                            if (svalue != null) {
+                                                svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
+                                                svalue = StringUtils.replace(svalue, "[name]", clean(sibName));
+                                                svalue = StringUtils.replace(svalue, "[description]", clean(sibDescr));
+                                                svalue = StringUtils.replace(svalue, "[url]", clean(sibURL));
+                                            }
+                                            buf.append("<li class=\"").append(subcss).append("\">").append(svalue).append("</li>\n");
+                                        }
+                                        if (hadNext) {
+                                            // Print out ending UL
+                                            buf.append("<br></ul>\n");
+                                        }
+                                    }
+                                }
+                            }
+                            buf.append("</ul>");
+                            try {
+                                out.write(buf.toString());
+                            }
+                            catch (IOException e) {
+                                throw new JspException(e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return EVAL_PAGE;
+    }
+
+    /**
+     * Cleans the given string - if it's null, it's converted to a blank string. If it has ' then those are
+     * converted to double ' so HTML isn't screwed up.
+     *
+     * @param in the string to clean
+     * @return a cleaned version - not null and with escaped characters.
+     */
+    private String clean(String in) {
+        return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+    }
+}

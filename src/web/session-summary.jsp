@@ -79,7 +79,7 @@
 
 <%  } %>
 
-Active Sessions: <b><%= sessionCount %></b>,
+Active Sessions: <b><%= sessionCount %></b>
 
 <%  if (numPages > 1) { %>
 

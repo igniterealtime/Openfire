@@ -20,7 +20,6 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.xmpp.component.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,6 @@ public class IQRouter extends BasicModule {
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
     private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
     private SessionManager sessionManager;
-    private InternalComponentManager componentManager;
 
     /**
      * Creates a packet router.
@@ -125,7 +123,6 @@ public class IQRouter extends BasicModule {
         routingTable = server.getRoutingTable();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
-        componentManager = InternalComponentManager.getInstance();
     }
 
     /**
@@ -143,16 +140,21 @@ public class IQRouter extends BasicModule {
     private void handle(IQ packet) {
         JID recipientJID = packet.getTo();
         try {
-            // Check for registered components
-            Component component = null;
+            // Check for registered components and/or services
             if (recipientJID != null) {
-                component = componentManager.getComponent(packet.getTo().toBareJID());
+                try {
+                    RoutableChannelHandler serviceRoute = routingTable.getRoute(recipientJID);
+                    if (!(serviceRoute instanceof ClientSession)) {
+                        // A component/service was found that can handle the Packet
+                        serviceRoute.process(packet);
+                        return;
+                    }
+                }
+                catch (NoSuchRouteException e) {
+                    // Do nothing. Continue looking for a handler
+                }
             }
-            if (component != null) {
-                // A component was found that can handle the Packet
-                component.processPacket(packet);
-            }
-            else if (isLocalServer(recipientJID)) {
+            if (isLocalServer(recipientJID)) {
                 // Let the server handle the Packet
                 Element childElement = packet.getChildElement();
                 String namespace = null;
@@ -178,19 +180,6 @@ public class IQRouter extends BasicModule {
                         }
                         else {
                             // JID is of the form <node@domain>
-                            try {
-                                // Let a "service" handle this packet otherwise return an error
-                                // Useful for MUC where node refers to a room and domain is the
-                                // MUC service.
-                                ChannelHandler route = routingTable.getRoute(recipientJID);
-                                if (route instanceof BasicModule) {
-                                    route.process(packet);
-                                    return;
-                                }
-                            }
-                            catch (NoSuchRouteException e) {
-                                // do nothing
-                            }
                             // Answer an error since the server can't handle packets sent to a node
                             reply.setError(PacketError.Condition.service_unavailable);
                         }

@@ -8,6 +8,7 @@ import org.jivesoftware.messenger.spi.PacketRouterImpl;
 import org.jivesoftware.messenger.spi.PresenceImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.xmpp.packet.Packet;
 
 /**
  * <p>Manages the registration and delegation of Components.</p>
@@ -118,6 +119,25 @@ public class ComponentManager {
             router = (PacketRouterImpl) ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
             if (router != null) {
                 router.route(packet);
+            }
+        }
+        catch (UnauthorizedException e) {
+            Log.error(e);
+        }
+    }
+
+     /**
+     * Send a packet to the specified recipient. Please note that this sends packets only
+     * to outgoing jids and does to the incoming server reader.
+     *
+     * @param packet the packet to send.
+     */
+    public void sendPacket(Packet packet) {
+        PacketRouter router;
+        try {
+            router = (PacketRouterImpl) ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
+            if (router != null) {
+               // router.route(packet);
             }
         }
         catch (UnauthorizedException e) {

@@ -41,7 +41,11 @@ To continue:
         Please <b style="font-size:1.2em;">restart</b> the server.
     </li>
     <li>
-        <a href="index.jsp">Login to the admin console</a>.
+        <%
+            String server = request.getServerName();
+            String port = JiveGlobals.getProperty("adminConsole.port");
+        %>
+        <a href="http://<%= server %>:<%= port %>/index.jsp">Login to the admin console</a>.
     </li>
 </ol>
 

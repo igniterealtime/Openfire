@@ -63,6 +63,7 @@ public class PluginServlet extends HttpServlet {
             throws ServletException, IOException
     {
         String pathInfo = request.getPathInfo();
+
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -101,7 +102,7 @@ public class PluginServlet extends HttpServlet {
         }
         // Find the name of the plugin directory given that the webXML file
         // lives in plugins/[pluginName]/web/web.xml
-        String pluginName = webXML.getParentFile().getParent();
+        String pluginName = webXML.getParentFile().getParentFile().getName();
         try {
             SAXReader saxReader = new SAXReader();
             Document doc = saxReader.read(webXML);

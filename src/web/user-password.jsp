@@ -53,7 +53,7 @@
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-password.jsp?username="+username));
-    pageinfo.setSubPageID("user-edit-password");
+    pageinfo.setSubPageID("user-password");
     pageinfo.setExtraParams("username="+username);
 %>
 <c:set var="tab" value="pass" />

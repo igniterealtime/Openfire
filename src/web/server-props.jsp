@@ -1,29 +1,40 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.XMPPServerInfo,
                  java.util.Iterator,
-                 org.jivesoftware.messenger.ServerPort"
+                 org.jivesoftware.messenger.ServerPort,
+                 org.jivesoftware.admin.AdminPageBean"
 %>
+
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="fmt" %>
+
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 <c:set var="admin" value="${admin.manager}" />
 
-<!-- Define Title and BreadCrumbs -->
-<c:set var="title" value="Server Properties"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="server-props.jsp" />
+<%  // Title of this page and breadcrumbs
+    String title = "Server Properties";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-props.jsp"));
+    pageinfo.setPageID("server-props");
+%>
 <jsp:include page="top.jsp" flush="true" />
-
-
+<jsp:include page="title.jsp" flush="true" />
 
 <p>
 Below is a list of information for this <fmt:message key="short.title" bundle="${lang}" /> server.

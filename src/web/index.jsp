@@ -34,7 +34,6 @@
 <%  // Title of this page and breadcrumbs
     String title = "Jive Messenger Admin";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
     pageinfo.setPageID("server-main");
 %>
 

@@ -2,6 +2,11 @@
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -10,23 +15,28 @@
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.messenger.container.*,
                  org.jivesoftware.messenger.spi.BasicServer,
-                 org.jivesoftware.messenger.auth.UnauthorizedException"
+                 org.jivesoftware.messenger.auth.UnauthorizedException,
+                 org.jivesoftware.admin.AdminPageBean"
 %>
 
 <%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="ftm" %>
+<%@ taglib uri="fmt" prefix="fmt" %>
+
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define Title and BreadCrumbs -->
-<c:set var="title" value="Server Status"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="server-status.jsp" />
+<%  // Title of this page and breadcrumbs
+    String title = "Server Status";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-status.jsp"));
+    pageinfo.setPageID("server-status");
+%>
 <jsp:include page="top.jsp" flush="true" />
-
+<jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters //
     boolean stop = request.getParameter("stop") != null;

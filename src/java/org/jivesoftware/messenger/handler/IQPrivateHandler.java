@@ -56,15 +56,20 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
-
         IQ replyPacket = null;
-        Element dataElement = packet.getChildElement();
+        Element child = packet.getChildElement();
+        Element dataElement = (Element) child.elementIterator().next();
+
         if (dataElement != null) {
             if (IQ.Type.get.equals(packet.getType())) {
                 replyPacket = IQ.createResultIQ(packet);
                 Element dataStored = privateStorage.get(packet.getFrom().getNode(), dataElement);
                 dataStored.setParent(null);
-                replyPacket.setChildElement(dataStored);
+
+                child.remove(dataElement);
+                child.setParent(null);
+                replyPacket.setChildElement(child);
+                child.add(dataStored);
             }
             else {
                 privateStorage.add(packet.getFrom().getNode(), dataElement);

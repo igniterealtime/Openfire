@@ -145,63 +145,50 @@ public class IQOwnerHandler {
                 item = (Element)items.next();
                 affiliation = item.attributeValue("affiliation");
                 // Create the result that will hold an item for each owner or admin
-                MetaDataFragment result = new MetaDataFragment(DocumentHelper.createElement(QName
-                        .get("query", "http://jabber.org/protocol/muc#owner")));
+                Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#owner");
 
                 if ("owner".equals(affiliation)) {
                     // The client is requesting the list of owners
-                    MetaDataFragment ownerMetaData;
+                    Element ownerMetaData;
                     MUCRole role;
                     for (String jid : room.getOwners()) {
-                        ownerMetaData =
-                                new MetaDataFragment("http://jabber.org/protocol/muc#owner",
-                                        "item");
-                        ownerMetaData.setProperty("item:affiliation", "owner");
-                        ownerMetaData.setProperty("item:jid", jid);
+                        ownerMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
+                        ownerMetaData.addAttribute("affiliation", "owner");
+                        ownerMetaData.addAttribute("jid", jid);
                         // Add role and nick to the metadata if the user is in the room
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             role = roles.get(0);
-                            ownerMetaData.setProperty("item:role", role.getRoleAsString());
-                            ownerMetaData.setProperty("item:nick", role.getNickname());
+                            ownerMetaData.addAttribute("role", role.getRoleAsString());
+                            ownerMetaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
                             // Do nothing
                         }
-                        // Add the item with the owner's information to the result
-                        result.addFragment(ownerMetaData);
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
                 }
                 else if ("admin".equals(affiliation)) {
                     // The client is requesting the list of admins
-                    MetaDataFragment adminMetaData;
+                    Element adminMetaData;
                     MUCRole role;
                     for (String jid : room.getAdmins()) {
-                        adminMetaData =
-                                new MetaDataFragment("http://jabber.org/protocol/muc#owner",
-                                        "item");
-                        adminMetaData.setProperty("item:affiliation", "admin");
-                        adminMetaData.setProperty("item:jid", jid);
+                        adminMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
+                        adminMetaData.addAttribute("affiliation", "admin");
+                        adminMetaData.addAttribute("jid", jid);
                         // Add role and nick to the metadata if the user is in the room
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             role = roles.get(0);
-                            adminMetaData.setProperty("item:role", role.getRoleAsString());
-                            adminMetaData.setProperty("item:nick", role.getNickname());
+                            adminMetaData.addAttribute("role", role.getRoleAsString());
+                            adminMetaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
                             // Do nothing
                         }
-                        // Add the item with the admin's information to the result
-                        result.addFragment(adminMetaData);
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
                 }
                 else {
-                    reply.setError(XMPPError.Code.BAD_REQUEST);
+                    reply.setError(PacketError.Condition.bad_request);
                 }
             }
         }
@@ -265,8 +252,7 @@ public class IQOwnerHandler {
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
                             if (!hadAffiliation && room.isInvitationRequiredToEnter()) {
-                                room.sendInvitation(bareJID, null, senderRole, reply
-                                        .getOriginatingSession());
+                                room.sendInvitation(new JID(bareJID), null, senderRole);
                             }
                         }
                         else if ("none".equals(targetAffiliation)) {
@@ -739,7 +725,7 @@ public class IQOwnerHandler {
         configurationForm.addField(field);
 
         // Create the probeResult and add the basic info together with the configuration form
-        probeResult = new MetaDataFragment(element);
-        probeResult.addFragment(configurationForm);
+        probeResult = element;
+        probeResult.add(configurationForm.asXMLElement());
     }
 }

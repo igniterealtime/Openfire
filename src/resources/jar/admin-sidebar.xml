@@ -18,6 +18,10 @@
                     url="server-properties.jsp"
                     description="Click to manage server properties" />
 
+            <item id="server-locale" name="System Locale"
+                    url="server-locale.jsp"
+                    description="Click to set the locale used by the system" />
+
             <item id="server-db" name="Database"
                     url="server-db.jsp"
                     description="Click to see database connection information" />

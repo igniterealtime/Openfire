@@ -14,6 +14,8 @@ package org.jivesoftware.messenger.disco;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.StringUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -174,7 +176,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
             serverItems.add(element);
             
             // Add the new item as a valid entity that could receive info and items disco requests
-            String host = parseHost(discoItem.getJID());
+            String host = StringUtils.parseServer(discoItem.getJID());
             infoHandler.setProvider(host, discoItem.getDiscoInfoProvider());
             setProvider(host, discoItem.getDiscoItemsProvider());
         }
@@ -206,7 +208,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
                 serverItems.remove(element);
             }
             // Remove the item as a valid entity that could receive info and items disco requests
-            String host = parseHost(discoItem.getJID());
+            String host = StringUtils.parseServer(discoItem.getJID());
             infoHandler.removeProvider(host);
             removeProvider(host);
         }
@@ -243,35 +245,6 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
             }
         };
         return discoItemsProvider;
-    }
-
-    /**
-     * Returns the server portion of a XMPP address. For example, for the
-     * address "matt@example.org/Smack", "example.org" would be returned.
-     * If no server is present in the address, the empty string will be returned.
-     *
-     * @param XMPPAddress the XMPP address.
-     * @return the server portion of the XMPP address.
-     */
-    private static String parseHost(String XMPPAddress) {
-        if (XMPPAddress == null) {
-            return null;
-        }
-        int atIndex = XMPPAddress.indexOf("@");
-        // If the String ends with '@', return the empty string.
-        if (atIndex + 1 > XMPPAddress.length()) {
-            return "";
-        }
-        /*if (atIndex < 0) {
-            atIndex = 0;
-        }*/
-        int slashIndex = XMPPAddress.indexOf("/");
-        if (slashIndex > 0) {
-            return XMPPAddress.substring(atIndex + 1, slashIndex);
-        }
-        else {
-            return XMPPAddress.substring(atIndex + 1);
-        }
     }
 
 }

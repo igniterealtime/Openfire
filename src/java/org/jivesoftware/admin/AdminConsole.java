@@ -1,11 +1,12 @@
 /**
  * $RCSfile$
- * $Revision
+ * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
 
 package org.jivesoftware.admin;
@@ -32,13 +33,13 @@ import java.net.URL;
  *
  * <p>Note: IDs in the XML file must be unique because an internal mapping is kept of IDs to
  * nodes.</p>
- *
- * TODO: Add other property customizers (page title, image urls, etc)
  */
 public class AdminConsole {
 
     private static Collection items;
     private static Map idMap; // map of item ids -> item objs
+    private static String appName;
+    private static String logoImage;
 
     static {
         items = new ArrayList();
@@ -58,6 +59,21 @@ public class AdminConsole {
      */
     public static void addXMLSource(InputStream in) throws Exception {
         addToModel(in);
+    }
+
+    /**
+     * Returns the name of the application.
+     */
+    public static String getAppName() {
+        return appName;
+    }
+
+    /**
+     * Returns the URL (relative or absolute) of the main logo image for the admin console.
+     * @return
+     */
+    public static String getLogoImage() {
+        return logoImage;
     }
 
     /**
@@ -183,6 +199,22 @@ public class AdminConsole {
 
         private void init() {
             items = Collections.synchronizedList(new ArrayList());
+//            items = Collections.synchronizedList(new ArrayList(){
+//                public boolean add(Object obj) {
+//                    Item item = (Item)obj;
+//                    if (contains(item)) {
+//                        Item i = (Item)get(indexOf(item));
+//                        i.setName(item.getName());
+//                        i.setDescription(item.getDescription());
+//                        i.setUrl(item.getUrl());
+//                        return true;
+//                    }
+//                    else {
+//                        super.add(item);
+//                        return true;
+//                    }
+//                };
+//            });
             if (id != null && !"".equals(id.trim())) {
                 idMap.put(id, this);
             }
@@ -203,10 +235,24 @@ public class AdminConsole {
         }
 
         /**
+         * Sets the name.
+         */
+        void setName(String name) {
+            this.name = name;
+        }
+
+        /**
          * Returns the description of the item.
          */
         public String getDescription() {
             return description;
+        }
+
+        /**
+         * Sets the description.
+         */
+        void setDescription(String description) {
+            this.description = description;
         }
 
         /**
@@ -333,6 +379,13 @@ public class AdminConsole {
     private static void addToModel(InputStream in) throws Exception {
         // Build an XMLPropertiesTest object from the input stream:
         XMLProperties xml = new XMLProperties(in);
+        // Set any global properties
+        if (xml.getProperty("global.appname") != null) {
+            appName = xml.getProperty("global.appname");
+        }
+        if (xml.getProperty("global.logo-image") != null) {
+            logoImage = xml.getProperty("global.logo-image");
+        }
         // Get all children of the 'tabs' element - should be 'tab' items:
         String[] tabs = xml.getChildrenProperties("tabs");
         for (int i=0; i<tabs.length; i++) {
@@ -415,5 +468,11 @@ public class AdminConsole {
         classLoaders[1] = Thread.currentThread().getContextClassLoader();
         classLoaders[2] = ClassLoader.getSystemClassLoader();
         return classLoaders;
+    }
+
+    private static void clear() {
+        items = new ArrayList();
+        idMap = new HashMap();
+        load();
     }
 }

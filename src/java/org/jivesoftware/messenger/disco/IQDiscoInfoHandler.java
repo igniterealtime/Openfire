@@ -116,11 +116,13 @@ public class IQDiscoInfoHandler extends IQHandler {
             else {
                 // If the DiscoInfoProvider has no information for the requested name and node 
                 // then answer a not found error
+                reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.item_not_found);
             }
         }
         else {
             // If we didn't find a DiscoInfoProvider then answer a not found error
+            reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.item_not_found);
         }
 

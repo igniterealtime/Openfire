@@ -110,6 +110,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         }
         catch (SharedGroupException e) {
             IQ result = IQ.createResultIQ(packet);
+            result.setChildElement(packet.getChildElement().createCopy());
             result.setError(PacketError.Condition.not_acceptable);
             return result;
         }

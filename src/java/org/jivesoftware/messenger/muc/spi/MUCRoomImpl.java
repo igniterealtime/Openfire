@@ -744,11 +744,10 @@ public class MUCRoomImpl implements MUCRoom {
             broadcastPresence((Presence)packet);
         }
         else if (packet instanceof IQ) {
-             packet = packet.createCopy();
-            packet.setError(PacketError.Condition.bad_request);
-            packet.setTo(packet.getFrom());
-            packet.setFrom(role.getRoleAddress());
-            router.route(packet);
+            IQ reply = IQ.createResultIQ((IQ) packet);
+            reply.setChildElement(((IQ) packet).getChildElement());
+            reply.setError(PacketError.Condition.bad_request);
+            router.route(reply);
         }
     }
 

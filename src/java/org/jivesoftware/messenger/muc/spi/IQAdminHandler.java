@@ -80,6 +80,7 @@ public class IQAdminHandler {
         else {
             // An unknown and possibly incorrect element was included in the query
             // element so answer a BAD_REQUEST error
+            reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.bad_request);
         }
         if (reply.getTo() != null) {

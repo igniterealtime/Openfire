@@ -110,6 +110,7 @@ class IQMUCRegisterHandler {
         if (room == null) {
             // The room doesn't exist so answer a NOT_FOUND error
             reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.item_not_found);
             return reply;
         }
@@ -172,6 +173,7 @@ class IQMUCRegisterHandler {
                                 room.getRole()));
                     }
                     else {
+                        reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.bad_request);
                     }
                 }
@@ -183,10 +185,12 @@ class IQMUCRegisterHandler {
             }
             catch (ForbiddenException e) {
                 reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.forbidden);
             }
             catch (ConflictException e) {
                 reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.conflict);
             }
             catch (Exception e) {

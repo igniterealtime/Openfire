@@ -131,10 +131,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             }
             catch (UserNotFoundException e) {
                 response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
                 response.setError(PacketError.Condition.not_authorized);
             }
             catch (UnauthorizedException e) {
                 response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
                 response.setError(PacketError.Condition.not_authorized);
             }
             // Send the response directly since we want to be sure that we are sending it back
@@ -179,6 +181,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 }
                 else {
                     response = IQ.createResultIQ(packet);
+                    response.setChildElement(packet.getChildElement().createCopy());
                     response.setError(PacketError.Condition.forbidden);
                 }
             }
@@ -239,6 +242,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             auth.addElement("resource").setText(session.getAddress().getResource());
         }
         else {
+            response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.forbidden);
         }
         return response;

@@ -141,6 +141,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         // If inband registration is not allowed, return an error.
         if (!enabled) {
             reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.forbidden);
         }
         else if (IQ.Type.get.equals(packet.getType())) {
@@ -261,6 +262,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     // not provided
                     if (password == null || password.trim().length() == 0) {
                         reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.not_acceptable);
                         return reply;
                     }
@@ -295,10 +297,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             }
             catch (UserAlreadyExistsException e) {
                 reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.conflict);
             }
             catch (UserNotFoundException e) {
                 reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.bad_request);
             }
             catch (Exception e) {

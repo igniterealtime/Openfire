@@ -209,12 +209,11 @@
     </target>
 
     <!-- deployjar ============================================================================= -->
-    <target name="deployjar" depends="jar" description="Pushes JARs to specified location.">
+    <target name="deployjar" depends="jar" description="Pushes JARs to specified web location.">
         <copy todir="${deploy.jar.dir}" overwrite="${overwrite}">
             <fileset dir="${jar.dest.dir}" includes="*.jar"  />
         </copy>
     </target>
-
 
     <!-- war =================================================================================== -->
     <target name="war" depends="jar" description="Creates a WAR of Messenger">

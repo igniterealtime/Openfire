@@ -30,6 +30,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -88,7 +89,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
      */
-    private Map<String,MUCRoom> rooms = Collections.synchronizedMap(new HashMap<String,MUCRoom>());
+    private Map<String,MUCRoom> rooms = new ConcurrentHashMap<String,MUCRoom>();
 
     /**
      * Cache for the persistent room surrogates. There will be a persistent room surrogate for each
@@ -100,7 +101,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * chat users managed by this manager, table: key user jid (XMPPAddress); value ChatUser
      */
-    private Map users = Collections.synchronizedMap(new HashMap());
+    private Map<XMPPAddress, MUCUser> users = new ConcurrentHashMap<XMPPAddress, MUCUser>();
     private HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
@@ -146,7 +147,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Queue logQueue = new LinkedBlockingQueue();
+    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<ConversationLogEntry>();
 
     /**
      * Create a new group chat server.
@@ -171,28 +172,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
          * Remove any user that has been idle for longer than the user timeout time.
          */
         public void run() {
-            synchronized (users) {
-                try {
-                    checkForTimedOutUsers();
-                }
-                catch (ConcurrentModificationException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                }
-            }
+            checkForTimedOutUsers();
         }
     }
 
-    private void checkForTimedOutUsers() throws ConcurrentModificationException {
+    private void checkForTimedOutUsers() {
         // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
         if (USER_IDLE == -1) {
             return;
         }
         final long deadline = System.currentTimeMillis() - USER_IDLE;
-        final Map userMap = new HashMap(users);
-        final Iterator userIter = userMap.values().iterator();
-        while (userIter.hasNext()) {
+        for (MUCUser user : users.values()) {
             try {
-                MUCUser user = (MUCUser) userIter.next();
                 if (user.getLastPacketTime() < deadline) {
                     // Kick the user from all the rooms that he/she had previuosly joined
                     Iterator<MUCRole> roles = user.getRoles();
@@ -217,7 +208,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     }
                 }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
@@ -228,13 +219,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      */
     private class LogConversationTask extends TimerTask {
         public void run() {
-            synchronized (users) {
-                try {
-                    logConversation();
-                }
-                catch (Throwable e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                }
+            try {
+                logConversation();
+            }
+            catch (Throwable e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
     }
@@ -243,7 +232,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         ConversationLogEntry entry = null;
         boolean success = false;
         for (int index = 0; index <= LOG_BATCH_SIZE && !logQueue.isEmpty(); index++) {
-            entry = (ConversationLogEntry)logQueue.poll();
+            entry = logQueue.poll();
             if (entry != null) {
                 success = MUCPersistenceManager.saveConversationLogEntry(entry);
                 if (!success) {
@@ -287,19 +276,19 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public MUCRoom getChatRoom(String roomName) {
-        synchronized (rooms) {
-            MUCRoom answer = rooms.get(roomName.toLowerCase());
-            // If the room is not in memory check if there exists a surrogate of the room. There
-            // will be a surrogate if and only if exists an room in the database for the requested
-            // room name
-            if (answer == null) {
+        MUCRoom answer = rooms.get(roomName.toLowerCase());
+        // If the room is not in memory check if there exists a surrogate of the room. There
+        // will be a surrogate if and only if exists an room in the database for the requested
+        // room name
+        if (answer == null) {
+            synchronized (persistentRoomSurrogateCache) {
                 if (persistentRoomSurrogateCache.size() == 0) {
                     populateRoomSurrogateCache();
                 }
-                answer = (MUCRoom) persistentRoomSurrogateCache.get(roomName);
             }
-            return answer;
+            answer = (MUCRoom) persistentRoomSurrogateCache.get(roomName);
         }
+        return answer;
     }
 
     private void populateRoomSurrogateCache() {
@@ -313,8 +302,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void removeChatRoom(String roomName) throws UnauthorizedException {
-        synchronized (rooms) {
-            final MUCRoom room = rooms.get(roomName.toLowerCase());
+        final MUCRoom room = rooms.remove(roomName.toLowerCase());
+        if (room != null) {
             final long chatLength = room.getChatLength();
             totalChatTime += chatLength;
             // Update the database to indicate that the room is no longer in memory (only if the
@@ -329,7 +318,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 // Just force to expire old entries since the cache doesn't have a clean-up thread
                 persistentRoomSurrogateCache.size();
             }
-            rooms.remove(roomName.toLowerCase());
         }
     }
 
@@ -342,18 +330,16 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void removeUser(XMPPAddress jabberID) throws UnauthorizedException {
-        synchronized (users) {
-            MUCUser user = (MUCUser)users.remove(jabberID);
-            if (user != null) {
-                Iterator roles = user.getRoles();
-                while (roles.hasNext()) {
-                    MUCRole role = (MUCRole)roles.next();
-                    try {
-                        role.getChatRoom().leaveRoom(role.getNickname());
-                    }
-                    catch (Exception e) {
-                        Log.error(e);
-                    }
+        MUCUser user = users.remove(jabberID);
+        if (user != null) {
+            Iterator<MUCRole> roles = user.getRoles();
+            while (roles.hasNext()) {
+                MUCRole role = roles.next();
+                try {
+                    role.getChatRoom().leaveRoom(role.getNickname());
+                }
+                catch (Exception e) {
+                    Log.error(e);
                 }
             }
         }
@@ -366,7 +352,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
         MUCUser user = null;
         synchronized (users) {
-            user = (MUCUser) users.get(userjid);
+            user = users.get(userjid);
             if (user == null) {
                 user = new MUCUserImpl(this, router, userjid);
                 users.put(userjid, user);
@@ -376,11 +362,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void serverBroadcast(String msg) throws UnauthorizedException {
-        synchronized (rooms) {
-            Iterator itr = rooms.values().iterator();
-            while (itr.hasNext()) {
-                ((MUCRoom)itr.next()).serverBroadcast(msg);
-            }
+        for (MUCRoom room : rooms.values()) {
+            room.serverBroadcast(msg);
         }
     }
 
@@ -782,36 +765,34 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             throws UnauthorizedException {
         List answer = new ArrayList();
         if (name == null && node == null) {
+            Element item;
             // Answer all the public rooms as items
-            synchronized (rooms) {
-                Iterator itr = rooms.values().iterator();
-                MUCRoom room;
-                Element item;
-                while (itr.hasNext()) {
-                    room = (MUCRoom)itr.next();
-                    if (room.isPublicRoom()) {
-                        item = DocumentHelper.createElement("item");
-                        item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
-                        item.addAttribute("name", room.getNaturalLanguageName());
-
-                        answer.add(item);
-                    }
-                }
-                // Load the room surrogates for persistent rooms that aren't in memory (if the cache
-                // is still empty)
-                if (persistentRoomSurrogateCache.size() == 0) {
-                    populateRoomSurrogateCache();
-                }
-                // Add items for each room surrogate (persistent room that is not in memory at
-                // the moment)
-                for (Iterator it=persistentRoomSurrogateCache.values().iterator(); it.hasNext();) {
-                    room = (MUCRoom)it.next();
+            for (MUCRoom room : rooms.values()) {
+                if (room.isPublicRoom()) {
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
                     item.addAttribute("name", room.getNaturalLanguageName());
 
                     answer.add(item);
                 }
+            }
+            // Load the room surrogates for persistent rooms that aren't in memory (if the cache
+            // is still empty)
+            synchronized(persistentRoomSurrogateCache) {
+                if (persistentRoomSurrogateCache.size() == 0) {
+                    populateRoomSurrogateCache();
+                }
+            }
+            // Add items for each room surrogate (persistent room that is not in memory at
+            // the moment)
+            MUCRoom room;
+            for (Iterator it=persistentRoomSurrogateCache.values().iterator(); it.hasNext();) {
+                room = (MUCRoom)it.next();
+                item = DocumentHelper.createElement("item");
+                item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
+                item.addAttribute("name", room.getNaturalLanguageName());
+
+                answer.add(item);
             }
         }
         else if (name != null && node == null) {
@@ -820,8 +801,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             if (room != null && room.isPublicRoom()) {
                 MUCRole role;
                 Element item;
-                for (Iterator members = room.getOccupants(); members.hasNext();) {
-                    role = (MUCRole)members.next();
+                for (Iterator<MUCRole> members = room.getOccupants(); members.hasNext();) {
+                    role = members.next();
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", role.getRoleAddress().toStringPrep());
 

@@ -153,11 +153,11 @@
 </p>
 
 <p>
-<fmt:message key="setup.datasource.standard.info" /><b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[MESSENGER_HOME]/resources/database</tt>.<fmt:message key="title" />.
+<fmt:message key="setup.datasource.standard.info" /> <fmt:message key="title" />.
 </p>
 
 <p>
-<fmt:message key="setup.datasource.standard.note" />
+<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[MESSENGER_HOME]/resources/database</tt>.
 </p>
 
 <%  if (errors.size() > 0) { %>

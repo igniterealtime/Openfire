@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# jive-messengerd
+#
+# chckconfig: 2345 20 80
+# description: Used to start and stop the jive messenger XMPP server
+# 
 # Script used to start jive messenger as daemon
 # The script has currently been tested on Redhat Fedora Core 3,
 # but should theoretically work on most UNIX like systems
@@ -22,9 +27,9 @@
 # If this is not set the script will look for /opt/jive_messenger, then /usr/local/jive_messenger
 #export MESSENGER_HOME=
 
-# Set this to tell which user to run messenger daemon as
-# If this is not set the script will default to the user "root"
-#export MESSENGER_USER=
+# If there is a different user you would like to run this script as,
+# change the following line
+export MESSENGER_USER=jive
 
 # -----------------------------------------------------------------
 
@@ -41,10 +46,6 @@ if [ ! $MESSENGER_HOME ]; then
 	fi
 fi
 
-# If no messenger user has been specified use root
-if [ ! $MESSENGER_USER ]; then
-	MESSENGER_USER="root"
-fi
 
 function execCommand() {
 	OLD_PWD=`pwd`

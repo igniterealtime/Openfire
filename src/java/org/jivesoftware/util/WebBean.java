@@ -27,8 +27,8 @@ public abstract class WebBean {
     public JspWriter out;
 
     public void init(HttpServletRequest request, HttpServletResponse response,
-                     HttpSession session, ServletContext app, JspWriter out) {
-
+            HttpSession session, ServletContext app, JspWriter out)
+    {
         this.request = request;
         this.response = response;
         this.session = session;

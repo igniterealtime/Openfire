@@ -14,35 +14,36 @@ package org.jivesoftware.util;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * This class assists skin writers in getting parameters.
+ * Assists JSP writers in getting parameters and attributes.
  */
 public class ParamUtils {
 
     /**
-     * Gets a parameter as a string.
+     * Returns a parameter as a string.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return The value of the parameter or null if the parameter was not
-     *         found or if the parameter is a zero-length string.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return the value of the parameter or null if the parameter was not
+     *      found or if the parameter is a zero-length string.
      */
     public static String getParameter(HttpServletRequest request, String name) {
         return getParameter(request, name, false);
     }
 
     /**
-     * Gets a parameter as a string.
+     * Returns a parameter as a string.
      *
-     * @param request        The HttpServletRequest object, known as "request" in a
-     *                       JSP page.
-     * @param name           The name of the parameter you want to get
-     * @param emptyStringsOK Return the parameter values even if it is an empty string.
-     * @return The value of the parameter or null if the parameter was not
-     *         found.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @param emptyStringsOK teturn the parameter values even if it is an empty string.
+     * @return the value of the parameter or null if the parameter was not
+     *      found.
      */
-    public static String getParameter(HttpServletRequest request,
-                                      String name, boolean emptyStringsOK) {
+    public static String getParameter(HttpServletRequest request, String name,
+            boolean emptyStringsOK)
+    {
         String temp = request.getParameter(name);
         if (temp != null) {
             if (temp.equals("") && !emptyStringsOK) {
@@ -84,28 +85,28 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a parameter as a boolean.
+     * Returns a parameter as a boolean.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return True if the value of the parameter was "true", false otherwise.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return true if the value of the parameter was "true", false otherwise.
      */
-    public static boolean getBooleanParameter(HttpServletRequest request,
-                                              String name) {
+    public static boolean getBooleanParameter(HttpServletRequest request, String name) {
         return getBooleanParameter(request, name, false);
     }
 
     /**
-     * Gets a parameter as a boolean.
+     * Returns a parameter as a boolean.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return True if the value of the parameter was "true", false otherwise.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return true if the value of the parameter was "true", false otherwise.
      */
     public static boolean getBooleanParameter(HttpServletRequest request,
-                                              String name, boolean defaultVal) {
+            String name, boolean defaultVal)
+    {
         String temp = request.getParameter(name);
         if ("true".equals(temp) || "on".equals(temp)) {
             return true;
@@ -119,13 +120,13 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a parameter as an int.
+     * Returns a parameter as an int.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return The int value of the parameter specified or the default value if
-     *         the parameter is not found.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return the int value of the parameter specified or the default value if
+     *      the parameter is not found.
      */
     public static int getIntParameter(HttpServletRequest request,
                                       String name, int defaultNum) {
@@ -145,13 +146,13 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a list of int parameters.
+     * Returns a list of int parameters.
      *
-     * @param request    The HttpServletRequest object, known as "request" in a
-     *                   JSP page.
-     * @param name       The name of the parameter you want to get
-     * @param defaultNum The default value of a parameter, if the parameter
-     *                   can't be converted into an int.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @param defaultNum the default value of a parameter, if the parameter
+     *      can't be converted into an int.
      */
     public static int[] getIntParameters(HttpServletRequest request,
                                          String name, int defaultNum) {
@@ -172,13 +173,13 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a parameter as a double.
+     * Returns a parameter as a double.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return The double value of the parameter specified or the default value
-     *         if the parameter is not found.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return the double value of the parameter specified or the default value
+     *      if the parameter is not found.
      */
     public static double getDoubleParameter(HttpServletRequest request, String name, double defaultNum) {
         String temp = request.getParameter(name);
@@ -197,13 +198,13 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a parameter as a long.
+     * Returns a parameter as a long.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return The long value of the parameter specified or the default value if
-     *         the parameter is not found.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @return the long value of the parameter specified or the default value if
+     *      the parameter is not found.
      */
     public static long getLongParameter(HttpServletRequest request, String name, long defaultNum) {
         String temp = request.getParameter(name);
@@ -222,16 +223,17 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a list of long parameters.
+     * Returns a list of long parameters.
      *
-     * @param request    The HttpServletRequest object, known as "request" in a
-     *                   JSP page.
-     * @param name       The name of the parameter you want to get
-     * @param defaultNum The default value of a parameter, if the parameter
-     *                   can't be converted into a long.
+     * @param request the HttpServletRequest object, known as "request" in a
+     *      JSP page.
+     * @param name the name of the parameter you want to get
+     * @param defaultNum the default value of a parameter, if the parameter
+     *      can't be converted into a long.
      */
-    public static long[] getLongParameters(HttpServletRequest request,
-                                           String name, long defaultNum) {
+    public static long[] getLongParameters(HttpServletRequest request, String name,
+            long defaultNum)
+    {
         String[] paramValues = request.getParameterValues(name);
         if (paramValues == null || paramValues.length == 0) {
             return new long[0];
@@ -249,30 +251,29 @@ public class ParamUtils {
     }
 
     /**
-     * Gets a parameter as a string.
+     * Returns an attribute as a string.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the parameter you want to get
-     * @return The value of the parameter or null if the parameter was not
-     *         found or if the parameter is a zero-length string.
+     * @param request the HttpServletRequest object, known as "request" in a JSP page.
+     * @param name the name of the parameter you want to get
+     * @return the value of the parameter or null if the parameter was not
+     *      found or if the parameter is a zero-length string.
      */
     public static String getAttribute(HttpServletRequest request, String name) {
         return getAttribute(request, name, false);
     }
 
     /**
-     * Gets a parameter as a string.
+     * Returns an attribute as a string.
      *
-     * @param request        The HttpServletRequest object, known as "request" in a
-     *                       JSP page.
-     * @param name           The name of the parameter you want to get
-     * @param emptyStringsOK Return the parameter values even if it is an empty string.
-     * @return The value of the parameter or null if the parameter was not
-     *         found.
+     * @param request the HttpServletRequest object, known as "request" in a JSP page.
+     * @param name the name of the parameter you want to get.
+     * @param emptyStringsOK return the parameter values even if it is an empty string.
+     * @return the value of the parameter or null if the parameter was not
+     *      found.
      */
-    public static String getAttribute(HttpServletRequest request,
-                                      String name, boolean emptyStringsOK) {
+    public static String getAttribute(HttpServletRequest request, String name,
+            boolean emptyStringsOK)
+    {
         String temp = (String)request.getAttribute(name);
         if (temp != null) {
             if (temp.equals("") && !emptyStringsOK) {
@@ -288,15 +289,13 @@ public class ParamUtils {
     }
 
     /**
-     * Gets an attribute as a boolean.
+     * Returns an attribute as a boolean.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the attribute you want to get
-     * @return True if the value of the attribute is "true", false otherwise.
+     * @param request the HttpServletRequest object, known as "request" in a JSP page.
+     * @param name the name of the attribute you want to get.
+     * @return true if the value of the attribute is "true", false otherwise.
      */
-    public static boolean getBooleanAttribute(HttpServletRequest request,
-                                              String name) {
+    public static boolean getBooleanAttribute(HttpServletRequest request, String name) {
         String temp = (String)request.getAttribute(name);
         if (temp != null && temp.equals("true")) {
             return true;
@@ -307,16 +306,14 @@ public class ParamUtils {
     }
 
     /**
-     * Gets an attribute as a int.
+     * Returns an attribute as a int.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the attribute you want to get
-     * @return The int value of the attribute or the default value if the
-     *         attribute is not found or is a zero length string.
+     * @param request the HttpServletRequest object, known as "request" in a JSP page.
+     * @param name the name of the attribute you want to get.
+     * @return the int value of the attribute or the default value if the
+     *      attribute is not found or is a zero length string.
      */
-    public static int getIntAttribute(HttpServletRequest request,
-                                      String name, int defaultNum) {
+    public static int getIntAttribute(HttpServletRequest request, String name, int defaultNum) {
         String temp = (String)request.getAttribute(name);
         if (temp != null && !temp.equals("")) {
             int num = defaultNum;
@@ -333,16 +330,14 @@ public class ParamUtils {
     }
 
     /**
-     * Gets an attribute as a long.
+     * Returns an attribute as a long.
      *
-     * @param request The HttpServletRequest object, known as "request" in a
-     *                JSP page.
-     * @param name    The name of the attribute you want to get
-     * @return The long value of the attribute or the default value if the
-     *         attribute is not found or is a zero length string.
+     * @param request the HttpServletRequest object, known as "request" in a JSP page.
+     * @param name the name of the attribute you want to get.
+     * @return the long value of the attribute or the default value if the
+     *      attribute is not found or is a zero length string.
      */
-    public static long getLongAttribute(HttpServletRequest request,
-                                        String name, long defaultNum) {
+    public static long getLongAttribute(HttpServletRequest request, String name, long defaultNum) {
         String temp = (String)request.getAttribute(name);
         if (temp != null && !temp.equals("")) {
             long num = defaultNum;

@@ -84,7 +84,7 @@ public class MulticastDNSService extends BasicModule {
     public void stop() {
         if (jmdns != null) {
             try {
-                jmdns.unregisterService(serviceInfo);
+                jmdns.close();
             }
             catch (Exception e) { }
         }
@@ -92,11 +92,7 @@ public class MulticastDNSService extends BasicModule {
 
     public void destroy() {
         if (jmdns != null) {
-            try {
-                jmdns.close();
-                jmdns = null;
-            }
-            catch (Exception e) { }
+            jmdns = null;
         }
     }
 }

@@ -16,7 +16,7 @@ import org.jivesoftware.util.Log;
 import java.io.File;
 
 /**
- * Starts the core XMPP server. A ootstrap class that configures classloaders
+ * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
  *
  * This class should be for standalone mode only. Jive Messenger servers launched
@@ -29,9 +29,9 @@ import java.io.File;
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property messenger.lib.directory is specified ServerStarter will attempt
- * to use this value as the value for messenger's lib directory. If the property is not specified
- * the default value of ../lib will be used.
+ * Note: if the enviroment property <tt>messenger.lib.directory</tt> is specified
+ * ServerStarter will attempt to use this value as the value for messenger's lib
+ * directory. If the property is not specified the default value of ../lib will be used.
  *
  * @author Iain Shigeoka
  */

@@ -68,7 +68,7 @@ public class IQvCardHandler extends IQHandler {
         info = new IQHandlerInfo("vCard", "vcard-temp");
     }
 
-    public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = null;
         try {
             JID recipient = packet.getTo();

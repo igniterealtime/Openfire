@@ -66,11 +66,6 @@ public class Permissions implements Cacheable {
     public static final long SYSTEM_ADMIN = 0x800000000000000L;
 
     /**
-     * Permission to modify a queue.
-     */
-    public static final long QUEUE_ADMIN = 0x1000000000000000L;
-
-    /**
      * A long holding permission values. We use the bits in the number to extract up to 63
      * different permissions.
      */

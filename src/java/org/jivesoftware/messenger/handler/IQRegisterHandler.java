@@ -34,7 +34,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -63,6 +62,7 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvider {
 
+    private static boolean enabled;
     private static Element probeResult;
 
     private UserManager userManager;
@@ -71,8 +71,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     private SessionManager sessionManager;
 
     private IQHandlerInfo info;
-    // TODO: this value needs to be shared across all instances but not across the entire jvm...
-    private static boolean enabled;
     private Map delegates = new HashMap();
 
     /**
@@ -135,18 +133,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // Add the registration form to the probe result.
             probeResult.add(registrationForm.asXMLElement());
         }
-        // Check for the default case where no inband property is set and
-        // make the default true (allowing inband registration)
-        String inband = JiveGlobals.getProperty("register.inband");
-        if (inband == null || "".equals(inband)) {
-            setInbandRegEnabled(true);
-        }
-        else {
-            enabled = "true".equals(inband);
-        }
+        // See if in-band registration should be enabled (default is true).
+        enabled = JiveGlobals.getBooleanProperty("register.inband", true);
     }
 
-    public synchronized IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException, XmlPullParserException {
+    public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
         // Look for a delegate for this packet
         IQHandler delegate = getDelegate(packet.getTo());
         // We assume that the registration packet was meant to the server if delegate is
@@ -158,13 +149,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
         Session session = sessionManager.getSession(packet.getFrom());
         IQ reply = null;
+        // If inband registration is not allowed, return an error.
         if (!enabled) {
             reply = IQ.createResultIQ(packet);
             reply.setError(PacketError.Condition.forbidden);
         }
         else if (IQ.Type.get.equals(packet.getType())) {
             reply = IQ.createResultIQ(packet);
-            probeResult.setParent(null);
             if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                 try {
                     User user = userManager.getUser(session.getUsername());
@@ -192,10 +183,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     reply.setChildElement(currentRegistration);
                 }
                 catch (UserNotFoundException e) {
-                    reply.setChildElement(probeResult);
+                    reply.setChildElement(probeResult.createCopy());
                 }
                 catch (UnauthorizedException e) {
-                    reply.setChildElement(probeResult);
+                    reply.setChildElement(probeResult.createCopy());
                 }
             }
             else {
@@ -204,7 +195,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 // incorrect value since we are setting a fake JID until the user actually
                 // authenticates with the server.
                 reply.setTo((JID) null);
-                reply.setChildElement(probeResult);
+                reply.setChildElement(probeResult.createCopy());
             }
         }
         else if (IQ.Type.set.equals(packet.getType())) {

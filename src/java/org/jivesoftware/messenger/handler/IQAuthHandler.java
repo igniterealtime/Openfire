@@ -77,20 +77,20 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         anonymousAllowed = "true".equals(JiveGlobals.getProperty("xmpp.auth.anonymous"));
     }
 
-    public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             Session session = sessionManager.getSession(packet.getFrom());
             IQ response = null;
             try {
                 Element iq = packet.getElement();
                 Element query = iq.element("query");
-
+                Element queryResponse = probeResponse.createCopy();
                 if (IQ.Type.get == packet.getType()) {
                     String username = query.elementTextTrim("username");
-                    probeResponse.element("username").setText(username);
+                    queryResponse.element("username").setText(username);
                     response = IQ.createResultIQ(packet);
-                    probeResponse.setParent(null);
-                    response.setChildElement(probeResponse);
+                    queryResponse.setParent(null);
+                    response.setChildElement(queryResponse);
                     // This is a workaround. Since we don't want to have an incorrect TO attribute
                     // value we need to clean up the TO attribute and send directly the response.
                     // The TO attribute will contain an incorrect value since we are setting a fake
@@ -151,7 +151,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             Session session, String digest) throws UnauthorizedException, UserNotFoundException
     {
         JID jid = localServer.createJID(username, iq.elementTextTrim("resource"));
-
 
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection

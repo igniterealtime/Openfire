@@ -36,7 +36,6 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
     private static Element bodyElement;
     private static Element versionElement;
     private IQHandlerInfo info;
-    private XMPPServer localServer;
 
     public IQVersionHandler() {
         super("XMPP Server Version Handler");

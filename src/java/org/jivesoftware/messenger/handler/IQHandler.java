@@ -16,26 +16,22 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 /**
- * <p>Base class whose main responsibility is to handle IQ packets. Subclasses may only need to
- * specify the IQHandlerInfo (i.e. name and namespace of the packets to handle) and actually handle
- * the IQ packet.</p>
- * <p/>
- * Simplifies creation of simple TYPE_IQ message handlers.
+ * Base class whose main responsibility is to handle IQ packets. Subclasses may
+ * only need to specify the IQHandlerInfo (i.e. name and namespace of the packets
+ * to handle) and actually handle the IQ packet. Simplifies creation of simple
+ * TYPE_IQ message handlers.
  *
  * @author Gaston Dombiak
  */
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
     protected PacketDeliverer deliverer;
-
     protected IQRouter router;
-
     private SessionManager sessionManager;
 
     /**
@@ -85,18 +81,15 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
      *
      * @param packet the IQ packet to handle.
      * @return the response to send back.
-     * @throws UnauthorizedException If the user that sent the packet is not authorized to request
-     *                               the given operation.
-     * @throws org.xmlpull.v1.XmlPullParserException
-     *                               If there was trouble reading the stream.
+     * @throws UnauthorizedException if the user that sent the packet is not
+     *      authorized to request the given operation.
      */
-    public abstract IQ handleIQ(IQ packet) throws UnauthorizedException, XmlPullParserException;
+    public abstract IQ handleIQ(IQ packet) throws UnauthorizedException;
 
     /**
-     * <p>Obtain the handler information to help generically handle IQ packets.</p>
-     * <p/>
-     * <p>IQHandlers that aren't local server iq handlers (e.g. chatbots, transports, etc)
-     * return a null.</p>
+     * Returns the handler information to help generically handle IQ packets.
+     * IQHandlers that aren't local server iq handlers (e.g. chatbots, transports, etc)
+     * return <tt>null</tt>.
      *
      * @return The IQHandlerInfo for this handler
      */

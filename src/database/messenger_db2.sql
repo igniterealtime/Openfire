@@ -27,7 +27,7 @@ CREATE TABLE jivePrivate (
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 LONG VARCHAR    NOT NULL,
-  CONSTRAINT JivePrivate_pk PRIMARY KEY (username, name, namespace)
+  CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
 
@@ -67,7 +67,7 @@ CREATE TABLE jiveVCard (
   username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT JiveVCard_pk PRIMARY KEY (username, name)
+  CONSTRAINT jiveVCard_pk PRIMARY KEY (username, name)
 );
 
 

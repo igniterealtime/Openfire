@@ -104,7 +104,7 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupID               BIGINT          NOT NULL,
-  username              BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   administrator         INTEGER         NOT NULL,
   CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupID, username, administrator)
 );

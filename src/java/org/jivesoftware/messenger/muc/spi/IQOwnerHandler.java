@@ -20,7 +20,6 @@ import org.jivesoftware.messenger.muc.ForbiddenException;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
 
@@ -50,8 +49,26 @@ public class IQOwnerHandler {
         init();
     }
 
-    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, UnauthorizedException,
-            ConflictException {
+    /**
+     * Handles the IQ packet sent by an owner of the room. Possible actions are:
+     * <ul>
+     * <li>Return the list of owners</li>
+     * <li>Return the list of admins</li>
+     * <li>Change user's affiliation to owner</li>
+     * <li>Change user's affiliation to admin</li>
+     * <li>Change user's affiliation to member</li>
+     * <li>Change user's affiliation to none</li>
+     * <li>Destroy the room</li>
+     * <li>Return the room configuration within a dataform</li>
+     * <li>Update the room configuration based on the sent dataform</li>
+     * </ul>
+     *
+     * @param packet the IQ packet sent by an owner of the room.
+     * @param role the role of the user that sent the packet.
+     * @throws ForbiddenException if the user does not have enough permissions (ie. is not an owner).
+     * @throws ConflictException If the room was going to lose all of its owners.
+     */
+    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
         if (MUCRole.OWNER != role.getAffiliation()) {
             throw new ForbiddenException();
@@ -106,9 +123,10 @@ public class IQOwnerHandler {
      * affiliation of the requested jid.
      *
      * @param itemsList  the list of items sent by the client.
-     * @param senderRole the role of the user that is sent the items.
+     * @param senderRole the role of the user that sent the items.
      * @param reply      the iq packet that will be sent back as a reply to the client's request.
      * @throws ForbiddenException if the user does not have enough permissions.
+     * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void handleItemsElement(List itemsList, MUCRole senderRole, IQ reply)
             throws ForbiddenException, ConflictException {
@@ -281,6 +299,7 @@ public class IQOwnerHandler {
      * @param senderRole  the role of the user that sent the data form.
      * @param formElement the element that contains the data form specification.
      * @throws ForbiddenException    if the user does not have enough privileges.
+     * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void handleDataFormElement(MUCRole senderRole, Element formElement)
             throws ForbiddenException, ConflictException {
@@ -311,6 +330,15 @@ public class IQOwnerHandler {
         }
     }
 
+    /**
+     * Processes the completed form sent by an owner of the room. This will modify the room's
+     * configuration as well as the list of owners and admins.
+     *
+     * @param completedForm the completed form sent by an owner of the room.
+     * @param senderRole the role of the user that sent the completed form.
+     * @throws ForbiddenException if the user does not have enough privileges.
+     * @throws ConflictException If the room was going to lose all of its owners.
+     */
     private void processConfigurationForm(XDataFormImpl completedForm, MUCRole senderRole)
             throws ForbiddenException, ConflictException {
         Iterator<String> values;

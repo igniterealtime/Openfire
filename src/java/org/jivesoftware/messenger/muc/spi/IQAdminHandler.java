@@ -16,7 +16,6 @@ import org.jivesoftware.messenger.muc.ForbiddenException;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.NotAllowedException;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,8 +43,29 @@ public class IQAdminHandler {
         this.router = packetRouter;
     }
 
-    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, UnauthorizedException,
-            ConflictException {
+    /**
+     * Handles the IQ packet sent by an owner or admin of the room. Possible actions are:
+     * <ul>
+     * <li>Return the list of participants</li>
+     * <li>Return the list of moderators</li>
+     * <li>Return the list of members</li>
+     * <li>Return the list of outcasts</li>
+     * <li>Change user's affiliation to member</li>
+     * <li>Change user's affiliation to outcast</li>
+     * <li>Change user's affiliation to none</li>
+     * <li>Change occupant's affiliation to moderator</li>
+     * <li>Change occupant's affiliation to participant</li>
+     * <li>Change occupant's affiliation to visitor</li>
+     * <li>Kick occupants from the room</li>
+     * </ul>
+     *
+     * @param packet the IQ packet sent by an owner or admin of the room.
+     * @param role the role of the user that sent the request packet.
+     * @throws ForbiddenException If the user is not allowed to perform his request.
+     * @throws ConflictException If the desired room nickname is already reserved for the room or
+     *                           if the room was going to lose all of its owners.
+     */
+    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException {
         IQ reply = packet.createResult();
         Element element = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
 
@@ -77,6 +97,8 @@ public class IQAdminHandler {
      * @param itemsList  the list of items sent by the client.
      * @param reply      the iq packet that will be sent back as a reply to the client's request.
      * @throws ForbiddenException If the user is not allowed to perform his request.
+     * @throws ConflictException If the desired room nickname is already reserved for the room or
+     *                           if the room was going to lose all of its owners.
      */
     private void handleItemsElement(MUCRole senderRole, List itemsList, IQ reply)
             throws ForbiddenException, ConflictException {

@@ -34,6 +34,9 @@ import javax.naming.directory.*;
  *      <li>ldap.usernameField -- default value is "uid".</li>
  *      <li>ldap.nameField -- default value is "cn".</li>
  *      <li>ldap.emailField -- default value is "mail".</li>
+ *      <li>ldap.searchFilter -- the filter used to load the list of users. The
+ *              default value is in the form "([usernameField]={0})" where [usernameField]
+ *              is the value of ldap.usernameField.
  *      <li>ldap.ldapDebugEnabled</li>
  *      <li>ldap.sslEnabled</li>
  *      <li>ldap.autoFollowReferrals</li>
@@ -59,6 +62,7 @@ public class LdapManager {
     private String initialContextFactory;
     private boolean followReferrals = false;
     private boolean connectionPoolEnabled = true;
+    private String searchFilter = null;
 
     private static LdapManager instance = new LdapManager();
 
@@ -103,6 +107,15 @@ public class LdapManager {
             this.connectionPoolEnabled = Boolean.valueOf(
                     JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled")).booleanValue();
         }
+        if (JiveGlobals.getXMLProperty("ldap.searchFilter") != null) {
+            this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
+        }
+        else {
+            StringBuffer filter = new StringBuffer();
+            filter.append("(").append(usernameField).append("={0})");
+            this.searchFilter = filter.toString();
+        }
+
         this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
         if (adminDN != null && adminDN.trim().equals("")) {
             adminDN = null;
@@ -141,6 +154,7 @@ public class LdapManager {
             Log.debug("\t emailField: " + emailField);
             Log.debug("\t adminDN: " + adminDN);
             Log.debug("\t adminPassword: " + adminPassword);
+            Log.debug("\t searchFilter: " + searchFilter);
             Log.debug("\t ldapDebugEnabled: " + ldapDebugEnabled);
             Log.debug("\t sslEnabled: " + sslEnabled);
             Log.debug("\t initialContextFactory: " + initialContextFactory);
@@ -385,11 +399,7 @@ public class LdapManager {
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            StringBuffer filter = new StringBuffer();
-            filter.append("(").append(usernameField).append("=");
-            filter.append(username).append(")");
-
-            NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
+            NamingEnumeration answer = ctx.search("", searchFilter, new String[] {username}, constraints);
 
             if (debug) {
                 Log.debug("... search finished");
@@ -709,5 +719,34 @@ public class LdapManager {
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
         JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
+    }
+
+    /**
+     * Returns the filter used for searching the directory for users.
+     *
+     * @return the search filter.
+     */
+    public String getSearchFilter() {
+    	return searchFilter;
+    }
+
+    /**
+     * Sets the filter used for searching the directory for users. The filter should
+     * contain a single token "{0}" that will be dynamically replaced with the
+     * user's unique ID.
+     *
+     * @param searchFilter the search filter.
+     */
+    public void setSearchFilter(String searchFilter) {
+    	if (searchFilter == null || "".equals(searchFilter)) {
+            StringBuffer filter = new StringBuffer();
+            filter.append("(").append(usernameField).append("={0})");
+            this.searchFilter = filter.toString();
+            JiveGlobals.deleteXMLProperty("ldap.searchFilter");
+        }
+        else {
+            this.searchFilter = searchFilter;
+    		JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+    	}
     }
 }

@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.ldap;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveConstants;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -21,6 +22,7 @@ import javax.naming.ldap.Control;
 import javax.naming.ldap.SortControl;
 import javax.naming.ldap.LdapContext;
 import java.util.*;
+import java.text.MessageFormat;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -32,6 +34,8 @@ public class LdapUserProvider implements UserProvider {
 
     private LdapManager manager;
     private Map<String, String> searchFields;
+    private int userCount = -1;
+    private long expiresStamp = System.currentTimeMillis();
 
     public LdapUserProvider() {
         manager = LdapManager.getInstance();
@@ -99,7 +103,10 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public int getUserCount() {
-        // TODO: cache result for X minutes
+        // Cache user count for 5 minutes.
+        if (userCount != -1 && System.currentTimeMillis() < expiresStamp) {
+            return userCount;
+        }
         int count = 0;
         DirContext ctx = null;
         try {
@@ -108,7 +115,7 @@ public class LdapUserProvider implements UserProvider {
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
-            String filter = "(" + manager.getUsernameField() + "=*)";
+            String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, constraints);
             while (answer.hasMoreElements()) {
                 count++;
@@ -122,6 +129,8 @@ public class LdapUserProvider implements UserProvider {
             try { ctx.close(); }
             catch (Exception ignored) { }
         }
+        this.userCount = count;
+        this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
         return count;
     }
 
@@ -140,9 +149,8 @@ public class LdapUserProvider implements UserProvider {
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
-            String filter = "(" + manager.getUsernameField() + "=*)";
+            String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, constraints);
-
             while (answer.hasMoreElements()) {
                 // Get the next userID.
                 usernames.add(
@@ -192,7 +200,7 @@ public class LdapUserProvider implements UserProvider {
             {
                 constraints.setCountLimit(startIndex+numResults);
             }
-            String filter = "(" + manager.getUsernameField() + "=*)";
+            String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, constraints);
             // If client-side sorting is enabled, read in all results, sort, then get a sublist.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty(
@@ -297,12 +305,15 @@ public class LdapUserProvider implements UserProvider {
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
             StringBuffer filter = new StringBuffer();
+            if (fields.size() > 1) {
+                filter.append("(|");
+            }
             for (String field:fields) {
                 String attribute = searchFields.get(field);
-                if (filter.length() != 0) {
-                    filter.append(" || ");
-                }
                 filter.append("(").append(attribute).append("=").append(query).append(")");
+            }
+            if (fields.size() > 1) {
+                filter.append(")");
             }
             NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
             while (answer.hasMoreElements()) {

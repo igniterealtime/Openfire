@@ -149,7 +149,7 @@
     </target>
 
     <!-- jar =================================================================================== -->
-    <target name="jar" depends="compile, jspc" description="Produces a JAR of Messenger app code">
+    <target name="jar" depends="compile, jspc" description="Produces Messengers jars and sets up dependencies">
         <mkdir dir="${jar.dest.dir}" />
         <!-- Make main Messenger jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}">
@@ -176,6 +176,9 @@
         <copy todir="${jar.dest.dir}">
             <fileset dir="${lib.dist.dir}" includes="*.jar" />
         </copy>
+
+        <!-- Setup environment -->
+        <antcall target="-prepare" />
     </target>
 
     <!-- war =================================================================================== -->
@@ -303,6 +306,62 @@
         </junit>
     </target>
 
+    <target name="-prepare">
+
+        <property name="prepare.out.dir" value="${target.dir}" />
+
+        <!-- Copy lib dir -->
+        <copy todir="${prepare.out.dir}/lib">
+            <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
+        </copy>
+
+        <!-- Copy conf dir -->
+        <copy todir="${prepare.out.dir}">
+            <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+        </copy>
+
+        <!-- Copy bin dir -->
+        <copy todir="${prepare.out.dir}">
+            <fileset dir="${src.dir}" includes="bin/*.*" />
+        </copy>
+
+        <!-- Create a logs dir in the binary release -->
+        <mkdir dir="${prepare.out.dir}/logs" />
+
+        <!-- Copy plugins -->
+        <copy todir="${prepare.out.dir}">
+            <fileset dir="${src.dir}" includes="plugins/**/*.*" />
+        </copy>
+
+        <!-- Copy admin plugin resources -->
+        <copy todir="${prepare.out.dir}/plugins/admin/webapp">
+            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+            <fileset dir="${web.dir}">
+                <patternset refid="web.sources" />
+                <exclude name="**/*.jsp" />
+                <exclude name="**/*.jspf" />
+            </fileset>
+        </copy>
+        <!-- Copy other WEB-INF stuff -->
+        <copy todir="${prepare.out.dir}/plugins/admin/webapp">
+            <fileset dir="${webapp.dest.dir}" />
+        </copy>
+        <!-- Copy in tag library support -->
+         <copy todir="${prepare.out.dir}/lib">
+             <fileset dir="${lib.build.dir}" includes="commons-el.jar" />
+         </copy>
+        <!-- Copy in pre-compiled JSP jar -->
+        <copy todir="${prepare.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+            <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}" />
+        </copy>
+        <!-- Copy in jasper runtime jar -->
+        <copy todir="${prepare.out.dir}/lib">
+            <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar" />
+            <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar" />
+        </copy>
+
+    </target>
+
     <!-- release =============================================================================== -->
     <target name="release" depends="jar,javadoc" description="Creates a distribution">
         <mkdir dir="${release.dest.dir}" />
@@ -315,57 +374,11 @@
         <mkdir dir="${release.out.dir}" />
         <mkdir dir="${release.src.out.dir}" />
 
-        <!-- Copy lib dir -->
-        <copy todir="${release.out.dir}/lib">
-            <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
-        </copy>
+        <!-- Copy all prepare dirs to the binary dist -->
+        <ant antfile="${basedir}/build/build.xml" target="-prepare">
+            <property name="prepare.out.dir" value="${release.out.dir}" />
+        </ant>
 
-        <!-- Copy conf dir -->
-        <copy todir="${release.out.dir}">
-            <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
-        </copy>
-
-        <!-- Copy bin dir -->
-        <copy todir="${release.out.dir}">
-            <fileset dir="${src.dir}" includes="bin/*.*" />
-        </copy>
-
-        <!-- Create a logs dir in the binary release -->
-        <mkdir dir="${release.out.dir}/logs" />
-
-        <!-- Copy plugins -->
-        <copy todir="${release.out.dir}">
-            <fileset dir="${src.dir}" includes="plugins/**/*.*" />
-        </copy>
-
-        <!-- TODO: the following should probably take place in another target -->
-        <!-- Copy admin plugin resources -->
-        <copy todir="${release.out.dir}/plugins/admin/webapp">
-            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
-            <fileset dir="${web.dir}">
-                <patternset refid="web.sources" />
-                <exclude name="**/*.jsp" />
-                <exclude name="**/*.jspf" />
-            </fileset>
-        </copy>
-        <!-- Copy other WEB-INF stuff -->
-        <copy todir="${release.out.dir}/plugins/admin/webapp">
-            <fileset dir="${webapp.dest.dir}" />
-        </copy>
-        <!-- Copy in tag library support -->
-         <copy todir="${release.out.dir}/lib">
-             <fileset dir="${lib.build.dir}" includes="commons-el.jar" />
-         </copy>
-        <!-- Copy in pre-compiled JSP jar -->
-        <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
-            <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}" />
-        </copy>
-        <!-- Copy in jasper runtime jar -->
-        <copy todir="${release.out.dir}/lib">
-            <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar" />
-            <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar" />
-        </copy>
-        
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" />

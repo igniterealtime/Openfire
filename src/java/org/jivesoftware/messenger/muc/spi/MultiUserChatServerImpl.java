@@ -195,9 +195,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         catch (NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins
                         }
-                        catch (UnauthorizedException e) {
-                            // Do nothing
-                        }
                     }
                 }
             }
@@ -293,7 +290,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return getChatRoom(roomName) != null;
     }
 
-    public void removeChatRoom(String roomName) throws UnauthorizedException {
+    public void removeChatRoom(String roomName) {
         final MUCRoom room = rooms.remove(roomName.toLowerCase());
         if (room != null) {
             final long chatLength = room.getChatLength();
@@ -309,7 +306,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return historyStrategy;
     }
 
-    public void removeUser(XMPPAddress jabberID) throws UnauthorizedException {
+    public void removeUser(XMPPAddress jabberID) {
         MUCUser user = users.remove(jabberID);
         if (user != null) {
             Iterator<MUCRole> roles = user.getRoles();
@@ -325,8 +322,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCUser getChatUser(XMPPAddress userjid) throws UnauthorizedException,
-            UserNotFoundException {
+    public MUCUser getChatUser(XMPPAddress userjid) throws UserNotFoundException {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }

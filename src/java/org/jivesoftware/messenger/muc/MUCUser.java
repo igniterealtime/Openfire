@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.muc;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.ChannelHandler;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 import java.util.Iterator;
 
@@ -37,9 +36,8 @@ public interface MUCUser extends ChannelHandler {
      * Obtain a user ID (useful for database indexing).
      *
      * @return The user's id number if any (-1 indicates the implementation doesn't support ids)
-     * @throws UnauthorizedException If the caller doesn't have appropriate permissions
      */
-    long getID() throws UnauthorizedException;
+    long getID();
 
     /**
       * Obtain the address of the user. The address is used by services like the core
@@ -56,19 +54,16 @@ public interface MUCUser extends ChannelHandler {
      *
      * @param roomName The name of the room we're interested in
      * @return The role the user plays in that room
-     * @throws UnauthorizedException If the caller doesn't have appropriate permissions
      * @throws NotFoundException     if the user does not have a role in the given room
      */
-    MUCRole getRole(String roomName)
-            throws UnauthorizedException, NotFoundException;
+    MUCRole getRole(String roomName) throws NotFoundException;
 
     /**
      * Get all roles for this user.
      *
      * @return Iterator over all roles for this user
-     * @throws UnauthorizedException If the caller doesn't have permission
      */
-    Iterator<MUCRole> getRoles() throws UnauthorizedException;
+    Iterator<MUCRole> getRoles();
 
     /**
      * Removes the role of the use in a particular room.<p>

@@ -118,7 +118,7 @@ public interface MultiUserChatServer {
      * @param roomName Name of the room to get.
      * @param userjid The user's normal jid, not the chat nickname jid.
      * @return The chatroom for the given name.
-     * @throws UnauthorizedException If the caller doesn't have permission to access this room.
+     * @throws UnauthorizedException If the caller doesn't have permission to create a new room.
      */
     MUCRoom getChatRoom(String roomName, XMPPAddress userjid) throws UnauthorizedException;
 
@@ -150,27 +150,24 @@ public interface MultiUserChatServer {
      * Removes the room associated with the given name.
      * 
      * @param roomName The room to remove.
-     * @throws UnauthorizedException If the caller doesn't have permission.
      */
-    void removeChatRoom(String roomName) throws UnauthorizedException;
+    void removeChatRoom(String roomName);
 
     /**
      * Removes a user from all chat rooms.
      * 
      * @param jabberID The user's normal jid, not the chat nickname jid.
-     * @throws UnauthorizedException If the caller doesn't have permission.
      */
-    void removeUser(XMPPAddress jabberID) throws UnauthorizedException;
+    void removeUser(XMPPAddress jabberID);
 
     /**
      * Obtain a chat user by XMPPAddress.
      * 
      * @param userjid The XMPPAddress of the user.
      * @return The chatuser corresponding to that XMPPAddress.
-     * @throws UnauthorizedException If the caller doesn't have permission.
      * @throws UserNotFoundException If the user is not found and can't be auto-created.
      */
-    MUCUser getChatUser(XMPPAddress userjid) throws UnauthorizedException, UserNotFoundException;
+    MUCUser getChatUser(XMPPAddress userjid) throws UserNotFoundException;
 
     /**
      * Broadcast a given message to all members of this chat room. The sender is always set to be

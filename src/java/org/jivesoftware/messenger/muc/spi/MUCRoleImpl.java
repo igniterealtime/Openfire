@@ -223,17 +223,17 @@ public class MUCRoleImpl implements MUCRole {
         return rJID;
     }
 
-    public void send(Presence packet) throws UnauthorizedException {
+    public void send(Presence packet) {
         packet.setRecipient(user.getAddress());
         router.route(packet);
     }
 
-    public void send(Message packet) throws UnauthorizedException {
+    public void send(Message packet) {
         packet.setRecipient(user.getAddress());
         router.route(packet);
     }
 
-    public void send(IQ packet) throws UnauthorizedException {
+    public void send(IQ packet) {
         packet.setRecipient(user.getAddress());
         router.route(packet);
     }
@@ -242,7 +242,7 @@ public class MUCRoleImpl implements MUCRole {
      * Calculates and sets the extended presence information to add to the presence. The information
      * to add contains the user's jid, affiliation and role.
      */
-    private void calculateExtendedInformation() throws UnauthorizedException {
+    private void calculateExtendedInformation() {
         extendedInformation.setProperty("x.item:jid", user.getAddress().toString());
         extendedInformation.setProperty("x.item:affiliation", getAffiliationAsString());
         extendedInformation.setProperty("x.item:role", getRoleAsString());

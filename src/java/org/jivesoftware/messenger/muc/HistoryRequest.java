@@ -24,9 +24,6 @@ import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.Message;
 import org.jivesoftware.messenger.MetaDataFragment;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-
-import org.jivesoftware.messenger.muc.MUCRoomHistory;
 
 /**
  * Represents the amount of history requested by an occupant while joining a room. There are 
@@ -174,77 +171,72 @@ public class HistoryRequest {
      * @param roomHistory the history of the room.
      */
     public void sendHistory(MUCRoleImpl joinRole, MUCRoomHistory roomHistory) {
-        try {
-            if (!isConfigured()) {
-                Iterator history = roomHistory.getMessageHistory();
-                while (history.hasNext()) {
-                    joinRole.send((Message) history.next());
-                }
+        if (!isConfigured()) {
+            Iterator history = roomHistory.getMessageHistory();
+            while (history.hasNext()) {
+                joinRole.send((Message) history.next());
             }
-            else {
-                if (getMaxChars() == 0) {
-                    // The user requested to receive no history
-                    return;
+        }
+        else {
+            if (getMaxChars() == 0) {
+                // The user requested to receive no history
+                return;
+            }
+            Message message;
+            int accumulatedChars = 0;
+            int accumulatedStanzas = 0;
+            MetaDataFragment delayInformation;
+            LinkedList historyToSend = new LinkedList();
+            ListIterator iterator = roomHistory.getReverseMessageHistory();
+            while (iterator.hasPrevious()) {
+                message = (Message)iterator.previous();
+                // Update number of characters to send
+                accumulatedChars += message.getBody().length();
+                if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
+                    // Stop collecting history since we have exceded a limit
+                    break;
                 }
-                Message message;
-                int accumulatedChars = 0;
-                int accumulatedStanzas = 0;
-                MetaDataFragment delayInformation;
-                LinkedList historyToSend = new LinkedList();
-                ListIterator iterator = roomHistory.getReverseMessageHistory();
-                while (iterator.hasPrevious()) {
-                    message = (Message)iterator.previous();
-                    // Update number of characters to send
-                    accumulatedChars += message.getBody().length();
-                    if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
-                        // Stop collecting history since we have exceded a limit
-                        break;
-                    }
-                    // Update number of messages to send
-                    accumulatedStanzas ++;
-                    if (getMaxStanzas() > -1 && accumulatedStanzas > getMaxStanzas()) {
-                        // Stop collecting history since we have exceded a limit
-                        break;
-                    }
-                    
-                    if (getSeconds() > -1 || getSince() != null) {
-                        delayInformation = (MetaDataFragment) message.getFragment(
-                                "x",
-                                "jabber:x:delay");
-                        try {
-                            // Get the date when the historic message was sent
-                            Date delayedDate = delayedFormatter.parse(delayInformation
-                                    .getProperty("x:stamp"));
-                            if (getSince() != null && delayedDate.before(getSince())) {
+                // Update number of messages to send
+                accumulatedStanzas ++;
+                if (getMaxStanzas() > -1 && accumulatedStanzas > getMaxStanzas()) {
+                    // Stop collecting history since we have exceded a limit
+                    break;
+                }
+
+                if (getSeconds() > -1 || getSince() != null) {
+                    delayInformation = (MetaDataFragment) message.getFragment(
+                            "x",
+                            "jabber:x:delay");
+                    try {
+                        // Get the date when the historic message was sent
+                        Date delayedDate = delayedFormatter.parse(delayInformation
+                                .getProperty("x:stamp"));
+                        if (getSince() != null && delayedDate.before(getSince())) {
+                            // Stop collecting history since we have exceded a limit
+                            break;
+                        }
+                        if (getSeconds() > -1) {
+                            Date current = new Date();
+                            long diff = (current.getTime() - delayedDate.getTime()) / 1000;
+                            if (getSeconds() <= diff) {
                                 // Stop collecting history since we have exceded a limit
                                 break;
                             }
-                            if (getSeconds() > -1) {
-                                Date current = new Date();
-                                long diff = (current.getTime() - delayedDate.getTime()) / 1000;
-                                if (getSeconds() <= diff) {
-                                    // Stop collecting history since we have exceded a limit
-                                    break;
-                                }
-                            }
                         }
-                        catch (ParseException e) {
-                            Log.error("Error parsing date from historic message", e);
-                        }
-
                     }
-                    
-                    historyToSend.addFirst(message);
+                    catch (ParseException e) {
+                        Log.error("Error parsing date from historic message", e);
+                    }
+
                 }
-                // Send the smallest amount of traffic to the user
-                Iterator history = historyToSend.iterator();
-                while (history.hasNext()) {
-                    joinRole.send((Message) history.next());
-                }
+
+                historyToSend.addFirst(message);
             }
-        }
-        catch (UnauthorizedException e) {
-            // Do nothing
+            // Send the smallest amount of traffic to the user
+            Iterator history = historyToSend.iterator();
+            while (history.hasNext()) {
+                joinRole.send((Message) history.next());
+            }
         }
     }
 }

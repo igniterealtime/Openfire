@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.muc;
 import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.Message;
 import org.jivesoftware.messenger.Presence;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 /**
  * Interface for any object that can accept chat messages and presence
@@ -27,23 +26,20 @@ public interface ChatDeliverer {
      * Sends a packet to the user.
      *
      * @param packet The packet to send
-     * @throws UnauthorizedException Thrown if unauthorized
      */
-    void send(Message packet) throws UnauthorizedException;
+    void send(Message packet);
 
     /**
      * Sends a packet to the user.
      *
      * @param packet The packet to send
-     * @throws UnauthorizedException Thrown if unauthorized
      */
-    void send(Presence packet) throws UnauthorizedException;
+    void send(Presence packet);
 
     /**
      * Sends a packet to the user.
      *
      * @param packet The packet to send
-     * @throws UnauthorizedException Thrown if unauthorized
      */
-    void send(IQ packet) throws UnauthorizedException;
+    void send(IQ packet);
 }

@@ -61,11 +61,11 @@ public class MUCUserImpl implements MUCUser {
         this.server = chatserver;
     }
 
-    public long getID() throws UnauthorizedException {
+    public long getID() {
         return -1;
     }
 
-    public MUCRole getRole(String roomName) throws UnauthorizedException, NotFoundException {
+    public MUCRole getRole(String roomName) throws NotFoundException {
         MUCRole role = roles.get(roomName.toLowerCase());
         if (role == null) {
             throw new NotFoundException(roomName);
@@ -73,7 +73,7 @@ public class MUCUserImpl implements MUCUser {
         return role;
     }
 
-    public Iterator<MUCRole> getRoles() throws UnauthorizedException {
+    public Iterator<MUCRole> getRoles() {
         return Collections.unmodifiableCollection(roles.values()).iterator();
     }
 
@@ -327,166 +327,161 @@ public class MUCUserImpl implements MUCUser {
 
     public void process(Presence packet) {
         lastPacketTime = System.currentTimeMillis();
-        try {
-            XMPPAddress recipient = packet.getRecipient();
-            String group = recipient.getNamePrep();
-            if (group == null) {
-                if (Presence.UNAVAILABLE == packet.getType()) {
-                    server.removeUser(packet.getSender());
-                }
+        XMPPAddress recipient = packet.getRecipient();
+        String group = recipient.getNamePrep();
+        if (group == null) {
+            if (Presence.UNAVAILABLE == packet.getType()) {
+                server.removeUser(packet.getSender());
             }
-            else {
-                MUCRole role = roles.get(group.toLowerCase());
-                if (role == null) {
-                    // If we're not already in a room, we either are joining it or it's not
-                    // properly addressed and we drop it silently
-                    if (recipient.getResource() != null
-                            && recipient.getResource().trim().length() > 0) {
-                        if (packet.getType() == Presence.AVAILABLE
-                                || Presence.INVISIBLE == packet.getType()) {
-                            try {
-                                // Get or create the room
-                                MUCRoom room = server.getChatRoom(group, packet.getSender());
-                                // User must support MUC in order to create a room
-                                MetaDataFragment mucInfo = (MetaDataFragment) packet.getFragment("x",
-                                        "http://jabber.org/protocol/muc");
-                                HistoryRequest historyRequest = null;
-                                String password = null;
-                                // Check for password & requested history if client supports MUC
-                                if (mucInfo != null) {
-                                    password = mucInfo.getProperty("x.password");
-                                    if (mucInfo.includesProperty("x.history")) {
-                                        historyRequest = new HistoryRequest(mucInfo);
-                                    }
-                                }
-                                // The user joins the room
-                                role = room.joinRoom(recipient.getResource().trim(),
-                                        password,
-                                        historyRequest,
-                                        this);
-                                roles.put(group, role);
-                                // If the client that created the room is non-MUC compliant then
-                                // unlock the room thus creating an "instant" room
-                                if (room.isLocked() && mucInfo == null) {
-                                    room.unlockRoom(role);
+        }
+        else {
+            MUCRole role = roles.get(group.toLowerCase());
+            if (role == null) {
+                // If we're not already in a room, we either are joining it or it's not
+                // properly addressed and we drop it silently
+                if (recipient.getResource() != null
+                        && recipient.getResource().trim().length() > 0) {
+                    if (packet.getType() == Presence.AVAILABLE
+                            || Presence.INVISIBLE == packet.getType()) {
+                        try {
+                            // Get or create the room
+                            MUCRoom room = server.getChatRoom(group, packet.getSender());
+                            // User must support MUC in order to create a room
+                            MetaDataFragment mucInfo = (MetaDataFragment) packet.getFragment("x",
+                                    "http://jabber.org/protocol/muc");
+                            HistoryRequest historyRequest = null;
+                            String password = null;
+                            // Check for password & requested history if client supports MUC
+                            if (mucInfo != null) {
+                                password = mucInfo.getProperty("x.password");
+                                if (mucInfo.includesProperty("x.history")) {
+                                    historyRequest = new HistoryRequest(mucInfo);
                                 }
                             }
-                            catch (UnauthorizedException e) {
-                                sendErrorPacket(packet, XMPPError.Code.UNAUTHORIZED);
-                            }
-                            catch (NotAllowedException e) {
-                                sendErrorPacket(packet, XMPPError.Code.NOT_ALLOWED);
-                            }
-                            catch (UserAlreadyExistsException e) {
-                                sendErrorPacket(packet, XMPPError.Code.CONFLICT);
-                            }
-                            catch (RoomLockedException e) {
-                                sendErrorPacket(packet, XMPPError.Code.NOT_FOUND);
-                            }
-                            catch (ForbiddenException e) {
-                                sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
-                            }
-                            catch (RegistrationRequiredException e) {
-                                sendErrorPacket(packet, XMPPError.Code.REGISTRATION_REQUIRED);
-                            }
-                            catch (ConflictException e) {
-                                sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                            // The user joins the room
+                            role = room.joinRoom(recipient.getResource().trim(),
+                                    password,
+                                    historyRequest,
+                                    this);
+                            roles.put(group, role);
+                            // If the client that created the room is non-MUC compliant then
+                            // unlock the room thus creating an "instant" room
+                            if (room.isLocked() && mucInfo == null) {
+                                room.unlockRoom(role);
                             }
                         }
-                        else {
-                            // TODO: send error message to user (can't send presence to group you
-                            // haven't joined)
+                        catch (UnauthorizedException e) {
+                            sendErrorPacket(packet, XMPPError.Code.UNAUTHORIZED);
+                        }
+                        catch (NotAllowedException e) {
+                            sendErrorPacket(packet, XMPPError.Code.NOT_ALLOWED);
+                        }
+                        catch (UserAlreadyExistsException e) {
+                            sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                        }
+                        catch (RoomLockedException e) {
+                            sendErrorPacket(packet, XMPPError.Code.NOT_FOUND);
+                        }
+                        catch (ForbiddenException e) {
+                            sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
+                        }
+                        catch (RegistrationRequiredException e) {
+                            sendErrorPacket(packet, XMPPError.Code.REGISTRATION_REQUIRED);
+                        }
+                        catch (ConflictException e) {
+                            sendErrorPacket(packet, XMPPError.Code.CONFLICT);
                         }
                     }
                     else {
-                        if (packet.getType() == Presence.AVAILABLE
-                                || Presence.INVISIBLE == packet.getType()) {
-                            // A resource is required in order to join a room
-                            sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
-                        }
-                        // TODO: send error message to user (can't send packets to group you haven't
-                        // joined)
+                        // TODO: send error message to user (can't send presence to group you
+                        // haven't joined)
                     }
                 }
                 else {
-                    // Check and reject conflicting packets with conflicting roles
-                    // In other words, another user already has this nickname
-                    if (!role.getChatUser().getAddress().equals(packet.getSender())) {
-                        sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                    if (packet.getType() == Presence.AVAILABLE
+                            || Presence.INVISIBLE == packet.getType()) {
+                        // A resource is required in order to join a room
+                        sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
+                    }
+                    // TODO: send error message to user (can't send packets to group you haven't
+                    // joined)
+                }
+            }
+            else {
+                // Check and reject conflicting packets with conflicting roles
+                // In other words, another user already has this nickname
+                if (!role.getChatUser().getAddress().equals(packet.getSender())) {
+                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                }
+                else {
+                    if (Presence.UNAVAILABLE == packet.getType()) {
+                        try {
+                            roles.remove(group.toLowerCase());
+                            role.getChatRoom().leaveRoom(role.getNickname());
+                        }
+                        catch (UserNotFoundException e) {
+                            // Do nothing since the users has already left the room
+                        }
+                        catch (Exception e) {
+                            Log.error(e);
+                        }
                     }
                     else {
-                        if (Presence.UNAVAILABLE == packet.getType()) {
-                            try {
-                                roles.remove(group.toLowerCase());
-                                role.getChatRoom().leaveRoom(role.getNickname());
+                        try {
+                            String resource = (recipient.getResource() == null
+                                    || recipient.getResource().trim().length() == 0 ? null
+                                    : recipient.getResource().trim());
+                            if (resource == null
+                                    || role.getNickname().equalsIgnoreCase(resource)) {
+                                // Occupant has changed his availability status
+                                role.setPresence(packet);
+                                Presence presence = (Presence) role.getPresence()
+                                        .createDeepCopy();
+                                presence.setSender(role.getRoleAddress());
+                                role.getChatRoom().send(presence);
                             }
-                            catch (UserNotFoundException e) {
-                                // Do nothing since the users has already left the room
-                            }
-                            catch (Exception e) {
-                                Log.error(e);
-                            }
-                        }
-                        else {
-                            try {
-                                String resource = (recipient.getResource() == null
-                                        || recipient.getResource().trim().length() == 0 ? null
-                                        : recipient.getResource().trim());
-                                if (resource == null
-                                        || role.getNickname().equalsIgnoreCase(resource)) {
-                                    // Occupant has changed his availability status
-                                    role.setPresence(packet);
+                            else {
+                                // Occupant has changed his nickname. Send two presences
+                                // to each room occupant
+
+                                // Answer a conflic error if the new nickname is taken
+                                if (role.getChatRoom().hasOccupant(resource)) {
+                                    sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                                }
+                                else {
+                                    // Send "unavailable" presence for the old nickname
                                     Presence presence = (Presence) role.getPresence()
                                             .createDeepCopy();
+                                    // Switch the presence to OFFLINE
+                                    presence.setVisible(false);
+                                    presence.setAvailable(false);
+                                    presence.setSender(role.getRoleAddress());
+                                    // Add the new nickname and status 303 as properties
+                                    MetaDataFragment frag = (MetaDataFragment) presence
+                                            .getFragment(
+                                                    "x",
+                                                    "http://jabber.org/protocol/muc#user");
+                                    frag.setProperty("x.item:nick", resource);
+                                    frag.setProperty("x.status:code", "303");
+                                    role.getChatRoom().send(presence);
+
+                                    // Send availability presence for the new nickname
+                                    String oldNick = role.getNickname();
+                                    role.setPresence(packet);
+                                    role.changeNickname(resource);
+                                    role.getChatRoom().nicknameChanged(oldNick, resource);
+                                    presence = (Presence) role.getPresence().createDeepCopy();
                                     presence.setSender(role.getRoleAddress());
                                     role.getChatRoom().send(presence);
                                 }
-                                else {
-                                    // Occupant has changed his nickname. Send two presences
-                                    // to each room occupant
-
-                                    // Answer a conflic error if the new nickname is taken
-                                    if (role.getChatRoom().hasOccupant(resource)) {
-                                        sendErrorPacket(packet, XMPPError.Code.CONFLICT);
-                                    }
-                                    else {
-                                        // Send "unavailable" presence for the old nickname
-                                        Presence presence = (Presence) role.getPresence()
-                                                .createDeepCopy();
-                                        // Switch the presence to OFFLINE
-                                        presence.setVisible(false);
-                                        presence.setAvailable(false);
-                                        presence.setSender(role.getRoleAddress());
-                                        // Add the new nickname and status 303 as properties
-                                        MetaDataFragment frag = (MetaDataFragment) presence
-                                                .getFragment(
-                                                        "x",
-                                                        "http://jabber.org/protocol/muc#user");
-                                        frag.setProperty("x.item:nick", resource);
-                                        frag.setProperty("x.status:code", "303");
-                                        role.getChatRoom().send(presence);
-
-                                        // Send availability presence for the new nickname
-                                        String oldNick = role.getNickname();
-                                        role.setPresence(packet);
-                                        role.changeNickname(resource);
-                                        role.getChatRoom().nicknameChanged(oldNick, resource);
-                                        presence = (Presence) role.getPresence().createDeepCopy();
-                                        presence.setSender(role.getRoleAddress());
-                                        role.getChatRoom().send(presence);
-                                    }
-                                }
                             }
-                            catch (Exception e) {
-                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                            }
+                        }
+                        catch (Exception e) {
+                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                         }
                     }
                 }
             }
-        }
-        catch (UnauthorizedException ue) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), ue);
         }
     }
 }

@@ -94,9 +94,8 @@ public interface MUCRoom extends ChatDeliverer {
      * Obtain the role of the chat server (mainly for addressing messages and presence).
      *
      * @return The role for the chat room itself
-     * @throws UnauthorizedException If you don't have permission
      */
-    MUCRole getRole() throws UnauthorizedException;
+    MUCRole getRole();
 
     /**
      * Obtain the role of a given user by nickname.
@@ -130,9 +129,8 @@ public interface MUCRoom extends ChatDeliverer {
      * Obtain the roles of all users in the chatroom.
      *
      * @return Iterator over all users in the chatroom
-     * @throws UnauthorizedException If you don't have permission to access the user
      */
-    Iterator<MUCRole> getOccupants() throws UnauthorizedException;
+    Iterator<MUCRole> getOccupants();
 
     /**
      * Returns the number of occupants in the chatroom at the moment.
@@ -146,9 +144,8 @@ public interface MUCRoom extends ChatDeliverer {
      *
      * @param nickname The nickname of the user you'd like to obtain
      * @return True if a nickname is taken
-     * @throws UnauthorizedException If you don't have permission to access the user
      */
-    boolean hasOccupant(String nickname) throws UnauthorizedException;
+    boolean hasOccupant(String nickname);
 
     /**
      * Returns the reserved room nickname for the bare JID or null if none.
@@ -195,11 +192,9 @@ public interface MUCRoom extends ChatDeliverer {
      * Remove a member from the chat room.
      *
      * @param nickname The user to remove
-     * @throws UnauthorizedException If the user doesn't have permission to leave the room.
      * @throws UserNotFoundException If the nickname is not found.
      */
-    void leaveRoom(String nickname)
-            throws UnauthorizedException, UserNotFoundException;
+    void leaveRoom(String nickname) throws UserNotFoundException;
 
     /**
      * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
@@ -208,9 +203,8 @@ public interface MUCRoom extends ChatDeliverer {
      * 
      * @param alternateJID the alternate JID. Commonly used to provide a replacement room.
      * @param reason the reason why the room was destroyed.
-     * @throws UnauthorizedException If the user doesn't have permission to destroy the room.
      */
-    void destroyRoom(String alternateJID, String reason) throws UnauthorizedException;
+    void destroyRoom(String alternateJID, String reason);
 
     /**
      * Create a new presence in this room for the given role.
@@ -226,7 +220,7 @@ public interface MUCRoom extends ChatDeliverer {
      *
      * @param msg The message to broadcast
      */
-    void serverBroadcast(String msg) throws UnauthorizedException;
+    void serverBroadcast(String msg);
     
     /**
      * Returns the total length of the chat session.

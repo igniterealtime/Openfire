@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.Module;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.JID;
 
 /**
@@ -53,13 +52,5 @@ public interface XMPPServer extends Module {
      * @return an XMPPAddress for the server.
      */
     public JID createJID(String username, String resource);
-
-    /**
-     * Obtain the session representing a packet stream originating from the server.
-     *
-     * @return the session representing the server packet stream.
-     * @throws UnauthorizedException if the caller doesn't have permission to access this resource.
-     */
-    public Session getSession() throws UnauthorizedException;
 
 }

@@ -77,13 +77,6 @@ public class BasicServer extends BasicModule implements XMPPServer {
         return new JID(username, name, resource);
     }
 
-    private Session serverSession = new ServerSession(new JID(null, name, null),
-            new BasicStreamIDFactory().createStreamID(name));
-
-    public Session getSession() {
-        return serverSession;
-    }
-
     public String getName() {
         return "XMPP Server Kernel";
     }

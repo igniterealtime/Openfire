@@ -1,3 +1,14 @@
+/**
+ * $RCSfile$
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2004 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.messenger;
 
 import java.util.Map;
@@ -9,7 +20,7 @@ import org.xmpp.packet.Presence;
 
 /**
  * Manages the registration and delegation of Components. The ComponentManager
- * is responsible for managing registration and delegation of <code>Components</code>,
+ * is responsible for managing registration and delegation of {@link Component Components},
  * as well as offering a facade around basic server functionallity such as sending and
  * receiving of packets.
  *

@@ -65,7 +65,8 @@ file might look like the following:
 
 <p>Your plugin class must be implement the
 <tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
-interface from the <a href="javadoc/index.html">Jive Messenger API</a>. The Plugin interface has
+interface from the <a href="javadoc/index.html">Jive Messenger API</a> as 
+well as have a default (no argument) contructor. The Plugin interface has
 methods for initializing and destroying the plugin, as well as methods for retrieving meta-data
 such as the plugin name, description, version, and author.
 </p>
@@ -191,7 +192,29 @@ looks for plugin development directories in the following format:
 </fieldset>
 
 <p>The build script will compile source files and JSPs and create a valid 
-plugin structure.</p>
+plugin structure and JAR file. Put your plugin directories in the <tt>src/plugins</tt>
+directory of the source distribution and then use <tt>ant plugins</tt> to
+build your plugins.</p>
+
+<h2>Implementing Your Plugin</h2>
+
+<p>Plugins have full access to the Jive Messenger API. This provides a tremendous 
+amount of flexibility for what plugins can accomplish. However, there are several integration
+points that are the most common:
+
+<ol>
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/Component.html">Component</a>. 
+ Components receive all packets addressed to a particular sub-domain. For example, 
+ <tt>test_component.example.com</tt>. So, a packet sent to <tt>joe@test_component.example.com</tt> would 
+ be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS entries 
+ for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the 
+ example above); sub-domains are only used for routing within the XMPP server.
+ 
+   <li>Register a plugin as an IQHandler. IQ handlers respond to IQ packets with a particular element name and 
+  namespace.
+</ol>
+
+</p>
 
 <br><br>
 

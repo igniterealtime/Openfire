@@ -58,7 +58,7 @@ Choose your database from the list below for setup details:
     upgrade to the newest Connector/J drivers (3.0.2 or later).
 	<p>
 	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
-		<li>driver: <tt>org.gjt.mm.mysql.Driver</tt>
+		<li>driver: <tt>com.mysql.jdbc.Driver</tt>
 		<li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
 	</ul><p>
 		
@@ -68,11 +68,10 @@ Choose your database from the list below for setup details:
 
 	<p><b>Setup Instructions</b><p>
 	<ol>
-		<li>Make sure that you are using MySQL 3.23.2 or later and the 
-		MyISAM table type (default).
+		<li>Make sure that you are using MySQL 3.23.2 or later (4.x recommended).
 		<li>Create a database for the Jive tables:<br>
 	    <code>mysqladmin create [databaseName]</code><br>
-	    (note: "databaseName" can be something like 'jivexmpp')
+	    (note: "databaseName" can be something like 'messenger')
 
 	    <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
 	    Unix/Linux: <code>cat messenger_mysql.sql | mysql [databaseName];</code>
@@ -258,18 +257,18 @@ Choose your database from the list below for setup details:
 
 </ul>
 
-<p><h2><a name="hsql">HSQL 1.7.1 (Hypersonic)</a></h2><p><ul>
+<p><h2><a name="hsql">HSQLDB 1.7.4</a></h2><p><ul>
 
     <b>Special Note</b>
     <p>
-    Jive Messenger bundles HSQL as its embedded database. If you choose to use the embedded database,
+    Jive Messenger bundles hsqldb as its embedded database. If you choose to use the embedded database,
     it can be configured via the Jive Messenger installer. If you have a stand-alone installation
-    of HSQL, follow the instructions below to connect to it.
+    of hsqlDB, follow the instructions below to connect to it.
     </p>
 
 	<b>JDBC Drivers</b>
 	<p>
-	Because HSQL db is embedded in Jive Messenger, there is no need to download the
+	Because hsqldb is embedded in Jive Messenger, there is no need to download the
     JDBC driver separately. Values for the config file are:
 	<ul>
 		<li>driver: <code>org.hsqldb.jdbcDriver</code>

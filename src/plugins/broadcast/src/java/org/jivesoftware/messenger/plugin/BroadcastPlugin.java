@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
  * Broadcast service plugin. It accepts messages and broadcasts them out to
@@ -43,7 +44,7 @@ public class BroadcastPlugin implements Plugin, Component {
     private String serviceName;
     private SessionManager sessionManager;
     private GroupManager groupManager;
-    private List<String> allowedUsers;
+    private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
 
     /**
@@ -53,7 +54,7 @@ public class BroadcastPlugin implements Plugin, Component {
         serviceName = JiveGlobals.getProperty("plugin.broadcast.serviceName", "broadcast");
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
-        allowedUsers = new ArrayList<String>();
+        allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
     }
 
     // Plugin Interface
@@ -86,6 +87,8 @@ public class BroadcastPlugin implements Plugin, Component {
         // Unregister component.
         ComponentManager.getInstance().removeComponent(serviceName);
         sessionManager = null;
+        groupManager = null;
+        allowedUsers.clear();
     }
 
     // Component Interface
@@ -100,7 +103,8 @@ public class BroadcastPlugin implements Plugin, Component {
             if ("all".equals(toNode)) {
                 if (allowedUsers.size() > 0) {
                     // See if the user is allowed to send the message.
-                    String address = message.getFrom().toBareJID();
+                    JID address = new JID(message.getFrom().toBareJID());
+                    System.out.println("address: " + address);
                     if (!allowedUsers.contains(address)) {
                         Message error = new Message();
                         if (message.getID() != null) {
@@ -127,7 +131,8 @@ public class BroadcastPlugin implements Plugin, Component {
                 try {
                     Group group = groupManager.getGroup(toNode);
                     if ((groupMembersAllowed && group.isUser(fromNode)) ||
-                            group.getAdmins().contains(fromNode))
+                            group.getAdmins().contains(fromNode) ||
+                            allowedUsers.contains(message.getFrom().toBareJID()))
                     {
                         for (String user : group.getMembers()) {
                             Message newMessage = message.createCopy();
@@ -205,8 +210,25 @@ public class BroadcastPlugin implements Plugin, Component {
      *
      * @return the users allowed to send broadcast messages.
      */
-    public Collection<String> getGlobalAllowedUsers() {
+    public Collection<JID> getGlobalAllowedUsers() {
         return allowedUsers;
+    }
+
+    /**
+     * Sets the collection of addresses of users allowed to send broadcast
+     * messages. If the collection is empty, anyone can send broadcast messages.
+     * Additional users may also be allowed to send broadcast messages to
+     * specific groups depending on the group settings.
+     *
+     * @param allowedUsers collection of users allowed to send broadcast messages
+     *      to all users.
+     */
+    public void setGlobalAllowedUsers(Collection<String> allowedUsers) {
+        StringBuffer buf = new StringBuffer();
+        for (String jid : allowedUsers) {
+            buf.append(jid).append(",");
+        }
+        JiveGlobals.setProperty("plugin.broadcast.allowedUsers", buf.toString());
     }
 
     /**
@@ -234,5 +256,29 @@ public class BroadcastPlugin implements Plugin, Component {
     public void setGroupMembersAllowed(boolean allowed) {
         this.groupMembersAllowed = allowed;
         JiveGlobals.setProperty("plugin.broadcast.groupMembersAllowed", Boolean.toString(allowed));
+    }
+
+    /**
+     * Returns a comma-delimitted list of strings into a Collection of Strings.
+     *
+     * @param str the String.
+     * @return a list.
+     */
+    private List<JID> stringToList(String str) {
+        List<JID> values = new ArrayList<JID>();
+        StringTokenizer tokens = new StringTokenizer(str, ",");
+        while (tokens.hasMoreTokens()) {
+            String value = tokens.nextToken().trim();
+            if (!value.equals("")) {
+                // See if this is a full JID or just a username.
+                if (value.contains("@")) {
+                    values.add(new JID(value));
+                }
+                else {
+                    values.add(XMPPServer.getInstance().createJID(value, null));
+                }
+            }
+        }
+        return values;
     }
 }

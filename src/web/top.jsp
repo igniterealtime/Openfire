@@ -12,7 +12,8 @@
 <%@ page import="org.jivesoftware.messenger.container.ServiceLookup,
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.container.Container,
-                 org.jivesoftware.util.StringUtils"
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 
@@ -27,7 +28,7 @@
 
 <html>
 <head>
-    <title>Jive Messenger Admin Console<%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
+    <title><%= AdminConsole.getAppName() %> Admin Console<%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
     <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
     <link rel="stylesheet" type="text/css" href="style/global.css">
 </head>
@@ -39,7 +40,7 @@
 <tbody>
     <tr>
         <td>
-            <img src="images/header-title.gif" width="289" height="38" border="0" alt="Jive Messenger Admin Console">
+            <img src="<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> Admin Console">
         </td>
         <td align="right">
             <table cellpadding="0" cellspacing="0" border="0">
@@ -52,7 +53,7 @@
                     &nbsp;
                 </td>
                 <td class="info">
-                    <nobr>Jive Messenger <%= admin.getXMPPServer().getServerInfo().getVersion().getVersionString() %></nobr>
+                    <nobr><%= AdminConsole.getAppName() %> <%= admin.getXMPPServer().getServerInfo().getVersion().getVersionString() %></nobr>
                 </td>
             </tr>
             </table>

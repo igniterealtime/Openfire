@@ -140,10 +140,10 @@ Sorted by Room ID
         <td width="1%">
             <%= i %>
         </td>
-        <td width="45%" align="center" valign="middle">
-            <%=  room.getName() %>
+        <td width="45%" valign="middle">
+           <%=  room.getName() %>
         </td>
-        <td width="45%" align="center" valign="middle">
+        <td width="45%" valign="middle">
             <%=  room.getDescription() %>
         </td>
         <td width="1%" align="center">

@@ -31,8 +31,11 @@
     <property name="src.dir" value="${basedir}/src" />
     <property name="src.java.dir" value="${src.dir}/java" />
     <property name="src.i18n.dir" value="${src.dir}/i18n" />
+    <property name="web.dir" value="${src.dir}/web" />
     <property name="lib.build.dir" value="${basedir}/build/lib" />
     <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
+    <property name="lib.dist.dir" value="${lib.build.dir}/dist" />
+    <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib" />
     <property name="target.dir" value="${basedir}/target" />
     <property name="compile.dir" value="${basedir}/target/classes" />
     <property name="jar.name" value="messengerd.jar" />
@@ -54,6 +57,11 @@
     <path id="compile.dependencies">
         <path refid="javadoc.dependencies" />
         <fileset dir="${lib.merge.dir}" includes="*.jar" />
+    </path>
+
+    <path id="jspc.dependencies">
+        <path refid="compile.dependencies" />
+        <fileset dir="${lib.web.dir}" includes="*.jar" />
     </path>
 
     <patternset id="compile.sources">
@@ -86,6 +94,7 @@
             destdir="${compile.dir}"
             includeAntRuntime="no"
             debug="on"
+            source="1.5"
         >
             <src path="${src.java.dir}" />
             <patternset refid="compile.sources" />
@@ -118,36 +127,62 @@
     </target>
 
     <!-- jspc ================================================================================== -->
-    <target name="jspc" description="Compiles all JSP pages in the admin console">
+    <target name="jspc" depends="compile" description="Compiles all JSP pages in the admin console">
         <mkdir dir="${jspc.dest.dir}" />
         <mkdir dir="${jspc.java.dest.dir}" />
         <mkdir dir="${jspc.classes.dest.dir}" />
 
-        <!--
-        <jspc srcdir="${src.admin.dir}"
-                destdir="${out.jspc.java.dir}"
-                package="com.jivesoftware.messenger.admin"
-                webinc="${out.jspc.webinf.dir}/web.tmp.xml">
-            <include name="**/*.jsp" />
-            <exclude name="error.jsp" />
-            <exclude name="header.jsp" />
-            <exclude name="footer.jsp" />
-            <exclude name="title.jsp" />
-            <exclude name="title-browser.jsp" />
-            <exclude name="breadcrumbs.jsp" />
-            <exclude name="workgroup-agents.jsp" />
-            <exclude name="session-row.jsp" />
-            <exclude name="setup-env-check.jsp" />
-            <exclude name="setup-header.jsp" />
-            <exclude name="setup-footer.jsp" />
-            <exclude name="upgrade/index.jsp" />
-            <classpath>
-                <pathelement path="${out.classes.dir}"/>
-                <path refid="compile.dependencies"/>
-                <path refid="compile.web.dependencies"/>
+        <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+            <classpath id="jspc.classpath">
+                <pathelement location="${java.home}/../lib/tools.jar" />
+                <pathelement path="${compile.dir}" />
+                <path refid="jspc.dependencies" />
             </classpath>
-        </jspc>
-        -->
+        </taskdef>
+
+        <!-- todo - try standard jspc task, use jasper2 compiler -->
+
+        <jasper2
+                validateXml="false"
+                uriroot="${web.dir}"
+                outputDir="${jspc.java.dest.dir}"
+                package="org.jivesoftware.messenger.admin"
+                webXmlFragment="${jspc.dest.dir}/web.tmp.xml" />
+<!--            <include name="**/*.jsp" />-->
+<!--            <exclude name="session-row.jsp" />-->
+<!--        </jasper2>-->
+
+        <javac
+            destdir="${jspc.classes.dest.dir}"
+            includeAntRuntime="no"
+            debug="on"
+            source="1.5"
+            includes="org/jivesoftware/messenger/admin/**/*.java"
+            excludes="**/*.smap"
+        >
+            <src path="${jspc.java.dest.dir}" />
+            <classpath>
+                <pathelement path="${compile.dir}" />
+                <path refid="jspc.dependencies" />
+            </classpath>
+        </javac>
+
+<!--            <classpath>-->
+<!--                <pathelement path="${compile.dir}" />-->
+<!--                <path refid="compile.dependencies" />-->
+<!--            </classpath>-->
+<!--        </jasper2>-->
+
+<!--        <jspc srcdir="${web.dir}"-->
+<!--                destdir="${jspc.java.dest.dir}"-->
+<!--                package="com.jivesoftware.messenger.admin"-->
+<!--                webinc="${jspc.dest.dir}/web.tmp.xml">-->
+<!--            <include name="**/*.jsp" />-->
+<!--            <classpath>-->
+<!--                <pathelement path="${compile.dir}" />-->
+<!--                <path refid="compile.dependencies" />-->
+<!--            </classpath>-->
+<!--        </jspc>-->
     </target>
 
     <!-- jspcjar =============================================================================== -->

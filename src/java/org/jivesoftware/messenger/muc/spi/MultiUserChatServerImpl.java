@@ -67,19 +67,27 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * The time to elapse between clearing of idle chat users.
      */
-    private static int USER_TIMEOUT = 300000;
+    private int user_timeout = 300000;
     /**
      * The number of milliseconds a user must be idle before he/she gets kicked from all the rooms.
      */
-    private static int USER_IDLE = 1800000;
+    private int user_idle = 1800000;
+    /**
+     * Task that kicks idle users from the rooms.
+     */
+    private UserTimeoutTask userTimeoutTask;
     /**
      * The time to elapse between logging the room conversations.
      */
-    private static int LOG_TIMEOUT = 300000;
+    private int log_timeout = 300000;
     /**
      * The number of messages to log on each run of the logging process.
      */
-    private static int LOG_BATCH_SIZE = 50;
+    private int log_batch_size = 50;
+    /**
+     * Task that flushes room conversation logs to the database.
+     */
+    private LogConversationTask logConversationTask;
     /**
      * the chat service's hostname
      */
@@ -171,10 +179,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     private void checkForTimedOutUsers() {
         // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
-        if (USER_IDLE == -1) {
+        if (user_idle == -1) {
             return;
         }
-        final long deadline = System.currentTimeMillis() - USER_IDLE;
+        final long deadline = System.currentTimeMillis() - user_idle;
         for (MUCUser user : users.values()) {
             try {
                 if (user.getLastPacketTime() < deadline) {
@@ -221,7 +229,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private void logConversation() {
         ConversationLogEntry entry = null;
         boolean success = false;
-        for (int index = 0; index <= LOG_BATCH_SIZE && !logQueue.isEmpty(); index++) {
+        for (int index = 0; index <= log_batch_size && !logQueue.isEmpty(); index++) {
             entry = logQueue.poll();
             if (entry != null) {
                 success = MUCPersistenceManager.saveConversationLogEntry(entry);
@@ -377,6 +385,72 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         JiveGlobals.setProperty("xmpp.muc.service", name);
     }
 
+    public void setKickIdleUsersTimeout(int timeout) {
+        if (this.user_timeout == timeout) {
+            return;
+        }
+        // Cancel the existing task because the timeout has changed
+        if (userTimeoutTask != null) {
+            userTimeoutTask.cancel();
+        }
+        this.user_timeout = timeout;
+        // Create a new task and schedule it with the new timeout
+        userTimeoutTask = new UserTimeoutTask();
+        timer.schedule(userTimeoutTask, user_timeout, user_timeout);
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.muc.tasks.user.timeout", Integer.toString(timeout));
+    }
+
+    public int getKickIdleUsersTimeout() {
+        return user_timeout;
+    }
+
+    public void setUserIdleTime(int idleTime) {
+        if (this.user_idle == idleTime) {
+            return;
+        }
+        this.user_idle = idleTime;
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.muc.tasks.user.idle", Integer.toString(idleTime));
+    }
+
+    public int getUserIdleTime() {
+        return user_idle;
+    }
+
+    public void setLogConversationsTimeout(int timeout) {
+        if (this.log_timeout == timeout) {
+            return;
+        }
+        // Cancel the existing task because the timeout has changed
+        if (logConversationTask != null) {
+            logConversationTask.cancel();
+        }
+        this.log_timeout = timeout;
+        // Create a new task and schedule it with the new timeout
+        logConversationTask = new LogConversationTask();
+        timer.schedule(logConversationTask, log_timeout, log_timeout);
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.muc.tasks.log.timeout", Integer.toString(timeout));
+    }
+
+    public int getLogConversationsTimeout() {
+        return log_timeout;
+    }
+
+    public void setLogConversationBatchSize(int size) {
+        if (this.log_batch_size == size) {
+            return;
+        }
+        this.log_batch_size = size;
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.muc.tasks.log.batchsize", Integer.toString(size));
+    }
+
+    public int getLogConversationBatchSize() {
+        return log_batch_size;
+    }
+
     public Collection<String> getUsersAllowedToCreate() {
         return allowedToCreate;
     }
@@ -458,7 +532,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         String value = JiveGlobals.getProperty("xmpp.muc.tasks.user.timeout");
         if (value != null) {
             try {
-                USER_TIMEOUT = Integer.parseInt(value);
+                user_timeout = Integer.parseInt(value);
             }
             catch (NumberFormatException e) {
                 Log.error("Wrong number format of property xmpp.muc.tasks.user.timeout", e);
@@ -467,7 +541,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         value = JiveGlobals.getProperty("xmpp.muc.tasks.user.idle");
         if (value != null) {
             try {
-                USER_IDLE = Integer.parseInt(value);
+                user_idle = Integer.parseInt(value);
             }
             catch (NumberFormatException e) {
                 Log.error("Wrong number format of property xmpp.muc.tasks.user.idle", e);
@@ -476,7 +550,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         value = JiveGlobals.getProperty("xmpp.muc.tasks.log.timeout");
         if (value != null) {
             try {
-                LOG_TIMEOUT = Integer.parseInt(value);
+                log_timeout = Integer.parseInt(value);
             }
             catch (NumberFormatException e) {
                 Log.error("Wrong number format of property xmpp.muc.tasks.log.timeout", e);
@@ -485,7 +559,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         value = JiveGlobals.getProperty("xmpp.muc.tasks.log.batchsize");
         if (value != null) {
             try {
-                LOG_BATCH_SIZE = Integer.parseInt(value);
+                log_batch_size = Integer.parseInt(value);
             }
             catch (NumberFormatException e) {
                 Log.error("Wrong number format of property xmpp.muc.tasks.log.batchsize", e);
@@ -514,10 +588,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         chatServiceAddress = new XMPPAddress(null, chatServiceName, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
-        timer.schedule(new UserTimeoutTask(), USER_TIMEOUT, USER_TIMEOUT);
+        userTimeoutTask = new UserTimeoutTask();
+        timer.schedule(userTimeoutTask, user_timeout, user_timeout);
         // Log the room conversations every 5 minutes after a 5 minutes server startup delay
         // (default values)
-        timer.schedule(new LogConversationTask(), LOG_TIMEOUT, LOG_TIMEOUT);
+        logConversationTask = new LogConversationTask();
+        timer.schedule(logConversationTask, log_timeout, log_timeout);
     }
 
     public void start() {

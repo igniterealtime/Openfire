@@ -103,6 +103,22 @@ public interface MultiUserChatServer {
      */
     void removeUserAllowedToCreate(String userJID);
 
+    void setKickIdleUsersTimeout(int timeout);
+
+    int getKickIdleUsersTimeout();
+
+    void setUserIdleTime(int idle);
+
+    int getUserIdleTime();
+
+    void setLogConversationsTimeout(int timeout);
+
+    int getLogConversationsTimeout();
+
+    void setLogConversationBatchSize(int size);
+
+    int getLogConversationBatchSize();
+
     /**
      * Obtain the server-wide default message history settings.
      * 

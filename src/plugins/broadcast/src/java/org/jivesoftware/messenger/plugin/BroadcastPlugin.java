@@ -138,7 +138,12 @@ public class BroadcastPlugin implements Plugin, Component {
                         error.setSubject("Error sending broadcast message");
                         error.setBody("Not allowed to send a broadcast message to " +
                                 message.getTo());
-                        InternalComponentManager.getInstance().sendPacket(this, error);
+                        try {
+                            componentManager.sendPacket(this, error);
+                        }
+                        catch (Exception e) {
+                            componentManager.getLog().error(e);
+                        }
                         return;
                     }
                 }
@@ -161,7 +166,12 @@ public class BroadcastPlugin implements Plugin, Component {
                             Message newMessage = message.createCopy();
                             JID userJID = XMPPServer.getInstance().createJID(user, null);
                             newMessage.setTo(userJID);
-                            InternalComponentManager.getInstance().sendPacket(this, newMessage);
+                            try {
+                                componentManager.sendPacket(this, newMessage);
+                            }
+                            catch (Exception e) {
+                                componentManager.getLog().error(e);
+                            }
                         }
                     }
                     else {
@@ -175,7 +185,12 @@ public class BroadcastPlugin implements Plugin, Component {
                         error.setSubject("Error sending broadcast message");
                         error.setBody("Not allowed to send a broadcast message to " +
                                 message.getTo());
-                        InternalComponentManager.getInstance().sendPacket(this, error);
+                        try {
+                            componentManager.sendPacket(this, error);
+                        }
+                        catch (Exception e) {
+                            componentManager.getLog().error(e);
+                        }
                     }
                 }
                 catch (GroupNotFoundException gnfe) {
@@ -189,7 +204,12 @@ public class BroadcastPlugin implements Plugin, Component {
                     error.setSubject("Error sending broadcast message");
                     error.setBody("Address not valid: " +
                             message.getTo());
-                    InternalComponentManager.getInstance().sendPacket(this, error);
+                    try {
+                        componentManager.sendPacket(this, error);
+                    }
+                    catch (Exception e) {
+                        componentManager.getLog().error(e);
+                    }
                 }
             }
         }

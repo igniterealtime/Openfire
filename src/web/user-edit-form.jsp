@@ -17,24 +17,22 @@
 <%  // Get parameters
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
     String name = ParamUtils.getParameter(request,"name");
     String email = ParamUtils.getParameter(request,"email");
-    boolean nameVisible = ParamUtils.getBooleanParameter(request,"nameVisible");
-    boolean emailVisible = ParamUtils.getBooleanParameter(request,"emailVisible");
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        response.sendRedirect("user-properties.jsp?userID=" + userID);
+        response.sendRedirect("user-properties.jsp?username=" + username);
         return;
     }
 
     // Load the user object
-    User user = admin.getUserManager().getUser(userID);
+    User user = admin.getUserManager().getUser(username);
   
     // Get a private data manager //
     final PrivateStore privateStore = admin.getPrivateStore();
-    userData.setState( user.getID(), privateStore );
+    userData.setState( user.getUsername(), privateStore );
 
     // Handle a save
     Map errors = new HashMap();
@@ -49,12 +47,10 @@
         if (errors.size() == 0) {
             user.getInfo().setEmail(email);
             user.getInfo().setName(name);
-            user.getInfo().setNameVisible(nameVisible);
-            user.getInfo().setEmailVisible(emailVisible);
             user.saveInfo();
 
             // Changes good, so redirect
-            response.sendRedirect("user-edit-form.jsp?success=true&userID=" + userID);
+            response.sendRedirect("user-edit-form.jsp?success=true&username=" + username);
             return;
         }
     }
@@ -62,9 +58,7 @@
 
 
 
-
 <c:set var="sbar" value="users" scope="page" />
-
 
 
 <!-- Define BreadCrumbs -->
@@ -93,18 +87,10 @@
 Use the form below to edit user properties.
 </td></tr>
 
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 <input type="hidden" name="save" value="true">
 
 
-<tr class="jive-even">
-    <td class="jive-label">
-        User ID:
-    </td>
-    <td>
-        <%= user.getID() %>
-    </td>
-</tr>
 <tr class="jive-odd">
     <td>
         Username:
@@ -145,47 +131,6 @@ Use the form below to edit user properties.
             </span>
 
         <%  } %>
-    </td>
-</tr>
-<tr class="jive-odd" valign="top">
-    <td class="jive-label">
-        Privacy:
-    </td>
-    <td>
-        <table style="border-width:0px;" cellpadding="2" cellspacing="0" border="0" width="100%">
-        <tr>
-            <td width="1%" nowrap>
-                Show Name:
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="nameVisible" value="true" <%= ((user.getInfo().isNameVisible()) ? "checked" : "") %> id="nv01">
-                <label for="nv01">Yes</label> &nbsp;
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="nameVisible" value="false" <%= ((!user.getInfo().isNameVisible()) ? "checked" : "") %> id="nv02">
-                <label for="nv02">No</label> &nbsp;
-            </td>
-            <td width="97%">
-                &nbsp;
-            </td>
-        </tr>
-        <tr>
-            <td width="1%" nowrap>
-                Show Email:
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="emailVisible" value="true" <%= ((user.getInfo().isEmailVisible()) ? "checked" : "") %> id="ev01">
-                <label for="ev01">Yes</label> &nbsp;
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="emailVisible" value="false" <%= ((!user.getInfo().isEmailVisible()) ? "checked" : "") %> id="ev02">
-                <label for="ev02">No</label> &nbsp;
-            </td>
-            <td width="97%">
-                &nbsp;
-            </td>
-        </td>
-        </table>
     </td>
 </tr>
 </table>

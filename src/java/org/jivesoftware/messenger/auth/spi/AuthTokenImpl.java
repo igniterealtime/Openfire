@@ -23,24 +23,24 @@ public final class AuthTokenImpl implements AuthToken, Serializable {
 
     private static final long serialVersionUID = 01L;
 
-    private long userID;
+    private String username;
 
     /**
-     * Constucts a new DbAuthToken with the specified userID.
+     * Constucts a new AuthTokenImpl with the specified username.
      *
-     * @param userID the userID to create an authToken token with.
+     * @param username the username to create an authToken token with.
      */
-    public AuthTokenImpl(long userID) {
-        this.userID = userID;
+    public AuthTokenImpl(String username) {
+        this.username = username;
     }
 
     // AuthToken Interface
 
-    public long getUserID() {
-        return userID;
+    public String getUsername() {
+        return username;
     }
 
     public boolean isAnonymous() {
-        return userID == -1;
+        return username != null;
     }
 }

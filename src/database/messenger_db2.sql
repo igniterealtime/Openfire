@@ -3,12 +3,10 @@
 --   $Date$
 
 CREATE TABLE jiveUser (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   password              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100),
-  nameVisible           INTEGER         NOT NULL,
   email                 VARCHAR(100),
-  emailVisible          INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
   CONSTRAINT jiveUser_pk PRIMARY KEY (userID)
@@ -17,7 +15,7 @@ CREATE INDEX jiveUsr_cDate_idx ON jiveUser (creationDate ASC);
 
 
 CREATE TABLE jiveUserProp (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
   CONSTRAINT jiveUsrProp_pk PRIMARY KEY (userID, name)
@@ -25,7 +23,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 LONG VARCHAR    NOT NULL,
@@ -34,7 +32,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -45,7 +43,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   jid                   VARCHAR(2000)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -66,20 +64,10 @@ CREATE INDEX jiveRoGrps_rid_idx ON jiveRosterGroups (rosterID ASC);
 
 
 CREATE TABLE jiveVCard (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (userID, name)
-);
-
-
-CREATE TABLE jiveDomain (
-  domainID              INTEGER         NOT NULL,
-  name                  VARCHAR(100)    UNIQUE NOT NULL,
-  description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveDomain_pk PRIMARY KEY (domainID)
 );
 
 
@@ -90,16 +78,6 @@ CREATE TABLE jiveChatbot (
   modificationDate      CHAR(15)        NOT NULL,
   CONSTRAINT jiveChatbot_pk PRIMARY KEY (chatbotID)
 );
-
-
-CREATE TABLE jiveUserID (
-  username              VARCHAR(30)     UNIQUE NOT NULL,
-  domainID              INTEGER         NOT NULL,
-  objectType            INTEGER         NOT NULL,
-  objectID              INTEGER         NOT NULL,
-  CONSTRAINT jiveUserID_pk PRIMARY KEY (username, domainID)
-);
-CREATE INDEX jiveUsrID_obj_idx ON jiveUserID (objectType, objectID);
 
 
 CREATE TABLE jiveGroup (

@@ -16,7 +16,6 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.auth.*;
 import org.jivesoftware.messenger.user.User;
 import java.util.Iterator;
@@ -87,12 +86,12 @@ public class GroupManagerImpl extends BasicModule implements GroupManager {
 
     public void deleteGroup(Group group) throws UnauthorizedException {
         long groupID = group.getID();
-        long[] members = new long[group.getMemberCount()];
+        String[] members = new String[group.getMemberCount()];
         Iterator iter = group.members();
 
         for (int i = 0; i < members.length; i++) {
             User user = (User)iter.next();
-            members[i] = user.getID();
+            members[i] = user.getUsername();
         }
 
         provider.deleteGroup(group.getID());
@@ -122,14 +121,14 @@ public class GroupManagerImpl extends BasicModule implements GroupManager {
         return new GroupIterator(this, groups.toArray());
     }
 
-    public Iterator getGroups(Entity entity) {
-        long userID = entity.getID();
-        String key = "userGroups-" + userID;
+    public Iterator getGroups(User user) {
+        String username = user.getUsername();
+        String key = "userGroups-" + username;
         // Look in the group membership cache for the value.
         long[] groups = (long[])groupMemberCache.get(key);
 
         if (groups == null) {
-            groups = provider.getGroups(entity.getID()).toArray();
+            groups = provider.getGroups(username).toArray();
         }
         return new GroupIterator(this, groups);
     }

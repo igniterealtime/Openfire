@@ -16,14 +16,14 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.auth.*;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -56,30 +56,30 @@ public class DbGroupProvider implements GroupProvider {
     private static final String INSERT_PROPERTY =
         "INSERT INTO jiveGroupProp (groupID, name, propValue) VALUES (?, ?, ?)";
      private static final String MEMBER_TEST =
-        "SELECT userID FROM jiveGroupUser " +
-        "WHERE groupID=? AND userID=? AND administrator=0";
+        "SELECT username FROM jiveGroupUser " +
+        "WHERE groupID=? AND username=? AND administrator=0";
     private static final String ADMIN_TEST =
-        "SELECT userID FROM jiveGroupUser " +
-        "WHERE groupID=? AND userID=? AND administrator=1";
+        "SELECT username FROM jiveGroupUser " +
+        "WHERE groupID=? AND username=? AND administrator=1";
      private static final String LOAD_ADMINS =
-        "SELECT userID FROM jiveGroupUser WHERE administrator=1 AND groupID=?";
+        "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupID=?";
     private static final String LOAD_MEMBERS =
-        "SELECT userID FROM jiveGroupUser WHERE administrator=0 AND groupID=?";
+        "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupID=?";
     private static final String GROUP_MEMBER_COUNT =
-        "SELECT count(*) FROM jiveGroupUser WHERE administrator =0";
+        "SELECT count(*) FROM jiveGroupUser WHERE administrator=0";
     private static final String GROUP_ADMIN_COUNT =
-        "SELECT count(*) FROM jiveGroupUser WHERE administrator =1";
+        "SELECT count(*) FROM jiveGroupUser WHERE administrator=1";
     private static final String SELECT_GROUP_BY_NAME =
         "SELECT name, description, groupID, creationDate, modificationDate " +
         "FROM jiveGroup WHERE name=?";
     private static final String REMOVE_USER =
-        "DELETE FROM jiveGroupUser WHERE groupID=? AND userID=?";
+        "DELETE FROM jiveGroupUser WHERE groupID=? AND username=?";
     private static final String UPDATE_USER =
-        "UPDATE jiveGroupUser SET administrator=? WHERE  groupID=? userID=?";
+        "UPDATE jiveGroupUser SET administrator=? WHERE  groupID=? username=?";
     private static final String ADD_USER =
-        "INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (?, ?, ?)";
+        "INSERT INTO jiveGroupUser (groupID, username, administrator) VALUES (?, ?, ?)";
     private static final String USER_GROUPS =
-        "SELECT groupID FROM jiveGroupUser WHERE userID=? AND administrator=0";
+        "SELECT groupID FROM jiveGroupUser WHERE username=? AND administrator=0";
     private static final String ALL_GROUPS = "SELECT groupID FROM jiveGroup";
 
     public Group createGroup(String name) throws UnauthorizedException,
@@ -119,9 +119,9 @@ public class DbGroupProvider implements GroupProvider {
     }
 
     public Group getGroup(long groupID) throws GroupNotFoundException {
+        Group group = null;
         Connection con = null;
         PreparedStatement pstmt = null;
-        Group group = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_GROUP_BY_ID);
@@ -141,6 +141,7 @@ public class DbGroupProvider implements GroupProvider {
                     // Add in name, value as a new property.
                     group.setProperty(rs.getString(1), rs.getString(2));
                 }
+                rs.close();
             }
         }
         catch (SQLException e) {
@@ -171,9 +172,9 @@ public class DbGroupProvider implements GroupProvider {
     }
 
     public Group getGroup(String name) throws GroupNotFoundException {
+        Group group = null;
         Connection con = null;
         PreparedStatement pstmt = null;
-        Group group = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_GROUP_BY_NAME);
@@ -191,6 +192,7 @@ public class DbGroupProvider implements GroupProvider {
                     // Add in name, value as a new property.
                     group.setProperty(rs.getString(1), rs.getString(2));
                 }
+                rs.close();
             }
         }
         catch (SQLException e) {
@@ -216,7 +218,6 @@ public class DbGroupProvider implements GroupProvider {
         group.setModificationDate(new Date());
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SAVE_GROUP);
@@ -243,7 +244,6 @@ public class DbGroupProvider implements GroupProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
-
         try {
             con = DbConnectionManager.getTransactionConnection();
             // Remove all users in the group.
@@ -274,7 +274,6 @@ public class DbGroupProvider implements GroupProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(GROUP_COUNT);
@@ -282,6 +281,7 @@ public class DbGroupProvider implements GroupProvider {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -299,7 +299,6 @@ public class DbGroupProvider implements GroupProvider {
         LongList groups = new LongList();
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_GROUPS);
@@ -307,6 +306,7 @@ public class DbGroupProvider implements GroupProvider {
             while (rs.next()) {
                 groups.add(rs.getLong(1));
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -324,7 +324,6 @@ public class DbGroupProvider implements GroupProvider {
         LongList groups = new LongList();
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_GROUPS);
@@ -344,6 +343,7 @@ public class DbGroupProvider implements GroupProvider {
                     break;
                 }
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -357,18 +357,19 @@ public class DbGroupProvider implements GroupProvider {
         return groups;
     }
 
-    public LongList getGroups(long entityID) {
+    public LongList getGroups(String username) {
+        LongList groups = new LongList();
         Connection con = null;
         PreparedStatement pstmt = null;
-        LongList groups = new LongList();
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_GROUPS);
-            pstmt.setLong(1, entityID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 groups.add(rs.getLong(1));
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -382,16 +383,16 @@ public class DbGroupProvider implements GroupProvider {
         return groups;
     }
 
-    public void createMember(long groupID, long entityID, boolean administrator)
-            throws UserAlreadyExistsException {
+    public void createMember(long groupID, String username, boolean administrator)
+            throws UserAlreadyExistsException
+    {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_USER);
             pstmt.setLong(1, groupID);
-            pstmt.setLong(2, entityID);
+            pstmt.setString(2, username);
             pstmt.setInt(3, administrator ? 1 : 0);
             pstmt.executeUpdate();
         }
@@ -407,16 +408,15 @@ public class DbGroupProvider implements GroupProvider {
         }
     }
 
-    public void updateMember(long groupID, long entityID, boolean administrator) {
+    public void updateMember(long groupID, String username, boolean administrator) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_USER);
             pstmt.setInt(1, administrator ? 1 : 0);
             pstmt.setLong(2, groupID);
-            pstmt.setLong(3, entityID);
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -430,7 +430,7 @@ public class DbGroupProvider implements GroupProvider {
         }
     }
 
-    public void deleteMember(long groupID, long entityID) {
+    public void deleteMember(long groupID, String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
 
@@ -438,7 +438,7 @@ public class DbGroupProvider implements GroupProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(REMOVE_USER);
             pstmt.setLong(1, groupID);
-            pstmt.setLong(2, entityID);
+            pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -456,7 +456,6 @@ public class DbGroupProvider implements GroupProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
@@ -469,6 +468,7 @@ public class DbGroupProvider implements GroupProvider {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -482,10 +482,10 @@ public class DbGroupProvider implements GroupProvider {
         return count;
     }
 
-    public LongList getMembers(long groupID, boolean adminsOnly) {
+    public String [] getMembers(long groupID, boolean adminsOnly) {
+        List<String> members = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
-        LongList members = new LongList();
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
@@ -497,8 +497,9 @@ public class DbGroupProvider implements GroupProvider {
             pstmt.setLong(1, groupID);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                members.add(rs.getLong(1));
+                members.add(rs.getString(1));
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -509,13 +510,13 @@ public class DbGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        return members;
+        return (String [])members.toArray();
     }
 
-    public LongList getMembers(long groupID, BasicResultFilter filter, boolean adminsOnly) {
+    public String [] getMembers(long groupID, BasicResultFilter filter, boolean adminsOnly) {
+        List<String> members = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
-        LongList members = new LongList();
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
@@ -535,12 +536,13 @@ public class DbGroupProvider implements GroupProvider {
             // Now read in desired number of results
             for (int i = 0; i < filter.getNumResults(); i++) {
                 if (rs.next()) {
-                    members.add(rs.getLong(1));
+                    members.add(rs.getString(1));
                 }
                 else {
                     break;
                 }
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -551,14 +553,13 @@ public class DbGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        return members;
+        return (String [])members.toArray();
     }
 
-    public boolean isMember(long groupID, long entityID, boolean adminsOnly) {
+    public boolean isMember(long groupID, String username, boolean adminsOnly) {
         boolean member = false;
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
@@ -568,10 +569,11 @@ public class DbGroupProvider implements GroupProvider {
                 pstmt = con.prepareStatement(MEMBER_TEST);
             }
             pstmt.setLong(1, groupID);
-            pstmt.setLong(2, entityID);
+            pstmt.setString(2, username);
             ResultSet rs = pstmt.executeQuery();
             // If there is a result, then the user is a member of the group.
             member = rs.next();
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -588,7 +590,6 @@ public class DbGroupProvider implements GroupProvider {
     public void createProperty(long groupID, String name, String value) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
@@ -611,7 +612,6 @@ public class DbGroupProvider implements GroupProvider {
     public void updateProperty(long groupID, String name, String value) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
@@ -634,7 +634,6 @@ public class DbGroupProvider implements GroupProvider {
     public void deleteProperty(long groupID, String name) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_PROPERTY);

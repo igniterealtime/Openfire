@@ -18,8 +18,6 @@ import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.AuthProvider;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.spi.DbUserIDProvider;
-import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,21 +51,12 @@ import java.sql.SQLException;
  */
 public class DbAuthProvider implements AuthProvider {
 
-    /**
-     * DATABASE QUERIES *
-     */
     private static final String AUTHORIZE =
-            "SELECT userID FROM jiveUser WHERE userID=? AND password=?";
-
+        "SELECT username FROM jiveUser WHERE username=? AND password=?";
     private static final String SELECT_PASSWORD =
-            "SELECT password FROM jiveUser WHERE userID=?";
+        "SELECT password FROM jiveUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser set password=? WHERE userID=?";
-
-    /**
-     * <p>Used to map usernames to ids.</p>
-     */
-    private DbUserIDProvider idProvider = new DbUserIDProvider();
+        "UPDATE jiveUser set password=? WHERE username=?";
 
     /**
      * <p>Implementation requires the password to be stored in the user table in plain text.</p>
@@ -84,14 +73,12 @@ public class DbAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = NodePrep.prep(username);
-        long userID = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            userID = idProvider.getUserID(username);
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(AUTHORIZE);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             pstmt.setString(2, password);
 
             ResultSet rs = pstmt.executeQuery();
@@ -101,12 +88,10 @@ public class DbAuthProvider implements AuthProvider {
             if (!rs.next()) {
                 throw new UnauthorizedException();
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error("Exception in DbAuthProvider", e);
-            throw new UnauthorizedException();
-        }
-        catch (UserNotFoundException e) {
             throw new UnauthorizedException();
         }
         finally {
@@ -135,14 +120,12 @@ public class DbAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = NodePrep.prep(username);
-        long userID = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            userID = idProvider.getUserID(username);
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_PASSWORD);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -156,27 +139,17 @@ public class DbAuthProvider implements AuthProvider {
             if (!digest.equalsIgnoreCase(anticipatedDigest)) {
                 throw new UnauthorizedException();
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error("Exception in DbAuthProvider", e);
             throw new UnauthorizedException();
         }
-        catch (UserNotFoundException e) {
-            throw new UnauthorizedException();
-        }
         finally {
-            try {
-                if (pstmt != null) pstmt.close();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) con.close();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         // Got this far, so the user must be authorized.
     }
@@ -195,16 +168,13 @@ public class DbAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = NodePrep.prep(username);
-        long userID = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            userID = idProvider.getUserID(username);
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PASSWORD);
             pstmt.setString(1, password);
-            pstmt.setLong(2, userID);
-
+            pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -212,18 +182,10 @@ public class DbAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         finally {
-            try {
-                if (pstmt != null) pstmt.close();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) con.close();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
 

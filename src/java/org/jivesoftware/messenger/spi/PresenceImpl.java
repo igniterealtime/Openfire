@@ -34,7 +34,7 @@ import org.dom4j.Element;
  */
 public class PresenceImpl extends AbstractPacket implements Presence, Cacheable {
 
-    private long userID = -1;
+    private String username;
     private String uid = "";
     private Date loginTime;
     private Date updateTime;
@@ -46,7 +46,7 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
     public PresenceImpl(User user, String uid) {
         this();
         if (user != null) {
-            this.userID = user.getID();
+            this.username = user.getUsername();
         }
 
         this.uid = uid;
@@ -140,8 +140,8 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
         }
     }
 
-    public long getUserID() {
-        return userID;
+    public String getUsername() {
+        return username;
     }
 
     public Date getLoginTime() {
@@ -184,7 +184,7 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
         // Approximate the size of the object in bytes by calculating the size of each field.
         int size = 0;
         size += CacheSizes.sizeOfObject();              // overhead of object
-        size += CacheSizes.sizeOfLong();                // userID
+        size += CacheSizes.sizeOfString(username);      // username
         size += CacheSizes.sizeOfString(uid);           // uid
         size += CacheSizes.sizeOfDate();                // login date
         size += CacheSizes.sizeOfDate();                // last update date
@@ -250,7 +250,7 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
     public XMPPFragment createDeepCopy() {
         PresenceImpl presence = new PresenceImpl();
         deepCopy(presence);
-        presence.userID = userID;
+        presence.username = username;
         presence.uid = uid;
         presence.loginTime = loginTime;
         presence.updateTime = updateTime;

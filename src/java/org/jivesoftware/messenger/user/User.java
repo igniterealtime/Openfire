@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Group;
 import org.jivesoftware.messenger.auth.Permissions;
@@ -29,7 +28,16 @@ import java.util.Iterator;
  *
  * @see Group
  */
-public interface User extends Entity {
+public interface User {
+
+    /**
+     * <p>Returns the entity's username.</p>
+     * <p/>
+     * <p>All usernames must be unique in the system.</p>
+     *
+     * @return the username of the entity.
+     */
+    String getUsername();
 
     /**
      * <p>Sets a new password for the user.</p>

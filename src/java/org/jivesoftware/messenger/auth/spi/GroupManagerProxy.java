@@ -13,9 +13,10 @@ package org.jivesoftware.messenger.auth.spi;
 
 import org.jivesoftware.util.BasicResultFilter;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.auth.*;
 import org.jivesoftware.messenger.user.spi.UserGroupIteratorProxy;
+import org.jivesoftware.messenger.user.User;
+
 import java.util.Iterator;
 
 /**
@@ -90,8 +91,8 @@ public class GroupManagerProxy implements GroupManager {
         return new UserGroupIteratorProxy(JiveConstants.GROUP, iterator, auth, permissions);
     }
 
-    public Iterator getGroups(Entity entity) {
-        Iterator iterator = groupManager.getGroups(entity);
+    public Iterator getGroups(User user) {
+        Iterator iterator = groupManager.getGroups(user);
         return new UserGroupIteratorProxy(JiveConstants.GROUP, iterator, auth, permissions);
     }
 }

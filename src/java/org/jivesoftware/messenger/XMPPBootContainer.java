@@ -17,7 +17,6 @@ import org.jivesoftware.messenger.disco.IQDiscoItemsHandler;
 import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
 import org.jivesoftware.messenger.auth.spi.GroupManagerImpl;
-import org.jivesoftware.messenger.chatbot.spi.ChatbotManagerImpl;
 import org.jivesoftware.messenger.handler.*;
 import org.jivesoftware.messenger.spi.*;
 import org.jivesoftware.messenger.transport.TransportHandler;
@@ -41,9 +40,7 @@ public class XMPPBootContainer extends BootstrapContainer {
         return new String[]{
             BasicServer.class.getName(),
             RoutingTableImpl.class.getName(),
-            NameIDManagerImpl.class.getName(),
             AuditManagerImpl.class.getName(),
-            ChatbotManagerImpl.class.getName(),
             UserManagerImpl.class.getName(),
             RosterManagerImpl.class.getName(),
             DbPrivateStore.class.getName()};

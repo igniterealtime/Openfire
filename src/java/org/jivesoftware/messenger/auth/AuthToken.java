@@ -28,11 +28,11 @@ package org.jivesoftware.messenger.auth;
 public interface AuthToken {
 
     /**
-     * Returns the userID associated with this AuthToken.
+     * Returns the username associated with this AuthToken.
      *
-     * @return the userID associated with this AuthToken.
+     * @return the username associated with this AuthToken.
      */
-    public long getUserID();
+    public String getUsername();
 
     /**
      * Returns true if this AuthToken is the Anonymous auth token.

@@ -64,11 +64,11 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 if (IQ.GET.equals(packet.getType())) {
                     replyPacket = packet.createResult();
                     PayloadFragment frag = new PayloadFragment("jabber:iq:private", "query");
-                    frag.addFragment(new XMPPDOMFragment(privateStore.get(packet.getOriginatingSession().getUserID(), dataElement)));
+                    frag.addFragment(new XMPPDOMFragment(privateStore.get(packet.getOriginatingSession().getUsername(), dataElement)));
                     replyPacket.setChildFragment(frag);
                 }
                 else {
-                    privateStore.add(packet.getOriginatingSession().getUserID(), dataElement);
+                    privateStore.add(packet.getOriginatingSession().getUsername(), dataElement);
                     replyPacket = packet.createResult();
                 }
             }

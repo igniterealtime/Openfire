@@ -47,8 +47,6 @@
     String email = ParamUtils.getParameter(request,"email");
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
-    boolean nameVisible = ParamUtils.getBooleanParameter(request,"nameVisible",true);
-    boolean emailVisible = ParamUtils.getBooleanParameter(request,"emailVisible",false);
 
     // Handle a cancel
     if (cancel) {
@@ -79,12 +77,10 @@
                 if (name != null) {
                     newUser.getInfo().setName(name);
                 }
-                newUser.getInfo().setNameVisible(nameVisible);
-                newUser.getInfo().setEmailVisible(emailVisible);
                 newUser.saveInfo();
                 
                 // Successful, so redirect
-                response.sendRedirect("user-create-success.jsp?userID=" + newUser.getID());
+                response.sendRedirect("user-create-success.jsp?username=" + newUser.getUsername());
                 return;
             }
             catch (UserAlreadyExistsException e) {
@@ -207,47 +203,6 @@ Use the form below to create a new user in the system.
             </span>
 
         <%  } %>
-    </td>
-</tr>
-<tr class="jive-odd" valign="top">
-    <td>
-        Privacy:
-    </td>
-    <td>
-        <table style="border-width:0px;" cellspacing="2" cellpadding="0" border="0" width="100%">
-        <tr>
-            <td width="1%" nowrap>
-                Show Name:
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="nameVisible" value="true" <%= ((nameVisible) ? "checked" : "") %> id="nv01">
-                <label for="nv01">Yes</label> &nbsp;
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="nameVisible" value="false" <%= ((!nameVisible) ? "checked" : "") %> id="nv02">
-                <label for="nv02">No</label> &nbsp;
-            </td>
-            <td width="97%">
-                &nbsp;
-            </td>
-        </tr>
-        <tr>
-            <td width="1%" nowrap>
-                Show Email:
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="emailVisible" value="true" <%= ((emailVisible) ? "checked" : "") %> id="ev01">
-                <label for="ev01">Yes</label> &nbsp;
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="emailVisible" value="false" <%= ((!emailVisible) ? "checked" : "") %> id="ev02">
-                <label for="ev02">No</label> &nbsp;
-            </td>
-            <td width="97%">
-                &nbsp;
-            </td>
-        </tr>
-        </table>
     </td>
 </tr>
 </table>

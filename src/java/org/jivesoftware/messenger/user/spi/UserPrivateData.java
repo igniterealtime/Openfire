@@ -30,24 +30,22 @@ final public class UserPrivateData {
     private final Map settings = new HashMap();
     private List elementList = new ArrayList();
     private PrivateStore privateStore;
-    private long ID;
+    private String username;
     final String settingsNamespace = "jive:user:settings";
     final String settingsElementName = "personal_settings";
 
     final Namespace NS = Namespace.get(settingsNamespace);
     final QName namespace = DocumentHelper.createQName(settingsElementName, NS);
 
-
     public UserPrivateData() {
     }
 
-    public void setState(long id, PrivateStore privateStore) {
+    public void setState(String username, PrivateStore privateStore) {
         this.privateStore = privateStore;
-        this.ID = id;
-
+        this.username = username;
 
         try {
-            final Element element = privateStore.get(this.ID, DocumentHelper.createElement(namespace));
+            final Element element = privateStore.get(username, DocumentHelper.createElement(namespace));
             final List list = element.elements();
 
             final Iterator iter = list.iterator();
@@ -106,7 +104,7 @@ final public class UserPrivateData {
         }
 
         try {
-            privateStore.add(this.ID, element);
+            privateStore.add(username, element);
         }
         catch (Exception ex) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), ex);

@@ -11,12 +11,12 @@
 
 package org.jivesoftware.messenger.auth.spi;
 
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Group;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.spi.UserIteratorProxy;
 import java.util.Date;
 import java.util.Iterator;
@@ -126,54 +126,54 @@ public class GroupProxy implements Group {
         return group.getPropertyNames();
     }
 
-    public void addAdministrator(Entity entity)
+    public void addAdministrator(User user)
             throws UnauthorizedException, UserAlreadyExistsException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
                 | Permissions.GROUP_ADMIN)) {
-            group.addAdministrator(entity);
+            group.addAdministrator(user);
         }
         else {
             throw new UnauthorizedException();
         }
     }
 
-    public void removeAdministrator(Entity entity) throws UnauthorizedException {
+    public void removeAdministrator(User user) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
                 | Permissions.GROUP_ADMIN)) {
-            group.removeAdministrator(entity);
+            group.removeAdministrator(user);
         }
         else {
             throw new UnauthorizedException();
         }
     }
 
-    public void addMember(Entity entity)
+    public void addMember(User user)
             throws UnauthorizedException, UserAlreadyExistsException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
                 | Permissions.GROUP_ADMIN)) {
-            group.addMember(entity);
+            group.addMember(user);
         }
         else {
             throw new UnauthorizedException();
         }
     }
 
-    public void removeMember(Entity entity) throws UnauthorizedException {
+    public void removeMember(User user) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
                 | Permissions.GROUP_ADMIN)) {
-            group.removeMember(entity);
+            group.removeMember(user);
         }
         else {
             throw new UnauthorizedException();
         }
     }
 
-    public boolean isAdministrator(Entity entity) {
-        return group.isAdministrator(entity);
+    public boolean isAdministrator(User user) {
+        return group.isAdministrator(user);
     }
 
-    public boolean isMember(Entity entity) {
-        return group.isMember(entity);
+    public boolean isMember(User user) {
+        return group.isMember(user);
     }
 
     public int getAdministratorCount() {

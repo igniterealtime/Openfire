@@ -92,11 +92,11 @@ public class SessionImpl implements Session {
         }
     }
 
-    public long getUserID() throws UserNotFoundException {
+    public String getUsername() throws UserNotFoundException {
         if (authToken == null) {
             throw new UserNotFoundException();
         }
-        return authToken.getUserID();
+        return authToken.getUsername();
     }
 
     public String getServerName() {
@@ -104,7 +104,7 @@ public class SessionImpl implements Session {
     }
 
     public void setAuthToken(AuthToken auth, UserManager userManager, String resource) throws UserNotFoundException {
-        User user = userManager.getUser(auth.getUserID());
+        User user = userManager.getUser(auth.getUsername());
         jid = new XMPPAddress(user.getUsername(), serverName, resource);
         authToken = auth;
 

@@ -18,7 +18,7 @@
 <c:set var="sbar" value="session" scope="page" />  
 
 <%  // Get parameters
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
     boolean send = ParamUtils.getBooleanParameter(request,"send");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean sendToAll = ParamUtils.getBooleanParameter(request,"sendToAll");
@@ -47,20 +47,20 @@
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        if (userID == -1L) {
+        if (username == null) {
             response.sendRedirect("session-summary.jsp");
             return;
         }
         else {
-            response.sendRedirect("user-properties.jsp?userID=" + userID);
+            response.sendRedirect("user-properties.jsp?username=" + username);
             return;
         }
     }
 
     // Get the user - a user might not be passed in if this is a system-wide message
     User user = null;
-    if (userID != -1L) {
-        user = admin.getUserManager().getUser(userID);
+    if (username != null) {
+        user = admin.getUserManager().getUser(username);
     }
 
     // Get the session manager
@@ -96,7 +96,7 @@
                     sessionManager.sendServerMessage(XMPPAddress.parseJID(jid),null,message);
                 }
             }
-            response.sendRedirect("user-message.jsp?success=true&userID=" + userID + "&tabs=" + tabs);
+            response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
             return;
         }
     }
@@ -154,7 +154,7 @@ function updateSelect(el) {
 </script>
 
 <form action="user-message.jsp" method="post" name="f">
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 <input type="hidden" name="tabs" value="<%= tabs %>">
 <input type="hidden" name="send" value="true">
 <%  if (sess != null) { %>

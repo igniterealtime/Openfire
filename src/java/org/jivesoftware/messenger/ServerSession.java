@@ -60,9 +60,7 @@ public class ServerSession implements Session {
         return null;
     }
 
-    public void setAuthToken(AuthToken auth,
-                             UserManager userManager,
-                             String resource) {
+    public void setAuthToken(AuthToken auth, UserManager userManager, String resource) {
     }
 
     public void setAnonymousAuth() throws UnauthorizedException {
@@ -77,8 +75,8 @@ public class ServerSession implements Session {
         return streamID;
     }
 
-    public long getUserID() throws UserNotFoundException, UnauthorizedException {
-        return 0;
+    public String getUsername() throws UserNotFoundException, UnauthorizedException {
+        return null;
     }
 
     public String getServerName() {

@@ -28,11 +28,11 @@ import org.jivesoftware.util.Cacheable;
 public interface CachedRoster extends Roster, Cacheable {
 
     /**
-     * <p>Return the id of the user or chatbot that owns this roster.</p>
+     * <p>Return the username of the user or chatbot that owns this roster.</p>
      *
-     * @return The long ID of the user or chatbot that owns this roster
+     * @return the username of the user or chatbot that owns this roster
      */
-    long getUserID();
+    String getUsername();
 
     /**
      * <p>Obtain a 'roster reset', a snapshot of the full cached roster as an IQRoster.</p>

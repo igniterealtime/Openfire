@@ -44,37 +44,17 @@ public interface OfflineMessageStore {
      * messages stay in the message store and will be available to other
      * users of getMessages().</p>
      *
-     * @param userName The user name of the user who's messages you'd like to receive
+     * @param username the username of the user who's messages you'd like to receive
      * @return An iterator of packets containing all offline messages
      * @throws UnauthorizedException If the user is not allowed to retrieve messages
      */
-    Iterator getMessages(String userName) throws UnauthorizedException, UserNotFoundException;
-
-    /**
-     * <p>Obtain all messages in the store for a user.</p>
-     * <p>Remove messages using the iterator.remove() method. Otherwise
-     * messages stay in the message store and will be available to other
-     * users of getMessages().</p>
-     *
-     * @param userID The user ID of the user who's messages you'd like to receive
-     * @return An iterator of packets containing all offline messages
-     * @throws UnauthorizedException If the user is not allowed to retrieve messages
-     */
-    Iterator getMessages(long userID) throws UnauthorizedException;
+    Iterator getMessages(String username) throws UnauthorizedException, UserNotFoundException;
 
     /**
      * <p>Obtain the approximate size of the XML messages stored for a particular user.</p>
      *
-     * @param userID The user ID of the user who's messages you'd like to receive
+     * @param username the username of the user who's messages you'd like to receive
      * @return The approximate size of messages stored in bytes
      */
-    int getSize(long userID) throws UnauthorizedException;
-
-    /**
-     * Obtain the approximate size of the XML messages stored for a particular user.
-     *
-     * @param userName The user name of the user who's messages you'd like to receive
-     * @return The approximate size of messages stored in bytes
-     */
-    int getSize(String userName) throws UnauthorizedException, UserNotFoundException;
+    int getSize(String username) throws UnauthorizedException;
 }

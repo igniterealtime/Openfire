@@ -11,15 +11,22 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.NodePrep;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
+import org.jivesoftware.database.DbConnectionManager;
+
 import java.util.Iterator;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Database implementation of the UserManager interface.
@@ -39,24 +46,30 @@ import java.util.Iterator;
  */
 public class UserManagerImpl extends BasicModule implements UserManager {
 
-    private Cache id2userCache;
-    private Cache name2idCache;
+    private static final String USER_COUNT = "SELECT count(*) FROM jiveUser";
+    private static final String ALL_USERS = "SELECT username from jiveUser";
+    private static final String INSERT_USER =
+        "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
+        "VALUES (?,?,?,?,?,?)";
+    private static final String DELETE_USER_GROUPS =
+        "DELETE FROM jiveGroupUser WHERE username=?";
+    private static final String DELETE_USER_PROPS =
+        "DELETE FROM jiveUserProp WHERE username=?";
+    private static final String DELETE_VCARD_PROPS =
+        "DELETE FROM jiveVCard WHERE username=?";
+    private static final String DELETE_USER =
+        "DELETE FROM jiveUser WHERE username=?";
 
-    private UserIDProvider userIDProvider = UserProviderFactory.getUserIDProvider();
-    private UserAccountProvider userAccountProvider =
-            UserProviderFactory.getUserAccountProvider();
+    private Cache userCache;
 
     public UserManagerImpl() {
         super("User Manager");
     }
 
     private void initializeCaches() {
-        CacheManager.initializeCache("username2userid", 128 * 1024); // 1/8 MB
-        CacheManager.initializeCache("userid2user", 521 * 1024); // 1/2 MB
-        CacheManager.initializeCache("userid2roster", 521 * 1024); // 1/2 MB
-
-        id2userCache = CacheManager.getCache("userid2user");
-        name2idCache = CacheManager.getCache("username2userid");
+        CacheManager.initializeCache("userCache", 512*1024);
+        CacheManager.initializeCache("username2roster", 512*1024);
+        userCache = CacheManager.getCache("userCache");
     }
 
     public User createUser(String username, String password, String email)
@@ -75,7 +88,34 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
             try {
-                newUser = getUser(userAccountProvider.createUser(username, password, email));
+                if (email == null || email.length() == 0) {
+                    email = " ";
+                }
+                Connection con = null;
+                PreparedStatement pstmt = null;
+                boolean abortTransaction = false;
+                try {
+                    con = DbConnectionManager.getTransactionConnection();
+                    pstmt = con.prepareStatement(INSERT_USER);
+                    pstmt.setString(1, username);
+                    pstmt.setString(2, password);
+                    pstmt.setString(3, "");
+                    pstmt.setString(5, email);
+                    Date now = new Date();
+                    pstmt.setString(7, StringUtils.dateToMillis(now));
+                    pstmt.setString(8, StringUtils.dateToMillis(now));
+                    pstmt.execute();
+                }
+                catch (Exception e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    abortTransaction = true;
+                }
+                finally {
+                    try { if (pstmt != null) { pstmt.close(); } }
+                    catch (Exception e) { Log.error(e); }
+                    DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+                }
+                newUser = getUser(username);
             }
             catch (UserNotFoundException e) {
                 throw new UnauthorizedException("Created an account but could not load it. username: "
@@ -85,30 +125,17 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         return newUser;
     }
 
-    public User getUser(long userID) throws UserNotFoundException {
-
-        User user = (User)id2userCache.get(userID);
-        if (user == null) {
-            String username = userIDProvider.getUsername(userID);
-            user = loadUser(userID, username);
-        }
-
-        return user;
-    }
-
     public User getUser(String username) throws UserNotFoundException {
         if (username == null) {
             throw new UserNotFoundException("Username with null value is not valid.");
         }
         username = NodePrep.prep(username);
-        User user = null;
-        Long userIDLong = (Long)name2idCache.get(username);
-        if (userIDLong == null) {
-            long userID = userIDProvider.getUserID(username);
-            user = loadUser(userID, username);
+        User user = (User)userCache.get(username);
+        if (user == null) {
+            user = loadUser(username);
         }
         else {
-            user = (User)id2userCache.get(userIDLong);
+            user = (User)userCache.get(username);
         }
         if (user == null) {
             throw new UserNotFoundException();
@@ -117,49 +144,139 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         return user;
     }
 
-    public long getUserID(String username) throws UserNotFoundException {
-        username = NodePrep.prep(username);
-        Long userIDLong = (Long)name2idCache.get(username);
-        // If ID wan't found in cache, load it up and put it there.
-        if (userIDLong == null) {
-            long userID = userIDProvider.getUserID(username);
-            User user = loadUser(userID, username);
-            return user.getID();
-        }
-
-        return userIDLong;
-    }
-
-    private User loadUser(long userID, String username) {
-        User user = new UserImpl(userID, username);
-        Long userIDLong = userID;
-        id2userCache.put(userIDLong, user);
-        name2idCache.put(username, userIDLong);
+    private User loadUser(String username) {
+        User user = new UserImpl(username);
+        userCache.put(username, user);
         return user;
     }
 
     public void deleteUser(User user) throws UnauthorizedException {
-        userAccountProvider.deleteUser(user.getID());
-        // Expire user caches.
-        id2userCache.remove(user.getID());
-        name2idCache.remove(user.getUsername());
-    }
-
-    public void deleteUser(long userID)
-            throws UnauthorizedException, UserNotFoundException {
-        deleteUser((User)id2userCache.get(userID));
+        String username = user.getUsername();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            // Remove user from all groups
+            pstmt = con.prepareStatement(DELETE_USER_GROUPS);
+            pstmt.setString(1, username);
+            pstmt.execute();
+            pstmt.close();
+            // Delete all of the users's extended properties
+            pstmt = con.prepareStatement(DELETE_USER_PROPS);
+            pstmt.setString(1, username);
+            pstmt.execute();
+            pstmt.close();
+            // Delete all of the users's vcard properties
+            pstmt = con.prepareStatement(DELETE_VCARD_PROPS);
+            pstmt.setString(1, username);
+            pstmt.execute();
+            pstmt.close();
+            // Delete the actual user entry
+            pstmt = con.prepareStatement(DELETE_USER);
+            pstmt.setString(1, username);
+            pstmt.execute();
+        }
+        catch (Exception e) {
+            Log.error(e);
+            abortTransaction = true;
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+        }
+        // Expire user cache.
+        userCache.remove(user.getUsername());
     }
 
     public int getUserCount() {
-        return userIDProvider.getUserCount();
+        int count = 0;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(USER_COUNT);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return count;
     }
 
     public Iterator users() throws UnauthorizedException {
-        return new UserIterator(userIDProvider.getUserIDs().toArray());
+        List<String> users = new ArrayList<String>(500);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(ALL_USERS);
+            ResultSet rs = pstmt.executeQuery();
+            // Set the fetch size. This will prevent some JDBC drivers from trying
+            // to load the entire result set into memory.
+            DbConnectionManager.setFetchSize(rs, 500);
+            while (rs.next()) {
+                users.add(rs.getString(1));
+            }
+            rs.close();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return new UserIterator((String [])users.toArray());
     }
 
     public Iterator users(int startIndex, int numResults) throws UnauthorizedException {
-        return new UserIterator(userIDProvider.getUserIDs(startIndex, numResults).toArray());
+        List<String> users = new ArrayList<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(ALL_USERS);
+            ResultSet rs = pstmt.executeQuery();
+            DbConnectionManager.setFetchSize(rs, startIndex + numResults);
+            // Move to start of index
+            for (int i = 0; i < startIndex; i++) {
+                rs.next();
+            }
+            // Now read in desired number of results (or stop if we run out of results).
+            for (int i = 0; i < numResults; i++) {
+                if (rs.next()) {
+                    users.add(rs.getString(1));
+                }
+                else {
+                    break;
+                }
+            }
+            rs.close();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return new UserIterator((String [])users.toArray());
     }
 
     // #####################################################################

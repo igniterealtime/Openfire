@@ -71,7 +71,7 @@ public class IQvCardHandler extends IQHandler {
             XMPPAddress recipient = packet.getRecipient();
             XMPPPacket.Type type = packet.getType();
             if (type.equals(IQ.SET)) {
-                User user = userManager.getUser(packet.getOriginatingSession().getUserID());
+                User user = userManager.getUser(packet.getOriginatingSession().getUsername());
                 // Proper format
                 Element vcard = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
                 if (vcard != null) {

@@ -471,22 +471,16 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
 
             // Grab all the possible matching sessions by user
             LinkedList results = new LinkedList();
-            if (filter.getUserID() == SessionResultFilter.ALL_USER_ID) {
+            if (filter.getUsername() == null) {
                 // No user id filtering
                 copyAnonSessions(results);
                 copyUserSessions(results);
             }
             else {
-                // user id filtering
-                if (filter.getUserID() == SessionResultFilter.ANONYMOUS_USER_ID) {
-                    copyAnonSessions(results);
+                try {
+                    copyUserSessions(userManager.getUser(filter.getUsername()).getUsername(), results);
                 }
-                else {
-                    try {
-                        copyUserSessions(userManager.getUser(filter.getUserID()).getUsername(), results);
-                    }
-                    catch (UserNotFoundException e) {
-                    }
+                catch (UserNotFoundException e) {
                 }
             }
 

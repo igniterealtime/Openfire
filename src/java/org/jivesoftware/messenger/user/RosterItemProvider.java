@@ -36,35 +36,35 @@ public interface RosterItemProvider {
      * <p/>
      * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
      *
-     * @param userID The long ID of the user/chatbot that owns the roster item
-     * @param item   The settings for the roster item to create
+     * @param username the username of the user/chatbot that owns the roster item
+     * @param item the settings for the roster item to create
      * @return The created roster item
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    CachedRosterItem createItem(long userID, RosterItem item) throws UserAlreadyExistsException, UnsupportedOperationException;
+    CachedRosterItem createItem(String username, RosterItem item) throws UserAlreadyExistsException, UnsupportedOperationException;
 
     /**
      * <p>Update the roster item in storage with the information contained in the given item (optional operation).</p>
      * <p/>
      * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
      *
-     * @param userID The long ID of the user/chatbot that owns the roster item
+     * @param username the username of the user/chatbot that owns the roster item
      * @param item   The roster item to update
      * @throws UserNotFoundException         If no entry could be found to update
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    void updateItem(long userID, CachedRosterItem item) throws UserNotFoundException, UnsupportedOperationException;
+    void updateItem(String username, CachedRosterItem item) throws UserNotFoundException, UnsupportedOperationException;
 
     /**
      * <p>Delete the roster item with the given itemJID for the user (optional operation).</p>
      * <p/>
      * <p>If you don't want roster items deleted through messenger, throw UnsupportedOperationException.</p>
      *
-     * @param userID       The long ID of the user/chatbot that owns the roster item
+     * @param username the long ID of the user/chatbot that owns the roster item
      * @param rosterItemID The roster item to delete
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    void deleteItem(long userID, long rosterItemID) throws UnsupportedOperationException;
+    void deleteItem(String username, long rosterItemID) throws UnsupportedOperationException;
 
     /**
      * <p>Delete all roster items associated with the given user (optional operation).</p>
@@ -74,18 +74,18 @@ public interface RosterItemProvider {
      * <p/>
      * <p>If you don't want roster items deleted through messenger, throw UnsupportedOperationException.</p>
      *
-     * @param userID The long ID of the user/chatbot that owns the roster items
+     * @param username the username of the user/chatbot that owns the roster items
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    void deleteItems(long userID) throws UnsupportedOperationException;
+    void deleteItems(String username) throws UnsupportedOperationException;
 
     /**
      * <p>Obtain a count of the number of roster items available for the given user.</p>
      *
-     * @param userID The long ID of the user/chatbot that owns the roster items
+     * @param username the username of the user/chatbot that owns the roster items
      * @return The number of roster items available for the user
      */
-    int getItemCount(long userID);
+    int getItemCount(String username);
 
     /**
      * <p>Retrieve an iterator of RosterItems for the given user.</p>
@@ -94,8 +94,8 @@ public interface RosterItemProvider {
      * in memory when possible. However, some rosters may be very large so items may need
      * to be retrieved from the provider more frequently than usual for provider data.
      *
-     * @param userID The long ID of the user/chatbot that owns the roster items
+     * @param username the username of the user/chatbot that owns the roster items
      * @return An iterator of all RosterItems owned by the user
      */
-    Iterator getItems(long userID);
+    Iterator getItems(String username);
 }

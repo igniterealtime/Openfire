@@ -29,10 +29,10 @@
 
 
 <%  // Get parameters //
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
 
     // Load the user object
-    User user = admin.getUserManager().getUser(userID);
+    User user = admin.getUserManager().getUser(username);
 %>
 
 
@@ -46,7 +46,7 @@ User password updated successfully.
 </p>
 
 <form action="user-properties.jsp">
-<input type="hidden" name="userID" value="<%= user.getID() %>">
+<input type="hidden" name="username" value="<%= user.getUsername() %>">
 <input type="submit" value="Back to user properties">
 </form>
 

@@ -17,7 +17,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.chatbot.Chatbot;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import java.util.ArrayList;
@@ -151,7 +150,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         XMPPPacket.Type type = packet.getType();
 
         try {
-            User sessionUser = userManager.getUser(session.getUserID());
+            User sessionUser = userManager.getUser(session.getUsername());
             CachedRoster cachedRoster = (CachedRoster)sessionUser.getRoster();
             if (IQ.GET == type) {
                 returnPacket = cachedRoster.getReset();
@@ -226,15 +225,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 recipientRoster.deleteRosterItem(sender);
             }
             catch (UserNotFoundException e) {
-                try {
-                    ChannelHandler route = routingTable.getRoute(recipient);
-                    if (route instanceof Chatbot) {
-                        route.process(packet);
-                    }
-                }
-                catch (NoSuchRouteException e1) {
-                    throw new UserNotFoundException();
-                }
             }
         }
         else { // Recipient is remote so we just forward the packet to them

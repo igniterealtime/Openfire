@@ -49,7 +49,7 @@
 
     // Handle a "message" click:
     if (request.getParameter("message") != null) {
-        response.sendRedirect("user-message.jsp?userID=" + user.getID());
+        response.sendRedirect("user-message.jsp?username=" + user.getUsername());
         return;
     }
 

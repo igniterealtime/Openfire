@@ -52,15 +52,6 @@ public interface UserManager extends Module {
     public void deleteUser(User user) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
-     * Returns a User specified by their ID.
-     *
-     * @param userID the id of the User to lookup.
-     * @return the User specified by <tt>userID</tt>.
-     * @throws UserNotFoundException if the user does not exist.
-     */
-    public User getUser(long userID) throws UserNotFoundException;
-
-    /**
      * Returns the User specified by username.
      *
      * @param username the username of the user.
@@ -68,25 +59,6 @@ public interface UserManager extends Module {
      * @throws UserNotFoundException if the user does not exist.
      */
     public User getUser(String username) throws UserNotFoundException;
-
-    /**
-     * Returns the userID specified by the username. This method is only useful in specialized
-     * cases, as its generally easier to call <tt>getUser(username).getID()</tt> instead of this
-     * method.
-     *
-     * @param username the username of the user.
-     * @return the userID that matches username.
-     * @throws UserNotFoundException if the user does not exist.
-     */
-    public long getUserID(String username) throws UserNotFoundException;
-
-    /**
-     * <p>Deletes a user.</p>
-     *
-     * @param userID the ID of the user to delete.
-     * @throws UnauthorizedException
-     */
-    public void deleteUser(long userID) throws UnauthorizedException, UserNotFoundException;
 
     /**
      * Returns the number of users in the system.

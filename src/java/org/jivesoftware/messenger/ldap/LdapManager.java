@@ -410,7 +410,7 @@ public class LdapManager {
             }
             String userDN = ((SearchResult)answer.next()).getName();
             // Make sure there are no more search results. If there are, then
-            // the userID isn't unique on the LDAP server (a perfectly possible
+            // the username isn't unique on the LDAP server (a perfectly possible
             // scenario since only fully qualified dn's need to be unqiue).
             // There really isn't a way to handle this, so throw an exception.
             // The baseDN must be set correctly so that this doesn't happen.

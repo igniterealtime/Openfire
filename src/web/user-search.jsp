@@ -24,7 +24,6 @@
 
     // Get parameters
     boolean search = ParamUtils.getBooleanParameter(request,"search");
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
     String username = ParamUtils.getParameter(request,"username");
 
     // Handle a cancel
@@ -38,20 +37,14 @@
     if (search) {
         User user = null;
         try {
-            user = admin.getUserManager().getUser(userID);
+            user = admin.getUserManager().getUser(username);
         }
-        catch (UserNotFoundException e1) {
-            errors.put("userID","userID");
-            try {
-                user = admin.getUserManager().getUser(username);
-            }
-            catch (Exception e2) {
-                errors.put("username","username");
-            }
+        catch (Exception e2) {
+            errors.put("username","username");
         }
         if (user != null) {
             // found the user, so redirect to the user properties page:
-            response.sendRedirect("user-properties.jsp?userID=" + user.getID());
+            response.sendRedirect("user-properties.jsp?username=" + user.getUsername());
             return;
         }
     }
@@ -74,14 +67,6 @@ or username.
 
 <input type="hidden" name="search" value="true">
 
-<tr class="jive-even">
-    <td>
-        User ID:
-    </td>
-    <td>
-        <input type="text" name="userID" value="<%= ((userID!=-1L) ? ""+userID : "") %>" size="5" maxlength="10">
-    </td>
-</tr>
 <tr class="">
     <td align="center">
         or

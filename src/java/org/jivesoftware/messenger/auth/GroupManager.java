@@ -12,7 +12,8 @@
 package org.jivesoftware.messenger.auth;
 
 import org.jivesoftware.util.BasicResultFilter;
-import org.jivesoftware.messenger.Entity;
+import org.jivesoftware.messenger.user.User;
+
 import java.util.Iterator;
 
 /**
@@ -105,8 +106,8 @@ public interface GroupManager {
     /**
      * Returns an iterator for all groups that a user is a member of.
      *
-     * @param entity the user to get a list of groups for.
+     * @param user the user to get a list of groups for.
      * @return all groups that a user belongs to.
      */
-    public Iterator getGroups(Entity entity);
+    public Iterator getGroups(User user);
 }

@@ -116,17 +116,17 @@ public interface GroupProvider {
      * <p>Obtain an list of all Group IDs known by the provider
      * that a given entity belongs to.</p>
      *
-     * @param entityID The ID of the entity to find groups for
+     * @param username the username.
      * @return The list of IDs of the groups that the entity belongs to
      */
-    LongList getGroups(long entityID);
+    LongList getGroups(String username);
 
     /**
      * <p>Creates a membership relationship between the
      * group and the entity (optional operation).</p>
      *
-     * @param groupID       The group to add the member to
-     * @param entityID      The entity to add
+     * @param groupID the group to add the member to
+     * @param username the username to add
      * @param administrator True if the member is an administrator of the group
      * @throws UnauthorizedException         If the password is invalid or
      *                                       the caller does not have permission to make the change
@@ -135,7 +135,7 @@ public interface GroupProvider {
      * @throws UserAlreadyExistsException    If the given entity is already a member
      *                                       of the group
      */
-    void createMember(long groupID, long entityID, boolean administrator)
+    void createMember(long groupID, String username, boolean administrator)
             throws UnauthorizedException,
             UserAlreadyExistsException,
             UnsupportedOperationException;
@@ -145,28 +145,26 @@ public interface GroupProvider {
      * group and the entity (optional operation).</p>
      *
      * @param groupID       The group to add the member to
-     * @param entityID      The entity to add
+     * @param username      the username
      * @param administrator True if the member is an administrator of the group
      * @throws UnauthorizedException         If the password is invalid or
      *                                       the caller does not have permission to make the change
      * @throws UnsupportedOperationException If the provider does not
      *                                       support the operation (this is an optional operation)
      */
-    void updateMember(long groupID, long entityID, boolean administrator)
+    void updateMember(long groupID, String username, boolean administrator)
             throws UnauthorizedException, UnsupportedOperationException;
 
     /**
-     * <p>Deletes a membership relationship between the
-     * group and the entity (optional operation).</p>
+     * Deletes a membership relationship between the group and the user (optional operation).
      *
-     * @param groupID  The group to add the member to
-     * @param entityID The entity to add
-     * @throws UnauthorizedException         If the password is invalid or
-     *                                       the caller does not have permission to make the change
-     * @throws UnsupportedOperationException If the provider does not
-     *                                       support the operation (this is an optional operation)
+     * @param groupID the group.
+     * @param username the username.
+     * @throws UnauthorizedException if does not have permission to make the change.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
      */
-    void deleteMember(long groupID, long entityID)
+    void deleteMember(long groupID, String username)
             throws UnauthorizedException, UnsupportedOperationException;
 
     /**
@@ -185,7 +183,7 @@ public interface GroupProvider {
      * @param adminsOnly True if the results should be restricted to administrators only
      * @return The list of IDs of the entities that belongs to the group
      */
-    LongList getMembers(long groupID, boolean adminsOnly);
+    String [] getMembers(long groupID, boolean adminsOnly);
 
     /**
      * <p>Obtain a list of all entity ID's of members of the given group
@@ -196,17 +194,17 @@ public interface GroupProvider {
      * @param adminsOnly True if the results should be restricted to administrators only
      * @return The list of IDs of the entities that belongs to the group
      */
-    LongList getMembers(long groupID, BasicResultFilter filter, boolean adminsOnly);
+    String [] getMembers(long groupID, BasicResultFilter filter, boolean adminsOnly);
 
     /**
      * <p>Determine if a given entity is a member of a group.</p>
      *
      * @param groupID    The ID of the group
-     * @param entityID   The ID of the entity being checked for membership in the group
+     * @param username the username.
      * @param adminsOnly True if the entity must be an administrator of the group
      * @return True if the entity is a member of the group
      */
-    boolean isMember(long groupID, long entityID, boolean adminsOnly);
+    boolean isMember(long groupID, String username, boolean adminsOnly);
 
     /**
      * <p>Creates a property on a group (optional operation).</p>
@@ -225,9 +223,9 @@ public interface GroupProvider {
     /**
      * <p>Updates a property on a group (optional operation).</p>
      *
-     * @param groupID The ID of the group
-     * @param name    The name of the property
-     * @param value   The value of the property
+     * @param groupID the ID of the group.
+     * @param name the name of the property.
+     * @param value the value of the property.
      * @throws UnauthorizedException         If the password is invalid or
      *                                       the caller does not have permission to make the change
      * @throws UnsupportedOperationException If the provider does not

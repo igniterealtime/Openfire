@@ -46,11 +46,11 @@ import org.dom4j.Element;
 public class DbPrivateStore extends BasicModule implements PrivateStore {
 
     private static final String LOAD_PRIVATE =
-        "SELECT value FROM jivePrivate WHERE userID=? AND namespace=?";
+        "SELECT value FROM jivePrivate WHERE username=? AND namespace=?";
     private static final String INSERT_PRIVATE =
-        "INSERT INTO jivePrivate (value,name,userID,namespace) VALUES (?,?,?,?)";
+        "INSERT INTO jivePrivate (value,name,username,namespace) VALUES (?,?,?,?)";
     private static final String UPDATE_PRIVATE =
-        "UPDATE jivePrivate SET value=?, name=? WHERE userID=? AND namespace=?";
+        "UPDATE jivePrivate SET value=?, name=? WHERE username=? AND namespace=?";
 
     // currently no delete supported, we can detect an add of an empty element and use that to
     // signal a delete but that optimization doesn't seem necessary.
@@ -73,7 +73,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
         JiveGlobals.setProperty("xmpp.private", Boolean.toString(enabled));
     }
 
-    public void add(long userID, Element data) throws UnauthorizedException {
+    public void add(String username, Element data) throws UnauthorizedException {
         if (enabled) {
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -82,10 +82,17 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 data.write(writer);
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
-                pstmt.setLong(1, userID);
+                pstmt.setString(1, username);
                 pstmt.setString(2, data.getNamespaceURI());
                 ResultSet rs = pstmt.executeQuery();
+                boolean update = false;
                 if (rs.next()) {
+                    update = true;
+                }
+                rs.close();
+                pstmt.close();
+                
+                if (update) {
                     pstmt = con.prepareStatement(UPDATE_PRIVATE);
                 }
                 else {
@@ -93,7 +100,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 }
                 pstmt.setString(1, writer.toString());
                 pstmt.setString(2, data.getName());
-                pstmt.setLong(3, userID);
+                pstmt.setString(3, username);
                 pstmt.setString(4, data.getNamespaceURI());
                 pstmt.executeUpdate();
             }
@@ -101,27 +108,15 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
     }
 
-    public Element get(long userID, Element data) throws UnauthorizedException {
+    public Element get(String username, Element data) throws UnauthorizedException {
         data.clearContent();
         if (enabled) {
             Connection con = null;
@@ -129,7 +124,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
             try {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
-                pstmt.setLong(1, userID);
+                pstmt.setString(1, username);
                 pstmt.setString(2, data.getNamespaceURI());
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
@@ -142,22 +137,10 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
         return data;

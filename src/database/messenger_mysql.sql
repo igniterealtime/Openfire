@@ -3,94 +3,21 @@
 # $Date$
 
 CREATE TABLE jiveUser (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   password              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100),
-  nameVisible           TINYINT         NOT NULL,
   email                 VARCHAR(100),
-  emailVisible          TINYINT         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  PRIMARY KEY (userID),
+  PRIMARY KEY (username),
   INDEX jiveUser_cDate_idx (creationDate)
 );
 
 CREATE TABLE jiveUserProp (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
-  PRIMARY KEY (userID, name)
-);
-
-
-CREATE TABLE jivePrivate (
-  userID                BIGINT          NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  namespace             VARCHAR(200)    NOT NULL,
-  value                 TEXT            NOT NULL,
-  PRIMARY KEY (userID, name, namespace)
-);
-
-CREATE TABLE jiveOffline (
-  userID                BIGINT          NOT NULL,
-  messageID             BIGINT          NOT NULL,
-  creationDate          CHAR(15)        NOT NULL,
-  messageSize           INTEGER         NOT NULL,
-  message               TEXT            NOT NULL,
-  PRIMARY KEY (userID, messageID)
-);
-
-CREATE TABLE jiveRoster (
-  rosterID              BIGINT          NOT NULL,
-  userID                BIGINT          NOT NULL,
-  jid                   TEXT            NOT NULL,
-  sub                   TINYINT         NOT NULL,
-  ask                   TINYINT         NOT NULL,
-  recv                  TINYINT         NOT NULL,
-  nick                  VARCHAR(255),
-  PRIMARY KEY (rosterID),
-  INDEX jiveRoster_userid_idx (userID)
-);
-
-CREATE TABLE jiveRosterGroups (
-  rosterID              BIGINT          NOT NULL,
-  rank                  TINYINT         NOT NULL,
-  groupName             VARCHAR(255)    NOT NULL,
-  PRIMARY KEY (rosterID, rank),
-  INDEX jiveRosterGroup_rosterid_idx (rosterID)
-);
-
-CREATE TABLE jiveVCard (
-  userID                BIGINT          NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             TEXT            NOT NULL,
-  PRIMARY KEY (userID, name)
-);
-
-CREATE TABLE jiveDomain (
-  domainID              BIGINT          NOT NULL,
-  name                  VARCHAR(100)    UNIQUE NOT NULL,
-  description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  PRIMARY KEY (domainID)
-);
-
-CREATE TABLE jiveChatbot (
-  chatbotID             BIGINT          NOT NULL,
-  description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  PRIMARY KEY (chatbotID)
-);
-
-CREATE TABLE jiveUserID (
-  username              VARCHAR(30)     UNIQUE NOT NULL,
-  domainID              BIGINT          NOT NULL,
-  objectType            INTEGER         NOT NULL,
-  objectID              BIGINT          NOT NULL,
-  PRIMARY KEY (username, domainID),
-  INDEX jiveUser_object_idx (objectType, objectID)
+  PRIMARY KEY (username, name)
 );
 
 CREATE TABLE jiveGroup (
@@ -116,6 +43,58 @@ CREATE TABLE jiveGroupUser (
   userID                BIGINT          NOT NULL,
   administrator         TINYINT         NOT NULL,
   PRIMARY KEY (groupID, userID, administrator)
+);
+
+CREATE TABLE jivePrivate (
+  username              VARCHAR(32)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  namespace             VARCHAR(200)    NOT NULL,
+  value                 TEXT            NOT NULL,
+  PRIMARY KEY (username, name, namespace)
+);
+
+CREATE TABLE jiveOffline (
+  username              VARCHAR(32)     NOT NULL,
+  messageID             BIGINT          NOT NULL,
+  creationDate          CHAR(15)        NOT NULL,
+  messageSize           INTEGER         NOT NULL,
+  message               TEXT            NOT NULL,
+  PRIMARY KEY (username, messageID)
+);
+
+CREATE TABLE jiveRoster (
+  rosterID              BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
+  jid                   TEXT            NOT NULL,
+  sub                   TINYINT         NOT NULL,
+  ask                   TINYINT         NOT NULL,
+  recv                  TINYINT         NOT NULL,
+  nick                  VARCHAR(255),
+  PRIMARY KEY (rosterID),
+  INDEX jiveRoster_unameid_idx (username)
+);
+
+CREATE TABLE jiveRosterGroups (
+  rosterID              BIGINT          NOT NULL,
+  rank                  TINYINT         NOT NULL,
+  groupName             VARCHAR(255)    NOT NULL,
+  PRIMARY KEY (rosterID, rank),
+  INDEX jiveRosterGroup_rosterid_idx (rosterID)
+);
+
+CREATE TABLE jiveVCard (
+  username              VARCHAR(32)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  propValue             TEXT            NOT NULL,
+  PRIMARY KEY (username, name)
+);
+
+CREATE TABLE jiveChatbot (
+  chatbotID             BIGINT          NOT NULL,
+  description           VARCHAR(255),
+  creationDate          CHAR(15)        NOT NULL,
+  modificationDate      CHAR(15)        NOT NULL,
+  PRIMARY KEY (chatbotID)
 );
 
 CREATE TABLE jiveID (
@@ -198,18 +177,12 @@ INSERT INTO jiveID (idType, id) VALUES (23, 1);
 CREATE TABLE jiveUserPerm (
   objectType            INTEGER         NOT NULL,
   objectID              BIGINT          NOT NULL,
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   permission            INTEGER         NOT NULL,
   INDEX jiveUserPerm_object_idx (objectType, objectID),
-  INDEX jiveUserPerm_userID_idx (userID)
+  INDEX jiveUserPerm_uname_idx (username)
 );
 
 # Entry for admin user -- password is "admin"
-INSERT INTO jiveUserID (username, domainID, objectType, objectID) VALUES ('admin', 1, 0, 1);
-INSERT INTO jiveUser (userID, name, password, email, emailVisible, nameVisible, creationDate, modificationDate)
-    VALUES (1, 'Administrator', 'admin', 'admin@example.com', 1, 1, '0', '0');
-
-# Make the administrator an admin member of the Administrators group
-INSERT INTO jiveGroup (groupID, name, description, creationDate, modificationDate)
-    VALUES (1, 'Administrators', 'Messenger Server administrators', '0', '0');
-INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (1, 1, 1);
+INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

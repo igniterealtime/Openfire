@@ -177,7 +177,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             reply = packet.createResult();
             if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                 try {
-                    User user = userManager.getUser(session.getUserID());
+                    User user = userManager.getUser(session.getUsername());
                     MetaDataFragment currentRegistration = (MetaDataFragment) probeResult
                             .createDeepCopy();
                     currentRegistration.setProperty("query.registered", null);
@@ -191,15 +191,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     form.getField("username").addValue(user.getUsername());
                     form.getField("name").addValue(user.getInfo().getName());
                     form.getField("email").addValue(user.getInfo().getEmail());
-                    // Clear default value and set new value
-                    FormField field = form.getField("x-nameVisible");
-                    field.clearValues();
-                    field.addValue((user.getInfo().isNameVisible() ? "1" : "0"));
-                    // Clear default value and set new value
-                    field = form.getField("x-emailVisible");
-                    field.clearValues();
-                    field.addValue((user.getInfo().isEmailVisible() ? "1" : "0"));
-                    
                     reply.setChildFragment(currentRegistration);
                 }
                 catch (UserNotFoundException e) {
@@ -228,7 +219,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         presence.setSender(packet.getSender());
                         presenceHandler.process(presence);
                         // Delete the user
-                        userManager.deleteUser(session.getUserID());
+                        userManager.deleteUser(userManager.getUser(session.getUsername()));
                         reply = packet.createResult();
                         session.getConnection().deliver(reply);
                         // Close the user's connection
@@ -290,7 +281,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
 
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                        User user = userManager.getUser(session.getUserID());
+                        User user = userManager.getUser(session.getUsername());
                         if (user != null) {
                             if (user.getUsername().equalsIgnoreCase(username)) {
                                 user.setPassword(password);
@@ -324,17 +315,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             String name = (values.hasNext() ? values.next() : " ");
                             newUser.getInfo().setName(name);
                         }
-                        // Get the name visible flag sent in the form
-                        values = registrationForm.getField("x-nameVisible").getValues();
-                        String visible = (values.hasNext() ? values.next() : "1");
-                        boolean nameVisible = ("1".equals(visible) ? true : false);
-                        // Get the email visible flag sent in the form
-                        values = registrationForm.getField("x-emailVisible").getValues();
-                        visible = (values.hasNext() ? values.next() : "0");
-                        boolean emailVisible = ("1".equals(visible) ? true : false);
-                        // Save the extra user info
-                        newUser.getInfo().setNameVisible(nameVisible);
-                        newUser.getInfo().setEmailVisible(emailVisible);
                         newUser.saveInfo();
                     }
 

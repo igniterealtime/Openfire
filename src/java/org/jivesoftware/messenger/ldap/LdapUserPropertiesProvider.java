@@ -25,34 +25,34 @@ public class LdapUserPropertiesProvider implements UserPropertiesProvider {
     /**
      * Delete Vcard property. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @throws UnsupportedOperationException
      */
-    public void deleteVcardProperty(long id, String name) throws UnsupportedOperationException {
+    public void deleteVcardProperty(String username, String name) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * Delete user property. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @throws UnsupportedOperationException
      */
-    public void deleteUserProperty(long id, String name) throws UnsupportedOperationException {
+    public void deleteUserProperty(String username, String name) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * Insert new vCard property. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @param value
      * @throws UnsupportedOperationException
      */
-    public void insertVcardProperty(long id, String name, String value) throws UnsupportedOperationException {
+    public void insertVcardProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
@@ -60,56 +60,56 @@ public class LdapUserPropertiesProvider implements UserPropertiesProvider {
     /**
      * Insert new user property. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @param value
      * @throws UnsupportedOperationException
      */
-    public void insertUserProperty(long id, String name, String value) throws UnsupportedOperationException {
+    public void insertUserProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * Update vCard. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @param value
      * @throws UnsupportedOperationException
      */
-    public void updateVcardProperty(long id, String name, String value) throws UnsupportedOperationException {
+    public void updateVcardProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * Update user property. Currently unimplemented.
      *
-     * @param id
+     * @param username
      * @param name
      * @param value
      * @throws UnsupportedOperationException
      */
-    public void updateUserProperty(long id, String name, String value) throws UnsupportedOperationException {
+    public void updateUserProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * Get vCard properties. Unimplemented.
      *
-     * @param id
+     * @param username
      * @return empty Map
      */
-    public Map getVcardProperties(long id) {
+    public Map getVcardProperties(String username) {
         return Collections.EMPTY_MAP;
     }
 
     /**
      * Get user properties. Unimplemented.
      *
-     * @param id
+     * @param username
      * @return empty Map.
      */
-    public Map getUserProperties(long id) {
+    public Map getUserProperties(String username) {
         return Collections.EMPTY_MAP;
     }
 }

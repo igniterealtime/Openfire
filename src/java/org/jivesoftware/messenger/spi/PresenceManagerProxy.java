@@ -18,9 +18,7 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.spi.UserIteratorProxy;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * Enforces security constraints.
@@ -44,65 +42,20 @@ public class PresenceManagerProxy implements PresenceManager {
         return manager.isAvailable(user);
     }
 
-    public int getOnlineUserCount() {
-        Iterator iter = getOnlineUsers();
-        int count = 0;
-
-        while (iter.hasNext()) {
-            iter.next();
-            count++;
-        }
-
-        return count;
-    }
-
     public int getOnlineGuestCount() {
         return manager.getOnlineGuestCount();
     }
 
-    public Iterator getOnlineUsers() {
-        Iterator iter = manager.getOnlineUsers();
-        ArrayList users = new ArrayList();
-
-        while (iter.hasNext()) {
-            User user = (User)iter.next();
-            if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN) ||
-                    user.isAuthorized(Permissions.VIEW_ONLINE_STATUS)) {
-                users.add(user);
-            }
-        }
-
-        return new UserIteratorProxy(users.iterator(), authToken, permissions);
+    public Collection<User> getOnlineUsers() {
+        return manager.getOnlineUsers();
     }
 
-    public Iterator getOnlineUsers(boolean ascending, int sortField) {
-        Iterator iter = manager.getOnlineUsers(ascending, sortField);
-        ArrayList users = new ArrayList();
-
-        while (iter.hasNext()) {
-            User user = (User)iter.next();
-            if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN) ||
-                    user.isAuthorized(Permissions.VIEW_ONLINE_STATUS)) {
-                users.add(user);
-            }
-        }
-
-        return new UserIteratorProxy(users.iterator(), authToken, permissions);
+    public Collection<User> getOnlineUsers(boolean ascending, int sortField) {
+        return manager.getOnlineUsers(ascending, sortField);
     }
 
-    public Iterator getOnlineUsers(boolean ascending, int sortField, int numResults) {
-        Iterator iter = manager.getOnlineUsers(ascending, sortField, numResults);
-        ArrayList users = new ArrayList();
-
-        while (iter.hasNext()) {
-            User user = (User)iter.next();
-            if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN) ||
-                    user.isAuthorized(Permissions.VIEW_ONLINE_STATUS)) {
-                users.add(user);
-            }
-        }
-
-        return new UserIteratorProxy(users.iterator(), authToken, permissions);
+    public Collection<User> getOnlineUsers(boolean ascending, int sortField, int numResults) {
+        return manager.getOnlineUsers(ascending, sortField, numResults);
     }
 
     public Presence createPresence(User user, String uid) throws UnauthorizedException {
@@ -115,7 +68,7 @@ public class PresenceManagerProxy implements PresenceManager {
     }
 
     public void setOffline(Presence presence) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             manager.setOffline(presence);
         }

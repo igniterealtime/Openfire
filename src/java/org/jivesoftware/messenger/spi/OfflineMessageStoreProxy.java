@@ -55,27 +55,10 @@ public class OfflineMessageStoreProxy implements OfflineMessageStore {
         }
     }
 
-    public Iterator getMessages(long userID) throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return store.getMessages(userID);
-        }
-        else {
-            throw new org.jivesoftware.messenger.auth.UnauthorizedException();
-        }
-    }
 
-    public int getSize(long userID) throws UnauthorizedException {
+    public int getSize(String username) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return store.getSize(userID);
-        }
-        else {
-            throw new org.jivesoftware.messenger.auth.UnauthorizedException();
-        }
-    }
-
-    public int getSize(String userName) throws UnauthorizedException, UserNotFoundException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return store.getSize(userName);
+            return store.getSize(username);
         }
         else {
             throw new org.jivesoftware.messenger.auth.UnauthorizedException();

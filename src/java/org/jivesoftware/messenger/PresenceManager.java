@@ -14,6 +14,7 @@ package org.jivesoftware.messenger;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * The presence manager tracks on a global basis who's online. The presence
@@ -44,14 +45,6 @@ public interface PresenceManager {
     public boolean isAvailable(User user) throws UnauthorizedException;
 
     /**
-     * Returns the number of users who are currently online. Online users with a
-     * presence status set to invisible will not be included.
-     *
-     * @return the number of online users.
-     */
-    public int getOnlineUserCount();
-
-    /**
      * Returns the number of guests who are currently online. Guests with a
      * presence status other that online or idle will not be included.
      *
@@ -60,33 +53,33 @@ public interface PresenceManager {
     public int getOnlineGuestCount();
 
     /**
-     * Returns an iterator of users who are currently online. Online users with a
+     * Returns a Collection of users who are currently online. Online users with a
      * presence status other that online or idle will not be included.
      *
-     * @return an iterator of online users.
+     * @return a Collection of online users.
      */
-    public Iterator getOnlineUsers();
+    public Collection<User> getOnlineUsers();
 
     /**
-     * Returns an iterator of users sorted in the manner requested who are currently online.
+     * Returns a Collection of users sorted in the manner requested who are currently online.
      * Online users with a presence status other that online or idle will not be included.
      *
      * @param ascending sort ascending if true, descending if false.
      * @param sortField a valid sort field from the PresenceManager interface.
-     * @return an iterator of online users.
+     * @return a Collection of online users.
      */
-    public Iterator getOnlineUsers(boolean ascending, int sortField);
+    public Collection<User> getOnlineUsers(boolean ascending, int sortField);
 
     /**
-     * Returns an iterator of users who are currently online matching the criteria given.
+     * Returns a Collection of users who are currently online matching the criteria given.
      * Online users with a presence status other than online or idle will not be included.
      *
-     * @param ascending  sort ascending if true, descending if false.
+     * @param ascending sort ascending if true, descending if false.
      * @param sortField  a valid sort field from the PresenceManager interface.
      * @param numResults - the number of results to return.
-     * @return an iterator of online users matching the given criteria.
+     * @return an Collection of online users matching the given criteria.
      */
-    public Iterator getOnlineUsers(boolean ascending, int sortField, int numResults);
+    public Collection<User> getOnlineUsers(boolean ascending, int sortField, int numResults);
 
     /**
      * Create a presence for a user. Creating a presence will automatically set the user to be

@@ -27,16 +27,12 @@
     </p>
 
 <%  } else if (exception instanceof UserNotFoundException) {
-        String userID = ParamUtils.getParameter(request,"userID");
         String username = ParamUtils.getParameter(request,"username");
-        if (userID == null) {
-            userID = username;
-        }
 %>
         <p>
         The requested user
-        <%  if (userID != null) { %>
-            (id: <%= userID %>)
+        <%  if (username != null) { %>
+            (username: <%= username %>)
         <%  } %>
         was not found.
         </p>

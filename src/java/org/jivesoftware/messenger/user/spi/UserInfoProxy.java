@@ -39,18 +39,8 @@ public class UserInfoProxy implements UserInfo {
         this.permissions = permissions;
     }
 
-    public long getId() {
-        return info.getId();
-    }
-
     public String getName() {
-        if (isNameVisible() || permissions.hasPermission(Permissions.SYSTEM_ADMIN |
-                Permissions.USER_ADMIN)) {
-            return info.getName();
-        }
-        else {
-            return null;
-        }
+        return info.getName();
     }
 
     public void setName(String name) throws UnauthorizedException {
@@ -62,45 +52,13 @@ public class UserInfoProxy implements UserInfo {
         }
     }
 
-    public boolean isNameVisible() {
-        return info.isNameVisible();
-    }
-
-    public void setNameVisible(boolean visible) throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            info.setNameVisible(visible);
-        }
-        else {
-            throw new UnauthorizedException();
-        }
-    }
-
     public String getEmail() {
-        if (isEmailVisible() || permissions.hasPermission(Permissions.SYSTEM_ADMIN |
-                Permissions.USER_ADMIN)) {
-            return info.getEmail();
-        }
-        else {
-            return null;
-        }
+        return info.getEmail();
     }
 
     public void setEmail(String email) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             info.setEmail(email);
-        }
-        else {
-            throw new UnauthorizedException();
-        }
-    }
-
-    public boolean isEmailVisible() {
-        return info.isEmailVisible();
-    }
-
-    public void setEmailVisible(boolean visible) throws UnauthorizedException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            info.setEmailVisible(visible);
         }
         else {
             throw new UnauthorizedException();

@@ -29,84 +29,85 @@ public interface UserPropertiesProvider {
     /**
      * <p>Delete a user's vcard property (optional operation).</p>
      *
-     * @param id   The ID of the user
+     * @param username the username of the user
      * @param name The name of the property to delete
      * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    public void deleteVcardProperty(long id, String name) throws UnauthorizedException, UnsupportedOperationException;
+    public void deleteVcardProperty(String username, String name) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Delete a user's user property (optional operation).</p>
      *
-     * @param id   The ID of the user
+     * @param username the username of the user
      * @param name The name of the property to delete
      * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    public void deleteUserProperty(long id, String name) throws UnauthorizedException, UnsupportedOperationException;
+    public void deleteUserProperty(String username, String name) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Insert a new vcard property (optional operation).</p>
      *
-     * @param id    The ID of the user
+     * @param username the username of the user
      * @param name  The name of the property
      * @param value The value of the property
      * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    public void insertVcardProperty(long id, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
+    public void insertVcardProperty(String username, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Insert a new user property (optional operation).</p>
      *
-     * @param id    The ID of the user
+     * @param username the username of the user
      * @param name  The name of the property
      * @param value The value of the property
      * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    public void insertUserProperty(long id, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
+    public void insertUserProperty(String username, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Update a vcard property (optional operation).</p>
      *
-     * @param id    The ID of the user
-     * @param name  The name of the property
-     * @param value The value of the property
-     * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
-     * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
+     * @param username the username of the user.
+     * @param name  The name of the property.
+     * @param value The value of the property.
+     * @throws UnauthorizedException  if the caller does not have permission to carry out the operation
+     * @throws UnsupportedOperationException if the provider does not support the operation (this is an optional operation).
      */
-    public void updateVcardProperty(long id, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
+    public void updateVcardProperty(String username, String name, String value)
+            throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Update an Existing user property (optional operation).</p>
      *
-     * @param id    The ID of the user
+     * @param username the username of the user
      * @param name  The name of the property
      * @param value The value of the property
      * @throws UnauthorizedException         If the caller does not have permission to carry out the operation
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    public void updateUserProperty(long id, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
+    public void updateUserProperty(String username, String name, String value) throws UnauthorizedException, UnsupportedOperationException;
 
     /**
      * <p>Obtain a map containing all vcard properties for a user.</p>
      * <p/>
      * <p>If the provider doesn't support vcard properties, return an empty map.</p>
      *
-     * @param id The id of the user to retrieve the vcard properties
+     * @param username the username of the user to retrieve the vcard properties
      * @return A map of property name-value pairs
      */
-    public Map getVcardProperties(long id);
+    public Map getVcardProperties(String username);
 
     /**
      * <p>Obtain a map containing all user properties for a user.</p>
      * <p/>
      * <p>If the provider doesn't support user properties, return an empty map.</p>
      *
-     * @param id The id of the user to retrieve the user properties
+     * @param username the username of the user to retrieve the user properties
      * @return A map of property name-value pairs
      */
-    public Map getUserProperties(long id);
+    public Map getUserProperties(String username);
 }

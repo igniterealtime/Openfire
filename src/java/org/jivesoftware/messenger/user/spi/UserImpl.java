@@ -47,7 +47,6 @@ public class UserImpl implements User, Cacheable {
     /**
      * User id of -1 is reserved for "anonymous user" and 0 is reserved for "all users".
      */
-    private long id = -2;
     private String username = null;
     private UserInfo userInfo;
     private Map properties;
@@ -57,15 +56,9 @@ public class UserImpl implements User, Cacheable {
      * Create a new DbUser with all required fields.
      *
      * @param username the username for the user.
-     * @param id the id for the user.
      */
-    protected UserImpl(long id, String username) {
-        this.id = id;
+    protected UserImpl(String username) {
         this.username = username;
-    }
-
-    public long getID() {
-        return id;
     }
 
     public String getUsername() {
@@ -83,7 +76,7 @@ public class UserImpl implements User, Cacheable {
 
     public UserInfo getInfo() throws UserNotFoundException {
         if (userInfo == null) {
-            userInfo = infoProvider.getInfo(id);
+            userInfo = infoProvider.getInfo(username);
         }
         return userInfo;
     }
@@ -91,7 +84,7 @@ public class UserImpl implements User, Cacheable {
     public void saveInfo() throws UnauthorizedException {
         if (userInfo != null) {
             try {
-                infoProvider.setInfo(id, userInfo);
+                infoProvider.setInfo(username, userInfo);
             }
             catch (UserNotFoundException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -118,10 +111,10 @@ public class UserImpl implements User, Cacheable {
 
     private void loadPropertiesFromDb(boolean isVcard) {
         if (isVcard) {
-            vcardProps = propertiesProvider.getVcardProperties(id);
+            vcardProps = propertiesProvider.getVcardProperties(username);
         }
         else {
-            properties = propertiesProvider.getUserProperties(id);
+            properties = propertiesProvider.getUserProperties(username);
         }
     }
 
@@ -155,7 +148,7 @@ public class UserImpl implements User, Cacheable {
                 updatePropertyInDb(name, value, isVcard);
 
                 // Re-add user to cache.
-                CacheManager.getCache("userid2user").put(new Long(id), this);
+                CacheManager.getCache("userCache").put(username, this);
             }
         }
         else {
@@ -163,25 +156,25 @@ public class UserImpl implements User, Cacheable {
             insertPropertyIntoDb(name, value, isVcard);
 
             // Re-add user to cache.
-            CacheManager.getCache("userid2user").put(new Long(id), this);
+            CacheManager.getCache("userCache").put(username, this);
         }
     }
 
     private void insertPropertyIntoDb(String name, String value, boolean vcard) throws UnauthorizedException {
         if (vcard) {
-            propertiesProvider.insertVcardProperty(id, name, value);
+            propertiesProvider.insertVcardProperty(username, name, value);
         }
         else {
-            propertiesProvider.insertUserProperty(id, name, value);
+            propertiesProvider.insertUserProperty(username, name, value);
         }
     }
 
     private void updatePropertyInDb(String name, String value, boolean vcard) throws UnauthorizedException {
         if (vcard) {
-            propertiesProvider.updateVcardProperty(id, name, value);
+            propertiesProvider.updateVcardProperty(username, name, value);
         }
         else {
-            propertiesProvider.updateUserProperty(id, name, value);
+            propertiesProvider.updateUserProperty(username, name, value);
         }
     }
 
@@ -208,16 +201,16 @@ public class UserImpl implements User, Cacheable {
             deletePropertyFromDb(name, isVcard);
 
             // Re-add user to cache.
-            CacheManager.getCache("userid2user").put(new Long(id), this);
+            CacheManager.getCache("userCache").put(username, this);
         }
     }
 
     private void deletePropertyFromDb(String name, boolean vcard) throws UnauthorizedException {
         if (vcard) {
-            propertiesProvider.deleteVcardProperty(id, name);
+            propertiesProvider.deleteVcardProperty(username, name);
         }
         else {
-            propertiesProvider.deleteUserProperty(id, name);
+            propertiesProvider.deleteUserProperty(username, name);
         }
     }
 
@@ -239,20 +232,20 @@ public class UserImpl implements User, Cacheable {
 
     public CachedRoster getRoster() throws UnauthorizedException {
         CachedRoster roster = null;
-        if (CacheManager.getCache("userid2roster").get(new Long(this.id)) != null) {
+        if (CacheManager.getCache("username2roster").get(username) != null) {
             // Check for a cached roster:
-            roster = (CachedRoster)CacheManager.getCache("userid2roster").get(new Long(this.id));
+            roster = (CachedRoster)CacheManager.getCache("username2roster").get(username);
         }
         else {
             // Not in cache so load a new one:
-            roster = new CachedRosterImpl(id, username);
-            CacheManager.getCache("userid2roster").put(new Long(this.id), roster);
+            roster = new CachedRosterImpl(username);
+            CacheManager.getCache("userame2roster").put(username, roster);
         }
         return roster;
     }
 
     public Permissions getPermissions(AuthToken auth) {
-        if (auth.getUserID() == id) {
+        if (auth.getUsername() == username) {
             return USER_ADMIN_PERMS;
         }
         else {
@@ -305,7 +298,7 @@ public class UserImpl implements User, Cacheable {
     }
 
     public int hashCode() {
-        return (int)id;
+        return username.hashCode();
     }
 
     public boolean equals(Object object) {
@@ -313,7 +306,7 @@ public class UserImpl implements User, Cacheable {
             return true;
         }
         if (object != null && object instanceof User) {
-            return id == ((User)object).getID();
+            return username.equals(((User)object).getUsername());
         }
         else {
             return false;

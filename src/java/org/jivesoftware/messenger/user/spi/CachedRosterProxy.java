@@ -24,8 +24,8 @@ public class CachedRosterProxy extends RosterProxy implements CachedRoster {
         super(roster, authToken, permissions);
     }
 
-    public long getUserID() {
-        return ((CachedRoster)roster).getUserID();
+    public String getUsername() {
+        return ((CachedRoster)roster).getUsername();
     }
 
     public IQRoster getReset() throws UnauthorizedException {

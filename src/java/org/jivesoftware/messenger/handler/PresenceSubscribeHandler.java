@@ -18,7 +18,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.chatbot.ChatbotManager;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.user.spi.CachedRosterImpl;
 import java.util.Hashtable;
@@ -88,22 +87,16 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             if (roster != null) {
                 manageSub(senderJID, false, type, roster);
             }
-            if (chatbotManager.isChatbot(recipientJID)) {
-                RoutableChannelHandler route = routingTable.getRoute(recipientJID);
-                route.process((XMPPPacket)presence.createDeepCopy());
+            try {
+                // Try to obtain a handler for the packet based on the routes. If the handler is
+                // a module, the module will be able to handle the packet. If the handler is a
+                // Session the packet will be routed to the client. If a route cannot be found
+                // then the packet will be delivered based on its recipient and sender.
+                ChannelHandler handler = routingTable.getRoute(recipientJID);
+                handler.process((XMPPPacket)presence.createDeepCopy());
             }
-            else {
-                try {
-                    // Try to obtain a handler for the packet based on the routes. If the handler is
-                    // a module, the module will be able to handle the packet. If the handler is a
-                    // Session the packet will be routed to the client. If a route cannot be found
-                    // then the packet will be delivered based on its recipient and sender.
-                    ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    handler.process((XMPPPacket)presence.createDeepCopy());
-                }
-                catch (NoSuchRouteException e) {
-                    deliverer.deliver((XMPPPacket)presence.createDeepCopy());
-                }
+            catch (NoSuchRouteException e) {
+                deliverer.deliver((XMPPPacket)presence.createDeepCopy());
             }
         }
         catch (Exception e) {
@@ -118,40 +111,20 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @return The roster or null if the address is not managed on the server
      */
     private Roster getRoster(XMPPAddress address) {
-        Long userID = null;
+        String username = null;
         Roster roster = null;
         if (localServer.isLocal(address) && !"".equals(address.getName())) {
-            try {
-                if (chatbotManager != null) {
-                    if (chatbotManager.isChatbot(address)) {
-                        userID = chatbotManager.getChatbotID(address.getNamePrep());
-                    }
-                }
-            }
-            catch (UserNotFoundException e) {
-                // do nothing
-            }
-            try {
-                if (userID == null && userManager != null) {
-                    userID = userManager.getUserID(address.getNamePrep());
-                }
-            }
-            catch (UserNotFoundException e) {
-                // do nothing
-            }
-            if (userID != null) {
-                // Check for a cached roster:
-                roster = (Roster)CacheManager.getCache("userid2roster").get(userID);
-                if (roster == null) {
-                    // Not in cache so load a new one:
-                    roster = new CachedRosterImpl(userID, address.getNamePrep());
-                    CacheManager.getCache("userid2roster").put(userID, roster);
-                }
+            username = address.getNamePrep();
+            // Check for a cached roster:
+            roster = (Roster)CacheManager.getCache("username2roster").get(username);
+            if (roster == null) {
+                // Not in cache so load a new one:
+                roster = new CachedRosterImpl(username);
+                CacheManager.getCache("username2roster").put(username, roster);
             }
         }
         return roster;
     }
-
 
     /**
      * Manage the subscription request. This method retrieves a user's roster
@@ -163,11 +136,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
      * @throws UnauthorizedException If a security access violation occurs
      */
-    private void manageSub(XMPPAddress target,
-                           boolean isSending,
-                           XMPPPacket.Type type,
-                           Roster roster)
-            throws UnauthorizedException, UserAlreadyExistsException {
+    private void manageSub(XMPPAddress target, boolean isSending, XMPPPacket.Type type,
+            Roster roster) throws UnauthorizedException, UserAlreadyExistsException
+    {
         try {
             RosterItem item;
             if (roster.isRosterItem(target)) {
@@ -388,12 +359,10 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     public XMPPServer localServer;
     public PacketDeliverer deliverer;
     public PacketFactory packetFactory;
-    public ChatbotManager chatbotManager;
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(ChatbotManager.class, "chatbotManager");
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");

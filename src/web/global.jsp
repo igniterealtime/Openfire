@@ -58,7 +58,7 @@
     UserManager userManager = (UserManager)lookup.lookup(UserManager.class);
     User pageUser = null;  
     try {
-        pageUser = userManager.getUser(authToken.getUserID());
+        pageUser = userManager.getUser(authToken.getUsername());
     }
     catch (UserNotFoundException ignored) {}
 

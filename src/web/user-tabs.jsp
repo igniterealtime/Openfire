@@ -15,16 +15,16 @@
 <% ad.init(request, response, session, application, out ); %>
 
 
-<c:set var="userID" value="${param.userID}" />
+<c:set var="username" value="${param.username}" />
 <c:set var="tabName" value="${pageScope.tab}" />
 <jsp:useBean id="tabName" type="java.lang.String" />
 
 
 <%  // Get params
-    long ui = ParamUtils.getLongParameter(request,"userID",-1L);
+    String uname = ParamUtils.getParameter(request,"username");
 
     // Load the user
-    User foundUser = ad.getUserManager().getUser(ui);
+    User foundUser = ad.getUserManager().getUser(uname);
 
     // Get a presence manager
     PresenceManager presenceManager = ad.getPresenceManager();
@@ -35,14 +35,14 @@
 <c:set var="tabCount" value="1" />
 
     <td class="jive-<%= (("props".equals(tabName)) ? "selected-" : "") %>tab" width="1%" nowrap>
-        <a href="user-properties.jsp?userID=<c:out value="${userID}"/>">User Properties</a>
+        <a href="user-properties.jsp?username=<c:out value="${username}"/>">User Properties</a>
     </td>
     <td class="jive-tab-spacer" width="1%"><img src="images/blank.gif" width="5" height="1" border="0"></td>
 
 <c:set var="tabCount" value="${tabCount + 1}" />
 
     <td class="jive-<%= (("edit".equals(tabName)) ? "selected-" : "") %>tab" width="1%" nowrap>
-        <a href="user-edit-form.jsp?userID=<c:out value="${userID}"/>">Edit User</a>
+        <a href="user-edit-form.jsp?username=<c:out value="${username}"/>">Edit User</a>
     </td>
     <td class="jive-tab-spacer" width="1%"><img src="images/blank.gif" width="5" height="1" border="0"></td>
 
@@ -53,7 +53,7 @@
     %>
 
         <td class="jive-<%= (("message".equals(tabName)) ? "selected-" : "") %>tab" width="1%" nowrap>
-            <a href="user-message.jsp?userID=<c:out value="${userID}"/>">Send Message</a>
+            <a href="user-message.jsp?username=<c:out value="${username}"/>">Send Message</a>
         </td>
         <td class="jive-tab-spacer" width="1%"><img src="images/blank.gif" width="5" height="1" border="0"></td>
 
@@ -63,14 +63,14 @@
     <%  } %>
 
     <td class="jive-<%= (("pass".equals(tabName)) ? "selected-" : "") %>tab" width="1%" nowrap>
-        <a href="user-password.jsp?userID=<c:out value="${userID}"/>">Change Password</a>
+        <a href="user-password.jsp?username=<c:out value="${username}"/>">Change Password</a>
     </td>
     <td class="jive-tab-spacer" width="1%"><img src="images/blank.gif" width="5" height="1" border="0"></td>
 
 <c:set var="tabCount" value="${tabCount + 1}" />
 
     <td class="jive-<%= (("delete".equals(tabName)) ? "selected-" : "") %>tab" width="1%" nowrap>
-        <a href="user-delete.jsp?userID=<c:out value="${userID}"/>">Delete User</a>
+        <a href="user-delete.jsp?username=<c:out value="${username}"/>">Delete User</a>
     </td>
     <td class="jive-tab-spacer" width="1%"><img src="images/blank.gif" width="5" height="1" border="0"></td>
 <c:set var="width" value="${100-(tabCount*2)}" />

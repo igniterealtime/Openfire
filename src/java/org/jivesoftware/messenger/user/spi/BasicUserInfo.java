@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserInfo;
@@ -28,25 +27,19 @@ import org.jivesoftware.messenger.user.UserInfo;
  */
 public class BasicUserInfo implements UserInfo {
 
-    /**
-     * User id of -2 means no user id has been set yet. -1 is reserved for "anonymous user" and 0 is
-     * reserved for "all users".
-     */
-    private long id = -2;
+    private String username = null;
     private String name = " ";
-    private boolean nameVisible = true;
     private String email;
-    private boolean emailVisible = false; // Hide email addresses by default
     private java.util.Date creationDate;
     private java.util.Date modificationDate;
 
     /**
-     * <p>Create a new UserInfo with default fields.</p>
+     * Create a new UserInfo with default fields.
      *
-     * @param id The user's id this info belongs to
+     * @param username the username.
      */
-    public BasicUserInfo(long id) {
-        this.id = id;
+    public BasicUserInfo(String username) {
+        this.username = username;
         creationDate = new java.util.Date();
         modificationDate = new java.util.Date();
     }
@@ -54,15 +47,14 @@ public class BasicUserInfo implements UserInfo {
     /**
      * <p>Create a new UserInfo given field values.</p>
      *
-     * @param id           The user's id this info belongs to
+     * @param username     The username
      * @param name         The user's full name
      * @param email        The user's email address
-     * @param nameVisible  True if the user's name should be visible to other users of the system
-     * @param emailVisible True if the user's email should be visible to other users of the system
      */
-    public BasicUserInfo(long id, String name, String email,
-                         boolean nameVisible, boolean emailVisible, java.util.Date creationDate, java.util.Date modificationDate) {
-        this.id = id;
+    public BasicUserInfo(String username, String name, String email,
+                         java.util.Date creationDate, java.util.Date modificationDate)
+    {
+        this.username = username;
         this.creationDate = creationDate;
         this.modificationDate = modificationDate;
         if (email == null || "".equals(email)) {
@@ -74,12 +66,10 @@ public class BasicUserInfo implements UserInfo {
         if (name != null) {
             this.name = name;
         }
-        this.nameVisible = nameVisible;
-        this.emailVisible = emailVisible;
     }
 
-    public long getId() {
-        return id;
+    public String getUsername() {
+        return username;
     }
 
     public String getName() {
@@ -96,16 +86,6 @@ public class BasicUserInfo implements UserInfo {
         modificationDate.setTime(System.currentTimeMillis());
     }
 
-    public boolean isNameVisible() {
-        return nameVisible;
-    }
-
-    public void setNameVisible(boolean visible) throws UnauthorizedException {
-        nameVisible = visible;
-        // Update modification date
-        modificationDate.setTime(System.currentTimeMillis());
-    }
-
     public String getEmail() {
         return StringUtils.escapeHTMLTags(email);
     }
@@ -116,16 +96,6 @@ public class BasicUserInfo implements UserInfo {
         }
 
         this.email = email;
-        // Update modification date
-        modificationDate.setTime(System.currentTimeMillis());
-    }
-
-    public boolean isEmailVisible() {
-        return emailVisible;
-    }
-
-    public void setEmailVisible(boolean visible) throws UnauthorizedException {
-        emailVisible = visible;
         // Update modification date
         modificationDate.setTime(System.currentTimeMillis());
     }
@@ -180,7 +150,7 @@ public class BasicUserInfo implements UserInfo {
     }
 
     public int hashCode() {
-        return (int)id;
+        return username.hashCode();
     }
 
     public boolean equals(Object object) {
@@ -188,7 +158,7 @@ public class BasicUserInfo implements UserInfo {
             return true;
         }
         if (object != null && object instanceof User) {
-            return id == ((User)object).getID();
+            return username.equals(((User)object).getUsername());
         }
         else {
             return false;

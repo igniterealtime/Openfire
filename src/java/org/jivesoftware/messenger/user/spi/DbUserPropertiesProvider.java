@@ -15,7 +15,6 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserPropertiesProvider;
-import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,21 +35,21 @@ import java.util.Map;
 public class DbUserPropertiesProvider implements UserPropertiesProvider {
 
     private static final String LOAD_PROPERTIES =
-            "SELECT name, propValue FROM jiveUserProp WHERE userID=?";
+        "SELECT name, propValue FROM jiveUserProp WHERE username=?";
     private static final String DELETE_PROPERTY =
-            "DELETE FROM jiveUserProp WHERE userID=? AND name=?";
+        "DELETE FROM jiveUserProp WHERE username=? AND name=?";
     private static final String UPDATE_PROPERTY =
-            "UPDATE jiveUserProp SET propValue=? WHERE name=? AND userID=?";
+        "UPDATE jiveUserProp SET propValue=? WHERE name=? AND username=?";
     private static final String INSERT_PROPERTY =
-            "INSERT INTO jiveUserProp (userID, name, propValue) VALUES (?, ?, ?)";
+        "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
     private static final String LOAD_VPROPERTIES =
-            "SELECT name, propValue FROM jiveVCard WHERE userID=?";
+        "SELECT name, propValue FROM jiveVCard WHERE username=?";
     private static final String DELETE_VPROPERTY =
-            "DELETE FROM jiveVCard WHERE userID=? AND name=?";
+        "DELETE FROM jiveVCard WHERE username=? AND name=?";
     private static final String UPDATE_VPROPERTY =
-            "UPDATE jiveVCard SET propValue=? WHERE name=? AND userID=?";
+        "UPDATE jiveVCard SET propValue=? WHERE name=? AND username=?";
     private static final String INSERT_VPROPERTY =
-            "INSERT INTO jiveVCard (userID, name, propValue) VALUES (?, ?, ?)";
+        "INSERT INTO jiveVCard (username, name, propValue) VALUES (?, ?, ?)";
 
     /**
      * Create a new DbUserPropertiesProvider.
@@ -61,7 +60,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
     /**
      * Loads properties from the database.
      */
-    private synchronized Map loadPropertiesFromDb(long id, boolean isVcard) {
+    private synchronized Map loadPropertiesFromDb(String username, boolean isVcard) {
         Map props = new Hashtable();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -74,7 +73,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             else {
                 pstmt = con.prepareStatement(LOAD_PROPERTIES);
             }
-            pstmt.setLong(1, id);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 props.put(rs.getString(1), rs.getString(2));
@@ -84,22 +83,10 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return props;
     }
@@ -107,7 +94,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
     /**
      * Inserts a new property into the datatabase.
      */
-    private void insertPropertyIntoDb(long id, String name, String value, boolean isVcard) {
+    private void insertPropertyIntoDb(String username, String name, String value, boolean isVcard) {
         Connection con = null;
         PreparedStatement pstmt = null;
 
@@ -119,7 +106,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             else {
                 pstmt = con.prepareStatement(INSERT_PROPERTY);
             }
-            pstmt.setLong(1, id);
+            pstmt.setString(1, username);
             pstmt.setString(2, name);
             pstmt.setString(3, value);
             pstmt.executeUpdate();
@@ -128,32 +115,19 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
     }
 
     /**
      * Updates a property value in the database.
      */
-    private void updatePropertyInDb(long id, String name, String value, boolean isVcard) {
+    private void updatePropertyInDb(String username, String name, String value, boolean isVcard) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             if (isVcard) {
@@ -164,39 +138,26 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             }
             pstmt.setString(1, value);
             pstmt.setString(2, name);
-            pstmt.setLong(3, id);
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
     }
 
     /**
      * Deletes a property from the db.
      */
-    private void deletePropertyFromDb(long id, String name, boolean isVcard) {
+    private void deletePropertyFromDb(String username, String name, boolean isVcard) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             if (isVcard) {
@@ -205,7 +166,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             else {
                 pstmt = con.prepareStatement(DELETE_PROPERTY);
             }
-            pstmt.setLong(1, id);
+            pstmt.setString(1, username);
             pstmt.setString(2, name);
             pstmt.executeUpdate();
         }
@@ -213,54 +174,42 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
     }
 
-    public void deleteVcardProperty(long id, String name) {
-        deletePropertyFromDb(id, name, true);
+    public void deleteVcardProperty(String username, String name) {
+        deletePropertyFromDb(username, name, true);
     }
 
-    public void deleteUserProperty(long id, String name) {
-        deletePropertyFromDb(id, name, false);
+    public void deleteUserProperty(String username, String name) {
+        deletePropertyFromDb(username, name, false);
     }
 
-    public void insertVcardProperty(long id, String name, String value) {
-        insertPropertyIntoDb(id, name, value, true);
+    public void insertVcardProperty(String username, String name, String value) {
+        insertPropertyIntoDb(username, name, value, true);
     }
 
-    public void insertUserProperty(long id, String name, String value) {
-        insertPropertyIntoDb(id, name, value, false);
+    public void insertUserProperty(String username, String name, String value) {
+        insertPropertyIntoDb(username, name, value, false);
     }
 
-    public void updateVcardProperty(long id, String name, String value) {
-        updatePropertyInDb(id, name, value, true);
+    public void updateVcardProperty(String username, String name, String value) {
+        updatePropertyInDb(username, name, value, true);
     }
 
-    public void updateUserProperty(long id, String name, String value) {
-        updatePropertyInDb(id, name, value, false);
+    public void updateUserProperty(String username, String name, String value) {
+        updatePropertyInDb(username, name, value, false);
     }
 
-    public Map getVcardProperties(long id) {
-        return loadPropertiesFromDb(id, true);
+    public Map getVcardProperties(String username) {
+        return loadPropertiesFromDb(username, true);
     }
 
-    public Map getUserProperties(long id) {
-        return loadPropertiesFromDb(id, false);
+    public Map getUserProperties(String username) {
+        return loadPropertiesFromDb(username, false);
     }
 }

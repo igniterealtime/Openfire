@@ -16,18 +16,18 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean update = request.getParameter("update") != null;
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?userID=" + userID);
+        response.sendRedirect("user-properties.jsp?username=" + username);
         return;
     }
 
     // Load the user object
-    User user = admin.getUserManager().getUser(userID);
+    User user = admin.getUserManager().getUser(username);
 
     // Handle a password update:
     boolean errors = false;
@@ -36,7 +36,7 @@
         if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
             user.setPassword(password);
             // Done, so redirect
-            response.sendRedirect("user-password-success.jsp?userID=" + userID);
+            response.sendRedirect("user-password-success.jsp?username=" + username);
             return;
         }
         else {
@@ -80,7 +80,7 @@ Use the form below to change the user's password
 </td></tr>
 
 
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 
 
 <tr class="jive-even">
@@ -88,7 +88,7 @@ Use the form below to change the user's password
         User ID:
     </td>
     <td>
-        <%= user.getID() %>
+        <%= user.getUsername() %>
     </td>
 </tr>
 <tr class="jive-odd">

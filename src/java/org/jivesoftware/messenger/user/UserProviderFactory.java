@@ -42,19 +42,15 @@ import org.jivesoftware.messenger.JiveGlobals;
  */
 public class UserProviderFactory {
 
-    private static UserIDProvider userIDProvider;
     private static UserPropertiesProvider userPropertiesProvider;
     private static UserInfoProvider userInfoProvider;
-    private static UserAccountProvider userAccountProvider;
     private static RosterItemProvider rosterItemProvider;
 
     /**
      * The default class to instantiate is database implementation.
      */
-    private static String[] classNames = {"org.jivesoftware.messenger.user.spi.DbUserIDProvider",
-                                          "org.jivesoftware.messenger.user.spi.DbUserPropertiesProvider",
+    private static String[] classNames = {"org.jivesoftware.messenger.user.spi.DbUserPropertiesProvider",
                                           "org.jivesoftware.messenger.user.spi.DbUserInfoProvider",
-                                          "org.jivesoftware.messenger.user.spi.DbUserAccountProvider",
                                           "org.jivesoftware.messenger.user.spi.DbRosterItemProvider"};
 
     private static String[] propNames = {"UserProvider.id.className",
@@ -64,16 +60,9 @@ public class UserProviderFactory {
                                          "UserProvider.roster.className"};
 
     private static void setProviders(Class[] providers) throws IllegalAccessException, InstantiationException {
-        userIDProvider = (UserIDProvider)providers[0].newInstance();
         userPropertiesProvider = (UserPropertiesProvider)providers[1].newInstance();
         userInfoProvider = (UserInfoProvider)providers[2].newInstance();
-        userAccountProvider = (UserAccountProvider)providers[3].newInstance();
         rosterItemProvider = (RosterItemProvider)providers[4].newInstance();
-    }
-
-    public static UserIDProvider getUserIDProvider() {
-        loadProviders();
-        return userIDProvider;
     }
 
     public static UserPropertiesProvider getUserPropertiesProvider() {
@@ -86,21 +75,16 @@ public class UserProviderFactory {
         return userInfoProvider;
     }
 
-    public static UserAccountProvider getUserAccountProvider() {
-        loadProviders();
-        return userAccountProvider;
-    }
-
     public static RosterItemProvider getRosterItemProvider() {
         loadProviders();
         return rosterItemProvider;
     }
 
     private static void loadProviders() {
-        if (userIDProvider == null) {
+        if (userInfoProvider == null) {
             // Use className as a convenient object to get a lock on.
             synchronized (classNames) {
-                if (userIDProvider == null) {
+                if (userInfoProvider == null) {
                     try {
                         Class[] providers = new Class[classNames.length];
                         for (int i = 0; i < classNames.length; i++) {

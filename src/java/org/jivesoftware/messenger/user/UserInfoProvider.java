@@ -34,21 +34,21 @@ public interface UserInfoProvider {
      * <p>If your implementation doesn't support user info, simply return a UserInfo object filled with default
      * values.</p>
      *
-     * @param id The id of the user
+     * @param username the username of the user.
      * @return The user's info
      * @throws UserNotFoundException If a user with the given ID couldn't be found
      */
-    UserInfo getInfo(long id) throws UserNotFoundException;
+    UserInfo getInfo(String username) throws UserNotFoundException;
 
     /**
      * <p>Sets the user's info (optional operation).</p>
      *
-     * @param id   The ID of the user
+     * @param username the username of the user.
      * @param info The user's new info
      * @throws UserNotFoundException         If a user with the given ID couldn't be found
      * @throws UnauthorizedException         If this operation is not allowed for the caller's permissions
      * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
      */
-    void setInfo(long id, UserInfo info)
+    void setInfo(String username, UserInfo info)
             throws UserNotFoundException, UnauthorizedException, UnsupportedOperationException;
 }

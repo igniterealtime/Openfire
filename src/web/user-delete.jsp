@@ -15,22 +15,22 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?userID=" + userID);
+        response.sendRedirect("user-properties.jsp?username=" + username);
         return;
     }
 
     // Load the user object
-    User user = admin.getUserManager().getUser(userID);
+    User user = admin.getUserManager().getUser(username);
 
     // Handle a user delete:
     if (delete) {
         admin.getUserManager().deleteUser(user);
         // Deleted your own user account, force login
-        if (userID == admin.getAuthToken().getUserID()){
+        if (username.equals(admin.getAuthToken().getUsername())){
             session.removeAttribute("jive.admin.authToken");
             response.sendRedirect("login.jsp");
         }
@@ -63,7 +63,7 @@
 
 <p>
 Are you sure you want to delete the user
-<b><a href="user-properties.jsp?userID=<%= user.getID() %>"><%= user.getUsername() %></a></b>
+<b><a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a></b>
 from the system?
 </p>
 
@@ -75,7 +75,7 @@ from the system?
 </c:if>
 
 <form action="user-delete.jsp">
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 <input type="submit" name="delete" value="Delete User">
 <input type="submit" name="cancel" value="Cancel">
 </form>

@@ -14,16 +14,16 @@
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-edit-form.jsp?userID=" + userID);
+        response.sendRedirect("user-edit-form.jsp?username=" + username);
         return;
     }
 
     // Load the user object
-    User user = userManager.getUser(userID);
+    User user = userManager.getUser(username);
 %>
 
 <jsp:include page="header.jsp" flush="true" />
@@ -33,8 +33,8 @@
     String[][] breadcrumbs = {
         { "Home", "main.jsp" },
         { "User Summary", "user-summary.jsp" },
-        { "Edit User", "user-edit-form.jsp?userID="+userID },
-        { title, "user-email.jsp?userID="+userID }
+        { "Edit User", "user-edit-form.jsp?username="+username },
+        { title, "user-email.jsp?username="+username }
     };
 %>
 <jsp:include page="title.jsp" flush="true" />
@@ -44,7 +44,7 @@ Use the form below to send an email to the user.
 </p>
 
 <form action="user-email.jsp" name="emailform">
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 
 <div class="jive-table">
 <table cellpadding="3" cellspacing="1" border="0" width="100%">
@@ -59,7 +59,7 @@ Use the form below to send an email to the user.
     </td>
     <td>
         <%= pageUser.getUsername() %> &lt;<%= pageUser.getInfo().getEmail() %>&gt;
-        (<a href="user-edit-form.jsp?userID=<%= user.getID() %>">Edit User</a>)
+        (<a href="user-edit-form.jsp?username=<%= user.getUsername() %>">Edit User</a>)
     </td>
 </tr>
 <tr>

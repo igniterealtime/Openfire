@@ -24,11 +24,11 @@ package org.jivesoftware.messenger.user;
  */
 public interface RosterManager {
     /**
-     * <p>Obtain the roster for the given ID.</p>
+     * <p>Obtain the roster for the given username.</p>
      *
-     * @param id The ID to search for
+     * @param username the username to search for
      * @return The roster associated with the ID
      * @throws UserNotFoundException If the ID does not correspond to a known entity on the server
      */
-    CachedRoster getRoster(long id) throws UserNotFoundException;
+    CachedRoster getRoster(String username) throws UserNotFoundException;
 }

@@ -180,8 +180,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // Only user sessions need to be authenticated
         if (!"".equals(session.getAddress().getName())) {
             String username = session.getAddress().getNamePrep();
-            long userID = nameManager.getID(username);
-            CachedRoster roster = rosterManager.getRoster(userID);
+            CachedRoster roster = rosterManager.getRoster(username);
             Iterator items = roster.getRosterItems();
             while (items.hasNext()) {
                 RosterItem item = (RosterItem)items.next();
@@ -197,7 +196,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }
             }
             // deliver offline messages if any
-            Iterator msgs = messageStore.getMessages(userID);
+            Iterator msgs = messageStore.getMessages(username);
             while (msgs.hasNext()) {
                 Message msg = (Message)msgs.next();
                 session.getConnection().deliver(msg);
@@ -243,8 +242,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
-                    long userID = nameManager.getID(name);
-                    CachedRoster roster = rosterManager.getRoster(userID);
+                    CachedRoster roster = rosterManager.getRoster(name);
                     roster.broadcastPresence(update);
                 }
             }
@@ -308,8 +306,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
-                    long userID = nameManager.getID(name);
-                    CachedRoster roster = rosterManager.getRoster(userID);
+                    CachedRoster roster = rosterManager.getRoster(name);
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavialable presence to the entity
@@ -398,12 +395,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public PacketDeliverer deliverer;
     public PacketFactory packetFactory;
     public OfflineMessageStore messageStore;
-    public NameIDManager nameManager;
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(RosterManager.class, "rosterManager");
-        trackInfo.getTrackerClasses().put(NameIDManager.class, "nameManager");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
         trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");

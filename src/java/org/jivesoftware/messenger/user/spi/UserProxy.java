@@ -41,10 +41,6 @@ public class UserProxy implements User {
         this.permissions = permissions;
     }
 
-    public long getID() {
-        return user.getID();
-    }
-
     public String getUsername() {
         return user.getUsername();
     }

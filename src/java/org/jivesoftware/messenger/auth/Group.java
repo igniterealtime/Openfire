@@ -11,8 +11,9 @@
 
 package org.jivesoftware.messenger.auth;
 
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.User;
+
 import java.util.Date;
 import java.util.Iterator;
 
@@ -30,8 +31,6 @@ import java.util.Iterator;
  * Security for Group objects is provide by GroupProxy protection proxy objects.
  *
  * @author Iain Shigeoka
- *
- * @see Entity
  */
 public interface Group {
 
@@ -156,52 +155,52 @@ public interface Group {
      * Grants administrator privileges of the group to a user. This
      * method is restricted to those with group administration permission.
      *
-     * @param entity the User to grant adminstrative privileges to.
+     * @param user the User to grant adminstrative privileges to.
      * @throws UnauthorizedException if does not have group administrator permissions.
      */
-    public void addAdministrator(Entity entity) throws UnauthorizedException, UserAlreadyExistsException;
+    public void addAdministrator(User user) throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Revokes administrator privileges of the group to a user.
      * This method is restricted to those with group administration permission.
      *
-     * @param entity the User to grant adminstrative privileges to.
+     * @param user the User to grant adminstrative privileges to.
      * @throws UnauthorizedException if does not have group administrator permissions.
      */
-    public void removeAdministrator(Entity entity) throws UnauthorizedException;
+    public void removeAdministrator(User user) throws UnauthorizedException;
 
     /**
      * Adds a member to the group. This method is restricted to
      * those with group administration permission.
      *
-     * @param entity the User to add to the group.
+     * @param user the User to add to the group.
      * @throws UnauthorizedException if does not have group administrator permissions.
      */
-    public void addMember(Entity entity) throws UnauthorizedException, UserAlreadyExistsException;
+    public void addMember(User user) throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Removes a member from the group. If the User is not
      * in the group, this method does nothing. This method
      * is restricted to those with group administration permission.
      *
-     * @param entity the User to remove from the group.
+     * @param user the User to remove from the group.
      * @throws UnauthorizedException if does not have group administrator permissions.
      */
-    public void removeMember(Entity entity) throws UnauthorizedException;
+    public void removeMember(User user) throws UnauthorizedException;
 
     /**
      * Returns true if the User has group administrator permissions.
      *
      * @return true if the User is an administrator of the group.
      */
-    public boolean isAdministrator(Entity entity);
+    public boolean isAdministrator(User user);
 
     /**
      * Returns true if if the User is a member of the group.
      *
      * @return true if the User is a member of the group.
      */
-    public boolean isMember(Entity entity);
+    public boolean isMember(User user);
 
     /**
      * Returns the number of group administrators.

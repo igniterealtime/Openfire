@@ -18,14 +18,14 @@
 
 
 <%  // Get parameters
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
+    String username = ParamUtils.getParameter(request,"username");
 
     // Load user object
-    User user = admin.getUserManager().getUser(userID);
+    User user = admin.getUserManager().getUser(username);
 
     // Handle button clicks:
     if (request.getParameter("details") != null) {
-        response.sendRedirect("user-properties.jsp?userID=" + userID);
+        response.sendRedirect("user-properties.jsp?username=" + username);
         return;
     }
 
@@ -51,7 +51,7 @@ User created successfully!
 </p>
 
 <form action="user-create-success.jsp">
-<input type="hidden" name="userID" value="<%= userID %>">
+<input type="hidden" name="username" value="<%= username %>">
 
 <center>
 <input type="submit" name="details" value="Go to User Details">

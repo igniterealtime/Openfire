@@ -17,9 +17,7 @@ import java.util.LinkedList;
 import javax.xml.stream.XMLStreamException;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.chatbot.ChatbotManager;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.LocaleUtils;
@@ -37,7 +35,6 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
     public RoutingTable routingTable;
     public LinkedList iqHandlers = new LinkedList();
     private HashMap namespace2Handlers = new HashMap();
-    private ChatbotManager chatBotManager;
 
     /**
      * Creates a packet router.
@@ -72,24 +69,9 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
     }
 
     private boolean isLocalServer(XMPPAddress recipientJID) {
-        boolean isLocalServer = recipientJID == null || recipientJID.getHost() == null
+        return recipientJID == null || recipientJID.getHost() == null
                 || "".equals(recipientJID.getHost()) || recipientJID.getResource() == null
                 || "".equals(recipientJID.getResource());
-
-
-
-        if (recipientJID != null && isLocalServer) {
-            if (chatBotManager == null) {
-                try {
-                    chatBotManager = (ChatbotManager)ServiceLookupFactory.getLookup().lookup(ChatbotManager.class);
-                }
-                catch (UnauthorizedException e) {
-                    Log.error(e);
-                }
-            }
-            isLocalServer = !chatBotManager.isChatbot(recipientJID);
-        }
-        return isLocalServer;
     }
 
     private void handle(IQ packet) {

@@ -36,7 +36,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setAvailable(boolean online) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setAvailable(online);
         }
@@ -50,7 +50,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setVisible(boolean visible) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setVisible(visible);
         }
@@ -63,8 +63,8 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
         return presence.getID();
     }
 
-    public long getUserID() {
-        return presence.getUserID();
+    public String getUsername() {
+        return presence.getUsername();
     }
 
     public Date getLoginTime() {
@@ -76,7 +76,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setLastUpdateTime(Date time) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setLastUpdateTime(time);
         }
@@ -90,7 +90,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setShow(int status) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setShow(status);
         }
@@ -104,7 +104,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setStatus(String status) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setStatus(status);
         }
@@ -118,7 +118,7 @@ public class PresenceProxy extends AbstractPacketProxy implements Presence {
     }
 
     public void setPriority(int priority) throws UnauthorizedException {
-        if ((presence.getUserID() == authToken.getUserID()) ||
+        if (presence.getUsername().equals(authToken.getUsername()) ||
                 permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             presence.setPriority(priority);
         }

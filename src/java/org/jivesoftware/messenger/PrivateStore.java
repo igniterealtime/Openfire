@@ -46,11 +46,11 @@ public interface PrivateStore {
      * <p>If the name and namespace of the element matches another
      * stored private data XML document, then replace it with the new one.</p>
      *
-     * @param data   The data to store (XML element)
-     * @param userID The user ID of account where private data is being stored
+     * @param data the data to store (XML element)
+     * @param username the username of the account where private data is being stored
      * @throws UnauthorizedException If there are insufficient permissions to access the data
      */
-    void add(long userID, Element data) throws UnauthorizedException;
+    void add(String username, Element data) throws UnauthorizedException;
 
     /**
      * <p>Retrieve the data stored under a key corresponding to the name and namespace of
@@ -62,9 +62,9 @@ public interface PrivateStore {
      * <p>If no data is currently stored under the given key, return the query.</p>
      *
      * @param data   An XML document who's element name and namespace is used to match previously stored private data
-     * @param userID The user ID of account where private data is being stored
+     * @param username the username of the account where private data is being stored
      * @return The data stored under the given key or the data element
      * @throws UnauthorizedException If there are insufficient permissions to access the data
      */
-    Element get(long userID, Element data) throws UnauthorizedException;
+    Element get(String username, Element data) throws UnauthorizedException;
 }

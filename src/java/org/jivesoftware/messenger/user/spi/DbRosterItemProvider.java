@@ -19,8 +19,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LongList;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,10 +36,10 @@ import java.util.LinkedList;
 public class DbRosterItemProvider implements RosterItemProvider {
 
     private static final String CREATE_ROSTER_ITEM =
-            "INSERT INTO jiveRoster (userID, rosterID, jid, sub, ask, recv, nick) " +
+            "INSERT INTO jiveRoster (username, rosterID, jid, sub, ask, recv, nick) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    public CachedRosterItem createItem(long userID, RosterItem item)
+    public CachedRosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException, UnsupportedOperationException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -51,7 +49,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
 
             long rosterID = SequenceManager.nextID(JiveConstants.ROSTER);
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             pstmt.setLong(2, rosterID);
             pstmt.setString(3, item.getJid().toBareString());
             pstmt.setInt(4, item.getSubStatus().getValue());
@@ -69,14 +67,13 @@ public class DbRosterItemProvider implements RosterItemProvider {
                 // Otherwise, just create a coyy of the item with the new roster ID
                 cachedItem = new CachedRosterItemImpl(rosterID, item);
             }
-
             insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
         }
         catch (SQLException e) {
             throw new UserAlreadyExistsException(item.getJid().toStringPrep());
         }
         finally {
-           try { if (pstmt != null) { pstmt.close(); } }
+            try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
@@ -89,7 +86,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM jiveRosterGroups WHERE rosterID=?";
 
-    public void updateItem(long userID, CachedRosterItem item)
+    public void updateItem(String username, CachedRosterItem item)
             throws UserNotFoundException, UnsupportedOperationException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -162,7 +159,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM jiveRoster WHERE rosterID=?";
 
-    public void deleteItem(long userID, long rosterItemID)
+    public void deleteItem(String username, long rosterItemID)
             throws UnsupportedOperationException {
         // Only try to remove the user if they exist in the roster already:
         Connection con = null;
@@ -193,12 +190,12 @@ public class DbRosterItemProvider implements RosterItemProvider {
     }
 
     private static final String LOAD_ROSTER_IDS =
-            "DELETE from jiveRosterGroups WHERE userID=?";
+        "DELETE from jiveRosterGroups WHERE username=?";
 
     private static final String DELETE_ROSTER =
-            "DELETE FROM jiveRoster WHERE userID=?";
+        "DELETE FROM jiveRoster WHERE username=?";
 
-    public void deleteItems(long userID) throws UnsupportedOperationException {
+    public void deleteItems(String username) throws UnsupportedOperationException {
         Connection con = null;
         PreparedStatement pstmt = null;
 
@@ -206,7 +203,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             LongList list = new LongList();
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER_IDS);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(rs.getLong(1));
@@ -217,7 +214,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
                 pstmt.executeUpdate();
             }
             pstmt = con.prepareStatement(DELETE_ROSTER);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             pstmt.executeUpdate();
 
         }
@@ -233,17 +230,16 @@ public class DbRosterItemProvider implements RosterItemProvider {
     }
 
     private static final String COUNT_ROSTER_ITEMS =
-            "SELECT COUNT(rosterID) FROM jiveRoster WHERE userID=?";
+        "SELECT COUNT(rosterID) FROM jiveRoster WHERE username=?";
 
-    public int getItemCount(long userID) {
+    public int getItemCount(String username) {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(COUNT_ROSTER_ITEMS);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
@@ -262,19 +258,18 @@ public class DbRosterItemProvider implements RosterItemProvider {
     }
 
     private static final String LOAD_ROSTER =
-            "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE userID=?";
+        "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-            "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
+        "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
 
-    public Iterator getItems(long userID) {
+    public Iterator getItems(String username) {
+        LinkedList itemList = new LinkedList();
         Connection con = null;
         PreparedStatement pstmt = null;
-        LinkedList itemList = new LinkedList();
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 CachedRosterItem item = new CachedRosterItemImpl(rs.getLong(2),

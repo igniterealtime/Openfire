@@ -34,13 +34,6 @@ import java.util.Date;
 public interface UserInfo extends Cacheable {
 
     /**
-     * <p>Obtain the long ID of the user that owns this info.</p>
-     *
-     * @return The ID of the user that owns this info
-     */
-    long getId();
-
-    /**
      * Returns the user's name. The user's name does not have to be to be unique in the system. Some
      * users may opt to not let others see their name for privacy reasons. In that case, the user
      * can set nameVisible to false. In that case, a call to this method will return null.
@@ -56,23 +49,6 @@ public interface UserInfo extends Cacheable {
      * @throws UnauthorizedException if does not have administrator permissions.
      */
     void setName(String name) throws UnauthorizedException;
-
-    /**
-     * Returns true if the user has chosen to make her name visible to other users. If the name is
-     * not visible, calling getName() will throw an UnauthorizedException.
-     *
-     * @return true if the name is visible to other users.
-     */
-    boolean isNameVisible();
-
-    /**
-     * Sets whether a user's name is visible to other users. If the field is set to not be visible,
-     * calling getName() will throw an UnauthorizedException.
-     *
-     * @param visible boolean value to determin if the name should be visible.
-     * @throws UnauthorizedException if does not have administrator permissions.
-     */
-    void setNameVisible(boolean visible) throws UnauthorizedException;
 
     /**
      * Returns the user's email address. Email should be considered to be a required field of a user
@@ -91,23 +67,6 @@ public interface UserInfo extends Cacheable {
      * @throws UnauthorizedException if does not have administrator permissions.
      */
     void setEmail(String email) throws UnauthorizedException;
-
-    /**
-     * Returns true if the user has chosen to make her email visible to other users. If the email
-     * field is not visible, calling getEmail() will throw an UnauthorizedException.
-     *
-     * @return true if the name is visible to other users.
-     */
-    boolean isEmailVisible();
-
-    /**
-     * Sets whether a user's email is visible to other users. If the field is set to not be visible,
-     * calling getEmail() will throw an UnauthorizedException.
-     *
-     * @param visible boolean value to determin if the name should be visible.
-     * @throws UnauthorizedException if does not have administrator permissions.
-     */
-    void setEmailVisible(boolean visible) throws UnauthorizedException;
 
     /**
      * Returns the date that the user was created.

@@ -3,49 +3,47 @@
 // $Date$
 
 CREATE TABLE jiveUser (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   password              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100),
-  nameVisible           INTEGER         NOT NULL,
   email                 VARCHAR(100),
-  emailVisible          INTEGER         NOT NULL,
   creationDate          VARCHAR(15)     NOT NULL,
   modificationDate      VARCHAR(15)     NOT NULL,
-  CONSTRAINT jiveUser_pk PRIMARY KEY (userID)
+  CONSTRAINT jiveUser_pk PRIMARY KEY (username)
 );
 CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate);
 
 
 CREATE TABLE jiveUserProp (
-  userID                BIGINT          NOT NULL,
+  username              VARHCAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(4000)   NOT NULL,
-  CONSTRAINT jiveUserProp_pk PRIMARY KEY (userID, name)
+  CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
 );
 
 
 CREATE TABLE jivePrivate (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 LONGVARCHAR     NOT NULL,
-  CONSTRAINT jivePrivate_pk PRIMARY KEY (userID, name, namespace)
+  CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
 
 CREATE TABLE jiveOffline (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          VARCHAR(15)     NOT NULL,
   messageSize           INTEGER         NOT NULL,
   message               LONGVARCHAR     NOT NULL,
-  CONSTRAINT jiveOffline_pk PRIMARY KEY (userID, messageID)
+  CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
 
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   jid                   VARCHAR(3071)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -53,7 +51,7 @@ CREATE TABLE jiveRoster (
   nick                  VARCHAR(255),
   CONSTRAINT jiveRoster_pk PRIMARY KEY (rosterID)
 );
-CREATE INDEX jiveRoster_userid_idx ON jiveRoster (userID);
+CREATE INDEX jiveRoster_username_idx ON jiveRoster (username);
 
 
 CREATE TABLE jiveRosterGroups (
@@ -66,10 +64,10 @@ CREATE INDEX jiveRosterGroup_rosterid_idx ON jiveRosterGroups (rosterID);
 
 
 CREATE TABLE jiveVCard (
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(4000)   NOT NULL,
-  CONSTRAINT jiveVCard_pk PRIMARY KEY (userID, name)
+  CONSTRAINT jiveVCard_pk PRIMARY KEY (username, name)
 );
 
 
@@ -82,26 +80,6 @@ CREATE TABLE jiveDomain (
   CONSTRAINT jiveDomain_pk PRIMARY KEY (domainID),
   CONSTRAINT jiveDomain_name UNIQUE (name)
 );
-
-
-CREATE TABLE jiveChatbot (
-  chatbotID             BIGINT          NOT NULL,
-  description           VARCHAR(255),
-  creationDate          VARCHAR(15)     NOT NULL,
-  modificationDate      VARCHAR(15)     NOT NULL,
-  CONSTRAINT jiveChatbot_pk PRIMARY KEY (chatbotID)
-);
-
-
-CREATE TABLE jiveUserID (
-  username              VARCHAR(30)     NOT NULL,
-  domainID              BIGINT          NOT NULL,
-  objectType            INTEGER         NOT NULL,
-  objectID              BIGINT          NOT NULL,
-  CONSTRAINT jiveUserID_pk PRIMARY KEY (username, domainID),
-  CONSTRAINT jiveUserID_username UNIQUE (username)
-);
-CREATE INDEX jiveUserID_object_idx ON jiveUserID (objectType, objectID);
 
 
 CREATE TABLE jiveGroup (
@@ -126,9 +104,9 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupID               BIGINT          NOT NULL,
-  userID                BIGINT          NOT NULL,
+  username              BIGINT          NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupID, userID, administrator)
+  CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupID, username, administrator)
 );
 
 
@@ -211,11 +189,5 @@ INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
 // Entry for admin user -- password is "admin"
-INSERT INTO jiveUserID (username, domainID, objectType, objectID) VALUES ('admin', 1, 0, 1);
-INSERT INTO jiveUser (userID, name, password, email, emailVisible, nameVisible, creationDate, modificationDate)
-    VALUES (1, 'Administrator', 'admin', 'admin@example.com', 1, 1, '0', '0');
-
-// Make the administrator an admin member of the Administrators group
-INSERT INTO jiveGroup (groupID, name, description, creationDate, modificationDate)
-    VALUES (1, 'Administrators', 'Messenger Server administrators', '0', '0');
-INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (1, 1, 1);
+INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

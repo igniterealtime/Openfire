@@ -49,14 +49,6 @@ public class UserManagerProxy implements UserManager {
         return userManager.createUser(username, password, email);
     }
 
-    public User getUser(long userID) throws UserNotFoundException {
-        User user = userManager.getUser(userID);
-        Permissions userPermissions = user.getPermissions(auth);
-        Permissions newPermissions = new Permissions(permissions, userPermissions);
-
-        return new UserProxy(user, auth, newPermissions);
-    }
-
     public User getUser(String username) throws UserNotFoundException {
         User user = userManager.getUser(username.toLowerCase());
         Permissions userPermissions = user.getPermissions(auth);
@@ -65,22 +57,9 @@ public class UserManagerProxy implements UserManager {
         return new UserProxy(user, auth, newPermissions);
     }
 
-    public long getUserID(String username) throws UserNotFoundException {
-        return userManager.getUserID(username);
-    }
-
     public void deleteUser(User user) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
             userManager.deleteUser(user);
-        }
-        else {
-            throw new UnauthorizedException();
-        }
-    }
-
-    public void deleteUser(long userID) throws UnauthorizedException, UserNotFoundException {
-        if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            userManager.deleteUser(userID);
         }
         else {
             throw new UnauthorizedException();

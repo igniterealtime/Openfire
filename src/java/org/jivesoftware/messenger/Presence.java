@@ -142,7 +142,7 @@ public interface Presence extends XMPPPacket {
      *
      * @return the presence owner.
      */
-    public long getUserID();
+    public String getUsername();
 
     /**
      * Return the time when the presence was created.

@@ -128,7 +128,7 @@ public class WebManager extends WebBean {
     public User getUser() {
         User pageUser = null;
         try {
-            pageUser = getUserManager().getUser(getAuthToken().getUserID());
+            pageUser = getUserManager().getUser(getAuthToken().getUsername());
         }
         catch (UserNotFoundException ex) {
             Log.error(ex);

@@ -20,7 +20,6 @@
     boolean delete = request.getParameter("delete") != null;
     boolean email = request.getParameter("email") != null;
     boolean password = request.getParameter("password") != null;
-    long userID = ParamUtils.getLongParameter(request,"userID",-1L);
     String username = ParamUtils.getParameter(request,"username");
 
     // Handle a cancel
@@ -31,26 +30,26 @@
 
     // Handle a delete
     if (delete) {
-        response.sendRedirect("user-delete.jsp?userID=" + userID);
+        response.sendRedirect("user-delete.jsp?username=" + username);
         return;
     }
 
     // Handle an email
     if (email) {
-        response.sendRedirect("user-email.jsp?userID=" + userID);
+        response.sendRedirect("user-email.jsp?username=" + username);
         return;
     }
 
     // Handle an email
     if (password) {
-        response.sendRedirect("user-password.jsp?userID=" + userID);
+        response.sendRedirect("user-password.jsp?username=" + username);
         return;
     }
 
     // Load the user object
     User user = null;
     try {
-        user = admin.getUserManager().getUser(userID);
+        user = admin.getUserManager().getUser(username);
     }
     catch (UserNotFoundException unfe) {
         user = admin.getUserManager().getUser(username);
@@ -64,7 +63,7 @@
 <%
  // Get a private data manager //
   final PrivateStore privateStore = admin.getPrivateStore();
-  userData.setState( user.getID(), privateStore );
+  userData.setState( user.getUsername(), privateStore );
   String nickname = userData.getProperty( "nickname" );
     if(nickname == null){
         nickname = "";
@@ -90,14 +89,6 @@
 Below is a summary of user properties. Use the tabs above to do things like edit user properties,
 send the user a message (if they're online) or delete the user.
 </td></tr>
-<tr class="jive-even">
-    <td wrap width="1%">
-        User ID:
-    </td>
-    <td>
-        <%= user.getID() %>
-    </td>
-</tr>
 <tr class="jive-odd">
     <td wrap width="1%">
         Username:
@@ -147,15 +138,7 @@ send the user a message (if they're online) or delete the user.
 
         <%  } else { %>
 
-            <%   if (user.getInfo().isNameVisible()) { %>
-
-                <%= user.getInfo().getName() %>
-
-            <%  } else { %>
-
                 <i><%= user.getInfo().getName() %></i>
-
-            <%  } %>
 
         <%  } %>
     </td>
@@ -173,26 +156,9 @@ send the user a message (if they're online) or delete the user.
 
         <%  } else { %>
 
-            <%  if (user.getInfo().isEmailVisible()) { %>
-
-                <a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a>
-
-            <%  } else { %>
-
                 <i><a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a></i>
 
-            <%  } %>
-
         <%  } %>
-    </td>
-</tr>
-<tr class="jive-odd">
-    <td wrap>
-        Privacy:
-    </td>
-    <td>
-        Show Name: <b><%= ((user.getInfo().isNameVisible()) ? "Yes" : "No") %></b>,
-        Show Email: <b><%= ((user.getInfo().isEmailVisible()) ? "Yes" : "No") %></b>
     </td>
 </tr>
 <tr class="jive-even">

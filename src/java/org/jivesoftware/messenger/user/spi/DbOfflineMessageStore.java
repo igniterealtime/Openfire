@@ -21,9 +21,6 @@ import org.jivesoftware.messenger.OfflineMessageStore;
 import org.jivesoftware.messenger.PacketFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,14 +36,14 @@ import java.util.Iterator;
 public class DbOfflineMessageStore extends BasicModule implements OfflineMessageStore {
 
     private static final String INSERT_OFFLINE =
-            "INSERT INTO jiveOffline (userID, messageID, creationDate, messageSize, message) " +
-            "VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
+        "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-            "SELECT message FROM jiveOffline WHERE userID=?";
+        "SELECT message FROM jiveOffline WHERE username=?";
     private static final String SELECT_SIZE_OFFLINE =
-            "SELECT SUM(messageSize) FROM jiveOffline WHERE userID=?";
+        "SELECT SUM(messageSize) FROM jiveOffline WHERE username=?";
     private static final String DELETE_OFFLINE =
-            "DELETE FROM jiveOffline WHERE userID=?";
+        "DELETE FROM jiveOffline WHERE username=?";
 
     public DbOfflineMessageStore() {
         super("Offline Message Store");
@@ -58,135 +55,90 @@ public class DbOfflineMessageStore extends BasicModule implements OfflineMessage
             Connection con = null;
             PreparedStatement pstmt = null;
             long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
-            String user = message.getRecipient().getNamePrep();
+            String username = message.getRecipient().getNamePrep();
             try {
-                long userID = userManager.getUserID(user);
                 StringXMLStreamWriter serMsg = new StringXMLStreamWriter();
                 message.send(serMsg, 0);
                 String msg = serMsg.toString();
 
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(INSERT_OFFLINE);
-                pstmt.setLong(1, userID);
+                pstmt.setString(1, username);
                 pstmt.setLong(2, messageID);
                 pstmt.setString(3, StringUtils.dateToMillis(new Date()));
                 pstmt.setInt(4, msg.length());
                 pstmt.setString(5, msg);
                 pstmt.executeUpdate();
             }
-            catch (UserNotFoundException e) {
-                Log.warn("Could not store offline message for " + user +
-                        " address " + message.getRecipient(), e);
-            }
+
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
+                try { if (pstmt != null) { pstmt.close(); } }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) { con.close(); } }
+                catch (Exception e) { Log.error(e); }
             }
         }
     }
 
-    public Iterator getMessages(String userName)
-            throws UnauthorizedException, UserNotFoundException {
-        return getMessages(userManager.getUserID(userName));
-    }
-
-    public Iterator getMessages(long userID) throws UnauthorizedException {
+    public Iterator getMessages(String username) throws UnauthorizedException {
         java.util.LinkedList msgs = new java.util.LinkedList();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msg = rs.getString(1);
                 msgs.add(packetFactory.getMessage(msg));
             }
+            rs.close();
+            pstmt.close();
+
             pstmt = con.prepareStatement(DELETE_OFFLINE);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             pstmt.executeUpdate();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return msgs.iterator();
     }
 
-    public int getSize(long userID) {
+    public int getSize(String username) {
         int size = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_SIZE_OFFLINE);
-            pstmt.setLong(1, userID);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 size = rs.getInt(1);
             }
+            rs.close();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
         }
         return size;
-    }
-
-    public int getSize(String userName) throws UserNotFoundException {
-        return getSize(userManager.getUserID(userName));
     }
 
     public PacketFactory packetFactory;

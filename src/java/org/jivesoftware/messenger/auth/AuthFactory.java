@@ -15,9 +15,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.messenger.auth.spi.AuthTokenImpl;
-import org.jivesoftware.messenger.user.UserIDProvider;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.UserProviderFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -50,7 +47,6 @@ public abstract class AuthFactory {
      */
     public static final String SESSION_AUTHORIZATION = "jive.authToken";
 
-    private static UserIDProvider userIDProvider = null;
     private static AuthProvider authProvider = null;
 
     private static MessageDigest sha;
@@ -62,8 +58,6 @@ public abstract class AuthFactory {
      */
     static {
         authProvider = AuthProviderFactory.getAuthProvider();
-        userIDProvider = UserProviderFactory.getUserIDProvider();
-
         try {
             sha = MessageDigest.getInstance("SHA");
         }
@@ -119,14 +113,10 @@ public abstract class AuthFactory {
      * @throws UnauthorizedException if the username and password do not match any existing user.
      */
     public static AuthToken getAuthToken(String username, String password)
-            throws UnauthorizedException {
+            throws UnauthorizedException
+    {
         authProvider.authenticate(username, password);
-        try {
-            return new AuthTokenImpl(userIDProvider.getUserID(username));
-        }
-        catch (UserNotFoundException e) {
-            throw new UnauthorizedException("User " + username + " authenticated but no ID found", e);
-        }
+        return new AuthTokenImpl(username);
     }
 
     /**
@@ -144,19 +134,13 @@ public abstract class AuthFactory {
     public static AuthToken getAuthToken(String username, String token, String digest)
             throws UnauthorizedException {
         authProvider.authenticate(username, token, digest);
-        try {
-            return new AuthTokenImpl(userIDProvider.getUserID(username));
-        }
-        catch (UserNotFoundException e) {
-            throw new UnauthorizedException("User " + username + " digest authenticated but no ID found", e);
-        }
+        return new AuthTokenImpl(username);
     }
-
 
     /**
      * The same token can be used for all anonymous users, so cache it.
      */
-    private static final AuthToken anonymousAuth = new AuthTokenImpl(-1);
+    private static final AuthToken anonymousAuth = new AuthTokenImpl(null);
 
     /**
      * Returns an anonymous user AuthToken.

@@ -57,18 +57,18 @@ public class PrivateStoreProxy implements PrivateStore {
         }
     }
 
-    public void add(long userID, Element data) throws UnauthorizedException {
+    public void add(String username, Element data) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            store.add(userID, data);
+            store.add(username, data);
         }
         else {
             throw new UnauthorizedException();
         }
     }
 
-    public Element get(long userID, Element data) throws UnauthorizedException {
+    public Element get(String username, Element data) throws UnauthorizedException {
         if (permissions.hasPermission(Permissions.SYSTEM_ADMIN | Permissions.USER_ADMIN)) {
-            return store.get(userID, data);
+            return store.get(username, data);
         }
         else {
             throw new UnauthorizedException();

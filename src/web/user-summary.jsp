@@ -126,7 +126,7 @@ Sorted by User ID
             <%  } %>
         </td>
         <td width="30%">
-            <a href="user-properties.jsp?userID=<%= user.getID() %>"><%= user.getUsername() %></a>
+            <a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a>
         </td>
         <td width="40%">
             <%= user.getInfo().getName() %>
@@ -135,12 +135,12 @@ Sorted by User ID
             <%= dateFormatter.format(user.getInfo().getCreationDate()) %>
         </td>
         <td width="1%" align="center">
-            <a href="user-edit-form.jsp?userID=<%= user.getID() %>"
+            <a href="user-edit-form.jsp?username=<%= user.getUsername() %>"
              title="Click to edit..."
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center">
-            <a href="user-delete.jsp?userID=<%= user.getID() %>"
+            <a href="user-delete.jsp?username=<%= user.getUsername() %>"
              title="Click to delete..."
              ><img src="images/button_delete.gif" width="17" height="17" border="0"></a>
         </td>

@@ -15,9 +15,9 @@ import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.Entity;
 import org.jivesoftware.messenger.auth.*;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.spi.UserIterator;
 import java.util.*;
 
@@ -39,8 +39,8 @@ public class GroupImpl implements Group, Cacheable {
     private Date creationDate;
     private Date modificationDate;
     private Map properties;
-    private long[] memberList;
-    private long[] adminList;
+    private String[] memberList;
+    private String[] adminList;
     private Cache groupCache;
     private Cache groupMemberCache;
 
@@ -53,11 +53,9 @@ public class GroupImpl implements Group, Cacheable {
      * @param created          The date-time the group was created
      * @param modified         The date-time the group was last modified
      */
-    GroupImpl(long id,
-              String groupName,
-              String groupDescription,
-              Date created,
-              Date modified) {
+    GroupImpl(long id, String groupName, String groupDescription, Date created,
+              Date modified)
+    {
         groupID = id;
         name = groupName;
         description = groupDescription;
@@ -181,16 +179,15 @@ public class GroupImpl implements Group, Cacheable {
         return Collections.unmodifiableSet(properties.keySet()).iterator();
     }
 
-    public void addAdministrator(Entity entity)
+    public void addAdministrator(User user)
             throws UnauthorizedException, UserAlreadyExistsException {
         // If the user is already an administrator, do nothing.
-        if (isAdministrator(entity)) {
-            throw new UserAlreadyExistsException("User " + entity.getUsername() + "with ID " + entity.getID() +
+        if (isAdministrator(user)) {
+            throw new UserAlreadyExistsException("User " + user.getUsername() +
                     " already is a member of the group");
         }
-
-        long userID = entity.getID();
-        provider.createMember(groupID, userID, true);
+        String username = user.getUsername();
+        provider.createMember(groupID, username, true);
         try {
             provider.updateGroup(this);
         }
@@ -201,22 +198,22 @@ public class GroupImpl implements Group, Cacheable {
         // Changed admins, so reset admin list
         adminList = null;
         groupCache.put(new Long(groupID), this);
-        groupMemberCache.put(groupID + ",admin," + entity.getID(), Boolean.TRUE);
+        groupMemberCache.put(groupID + ",admin," + username, Boolean.TRUE);
 
         // Now, clear the permissions cache.
         // This is handled via a listener for the GroupEvent.GROUP_ADMINISTRATOR_ADD event
 
         // fire off an event
         Map params = new HashMap();
-        params.put("Administrator", entity);
+        params.put("Administrator", user);
     }
 
-    public void removeAdministrator(Entity entity) throws UnauthorizedException {
+    public void removeAdministrator(User user) throws UnauthorizedException {
         // If the user is not an administrator, do nothing.
-        if (isAdministrator(entity)) {
+        if (isAdministrator(user)) {
 
-            long userID = entity.getID();
-            provider.deleteMember(groupID, userID);
+            String username = user.getUsername();
+            provider.deleteMember(groupID, username);
             try {
                 provider.updateGroup(this);
             }
@@ -229,23 +226,23 @@ public class GroupImpl implements Group, Cacheable {
             groupCache.put(new Long(groupID), this);
 
             // Remove user from admin cache
-            groupMemberCache.remove(groupID + ",admin," + userID);
+            groupMemberCache.remove(groupID + ",admin," + username);
 
             // Now, clear the permissions cache.
             // This is handled via a listener for the GroupEvent.GROUP_ADMINISTRATOR_DELETE event
         }
     }
 
-    public void addMember(Entity entity)
+    public void addMember(User user)
             throws UnauthorizedException, UserAlreadyExistsException {
         // Don't do anything if the user is already a member of the group.
-        if (isMember(entity)) {
-            throw new UserAlreadyExistsException("User " + entity.getUsername() + "with ID " + entity.getID() +
-                    " already is a member of the group");
+        if (isMember(user)) {
+            throw new UserAlreadyExistsException("User " + user.getUsername() +
+                    " is already a member of the group");
         }
+        String username = user.getUsername();
 
-        long userID = entity.getID();
-        provider.createMember(groupID, userID, false);
+        provider.createMember(groupID, username, false);
         try {
             provider.updateGroup(this);
         }
@@ -258,59 +255,59 @@ public class GroupImpl implements Group, Cacheable {
         groupCache.put(new Long(groupID), this);
 
         // Remove user from member cache
-        groupMemberCache.remove(groupID + ",member," + userID);
+        groupMemberCache.remove(groupID + ",member," + username);
 
         // Remove the user's entry for groups they belong in.
-        groupMemberCache.remove("userGroups-" + userID);
+        groupMemberCache.remove("userGroups-" + username);
 
         // Now, clear the permissions cache.
         // This is handled via a listener for the GroupEvent.GROUP_USER_ADD event
     }
 
-    public void removeMember(Entity entity) throws UnauthorizedException {
+    public void removeMember(User user) throws UnauthorizedException {
         // Don't do anything if the user isn't a member of the group.
-        if (!isMember(entity)) {
+        if (!isMember(user)) {
             return;
         }
 
-        long userID = entity.getID();
-        provider.deleteMember(groupID, userID);
+        String username = user.getUsername();
+        provider.deleteMember(groupID, username);
 
         // Changed membership, so reset member list
         memberList = null;
         groupCache.put(new Long(groupID), this);
 
         // Remove user from member cache
-        groupMemberCache.remove(groupID + ",member," + userID);
+        groupMemberCache.remove(groupID + ",member," + username);
 
         // Remove the user's entry for groups they belong in.
-        groupMemberCache.remove("userGroups-" + userID);
+        groupMemberCache.remove("userGroups-" + username);
 
         // Now, clear the permissions cache.
         // This is handled via a listener for the GroupEvent.GROUP_USER_DELETE event
     }
 
-    public boolean isAdministrator(Entity entity) {
-        long userID = entity.getID();
+    public boolean isAdministrator(User user) {
+        String username = user.getUsername();
         Boolean bool = null;
-        bool = (Boolean)groupMemberCache.get(groupID + ",admin," + userID);
+        bool = (Boolean)groupMemberCache.get(groupID + ",admin," + username);
 
         if (bool == null) {
-            bool = new Boolean(provider.isMember(groupID, userID, true));
+            bool = new Boolean(provider.isMember(groupID, username, true));
             // Add to cache
-            groupMemberCache.put(groupID + ",admin," + userID, bool);
+            groupMemberCache.put(groupID + ",admin," + username, bool);
         }
         return bool.booleanValue();
     }
 
-    public boolean isMember(Entity entity) {
-        long userID = entity.getID();
+    public boolean isMember(User user) {
+        String username = user.getUsername();
         Boolean bool = null;
-        bool = (Boolean)groupMemberCache.get(groupID + ",member," + userID);
+        bool = (Boolean)groupMemberCache.get(groupID + ",member," + username);
         if (bool == null) {
-            bool = new Boolean(provider.isMember(groupID, userID, false));
+            bool = new Boolean(provider.isMember(groupID, username, false));
             // Add to cache
-            groupMemberCache.put(groupID + ",member," + userID, bool);
+            groupMemberCache.put(groupID + ",member," + username, bool);
         }
         return bool.booleanValue();
     }
@@ -333,7 +330,7 @@ public class GroupImpl implements Group, Cacheable {
 
     public Iterator members() {
         if (memberList == null) {
-            memberList = provider.getMembers(groupID, false).toArray();
+            memberList = provider.getMembers(groupID, false);
             // Re-add group to cache.
             groupCache.put(new Long(groupID), this);
         }
@@ -349,7 +346,7 @@ public class GroupImpl implements Group, Cacheable {
 
     public Iterator administrators() {
         if (adminList == null) {
-            adminList = provider.getMembers(groupID, true).toArray();
+            adminList = provider.getMembers(groupID, true);
             // Re-add group to cache.
             groupCache.put(new Long(groupID), this);
         }
@@ -364,15 +361,15 @@ public class GroupImpl implements Group, Cacheable {
     }
 
     public Permissions getPermissions(AuthToken auth) {
-        long userID = auth.getUserID();
+        String username = auth.getUsername();
         try {
             Boolean bool = null;
-            bool = (Boolean)groupMemberCache.get(groupID + ",admin," + userID);
+            bool = (Boolean)groupMemberCache.get(groupID + ",admin," + username);
 
             if (bool == null) {
-                bool = new Boolean(provider.isMember(groupID, userID, true));
+                bool = new Boolean(provider.isMember(groupID, username, true));
                 // Add to cache
-                groupMemberCache.put(groupID + ",admin," + userID, bool);
+                groupMemberCache.put(groupID + ",admin," + username, bool);
             }
 
             if (bool.booleanValue()) {

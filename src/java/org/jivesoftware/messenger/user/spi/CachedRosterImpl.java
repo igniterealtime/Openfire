@@ -17,7 +17,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.chatbot.ChatbotManager;
 import org.jivesoftware.messenger.user.*;
 import java.util.Iterator;
 import java.util.List;
@@ -35,44 +34,27 @@ import javax.xml.stream.XMLStreamException;
  */
 public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
-    /**
-     * <p>ID of the user that owns this roster.</p>
-     */
-    private long userID;
-    /**
-     * <p>Backend storage provider for rosters.</p>
-     */
     private RosterItemProvider rosterItemProvider;
-    // TODO: we should move all routing to a single place, doing routing logic here sucks
-    /**
-     * <p>Chatbot manager used for routing roster broadcasts.</p>
-     */
-    private ChatbotManager chatbotManager;
-    /**
-     * <p>User name of the user/chatbot that owns this roster.</p>
-     */
     private String username;
 
     /**
      * <p>Create a roster for the given user, pulling the existing roster items
      * out of the backend storage provider.</p>
      *
-     * @param id       ID of the user that owns this roster
      * @param username The username of the user that owns this roster
      */
-    public CachedRosterImpl(long id, String username) {
-        this.userID = id;
+    public CachedRosterImpl(String username) {
         this.username = username;
         rosterItemProvider = UserProviderFactory.getRosterItemProvider();
-        Iterator items = rosterItemProvider.getItems(userID);
+        Iterator items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
             rosterItems.put(item.getJid().toBareStringPrep(), item);
         }
     }
 
-    public long getUserID() {
-        return userID;
+    public String getUsername() {
+        return username;
     }
 
     public IQRoster getReset() throws UnauthorizedException {
@@ -137,7 +119,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
     protected RosterItem provideRosterItem(RosterItem item)
             throws UserAlreadyExistsException, UnauthorizedException {
-        item = rosterItemProvider.createItem(userID, new BasicRosterItem(item));
+        item = rosterItemProvider.createItem(username, new BasicRosterItem(item));
 
         // Broadcast the roster push to the user
         IQRoster roster = new IQRosterImpl();
@@ -167,7 +149,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         // already exist
         super.updateRosterItem(cachedItem);
         // Update the backend data store
-        rosterItemProvider.updateItem(userID, cachedItem);
+        rosterItemProvider.updateItem(username, cachedItem);
         // broadcast roster update
         if (!(cachedItem.getSubStatus() == RosterItem.SUB_NONE
                 && cachedItem.getAskStatus() == RosterItem.ASK_NONE)) {
@@ -198,7 +180,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         CachedRosterItem item = (CachedRosterItem)super.deleteRosterItem(user);
         if (item != null) {
             // If removing the user was successful, remove the user from the backend store
-            rosterItemProvider.deleteItem(userID, item.getID());
+            rosterItemProvider.deleteItem(username, item.getID());
 
             try {
                 // broadcast the update to the user
@@ -227,27 +209,10 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             XMPPAddress recipient = server.createAddress(username, null);
             roster.setRecipient(recipient);
             roster.setOriginatingSession(server.getSession());
-            if (chatbotManager == null) {
-                chatbotManager = (ChatbotManager)ServiceLookupFactory.getLookup().lookup(ChatbotManager.class);
+            if (sessionManager == null) {
+                sessionManager = (SessionManager)ServiceLookupFactory.getLookup().lookup(SessionManager.class);
             }
-            if (chatbotManager.isChatbot(recipient)) {
-                if (routingTable == null) {
-                    routingTable = (RoutingTable)ServiceLookupFactory.getLookup().lookup(RoutingTable.class);
-                }
-                try {
-                    ChannelHandler handler = routingTable.getRoute(recipient);
-                    handler.process(roster);
-                }
-                catch (NoSuchRouteException e) {
-                    Log.warn("Chatbot unreachable " + recipient, e);
-                }
-            }
-            else {
-                if (sessionManager == null) {
-                    sessionManager = (SessionManager)ServiceLookupFactory.getLookup().lookup(SessionManager.class);
-                }
-                sessionManager.userBroadcast(username, roster);
-            }
+            sessionManager.userBroadcast(username, roster);
         }
         catch (XMLStreamException e) {
             // We couldn't send to the user, no big deal
@@ -259,7 +224,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         // of each field.
         int size = 0;
         size += CacheSizes.sizeOfObject();              // overhead of object
-        size += CacheSizes.sizeOfLong();                // userID
+        size += CacheSizes.sizeOfString(username);     // username
         try {
             Iterator itemIter = getRosterItems();
             while (itemIter.hasNext()) {

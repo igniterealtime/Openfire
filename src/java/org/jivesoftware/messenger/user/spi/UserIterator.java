@@ -11,13 +11,11 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.database.DatabaseObjectFactory;
 import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.database.DatabaseObjectFactory;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -43,16 +41,16 @@ import java.util.NoSuchElementException;
  */
 public class UserIterator implements Iterator {
 
-    private long[] elements;
+    private String[] elements;
     private int currentIndex = -1;
     private Object nextElement = null;
 
-    private DatabaseObjectFactory objectFactory;
+    private UserDOFactory objectFactory;
 
     /**
      * Creates a new UserIterator.
      */
-    public UserIterator(long[] elements)
+    public UserIterator(String[] elements)
             throws UnauthorizedException {
         this.elements = elements;
 
@@ -60,7 +58,7 @@ public class UserIterator implements Iterator {
         this.objectFactory = new UserDOFactory();
     }
 
-    private class UserDOFactory implements DatabaseObjectFactory {
+    private class UserDOFactory {
         private UserManager userManager;
 
         public UserDOFactory() throws UnauthorizedException {
@@ -68,9 +66,9 @@ public class UserIterator implements Iterator {
                     (UserManager)ServiceLookupFactory.getLookup().lookup(UserManager.class);
         }
 
-        public Object loadObject(long id) {
+        public Object loadObject(String username) {
             try {
-                User user = userManager.getUser(id);
+                User user = userManager.getUser(username);
                 return user;
             }
             catch (UserNotFoundException e) { /* ignore */

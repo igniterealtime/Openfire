@@ -47,19 +47,6 @@ public class SessionResultFilter {
     public static final int ASCENDING = 1;
 
     // ############################################################
-    // User search criteria
-    // ############################################################
-    /**
-     * <p>Represents an anonymous user id that matches all anonymous users.</p>
-     */
-    public static final int ANONYMOUS_USER_ID = -1;
-
-    /**
-     * <p>Represents a user id that matches any/all users.</p>
-     */
-    public static final int ALL_USER_ID = -2;
-
-    // ############################################################
     // Result limit search criteria
     // ############################################################
     /**
@@ -101,6 +88,8 @@ public class SessionResultFilter {
     private long serverPacketRangeMin = NO_PACKET_LIMIT;
     private long serverPacketRangeMax = NO_PACKET_LIMIT;
 
+    private String username = null;
+
     /**
      * The starting index for results. Default is 0.
      */
@@ -112,32 +101,29 @@ public class SessionResultFilter {
      */
     private int numResults = NO_RESULT_LIMIT;
 
-    private long userID = ALL_USER_ID;
     private Date creationDateRangeMin = null;
     private Date creationDateRangeMax = null;
     private Date lastActivityDateRangeMin = null;
     private Date lastActivityDateRangeMax = null;
 
     /**
-     * Returns the userID that results will be filtered on. The method will
-     * return ALL_USER_ID if no user to filter on has been specified. The method
-     * will return ANONYMOUS_USER_ID if filtering is to take place on all "anonymous" users.
+     * Returns the username that results will be filtered on. The method will
+     * return <tt>null</tt> if no user to filter on has been specified.
      *
-     * @return the userID that results will be filtered on.
+     * @return the username that results will be filtered on.
      */
-    public long getUserID() {
-        return userID;
+    public String getUsername() {
+        return username;
     }
 
     /**
-     * Sets the userID that results will be filtered on. If you'd like to filter
-     * on "anonymous" users, pass in an id of ANONYMOUS_USER_ID. By default, no filtering on
-     * userID's will take place. To avoid filtering on userID pass ALL_USER_ID.
+     * Sets the username that results will be filtered on. By default, no filtering on
+     * username will take place. To avoid filtering on username pass in <tt>null</tt>.
      *
-     * @param userID the user ID to filter on.
+     * @param username the user ID to filter on.
      */
-    public void setUserID(long userID) {
-        this.userID = userID;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     /**
@@ -145,8 +131,7 @@ public class SessionResultFilter {
      * sessions to be filtered on. If this value has not been set, the method
      * will return null.
      *
-     * @return a Date representing the lower bound for creation dates to filter
-     *         on.
+     * @return a Date representing the lower bound for creation dates to filter on.
      */
     public Date getCreationDateRangeMin() {
         return creationDateRangeMin;
@@ -575,7 +560,7 @@ public class SessionResultFilter {
         clonedFilter.setSortField(getSortField());
         clonedFilter.setSortOrder(getSortOrder());
         clonedFilter.setStartIndex(getStartIndex());
-        clonedFilter.setUserID(getUserID());
+        clonedFilter.setUsername(getUsername());
         return clonedFilter;
     }
 
@@ -590,7 +575,7 @@ public class SessionResultFilter {
                     sortOrder == o.sortOrder &&
                     startIndex == o.startIndex &&
                     numResults == o.numResults &&
-                    userID == o.userID &&
+                    username == o.username &&
                     ((creationDateRangeMin == null && o.creationDateRangeMin == null) ||
                     creationDateRangeMin.equals(o.creationDateRangeMin)) &&
                     ((creationDateRangeMax == null && o.creationDateRangeMax == null) ||

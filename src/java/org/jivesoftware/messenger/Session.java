@@ -144,15 +144,15 @@ public interface Session extends RoutableChannelHandler {
     public StreamID getStreamID();
 
     /**
-     * <p>Obtain the user ID associated with this session.</p>
-     * <p>Use this information with the user manager to obtain the
-     * user based on ID.</p>
+     * Returns the username associated with this session. Use this information
+     * with the user manager to obtain the user based on username.
      *
-     * @return The user ID associated with this session
-     * @throws UserNotFoundException if a user is not associated with a session (the session has not authenticated yet)
-     * @throws UnauthorizedException If caller doesn't have permission to access this information
+     * @return the username associated with this session
+     * @throws UserNotFoundException if a user is not associated with a session
+     *      (the session has not authenticated yet)
+     * @throws UnauthorizedException If caller doesn't have permission to access this information.
      */
-    public long getUserID() throws UserNotFoundException, UnauthorizedException;
+    public String getUsername() throws UserNotFoundException, UnauthorizedException;
 
     /**
      * Obtain the name of the server this session belongs to.

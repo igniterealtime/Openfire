@@ -81,9 +81,8 @@ public class RosterManager extends BasicModule {
                 roster = new Roster(username);
             }
             // Remove each roster item from the user's roster
-            Iterator<RosterItem> items = roster.getRosterItems();
-            while (items.hasNext()) {
-                roster.deleteRosterItem(items.next().getJid());
+            for (RosterItem item : roster.getRosterItems()) {
+                roster.deleteRosterItem(item.getJid());
             }
             // Remove the cached roster from memory
             CacheManager.getCache("username2roster").remove(username);

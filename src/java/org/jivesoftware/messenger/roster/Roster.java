@@ -77,12 +77,12 @@ public class Roster implements Cacheable {
     }
 
     /**
-     * Returns an iterator of users in this roster.
+     * Returns a collection of users in this roster.
      *
-     * @return an iterator of users in this roster.
+     * @return a collection of users in this roster.
      */
-    public Iterator<RosterItem> getRosterItems() {
-        return Collections.unmodifiableMap(rosterItems).values().iterator();
+    public Collection<RosterItem> getRosterItems() {
+        return Collections.unmodifiableCollection(rosterItems.values());
     }
 
     /**
@@ -257,9 +257,7 @@ public class Roster implements Cacheable {
      */
     public org.xmpp.packet.Roster getReset() {
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
-        Iterator items = getRosterItems();
-        while (items.hasNext()) {
-            RosterItem item = (RosterItem)items.next();
+        for (RosterItem item : rosterItems.values()) {
             if (item.getSubStatus() != RosterItem.SUB_NONE || item.getAskStatus() != RosterItem.ASK_NONE) {
                 roster.addItem(item.getJid(), item.getNickname(),
                         getAskStatus(item.getAskStatus()),
@@ -291,9 +289,7 @@ public class Roster implements Cacheable {
         if (routingTable == null) {
             return;
         }
-        Iterator items = getRosterItems();
-        while (items.hasNext()) {
-            RosterItem item = (RosterItem)items.next();
+        for (RosterItem item : rosterItems.values()) {
             if (item.getSubStatus() == RosterItem.SUB_BOTH
                     || item.getSubStatus() == RosterItem.SUB_FROM) {
                 JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
@@ -337,10 +333,6 @@ public class Roster implements Cacheable {
         size += CacheSizes.sizeOfObject();                           // overhead of object
         size += CacheSizes.sizeOfCollection(rosterItems.values());   // roster item cache
         size += CacheSizes.sizeOfString(username);                   // username
-        Iterator<RosterItem> itemIter = getRosterItems();
-        while (itemIter.hasNext()) {
-            size += itemIter.next().getCachedSize();
-        }
         return size;
     }
 }

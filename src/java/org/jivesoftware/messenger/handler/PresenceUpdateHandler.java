@@ -176,9 +176,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         if (!"".equals(session.getAddress().getNode())) {
             String username = session.getAddress().getNode();
             Roster roster = rosterManager.getRoster(username);
-            Iterator items = roster.getRosterItems();
-            while (items.hasNext()) {
-                RosterItem item = (RosterItem)items.next();
+            for (RosterItem item : roster.getRosterItems()) {
                 if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
                     session.getConnection().deliver(createSubscribePresence(item.getJid(), true));
                 }

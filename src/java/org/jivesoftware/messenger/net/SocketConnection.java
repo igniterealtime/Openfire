@@ -11,24 +11,23 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.PacketDeliverer;
-import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.XMPPPacket;
-import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.BasicConnection;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
+import org.dom4j.io.XMLWriter;
+import org.jivesoftware.messenger.PacketDeliverer;
+import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.audit.Auditor;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.spi.BasicConnection;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.Packet;
 
 /**
  * An object to track the state of a Jabber client-server session.
@@ -68,8 +67,7 @@ public class SocketConnection extends BasicConnection {
 
     private boolean secure;
 
-    private XMLStreamWriter xmlSerializer;
-    private static XMLOutputFactory xmlFactory;
+    private XMLWriter xmlSerializer;
 
     /**
      * Create a new session using the supplied socket.
@@ -80,11 +78,8 @@ public class SocketConnection extends BasicConnection {
      * @param isSecure  True if this is a secure connection
      * @throws NullPointerException If the socket is null
      */
-    public SocketConnection(PacketDeliverer deliverer,
-                            Auditor auditor,
-                            Socket socket,
-                            boolean isSecure)
-            throws IOException, XMLStreamException {
+    public SocketConnection(PacketDeliverer deliverer, Auditor auditor,
+                            Socket socket, boolean isSecure) throws IOException, XmlPullParserException {
 
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
@@ -95,10 +90,7 @@ public class SocketConnection extends BasicConnection {
         sock = socket;
         writer = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream(), charset));
         this.deliverer = deliverer;
-        if (xmlFactory == null) {
-            xmlFactory = XMLOutputFactory.newInstance();
-        }
-        xmlSerializer = xmlFactory.createXMLStreamWriter(writer);
+        xmlSerializer = new XMLWriter(writer);
     }
 
     public boolean validate() {
@@ -107,8 +99,8 @@ public class SocketConnection extends BasicConnection {
         }
         try {
             synchronized (writer) {
-                xmlSerializer.writeCharacters(" ");
-                xmlSerializer.flush();
+                writer.write(" ");
+                writer.flush();
             }
         }
         catch (Exception e) {
@@ -125,8 +117,12 @@ public class SocketConnection extends BasicConnection {
         return sock.getInetAddress();
     }
 
-    public XMLStreamWriter getSerializer() throws UnauthorizedException {
+    public XMLWriter getSerializer() throws UnauthorizedException {
         return xmlSerializer;
+    }
+
+    public Writer getWriter() throws UnauthorizedException {
+        return writer;
     }
 
     /**
@@ -179,16 +175,19 @@ public class SocketConnection extends BasicConnection {
      *
      * @param packet The packet to deliver.
      */
-    public void deliver(XMPPPacket packet) throws
-            UnauthorizedException, PacketException, XMLStreamException {
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
         if (isClosed()) {
             deliverer.deliver(packet);
         }
         else {
-            packet.setSending(true);
             synchronized (writer) {
-                packet.send(xmlSerializer, 0);
-                xmlSerializer.flush();
+              //  packet.send(xmlSerializer, 0);
+                try {
+                    xmlSerializer.flush();
+                }
+                catch (IOException e) {
+                    Log.error(e);
+                }
             }
             auditor.audit(packet);
             session.incrementServerPacketCount();

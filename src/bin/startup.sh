@@ -58,6 +58,8 @@ if [ -z "$MESSENGER_HOME" -o ! -d "$MESSENGER_HOME" ]; then
 	#make it fully qualified
 	MESSENGER_HOME=`cd "$MESSENGER_HOME" && pwd`
 fi
+MESSENGER_OPTS="${MESSENGER_OPTS} -DmessengerHome=${MESSENGER_HOME}"
+
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
@@ -69,6 +71,7 @@ fi
 
 #set the MESSENGER_LIB location
 MESSENGER_LIB="${MESSENGER_HOME}/lib"
+MESSENGER_OPTS="${MESSENGER_OPTS} -Dmessenger.lib.dir=${MESSENGER_LIB}"
 
 
 if [ -z "$JAVACMD" ] ; then

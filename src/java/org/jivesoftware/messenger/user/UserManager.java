@@ -53,14 +53,21 @@ public class UserManager {
     }
 
     /**
-     * Returns the currently-installed UserProvider.
+     * Returns the currently-installed UserProvider. Note, in most cases the user
+     * provider should not be used directly. Instead, the appropriate methods
+     * in UserManager should be called.
      *
      * @return the current UserProvider.
      */
-    static UserProvider getUserProvider() {
+    public static UserProvider getUserProvider() {
         return provider;
     }
 
+    /**
+     * Returns a singleton UserManager instance.
+     *
+     * @return a UserManager instance.
+     */
     public static UserManager getInstance() {
         return instance;
     }

@@ -464,6 +464,15 @@ public class MUCRoomImpl implements MUCRoom {
             for (MUCRole occupantsRole : occupants.values()) {
                 Presence occupantsPresence = (Presence) occupantsRole.getPresence()
                         .createCopy();
+                // Skip to the next occupant if we cannot send presence of this occupant
+                if (hasToCheckRoleToBroadcastPresence()) {
+                    Element frag = occupantsPresence.getChildElement("x",
+                            "http://jabber.org/protocol/muc#user");
+                    // Check if we can broadcast the presence for this role
+                    if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
+                        continue;
+                    }
+                }
                 occupantsPresence.setFrom(occupantsRole.getRoleAddress());
                 // Don't include the occupant's JID if the room is semi-anon and the new occupant
                 // is not a moderator
@@ -581,10 +590,11 @@ public class MUCRoomImpl implements MUCRoom {
 
         if (leaveRole != null) {
             try {
-                Presence presence = createPresence(Presence.Type.unavailable);
+                Presence presence = (Presence) leaveRole.getPresence().createCopy();
+                // Switch the presence to OFFLINE
+                presence.setType(Presence.Type.unavailable);
                 presence.setFrom(leaveRole.getRoleAddress());
-                presence.getElement().add(leaveRole.getExtendedPresenceInformation().createCopy());
-                broadcastPresence(presence.createCopy());
+                broadcastPresence(presence);
                 leaveRole.kick();
                 List params = new ArrayList();
                 params.add(nickname);
@@ -633,10 +643,8 @@ public class MUCRoomImpl implements MUCRoom {
                         presence.setTo(leaveRole.getChatUser().getAddress());
 
                         // A fragment containing the x-extension for room destruction.
-                        // TODO Analyze if we need/can reuse the same fragment instead of creating a
-                        // new one each time
-                        Element fragment;
-                        fragment = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+                        Element fragment = presence.addChildElement("x",
+                                "http://jabber.org/protocol/muc#user");
                         Element item = fragment.addElement("item");
                         item.addAttribute("affiliation", "none");
                         item.addAttribute("role", "none");
@@ -787,7 +795,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (isLogEnabled()) {
                 MUCRole senderRole = null;
                 JID senderAddress = null;
-                if (message.getTo().getResource() != null) {
+                if (message.getTo() != null && message.getTo().getResource() != null) {
                     senderRole = occupants.get(message.getTo().getResource());
                 }
                 if (senderRole == null) {

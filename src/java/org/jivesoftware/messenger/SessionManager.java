@@ -607,8 +607,9 @@ public class SessionManager extends BasicModule {
      * @return the <code>Session</code> associated with the JID.
      */
     public ClientSession getSession(JID from) {
-        // Return null if the JID is null or belongs to a foreign server
-        if (from == null || !serverName.equals(from.getDomain())) {
+        // Return null if the JID is null or belongs to a foreign server. If the server is
+        // shutting down then serverName will be null so answer null too in this case.
+        if (from == null || serverName == null || !serverName.equals(from.getDomain())) {
             return null;
         }
 

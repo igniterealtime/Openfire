@@ -203,6 +203,12 @@ public class AdminConsole {
                 Element existingTab = getElemnetByID(id);
                 // Simple case, there is no existing tab with the same id.
                 if (existingTab == null) {
+                    // Make sure that the URL on the tab is set. If not, default to the
+                    // url of the first item.
+                    if (tab.attributeValue("url") == null) {
+                        tab.addAttribute("url", ((Element)tab.selectSingleNode(
+                                "//item[@url]")).attributeValue("url"));
+                    }
                     generatedModel.add(tab.createCopy());
                 }
                 // More complex case -- a tab with the same id already exists.

@@ -50,7 +50,7 @@ To continue:
             String server = request.getServerName();
             String port = JiveGlobals.getProperty("adminConsole.port");
         %>
-        <a href="http://<%= server %>:<%= port %>/index.jsp">Login to the admin console</a>.
+        <a href="http://<%= server %>:<%= port %>/login.jsp?username=admin">Login to the admin console</a>.
     </li>
 </ol>
 

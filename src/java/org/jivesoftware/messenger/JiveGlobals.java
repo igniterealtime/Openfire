@@ -78,7 +78,14 @@ public class JiveGlobals {
     public static Locale getLocale() {
         if (locale == null) {
             if (xmlProperties != null) {
-                String [] localeArray = ((String)xmlProperties.getProperty("locale")).split("_");
+                String [] localeArray;
+                String localeProperty = (String) xmlProperties.getProperty("locale");
+                if (localeProperty != null) {
+                    localeArray = localeProperty.split("_");
+                }
+                else {
+                    localeArray = new String[] {"", ""};
+                }
 
                 String language = localeArray[0];
                 if (language == null) {

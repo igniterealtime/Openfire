@@ -59,7 +59,7 @@
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
         embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
-        securePort = JiveGlobals.getXMLProperty("adminConsole.port", 9091);
+        securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
         sslEnabled = JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
 
         // If the domain is still blank, guess at the value:

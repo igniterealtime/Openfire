@@ -38,6 +38,8 @@
         </classpath>
     </taskdef>
 
+    <taskdef resource="clovertasks" />
+
     <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
@@ -72,6 +74,7 @@
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes" />
     <property name="test.results.dest.dir" value="${test.dest.dir}/results" />
     <property name="plugin.src.dir" value="${src.dir}/plugins" />
+    <property name="plugin.dev.dir" value="" /> <!-- Set by a developer as alt plugin location -->
     <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev" />
     <property name="plugin.dest.dir" value="${target.dir}/plugins" />
     <property name="webapp.dest.dir" value="${target.dir}/webapp" />
@@ -109,6 +112,8 @@
         <path refid="compile.dependencies" />
         <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
         <fileset dir="${lib.build.dir}" includes="junit.jar" />
+        <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
+        <fileset dir="${ant.home}/lib" includes="clover.jar" />
     </path>
 
     <path id="plugin.dependencies">
@@ -345,6 +350,19 @@
 
     </target>
 
+    <target name="with-clover">
+        <clover-setup initString="${target.dir}/test/messenger-coverage.db" />
+    </target>
+
+    <target name="clover-html" depends="with-clover">
+        <mkdir dir="${test.results.dest.dir}/clover" />
+        <clover-report>
+            <current outfile="${test.results.dest.dir}/clover">
+                <format type="html"/>
+            </current>
+        </clover-report>
+    </target>
+
     <!-- test ================================================================================== -->
     <target name="test" depends="jar" description="Compiles and runs test cases">
         <!-- Compile all test code -->
@@ -496,9 +514,15 @@
         <!-- Copy docs -->
         <copy todir="${release.out.dir}/documentation">
             <fileset dir="${docs.dir}/docs" />
+            <filterset>
+                <filter token="version" value="${version}" />
+            </filterset>
         </copy>
         <copy todir="${release.src.out.dir}/documentation">
             <fileset dir="${docs.dir}/docs" />
+            <filterset>
+                <filter token="version" value="${version}" />
+            </filterset>
         </copy>
 
         <!-- Copy Javadocs -->
@@ -588,10 +612,28 @@
         </ant>
 
         <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin" />
+        <antcall target="-plugins-impl" />
+        <antcall target="-plugins-impl-dev" />
+
+        </target><target name="-plugins-impl" if="${dirlist}">
 
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
-                <buildplugin plugin="@{plugin}" />
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}" />
+            </sequential>
+        </for>
+
+        </target><target name="-plugins-impl-dev" unless="${plugin.dev.dir}">
+
+        <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml" />
+
+        <antcall target="-plugin-impl-dev-build" />
+
+        </target><target name="-plugin-impl-dev-build" if="dirlist2">
+
+        <for list="${dirlist2}" param="plugin" trim="true">
+            <sequential>
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}" />
             </sequential>
         </for>
 
@@ -600,6 +642,7 @@
     <!-- buildplugin (MACRO) =================================================================== -->
     <macrodef name="buildplugin">
         <attribute name="plugin" />
+        <attribute name="pluginsrc" />
         <sequential>
             <!-- For each plugin, copile code, make a jar and copy resources. -->
             <mkdir dir="${plugin.dev.dest.dir}" />
@@ -607,18 +650,18 @@
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target" />
 
             <!-- Compile plugin source code -->
-            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
+            <mkdir dir="@{pluginsrc}/@{plugin}/target/classes" />
             <javac
                 destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
                 includeAntRuntime="no"
                 debug="on"
                 source="1.5"
             >
-                <src path="${plugin.src.dir}/@{plugin}/src/java" />
+                <src path="@{pluginsrc}/@{plugin}/src/java" />
                 <classpath>
                     <path refid="plugin.dependencies" />
                     <!-- Jars used by the plugin to compile with -->
-                    <pathelement location="${plugin.src.dir}/@{plugin}/lib/*.jar" />
+                    <pathelement location="@{pluginsrc}/@{plugin}/lib/*.jar" />
                 </classpath>
             </javac>
 
@@ -636,7 +679,7 @@
 
             <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
-                <fileset dir="${plugin.src.dir}/@{plugin}/src/web" />
+                <fileset dir="@{pluginsrc}/@{plugin}/src/web" />
                 <fileset dir="${web.dir}">
                     <include name="WEB-INF/**/*.*" />
                     <exclude name="WEB-INF/web.xml.startup.servlet" />
@@ -652,7 +695,6 @@
                     <pathelement location="${java.home}/../lib/tools.jar" />
                     <path refid="jspc.dependencies" />
                     <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
-<!--                    <pathelement location="${jar.dest.dir}/messenger.jar" />-->
                     <pathelement path="${compile.dir}" />
                 </classpath>
             </taskdef>
@@ -677,7 +719,6 @@
                 <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
                 <classpath>
                     <path refid="jspc.dependencies" />
-<!--                    <pathelement location="${jar.dest.dir}/messenger.jar" />-->
                     <pathelement path="${compile.dir}" />
                 </classpath>
             </javac>
@@ -692,10 +733,10 @@
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar" />
                 </fileset>
-                <fileset dir="${plugin.src.dir}/@{plugin}">
+                <fileset dir="@{pluginsrc}/@{plugin}">
                     <include name="plugin.xml" />
                 </fileset>
-                <fileset dir="${plugin.src.dir}/@{plugin}/src">
+                <fileset dir="@{pluginsrc}/@{plugin}/src">
                     <include name="web/**/*.*" />
                     <exclude name="web/**/*.jsp" />
                     <exclude name="web/**/*.jspf" />
@@ -708,6 +749,11 @@
                     <include name="web.xml" />
                 </fileset>
             </copy>
+
+            <!-- Jar the plugin -->
+            <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">
+                <fileset dir="${plugin.dest.dir}" />
+            </jar>
 
         </sequential>
     </macrodef>

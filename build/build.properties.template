@@ -10,8 +10,11 @@
 deploy.jar.dir=
 
 #
-# Directory where the installer messenger.iap_xml file is located.
-# Example: d:\\cvs\\xmpp\\chat\\build\\installer (win paths must have \\)
-# Note: Do not put a trailing "\" at the end!
+# Directory where plugin development is done. This is assumed to be the
+# root directory:
 #
-installer.new.path=
+# /home/joeuser/java/myplugins/          <- Point to this directory
+#                       |- fooplugin/
+#                       |- barplugin/
+#
+plugin.dev.dir=

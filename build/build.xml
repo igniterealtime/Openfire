@@ -50,12 +50,12 @@
     <property name="lib.dist.dir" value="${lib.build.dir}/dist" />
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib" />
     <property name="target.dir" value="${basedir}/target" />
-    <property name="compile.dir" value="${basedir}/target/classes" />
+    <property name="compile.dir" value="${target.dir}/classes" />
     <property name="jar.name" value="messenger.jar" />
     <property name="jar.starter.name" value="startup.jar" />
     <property name="jar.dest.dir" value="${target.dir}/lib" />
     <property name="javadoc.src.dir" value="${src.dir}/javadoc" />
-    <property name="javadoc.dest.dir" value="${basedir}/target/javadoc" />
+    <property name="javadoc.dest.dir" value="${target.dir}/javadoc" />
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
     <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java" />
     <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes" />

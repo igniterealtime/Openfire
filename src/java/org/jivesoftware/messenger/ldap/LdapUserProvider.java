@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.messenger.user.*;
+import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.naming.directory.*;
@@ -19,10 +20,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.SortControl;
 import javax.naming.ldap.LdapContext;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -144,6 +142,10 @@ public class LdapUserProvider implements UserProvider {
             }
             catch (Exception ignored) { }
         }
+        // If client-side sorting is enabled, do it.
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting")).booleanValue()) {
+            Collections.sort(usernames);
+        }
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
     }
 
@@ -164,20 +166,37 @@ public class LdapUserProvider implements UserProvider {
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
             String filter = "(" + manager.getUsernameField() + "=*)";
             NamingEnumeration answer = ctx.search("", filter, constraints);
-            for (int i = 0; i < startIndex; i++) {
-                answer.next();
-            }
-            // Now read in desired number of results (or stop if we run out of results).
-            for (int i = 0; i < numResults; i++) {
-                if (answer.hasMoreElements()) {
-                    // Get the next userID.
-                    usernames.add(
-                        (String)((SearchResult)answer.next()).getAttributes().get(
-                        manager.getUsernameField()).get()
-                    );
+            // If client-side sorting is enabled, read in all results, sort, then get a sublist.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
+                    "ldap.clientSideSorting")).booleanValue())
+            {
+                while (answer.hasMoreElements()) {
+                // Get the next userID.
+                usernames.add(
+                    (String)((SearchResult)answer.next()).getAttributes().get(
+                    manager.getUsernameField()).get()
+                );
                 }
-                else {
-                    break;
+                Collections.sort(usernames);
+                usernames = usernames.subList(startIndex, startIndex+numResults);
+            }
+            // Otherwise, only read in certain results.
+            else {
+                for (int i = 0; i < startIndex; i++) {
+                    answer.next();
+                }
+                // Now read in desired number of results (or stop if we run out of results).
+                for (int i = 0; i < numResults; i++) {
+                    if (answer.hasMoreElements()) {
+                        // Get the next userID.
+                        usernames.add(
+                            (String)((SearchResult)answer.next()).getAttributes().get(
+                            manager.getUsernameField()).get()
+                        );
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
         }

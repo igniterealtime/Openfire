@@ -61,7 +61,7 @@ public class LdapAuthProvider implements AuthProvider {
     }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
-        if (username == null || password == null || "".equals(password)) {
+        if (username == null || password == null || "".equals(password.trim())) {
             throw new UnauthorizedException();
         }
 

@@ -212,6 +212,7 @@ public class IQAdminHandler {
                     // going to change a role or an affiliation
                     if (hasJID) {
                         jid = new JID(item.attributeValue("jid"));
+                        nick = null;
                     }
                     else {
                         // Get the JID based on the requested nick
@@ -238,7 +239,7 @@ public class IQAdminHandler {
                         else if ("member".equals(target)) {
                             // Add the user as a member of the room based on the bare JID
                             boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.NONE;
-                            presences.addAll(room.addMember(jid.toBareJID(), null, senderRole));
+                            presences.addAll(room.addMember(jid.toBareJID(), nick, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
                             if (!hadAffiliation && room.isMembersOnly()) {

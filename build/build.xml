@@ -651,22 +651,22 @@
         <!-- ZIP -->
         <zip zipfile="${package.dest.dir}/${release.fullname}.zip"
             basedir="${release.out.dir}/.."
-            includes="${release.name}/**/*"
+            includes="${release.fullname}/**/*, ${release.name}/**/*"
         />
         <zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
             basedir="${release.src.out.dir}/.."
-            includes="${release.name.src}/**/*"
+            includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
         />
         <!-- TAR.GZ -->
         <tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
             basedir="${release.out.dir}/.."
-            includes="${release.name}/**/*"
+            includes="${release.fullname}/**/*, ${release.name}/**/*"
             compression="gzip"
             longfile="gnu"
         />
         <tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
             basedir="${release.src.out.dir}/.."
-            includes="${release.name.src}/**/*"
+            includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
             compression="gzip"
             longfile="gnu"
         />
@@ -676,7 +676,9 @@
     <!-- dailybuild ============================================================================ -->
     <target name="dailybuild" depends="init" description="Creates a daily build release">
         <property name="release.out.name" value="${dist.prefix}_${dailybuild.tstamp}" />
+        <property name="release.fullname" value="${release.out.name}" />
         <property name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}" />
+        <property name="release.fullname.src" value="${release.src.out.name}" />
         <property name="release.out.dir" value="${release.dest.dir}/dailybuild/${release.out.name}" />
         <property name="release.src.out.dir" value="${release.dest.dir}/dailybuild/${release.src.out.name}" />
         <antcall target="release">
@@ -807,7 +809,8 @@
             </copy>
 
             <!-- Copy the plugin.xml file to the target dir, code below assumes it's there -->
-            <copy todir="${plugin.dest.dir}/@{plugin}" file="@{pluginsrc}/@{plugin}/plugin.xml" />
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar" />
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" file="@{pluginsrc}/@{plugin}/plugin.xml" />
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"
@@ -907,7 +910,7 @@
             </if>
 
             <!-- Copy everything else to Messenger's plugin dir -->
-            <copy todir="${plugin.dest.dir}/@{plugin}">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar" />
                 </fileset>
@@ -920,7 +923,7 @@
                     <exclude name="java/**/*.java" />
                 </fileset>
             </copy>
-            <copy todir="${plugin.dest.dir}/@{plugin}/web" failonerror="false">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/web" failonerror="false">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">
                     <include name="web.xml" />
                 </fileset>
@@ -928,11 +931,11 @@
 
             <!-- Jar the plugin -->
             <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">
-                <fileset dir="${plugin.dest.dir}/@{plugin}" />
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/jar" />
             </jar>
 
             <!-- Delete the exploded plugin -->
-            <delete dir="${plugin.dest.dir}/@{plugin}" />
+            <delete dir="${plugin.dev.dest.dir}/@{plugin}/jar" />
 
         </sequential>
     </macrodef>

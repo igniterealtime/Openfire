@@ -110,7 +110,6 @@
         <include name="**/*.html" />
         <include name="**/*.css" />
         <include name="**/*.gif" />
-        <include name="**/*.jpg" />
     </patternset>
 
     <filterset id="docs.filters">
@@ -241,6 +240,7 @@
         <mkdir dir="${jspc.dest.dir}" />
         <mkdir dir="${jspc.java.dest.dir}" />
         <mkdir dir="${jspc.classes.dest.dir}" />
+        <mkdir dir="${webapp.dest.dir}" />
 
         <antcall target="-jspc-impl" />
 
@@ -278,7 +278,6 @@
         </javac>
 
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
-        <mkdir dir="${webapp.dest.dir}" />
         <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" />
         <copy file="${web.dir}/WEB-INF/web.xml" toFile="${webapp.dest.dir}/WEB-INF/web.xml">
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">

@@ -39,8 +39,8 @@ public class SocketPacketWriteHandler implements ChannelHandler {
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();
-            Session senderSession = sessionManager.getSession(packet.getFrom());
             if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
+                Session senderSession = sessionManager.getSession(packet.getFrom());
                 if (senderSession != null && !senderSession.getConnection().isClosed()) {
                     senderSession.getConnection().deliver(packet);
                 }

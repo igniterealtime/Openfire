@@ -178,7 +178,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 while (itemIter.hasNext()) {
                     RosterItem item = (RosterItem)itemIter.next();
                     if (item.getSubStatus() == RosterItem.SUB_REMOVE) {
-                        removeItem(cachedRoster, packet.getSender(), item, packet);
+                        removeItem(cachedRoster, packet.getSender(), item);
                     }
                     else {
                         if (cachedRoster.isRosterItem(item.getJid())) {
@@ -212,8 +212,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The XMPPAddress of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(Roster roster, XMPPAddress sender, RosterItem item, IQRoster packet)
-            throws UnauthorizedException, UserNotFoundException, XMLStreamException {
+    private void removeItem(Roster roster, XMPPAddress sender, RosterItem item)
+            throws UnauthorizedException, XMLStreamException {
 
         XMPPAddress recipient = item.getJid();
         // Remove recipient from the sender's roster

@@ -29,11 +29,13 @@
         String username = ParamUtils.getParameter(request,"username");
 %>
         <p>
-        <fmt:message key="error.requested_user" />
-        <%  if (username != null) { %>
-            (<fmt:message key="error.username" /><%= username %>)
+        <%  if (username == null) { %>
+            <fmt:message key="error.requested_user_not_found" />
+        <%  } else { %>
+            <fmt:message key="error.specific_user_not_found">
+                <fmt:param value="${username}" />
+            </fmt:message>
         <%  } %>
-        <fmt:message key="error.not_found" />
         </p>
 
 <%  } else if (exception instanceof GroupNotFoundException) { %>

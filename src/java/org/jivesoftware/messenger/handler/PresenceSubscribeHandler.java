@@ -130,7 +130,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private Roster getRoster(JID address) {
         String username = null;
         Roster roster = null;
-        if (localServer.isLocal(address) && !"".equals(address.getNode())) {
+        if (localServer.isLocal(address) && address.getNode() != null &&
+                !"".equals(address.getNode())) {
             username = address.getNode();
             // Check for a cached roster:
             roster = (Roster)CacheManager.getCache("username2roster").get(username);

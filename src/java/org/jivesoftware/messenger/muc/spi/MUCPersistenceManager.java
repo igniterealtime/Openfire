@@ -41,14 +41,14 @@ import org.jivesoftware.util.StringUtils;
 public class MUCPersistenceManager {
 
     private static final String LOAD_ROOM_SURROGATES =
-        "SELECT roomID, name, naturalLanguageRoom, description, canChangeSubject, maxUsers, " +
+        "SELECT roomID, name, naturalRoomName, description, canChangeSubject, maxUsers, " +
         "moderated, invitationRequired, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
-        "SELECT roomID, naturalLanguageRoom, description, canChangeSubject, maxUsers, " +
+        "SELECT roomID, naturalRoomName, description, canChangeSubject, maxUsers, " +
         "publicRoom, moderated, invitationRequired, canInvite, password, " +
         "canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
@@ -57,12 +57,12 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String UPDATE_ROOM = 
-        "UPDATE mucRoom SET modificationDate=?, naturalLanguageRoom=?, description=?, " +
+        "UPDATE mucRoom SET modificationDate=?, naturalRoomName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
         "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
         "inMemory=? WHERE roomID=?";
     private static final String ADD_ROOM = 
-        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalLanguageRoom, " +
+        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalRoomName, " +
         "description, canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, " +
         "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "lastActiveDate, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";

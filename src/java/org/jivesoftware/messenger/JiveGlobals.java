@@ -726,6 +726,18 @@ public class JiveGlobals {
                 }
             }
 
+             if(messengerHome == null){
+                try {
+                    messengerHome = new File("").getCanonicalPath();
+                    if(!new File(messengerHome, "conf/jive-messenger.xml").exists()){
+                        messengerHome = null;
+                    }
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
             // If still null, finding messengerHome failed.
             if (messengerHome == null) {
                 failedLoading = true;

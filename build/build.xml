@@ -533,7 +533,7 @@
             <fileset dir="${docs.dir}/docs/licenses" />
         </copy>
         <copy todir="${release.src.out.dir}/documentation">
-            <fileset dir="${docs.dir}/licenses" />
+            <fileset dir="${docs.dir}/docs/licenses" />
         </copy>
 
         <!-- Copy Javadocs -->
@@ -616,12 +616,16 @@
 
     <!-- plugins =============================================================================== -->
     <target name="plugins">
+        <!-- Call jar task, can't do this is as a 'depends' call of this target because
+             of the way class loading works for jspc calls.
+        -->
         <ant antfile="${basedir}/build/build.xml" dir="${basedir}"
             target="jar" inheritAll="false" inheritRefs="false"
         >
             <property name="no.jspc" value="true" />
         </ant>
 
+        <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->
         <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin" />
 
         <antcall target="-plugins-impl" />
@@ -629,6 +633,7 @@
 
         </target><target name="-plugins-impl" unless="${dirlist}">
 
+        <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
                 <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}" />
@@ -637,12 +642,14 @@
 
         </target><target name="-plugins-impl-dev" unless="${plugin.dev.dir}">
 
+        <!-- Get a list of plugins in the optional dev dir -->
         <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml" />
 
         <antcall target="-plugin-impl-dev-build" />
 
         </target><target name="-plugin-impl-dev-build" if="dirlist2">
 
+        <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
         <for list="${dirlist2}" param="plugin" trim="true">
             <sequential>
                 <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}" />

@@ -11,9 +11,7 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -58,7 +56,7 @@ public class OfflineMessageStrategy extends BasicModule {
         JiveGlobals.setProperty("xmpp.offline.type", type.toString());
     }
 
-    public void storeOffline(Message message) throws UnauthorizedException, UserNotFoundException {
+    public void storeOffline(Message message) {
         if (message != null) {
             Session senderSession = sessionManager.getSession(message.getFrom());
             if (senderSession == null) {

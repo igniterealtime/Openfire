@@ -91,7 +91,7 @@ public class IQvCardHandler extends IQHandler {
                 Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
                 result.setChildElement(vcard);
                 // Only try to get the vCard values of non-anonymous users 
-                if (recipient.getNode() != null) {
+                if (recipient != null && recipient.getNode() != null) {
                     User user = userManager.getUser(recipient.getNode());
                     VCardManager vManager = VCardManager.getInstance();
                     Collection<String> names = vManager.getVCardPropertyNames(user.getUsername());

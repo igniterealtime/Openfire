@@ -843,6 +843,9 @@ public class SessionManager extends BasicModule {
     }
 
     public int getSessionCount(String username) {
+        if (username == null) {
+            return 0;
+        }
         int sessionCount = 0;
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {

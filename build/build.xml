@@ -95,9 +95,9 @@
     <property name="deploy.jar.dir" value="${jar.dest.dir}" />
     <property name="anttools.src.dir" value="${src.dir}/tools" />
     <property name="anttools.target.dir" value="${target.dir}/tools" />
-    <property name="installer.install4j.home" value="" />
+    <property name="installer.install4j.home" value="c:\\Program Files\\install4j" />
     <property name="installer.src" value="${basedir}/build/installer" />
-    <property name="installer.dest.dir" value="${release.dest.dir}" />
+    <property name="installer.dest.dir" value="${release.dest.dir}/installers" />
     <property name="installer.install4j.srcfile" value="${installer.src}/messenger.install4j" />
 
     <!-- ======================================================================================= -->
@@ -656,7 +656,7 @@
     </target>
 
     <!-- installer ============================================================================= -->
-    <target name="installer" description="Creates an Install4j installer">
+    <target name="installer" depends="release" description="Creates an Install4j installer">
 
         <condition property="install4j.not.ok" value="true"><not><available file="${installer.install4j.home}/bin/install4j.jar" /></not></condition>
         <fail if="install4j.not.ok" message="Path to Install4j not set, see build.properties.template file." />
@@ -665,8 +665,10 @@
                 classname="com.install4j.Install4JTask"
                 classpath="${installer.install4j.home}/bin/install4j.jar" />
 
+        <mkdir dir="${installer.dest.dir}" />
+
         <install4j projectfile="${installer.install4j.srcfile}"
-            destination="${install.dest.dir}" />
+            destination="${installer.dest.dir}" />
 
     </target>
 

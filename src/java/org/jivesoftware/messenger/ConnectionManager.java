@@ -13,7 +13,7 @@ package org.jivesoftware.messenger;
 
 import java.net.Socket;
 import java.util.Iterator;
-import javax.xml.stream.XMLStreamException;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * <p>Coordinates connections (accept, read, termination) on the server.</p>
@@ -34,5 +34,5 @@ public interface ConnectionManager {
      * @param sock     The socket to add to this manager for management
      * @param isSecure True if this is a secure connection
      */
-    public void addSocket(Socket sock, boolean isSecure) throws XMLStreamException;
+    public void addSocket(Socket sock, boolean isSecure) throws XmlPullParserException;
 }

@@ -32,8 +32,6 @@ public class OfflineMessageStrategy extends BasicModule {
     private static Type type = Type.store;
     private SessionManager sessionManager;
 
-
-    public PacketFactory packetFactory;
     public XMPPServer xmppServer;
     public PacketDeliverer deliverer;
     public OfflineMessageStore messageStore;
@@ -146,7 +144,6 @@ public class OfflineMessageStrategy extends BasicModule {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "xmppServer");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
         return trackInfo;
     }

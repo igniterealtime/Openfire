@@ -30,7 +30,6 @@ import org.jivesoftware.messenger.spi.ConnectionManagerImpl;
 import org.jivesoftware.messenger.spi.IQRouterImpl;
 import org.jivesoftware.messenger.spi.MessageRouterImpl;
 import org.jivesoftware.messenger.spi.PacketDelivererImpl;
-import org.jivesoftware.messenger.spi.PacketFactoryImpl;
 import org.jivesoftware.messenger.spi.PacketRouterImpl;
 import org.jivesoftware.messenger.spi.PacketTransporterImpl;
 import org.jivesoftware.messenger.spi.PresenceManagerImpl;
@@ -72,7 +71,6 @@ public class XMPPBootContainer extends BootstrapContainer {
             IQRouterImpl.class.getName(),
             MessageRouterImpl.class.getName(),
             PresenceRouterImpl.class.getName(),
-            PacketFactoryImpl.class.getName(),
 
             PacketTransporterImpl.class.getName(),
             PacketDelivererImpl.class.getName(),

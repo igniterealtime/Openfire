@@ -832,7 +832,7 @@ public class SessionManager implements ConnectionCloseListener {
 
         Presence presence = session.getPresence();
         if (presence == null || presence.isAvailable()) {
-            Presence offline = packetFactory.getPresence();
+            Presence offline = new Presence();
             offline.setFrom(session.getAddress());
             offline.setTo(new JID(null, serverName, null));
             offline.setType(Presence.Type.unavailable);
@@ -903,14 +903,11 @@ public class SessionManager implements ConnectionCloseListener {
         }
     }
 
-    public PacketFactory packetFactory;
-
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         return trackInfo;
     }

@@ -11,18 +11,36 @@
 
 package org.jivesoftware.messenger.launcher;
 
-import java.awt.*;
+import com.jivesoftware.xmpp.workgroup.utils.URLFileSystem;
+import org.jdesktop.jdic.tray.SystemTray;
+import org.jdesktop.jdic.tray.TrayIcon;
+import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.XMLProperties;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.UIManager;
+
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
-import javax.swing.*;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.util.XMLProperties;
-import org.jdesktop.jdic.tray.TrayIcon;
-import org.jdesktop.jdic.tray.SystemTray;
+import java.io.IOException;
 
 /**
  * Graphical launcher for Jive Messenger.
@@ -31,13 +49,14 @@ import org.jdesktop.jdic.tray.SystemTray;
  */
 public class Launcher {
 
-    private Process messengerd = null;
+    private Process messengerd;
     private String configFile = JiveGlobals.getMessengerHome() + File.separator + "conf" + File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
     private ImageIcon onIcon;
     private TrayIcon trayIcon;
+    private JFrame frame;
 
     /**
      * Creates a new Launcher object.
@@ -54,7 +73,16 @@ public class Launcher {
         }
 
         String title = "Jive Messenger";
-        final JFrame frame = new JFrame(title);
+        frame = new DroppableFrame() {
+            public void fileDropped(File file) {
+                String fileName = file.getName();
+                if (fileName.endsWith("*.jar")) {
+                    installPlugin(file);
+                }
+            }
+        };
+
+        frame.setTitle(title);
 
         ImageIcon splash = null;
         JLabel splashLabel = null;
@@ -131,7 +159,7 @@ public class Launcher {
 
         ActionListener actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (e.getActionCommand().equals("Start")) {
+                if ("Start".equals(e.getActionCommand())) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     // Adjust button and menu items.
                     startApplication();
@@ -145,8 +173,11 @@ public class Launcher {
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
                         public void run() {
-                            try {  sleep(8000);  }
-                            catch (Exception e) { }
+                            try {
+                                sleep(8000);
+                            }
+                            catch (Exception e) {
+                            }
                             // Enable the Launch Admin button/menu item only if the
                             // server has started.
                             if (stopButton.isEnabled()) {
@@ -159,7 +190,7 @@ public class Launcher {
 
                     thread.start();
                 }
-                else if (e.getActionCommand().equals("Stop")) {
+                else if ("Stop".equals(e.getActionCommand())) {
                     stopApplication();
                     // Change to the "off" button.
                     frame.setIconImage(offIcon.getImage());
@@ -173,14 +204,14 @@ public class Launcher {
                     startMenuItem.setEnabled(true);
                     stopMenuItem.setEnabled(false);
                 }
-                else if (e.getActionCommand().equals("Launch Admin")) {
+                else if ("Launch Admin".equals(e.getActionCommand())) {
                     launchBrowser();
                 }
-                else if (e.getActionCommand().equals("Quit")) {
+                else if ("Quit".equals(e.getActionCommand())) {
                     stopApplication();
                     System.exit(0);
                 }
-                else if (e.getActionCommand().equals("Hide/Show") || e.getActionCommand().equals("PressAction")) {
+                else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
                     // Hide/Unhide the window if the user clicked in the system tray icon or
                     // selected the menu option
                     if (frame.isVisible()) {
@@ -256,10 +287,10 @@ public class Launcher {
                 File windowsExe = new File(new File("").getAbsoluteFile(), "messengerd.exe");
                 File unixExe = new File(new File("").getAbsoluteFile(), "messengerd");
                 if (windowsExe.exists()) {
-                    messengerd = Runtime.getRuntime().exec(new String[] { windowsExe.toString() });
+                    messengerd = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
                 else if (unixExe.exists()) {
-                     messengerd = Runtime.getRuntime().exec(new String[] { unixExe.toString() });   
+                    messengerd = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
                 }
                 else {
                     throw new FileNotFoundException();
@@ -306,6 +337,48 @@ public class Launcher {
         catch (Exception e) {
             JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());
         }
+    }
+
+    private void installPlugin(final File plugin) {
+        final JDialog dialog = new JDialog(frame, "Installing Plugin", true);
+        dialog.getContentPane().setLayout(new BorderLayout());
+        JProgressBar bar = new JProgressBar();
+        bar.setIndeterminate(true);
+        bar.setString("Installing Plugin.  Please wait...");
+        bar.setStringPainted(true);
+        dialog.getContentPane().add(bar, BorderLayout.CENTER);
+        dialog.pack();
+        dialog.setSize(225, 55);
+
+        final SwingWorker installerThread = new SwingWorker() {
+            public Object construct() {
+                File pluginsDir = new File(JiveGlobals.getMessengerHome(), "plugins");
+                String tempName = plugin.getName() + ".part";
+                File tempPluginsFile = new File(pluginsDir, tempName);
+
+                File realPluginsFile = new File(pluginsDir, plugin.getName());
+
+                // Copy Plugin into Dir.
+                try {
+                    URLFileSystem.copy(plugin.toURL(), tempPluginsFile);
+
+                    // If successfull, rename to real plugin name.
+                    tempPluginsFile.renameTo(realPluginsFile);
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return realPluginsFile;
+            }
+
+            public void finished() {
+                dialog.setVisible(false);
+            }
+        };
+
+        // Start installation
+        installerThread.start();
+
     }
 }
 

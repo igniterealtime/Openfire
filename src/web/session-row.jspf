@@ -124,7 +124,7 @@
     <%  } else if (_show == Presence.SHOW_XA) { %>
 
         <td width="1%"
-            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away"
+            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Extended Away"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>

@@ -98,7 +98,9 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         }
 
         // Remove the disco item from the server for the component that is being removed
-        XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
+        if (XMPPServer.getInstance().getIQDiscoItemsHandler() != null) {
+            XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
+        }
     }
 
     public void sendPacket(Component component, Packet packet) {

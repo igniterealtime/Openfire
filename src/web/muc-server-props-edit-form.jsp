@@ -82,7 +82,7 @@
 <%  } %>
 
 <p>
-Use the form below to edit Multi-User Chat server properties.
+Use the form below to edit group chat service settings.
 </p>
 
 

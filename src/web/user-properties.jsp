@@ -201,17 +201,8 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             Email:
         </td>
         <td>
-            <%  if (user.getInfo().getEmail() == null || "".equals(user.getInfo().getEmail())) { %>
-
-                <span style="color:#999">
-                <i>Not set.</i>
-                </span>
-
-            <%  } else { %>
-
-                <a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a>
-
-            <%  } %>
+            <a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a>
+            &nbsp;
         </td>
     </tr>
     <tr>

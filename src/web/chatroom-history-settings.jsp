@@ -13,7 +13,8 @@
                  java.util.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.muc.HistoryStrategy"
+                 org.jivesoftware.messenger.muc.HistoryStrategy,
+                 org.jivesoftware.messenger.muc.MultiUserChatServer"
     errorPage="error.jsp"
 %>
 
@@ -46,8 +47,8 @@
     int numMessages = ParamUtils.getIntParameter(request,"numMessages",0);
 
     // Get an audit manager:
-//    ChatServer chatServer = (ChatServer)admin.getServiceLookup().lookup(ChatServer.class);
-//    HistoryStrategy historyStrat = chatServer.getHistoryStrategy();
+    MultiUserChatServer muc = admin.getMultiUserChatServer();
+    HistoryStrategy historyStrat = muc.getHistoryStrategy();
 
     Map errors = new HashMap();
     if (update) {
@@ -61,14 +62,14 @@
         }
         if (errors.size() == 0) {
             if (policy == ALL) {
-//                historyStrat.setType(HistoryStrategy.Type.all);
+                historyStrat.setType(HistoryStrategy.Type.all);
             }
             else if (policy == NONE) {
-//                historyStrat.setType(HistoryStrategy.Type.none);
+                historyStrat.setType(HistoryStrategy.Type.none);
             }
             else if (policy == NUMBER) {
-//                historyStrat.setType(HistoryStrategy.Type.number);
-//                historyStrat.setMaxNumber(numMessages);
+                historyStrat.setType(HistoryStrategy.Type.number);
+                historyStrat.setMaxNumber(numMessages);
             }
             // All done, redirect
             %>
@@ -88,16 +89,16 @@
 
     // Set page vars
     if (errors.size() == 0) {
-//        if (historyStrat.getType() == HistoryStrategy.Type.all) {
-//            policy = ALL;
-//        }
-//        else if (historyStrat.getType() == HistoryStrategy.Type.none) {
-//            policy = NONE;
-//        }
-//        else if (historyStrat.getType() == HistoryStrategy.Type.number) {
-//            policy = NUMBER;
-//        }
-//        numMessages = historyStrat.getMaxNumber();
+        if (historyStrat.getType() == HistoryStrategy.Type.all) {
+            policy = ALL;
+        }
+        else if (historyStrat.getType() == HistoryStrategy.Type.none) {
+            policy = NONE;
+        }
+        else if (historyStrat.getType() == HistoryStrategy.Type.number) {
+            policy = NUMBER;
+        }
+        numMessages = historyStrat.getMaxNumber();
     }
 %>
 
@@ -107,7 +108,7 @@ Chatrooms can replay conversation histories to provide context to new members jo
 much history to store for each room.
 </p>
 
-<form action="chatroom-history-settings.jsp">
+<form action="chatroom-history-settings.jsp" method="post">
 
 <fieldset>
     <legend>Set Chatroom History Policy</legend>

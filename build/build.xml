@@ -717,68 +717,80 @@
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
             </jar>
 
-            <!-- JSPC any JSP pages -->
+            <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
+            <available property="plugin.@{plugin}.webdocs.available"
+                    type="dir" file="@{pluginsrc}/@{plugin}/src/web" />
+            <if>
+                <equals arg1="${plugin.@{plugin}.webdocs.available}" arg2="true" />
+                <then>
 
-            <!-- Create output dir -->
-            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
-            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" />
+                    <!-- Continue with JSPC tasks... -->
 
-            <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
-                <fileset dir="@{pluginsrc}/@{plugin}/src/web" />
-                <fileset dir="${web.dir}">
-                    <include name="WEB-INF/**/*.*" />
-                    <exclude name="WEB-INF/web.xml.startup.servlet" />
-                    <exclude name="WEB-INF/classes/messenger_init.xml" />
-                    <exclude name="WEB-INF/tmp/**/*.*" />
-                    <exclude name="WEB-INF/work/**/*.*" />
-                </fileset>
-            </copy>
+                    <!-- Create output dir -->
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" />
 
-            <!-- Declare the jspc task with our plugin's classpath -->
-            <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
-                <classpath>
-                    <pathelement location="${java.home}/../lib/tools.jar" />
-                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
-                    <path refid="jspc.dependencies" />
-                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar" />
-                    <pathelement path="${compile.dir}" />
-                </classpath>
-            </taskdef>
+                    <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir. We'll
+                         not fail on an error since the web dir might not exist.
+                    -->
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/web" />
+                        <fileset dir="${web.dir}">
+                            <include name="WEB-INF/**/*.*" />
+                            <exclude name="WEB-INF/web.xml.startup.servlet" />
+                            <exclude name="WEB-INF/classes/messenger_init.xml" />
+                            <exclude name="WEB-INF/tmp/**/*.*" />
+                            <exclude name="WEB-INF/work/**/*.*" />
+                        </fileset>
+                    </copy>
 
-            <!-- JSP to Java -->
-            <jasper2
-                validateXml="false"
-                uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
-                outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                package="org.jivesoftware.messenger.plugin.@{plugin}"
-                webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
-            />
+                    <!-- Declare the jspc task with our plugin's classpath -->
+                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+                        <classpath>
+                            <pathelement location="${java.home}/../lib/tools.jar" />
+                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
+                            <path refid="jspc.dependencies" />
+                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar" />
+                            <pathelement path="${compile.dir}" />
+                        </classpath>
+                    </taskdef>
 
-            <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
-            
+                    <!-- JSP to Java -->
+                    <jasper2
+                        validateXml="false"
+                        uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                        outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
+                        package="org.jivesoftware.messenger.plugin.@{plugin}"
+                        webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                    />
 
-            <!-- Compile java classes -->
-            <javac
-                destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
-                includeAntRuntime="no"
-                debug="on"
-                source="1.5"
-                includes="org/jivesoftware/messenger/plugin/**/*.java"
-            >
-                <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
-                <classpath>
-                    <path refid="jspc.dependencies" />
-                    <pathelement path="${compile.dir}" />
-                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar" />
-                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
-                </classpath>
-            </javac>
+                    <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
 
-            <!-- Make a jar of compiled jsp classes -->
-            <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" includes="**/*.class" />
-            </jar>
+
+                    <!-- Compile java classes -->
+                    <javac
+                        destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                        includeAntRuntime="no"
+                        debug="on"
+                        source="1.5"
+                        includes="org/jivesoftware/messenger/plugin/**/*.java"
+                    >
+                        <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
+                        <classpath>
+                            <path refid="jspc.dependencies" />
+                            <pathelement path="${compile.dir}" />
+                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar" />
+                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
+                        </classpath>
+                    </javac>
+
+                    <!-- Make a jar of compiled jsp classes -->
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
+                        <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" includes="**/*.class" />
+                    </jar>
+
+                </then>
+            </if>
 
             <!-- Copy everything to Messenger's plugin dir -->
             <copy todir="${plugin.dest.dir}/@{plugin}">
@@ -796,7 +808,7 @@
                     <exclude name="java/**/*.java" />
                 </fileset>
             </copy>
-            <copy todir="${plugin.dest.dir}/@{plugin}/web">
+            <copy todir="${plugin.dest.dir}/@{plugin}/web" failonerror="false">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">
                     <include name="web.xml" />
                 </fileset>

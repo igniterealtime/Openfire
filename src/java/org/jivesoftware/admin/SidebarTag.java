@@ -18,6 +18,7 @@ import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Iterator;
 import java.io.IOException;
@@ -153,7 +154,7 @@ public class SidebarTag extends BodyTagSupport {
      */
     public int doEndTag() throws JspException {
         // Start by getting the request from the page context
-        ServletRequest request = pageContext.getRequest();
+        HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
 
         // Check for body of this tag and the child tag
         if (getBodyContent().getString() == null) {
@@ -228,7 +229,8 @@ public class SidebarTag extends BodyTagSupport {
                                         value = StringUtils.replace(value, "[id]", clean(subitemID));
                                         value = StringUtils.replace(value, "[name]", clean(subitemName));
                                         value = StringUtils.replace(value, "[description]", clean(subitemDescr));
-                                        value = StringUtils.replace(value, "[url]", clean(subitemURL));
+                                        value = StringUtils.replace(value, "[url]",
+                                                request.getContextPath() + "/" + clean(subitemURL));
                                     }
                                     String css = getCss();
                                     boolean isCurrent = item.equals(current);
@@ -271,7 +273,8 @@ public class SidebarTag extends BodyTagSupport {
                                                 svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
                                                 svalue = StringUtils.replace(svalue, "[name]", clean(sibName));
                                                 svalue = StringUtils.replace(svalue, "[description]", clean(sibDescr));
-                                                svalue = StringUtils.replace(svalue, "[url]", clean(sibURL));
+                                                svalue = StringUtils.replace(svalue, "[url]",
+                                                        request.getContextPath() + "/" + clean(sibURL));
                                             }
                                             buf.append("<li class=\"").append(subcss).append("\">").append(svalue).append("</li>\n");
                                         }

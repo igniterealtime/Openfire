@@ -129,7 +129,7 @@ public class PluginManager {
                     List urls = adminElement.selectNodes("//@url");
                     for (int i=0; i<urls.size(); i++) {
                         Attribute attr = (Attribute)urls.get(i);
-                        attr.setValue("/plugins/" + pluginDir.getName() + "/" + attr.getValue());
+                        attr.setValue("plugins/" + pluginDir.getName() + "/" + attr.getValue());
                     }
                     AdminConsole.addModel(adminElement);
                 }

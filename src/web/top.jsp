@@ -78,7 +78,7 @@
                         </div>
                     </td>
                     <td width="1%" id="jive-logout" nowrap>
-                        <a href="index.jsp?logout=true">Logout [<%= StringUtils.escapeHTMLTags(admin.getUser().getUsername()) %>]</a>
+                        <a href="<%= path %>/index.jsp?logout=true">Logout [<%= StringUtils.escapeHTMLTags(admin.getUser().getUsername()) %>]</a>
                         &nbsp;&nbsp;&nbsp;
                     </td>
                 </tr>

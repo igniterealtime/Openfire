@@ -18,6 +18,7 @@ import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.io.IOException;
 
@@ -114,7 +115,7 @@ public class TabsTag extends BodyTagSupport {
      * @throws JspException if an exception occurs while rendering the tabs.
      */
     public int doEndTag() throws JspException {
-        ServletRequest request = pageContext.getRequest();
+        HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
         String beanName = getBean();
         // Get the page data bean from the request:
         AdminPageBean pageInfo = (AdminPageBean)request.getAttribute(beanName);
@@ -143,7 +144,8 @@ public class TabsTag extends BodyTagSupport {
                 if (value != null) {
                     // The URL for the tab should be the URL of the first item in the tab.
                     value = StringUtils.replace(value, "[id]", clean(tab.attributeValue("id")));
-                    value = StringUtils.replace(value, "[url]", clean(tab.attributeValue("url")));
+                    value = StringUtils.replace(value, "[url]",
+                            request.getContextPath() + "/" + clean(tab.attributeValue("url")));
                     value = StringUtils.replace(value, "[name]", clean(tab.attributeValue("name")));
                     value = StringUtils.replace(value, "[description]", clean(tab.attributeValue("description")));
                 }

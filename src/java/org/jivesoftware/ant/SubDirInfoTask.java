@@ -80,6 +80,7 @@ public class SubDirInfoTask extends Task {
         // Get the siblings of the given directory, add sub directory names to the property
         File[] subdirs = dir.listFiles();
         StringBuffer buf = new StringBuffer();
+        String value = null;
         String sep = "";
         for (int i=0; i<subdirs.length; i++) {
             File subdir = subdirs[i];
@@ -100,12 +101,17 @@ public class SubDirInfoTask extends Task {
                 sep = getDelimiter();
             }
         }
-        if (buf.length() == 0) {
+        if (buf.length() > 0) {
+            value = buf.toString();
+        }
+        if (value == null) {
             log("No tokens found.", Project.MSG_DEBUG);
         }
-        if (buf.length() > 0) {
-            log("Setting property '" + property + "' to " + buf.toString(), Project.MSG_DEBUG);
-            getProject().setProperty(property, buf.toString());
+        else {
+            log("Setting property '" + property + "' to " + value, Project.MSG_DEBUG);
+            if (buf.length() >= 0) {
+                getProject().setProperty(property, value);
+            }
         }
     }
 }

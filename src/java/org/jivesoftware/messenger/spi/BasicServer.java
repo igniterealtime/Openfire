@@ -380,8 +380,8 @@ public class BasicServer implements XMPPServer {
         if (configFileGuess.exists()) {
             realHome = guess;
         }
-        File forumsHome = new File(guess, jiveConfigName);
-        if (!forumsHome.exists()) {
+        File messengerHome = new File(guess, jiveConfigName);
+        if (!messengerHome.exists()) {
             throw new FileNotFoundException();
         }
 

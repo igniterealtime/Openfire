@@ -25,38 +25,36 @@ if [ -z "$MESSENGER_HOME" -o ! -d "$MESSENGER_HOME" ]; then
 
 	if [ -d /opt/messenger ] ; then
 		MESSENGER_HOME="/opt/messenger"
-	fi
-
-	if [ -d /usr/local/messenger ] ; then
+	elif [ -d /usr/local/messenger ] ; then
 		MESSENGER_HOME="/usr/local/messenger"
-	fi
-
-	if [ -d ${HOME}/opt/messenger ] ; then
+	elif [ -d ${HOME}/messenger ] ; then
+		MESSENGER_HOME="${HOME}/messenger"
+	elif [ -d ${HOME}/opt/messenger ] ; then
 		MESSENGER_HOME="${HOME}/opt/messenger"
+	else 
+		#resolve links - $0 may be a link in messenger's home
+		PRG="0"
+		progname=`basename "$0$"`
+
+		# need this for relative symlinks
+
+		# need this for relative symlinks
+  		while [ -h "$PRG" ] ; do
+    			ls=`ls -ld "$PRG"`
+    			link=`expr "$ls" : '.*-> \(.*\)$'`
+    			if expr "$link" : '/.*' > /dev/null; then
+    				PRG="$link"
+    			else
+    				PRG=`dirname "$PRG"`"/$link"
+    			fi
+  		done
+
+		#assumes we are in the bin directory
+		MESSENGER_HOME=`dirname "$PRG"`/..
+
+		#make it fully qualified
+		MESSENGER_HOME=`cd "$MESSENGER_HOME" && pwd`
 	fi
-
-	#resolve links - $0 may be a link in messenger's home
-	PRG="0"
-	progname=`basename "$0$"`
-
-	# need this for relative symlinks
-
-	# need this for relative symlinks
-  	while [ -h "$PRG" ] ; do
-    		ls=`ls -ld "$PRG"`
-    		link=`expr "$ls" : '.*-> \(.*\)$'`
-    		if expr "$link" : '/.*' > /dev/null; then
-    			PRG="$link"
-    		else
-    			PRG=`dirname "$PRG"`"/$link"
-    		fi
-  	done
-
-	#assumes we are in the bin directory
-	MESSENGER_HOME=`dirname "$PRG"`/..
-
-	#make it fully qualified
-	MESSENGER_HOME=`cd "$MESSENGER_HOME" && pwd`
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
@@ -140,5 +138,9 @@ if $cygwin; then
   esac
 fi
 
+OLDPWD=`pwd`
+cd $MESSENGER_HOME/bin
 messenger_exec_command="exec \"$JAVACMD\" $MESSENGER_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$MESSENGER_LIB\"/startup.jar"
 eval $messenger_exec_command
+
+cd $OLDPWD

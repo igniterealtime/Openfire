@@ -92,13 +92,14 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                 else {
                     IQHandler handler = getHandler(namespace);
                     if (handler == null) {
+                        IQ reply = IQ.createResultIQ(packet);
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
-                            packet.setError(PacketError.Condition.service_unavailable);
+                            reply.setError(PacketError.Condition.service_unavailable);
                         }
                         else if (recipientJID.getNode() == null || "".equals(recipientJID.getNode())) {
                             // Answer an error if JID is of the form <domain>
-                            packet.setError(PacketError.Condition.feature_not_implemented);
+                            reply.setError(PacketError.Condition.feature_not_implemented);
                         }
                         else {
                             // JID is of the form <node@domain>
@@ -116,11 +117,11 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                                 // do nothing
                             }
                             // Answer an error since the server can't handle packets sent to a node
-                            packet.setError(PacketError.Condition.service_unavailable);
+                            reply.setError(PacketError.Condition.service_unavailable);
                         }
                         Session session = sessionManager.getSession(packet.getFrom());
                         if (session != null) {
-                            session.getConnection().deliver(packet);
+                            session.getConnection().deliver(reply);
                         }
                         else {
                             Log.warn("Packet could not be delivered " + packet);

@@ -31,15 +31,6 @@
     // handle a mode redirect
     Map errors = new HashMap();
     if (next) {
-        // First, update with XMPPSettings
-        Map xmppSettings = (Map)session.getAttribute("xmppSettings");
-        Iterator iter = xmppSettings.keySet().iterator();
-        while(iter.hasNext()){
-            String name = (String)iter.next();
-            String value = (String)xmppSettings.get(name);
-            JiveGlobals.setProperty(name, value);
-        }
-        
         if (STANDARD.equals(mode)) {
             response.sendRedirect("setup-datasource-standard.jsp");
             return;

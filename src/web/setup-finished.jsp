@@ -12,10 +12,22 @@
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.JiveGlobals,
-                 org.jivesoftware.messenger.XMPPBootContainer"
+                 org.jivesoftware.messenger.XMPPBootContainer,
+                 java.util.Map,
+                 java.util.Iterator"
 %>
 
-<%  boolean showSidebar = false; %>
+<%  boolean showSidebar = false;
+        // First, update with XMPPSettings
+        Map xmppSettings = (Map)session.getAttribute("xmppSettings");
+        Iterator iter = xmppSettings.keySet().iterator();
+        while(iter.hasNext()){
+            String name = (String)iter.next();
+            String value = (String)xmppSettings.get(name);
+            JiveGlobals.setProperty(name, value);
+        }
+
+%>
 
 <%@ include file="setup-header.jspf" %>
 

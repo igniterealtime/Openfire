@@ -20,6 +20,8 @@ import org.jivesoftware.messenger.SharedGroupException;
 import org.jivesoftware.messenger.group.Group;
 
 import java.util.Iterator;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -125,8 +127,11 @@ public class RosterManager extends BasicModule {
      * @param group the group that has been deleted.
      */
     public void groupDeleted(Group group) {
+        // Get all the group users
+        Collection<String> users = new ArrayList<String>(group.getMembers());
+        users.addAll(group.getAdmins());
         // Iterate on all the group users and update their rosters
-        for (String deletedUser : group.getUsers()) {
+        for (String deletedUser : users) {
             groupUserDeleted(group, deletedUser);
         }
     }
@@ -138,8 +143,11 @@ public class RosterManager extends BasicModule {
      * @param addedUser the username of the user that has been added to the group.
      */
     public void groupUserAdded(Group group, String addedUser) {
+        // Get all the group users
+        Collection<String> users = new ArrayList<String>(group.getMembers());
+        users.addAll(group.getAdmins());
         // Iterate on all the group users and update their rosters
-        for (String userToUpdate : group.getUsers()) {
+        for (String userToUpdate : users) {
             if (!addedUser.equals(userToUpdate)) {
                 // Get the roster to update
                 Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
@@ -158,8 +166,11 @@ public class RosterManager extends BasicModule {
      * @param deletedUser the username of the user that has been deleted from the group.
      */
     public void groupUserDeleted(Group group, String deletedUser) {
+        // Get all the group users
+        Collection<String> users = new ArrayList<String>(group.getMembers());
+        users.addAll(group.getAdmins());
         // Iterate on all the group users and update their rosters
-        for (String userToUpdate : group.getUsers()) {
+        for (String userToUpdate : users) {
             if (!deletedUser.equals(userToUpdate)) {
                 // Get the roster to update
                 Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);

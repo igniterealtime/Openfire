@@ -401,8 +401,11 @@ public class Roster implements Cacheable {
         // will have one entry in the map associated with all the groups
         Map<JID,List<String>> sharedGroupUsers = new HashMap<JID,List<String>>();
         for (Group group : sharedGroups) {
+            // Get all the group users
+            Collection<String> users = new ArrayList<String>(group.getMembers());
+            users.addAll(group.getAdmins());
             // Add the users of the group to the general list of users to process
-            for (String groupUser : group.getUsers()) {
+            for (String groupUser : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
                 // (since we have already added the user to the answer)
                 JID jid = new JID(groupUser, XMPPServer.getInstance().getServerInfo().getName(),

@@ -134,11 +134,11 @@ public class GroupManager {
      */
     public void deleteUser(User user) {
         for (Group group : getGroups(user)) {
-            if (group.isAdmin(user.getUsername())) {
-                group.removeAdmin(user.getUsername());
+            if (group.getAdmins().contains(user.getUsername())) {
+                group.getAdmins().remove(user.getUsername());
             }
             else {
-                group.removeMember(user.getUsername());
+                group.getMembers().remove(user.getUsername());
             }
         }
     }

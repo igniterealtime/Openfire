@@ -741,6 +741,7 @@
                     <path refid="jspc.dependencies" />
                     <pathelement path="${compile.dir}" />
                     <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
+                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
                 </classpath>
             </javac>
 

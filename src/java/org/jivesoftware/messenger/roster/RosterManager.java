@@ -141,25 +141,93 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     }
 
     public void groupModified(Group group, Map params) {
-        //TODO Implement this
+        // Do nothing if no group property has been modified
+        if (!"propertyModified".equals(params.get("type"))) {
+             return;
+        }
+        String originalValue = (String) params.get("originalValue");
+
+        if ("showInRoster".equals(params.get("propertyKey"))) {
+            String currentValue = group.getProperties().get("showInRoster");
+            // Nothing has changed so do nothing.
+            if (currentValue.equals(originalValue)) {
+                return;
+            }
+            // Get all the group users
+            Collection<String> users = new ArrayList<String>(group.getMembers());
+            users.addAll(group.getAdmins());
+            if ("true".equals(currentValue)) {
+                // We must show group in group members' rosters
+                // Iterate on all the group users and update their rosters
+                for (String addedUser : users) {
+                    groupUserAdded(group, addedUser);
+                }
+            }
+            else {
+                // We must remove group from group members' rosters
+                // Iterate on all the group users and update their rosters
+                for (String deletedUser : users) {
+                    groupUserDeleted(group, deletedUser);
+                }
+            }
+        }
+        else if ("displayName".equals(params.get("propertyKey"))) {
+            String currentValue = group.getProperties().get("displayName");
+            // Nothing has changed so do nothing.
+            if (currentValue.equals(originalValue)) {
+                return;
+            }
+            // Do nothing if the group is not being shown in group members' rosters
+            if (!"true".equals(group.getProperties().get("showInRoster"))) {
+                return;
+            }
+            // Get all the group users
+            Collection<String> users = new ArrayList<String>(group.getMembers());
+            users.addAll(group.getAdmins());
+            // Iterate on all the group users and update their rosters
+            for (String updatedUser : users) {
+                // Get the roster to update.
+                Roster roster = (Roster) CacheManager.getCache("username2roster").get(updatedUser);
+                if (roster != null) {
+                    // Update the roster with the new group display name
+                    roster.shareGroupRenamed(originalValue, currentValue, users);
+                }
+            }
+        }
     }
 
     public void memberAdded(Group group, Map params) {
+        // Do nothing if the group is not being shown in group members' rosters
+        if (!"true".equals(group.getProperties().get("showInRoster"))) {
+            return;
+        }
         String addedUser = (String) params.get("member");
         groupUserAdded(group, addedUser);
     }
 
     public void memberRemoved(Group group, Map params) {
+        // Do nothing if the group is not being shown in group members' rosters
+        if (!"true".equals(group.getProperties().get("showInRoster"))) {
+            return;
+        }
         String addedUser = (String) params.get("member");
         groupUserDeleted(group, addedUser);
     }
 
     public void adminAdded(Group group, Map params) {
+        // Do nothing if the group is not being shown in group members' rosters
+        if (!"true".equals(group.getProperties().get("showInRoster"))) {
+            return;
+        }
         String addedUser = (String) params.get("admin");
         groupUserAdded(group, addedUser);
     }
 
     public void adminRemoved(Group group, Map params) {
+        // Do nothing if the group is not being shown in group members' rosters
+        if (!"true".equals(group.getProperties().get("showInRoster"))) {
+            return;
+        }
         String addedUser = (String) params.get("admin");
         groupUserDeleted(group, addedUser);
     }
@@ -176,6 +244,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         users.addAll(group.getAdmins());
         // Get the roster of the added user.
         Roster addedUserRoster = (Roster) CacheManager.getCache("username2roster").get(addedUser);
+        // Get the display name of the group
+        String groupName = group.getProperties().get("displayName");
 
         // Iterate on all the group users and update their rosters
         for (String userToUpdate : users) {
@@ -184,11 +254,11 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
                 // Only update rosters in memory
                 if (roster != null) {
-                    roster.addSharedUser(group.getName(), addedUser);
+                    roster.addSharedUser(groupName, addedUser);
                 }
                 // Update the roster of the newly added group user
                 if (addedUserRoster != null) {
-                    addedUserRoster.addSharedUser(group.getName(), userToUpdate);
+                    addedUserRoster.addSharedUser(groupName, userToUpdate);
                 }
             }
         }
@@ -206,6 +276,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         users.addAll(group.getAdmins());
         // Get the roster of the deleted user.
         Roster deletedUserRoster = (Roster) CacheManager.getCache("username2roster").get(deletedUser);
+        // Get the display name of the group
+        String groupName = group.getProperties().get("displayName");
 
         // Iterate on all the group users and update their rosters
         for (String userToUpdate : users) {
@@ -213,11 +285,11 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
             // Only update rosters in memory
             if (roster != null) {
-                roster.deleteSharedUser(group.getName(), deletedUser);
+                roster.deleteSharedUser(groupName, deletedUser);
             }
             // Update the roster of the newly deleted group user
             if (deletedUserRoster != null) {
-                deletedUserRoster.deleteSharedUser(group.getName(), userToUpdate);
+                deletedUserRoster.deleteSharedUser(groupName, userToUpdate);
             }
         }
     }

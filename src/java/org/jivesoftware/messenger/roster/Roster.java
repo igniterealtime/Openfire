@@ -74,6 +74,12 @@ public class Roster implements Cacheable {
         try {
             User rosterUser = UserManager.getInstance().getUser(getUsername());
             sharedGroups = GroupManager.getInstance().getGroups(rosterUser);
+            // Remove groups that are not being shown in group members' rosters
+            for (Iterator<Group> it=sharedGroups.iterator(); it.hasNext();) {
+                if (!"true".equals(it.next().getProperties().get("showInRoster"))) {
+                    it.remove();
+                }
+            }
         }
         catch (UserNotFoundException e) {
             sharedGroups = new ArrayList<Group>();
@@ -89,7 +95,7 @@ public class Roster implements Cacheable {
             for (Group group : sharedGroups) {
                 if (group.isUser(item.getJid().getNode())) {
                     // TODO Group name conflicts are not being considered (do we need this?)
-                    item.addSharedGroup(group.getName());
+                    item.addSharedGroup(group.getProperties().get("displayName"));
                 }
             }
             rosterItems.put(item.getJid().toBareJID(), item);
@@ -99,8 +105,9 @@ public class Roster implements Cacheable {
         for (JID jid : sharedUsers.keySet()) {
             try {
                 User user = UserManager.getInstance().getUser(jid.getNode());
+                String nickname = "".equals(user.getName()) ? jid.getNode() : user.getName();
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
-                        RosterItem.RECV_NONE, user.getName(), null);
+                        RosterItem.RECV_NONE, nickname , null);
                 for (String group : sharedUsers.get(jid)) {
                     item.addSharedGroup(group);
                 }
@@ -224,7 +231,7 @@ public class Roster implements Cacheable {
             Collection<Group> sharedGroups = GroupManager.getInstance().getGroups();
             for (String group : groups) {
                 for (Group sharedGroup : sharedGroups) {
-                    if (sharedGroup.getName().equals(group)) {
+                    if (group.equals(sharedGroup.getProperties().get("displayName"))) {
                         throw new SharedGroupException("Cannot add an item to a shared group");
                     }
                 }
@@ -412,7 +419,7 @@ public class Roster implements Cacheable {
                         groups = new ArrayList<String>();
                         sharedGroupUsers.put(jid, groups);
                     }
-                    groups.add(group.getName());
+                    groups.add(group.getProperties().get("displayName"));
                 }
             }
         }
@@ -477,14 +484,19 @@ public class Roster implements Cacheable {
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(jid);
+            // Do nothing if the item already includes the shared group
+            if (item.getSharedGroups().contains(sharedGroup)) {
+                return;
+            }
         }
         catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
                 User user = UserManager.getInstance().getUser(addedUser);
+                String nickname = "".equals(user.getName()) ? jid.getNode() : user.getName();
                 item =
                         new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
-                                RosterItem.RECV_NONE, user.getName(), null);
+                                RosterItem.RECV_NONE, nickname, null);
                 // Add the new item to the list of items
                 rosterItems.put(item.getJid().toBareJID(), item);
             }
@@ -534,6 +546,36 @@ public class Roster implements Cacheable {
         }
         catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
+        }
+    }
+
+    /**
+     * A shared group of the user has been renamed. Update the existing roster items with the new
+     * name of the shared group and make a roster push for all the available resources.
+     *
+     * @param oldName old name of the shared group.
+     * @param newName new name of the shared group.
+     * @param users group users of the renamed group.
+     */
+    void shareGroupRenamed(String oldName, String newName, Collection<String> users) {
+        for (String user : users) {
+            if (username.equals(user)) {
+                continue;
+            }
+            RosterItem item = null;
+            JID jid = XMPPServer.getInstance().createJID(user, "");
+            try {
+                // Get the RosterItem for the *local* user to add
+                item = getRosterItem(jid);
+                // Update the shared group name in the list of shared groups
+                item.removeSharedGroup(oldName);
+                item.addSharedGroup(newName);
+                // Brodcast to all the user resources of the updated roster item
+                broadcast(item);
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing since the contact does not exist in the user's roster. (strange case!)
+            }
         }
     }
 }

@@ -1,9 +1,12 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -11,9 +14,12 @@
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.HistoryStrategy"
+    errorPage="error.jsp"
 %>
 
-<%-- Define Administration Bean --%>
+<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="fmt" prefix="fmt" %>
+
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -28,15 +34,11 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-
 <%! // Global vars and methods:
-
-    // Strategy definitions:
     static final int ALL = 1;
     static final int NONE = 2;
     static final int NUMBER = 3;
 %>
-
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -70,9 +72,16 @@
             }
             // All done, redirect
             %>
-              <p class="jive-success-text">
-    Settings updated.
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
             <%
         }
     }
@@ -92,57 +101,64 @@
     }
 %>
 
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<form action="chatroom-history-settings.jsp">
-<tr><td class="text" colspan="2" >
+<p>
 Chatrooms can replay conversation histories to provide context to new members joining a room.
-<fmt:message key="short.title" bundle="${lang}" /> provides several options for controlling how much history to store for each room.
-</td>
+<fmt:message key="short.title" bundle="${lang}" /> provides several options for controlling how
+much history to store for each room.
+</p>
 
+<form action="chatroom-history-settings.jsp">
 
+<fieldset>
+    <legend>Set Chatroom History Policy</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= NONE %>" id="rb01"
+                 <%= ((policy==NONE) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb01"><b>Don't Show History</b></label> - Do not show the entire chat
+                history.
+            </td>
+        </tr>
+        <tr valign="top">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= ALL %>" id="rb02"
+                 <%= ((policy==ALL) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb02"><b>Show Entire Chat History</b></label> - Show the entire chat history
+                to the user.
+            </td>
+        </tr>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"
+                 <%= ((policy==NUMBER) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb03"><b>Show a Specific Number of Messages</b></label> - Show a specific
+                number of the most recent messages in the chat. Use the box below to specify
+                that number.
+        </tr>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>
+                &nbsp;
+            </td>
+            <td width="99%">
+                <input type="text" name="numMessages" size="5" maxlength="10"
+                 onclick="this.form.policy[2].checked=true;"
+                 value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"> messages
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
 
-<tr valign="top" class="">
-    <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= NONE %>" id="rb01"
-         <%= ((policy==NONE) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb01"><b>Don't Show History</b></label> - Do not show the entire chat
-        history.
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= ALL %>" id="rb02"
-         <%= ((policy==ALL) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb02"><b>Show Entire Chat History</b></label> - Show the entire chat history
-        to the user.
-    </td>
-</tr>
-<tr valign="top" class="">
-    <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"
-         <%= ((policy==NUMBER) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb03"><b>Show a Specific Number of Messages</b></label> - Show a specific
-        number of the most recent messages in the chat. Use the box below to specify
-        that number.
-</tr>
-<tr valign="top" class="">
-    <td width="1%" nowrap>
-        &nbsp;
-    </td>
-    <td width="99%">
-        <input type="text" name="numMessages" size="5" maxlength="10"
-         onclick="this.form.policy[2].checked=true;"
-         value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"> messages
-</tr>
-</table>
-
-<br>
+<br><br>
 
 <input type="submit" name="update" value="Save Settings">
 

@@ -16,9 +16,9 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="fmt" %>
 
-  <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -33,7 +33,7 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-  <%   // Get parameters:
+<%   // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean auditEnabled = ParamUtils.getBooleanParameter(request,"auditEnabled");
     boolean auditMessages = ParamUtils.getBooleanParameter(request,"auditMessages");
@@ -76,9 +76,18 @@
         // All done, redirect
         if (errors.size() == 0){
         %>
-         <p class="jive-success-text">
-           Settings Updated.
-         </p>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
         <%
         }
     }
@@ -95,138 +104,41 @@
     }
 %>
 
-<table cellpadding="4" cellspacing="0" border="0" width="600">
-<form action="audit-policy.jsp">
-<tr><td colspan="2" class="text">
-Jive Messenger can audit XMPP traffic on the server and save the data to
-XML data files. The amount of data sent via an XMPP server can be substantial.
+<p>
+<fmt:message key="title" bundle="${lang}" /> can audit XMPP traffic on the server and save
+the data to XML data files. The amount of data sent via an XMPP server can be substantial.
 Messenger provides several settings to control whether to audit packets, how
 audit files are created, and the types of packets to save. In most cases, logging
 Message packets will provide all of the data an enterprise requires. Presence
 and IQ packets are primarily useful for tracing and troubleshooting XMPP deployments.
-</td></tr>
+</p>
 
+<form action="audit-policy.jsp">
 
-
-<tr valign="top">
-    <td width="1%" nowrap>
-        <input type="radio" name="auditEnabled" value="false" id="rb01"
-         <%= (!auditEnabled ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb01">
-        <b>Disable Message Auditing</b> - Packets are not logged.
-        </label>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        <input type="radio" name="auditEnabled" value="true" id="rb02"
-         <%= (auditEnabled ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb02">
-        <b>Enable Message Auditing</b> - Packets are logged with the following options:
-        </label>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        &nbsp;
-    </td>
-    <td width="99%">
-        <div class="jive-table">
-        <table cellpadding="3" cellspacing="1" border="0" width="100%">
-        <tr valign="top">
-            <td width="1%" nowrap class="c1">
-                Maximum file size (MB):
-            </td>
-            <td width="99%">
-                <input type="text" size="15" maxlength="50" name="maxSize"
-                 value="<%= ((maxSize != null) ? maxSize : "") %>">
-
-            <%  if (errors.get("maxSize") != null) { %>
-
-                <span class="jive-error-text">
-                Please enter a valid number.
-                </span>
-
-            <%  } %>
-
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap class="c1">
-                Maximum number of files:
-            </td>
-            <td width="99%">
-                <input type="text" size="15" maxlength="50" name="maxCount"
-                 value="<%= ((maxCount != null) ? maxCount : "") %>">
-
-                <%  if (errors.get("maxCount") != null) { %>
-
-                    <span class="jive-error-text">
-                    Please enter a valid number.
-                    </span>
-
-                <%  } %>
-
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap class="c1">
-                Packets to audit:
-            </td>
-            <td width="99%">
-
-        <table cellpadding="4" cellspacing="0" border="0" width="100%">
+<fieldset>
+    <legend>Set Message Audit Policy</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
         <tr valign="top">
             <td width="1%" nowrap>
-                <input type="checkbox" name="auditMessages" id="cb01"
-                 onclick="this.form.auditEnabled[1].checked=true;"
-                 <%= (auditMessages ? "checked" : "") %>>
+                <input type="radio" name="auditEnabled" value="false" id="rb01"
+                 <%= (!auditEnabled ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="cb01">
-                <b>Audit Message Packets</b>
+                <label for="rb01">
+                <b>Disable Message Auditing</b> - Packets are not logged.
                 </label>
             </td>
         </tr>
         <tr valign="top">
             <td width="1%" nowrap>
-                <input type="checkbox" name="auditPresence" id="cb02"
-                 onclick="this.form.auditEnabled[1].checked=true;"
-                 <%= (auditPresence ? "checked" : "") %>>
+                <input type="radio" name="auditEnabled" value="true" id="rb02"
+                 <%= (auditEnabled ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="cb02">
-                <b>Audit Presence Packets</b>
-                </label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                <input type="checkbox" name="auditIQ" id="cb03"
-                 onclick="this.form.auditEnabled[1].checked=true;"
-                 <%= (auditIQ ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="cb03">
-                <b>Audit IQ Packets</b>
-                </label>
-            </td>
-        </tr>
-        <!--
-        <% if (false){ %>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                <input type="checkbox" name="auditXPath" id="cb04"
-                 onclick="this.form.auditEnabled[1].checked=true;"
-                 <%= (auditXPath ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="cb04">
-                <b>Audit Packets matching XPath Queries:</b>
+                <label for="rb02">
+                <b>Enable Message Auditing</b> - Packets are logged with the following options:
                 </label>
             </td>
         </tr>
@@ -235,75 +147,98 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 &nbsp;
             </td>
             <td width="99%">
+                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        Maximum file size (MB):
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="15" maxlength="50" name="maxSize"
+                         value="<%= ((maxSize != null) ? maxSize : "") %>">
 
-                <table cellpadding="4" cellspacing="0" border="0" width="100%">
-                <tr>
-                    <td>
-                        Enter new query:
-                        <input type="text" size="30" maxlength="100" name="newXpathQuery"
-                         onclick="this.form.auditEnabled[1].checked=true;this.form.auditXPath.checked=true;"
-                         value="<%= ((newXpathQuery != null) ? newXpathQuery : "") %>">
+                    <%  if (errors.get("maxSize") != null) { %>
+
+                        <span class="jive-error-text">
+                        Please enter a valid number.
+                        </span>
+
+                    <%  } %>
+
                     </td>
                 </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        Maximum number of files:
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="15" maxlength="50" name="maxCount"
+                         value="<%= ((maxCount != null) ? maxCount : "") %>">
 
-                <%  Iterator queries = auditManager.getXPathFilters();
-                    if (queries.hasNext()) {
-                %>
-                    <tr>
-                        <td>
-                            Current queries audited:
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
+                        <%  if (errors.get("maxCount") != null) { %>
 
-                            <div class="jive-table">
-                            <table cellpadding="3" cellspacing="1" border="0" width="400">
-                            <tr>
-                                <th nowrap>XPath Query</th>
-                                <th align="center">Delete</th>
-                            </tr>
+                            <span class="jive-error-text">
+                            Please enter a valid number.
+                            </span>
 
-                            <%  while (queries.hasNext()) {
-                                    String query = (String)queries.next();
-                            %>
+                        <%  } %>
 
-                            <tr>
-                                <td class="jive-label" width="99%">
-                                    <%= query %>
-                                </td>
-                                <td align="center" width="1%">
-                                    <input type="checkbox" name="xpathQuery"
-                                     value="<%= StringUtils.replace(query, "\"", "&quot;") %>">
-                                </td>
-                            </tr>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        Packets to audit:
+                    </td>
+                    <td width="99%">
 
-                            <%  } %>
-
-                            </table>
-                            </div>
-
-                        </td>
-                    </tr>
-
-                <%  } %>
-
+                        <table cellpadding="4" cellspacing="0" border="0" width="100%">
+                        <tr valign="top">
+                            <td width="1%" nowrap>
+                                <input type="checkbox" name="auditMessages" id="cb01"
+                                 onclick="this.form.auditEnabled[1].checked=true;"
+                                 <%= (auditMessages ? "checked" : "") %>>
+                            </td>
+                            <td width="99%">
+                                <label for="cb01">
+                                <b>Audit Message Packets</b>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <td width="1%" nowrap>
+                                <input type="checkbox" name="auditPresence" id="cb02"
+                                 onclick="this.form.auditEnabled[1].checked=true;"
+                                 <%= (auditPresence ? "checked" : "") %>>
+                            </td>
+                            <td width="99%">
+                                <label for="cb02">
+                                <b>Audit Presence Packets</b>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <td width="1%" nowrap>
+                                <input type="checkbox" name="auditIQ" id="cb03"
+                                 onclick="this.form.auditEnabled[1].checked=true;"
+                                 <%= (auditIQ ? "checked" : "") %>>
+                            </td>
+                            <td width="99%">
+                                <label for="cb03">
+                                <b>Audit IQ Packets</b>
+                                </label>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
                 </table>
-
             </td>
         </tr>
-        <% } // xquery comment block %>
--->
-                </table>
-            </td>
-        </tr>
-        </table>
-        </div>
-    </td>
-</tr>
-</table>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
 
-<br>
+<br><br>
 
 <input type="submit" name="update" value="Save Settings">
 

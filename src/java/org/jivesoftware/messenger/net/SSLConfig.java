@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
-import java.security.Security;
 
 /**
  * Configuration of Messenger's SSL settings.
@@ -34,75 +33,40 @@ public class SSLConfig {
     private static String keypass;
     private static KeyStore trustStore;
     private static String trustpass;
-    private static String keystore;
-    private static String truststore;
+    private static String keyStoreLocation;
+    private static String trustStoreLocation;
 
     private SSLConfig() {
     }
 
     static {
-        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
-        if ("".equals(algorithm) || algorithm == null) {
-            algorithm = "TLS";
-        }
-        String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType");
-        if ("".equals(storeType)) {
-            storeType = null;
-        }
-        keystore = JiveGlobals.getProperty("xmpp.socket.ssl.keystore");
-        if ("".equals(keystore) || keystore == null) {
-            keystore = null;
-        }
-        else {
-            keystore = JiveGlobals.getMessengerHome() + File.separator + keystore;
-        }
-        keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass");
-        if (keypass == null) {
-            keypass = "";
-        }
-        else {
-            keypass = keypass.trim();
-        }
-        truststore = JiveGlobals.getProperty("xmpp.socket.ssl.truststore");
-        if ("".equals(truststore) || truststore == null) {
-            truststore = null;
-        }
-        else {
-            truststore = JiveGlobals.getMessengerHome() + File.separator + truststore;
-        }
-        trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass");
-        if (trustpass == null) {
-            trustpass = "";
-        }
-        else {
-            trustpass = trustpass.trim();
-        }
-
+        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+        String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
+        // Get the keystore location. The default location is security/keystore
+        keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
+                JiveGlobals.getMessengerHome() + File.separator + "security" +
+                File.separator + "keystore");
+        // Get the keystore password. The default password is "changeit".
+        keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
+        keypass = keypass.trim();
+        // Get the truststore location; default at security/truststore
+        trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
+                JiveGlobals.getMessengerHome() + File.separator + "security" +
+                File.separator + "truststore");
+        // Get the truststore passwprd; default is "changeit".
+        trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
+        trustpass = trustpass.trim();
 
         try {
             keyStore = KeyStore.getInstance(storeType);
-            if (keystore == null) {
-                keyStore.load(null, keypass.toCharArray());
-            }
-            else {
-                keyStore.load(new FileInputStream(keystore), keypass.toCharArray());
-            }
+            keyStore.load(new FileInputStream(keyStoreLocation), keypass.toCharArray());
 
             trustStore = KeyStore.getInstance(storeType);
-            if (truststore == null) {
-                trustStore.load(null, trustpass.toCharArray());
-            }
-            else {
-                trustStore.load(new FileInputStream(truststore), trustpass.toCharArray());
-            }
+            trustStore.load(new FileInputStream(trustStoreLocation), trustpass.toCharArray());
 
-            // Install the jsse provider for jdk 1.3.x and the external jsse
-            // Not needed on jdk1.4.x but this implementation must support both platforms
-            Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
             sslFactory = (SSLJiveServerSocketFactory)
                     SSLJiveServerSocketFactory.getInstance(algorithm,
-                            keyStore,
-                            trustStore);
+                    keyStore, trustStore);
         }
         catch (Exception e) {
             Log.error(e);
@@ -158,13 +122,8 @@ public class SSLConfig {
 
     public static void saveStores() throws IOException {
         try {
-            if (keystore != null) {
-                keyStore.store(new FileOutputStream(keystore), keypass.toCharArray());
-            }
-
-            if (truststore != null) {
-                trustStore.store(new FileOutputStream(truststore), trustpass.toCharArray());
-            }
+            keyStore.store(new FileOutputStream(keyStoreLocation), keypass.toCharArray());
+            trustStore.store(new FileOutputStream(trustStoreLocation), trustpass.toCharArray());
         }
         catch (IOException e) {
             throw e;

@@ -68,6 +68,8 @@ public class SocketConnection extends BasicConnection {
 
     private XMLWriter xmlSerializer;
 
+    private boolean flashClient = false;
+
     /**
      * Create a new session using the supplied socket.
      *
@@ -182,6 +184,9 @@ public class SocketConnection extends BasicConnection {
             synchronized (writer) {
                 try {
                     xmlSerializer.write(packet.getElement());
+                    if (flashClient) {
+                        writer.write('\0');
+                    }
                     xmlSerializer.flush();
                 }
                 catch (IOException e) {
@@ -191,5 +196,13 @@ public class SocketConnection extends BasicConnection {
             auditor.audit(packet, session);
             session.incrementServerPacketCount();
         }
+    }
+
+    public void setFlashClient(boolean flashClient) {
+        this.flashClient = flashClient;
+    }
+
+    public boolean isFlashClient() {
+        return flashClient;
     }
 }

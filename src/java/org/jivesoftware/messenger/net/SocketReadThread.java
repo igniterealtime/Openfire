@@ -48,6 +48,7 @@ public class SocketReadThread extends Thread {
     private static String CHARSET = "UTF-8";
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
+    private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
 
     private Socket sock;
     private Session session;
@@ -236,26 +237,62 @@ public class SocketReadThread extends Thread {
      */
     private void createSession() throws UnauthorizedException, XmlPullParserException, IOException, Exception {
         XmlPullParser xpp = reader.getXPPParser();
-        for (int eventType = xpp.getEventType();
-             eventType != XmlPullParser.START_TAG;
-             eventType = xpp.next()) {
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
         }
 
+        boolean isFlashClient = xpp.getPrefix().equals("flash");
         // Conduct error checking, the opening tag should be 'stream'
         // in the 'etherx' namespace
-        if (!xpp.getName().equals("stream")) {
+        if (!xpp.getName().equals("stream") && !isFlashClient) {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
         }
-        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE)) {
+
+        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE) &&
+                !(isFlashClient && xpp.getNamespace(xpp.getPrefix()).equals(FLASH_NAMESPACE))) {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
         }
 
         Writer writer = connection.getWriter();
-        String startPacket = "<?xml version='1.0' encoding='"+CHARSET+"'?><stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\""+serverName+"\" id=\""+session.getStreamID().toString()+"\">";
-        writer.write(startPacket);
+        // Build the start packet response
+        StringBuffer sb = new StringBuffer();
+        sb.append("<?xml version='1.0' encoding='");
+        sb.append(CHARSET);
+        sb.append("'?>");
+        if (isFlashClient) {
+            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
+        }
+        else {
+            sb.append("<stream:stream ");
+        }
+        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\"");
+        sb.append(serverName);
+        sb.append("\" id=\"");
+        sb.append(session.getStreamID().toString());
+        sb.append("\">");
+        writer.write(sb.toString());
+
+        // If this is a flash client then flag the connection and append a special caracter to the
+        // response
+        if (isFlashClient) {
+            session.getConnection().setFlashClient(true);
+            writer.write('\0');
+
+            // Skip possible end of tags and \0 characters
+            /*final int[] holderForStartAndLength = new int[2];
+            final char[] chars = xpp.getTextCharacters(holderForStartAndLength);
+            if (chars[xpp.getColumnNumber()-2] == '/') {
+                xpp.next();
+                try {
+                    xpp.next();
+                }
+                catch (XmlPullParserException ie) {
+                    // We expect this exception since the parser is reading a \0 character
+                }
+            }*/
+        }
+
         writer.flush();
         // TODO: check for SASL support in opening stream tag
     }
-
-
 }

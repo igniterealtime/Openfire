@@ -139,4 +139,24 @@ public interface Connection {
      * @throws UnauthorizedException If caller doesn't have permission to access this resource
      */
     void deliver(Packet packet) throws UnauthorizedException;
+
+    /**
+     * Sets whether the connected client is a flash client or not. Flash clients need to receive
+     * a special character (i.e. \0) at the end of each xml packet. Flash clients may send the
+     * character \0 in incoming packets and may start a connection using another openning tag
+     * such as: "flash:client".
+     *
+     * @param flashClient flag that indicates if the client is a flash client.
+     */
+    void setFlashClient(boolean flashClient);
+
+    /**
+     * Returns true if the connected client is a flash client. Flash clients need to receive
+     * a special character (i.e. \0) at the end of each xml packet. Flash clients may send the
+     * character \0 in incoming packets and may start a connection using another openning tag
+     * such as: "flash:client".
+     *
+     * @return true if the connected client is a flash client.
+     */
+    boolean isFlashClient();
 }

@@ -65,6 +65,11 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
     private PacketRouter router;
 
     /**
+     * The natural language name of the room.
+     */
+    private String naturalLanguageName;
+
+    /**
      * Description of the room. The owner can change the description using the room configuration
      * form.
      */
@@ -361,6 +366,14 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         this.canOccupantsInvite = canOccupantsInvite;
     }
 
+    public String getNaturalLanguageName() {
+        return naturalLanguageName;
+    }
+
+    public void setNaturalLanguageName(String naturalLanguageName) {
+        this.naturalLanguageName = naturalLanguageName;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -451,10 +464,6 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
 
     public boolean canBroadcastPresence(String roleToBroadcast) {
         throw new UnsupportedOperationException();
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void unlockRoom(MUCRole senderRole) {

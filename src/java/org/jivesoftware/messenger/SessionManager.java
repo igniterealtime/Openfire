@@ -22,8 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
@@ -38,7 +36,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -95,12 +92,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     }
 
     /**
-     * The standard Jive reader/writer lock to synchronize access to
-     * the session set.
-     */
-    private ReadWriteLock sessionLock = new ReentrantReadWriteLock();
-
-    /**
      * Map of priority ordered SessionMap objects with username (toLowerCase) as key.
      * The map and its contents should NOT be persisted to disk.
      */
@@ -113,17 +104,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private RoutingTable routingTable;
 
     /**
-     * The standard Jive reader/writer lock to synchronize access to
-     * the anonymous session set.
-     */
-    private ReadWriteLock anonymousSessionLock = new ReentrantReadWriteLock();
-
-    /**
      * Map of anonymous server sessions. They need to be treated separately as they
      * have no associated user, and don't follow the normal routing rules for
      * priority based fall over.
      */
-    private Map<String, Session> anonymousSessions = new HashMap<String, Session>();
+    private Map<String, Session> anonymousSessions = new ConcurrentHashMap<String, Session>();
 
     /**
      * Simple data structure to track sessions for a single user (tracked by resource
@@ -297,28 +282,27 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         boolean success = false;
         String username = session.getAddress().getNode().toLowerCase();
         SessionMap resources = null;
-        sessionLock.writeLock().lock();
-        try {
-            resources = sessions.get(username);
-            if (resources == null) {
-                resources = new SessionMap();
-                sessions.put(username, resources);
+
+        synchronized(username.intern()) {
+            try {
+                resources = sessions.get(username);
+                if (resources == null) {
+                    resources = new SessionMap();
+                    sessions.put(username, resources);
+                }
+                resources.addSession(session);
+                // Register to recieve close notification on this session so we can
+                // remove its route from the sessions set. We hand the session back
+                // to ourselves in the message.
+                session.getConnection().registerCloseListener(this, session);
+                // Remove the pre-Authenticated session but remember to use the temporary JID as the key
+                preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
+                        session.getStreamID().toString()).toString());
+                success = true;
             }
-            resources.addSession(session);
-            // Register to recieve close notification on this session so we can
-            // remove its route from the sessions set. We hand the session back
-            // to ourselves in the message.
-            session.getConnection().registerCloseListener(this, session);
-            // Remove the pre-Authenticated session but remember to use the temporary JID as the key
-            preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
-                    session.getStreamID().toString()).toString());
-            success = true;
-        }
-        catch (UnauthorizedException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-        finally {
-            sessionLock.writeLock().unlock();
+            catch (UnauthorizedException e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
         }
         if (success) {
             Session defaultSession = resources.getDefaultSession();
@@ -339,8 +323,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      */
     public void changePriority(JID sender, int priority) {
         String username = sender.getNode().toLowerCase();
-        sessionLock.writeLock().lock();
-        try {
+        synchronized (username.intern()) {
             SessionMap resources = sessions.get(username);
             if (resources == null) {
                 return;
@@ -352,9 +335,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // Update the route to the bareJID with the session with highest priority
             routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
                     defaultSession);
-        }
-        finally {
-            sessionLock.writeLock().unlock();
         }
     }
 
@@ -376,22 +356,17 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         String username = recipient.getNode();
         if (username == null || "".equals(username)) {
             if (resource != null) {
-                anonymousSessionLock.readLock().lock();
-                try {
+                synchronized (username.intern()) {
                     session = anonymousSessions.get(resource);
-                    if(session == null){
+                    if (session == null){
                         session = getSession(recipient);
                     }
-                }
-                finally {
-                    anonymousSessionLock.readLock().unlock();
                 }
             }
         }
         else {
             username = username.toLowerCase();
-            sessionLock.readLock().lock();
-            try {
+            synchronized (username.intern()) {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     if (resource == null) {
@@ -405,9 +380,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                     }
                 }
             }
-            finally {
-                sessionLock.readLock().unlock();
-            }
         }
         return session;
     }
@@ -419,20 +391,13 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
         if (username == null || "".equals(username)) {
             if (resource != null) {
-                anonymousSessionLock.readLock().lock();
-                try {
-                    hasRoute = anonymousSessions.containsKey(resource);
-                }
-                finally {
-                    anonymousSessionLock.readLock().unlock();
-                }
+                hasRoute = anonymousSessions.containsKey(resource);
             }
         }
         else {
             username = username.toLowerCase();
             Session session = null;
-            sessionLock.readLock().lock();
-            try {
+            synchronized (username.intern()) {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     if (resource == null) {
@@ -444,9 +409,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                         }
                     }
                 }
-            }
-            finally {
-                sessionLock.readLock().unlock();
             }
             // Makes sure the session is still active
             // Must occur outside of the lock since validation can cause
@@ -482,25 +444,15 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
         String username = from.getNode();
         if (username == null || "".equals(username)) {
-            anonymousSessionLock.readLock().lock();
-            try {
-                session = anonymousSessions.get(resource);
-            }
-            finally {
-                anonymousSessionLock.readLock().unlock();
-            }
+            session = anonymousSessions.get(resource);
         }
         else {
             username = username.toLowerCase();
-            sessionLock.readLock().lock();
-            try {
+            synchronized (username.intern()) {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     session = sessionMap.getSession(resource);
                 }
-            }
-            finally {
-                sessionLock.readLock().unlock();
             }
         }
         if (session == null) {
@@ -653,48 +605,30 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     private void copyAnonSessions(List sessions) {
         // Add anonymous sessions
-        anonymousSessionLock.readLock().lock();
-        try {
-            for (Session session : anonymousSessions.values()) {
-                sessions.add(session);
-            }
-        }
-        finally {
-            anonymousSessionLock.readLock().unlock();
+        for (Session session : anonymousSessions.values()) {
+            sessions.add(session);
         }
     }
 
     private void copyUserSessions(List sessions) {
         // Get a copy of the sessions from all users
-        sessionLock.readLock().lock();
-        try {
-            Iterator users = getSessionUsers();
-            while (users.hasNext()) {
-                Collection<Session> usrSessions = getSessions((String)users.next());
-                for (Session session : usrSessions) {
-                    sessions.add(session);
-                }
+        Iterator users = getSessionUsers();
+        while (users.hasNext()) {
+            Collection<Session> usrSessions = getSessions((String)users.next());
+            for (Session session : usrSessions) {
+                sessions.add(session);
             }
-        }
-        finally {
-            sessionLock.readLock().unlock();
         }
     }
 
     private void copyUserSessions(String username, List sessionList) {
         // Get a copy of the sessions from all users
-        sessionLock.readLock().lock();
-        try {
-            SessionMap sessionMap = sessions.get(username);
-            if (sessionMap != null) {
-                Iterator sessionItr = sessionMap.getSessions();
-                while (sessionItr.hasNext()) {
-                    sessionList.add(sessionItr.next());
-                }
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            Iterator sessionItr = sessionMap.getSessions();
+            while (sessionItr.hasNext()) {
+                sessionList.add(sessionItr.next());
             }
-        }
-        finally {
-            sessionLock.readLock().unlock();
         }
     }
 
@@ -730,15 +664,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public int getSessionCount(String username) throws UnauthorizedException {
         int sessionCount = 0;
-        sessionLock.readLock().lock();
-        try {
-            SessionMap sessionMap = sessions.get(username);
-            if (sessionMap != null) {
-                sessionCount = sessionMap.resources.size();
-            }
-        }
-        finally {
-            sessionLock.readLock().unlock();
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            sessionCount = sessionMap.resources.size();
         }
         return sessionCount;
     }
@@ -753,25 +681,14 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      *
      * @param packet The packet to be broadcast
      */
-    public void broadcast(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
-        sessionLock.readLock().lock();
-        try {
-            Iterator values = sessions.values().iterator();
-            while (values.hasNext()) {
-                ((SessionMap)values.next()).broadcast(packet);
-            }
+    public void broadcast(Packet packet) throws UnauthorizedException {
+        Iterator values = sessions.values().iterator();
+        while (values.hasNext()) {
+            ((SessionMap)values.next()).broadcast(packet);
         }
-        finally {
-            sessionLock.readLock().unlock();
-        }
-        anonymousSessionLock.readLock().lock();
-        try {
-            for (Session session : anonymousSessions.values()) {
-                session.getConnection().deliver(packet);
-            }
-        }
-        finally {
-            anonymousSessionLock.readLock().unlock();
+
+        for (Session session : anonymousSessions.values()) {
+            session.getConnection().deliver(packet);
         }
     }
 
@@ -783,15 +700,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param packet The packet to be broadcast
      */
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
-        sessionLock.readLock().lock();
-        try {
-            SessionMap sessionMap = sessions.get(username);
-            if (sessionMap != null) {
-                sessionMap.broadcast(packet);
-            }
-        }
-        finally {
-            sessionLock.readLock().unlock();
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            sessionMap.broadcast(packet);
         }
     }
 
@@ -807,20 +718,13 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
         SessionMap sessionMap = null;
         if (anonymousSessions.containsValue(session)) {
-            anonymousSessionLock.writeLock().lock();
-            try {
-                anonymousSessions.remove(session.getAddress().getResource());
-                sessionCount--;
-            }
-            finally {
-                anonymousSessionLock.writeLock().unlock();
-            }
+            anonymousSessions.remove(session.getAddress().getResource());
+            sessionCount--;
         }
         else {
             if (session.getAddress() != null && session.getAddress().getNode() != null) {
                 String username = session.getAddress().getNode().toLowerCase();
-                sessionLock.writeLock().lock();
-                try {
+                synchronized (username.intern()) {
                     sessionMap = sessions.get(username);
                     if (sessionMap != null) {
                         sessionMap.removeSession(session);
@@ -829,9 +733,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                             sessions.remove(username);
                         }
                     }
-                }
-                finally {
-                    sessionLock.writeLock().unlock();
                 }
             }
         }
@@ -865,16 +766,10 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public void addAnonymousSession(Session session) {
         try {
-            anonymousSessionLock.writeLock().lock();
-            try {
-                anonymousSessions.put(session.getAddress().getResource(), session);
-                session.getConnection().registerCloseListener(this, session);
-                // Remove the session from the pre-Authenticated sessions list
-                preAuthenticatedSessions.remove(session.getAddress().toString());
-            }
-            finally {
-                anonymousSessionLock.writeLock().unlock();
-            }
+            anonymousSessions.put(session.getAddress().getResource(), session);
+            session.getConnection().registerCloseListener(this, session);
+            // Remove the session from the pre-Authenticated sessions list
+            preAuthenticatedSessions.remove(session.getAddress().toString());
             // Anonymous session always have resources so we only need to add one route. That is
             // the route to the anonymous session
             routingTable.addRoute(session.getAddress(), session);

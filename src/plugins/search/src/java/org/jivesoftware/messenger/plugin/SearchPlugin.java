@@ -13,6 +13,7 @@ import java.util.*;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
 import org.jivesoftware.messenger.forms.DataForm;
@@ -44,7 +45,7 @@ import org.xmpp.packet.Packet;
  * @author Ryan Graham 
  */
 public class SearchPlugin implements Component, Plugin {
-
+    private XMPPServer server;
     private UserManager userManager;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
@@ -56,6 +57,7 @@ public class SearchPlugin implements Component, Plugin {
     private Collection<String> searchFields;
 
     public SearchPlugin() {
+        server = XMPPServer.getInstance();
         // See if the installed provider supports searching. If not, workaround
         // by providing our own searching.
         UserManager manager = UserManager.getInstance();
@@ -131,6 +133,7 @@ public class SearchPlugin implements Component, Plugin {
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        server = null;
         userManager = null;
     }
 
@@ -163,10 +166,25 @@ public class SearchPlugin implements Component, Plugin {
 
                     Element responseElement = DocumentHelper.createElement(QName.get(
                             "query", "http://jabber.org/protocol/disco#info"));
-                    responseElement.addElement("identity").addAttribute("category", "search");
+                    responseElement.addElement("identity").addAttribute("category", "search")
+                                                          .addAttribute("type", "text")
+                                                          .addAttribute("name", "User Search");
                     responseElement.addElement("feature").addAttribute("var", "jabber:iq:search");
                     replyPacket.setChildElement(responseElement);
 
+                    componentManager.sendPacket(this, replyPacket);
+                }
+                catch (ComponentException e) {
+                    componentManager.getLog().error(e);
+                }
+            }
+            else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
+                try {
+                    IQ replyPacket = IQ.createResultIQ(packet);
+                    Element responseElement = DocumentHelper.createElement(QName.get(
+                            "query", "http://jabber.org/protocol/disco#info"));
+                    
+                    replyPacket.setChildElement(responseElement);
                     componentManager.sendPacket(this, replyPacket);
                 }
                 catch (ComponentException e) {
@@ -199,8 +217,12 @@ public class SearchPlugin implements Component, Plugin {
     private IQ processSetPacket(IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
         
+        XFormFieldImpl field = new XFormFieldImpl("jid");
+        field.setLabel("JID");
+        searchResults.addReportedField(field);
+        
         for (String fieldName: searchFields) {
-            XFormFieldImpl field = new XFormFieldImpl(fieldName);
+            field = new XFormFieldImpl(fieldName);
             field.setLabel(initCap(fieldName));
             searchResults.addReportedField(field);
         }
@@ -246,11 +268,16 @@ public class SearchPlugin implements Component, Plugin {
         Iterator userIter = users.iterator();
         while (userIter.hasNext()) {
             User user = (User) userIter.next();
+            String username = user.getName();
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
 
+            XFormFieldImpl fieldJID = new XFormFieldImpl("jid");
+            fieldJID.addValue(username + "@" + server.getServerInfo().getName());
+            items.add(fieldJID);
+            
             XFormFieldImpl fieldUsername = new XFormFieldImpl("Username");
-            fieldUsername.addValue(user.getUsername());
+            fieldUsername.addValue(username);
             items.add(fieldUsername);
 
             XFormFieldImpl fieldName = new XFormFieldImpl("Name");
@@ -329,12 +356,14 @@ public class SearchPlugin implements Component, Plugin {
                         Log.error("Error getting user", e);
                     }
 
-                } else if (field.equals("Name")) {
+                }
+                else if (field.equals("Name")) {
                     if (query.equalsIgnoreCase(user.getName())) {
                         foundUsers.add(user);
                     }
 
-                } else if (field.equals("Email")) {
+                }
+                else if (field.equals("Email")) {
                     if (user.getEmail() != null) {
                         if (query.equalsIgnoreCase(user.getEmail())) {
                             foundUsers.add(user);

@@ -5,6 +5,6 @@
     <name>Search Plugin</name>
     <description>Provides support for Jabber Search (JEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <minServerVersion>2.1.2</minServerVersion>
 </plugin>

@@ -1,3 +1,10 @@
+version 1.0.4
+---------------
+* Added type and name attributes to the identity element when handling a disco#info query
+* Added a check and appropriate response to a disco#items query
+* Added a jid field when returning the search results
+
+
 version 1.0.3
 ---------------
 * Fixed incompatiblity issue with psi

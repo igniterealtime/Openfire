@@ -196,7 +196,7 @@ public class ConnectionPool implements Runnable {
         }
 
         // check to see if there's any currently open connections to close
-        for (int i = 0; i <= conCount; i++) {
+        for (int i = 0; i < conCount; i++) {
             ConnectionWrapper wrapper = wrappers[i];
 
             // null means that the connection hasn't been initialized, which will only occur

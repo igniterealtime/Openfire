@@ -17,9 +17,7 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
-import org.jivesoftware.messenger.roster.RosterManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -130,10 +128,6 @@ public class GroupManager {
 
         // Expire all relevant caches.
         groupCache.remove(group.getName());
-
-        // Notify the RosterManager that the group has been deleted
-        RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
-        rosterManager.groupDeleted(group);
     }
 
     /**

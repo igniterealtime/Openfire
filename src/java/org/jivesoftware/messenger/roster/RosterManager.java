@@ -17,11 +17,14 @@ import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.SharedGroupException;
+import org.jivesoftware.messenger.event.GroupEventListener;
+import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.group.Group;
 
 import java.util.Iterator;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -34,12 +37,14 @@ import java.util.ArrayList;
  *
  * @author Iain Shigeoka
  */
-public class RosterManager extends BasicModule {
+public class RosterManager extends BasicModule implements GroupEventListener {
 
     private Cache rosterCache = null;
 
     public RosterManager() {
         super("Roster Manager");
+        // Add the new instance as a listener of group events
+        GroupEventDispatcher.addListener(this);
     }
 
     /**
@@ -121,12 +126,11 @@ public class RosterManager extends BasicModule {
         }
     }
 
-    /**
-     * Notification that a Group has been deleted. Update the group users' roster accordingly.
-     *
-     * @param group the group that has been deleted.
-     */
-    public void groupDeleted(Group group) {
+    public void groupCreated(Group group, Map params) {
+        //Do nothing
+    }
+
+    public void groupDeleting(Group group, Map params) {
         // Get all the group users
         Collection<String> users = new ArrayList<String>(group.getMembers());
         users.addAll(group.getAdmins());
@@ -136,13 +140,37 @@ public class RosterManager extends BasicModule {
         }
     }
 
+    public void groupModified(Group group, Map params) {
+        //TODO Implement this
+    }
+
+    public void memberAdded(Group group, Map params) {
+        String addedUser = (String) params.get("member");
+        groupUserAdded(group, addedUser);
+    }
+
+    public void memberRemoved(Group group, Map params) {
+        String addedUser = (String) params.get("member");
+        groupUserDeleted(group, addedUser);
+    }
+
+    public void adminAdded(Group group, Map params) {
+        String addedUser = (String) params.get("admin");
+        groupUserAdded(group, addedUser);
+    }
+
+    public void adminRemoved(Group group, Map params) {
+        String addedUser = (String) params.get("admin");
+        groupUserDeleted(group, addedUser);
+    }
+
     /**
      * Notification that a Group user has been added. Update the group users' roster accordingly.
      *
      * @param group the group where the user was added.
      * @param addedUser the username of the user that has been added to the group.
      */
-    public void groupUserAdded(Group group, String addedUser) {
+    private void groupUserAdded(Group group, String addedUser) {
         // Get all the group users
         Collection<String> users = new ArrayList<String>(group.getMembers());
         users.addAll(group.getAdmins());
@@ -172,7 +200,7 @@ public class RosterManager extends BasicModule {
      * @param group the group from where the user was deleted.
      * @param deletedUser the username of the user that has been deleted from the group.
      */
-    public void groupUserDeleted(Group group, String deletedUser) {
+    private void groupUserDeleted(Group group, String deletedUser) {
         // Get all the group users
         Collection<String> users = new ArrayList<String>(group.getMembers());
         users.addAll(group.getAdmins());
@@ -181,19 +209,16 @@ public class RosterManager extends BasicModule {
 
         // Iterate on all the group users and update their rosters
         for (String userToUpdate : users) {
-            if (!deletedUser.equals(userToUpdate)) {
-                // Get the roster to update
-                Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
-                // Only update rosters in memory
-                if (roster != null) {
-                    roster.deleteSharedUser(group.getName(), deletedUser);
-                }
-                // Update the roster of the newly deleted group user
-                if (deletedUserRoster != null) {
-                    deletedUserRoster.deleteSharedUser(group.getName(), userToUpdate);
-                }
+            // Get the roster to update
+            Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
+            // Only update rosters in memory
+            if (roster != null) {
+                roster.deleteSharedUser(group.getName(), deletedUser);
+            }
+            // Update the roster of the newly deleted group user
+            if (deletedUserRoster != null) {
+                deletedUserRoster.deleteSharedUser(group.getName(), userToUpdate);
             }
         }
     }
-
 }

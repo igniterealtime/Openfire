@@ -25,6 +25,13 @@
         String value = (String)xmppSettings.get(name);
         JiveGlobals.setProperty(name, value);
     }
+    Map xmlSettings = (Map)session.getAttribute("xmlSettings");
+    iter = xmlSettings.keySet().iterator();
+    while(iter.hasNext()){
+        String name = (String)iter.next();
+        String value = (String)xmlSettings.get(name);
+        JiveGlobals.setXMLProperty(name, value);
+    }
     // Shut down connection provider. Some connection providers (such as the
     // embedded provider) require a clean shut-down.
     DbConnectionManager.getConnectionProvider().destroy();    
@@ -49,7 +56,7 @@
     <li>
         <%
             String server = request.getServerName();
-            String port = JiveGlobals.getProperty("adminConsole.port");
+            String port = JiveGlobals.getXMLProperty("adminConsole.port");
         %>
         <a href="http://<%= server %>:<%= port %>/login.jsp?username=admin"><fmt:message key="setup.finished.login" /></a>.
     </li>

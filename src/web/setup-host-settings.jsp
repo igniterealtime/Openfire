@@ -39,11 +39,14 @@
             Map xmppSettings = new HashMap();
 
             xmppSettings.put("xmpp.domain",domain);
-            xmppSettings.put("adminConsole.port",Integer.toString(embeddedPort));
-            xmppSettings.put("adminConsole.securePort",Integer.toString(securePort));
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "true" );
             session.setAttribute("xmppSettings", xmppSettings);
+
+            Map xmlSettings = new HashMap();
+            xmlSettings.put("adminConsole.port",Integer.toString(embeddedPort));
+            xmlSettings.put("adminConsole.securePort",Integer.toString(securePort));
+            session.setAttribute("xmlSettings", xmlSettings);
 
             // update the sidebar status
             session.setAttribute("jive.setup.sidebar.2","done");

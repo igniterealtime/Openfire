@@ -147,6 +147,9 @@
         if (s > 5) {
             s -= 5;
         }
+        if (s < 5) {
+            s = 0;
+        }
         if (s > 2) {
     %>
         <a href="user-summary.jsp?start=0&range=<%= range %>">1</a> ...
@@ -274,6 +277,9 @@
         int s = curPage-1;
         if (s > 5) {
             s -= 5;
+        }
+        if (s < 5) {
+            s = 0;
         }
         if (s > 2) {
     %>

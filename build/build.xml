@@ -365,7 +365,9 @@
 
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
         <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" />
-        <copy file="${web.dir}/WEB-INF/web.xml" toFile="${webapp.dest.dir}/WEB-INF/web.xml">
+        <copy file="${web.dir}/WEB-INF/web.xml"
+                toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+                overwrite="true">
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
                 <filter token="JSPC-SERVLETS" value="${servlet-xml}" />
             </filterset>

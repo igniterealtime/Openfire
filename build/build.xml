@@ -102,7 +102,6 @@
         <include name="**/*.html" />
         <include name="**/*.css" />
         <include name="**/*.gif" />
-        <include name="**/*.jpg" /> <!-- TODO: convert these to gif files -->
     </patternset>
 
     <filterset id="docs.filters">
@@ -128,6 +127,14 @@
         <tstamp>
             <format property="builddate" pattern="MM/dd/yyyy" />
         </tstamp>
+        <tstamp>
+            <format property="dailybuild.tstamp" pattern="yyyy-MM-dd" locale="en"/>
+        </tstamp>
+
+        <echo>
+            ${dailybuild.tstamp}
+        </echo>
+
         <mkdir dir="${target.dir}" />
     </target>
 
@@ -442,6 +449,14 @@
             compression="gzip"
         />
 
+    </target>
+
+    <!-- dailybuild ============================================================================ -->
+    <target name="dailybuild" depends="init" description="Creates a daily build release">
+        <antcall target="release">
+            <param name="release.out.name" value="${dist.prefix}_${dailybuild.tstamp}" />
+            <param name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}" />
+        </antcall>
     </target>
 
     <!-- clean ================================================================================= -->

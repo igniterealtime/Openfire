@@ -144,6 +144,16 @@ public class SocketConnection extends BasicConnection {
                 if (session != null) {
                     session.setStatus(Session.STATUS_CLOSED);
                 }
+                synchronized (writer) {
+                    try {
+                        writer.write("</stream:stream>");
+                        if (flashClient) {
+                            writer.write('\0');
+                        }
+                        xmlSerializer.flush();
+                    }
+                    catch (IOException e) {}
+                }
             }
             catch (Exception e) {
                 // Do nothing

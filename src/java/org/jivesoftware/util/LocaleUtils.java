@@ -281,7 +281,7 @@ public class LocaleUtils {
             }
         }
         catch (java.util.MissingResourceException mre) {
-            Log.error("Missing resource for key: " + key
+            Log.warn("Missing resource for key: " + key
                     + " in locale " + locale.toString());
             value = "";
         }

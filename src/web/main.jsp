@@ -20,17 +20,16 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-
 <!-- Define BreadCrumbs -->
 <c:set var="title" value="Jive Messenger Admin"  />
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
+
 <%@ include file="top.jsp" %>
 
-  
 <p>Welcome to the Jive Messenger Admin tool.</p>
 
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
+<table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
 <tr class="tableHeaderBlue"><td colspan="2" align="center"><fmt:message key="title" bundle="${lang}" /> Information</td></tr>
 <tr><td colspan="2">
 <tr>  

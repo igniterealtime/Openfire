@@ -16,3 +16,4 @@ jaxen.jar            | 1.1 beta 4 (from DOM4J 1.5.2)
 junit.jar            | 3.8.1
 ant-contrib.jar      | 1.0b1
 ant-subdirtask.jar   | Revision 1.4 (CVS)
+jdic.jar             | 0.8.6 (for windows only)

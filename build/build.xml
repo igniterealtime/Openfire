@@ -180,6 +180,7 @@
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class" />
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
+            <fileset dir="${src.dir}/database" includes="*.sql" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
@@ -342,6 +343,11 @@
         <!-- Copy conf dir -->
         <copy todir="${prepare.out.dir}">
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+        </copy>
+
+        <!-- Copy database scripts -->
+        <copy todir="${prepare.out.dir}">
+            <fileset dir="${src.dir}" includes="database/**/*.*"></fileset>
         </copy>
 
         <!-- Copy bin dir -->

@@ -1051,7 +1051,9 @@ public class SessionManager extends BasicModule {
             try {
                 ComponentSession session = (ComponentSession)handback;
                 // Unbind the domain for this external component
-                InternalComponentManager.getInstance().removeComponent(session.getAddress().getDomain());
+                String domain = session.getAddress().getDomain();
+                String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
+                InternalComponentManager.getInstance().removeComponent(subdomain);
                 // Remove the session
                 componentsSessions.remove(session);
             }

@@ -92,7 +92,7 @@ import="java.text.DateFormat,
         }
         else {
             response.sendRedirect("group-edit.jsp?group=" +
-                    URLEncoder.encode(groupName, "UTF-8") + "&success=false");
+                    URLEncoder.encode(groupName, "UTF-8") + "&success=false&add=true");
         }
         return;
     }
@@ -149,8 +149,21 @@ import="java.text.DateFormat,
     </div><br>
 <%
     }
+    else if(request.getParameter("success") != null && request.getParameter("success").equals("false")) {
 %>
-
+ <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        <% if(add) { %>
+        User(s) not added successfully.
+        <% } %>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+<% } %>
 <form name="ff" action="group-edit.jsp">
 <input type="hidden" name="group" value="<%= groupName %>"/>
 

@@ -9,6 +9,7 @@
                  java.util.Iterator,
                  org.jivesoftware.messenger.user.UserManager,
                  java.text.DateFormat,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.PresenceManager"
 %>
 
@@ -16,14 +17,17 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="User Summary"  />
-<c:set var="breadcrumbs" value="${webManager.breadCrumbs}"  />
-<c:set var="image" value="/images/user.jpg" />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-summary.jsp" />
-<c:set var="sbar" value="users"/>
-<%@ include file="top.jsp" %>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "User Summary";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
+    pageinfo.setPageID("user-summary");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
 
 
 

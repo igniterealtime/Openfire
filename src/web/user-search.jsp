@@ -7,18 +7,22 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  java.util.HashMap,
+                 org.jivesoftware.admin.*,
                  java.util.Map" %>
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="User Search"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-search.jsp" />
-<c:set var="sbar" value="users" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "User Search";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
+    pageinfo.setPageID("user-search");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 <% 
 
@@ -58,25 +62,14 @@
 <%  } %>
 <form name="f" action="user-search.jsp">
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Search For User</td></tr>
 <tr><td class="text" colspan="2">
-Use the form below to search for users in the system. Currently, searches are keyed off userID
-or username.
-
-
+Use the form below to search for users in the system.
 
 <input type="hidden" name="search" value="true">
 
-<tr class="">
-    <td align="center">
-        or
-    </td>
-    <td>
-        &nbsp;
-    </td>
-</tr>
+
 <tr class="jive-even">
-    <td class="jive-label">
+    <td width="1%">
         Username:
     </td>
     <td>

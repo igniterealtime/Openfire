@@ -264,7 +264,7 @@ public class WebManager extends WebBean {
         }
     }
 
-    private void showServerDown() {
+    protected void showServerDown() {
         try {
             response.sendRedirect("error-serverdown.jsp");
         }

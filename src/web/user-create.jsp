@@ -9,12 +9,10 @@
                  java.util.Map,
                  org.jivesoftware.messenger.user.UserManager,
                  org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.messenger.user.spi.*"
-%>
-
-<%@ page import="org.jivesoftware.util.*,
+                 org.jivesoftware.messenger.user.spi.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
+                 org.jivesoftware.admin.*,
                  java.io.StringWriter,
                  java.io.StringWriter,
                  java.io.IOException,
@@ -89,14 +87,16 @@
 
 
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Create User"  />
-<c:set var="breadcrumbs" value="${webManager.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set var="sbar" value="users" scope="page" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-create.jsp" />
-<%@ include file="top.jsp" %>
-
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Create User";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-create.jsp"));
+    pageinfo.setPageID("user-create");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 <c:set var="submit" value="${param.create}" />
 <c:set var="errors" value="${errors}" />
@@ -110,7 +110,6 @@
 <%  } %>
 <form name="f" action="user-create.jsp" method="post">
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center">Create New User</td></tr>
 <tr><td class="text" colspan="2">
 Use the form below to create a new user in the system.
 </td></tr>

@@ -11,8 +11,6 @@
 
 package org.jivesoftware.messenger.launcher;
 
-import org.jivesoftware.util.XMLProperties;
-import org.jivesoftware.messenger.JiveGlobals;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +19,8 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import javax.swing.*;
+import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.XMLProperties;
 
 /**
  * Launcher for Jive Messenger.
@@ -30,8 +30,7 @@ import javax.swing.*;
 public class Launcher {
 
     private Process messengerd = null;
-    private String configFile = JiveGlobals.getMessengerHome() + File.separator + "config" +
-            File.separator + "jive-messenger.xml";
+    private String configFile = JiveGlobals.getMessengerHome() + File.separator + "conf" + File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 
     /**
@@ -164,29 +163,27 @@ public class Launcher {
 
     private synchronized void startApplication() {
         if (messengerd == null) {
-            File binDir = null;
+            File libDir = null;
             File exe = null;
 
             try {
-                // Aliases keep their cwd rather than the aliased binDir's cwd on MacOS X
+                // Aliases keep their cwd rather than the aliased libDir's cwd on MacOS X
                 // so we'll do a search for messengerd rather than relying on it being where
                 // we think it will be...
-                binDir = new File("").getAbsoluteFile();
+                libDir = new File("").getAbsoluteFile();
 
-                if (!"bin".equals(binDir.getName())) {
-                    binDir = new File(binDir, "bin");
-                }
+                File parentDir = libDir.getParentFile();
 
-                if ("bin".equals(binDir.getName())) {
+                if ("lib".equals(libDir.getName())) {
                     // Windows
-                    exe = new File(binDir, "messengerd.exe");
+                    exe = new File(parentDir, "messenger.exe");
 
                     if (exe.exists()) {
                         messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
                     }
                     else {
                         // MacOS X
-                        exe = new File(binDir, "messengerd.app");
+                        exe = new File(parentDir, "messenger.app");
 
                         if (exe.exists()) {
                             messengerd = Runtime.getRuntime().exec(new String[]{
@@ -195,7 +192,7 @@ public class Launcher {
                         }
                         else {
                             // Unix
-                            exe = new File(binDir, "messengerd");
+                            exe = new File(parentDir, "messenger");
 
                             if (exe.exists()) {
                                 messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
@@ -210,9 +207,9 @@ public class Launcher {
             catch (Exception e) {
                 // Try one more time using the jar and hope java is on the path
                 try {
-                    if (binDir != null) {
+                    if (libDir != null) {
                         messengerd = Runtime.getRuntime().exec(new String[]{
-                            "java", "-jar", new File(binDir, "messengerd.jar").toString()
+                            "java", "-jar", new File(libDir, "startup.jar").toString()
                         });
                     }
                     else {
@@ -250,10 +247,11 @@ public class Launcher {
         try {
             XMLProperties props = new XMLProperties(configFile);
             String port = props.getProperty("embedded-web.port");
-            BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.jsp");
+            BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
         }
         catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
+

@@ -306,8 +306,10 @@ public class Group implements Cacheable {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
+            Object answer;
             if (properties.containsKey(key)) {
                 String originalValue = properties.get(key);
+                answer = properties.put((String)key, (String)value);
                 updateProperty((String)key, (String)value);
                 // Fire event.
                 Map params = new HashMap();
@@ -318,6 +320,7 @@ public class Group implements Cacheable {
                         GroupEventDispatcher.EventType.group_modified, params);
             }
             else {
+                answer = properties.put((String)key, (String)value);
                 insertProperty((String)key, (String)value);
                 // Fire event.
                 Map params = new HashMap();
@@ -326,7 +329,7 @@ public class Group implements Cacheable {
                 GroupEventDispatcher.dispatchEvent(Group.this,
                         GroupEventDispatcher.EventType.group_modified, params);
             }
-            return properties.put((String)key, (String)value);
+            return answer;
         }
 
         public Set<Entry> entrySet() {

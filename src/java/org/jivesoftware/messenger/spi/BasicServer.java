@@ -95,7 +95,7 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
                 name = "127.0.0.1";
             }
 
-            version = new Version(2, 0, 0, Version.ReleaseStatus.Release, -1);
+            version = new Version(2, 0, 1, Version.ReleaseStatus.Release, -1);
             initialized = true;
         }
         catch (UnauthorizedException e) {

@@ -808,9 +808,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return false;
     }
 
-    public Iterator getItems(String name, String node, JID senderJID)
+    public Iterator<Element> getItems(String name, String node, JID senderJID)
             throws UnauthorizedException {
-        List answer = new ArrayList();
+        List<Element> answer = new ArrayList<Element>();
         if (name == null && node == null) {
             Element item;
             // Answer all the public rooms as items

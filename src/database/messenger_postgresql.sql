@@ -153,7 +153,7 @@ CREATE TABLE mucAffiliation (
 
 CREATE TABLE mucMember (
   roomID              INTEGER        NOT NULL,
-  jid                 VARCH(1024)    NOT NULL,
+  jid                 VARCHAR(1024)  NOT NULL,
   nickname            VARCHAR(255)   NULL,
   CONSTRAINT mucMember__pk PRIMARY KEY (roomID,jid)
 );

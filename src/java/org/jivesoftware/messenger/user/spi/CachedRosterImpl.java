@@ -24,8 +24,6 @@ import org.jivesoftware.messenger.user.BasicRoster;
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.CachedRoster;
 import org.jivesoftware.messenger.user.CachedRosterItem;
-import org.jivesoftware.messenger.user.IQRoster;
-import org.jivesoftware.messenger.user.IQRosterItem;
 import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.messenger.user.RosterItemProvider;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
@@ -37,6 +35,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.Roster;
 
 /**
  * <p>A roster implemented against a JDBC database.</p>
@@ -79,18 +78,16 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         return username;
     }
 
-    public IQRoster getReset() throws UnauthorizedException {
-        IQRoster roster = new IQRoster();
+    public Roster getReset() throws UnauthorizedException {
+        Roster roster = new Roster();
         Iterator items = getRosterItems();
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
             if (item.getSubStatus() != RosterItem.SUB_NONE || item.getAskStatus() != RosterItem.ASK_NONE) {
-                try {
-                    roster.createRosterItem(item);
-                }
-                catch (UserAlreadyExistsException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                }
+                roster.addItem(item.getJid(), item.getNickname(),
+                        Roster.Ask.valueOf(item.getAskStatus().getName()),
+                        Roster.Subscription.valueOf(item.getSubStatus().getName()),
+                        item.getGroups());
             }
         }
         return roster;
@@ -130,20 +127,17 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
     }
 
-    protected RosterItem provideRosterItem(JID user, String nickname, List group) throws UserAlreadyExistsException, UnauthorizedException {
-        return provideRosterItem(new BasicRosterItem(user, nickname, group));
-    }
+    protected RosterItem provideRosterItem(JID user, String nickname, List<String> group) throws UserAlreadyExistsException, UnauthorizedException {
+        Roster roster = new Roster();
+        roster.setType(IQ.Type.set);
+        Roster.Item item = roster.addItem(user, nickname, null, Roster.Subscription.none, group);
 
-    protected RosterItem provideRosterItem(RosterItem item) throws UserAlreadyExistsException, UnauthorizedException {
-        item = rosterItemProvider.createItem(username, new BasicRosterItem(item));
+        RosterItem rosterItem = rosterItemProvider.createItem(username, new BasicRosterItem(item));
 
         // Broadcast the roster push to the user
-        IQRoster roster = new IQRoster();
-        roster.setType(IQ.Type.set);
-        roster.createRosterItem(item);
         broadcast(roster);
 
-        return item;
+        return rosterItem;
     }
 
     private PresenceManager presenceManager;
@@ -155,8 +149,8 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             cachedItem = (CachedRosterItem)item;
         }
         else {
-            // This is a different item object, probably an IQRosterItem update for an existing item
-            // So grab the cached version out of the super to learn the rosterID for the item
+            // This is a different item object, probably an BasicRosterItem update for an existing
+            // item. So grab the cached version out of the super to learn the rosterID for the item
             // And create a new cached roster item with the new info
             cachedItem = (CachedRosterItem)super.getRosterItem(item.getJid());
             cachedItem = new CachedRosterItemImpl(cachedItem.getID(), item);
@@ -170,15 +164,13 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         if (!(cachedItem.getSubStatus() == RosterItem.SUB_NONE
                 && cachedItem.getAskStatus() == RosterItem.ASK_NONE)) {
 
-            try {
-                IQRoster roster = new IQRoster();
-                roster.setType(IQ.Type.set);
-                roster.createRosterItem(cachedItem);
-                broadcast(roster);
-            }
-            catch (UserAlreadyExistsException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+            Roster roster = new Roster();
+            roster.setType(IQ.Type.set);
+            roster.addItem(cachedItem.getJid(), cachedItem.getNickname(),
+                    Roster.Ask.valueOf(cachedItem.getAskStatus().getName()),
+                    Roster.Subscription.valueOf(cachedItem.getSubStatus().getName()),
+                    cachedItem.getGroups());
+            broadcast(roster);
 
         }
         if (cachedItem.getSubStatus() == RosterItem.SUB_BOTH
@@ -198,24 +190,18 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             // If removing the user was successful, remove the user from the backend store
             rosterItemProvider.deleteItem(username, item.getID());
 
-            try {
-                // broadcast the update to the user
-                IQRoster roster = new IQRoster();
-                roster.setType(IQ.Type.set);
-                IQRosterItem iqItem = (IQRosterItem)roster.createRosterItem(user);
-                iqItem.setSubStatus(RosterItem.SUB_REMOVE);
-                broadcast(roster);
-            }
-            catch (UserAlreadyExistsException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+            // broadcast the update to the user
+            Roster roster = new Roster();
+            roster.setType(IQ.Type.set);
+            roster.addItem(user, Roster.Subscription.remove);
+            broadcast(roster);
         }
         return item;
     }
 
 
 
-    private void broadcast(IQRoster roster) throws UnauthorizedException {
+    private void broadcast(Roster roster) throws UnauthorizedException {
         if (server == null) {
             server = BasicServer.getInstance();
         }

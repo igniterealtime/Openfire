@@ -39,5 +39,5 @@ public interface CachedRosterItem extends RosterItem, Cacheable {
      *
      * @param item The item who's settings will be copied into the cached copy
      */
-    void setAsCopyOf(RosterItem item);
+    void setAsCopyOf(org.xmpp.packet.Roster.Item item);
 }

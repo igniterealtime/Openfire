@@ -12,6 +12,8 @@
 package org.jivesoftware.messenger.user.spi;
 
 import java.util.List;
+import java.util.LinkedList;
+
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.CachedRosterItem;
 import org.jivesoftware.messenger.user.RosterItem;
@@ -31,7 +33,7 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
                                 AskType askStatus,
                                 RecvType recvStatus,
                                 String nickname,
-                                List groups) {
+                                List<String> groups) {
         super(jid, subStatus, askStatus, recvStatus, nickname, groups);
         this.rosterID = id;
     }
@@ -46,7 +48,7 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
                 null);
     }
 
-    public CachedRosterItemImpl(long id, JID jid, String nickname, List groups) {
+    public CachedRosterItemImpl(long id, JID jid, String nickname, List<String> groups) {
         this(id,
                 jid,
                 RosterItem.SUB_NONE,
@@ -82,9 +84,9 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
         return rosterID;
     }
 
-    public void setAsCopyOf(RosterItem item) {
-        setNickname(item.getNickname());
-        setGroups(item.getGroups());
+    public void setAsCopyOf(org.xmpp.packet.Roster.Item item) {
+        setNickname(item.getName());
+        setGroups(new LinkedList<String>(item.getGroups()));
     }
 
     public int getCachedSize() {

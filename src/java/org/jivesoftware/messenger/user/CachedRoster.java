@@ -13,7 +13,7 @@ package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Cacheable;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 /**
  * <p>A Roster that is cached in memory and persisted to some backend storage system.</p>
@@ -35,11 +35,11 @@ public interface CachedRoster extends Roster, Cacheable {
     String getUsername();
 
     /**
-     * <p>Obtain a 'roster reset', a snapshot of the full cached roster as an IQRoster.</p>
+     * <p>Obtain a 'roster reset', a snapshot of the full cached roster as an Roster.</p>
      *
-     * @return The roster reset (snapshot) as an IQRoster
+     * @return The roster reset (snapshot) as an Roster
      */
-    IQRoster getReset() throws UnauthorizedException;
+    org.xmpp.packet.Roster getReset() throws UnauthorizedException;
 
     /**
      * <p>Broadcast the presence update to all subscribers of the roter.</p>

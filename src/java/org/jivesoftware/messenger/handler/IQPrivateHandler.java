@@ -62,8 +62,9 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         if (dataElement != null) {
             if (IQ.Type.get.equals(packet.getType())) {
                 replyPacket = IQ.createResultIQ(packet);
-                Element privateData = replyPacket.setChildElement("query", "jabber:iq:private");
-                privateData.add(privateStorage.get(packet.getFrom().getNode(), dataElement));
+                Element dataStored = privateStorage.get(packet.getFrom().getNode(), dataElement);
+                dataStored.setParent(null);
+                replyPacket.setChildElement(dataStored);
             }
             else {
                 privateStorage.add(packet.getFrom().getNode(), dataElement);

@@ -99,7 +99,8 @@ public class BasicRoster implements Roster, Cacheable {
         return createRosterItem(user, null, null);
     }
 
-    public RosterItem createRosterItem(JID user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException {
+    public RosterItem createRosterItem(JID user, String nickname, List<String> groups)
+            throws UnauthorizedException, UserAlreadyExistsException {
         RosterItem item = provideRosterItem(user, nickname, groups);
         itemLock.writeLock().lock();
         try {
@@ -111,12 +112,12 @@ public class BasicRoster implements Roster, Cacheable {
         }
     }
 
-    public RosterItem createRosterItem(RosterItem item) throws UnauthorizedException, UserAlreadyExistsException {
-        item = provideRosterItem(item);
+    public void createRosterItem(org.xmpp.packet.Roster.Item item)
+            throws UnauthorizedException, UserAlreadyExistsException {
+        RosterItem rosterItem = provideRosterItem(item);
         itemLock.writeLock().lock();
         try {
-            rosterItems.put(item.getJid().toBareJID(), item);
-            return item;
+            rosterItems.put(item.getJID().toBareJID(), rosterItem);
         }
         finally {
             itemLock.writeLock().unlock();
@@ -134,7 +135,7 @@ public class BasicRoster implements Roster, Cacheable {
      * @param groups   The groups the item belongs to (or null for none)
      * @return The newly created roster items ready to be stored by the BasicRoster item's hash table
      */
-    protected RosterItem provideRosterItem(JID user, String nickname, List groups)
+    protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups)
             throws UserAlreadyExistsException, UnauthorizedException {
         return new BasicRosterItem(user, nickname, groups);
     }
@@ -148,7 +149,7 @@ public class BasicRoster implements Roster, Cacheable {
      * @param item The item to copy settings for the new item in this roster
      * @return The newly created roster items ready to be stored by the BasicRoster item's hash table
      */
-    protected RosterItem provideRosterItem(RosterItem item)
+    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, UnauthorizedException {
         return new BasicRosterItem(item);
     }

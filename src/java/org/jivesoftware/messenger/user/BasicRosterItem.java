@@ -27,7 +27,7 @@ public class BasicRosterItem implements RosterItem {
     protected RecvType recvStatus;
     protected JID jid;
     protected String nickname;
-    protected List groups;
+    protected List<String> groups;
     protected SubType subStatus;
     protected AskType askStatus;
 
@@ -37,15 +37,15 @@ public class BasicRosterItem implements RosterItem {
                            AskType askStatus,
                            RecvType recvStatus,
                            String nickname,
-                           List groups) {
+                           List<String> groups) {
         this.jid = jid;
         this.subStatus = subStatus;
         this.askStatus = askStatus;
         this.recvStatus = recvStatus;
         this.nickname = nickname;
-        this.groups = new LinkedList();
+        this.groups = new LinkedList<String>();
         if (groups != null) {
-            Iterator groupItr = groups.iterator();
+            Iterator<String> groupItr = groups.iterator();
             while (groupItr.hasNext()) {
                 this.groups.add(groupItr.next());
             }
@@ -61,7 +61,7 @@ public class BasicRosterItem implements RosterItem {
                 null);
     }
 
-    public BasicRosterItem(JID jid, String nickname, List groups) {
+    public BasicRosterItem(JID jid, String nickname, List<String> groups) {
         this(jid,
                 RosterItem.SUB_NONE,
                 RosterItem.ASK_NONE,
@@ -75,16 +75,44 @@ public class BasicRosterItem implements RosterItem {
      *
      * @param item
      */
-    public BasicRosterItem(RosterItem item) {
-        this(item.getJid(),
-                item.getSubStatus(),
-                item.getAskStatus(),
-                item.getRecvStatus(),
-                item.getNickname(),
-                item.getGroups());
+    public BasicRosterItem(org.xmpp.packet.Roster.Item item) {
+        this(item.getJID(),
+                getSubType(item),
+                getAskStatus(item),
+                RosterItem.RECV_NONE,
+                item.getName(),
+                new LinkedList<String>(item.getGroups()));
     }
 
+    private static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
+        if (item.getAsk() == org.xmpp.packet.Roster.Ask.subscribe) {
+            return RosterItem.ASK_SUBSCRIBE;
+        }
+        else if (item.getAsk() == org.xmpp.packet.Roster.Ask.unsubscribe) {
+            return RosterItem.ASK_UNSUBSCRIBE;
+        }
+        else {
+            return RosterItem.ASK_NONE;
+        }
+    }
 
+    private static RosterItem.SubType getSubType(org.xmpp.packet.Roster.Item item) {
+        if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.to) {
+            return RosterItem.SUB_TO;
+        }
+        else if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.from) {
+            return RosterItem.SUB_FROM;
+        }
+        else if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.both) {
+            return RosterItem.SUB_BOTH;
+        }
+        else if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
+            return RosterItem.SUB_REMOVE;
+        }
+        else {
+            return RosterItem.SUB_NONE;
+        }
+    }
 
     public SubType getSubStatus() {
         return subStatus;
@@ -122,13 +150,13 @@ public class BasicRosterItem implements RosterItem {
         this.nickname = nickname;
     }
 
-    public List getGroups() {
+    public List<String> getGroups() {
         return groups;
     }
 
-    public void setGroups(List groups) {
+    public void setGroups(List<String> groups) {
         if (groups == null) {
-            this.groups = new LinkedList();
+            this.groups = new LinkedList<String>();
         }
         else {
             this.groups = groups;

@@ -89,6 +89,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     String username = query.elementTextTrim("username");
                     probeResponse.element("username").setText(username);
                     response = IQ.createResultIQ(packet);
+                    probeResponse.setParent(null);
                     response.setChildElement(probeResponse);
                 }
                 // Otherwise set query

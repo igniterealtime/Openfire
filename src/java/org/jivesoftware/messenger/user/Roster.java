@@ -22,14 +22,13 @@ import java.util.List;
  * <p>Rosters are similar to buddy groups in popular IM clients. The Roster interface is
  * a generic representation of the roster data. There are two primary implementations
  * of the Roster in Messenger, the CachedRoster representing a cached, persistently stored
- * Roster attached to a user/chatbot account, and an IQRoster containing a roster as XML
+ * Roster attached to a user/chatbot account, and an Roster containing a roster as XML
  * data (usually as it enters and exists Messenger over an XMPP c2s or s2s connection).
  * It is an important distinction as changes to CachedRosters will be saved to disk while
  * IQRosters are transient data objects.</p>
  *
  * @author Iain Shigeoka
  *
- * @see IQRoster
  * @see CachedRoster
  */
 public interface Roster {
@@ -86,7 +85,8 @@ public interface Roster {
      * @throws UnauthorizedException      if not the item or an administrator.
      * @throws UserAlreadyExistsException If a roster item already exists for the given user
      */
-    public RosterItem createRosterItem(JID user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException;
+    public RosterItem createRosterItem(JID user, String nickname, List<String> groups)
+            throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Create a new item to the roster based as a copy of the given item.
@@ -97,7 +97,8 @@ public interface Roster {
      * @throws UnauthorizedException      if not the item or an administrator.
      * @throws UserAlreadyExistsException If a roster item already exists for the given user
      */
-    public RosterItem createRosterItem(RosterItem item) throws UnauthorizedException, UserAlreadyExistsException;
+    public void createRosterItem(org.xmpp.packet.Roster.Item item)
+            throws UnauthorizedException, UserAlreadyExistsException;
 
     /**
      * Update an item that is already in the roster.

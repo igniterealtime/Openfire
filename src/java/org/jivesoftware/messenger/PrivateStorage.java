@@ -138,7 +138,6 @@ public class PrivateStorage extends BasicModule {
      * @return the data stored under the given key or the data element.
      */
     public Element get(String username, Element data) {
-        data.clearContent();
         if (enabled) {
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -149,6 +148,7 @@ public class PrivateStorage extends BasicModule {
                 pstmt.setString(2, data.getNamespaceURI());
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
+                    data.clearContent();
                     String result = rs.getString(1).trim();
                     Document doc = xmlReader.read(result);
                     data = doc.getRootElement();

@@ -18,9 +18,7 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.user.Roster;
-import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import org.xmpp.packet.*;
-import org.dom4j.Element;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -87,7 +85,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             UnauthorizedException, PacketException {
         try {
             IQ returnPacket = null;
-            IQRoster roster = (IQRoster)packet;
+            org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
 
             JID recipientJID = packet.getTo();
 
@@ -114,14 +112,12 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      *
      * @param packet The packet suspected of containing a roster removal
      */
-    private void removeRosterItem(IQRoster packet) throws UnauthorizedException {
+    private void removeRosterItem(org.xmpp.packet.Roster packet) throws UnauthorizedException {
         JID recipientJID = packet.getTo();
         JID senderJID = packet.getFrom();
         try {
-            Iterator itemIter = packet.getRosterItems();
-            while (itemIter.hasNext()) {
-                RosterItem packetItem = (RosterItem)itemIter.next();
-                if (packetItem.getSubStatus() == RosterItem.SUB_REMOVE) {
+            for (org.xmpp.packet.Roster.Item packetItem : packet.getItems()) {
+                if (packetItem.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
                     Roster roster = userManager.getUser(recipientJID.getNode()).getRoster();
                     RosterItem item = roster.getRosterItem(senderJID);
                     roster.deleteRosterItem(senderJID);
@@ -147,12 +143,13 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param packet The packet that triggered this update
      * @return Either a response to the roster update or null if the packet is corrupt and the session was closed down
      */
-    private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException {
+    private IQ manageRoster(org.xmpp.packet.Roster packet) throws UnauthorizedException,
+            UserAlreadyExistsException {
 
         IQ returnPacket = null;
         Session session = null;
         try {
-            sessionManager.getSession(packet.getFrom());
+            session = sessionManager.getSession(packet.getFrom());
         }
         catch (Exception e) {
             IQ error = IQ.createResultIQ(packet);
@@ -177,16 +174,14 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             }
             else if (IQ.Type.set == type) {
 
-                Iterator itemIter = packet.getRosterItems();
-                while (itemIter.hasNext()) {
-                    RosterItem item = (RosterItem)itemIter.next();
-                    if (item.getSubStatus() == RosterItem.SUB_REMOVE) {
+                for (org.xmpp.packet.Roster.Item item : packet.getItems()) {
+                    if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
                         removeItem(cachedRoster, packet.getFrom(), item);
                     }
                     else {
-                        if (cachedRoster.isRosterItem(item.getJid())) {
+                        if (cachedRoster.isRosterItem(item.getJID())) {
                             // existing item
-                            CachedRosterItem cachedItem = (CachedRosterItem)cachedRoster.getRosterItem(item.getJid());
+                            CachedRosterItem cachedItem = (CachedRosterItem)cachedRoster.getRosterItem(item.getJID());
                             cachedItem.setAsCopyOf(item);
                             cachedRoster.updateRosterItem(cachedItem);
                         }
@@ -215,13 +210,13 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(Roster roster, JID sender, RosterItem item)
+    private void removeItem(Roster roster, JID sender, org.xmpp.packet.Roster.Item item)
             throws UnauthorizedException
     {
 
-        JID recipient = item.getJid();
+        JID recipient = item.getJID();
         // Remove recipient from the sender's roster
-        roster.deleteRosterItem(item.getJid());
+        roster.deleteRosterItem(item.getJID());
         // Forward set packet to the subscriber
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
@@ -245,18 +240,11 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param to   The recipient address to use
      * @return The forwarded packet generated
      */
-    private Packet createRemoveForward(JID from, JID to) throws UnauthorizedException {
-
-        IQ response = new IQ();
+    private Packet createRemoveForward(JID from, JID to) {
+        org.xmpp.packet.Roster response = new org.xmpp.packet.Roster(IQ.Type.set);
         response.setFrom(from);
         response.setTo(to);
-        response.setType(IQ.Type.set);
-
-        Element query = response.setChildElement("query", "jabber:iq:roster");
-
-        IQRosterItem responseItem = new IQRosterItemImpl(from);
-        responseItem.setSubStatus(RosterItem.SUB_REMOVE);
-        query.add(responseItem.asXMLElement());
+        response.addItem(from, org.xmpp.packet.Roster.Subscription.remove);
 
         return response;
     }

@@ -32,6 +32,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.Roster;
 
 /**
  * @author Derek DeMoro
@@ -195,7 +196,7 @@ public class SocketReadThread extends Thread {
                     clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
                 }
                 else if ("iq".equals(tag)) {
-                    IQ packet = new IQ(doc);
+                    IQ packet = getIQ(doc);
                     packet.setFrom(session.getAddress());
                     auditor.audit(packet);
                     router.route(packet);
@@ -205,6 +206,16 @@ public class SocketReadThread extends Thread {
                     throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
                 }
             }
+        }
+    }
+
+    private IQ getIQ(Element doc) {
+        Element query = doc.element("query");
+        if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
+            return new Roster(doc);
+        }
+        else {
+            return new IQ(doc);
         }
     }
 

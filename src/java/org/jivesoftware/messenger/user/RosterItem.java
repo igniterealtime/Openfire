@@ -184,12 +184,12 @@ public interface RosterItem {
      *
      * @return The subscription status of the item
      */
-    public List getGroups();
+    public List<String> getGroups();
 
     /**
      * <p>Set the current groups for the item.</p>
      *
      * @param groups The subscription status of the item
      */
-    public void setGroups(List groups) throws UnauthorizedException;
+    public void setGroups(List<String> groups) throws UnauthorizedException;
 }

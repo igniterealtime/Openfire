@@ -894,7 +894,9 @@ public class SessionManager extends BasicModule {
     public void removeSession(ClientSession session) {
         // TODO: Requires better error checking to ensure the session count is maintained
         // TODO: properly (removal actually does remove).
-        if (session == null) {
+        // Do nothing if session is null or if the server is shutting down. Note: When the server
+        // is shutting down the serverName will be null.
+        if (session == null || serverName == null) {
             return;
         }
         SessionMap sessionMap = null;

@@ -23,7 +23,6 @@ import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.MUCRoom;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.database.DbConnectionManager;
 
 /**
  * A manager responsible for ensuring room persistence. There are different ways to make a room 
@@ -192,22 +191,21 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
-                pstmt.setLong(1, room.getID());
-                pstmt.setString(2, room.getName());
-                pstmt.setString(3, room.getDescription());
-                pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
-                pstmt.setInt(5, room.getMaxUsers());
-                pstmt.setInt(6, (room.isPublicRoom() ? 1 : 0));
-                pstmt.setInt(7, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(8, (room.isInvitationRequiredToEnter() ? 1 : 0));
-                pstmt.setInt(9, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setInt(10, (room.isPasswordProtected() ? 1 : 0));
-                pstmt.setString(11, room.getPassword());
-                pstmt.setInt(12, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(13, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(14, room.getSubject());
-                pstmt.setInt(15, marshallRolesToBroadcast(room));
-                pstmt.setInt(16, 1);
+                pstmt.setString(1, room.getName());
+                pstmt.setString(2, room.getDescription());
+                pstmt.setInt(3, (room.canOccupantsChangeSubject() ? 1 : 0));
+                pstmt.setInt(4, room.getMaxUsers());
+                pstmt.setInt(5, (room.isPublicRoom() ? 1 : 0));
+                pstmt.setInt(6, (room.isModerated() ? 1 : 0));
+                pstmt.setInt(7, (room.isInvitationRequiredToEnter() ? 1 : 0));
+                pstmt.setInt(8, (room.canOccupantsInvite() ? 1 : 0));
+                pstmt.setInt(9, (room.isPasswordProtected() ? 1 : 0));
+                pstmt.setString(10, room.getPassword());
+                pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setInt(13, marshallRolesToBroadcast(room));
+                pstmt.setInt(14, 1);
+                pstmt.setLong(15, room.getID());
                 pstmt.executeUpdate();
             }
             else {

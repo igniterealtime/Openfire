@@ -8,7 +8,7 @@
 
     <context-param>
         <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
-        <param-value>la</param-value>
+        <param-value>messenger_i18n_en</param-value>
     </context-param>
     <!-- Uncomment if running in application server only 
     <servlet>

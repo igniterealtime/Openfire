@@ -22,6 +22,13 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
+<%!
+    final int DEFAULT_RANGE = 15;
+    final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
+    final String USER_RANGE_PROP = "admin.userlist.range";
+%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -38,7 +45,31 @@
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",15);
+    int range = ParamUtils.getIntParameter(request,"range",DEFAULT_RANGE);
+    boolean setRange = request.getParameter("range") != null;
+
+    if (setRange) {
+        User user = webManager.getUser();
+        if (user != null) {
+            if (range == DEFAULT_RANGE) {
+                user.deleteProperty(USER_RANGE_PROP);
+            }
+            else {
+                user.setProperty(USER_RANGE_PROP, String.valueOf(range));
+            }
+        }
+    }
+
+    // Adjust the range based on the user's settings
+    if (webManager.getUser() != null) {
+        User user = webManager.getUser();
+        try {
+            range = Integer.parseInt(user.getProperty(USER_RANGE_PROP));
+        }
+        catch (Exception e) {
+            user.deleteProperty(USER_RANGE_PROP);
+        }
+    }
 
     // Get the user manager
     int userCount = webManager.getUserManager().getUserCount();
@@ -81,6 +112,18 @@
 
 <%  } %>
 <fmt:message key="User.Summary.sorted" />
+
+- Users per page:
+<select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
+
+    <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+
+        <option value="<%= RANGE_PRESETS[i] %>"
+         <%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+
+    <%  } %>
+
+</select>
 </p>
 
 <%  if (numPages > 1) { %>
@@ -92,12 +135,13 @@
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="user-summary.jsp?start=<%= (i*range) %>"
+        <a href="user-summary.jsp?start=<%= (i*range) %>&range=<%= range %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 
     <%  } %>
     ]
+
     </p>
 
 <%  } %>

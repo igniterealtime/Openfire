@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.handler;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.admin.AdminConsole;
 
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import org.xmpp.packet.IQ;
 public class IQVersionHandler extends IQHandler implements ServerFeaturesProvider {
 
     private static Element bodyElement;
-    private static Element versionElement;
     private IQHandlerInfo info;
 
     public IQVersionHandler() {
@@ -44,23 +42,18 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
             bodyElement.addElement("name").setText(AdminConsole.getAppName());
             bodyElement.addElement("os").setText("Java 5");
-            versionElement = bodyElement.addElement("version");
+            bodyElement.addElement("version");
         }
     }
 
     public IQ handleIQ(IQ packet) throws PacketException {
         // Could cache this information for every server we see
-        bodyElement.element("name").setText(AdminConsole.getAppName());
-        versionElement.setText(AdminConsole.getVersionString());
-        IQ result = null;
-        result = IQ.createResultIQ(packet);
-        bodyElement.setParent(null);
-        result.setChildElement(bodyElement.createCopy());
+        Element answerElement = bodyElement.createCopy();
+        answerElement.element("name").setText(AdminConsole.getAppName());
+        answerElement.element("version").setText(AdminConsole.getVersionString());
+        IQ result = IQ.createResultIQ(packet);
+        result.setChildElement(answerElement);
         return result;
-    }
-
-    public void initialize(XMPPServer server) {
-        super.initialize(server);
     }
 
     public IQHandlerInfo getInfo() {

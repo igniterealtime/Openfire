@@ -11,22 +11,30 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.NodePrep;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.database.DbConnectionManager;
-
-import java.util.Iterator;
-import java.util.Date;
-import java.util.List;
-import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.container.Container;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.UserProviderFactory;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 
 /**
  * Database implementation of the UserManager interface.
@@ -49,16 +57,16 @@ public class UserManagerImpl extends BasicModule implements UserManager {
     private static final String USER_COUNT = "SELECT count(*) FROM jiveUser";
     private static final String ALL_USERS = "SELECT username from jiveUser";
     private static final String INSERT_USER =
-        "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
-        "VALUES (?,?,?,?,?,?)";
+            "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
+            "VALUES (?,?,?,?,?,?)";
     private static final String DELETE_USER_GROUPS =
-        "DELETE FROM jiveGroupUser WHERE username=?";
+            "DELETE FROM jiveGroupUser WHERE username=?";
     private static final String DELETE_USER_PROPS =
-        "DELETE FROM jiveUserProp WHERE username=?";
+            "DELETE FROM jiveUserProp WHERE username=?";
     private static final String DELETE_VCARD_PROPS =
-        "DELETE FROM jiveVCard WHERE username=?";
+            "DELETE FROM jiveVCard WHERE username=?";
     private static final String DELETE_USER =
-        "DELETE FROM jiveUser WHERE username=?";
+            "DELETE FROM jiveUser WHERE username=?";
 
     private Cache userCache;
 
@@ -67,17 +75,21 @@ public class UserManagerImpl extends BasicModule implements UserManager {
     }
 
     private void initializeCaches() {
-        CacheManager.initializeCache("userCache", 512*1024);
-        CacheManager.initializeCache("username2roster", 512*1024);
+        CacheManager.initializeCache("userCache", 512 * 1024);
+        CacheManager.initializeCache("username2roster", 512 * 1024);
         userCache = CacheManager.getCache("userCache");
     }
 
-    public User createUser(String username, String password, String email)
-            throws UserAlreadyExistsException, UnauthorizedException {
+    public User createUser(String username, String password, String email) throws UserAlreadyExistsException, UnauthorizedException {
         User newUser = null;
         // Strip extra or invisible characters from the username so that existing
         // usernames can't be forged.
-        username = NodePrep.prep(username);
+        try {
+            username = Stringprep.nameprep(username, true);
+        }
+        catch (StringprepException e) {
+            Log.error(e);
+        }
         username = StringUtils.replace(username, "&nbsp;", "");
         try {
             getUser(username);
@@ -109,10 +121,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                 }
                 finally {
-                    try { if (pstmt != null) { pstmt.close(); } }
-                    catch (Exception e) { Log.error(e); }
-                    try { if (con != null) { con.close(); } }
-                    catch (Exception e) { Log.error(e); }
+                   DbConnectionManager.close(pstmt, con);
                 }
                 newUser = getUser(username);
             }
@@ -128,7 +137,12 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         if (username == null) {
             throw new UserNotFoundException("Username with null value is not valid.");
         }
-        username = NodePrep.prep(username);
+        try {
+            username = Stringprep.nameprep(username, false);
+        }
+        catch (StringprepException e) {
+            e.printStackTrace();
+        }
         User user = (User)userCache.get(username);
         if (user == null) {
             // Hack to make sure user exists.
@@ -179,8 +193,14 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
         // Expire user cache.
@@ -204,10 +224,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.close(pstmt, con);
         }
         return count;
     }
@@ -232,12 +249,9 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.close(pstmt, con);
         }
-        return new UserIterator((String [])users.toArray(new String[users.size()]));
+        return new UserIterator((String[])users.toArray(new String[users.size()]));
     }
 
     public Iterator users(int startIndex, int numResults) throws UnauthorizedException {
@@ -268,12 +282,9 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.close(pstmt, con);
         }
-        return new UserIterator((String [])users.toArray(new String[users.size()]));
+        return new UserIterator((String[])users.toArray(new String[users.size()]));
     }
 
     // #####################################################################

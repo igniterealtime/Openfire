@@ -366,6 +366,10 @@ public class Roster implements Cacheable {
 
         // Add the roster items (includes the personal roster and shared groups) to the answer
         for (RosterItem item : rosterItems.values()) {
+            // Do not include items with status FROM that exist only because of shared groups
+            if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
+                continue;
+            }
             org.xmpp.packet.Roster.Ask ask = getAskStatus(item.getAskStatus());
             org.xmpp.packet.Roster.Subscription sub = org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus()
                     .getName());
@@ -473,6 +477,10 @@ public class Roster implements Cacheable {
     }
 
     void broadcast(RosterItem item) {
+        // Do not broadcast items with status FROM that exist only because of shared groups
+        if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
+            return;
+        }
         // Set the groups to broadcast (include personal and shared groups)
         List<String> groups = new ArrayList<String>(item.getGroups());
         for (Group sharedGroup : item.getSharedGroups()) {

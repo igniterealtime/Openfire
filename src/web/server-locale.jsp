@@ -93,28 +93,33 @@
             }
         %>
 
-        <label for="sel01"><fmt:message key="locale.choose" />:</label>
+        <p><b><fmt:message key="locale.choose" />:</b></p>
 
-        <select size="1" name="localeCode" style="font-family:courier new; font-size:9pt;"
-         id="sel01" onchange="this.form.localeChoice[0].checked=true;">
-            <%  Arrays.sort(locales, new Comparator() {
-                    public int compare(Object o1, Object o2) {
-                        Locale loc1 = (Locale)o1;
-                        Locale loc2 = (Locale)o2;
-                        return loc1.getDisplayName().toLowerCase()
-                                .compareTo(loc2.getDisplayName().toLowerCase());
-                    }
-                });
-            %>
-
-            <%  for (int i=0; i<locales.length; i++) {
-                    boolean selected = locales[i].equals(locale);
-            %>
-                <option value="<%= locales[i] %>" <%= (selected ? "selected" : "") %>
-                 ><%= locales[i].getDisplayName() %> - <%= locales[i] %></option>
-
-            <%  } %>
-        </select>
+        <table cellspacing="0" cellpadding="3" border="0">
+        <tbody>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="en_US" <%= ("en_US".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc01" />
+                </td>
+                <td colspan="2">
+                    <label for="loc01">English (en_US)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc02" />
+                </td>
+                <td>
+                    <label for="loc02">Chinese Simplified (zh_CN)</label>
+                </td>
+                <td>
+                    <img src="images/language_zh_CN.gif" border="0" />
+                </td>
+            </tr>
+        </tbody>
+        </table>
 
     </div>
 </fieldset>

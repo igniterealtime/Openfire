@@ -18,7 +18,7 @@
     int port = ParamUtils.getIntParameter(request,"port",-1);
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
     int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
-    boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled");
+    boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled",true);
 
     boolean doContinue = request.getParameter("continue") != null;
 
@@ -65,16 +65,10 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
-        try {
-            port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port"));
-        } catch (Exception ignored) {}
-        try {
-            embeddedPort = Integer.parseInt(JiveGlobals.getProperty("embedded-web.port"));
-        } catch (Exception ignored) {}
-        try {
-            sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port"));
-        } catch (Exception ignored) {}
-        sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
+        port = JiveGlobals.getIntProperty("xmpp.socket.plain.port", 5222);
+        embeddedPort = JiveGlobals.getIntProperty("embedded-web.port", 9090);
+        sslPort = JiveGlobals.getIntProperty("xmpp.socket.ssl.port",5223);
+        sslEnabled = JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
 
         // If the domain is still blank, guess at the value:
         if (domain == null) {

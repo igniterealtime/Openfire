@@ -18,14 +18,7 @@
     </embedded-web>
     
     <!-- Example LDAP Settings -->
-	<!--
-    <UserProvider>
-        <id><className>com.jivesoftware.messenger.ldap.LdapUserIDProvider</className></id>
-        <properties><className>com.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className></properties>
-        <info><className>com.jivesoftware.messenger.ldap.LdapUserInfoProvider</className></info>
-        <account><className>com.jivesoftware.messenger.ldap.LdapUserAccountProvider</className></account>
-    </UserProvider>
-    <AuthProvider><className>com.jivesoftware.messenger.ldap.LdapAuthProvider</className></AuthProvider>
+    <!--
     <ldap>
         <host></host>
         <port>389</port>
@@ -36,6 +29,24 @@
         <adminDN></adminDN>
         <adminPassword></adminPassword>
         <mode>1</mode>
-    </ldap>
+    </ldap> 
+    <UserProvider>
+        <id>
+            <className>org.jivesoftware.messenger.ldap.LdapUserIDProvider</className>
+        </id>
+        <properties>
+            <className>org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className>
+        </properties>
+        <info>
+             <className>com.jivesoftware.messenger.ldap.LdapUserInfoProvider</className>
+        </info>
+        <account>
+            <className>com.jivesoftware.messenger.ldap.LdapUserAccountProvider</className>
+        </account>
+    </UserProvider>
+    <AuthProvider>
+        <className>org.jivesoftware.messenger.ldap.LdapAuthProvider</className>
+    </AuthProvider>
     -->
+    <! -- End Example LDAP Settings -->
 </jive>

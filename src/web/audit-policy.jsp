@@ -127,25 +127,25 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="auditEnabled" value="false" id="rb01"
                  <%= (!auditEnabled ? "checked" : "") %>>
             </td>
             <td width="99%">
                 <label for="rb01">
-                <b>Disable Message Auditing</b> - Packets are not logged.
+                <b>Disable Message Auditing</b> -- packets are not logged.
                 </label>
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="auditEnabled" value="true" id="rb02"
                  <%= (auditEnabled ? "checked" : "") %>>
             </td>
             <td width="99%">
                 <label for="rb02">
-                <b>Enable Message Auditing</b> - Packets are logged with the following options:
+                <b>Enable Message Auditing</b> -- packets are logged with the following options:
                 </label>
             </td>
         </tr>
@@ -255,18 +255,20 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                         </table>
                     </td>
                 </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        Queued packets:
-                    </td>
-                    <td width="99%">
-                         <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
-                    </td>
-                </tr>
                 </table>
             </td>
         </tr>
     </tbody>
+    </table>
+    <table border="0">
+        <tr valign="top">
+            <td width="1%" nowrap class="c1">
+                Queued packets:
+            </td>
+            <td width="99%">
+                 <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
+            </td>
+        </tr>
     </table>
     </div>
 </fieldset>

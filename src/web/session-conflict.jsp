@@ -104,7 +104,7 @@ allows them to request a different resource name.
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%">
                 <input type="radio" name="kickPolicy" value="0" id="rb01"
                  <%= ((kickPolicy==0) ? "checked" : "") %>>
@@ -114,7 +114,7 @@ allows them to request a different resource name.
                 immediately kick the other resource.
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%">
                 <input type="radio" name="kickPolicy" value="<%= SessionManager.NEVER_KICK %>" id="rb02"
                  <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
@@ -124,7 +124,7 @@ allows them to request a different resource name.
                 allow the new resource to log in.
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%">
                 <input type="radio" name="kickPolicy" value="1" id="rb04"
                  <%= ((kickPolicy==1) ? "checked" : "") %>>
@@ -140,7 +140,7 @@ allows them to request a different resource name.
        assignedKickPolicy = true;
     }
 %>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%">
                 <input type="radio" name="kickPolicy" value="<%= Integer.MAX_VALUE %>" id="rb03"
                  onfocus="this.form.kickValue.focus();"
@@ -152,7 +152,7 @@ allows them to request a different resource name.
                 number greater than one.
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%">
                 &nbsp;
             </td>

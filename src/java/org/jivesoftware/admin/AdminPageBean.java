@@ -15,6 +15,9 @@ import org.jivesoftware.util.StringUtils;
 import java.util.Collection;
 import java.util.ArrayList;
 
+/**
+ * A bean to hold page information for the admin console.
+ */
 public class AdminPageBean {
 
     private String title;

@@ -18,7 +18,6 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketException;
 
-import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.Connection;

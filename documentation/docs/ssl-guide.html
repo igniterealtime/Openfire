@@ -217,7 +217,8 @@ browser and add or change the following system properties:
   <li>xmpp.socket.ssl.port - the port to use for SSL (default is
 5223 for XMPP)</li>
   <li>xmpp.socket.ssl.storeType - the store type used ("JKS" is
-the Sun Java Keystore format used by the JDK keytool).</li>
+the Sun Java Keystore format used by the JDK keytool). If this property is 
+not defined, Messenger will assume a value of "jks".</li>
   <li>xmpp.socket.ssl.keystore - The location of the keystore file
 relative to the <tt>MESSENGER_HOME</tt> root directory.</li>
   <li>xmpp.socket.ssl.keypass - The keystore/key password you
@@ -228,5 +229,6 @@ the <tt>MESSENGER_HOME</tt> root directory.</li>
   <li>xmpp.socket.ssl.trustpass - The truststore/key password you
 changed in step 5.</li>
 </ul>
+You will need to restart the server after you have modified any of the above system properties.
 </body>
 </html>

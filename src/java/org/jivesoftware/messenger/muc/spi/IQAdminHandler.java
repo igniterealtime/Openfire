@@ -59,7 +59,11 @@ public class IQAdminHandler {
             // element so answer a BAD_REQUEST error
             reply.setError(XMPPError.Code.BAD_REQUEST);
         }
-        router.route(reply);
+        if (reply.getRecipient() != null) {
+            // Send a reply only if the sender of the original packet was from a real JID. (i.e. not
+            // a packet generated locally)
+            router.route(reply);
+        }
     }
 
     /**

@@ -43,7 +43,7 @@
         }
         else if (EMBEDDED.equals(mode)) {
             // Set the classname of the provider in the config file:
-            JiveGlobals.setProperty("connectionProvider.className",
+            JiveGlobals.setXMLProperty("connectionProvider.className",
                     "org.jivesoftware.database.EmbeddedConnectionProvider");
             ConnectionProvider conProvider = new EmbeddedConnectionProvider();
             DbConnectionManager.setConnectionProvider(conProvider);

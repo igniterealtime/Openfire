@@ -74,7 +74,7 @@
             // set properties, test connection, etc
 
             // Force the standard jive connection provider to be used by deleting the current setting:
-            JiveGlobals.setProperty("connectionProvider.className",
+            JiveGlobals.setXMLProperty("connectionProvider.className",
                     "org.jivesoftware.database.DefaultConnectionProvider");
             DefaultConnectionProvider conProvider = new DefaultConnectionProvider();
             try {
@@ -86,16 +86,16 @@
                 conProvider.setUsername(username);
                 conProvider.setPassword(password);
 
-                 JiveGlobals.setProperty("database.defaultProvider.driver", driver);
-        JiveGlobals.setProperty("database.defaultProvider.serverURL", serverURL);
-        JiveGlobals.setProperty("database.defaultProvider.username", username);
-        JiveGlobals.setProperty("database.defaultProvider.password", password);
+                 JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
+        JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
+        JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
+        JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
 
-        JiveGlobals.setProperty("database.defaultProvider.minConnections",
+        JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
                 Integer.toString(minConnections));
-        JiveGlobals.setProperty("database.defaultProvider.maxConnections",
+        JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
                 Integer.toString(maxConnections));
-        JiveGlobals.setProperty("database.defaultProvider.connectionTimeout",
+        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
             }
             catch (Exception e) {
@@ -118,27 +118,27 @@
 
     if (!doContinue) {
         // reset values of jdbc driver from props file
-        driver = JiveGlobals.getProperty("database.defaultProvider.driver");
-        serverURL = JiveGlobals.getProperty("database.defaultProvider.serverURL");
-        username = JiveGlobals.getProperty("database.defaultProvider.username");
-        password = JiveGlobals.getProperty("database.defaultProvider.password");
+        driver = JiveGlobals.getXMLProperty("database.defaultProvider.driver");
+        serverURL = JiveGlobals.getXMLProperty("database.defaultProvider.serverURL");
+        username = JiveGlobals.getXMLProperty("database.defaultProvider.username");
+        password = JiveGlobals.getXMLProperty("database.defaultProvider.password");
         try {
             minConnections = Integer.parseInt(
-                    JiveGlobals.getProperty("database.defaultProvider.minConnections"));
+                    JiveGlobals.getXMLProperty("database.defaultProvider.minConnections"));
         }
         catch (Exception e) {
             minConnections = 5;
         }
         try {
             maxConnections = Integer.parseInt(
-                    JiveGlobals.getProperty("database.defaultProvider.maxConnections"));
+                    JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
         }
         catch (Exception e) {
             maxConnections = 15;
         }
         try {
             connectionTimeout = Double.parseDouble(
-                    JiveGlobals.getProperty("database.defaultProvider.connectionTimeout"));
+                    JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout"));
         }
         catch (Exception e) {
             connectionTimeout = 1.0;

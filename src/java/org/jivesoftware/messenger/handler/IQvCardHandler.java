@@ -86,28 +86,32 @@ public class IQvCardHandler extends IQHandler {
                 result = IQ.createResultIQ(packet);
             }
             else if (type.equals(IQ.Type.get)) {
-                User user = userManager.getUser(recipient.getNode());
                 result = IQ.createResultIQ(packet);
 
                 Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
                 result.setChildElement(vcard);
-
-                VCardManager vManager = VCardManager.getInstance();
-                Collection<String> names = vManager.getVCardPropertyNames(user.getUsername());
-                for (String name : names) {
-                    String path = name.replace(':', '/');
-                    Element node = DocumentHelper.makeElement(vcard, path);
-                    node.setText(vManager.getVCardProperty(user.getUsername(), name));
+                // Only try to get the vCard values of non-anonymous users 
+                if (recipient.getNode() != null) {
+                    User user = userManager.getUser(recipient.getNode());
+                    VCardManager vManager = VCardManager.getInstance();
+                    Collection<String> names = vManager.getVCardPropertyNames(user.getUsername());
+                    for (String name : names) {
+                        String path = name.replace(':', '/');
+                        Element node = DocumentHelper.makeElement(vcard, path);
+                        node.setText(vManager.getVCardProperty(user.getUsername(), name));
+                    }
                 }
             }
             else {
                 result = IQ.createResultIQ(packet);
+                result.setChildElement(packet.getChildElement().createCopy());
                 result.setError(PacketError.Condition.not_acceptable);
             }
         }
         catch (UserNotFoundException e) {
             result = IQ.createResultIQ(packet);
-                result.setError(PacketError.Condition.item_not_found);
+            result.setChildElement(packet.getChildElement().createCopy());
+            result.setError(PacketError.Condition.item_not_found);
         }
         return result;
     }

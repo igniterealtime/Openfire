@@ -32,7 +32,6 @@
 <%
     // Get parameters
     String serverName = ParamUtils.getParameter(request,"serverName");
-    String groupChatName = ParamUtils.getParameter(request,"groupChatName");
     int port = ParamUtils.getIntParameter(request,"port",-1);
     int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
@@ -48,7 +47,6 @@
 
     if (defaults) {
         serverName = InetAddress.getLocalHost().getHostName();
-        groupChatName = "conference." + serverName;
         port = 5222;
         sslPort = 5223;
         embeddedPort = 9090;
@@ -62,13 +60,10 @@
         if (serverName == null) {
             errors.put("serverName","");
         }
-        if (groupChatName == null) {
-            errors.put("groupChatName","");
-        }
         if (port < 1) {
             errors.put("port","");
         }
-        if (sslPort < 1) {
+        if (sslPort < 1 && sslEnabled) {
             errors.put("sslPort","");
         }
         if (embeddedPort < 1) {
@@ -81,7 +76,6 @@
         }
         if (errors.size() == 0) {
             server.getServerInfo().setName(serverName);
-            admin.getMultiUserChatServer().setServiceName(groupChatName);
             JiveGlobals.setProperty("xmpp.socket.plain.port", String.valueOf(port));
             JiveGlobals.setProperty("embedded-web.port", String.valueOf(embeddedPort));
             JiveGlobals.setProperty("xmpp.socket.ssl.active", String.valueOf(sslEnabled));
@@ -93,7 +87,6 @@
 
     if (errors.size() == 0) {
         serverName = server.getServerInfo().getName();
-        groupChatName = admin.getMultiUserChatServer().getServiceName();
         sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
         try { port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port")); } catch (Exception ignored) {}
         try { embeddedPort = Integer.parseInt(JiveGlobals.getProperty("embedded-web.port")); } catch (Exception ignored) {}
@@ -191,23 +184,6 @@ Use the form below to edit server properties.
     </tr>
     <tr>
         <td class="c1">
-             Group Chat Service Name:
-        </td>
-        <td class="c2">
-            <input type="text" name="groupChatName" value="<%= (groupChatName != null) ? groupChatName : "" %>"
-             size="30" maxlength="40">
-            <%  if (errors.containsKey("groupChatName")) { %>
-                <br>
-                <span class="jive-error-text">
-                Please enter a valid group chat service name or
-                <a href="#" onclick="document.editform.groupChatName.value='<%= "conference." + InetAddress.getLocalHost().getHostName() %>';"
-                 >restore the default</a>.
-                </span>
-            <%  } %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1">
              SSL Enabled:
         </td>
         <td class="c2">
@@ -250,7 +226,7 @@ Use the form below to edit server properties.
     </tr>
     <tr>
         <td class="c1">
-             Embedded Web Server Port:
+             Admin Console Port:
         </td>
         <td class="c2">
             <input type="text" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "") %>"

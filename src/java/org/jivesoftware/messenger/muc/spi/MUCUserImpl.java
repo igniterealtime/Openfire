@@ -256,9 +256,6 @@ public class MUCUserImpl implements MUCUser {
                             }
                         }
                     }
-                    catch (UnauthorizedException e) {
-                        sendErrorPacket(packet, XMPPError.Code.UNAUTHORIZED);
-                    }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, XMPPError.Code.FORBIDDEN);
                     }
@@ -316,6 +313,9 @@ public class MUCUserImpl implements MUCUser {
                     }
                     catch (ConflictException e) {
                         sendErrorPacket(packet, XMPPError.Code.CONFLICT);
+                    }
+                    catch (NotAllowedException e) {
+                        sendErrorPacket(packet, XMPPError.Code.NOT_ALLOWED);
                     }
                 }
             }

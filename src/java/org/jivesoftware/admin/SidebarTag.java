@@ -12,6 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.LocaleUtils;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -216,7 +217,7 @@ public class SidebarTag extends BodyTagSupport {
                                 if (hcss == null) {
                                     hcss = "";
                                 }
-                                buf.append("<li class=\"").append(hcss).append("\">").append(clean(header)).append("</li>");
+                                buf.append("<li class=\"").append(hcss).append("\">").append(clean(i18n(header))).append("</li>");
                                 // Now print all items:
                                 for (Iterator subitems=sidebar.elementIterator(); subitems.hasNext(); ) {
                                     Element item = (Element)subitems.next();
@@ -227,8 +228,8 @@ public class SidebarTag extends BodyTagSupport {
                                     String value = getBodyContent().getString();
                                     if (value != null) {
                                         value = StringUtils.replace(value, "[id]", clean(subitemID));
-                                        value = StringUtils.replace(value, "[name]", clean(subitemName));
-                                        value = StringUtils.replace(value, "[description]", clean(subitemDescr));
+                                        value = StringUtils.replace(value, "[name]", clean(i18n(subitemName)));
+                                        value = StringUtils.replace(value, "[description]", clean(i18n(subitemDescr)));
                                         value = StringUtils.replace(value, "[url]",
                                                 request.getContextPath() + "/" + clean(subitemURL));
                                     }
@@ -251,7 +252,7 @@ public class SidebarTag extends BodyTagSupport {
                                             buf.append("<ul class=\"subitems\">\n");
                                             // Print the header LI
                                             String subheader = subcurrent.getParent().attributeValue("name");
-                                            buf.append("<li class=\"").append(hcss).append("\">").append(clean(subheader)).append("</li>");
+                                            buf.append("<li class=\"").append(hcss).append("\">").append(clean(i18n(subheader))).append("</li>");
                                         }
                                         String extraParams = pageInfo.getExtraParams();
                                         while (siblings.hasNext()) {
@@ -271,8 +272,8 @@ public class SidebarTag extends BodyTagSupport {
                                             String svalue = getSubsidebarTag().getBody();
                                             if (svalue != null) {
                                                 svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
-                                                svalue = StringUtils.replace(svalue, "[name]", clean(sibName));
-                                                svalue = StringUtils.replace(svalue, "[description]", clean(sibDescr));
+                                                svalue = StringUtils.replace(svalue, "[name]", clean(i18n(sibName)));
+                                                svalue = StringUtils.replace(svalue, "[description]", clean(i18n(sibDescr)));
                                                 svalue = StringUtils.replace(svalue, "[url]",
                                                         request.getContextPath() + "/" + clean(sibURL));
                                             }
@@ -309,5 +310,13 @@ public class SidebarTag extends BodyTagSupport {
      */
     private String clean(String in) {
         return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+    }
+
+    private String i18n(String in) {
+        // Look for the key symbol:
+        if (in.indexOf("${") == 0 && in.indexOf("}") == in.length()-1) {
+            return LocaleUtils.getLocalizedString(in.substring(2, in.length()-1));
+        }
+        return in;
     }
 }

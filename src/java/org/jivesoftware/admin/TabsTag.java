@@ -12,6 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.LocaleUtils;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -146,8 +147,8 @@ public class TabsTag extends BodyTagSupport {
                     value = StringUtils.replace(value, "[id]", clean(tab.attributeValue("id")));
                     value = StringUtils.replace(value, "[url]",
                             request.getContextPath() + "/" + clean(tab.attributeValue("url")));
-                    value = StringUtils.replace(value, "[name]", clean(tab.attributeValue("name")));
-                    value = StringUtils.replace(value, "[description]", clean(tab.attributeValue("description")));
+                    value = StringUtils.replace(value, "[name]", clean(i18n(tab.attributeValue("name"))));
+                    value = StringUtils.replace(value, "[description]", clean(i18n(tab.attributeValue("description"))));
                 }
                 String css = getCss();
                 if (tab.equals(currentTab)) {
@@ -178,5 +179,13 @@ public class TabsTag extends BodyTagSupport {
      */
     private String clean(String in) {
         return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+    }
+
+    private String i18n(String in) {
+        // Look for the key symbol:
+        if (in.indexOf("${") == 0 && in.indexOf("}") == in.length()-1) {
+            return LocaleUtils.getLocalizedString(in.substring(2, in.length()-1));
+        }
+        return in;
     }
 }

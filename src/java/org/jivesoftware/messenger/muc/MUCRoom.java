@@ -495,8 +495,10 @@ public interface MUCRoom extends ChatDeliverer {
      * Unlocks the room so that users can join the room. The room is locked when created and only
      * the owner of the room can unlock it by sending the configuration form to the Multi-User Chat
      * service.
+     *
+     * @param sendRole the role of the occupant that unlocked the room.
      */
-    public void unlockRoom();
+    public void unlockRoom(MUCRole sendRole);
 
     public List addAdmins(List newAdmins, MUCRole sendRole) throws ForbiddenException,
             ConflictException;

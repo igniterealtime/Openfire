@@ -21,7 +21,6 @@ import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.MessageImpl;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.*;
 
@@ -301,14 +300,7 @@ public class IQOwnerHandler {
             // If the room was locked, unlock it and send to the owner the "room is now unlocked"
             // message
             if (room.isLocked()) {
-                room.unlockRoom();
-
-                Message message = new MessageImpl();
-                message.setType(Message.GROUP_CHAT);
-                message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
-                message.setSender(room.getRole().getRoleAddress());
-                message.setRecipient(senderRole.getChatUser().getAddress());
-                router.route(message);
+                room.unlockRoom(senderRole);
             }
         }
     }

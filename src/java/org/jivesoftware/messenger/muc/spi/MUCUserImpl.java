@@ -337,9 +337,8 @@ public class MUCUserImpl implements MUCUser {
             else {
                 MUCRole role = roles.get(group.toLowerCase());
                 if (role == null) {
-                    // If we're not already in a room, we either are joining it
-                    // or it's not properly addressed and we drop it silently
-                    // In the future, we'll need to support TYPE_IQ queries to the room for MUC
+                    // If we're not already in a room, we either are joining it or it's not
+                    // properly addressed and we drop it silently
                     if (recipient.getResource() != null
                             && recipient.getResource().trim().length() > 0) {
                         if (packet.getType() == Presence.AVAILABLE
@@ -348,32 +347,27 @@ public class MUCUserImpl implements MUCUser {
                                 // Get or create the room
                                 MUCRoom room = server.getChatRoom(group, packet.getSender());
                                 // User must support MUC in order to create a room
-                                MetaDataFragment mucInfo = (MetaDataFragment) packet.getFragment(
-                                        "x",
+                                MetaDataFragment mucInfo = (MetaDataFragment) packet.getFragment("x",
                                         "http://jabber.org/protocol/muc");
                                 HistoryRequest historyRequest = null;
                                 String password = null;
-                                if (room.isLocked() && mucInfo == null) {
-                                    // Only users that support MUC are allowed to create roooms
-                                    // Remove the room since the intended owner doesn't support MUC
-                                    sendErrorPacket(packet, XMPPError.Code.BAD_REQUEST);
-                                    server.removeChatRoom(group);
-                                }
-                                else {
-                                    // Check for password & requested history if client supports MUC
-                                    if (mucInfo != null) {
-                                        password = mucInfo.getProperty("x.password");
-                                        if (mucInfo.includesProperty("x.history")) {
-                                            historyRequest = new HistoryRequest(mucInfo);
-                                        }
+                                // Check for password & requested history if client supports MUC
+                                if (mucInfo != null) {
+                                    password = mucInfo.getProperty("x.password");
+                                    if (mucInfo.includesProperty("x.history")) {
+                                        historyRequest = new HistoryRequest(mucInfo);
                                     }
-                                    // The user joins the room
-                                    role = room.joinRoom(
-                                        recipient.getResource().trim(),
+                                }
+                                // The user joins the room
+                                role = room.joinRoom(recipient.getResource().trim(),
                                         password,
                                         historyRequest,
                                         this);
-                                    roles.put(group, role);
+                                roles.put(group, role);
+                                // If the client that created the room is non-MUC compliant then
+                                // unlock the room thus creating an "instant" room
+                                if (room.isLocked() && mucInfo == null) {
+                                    room.unlockRoom(role);
                                 }
                             }
                             catch (UnauthorizedException e) {

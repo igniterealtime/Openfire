@@ -457,7 +457,7 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         this.name = name;
     }
 
-    public void unlockRoom() {
+    public void unlockRoom(MUCRole senderRole) {
         throw new UnsupportedOperationException();
     }
 

@@ -1740,9 +1740,16 @@ public class MUCRoomImpl implements MUCRoom {
         }
     }
 
-    public void unlockRoom() {
+    public void unlockRoom(MUCRole senderRole) {
         roomLocked = false;
         this.lockedTime = 0;
+        // Send to the occupant the unlocked the room a message saying so  
+        Message message = new MessageImpl();
+        message.setType(Message.GROUP_CHAT);
+        message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
+        message.setSender(getRole().getRoleAddress());
+        message.setRecipient(senderRole.getChatUser().getAddress());
+        router.route(message);
     }
 
     public List addAdmins(List newAdmins, MUCRole senderRole) throws ForbiddenException,

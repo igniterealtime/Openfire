@@ -17,3 +17,6 @@ junit.jar            | 3.8.1
 ant-contrib.jar      | 1.0b1
 ant-subdirtask.jar   | Revision 1.4 (CVS)
 jdic.jar             | 0.8.6 (for windows only)
+xmltask.jar          | 1.10.5
+jstl.jar             | Jakarta standard taglib 1.1.2
+standard.jar         | Jakarta standard taglib 1.1.2

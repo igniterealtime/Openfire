@@ -95,6 +95,8 @@ public class IQRouter extends BasicModule {
         if (iqHandlers.contains(handler)) {
             throw new IllegalArgumentException("IQHandler already provided by the server");
         }
+        // Ask the handler to be initialized
+        handler.initialize(XMPPServer.getInstance());
         // Register the handler as the handler of the namespace
         namespace2Handlers.put(handler.getInfo().getNamespace(), handler);
     }

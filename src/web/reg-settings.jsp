@@ -6,9 +6,19 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.handler.IQRegisterHandler,
-                 org.jivesoftware.messenger.handler.IQAuthHandler"
+                 org.jivesoftware.messenger.handler.IQAuthHandler,
+                 org.jivesoftware.admin.AdminPageBean"
 %>
-   
+
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Registration Settings";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "reg-settings.jsp"));
+    pageinfo.setPageID("server-reg-and-login");
+%>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>

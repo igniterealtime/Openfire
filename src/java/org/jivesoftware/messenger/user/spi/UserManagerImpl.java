@@ -93,9 +93,8 @@ public class UserManagerImpl extends BasicModule implements UserManager {
                 }
                 Connection con = null;
                 PreparedStatement pstmt = null;
-                boolean abortTransaction = false;
                 try {
-                    con = DbConnectionManager.getTransactionConnection();
+                    con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(INSERT_USER);
                     pstmt.setString(1, username);
                     pstmt.setString(2, password);
@@ -108,12 +107,12 @@ public class UserManagerImpl extends BasicModule implements UserManager {
                 }
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    abortTransaction = true;
                 }
                 finally {
                     try { if (pstmt != null) { pstmt.close(); } }
                     catch (Exception e) { Log.error(e); }
-                    DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+                    try { if (con != null) { con.close(); } }
+                    catch (Exception e) { Log.error(e); }
                 }
                 newUser = getUser(username);
             }

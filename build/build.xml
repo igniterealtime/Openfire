@@ -93,6 +93,8 @@
     <property name="dist.prefix" value="jive_messenger" />
     <property name="overwrite" value="false" />
     <property name="deploy.jar.dir" value="${jar.dest.dir}" />
+    <property name="anttools.src.dir" value="${src.dir}/tools" />
+    <property name="anttools.target.dir" value="${target.dir}/tools" />
     <property name="installer.install4j.home" value="" />
     <property name="installer.src" value="${basedir}/build/installer" />
     <property name="installer.dest.dir" value="${release.dest.dir}" />
@@ -742,6 +744,7 @@
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
             <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
+<!--                <fileset dir="@{pluginsrc}/@{plugin}/src/include" />-->
             </jar>
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
@@ -850,12 +853,26 @@
     </macrodef>
 
     <!-- anttasks ============================================================================== -->
-    <target name="anttasks" depends="compile">
-        <!-- Compile the custom ant task -->
-        <property name="anttask.dest" value="${target.dir}/anttask" />
-        <mkdir dir="${anttask.dest}" />
-        <jar jarfile="${anttask.dest}/ant-subdirtask.jar">
-            <fileset dir="${compile.dir}" includes="org/jivesoftware/ant/*Task.class" />
+    <target name="anttasks" depends="init">
+
+        <mkdir dir="${anttools.target.dir}" />
+        <mkdir dir="${anttools.target.dir}/classes" />
+
+        <javac
+            destdir="${anttools.target.dir}/classes"
+            includeAntRuntime="no"
+            debug="on"
+            source="1.4"
+        >
+            <src path="${anttools.src.dir}" />
+            <patternset refid="compile.sources" />
+            <classpath>
+                <path refid="compile.dependencies" />
+            </classpath>
+        </javac>
+
+        <jar jarfile="${anttools.target.dir}/ant-subdirtask.jar">
+            <fileset dir="${anttools.target.dir}/classes" includes="**/*.class" />
         </jar>
     </target>
 

@@ -22,93 +22,35 @@ import java.util.Map;
  * @author Jim Berrettini
  */
 public class LdapUserPropertiesProvider implements UserPropertiesProvider {
-    /**
-     * Delete Vcard property. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @throws UnsupportedOperationException
-     */
+
     public void deleteVcardProperty(String username, String name) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Delete user property. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @throws UnsupportedOperationException
-     */
     public void deleteUserProperty(String username, String name) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Insert new vCard property. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @param value
-     * @throws UnsupportedOperationException
-     */
     public void insertVcardProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-
-    /**
-     * Insert new user property. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @param value
-     * @throws UnsupportedOperationException
-     */
     public void insertUserProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Update vCard. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @param value
-     * @throws UnsupportedOperationException
-     */
     public void updateVcardProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Update user property. Currently unimplemented.
-     *
-     * @param username
-     * @param name
-     * @param value
-     * @throws UnsupportedOperationException
-     */
     public void updateUserProperty(String username, String name, String value) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Get vCard properties. Unimplemented.
-     *
-     * @param username
-     * @return empty Map
-     */
     public Map getVcardProperties(String username) {
         return Collections.EMPTY_MAP;
     }
 
-    /**
-     * Get user properties. Unimplemented.
-     *
-     * @param username
-     * @return empty Map.
-     */
     public Map getUserProperties(String username) {
         return Collections.EMPTY_MAP;
     }

@@ -28,21 +28,14 @@
         <baseDN></baseDN>
         <adminDN></adminDN>
         <adminPassword></adminPassword>
-        <mode>1</mode>
     </ldap> 
     <UserProvider>
-        <id>
-            <className>org.jivesoftware.messenger.ldap.LdapUserIDProvider</className>
-        </id>
         <properties>
             <className>org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className>
         </properties>
         <info>
              <className>org.jivesoftware.messenger.ldap.LdapUserInfoProvider</className>
         </info>
-        <account>
-            <className>org.jivesoftware.messenger.ldap.LdapUserAccountProvider</className>
-        </account>
     </UserProvider>
     <AuthProvider>
         <className>org.jivesoftware.messenger.ldap.LdapAuthProvider</className>

@@ -99,11 +99,8 @@ public class LdapUserInfoProvider implements UserInfoProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-            }
+            try { ctx.close(); }
+            catch (Exception ignored) { }
         }
         return userInfo;
     }

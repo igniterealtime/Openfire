@@ -18,7 +18,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
  * Implementation of auth provider interface for LDAP
  * authentication service plug-in.
  *
- * @author Jim Berrettini
+ * @author Matt Tucker
  */
 public class LdapAuthProvider implements AuthProvider {
     private LdapManager manager;
@@ -27,34 +27,14 @@ public class LdapAuthProvider implements AuthProvider {
         manager = LdapManager.getInstance();
     }
 
-    /**
-     * <p>Determines if the authentication system supports the use of
-     * plain-text passwords.</p>
-     *
-     * @return true - plain text passwords are supported.
-     */
     public boolean isPlainSupported() {
         return true;
     }
 
-    /**
-     * <p>Determines if the authentication system supports the use
-     * of digest authentication.</p>
-     *
-     * @return false - digest authentication is not currently supported.
-     */
     public boolean isDigestSupported() {
         return false;
     }
 
-    /**
-     * <p>Validates username and password against data in LDAP store. Returns if the username and password are valid otherwise the method throws an
-     * UnauthorizedException.<p>
-     *
-     * @param username
-     * @param password
-     * @throws UnauthorizedException
-     */
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
@@ -83,28 +63,10 @@ public class LdapAuthProvider implements AuthProvider {
         }
     }
 
-    /**
-     * <p>Validates username, unique session token, and digest generated from the
-     * password and token according to the Jabber digest auth protocol against data in LDAP store.
-     * Since Digest authentication is not currently supported, throws UnsupportedOperationsException.</p>
-     *
-     * @param username
-     * @param token
-     * @param digest
-     * @throws UnsupportedOperationException
-     */
     public void authenticate(String username, String token, String digest) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Digest authentication not currently supported.");
     }
 
-    /**
-     * <p>Updates username and password. Throws UnsupportedOperationException, as LDAP store is accessed in read-only
-     * mode.</p>
-     *
-     * @param username
-     * @param password
-     * @throws UnsupportedOperationException
-     */
     public void updatePassword(String username, String password) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Cannot update password in LDAP");
     }

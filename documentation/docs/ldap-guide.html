@@ -81,11 +81,8 @@ Open the Messenger configuration file <tt>MESSENGER_HOME/config/jive-messenger.x
 editor and add or change the following settings:
 </p>
 <ul>
-<li>UserProvider.id.className - com.jivesoftware.xmpp.ldap.LdapUserIDProvider</li>
 <li>UserProvider.properties.className</li>
 <li>UserProvider.info.className</li>
-<li>UserProvider.account.className</li>
-<li>UserProvider.roster.className</li>
 <li>ldap.host - LDAP server host; e.g. localhost or machine.example.com, etc.</li>
 <li>ldap.port - LDAP server port number</li>
 <li>ldap.usernameField - The field name that the username lookups will be performed on.</li>
@@ -103,7 +100,6 @@ editor and add or change the following settings:
 <li>ldap.sslEnabled - Enable SSL connections to your LDAP server. If you enable SSL connections, the LDAP server port
     number most likely should be changed to 636.
 </li>
-<li>ldap.mode - "0" for all LDAP mode, "1" for mixed LDAP/Jive DB mode</li>
 </ul>
 <p>
 Below is a sample set up.
@@ -112,18 +108,12 @@ Below is a sample set up.
 &lt;jive&gt;
 ...
   &lt;UserProvider&gt;
-    &lt;id&gt;
-      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserIDProvider&lt;/className&gt;
-    &lt;/id&gt;
     &lt;properties&gt;
       &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider&lt;/className&gt;
     &lt;/properties&gt;
     &lt;info&gt;
       &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserInfoProvider&lt;/className&gt;
     &lt;/info&gt;
-    &lt;account&gt;
-       &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserAccountProvider&lt;/className&gt;
-    &lt;/account&gt;
   &lt;UserProvider&gt;
   &lt;ldap&gt;
     &lt;host&gt;myhost.com&lt;/host&gt;
@@ -136,81 +126,8 @@ Below is a sample set up.
     &lt;adminPassword&gt;adm1npwd&lt;/adminPassword&gt;
     &lt;debugEnabled&gt;false&lt;/debugEnabled&gt;
     &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
-    &lt;mode&gt;1&lt;/mode&gt;
   &lt;/ldap&gt;
 ...
 &lt;/jive&gt;
 </code></pre>
-<h2>Configure the LDAP Server (optional)</h2>
-<p>
-<b>Note:</b> If you use the "mixed mode" of the Jive Messenger LDAP module, no changes to your LDAP directory are
-necessary. However, if you use the "pure mode", you'll need to make changes to your directory as detailed below.
-
-Several custom LDAP attributes are used to store things such as the numeric Jive Messenger user ID,
-the date the account was created, privacy flags, etc. The first step is to define these attributes in your LDAP
-directory.
-</p>
-<table>
-<tr>
-  <th>Name</th>
-  <th>Type</th>
-  <th>OID</th>
-  <th>Multi-valued</th>
-  <th>Description</th>
-</tr>
-<tr>
-  <td>jiveUserID</td>
-  <td>Integer </td>
-  <td>1.3.6.1.4.1.10985.389.2 </td>
-  <td>No </td>
-  <td>A numeric ID that Jive Messenger uses to identify a user.</td>
-</tr>
-<tr>
-  <td>jiveNameVisible </td>
-  <td>String </td>
-  <td>1.3.6.1.4.1.10985.389.3 </td>
-  <td>No </td>
-  <td>The value is "true" if a user wishes to show their name publicly; "false" otherwise.</td>
-</tr>
-<tr>
-  <td>jiveEmailVisible </td>
-  <td>String </td>
-  <td>1.3.6.1.4.1.2.10985.389.4 </td>
-  <td>No </td>
-  <td>The value is "true" if a user wishes to show their email address publicly; "false" otherwise.</td>
-</tr>
-<tr>
-  <td>jiveCDate </td>
-  <td>String </td>
-  <td>1.3.6.1.4.1.10985.389.6 </td>
-  <td>No </td>
-  <td>The date the user became a Jive Messenger user.</td>
-</tr>
-<tr>
-  <td>jiveMDate </td>
-  <td>String </td>
-  <td>1.3.6.1.4.1.10985.389.7 </td>
-  <td>No </td>
-  <td>The date the user information was last updated.</td>
-</tr>
-<tr>
-  <td>jiveProps </td>
-  <td>String </td>
-  <td>1.3.6.1.4.1.10985.389.8 </td>
-  <td>Yes </td>
-  <td>A collection of extended properties for the user.</td>
-</tr>
-</table>
-<p>Next, you can optionally create a new object class that uses the specified attributes
-(or modify an existing object to add the attributes). The Jive Messenger LDAP module does not actually pay attention to
-object types, but only looks for the correct attributes. If you do create a new object, the object name should be
-"jivePerson" with an OID of 1.3.6.1.4.1.2.10985.389.1.
-</p>
-<p>
-Each of the attributes listed above must be added as an optional attribute since the attributes will not be
-created until the user logs into Jive Messenger for the first time.
-</p>
-<p>
-Also, you may wish to create an index on the "jiveUserID" attribute so that lookups on that field are fast.
-</p>
 </body>

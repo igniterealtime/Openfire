@@ -22,43 +22,22 @@ import javax.naming.directory.*;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method
- * should be used to get an instace. The following Jive properties correspond
- * to the properties of this manager: <ul>
+ * should be used to get an instace. The following configure this manager:<ul>
  *      <li> ldap.host
  *      <li> ldap.port
  *      <li> ldap.usernameField
  *      <li> ldap.baseDN
  *      <li> ldap.adminDN
  *      <li> ldap.adminPassword
- *      <li> ldap.mode
  *      <li> ldap.ldapDebugEnabled
  *      <li> ldap.sslEnabled
  *      <li> ldap.initialContextFactory --  if this value is not specified,
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used instead.
- * </ul><p>
- *
- * The LDAP module operates in one of two modes:<ul>
- *      <li> ALL_LDAP_MODE -- all user data is stored in LDAP, including Jive-specific data such
- *          as the number of reward points, etc. This option requires making modifications to
- *          the schema of the directory.
- *      <li> LDAP_DB_MODE -- only critical user data is stored in LDAP (username, name, and email).
- *          All Jive-specific data is stored in the normal jiveUser and userProperty database
- *          tables. This mode requires no changes to the LDAP directory.</ul>
+ * </ul>
  *
  * @author Matt Tucker
  */
 public class LdapManager {
-
-    /**
-     * The mode for storing all user data in LDAP, including Jive-specific data.
-     */
-    public static final int ALL_LDAP_MODE = 0;
-
-    /**
-     * The mode for storing only critical user data in LDAP (username, name, and email) and all
-     * other Jive-specific user data in the normal database tables.
-     */
-    public static final int LDAP_DB_MODE = 1;
 
     private String host;
     private int port = 389;
@@ -69,7 +48,6 @@ public class LdapManager {
     private String alternateBaseDN = null;
     private String adminDN;
     private String adminPassword;
-    private int mode = 0;
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
     private String initialContextFactory;
@@ -87,7 +65,7 @@ public class LdapManager {
     }
 
     /**
-     * Creates a new LdapManager instance. This class is a singleton so the
+     * Constructs a new LdapManager instance. This class is a singleton so the
      * constructor is private.
      */
     private LdapManager() {
@@ -122,13 +100,6 @@ public class LdapManager {
         this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
         this.ldapDebugEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.ldapDebugEnabled"));
         this.sslEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.sslEnabled"));
-        String modeStr = JiveGlobals.getXMLProperty("ldap.mode");
-        if (modeStr != null) {
-            try {
-                this.mode = Integer.parseInt(modeStr);
-            }
-            catch (NumberFormatException nfe) { }
-        }
         this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -158,7 +129,6 @@ public class LdapManager {
             Log.debug("\t adminPassword: " + adminPassword);
             Log.debug("\t ldapDebugEnabled: " + ldapDebugEnabled);
             Log.debug("\t sslEnabled: " + sslEnabled);
-            Log.debug("\t mode: " + mode);
             Log.debug("\t initialContextFactory: " + initialContextFactory);
             Log.debug("\t connectionPoolEnabled: " + connectionPoolEnabled);
         }
@@ -716,30 +686,5 @@ public class LdapManager {
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
         JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
-    }
-
-    /**
-     * Returns the LDAP mode that is being used. Valid values are LdapManager.ALL_LDAP_MODE and
-     * LdapManager.LDAP_DB_MODE. The mode dictates what user data will be stored and what data
-     * (if any) will be stored in the database. Authentication is always performed using
-     * LDAP regardless of the mode.
-     *
-     * @return the current mode.
-     */
-    public int getMode() {
-        return mode;
-    }
-
-    /**
-     * Sets the LDAP mode that should be used. Valid values are LdapManager.ALL_LDAP_MODE and
-     * LdapManager.LDAP_DB_MODE. The mode dictates what user data will be stored and what data
-     * (if any) will be stored in the database. Authentication is always performed using
-     * LDAP regardless of the mode.
-     *
-     * @param mode the mode to use.
-     */
-    public void setMode(int mode) {
-        this.mode = mode;
-        JiveGlobals.setXMLProperty("ldap.mode", ""+mode);
     }
 }

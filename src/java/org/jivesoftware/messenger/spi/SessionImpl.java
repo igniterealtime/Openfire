@@ -19,6 +19,9 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Packet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,9 +34,9 @@ import java.util.List;
 public class SessionImpl implements Session {
 
     /**
-     * The XMPPAddress this session is authenticated as.
+     * The Address this session is authenticated as.
      */
-    private XMPPAddress jid;
+    private JID address;
 
     /**
      * The stream id for this session (random and unique).
@@ -74,13 +77,12 @@ public class SessionImpl implements Session {
      *
      * @param connection The connection we are proxying
      */
-    public SessionImpl(String serverName, Connection connection, StreamID streamID)
-            throws UnauthorizedException {
+    public SessionImpl(String serverName, Connection connection, StreamID streamID) throws UnauthorizedException {
         conn = connection;
         this.streamID = streamID;
         this.serverName = serverName;
-        this.jid = new XMPPAddress(null, null, null);
-        presence = new PresenceImpl();
+        this.address = new JID(null, null, null);
+        presence = new Presence();
 
         this.sessionManager = SessionManager.getInstance();
 
@@ -102,11 +104,11 @@ public class SessionImpl implements Session {
 
     public void setAuthToken(AuthToken auth, UserManager userManager, String resource) throws UserNotFoundException {
         User user = userManager.getUser(auth.getUsername());
-        jid = new XMPPAddress(user.getUsername(), serverName, resource);
+        address = new JID(user.getUsername(), serverName, resource);
         authToken = auth;
 
         List params = new ArrayList();
-        params.add(jid.toString());
+        params.add(address.toBareJID());
         params.add(getConnection().toString());
         // Log.info(LocaleUtils.getLocalizedString("admin.authenticated",params));
 
@@ -115,13 +117,13 @@ public class SessionImpl implements Session {
     }
 
     public void setAnonymousAuth() {
-        jid = new XMPPAddress("", serverName, "");
+        address = new JID("", serverName, "");
         // Registering with the session manager assigns the resource
         sessionManager.addAnonymousSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
 
         List params = new ArrayList();
-        params.add(jid.toString());
+        params.add(address.toString());
         params.add(getConnection().toString());
         //   Log.info(LocaleUtils.getLocalizedString("admin.authenticated",params));
     }
@@ -138,8 +140,12 @@ public class SessionImpl implements Session {
         return conn;
     }
 
-    public XMPPAddress getAddress() {
-        return jid;
+    public JID getAddress() {
+        return address;
+    }
+
+    public void setAddress(JID address){
+        this.address = address;
     }
 
     public StreamID getStreamID() {
@@ -216,11 +222,11 @@ public class SessionImpl implements Session {
         conflictCount++;
     }
 
-    public void process(XMPPPacket packet) {
+    public void process(Packet packet) {
         deliver(packet);
     }
 
-    private void deliver(XMPPPacket packet) {
+    private void deliver(Packet packet) {
         if (conn != null && !conn.isClosed()) {
             try {
                 conn.deliver(packet);

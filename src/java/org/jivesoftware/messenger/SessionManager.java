@@ -11,7 +11,17 @@
 
 package org.jivesoftware.messenger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -21,11 +31,16 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
+import org.jivesoftware.messenger.spi.PacketTransporterImpl;
 import org.jivesoftware.messenger.spi.SessionImpl;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -38,12 +53,11 @@ public class SessionManager implements ConnectionCloseListener {
     private int sessionCount = 0;
     final int NEVER_KICK = -1;
 
-
     public XMPPServer server;
     public PacketRouter router;
-    public PacketTransporter transporter;
+    public PacketTransporterImpl transporter;
     private String serverName;
-    private XMPPAddress serverAddress;
+    private JID serverAddress;
     public UserManager userManager;
     private int conflictLimit;
     private Random randomResource = new Random();
@@ -126,14 +140,13 @@ public class SessionManager implements ConnectionCloseListener {
      * have no associated user, and don't follow the normal routing rules for
      * priority based fall over.
      */
-    private HashMap anonymousSessions = new HashMap();
+    private Map anonymousSessions = new HashMap();
 
     /**
      * Simple data structure to track sessions for a single user (tracked by resource
      * and priority).
      */
     private class SessionMap {
-
         private HashMap resources = new HashMap();
         private LinkedList priorityList = new LinkedList();
 
@@ -179,7 +192,7 @@ public class SessionManager implements ConnectionCloseListener {
          * @param sender   The sender who's session just changed priority
          * @param priority The new priority for the session
          */
-        public void changePriority(XMPPAddress sender, int priority) {
+        public void changePriority(JID sender, int priority) {
             String resource = sender.getResource();
             if (resources.containsKey(resource)) {
                 priorityList.remove(resource);
@@ -248,12 +261,11 @@ public class SessionManager implements ConnectionCloseListener {
          *
          * @param packet
          */
-        private void broadcast(XMPPPacket packet) throws
-                UnauthorizedException, PacketException, XMLStreamException {
+        private void broadcast(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
             Iterator entries = resources.values().iterator();
             while (entries.hasNext()) {
                 Session session = (Session)entries.next();
-                packet.setRecipient(session.getAddress());
+                packet.setTo(session.getAddress());
                 session.getConnection().deliver(packet);
             }
         }
@@ -294,7 +306,7 @@ public class SessionManager implements ConnectionCloseListener {
     public boolean addSession(Session session) {
         boolean success = false;
         sessionLock.writeLock().lock();
-        String username = session.getAddress().getName().toLowerCase();
+        String username = session.getAddress().getNode().toLowerCase();
         SessionMap resources = null;
         try {
             resources = (SessionMap)sessions.get(username);
@@ -317,8 +329,8 @@ public class SessionManager implements ConnectionCloseListener {
         }
         if (success) {
             Session defaultSession = resources.getDefaultSession();
-            routingTable.addRoute(new XMPPAddress(defaultSession.getAddress().getNamePrep(),
-                    defaultSession.getAddress().getHostPrep(), ""), defaultSession);
+            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
+                    defaultSession);
             routingTable.addRoute(session.getAddress(), session);
         }
         return success;
@@ -330,8 +342,8 @@ public class SessionManager implements ConnectionCloseListener {
      * @param sender   The sender who's session just changed priority
      * @param priority The new priority for the session
      */
-    public void changePriority(XMPPAddress sender, int priority) {
-        String username = sender.getName().toLowerCase();
+    public void changePriority(JID sender, int priority) {
+        String username = sender.getNode().toLowerCase();
         sessionLock.writeLock().lock();
         try {
             SessionMap resources = (SessionMap)sessions.get(username);
@@ -343,8 +355,8 @@ public class SessionManager implements ConnectionCloseListener {
             // Get the session with highest priority
             Session defaultSession = resources.getDefaultSession();
             // Update the route to the bareJID with the session with highest priority
-            routingTable.addRoute(new XMPPAddress(defaultSession.getAddress().getNamePrep(),
-                    defaultSession.getAddress().getHostPrep(), ""), defaultSession);
+            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
+                    defaultSession);
         }
         finally {
             sessionLock.writeLock().unlock();
@@ -363,10 +375,10 @@ public class SessionManager implements ConnectionCloseListener {
      * @param recipient The recipient ID to send to or null to select the default route
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
-    public Session getBestRoute(XMPPAddress recipient) {
+    public Session getBestRoute(JID recipient) {
         Session session = null;
         String resource = recipient.getResource();
-        String username = recipient.getName();
+        String username = recipient.getNode();
         if (username == null || "".equals(username)) {
             if (resource != null) {
                 anonymousSessionLock.readLock().lock();
@@ -402,10 +414,10 @@ public class SessionManager implements ConnectionCloseListener {
         return session;
     }
 
-    public boolean isActiveRoute(XMPPAddress route) {
+    public boolean isActiveRoute(JID route) {
         boolean hasRoute = false;
         String resource = route.getResource();
-        String username = route.getName();
+        String username = route.getNode();
 
         if (username == null || "".equals(username)) {
             if (resource != null) {
@@ -449,14 +461,13 @@ public class SessionManager implements ConnectionCloseListener {
         return hasRoute;
     }
 
-    public Session getSession(XMPPAddress address)
-            throws UnauthorizedException, SessionNotFoundException {
+    public Session getSession(JID address) throws UnauthorizedException, SessionNotFoundException {
         Session session = null;
         String resource = address.getResource();
         if (resource == null) {
             throw new SessionNotFoundException();
         }
-        String username = address.getName();
+        String username = address.getNode();
         if (username == null || "".equals(username)) {
             anonymousSessionLock.readLock().lock();
             try {
@@ -729,8 +740,7 @@ public class SessionManager implements ConnectionCloseListener {
      *
      * @param packet The packet to be broadcast
      */
-    public void broadcast(XMPPPacket packet) throws
-            UnauthorizedException, PacketException, XMLStreamException {
+    public void broadcast(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
         sessionLock.readLock().lock();
         try {
             Iterator values = sessions.values().iterator();
@@ -760,8 +770,7 @@ public class SessionManager implements ConnectionCloseListener {
      *
      * @param packet The packet to be broadcast
      */
-    public void userBroadcast(String username, XMPPPacket packet) throws
-            UnauthorizedException, PacketException, XMLStreamException {
+    public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
         sessionLock.readLock().lock();
         try {
             SessionMap sessionMap = (SessionMap)sessions.get(username);
@@ -796,8 +805,8 @@ public class SessionManager implements ConnectionCloseListener {
             }
         }
         else {
-            if (session.getAddress() != null && session.getAddress().getName() != null) {
-                String username = session.getAddress().getName().toLowerCase();
+            if (session.getAddress() != null && session.getAddress().getNode() != null) {
+                String username = session.getAddress().getNode().toLowerCase();
                 sessionLock.writeLock().lock();
                 try {
                     sessionMap = (SessionMap)sessions.get(username);
@@ -818,25 +827,23 @@ public class SessionManager implements ConnectionCloseListener {
         Presence presence = session.getPresence();
         if (presence == null || presence.isAvailable()) {
             Presence offline = packetFactory.getPresence();
-            offline.setOriginatingSession(session);
-            offline.setSender(session.getAddress());
-            offline.setRecipient(new XMPPAddress(null, serverName, null));
-            offline.setAvailable(false);
+            offline.setFrom(session.getAddress());
+            offline.setTo(new JID(null, serverName, null));
+            offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
-        if (session.getAddress() != null && routingTable != null && !session.getAddress().isEmpty()) {
+        if (session.getAddress() != null && routingTable != null && session.getAddress().toBareJID().trim().length() != 0) {
             routingTable.removeRoute(session.getAddress());
             if (sessionMap != null) {
                 if (sessionMap.isEmpty()) {
                     // Remove the route for the session's BARE address
-                    routingTable.removeRoute(new XMPPAddress(session.getAddress().getNamePrep(),
-                            session.getAddress().getHostPrep(), ""));
+                    routingTable.removeRoute(new JID(session.getAddress().getNode(), session.getAddress().getDomain(), ""));
                 }
                 else {
                     // Update the route for the session's BARE address
                     Session defaultSession = sessionMap.getDefaultSession();
-                    routingTable.addRoute(new XMPPAddress(defaultSession.getAddress().getNamePrep(),
-                            defaultSession.getAddress().getHostPrep(), ""), defaultSession);
+                    routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
+                            defaultSession);
                 }
             }
         }
@@ -844,7 +851,9 @@ public class SessionManager implements ConnectionCloseListener {
 
     public void addAnonymousSession(Session session) {
         try {
-            session.getAddress().setResource(Integer.toHexString(randomResource.nextInt()));
+            JID newAddress = new JID(session.getAddress().getNode(), session.getAddress().getDomain(),
+                    Integer.toHexString(randomResource.nextInt()));
+            session.setAddress(newAddress);
             anonymousSessionLock.writeLock().lock();
             try {
                 anonymousSessions.put(session.getAddress().getResource(), session);
@@ -893,7 +902,6 @@ public class SessionManager implements ConnectionCloseListener {
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
         trackInfo.getTrackerClasses().put(XMPPServer.class, "server");
-        trackInfo.getTrackerClasses().put(PacketTransporter.class, "transporter");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
         trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
@@ -904,7 +912,7 @@ public class SessionManager implements ConnectionCloseListener {
     public void serviceAdded(Object service) {
         if (service instanceof XMPPServer && server != null) {
             serverName = server.getServerInfo().getName();
-            serverAddress = XMPPAddress.parseJID(serverName);
+            serverAddress = new JID(serverName);
         }
     }
 
@@ -947,14 +955,14 @@ public class SessionManager implements ConnectionCloseListener {
         }
     }
 
-    public void sendServerMessage(XMPPAddress address, String subject, String body) throws SessionNotFoundException {
-        XMPPPacket packet = createServerMessage(subject, body);
+    public void sendServerMessage(JID address, String subject, String body) throws SessionNotFoundException {
+        Packet packet = createServerMessage(subject, body);
         try {
-            if (address == null || address.getName() == null || address.getName().length() < 1) {
+            if (address == null || address.getNode() == null || address.getNode().length() < 1) {
                 broadcast(packet);
             }
             else if (address.getResource() == null || address.getResource().length() < 1) {
-                userBroadcast(address.getName(), packet);
+                userBroadcast(address.getNode(), packet);
             }
             else {
                 getSession(address).getConnection().deliver(packet);
@@ -964,9 +972,9 @@ public class SessionManager implements ConnectionCloseListener {
         }
     }
 
-    private XMPPPacket createServerMessage(String subject, String body) {
-        Message message = packetFactory.getMessage();
-        message.setSender(serverAddress);
+    private Packet createServerMessage(String subject, String body) {
+        Message message = new Message();
+        message.setFrom(serverAddress);
         if (subject != null) {
             message.setSubject(subject);
         }

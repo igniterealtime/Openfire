@@ -52,6 +52,14 @@ public interface Session extends RoutableChannelHandler {
      public JID getAddress();
 
     /**
+     * Sets the new address of this session. The address is used by services like the core
+     * server packet router to determine if a packet should be sent to the handler.
+     * Handlers that are working on behalf of the server should use the generic server
+     * hostname address (e.g. server.com).
+     */
+    public void setAddress(JID address);
+
+    /**
      * Returns the connection associated with this Session.
      *
      * @return The connection for this session

@@ -120,6 +120,10 @@ public class ServerSession implements Session {
         return address;
     }
 
+    public void setAddress(JID address){
+        this.address = address;
+    }
+
     public void process(Packet packet) {
     }
 

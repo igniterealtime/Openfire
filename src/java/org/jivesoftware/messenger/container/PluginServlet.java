@@ -167,7 +167,9 @@ public class PluginServlet extends HttpServlet {
         // lives in plugins/[pluginName]/web/web.xml
         String pluginName = webXML.getParentFile().getParentFile().getName();
         try {
-            SAXReader saxReader = new SAXReader();
+            SAXReader saxReader = new SAXReader(false);
+            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                    false);
             Document doc = saxReader.read(webXML);
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");

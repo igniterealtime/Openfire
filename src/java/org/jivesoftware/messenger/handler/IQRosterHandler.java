@@ -232,10 +232,17 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             catch (UserNotFoundException e) {
             }
         }
-        else { // Recipient is remote so we just forward the packet to them
-
-            Packet removePacket = createRemoveForward(sender, recipient);
-            router.route(removePacket);
+        else {
+            // Recipient is remote so we just forward the packet to them
+            String serverDomain = localServer.getServerInfo().getName();
+            // Check if the recipient may be hosted by this server
+            if (!recipient.getDomain().contains(serverDomain)) {
+                // TODO Implete when s2s is implemented
+            }
+            else {
+                Packet removePacket = createRemoveForward(sender, recipient);
+                router.route(removePacket);
+            }
         }
     }
 

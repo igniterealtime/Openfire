@@ -38,10 +38,10 @@
             <className>org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className>
         </properties>
         <info>
-             <className>com.jivesoftware.messenger.ldap.LdapUserInfoProvider</className>
+             <className>org.jivesoftware.messenger.ldap.LdapUserInfoProvider</className>
         </info>
         <account>
-            <className>com.jivesoftware.messenger.ldap.LdapUserAccountProvider</className>
+            <className>org.jivesoftware.messenger.ldap.LdapUserAccountProvider</className>
         </account>
     </UserProvider>
     <AuthProvider>

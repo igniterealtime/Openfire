@@ -99,7 +99,7 @@
 
 <p>
 Group chat rooms can replay conversation histories to provide context to new members joining a room.
-Thre are several options for controlling how much history to store for each room.
+There are several options for controlling how much history to store for each room.
 </p>
 
 <%  if ("true".equals(request.getParameter("success"))) { %>

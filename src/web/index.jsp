@@ -26,6 +26,14 @@
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
+<%  // Simple logout code
+    if ("true".equals(request.getParameter("logout"))) {
+        session.removeAttribute("jive.admin.authToken");
+        response.sendRedirect("index.jsp");
+        return;
+    }
+%>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>

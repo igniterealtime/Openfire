@@ -12,6 +12,7 @@ package org.jivesoftware.messenger;
 
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 import org.xmpp.component.*;
 import org.xmpp.component.ComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -37,13 +38,13 @@ public class ComponentSession extends Session {
 
     /**
      * Returns a newly created session between the server and a component. The session will be
-     * created and returned only if correct all the checkings were correct.<p>
+     * created and returned only if all the checkings were correct.<p>
      *
      * A domain will be binded for the new connecting component. This method is following
-     * the JEP-114 where the domain to bind in sent in the TO attribute of the stream header.
+     * the JEP-114 where the domain to bind is sent in the TO attribute of the stream header.
      *
      * @param serverName the name of the server where the session is connecting to.
-     * @param reader the reader that is reading the provided XML through the connection.
+     * @param reader     the reader that is reading the provided XML through the connection.
      * @param connection the connection with the component.
      * @return a newly created session between the server and a component.
      */
@@ -70,9 +71,8 @@ public class ComponentSession extends Session {
         // Check that a domain was provided in the stream header
         if (domain == null) {
             // Include the bad-format in the response
-            sb.append("<stream:error>");
-            sb.append("<bad-format xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");
-            sb.append("</stream:error>");
+            StreamError error = new StreamError(StreamError.Condition.bad_format);
+            sb.append(error.toXML());
             sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
@@ -85,11 +85,10 @@ public class ComponentSession extends Session {
         String secretKey = JiveGlobals.getProperty("component.external.secretKey");
         if (secretKey == null) {
             Log.error("Setup for external components is incomplete. Property " +
-                    "component.external.secretKey  does not exist.");
+                    "component.external.secretKey does not exist.");
             // Include the internal-server-error in the response
-            sb.append("<stream:error>");
-            sb.append("<internal-server-error xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");
-            sb.append("</stream:error>");
+            StreamError error = new StreamError(StreamError.Condition.internal_server_error);
+            sb.append(error.toXML());
             sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
@@ -101,9 +100,8 @@ public class ComponentSession extends Session {
         if (InternalComponentManager.getInstance().getComponent(domain) != null) {
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
-            sb.append("<stream:error>");
-            sb.append("<conflict xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");
-            sb.append("</stream:error>");
+            StreamError error = new StreamError(StreamError.Condition.conflict);
+            sb.append(error.toXML());
             sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
@@ -139,15 +137,14 @@ public class ComponentSession extends Session {
             String digest = "handshake".equals(doc.getName()) ? doc.getStringValue() : "";
             String anticipatedDigest = AuthFactory.createDigest(session.getStreamID().getID(),
                     secretKey);
-            // Check that a the provided handshake (secret key + sessionID) is correct
+            // Check that the provided handshake (secret key + sessionID) is correct
             if (!anticipatedDigest.equalsIgnoreCase(digest)) {
                 //  The credentials supplied by the initiator are not valid (answer an error
                 // and close the connection)
                 sb = new StringBuilder();
                 // Include the conflict error in the response
-                sb.append("<stream:error>");
-                sb.append("<not-authorized xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");
-                sb.append("</stream:error>");
+                StreamError error = new StreamError(StreamError.Condition.not_authorized);
+                sb.append(error.toXML());
                 sb.append("</stream:stream>");
                 writer.write(sb.toString());
                 writer.flush();
@@ -230,11 +227,9 @@ public class ComponentSession extends Session {
         }
 
         public void initialize(JID jid, ComponentManager componentManager) {
-
         }
 
         public void shutdown() {
-
         }
 
         public JID getAddress() {

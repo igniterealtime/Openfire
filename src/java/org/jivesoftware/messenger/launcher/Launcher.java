@@ -1,6 +1,5 @@
 package org.jivesoftware.messenger.launcher;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLProperties;
 import org.jivesoftware.messenger.JiveGlobals;
 import java.awt.*;
@@ -8,17 +7,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import javax.swing.*;
-
 
 /**
  * Launcher for Jive Messenger.
@@ -26,6 +17,7 @@ import javax.swing.*;
  * @author Matt Tucker
  */
 public class Launcher {
+
     private Process messengerd = null;
     private String configFile = JiveGlobals.getJiveHome() + File.separator + "config" +
             File.separator + "jive-messenger.xml";
@@ -148,66 +140,6 @@ public class Launcher {
         GraphicUtils.centerWindowOnScreen(frame);
 
         frame.setVisible(true);
-
-        // If setup is being run for the first time and we are using JDK 1.3,
-        // copy optional libs into the official lib directory.
-        if (isJDK13() && !this.isSetupDone()) {
-            try {
-                File optDir = new File(JiveGlobals.getJiveHome() + File.separator + "optional" +
-                        File.separator + "jdk1.3");
-                File libDir = new File(JiveGlobals.getJiveHome() + File.separator + "lib");
-
-                if (optDir.exists() && libDir.exists()) {
-                    File[] files = optDir.listFiles(new FileFilter() {
-                        public boolean accept(File pathname) {
-                            return pathname.getName().endsWith(".jar");
-                        }
-                    });
-
-                    for (int i = 0; i < files.length; i++) {
-                        File source = files[i];
-                        File destination = new File(libDir, source.getName());
-
-                        if (!destination.exists()) {
-                            InputStream in = null;
-                            OutputStream out = null;
-
-                            try {
-                                in = new BufferedInputStream(new FileInputStream(source));
-                                out = new BufferedOutputStream(new FileOutputStream(destination));
-
-                                byte[] buf = new byte[1024];
-                                int len;
-
-                                while ((len = in.read(buf)) >= 0) {
-                                    out.write(buf, 0, len);
-                                }
-                            }
-                            catch (Exception e) {
-                            }
-                            finally {
-                                try {
-                                    in.close();
-                                }
-                                catch (Exception e2) {
-                                    Log.error(e2);
-                                }
-
-                                try {
-                                    out.close();
-                                }
-                                catch (Exception e3) {
-                                    Log.error(e3);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-        }
     }
 
     /**
@@ -301,50 +233,6 @@ public class Launcher {
         }
 
         messengerd = null;
-    }
-
-    private boolean isJDK13() {
-        try {
-            loadClass("java.nio.Buffer");
-
-            return false;
-        }
-        catch (Exception e) {
-        }
-
-        return true;
-    }
-
-    Class loadClass(String className) throws ClassNotFoundException {
-        Class theClass = null;
-
-        try {
-            theClass = Class.forName(className);
-        }
-        catch (ClassNotFoundException e1) {
-            try {
-                theClass = Thread.currentThread().getContextClassLoader().loadClass(className);
-            }
-            catch (ClassNotFoundException e2) {
-                theClass = getClass().getClassLoader().loadClass(className);
-            }
-        }
-
-        return theClass;
-    }
-
-    private synchronized boolean isSetupDone() {
-        try {
-            XMLProperties props = new XMLProperties(configFile);
-            String setup = props.getProperty("setup");
-
-            return Boolean.valueOf(setup).booleanValue();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return true;
     }
 
     private synchronized void launchBrowser() {

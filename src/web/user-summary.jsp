@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -14,7 +19,8 @@
                  org.jivesoftware.messenger.Presence"
 %>
 
-<%-- Define Administration Bean --%>
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -28,9 +34,6 @@
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
-
-
-
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
@@ -49,8 +52,6 @@
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
 %>
-
-
 
 <p>
 Below is a list of users in the system.
@@ -85,18 +86,21 @@ Sorted by Username
 
 <%  } %>
 
-<table  cellpadding="3" cellspacing="0" border="0" width="600">
-</table>
-<table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
-<tr >
-    <th>&nbsp;</th>
-    <th>Online</th>
-    <th>Username</th>
-    <th>Name</th>
-    <th>Created</th>
-    <th>Edit</th>
-    <th>Delete</th>
-</tr>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
+    <tr>
+        <th>&nbsp;</th>
+        <th>Online</th>
+        <th>Username</th>
+        <th>Name</th>
+        <th>Created</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+</thead>
+<tbody>
+
 <%  // Print the list of users
     Iterator users = webManager.getUserManager().users(start, range);
     if (!users.hasNext()) {
@@ -158,7 +162,7 @@ Sorted by Username
              title="Click to edit..."
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
-        <td width="1%" align="center">
+        <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= user.getUsername() %>"
              title="Click to delete..."
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
@@ -168,6 +172,7 @@ Sorted by Username
 <%
     }
 %>
+</tbody>
 </table>
 </div>
 

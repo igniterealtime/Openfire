@@ -267,6 +267,9 @@ PRE, TT {
     border-style : solid;
     border-width : 1px 1px 0px 1px;
 }
+.jive-table .c1 {
+    width : 30%;
+}
 .jive-table TH, .jive-table TD {
     padding : 4px;
 }

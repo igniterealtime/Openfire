@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -10,11 +15,13 @@
                  java.util.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.*"
+    errorPage="error.jsp"
 %>
+
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
-
-
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -56,11 +63,12 @@
         user = webManager.getUserManager().getUser(username);
     }
 
-
+    PresenceManager presenceManager = webManager.getPresenceManager();
 
     // Date formatter for dates
     DateFormat formatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
 %>
+
 <%
  // Get a private data manager //
   final PrivateStore privateStore = webManager.getPrivateStore();
@@ -70,6 +78,7 @@
         nickname = "";
     }
 %>
+
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
     String title = "User Properties";
@@ -79,115 +88,120 @@
     pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+username);
 %>
-<c:set var="tab" value="props" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<%@ include file="user-tabs.jsp" %>
-<br/>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr><td class="text" colspan="2">
-Below is a summary of user properties. Use the tabs above to do things like edit user properties,
-send the user a message (if they're online) or delete the user.
-</td></tr>
-<tr class="jive-odd">
-    <td wrap width="1%">
-        Username:
-    </td>
-    <td>
-        <%= user.getUsername() %>
-    </td>
-</tr>
+<p>
+Below is a summary of user properties. To edit properties, click the "Edit" button below.
+</p>
 
-<tr class="jive-even">
-    <td wrap width="1%">
-        Status:
-    </td>
-<td valign="middle">
-  <%  if (presenceManager.isAvailable(user)) {
-                     Presence presence = presenceManager.getPresence(user);
-             %>
-                 <% if (presence.getShow() == Presence.SHOW_NONE) { %>
-                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
-                 Available
-                 <% } %>
-                 <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
-                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
-                 Available to Chat
-                 <% } %>
-                 <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
-                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
-                 Away
-                 <% } %>
-                 <% if (presence.getShow() == Presence.SHOW_XA) { %>
-                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
-                 Extended Away
-                 <% } %>
-                 <% if (presence.getShow() == Presence.SHOW_DND) { %>
-                 <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
-                 Do not Disturb
-                 <% } %>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
+    <tr>
+        <th colspan="2">
+            User Properties
+        </th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td class="c1">
+            Username:
+        </td>
+        <td>
+            <%= user.getUsername() %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Status:
+        </td>
+        <td>
+            <%  if (presenceManager.isAvailable(user)) {
+                    Presence presence = presenceManager.getPresence(user);
+            %>
+                <% if (presence.getShow() == Presence.SHOW_NONE) { %>
+                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
+                    Available
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
+                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
+                    Available to Chat
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
+                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
+                    Away
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_XA) { %>
+                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
+                    Extended Away
+                <% } %>
+                <% if (presence.getShow() == Presence.SHOW_DND) { %>
+                    <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
+                    Do not Disturb
+                <% } %>
 
+            <%  } else { %>
 
-        <%  } else { %>
+                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="Offline">
+                (Offline)
 
-            <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="Offline">
-            (Offline)
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Name:
+        </td>
+        <td>
+            <%  if (user.getInfo().getName() == null || "".equals(user.getInfo().getName())) { %>
 
-        <%  } %>
-    </td>
-</tr>
-<tr class="jive-odd">
-    <td wrap width="1%">
-        Name:
-    </td>
-    <td>
-        <%  if (user.getInfo().getName() == null || "".equals(user.getInfo().getName())) { %>
+                <span style="color:#999">
+                <i>Not set.</i>
+                </span>
 
-            <span style="color:#999">
-            <i>Not set.</i>
-            </span>
+            <%  } else { %>
 
-        <%  } else { %>
+                <%= user.getInfo().getName() %>
 
-                <i><%= user.getInfo().getName() %></i>
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Email:
+        </td>
+        <td>
+            <%  if (user.getInfo().getEmail() == null || "".equals(user.getInfo().getEmail())) { %>
 
-        <%  } %>
-    </td>
-</tr>
-<tr class="jive-even">
-    <td wrap width="1%">
-        Email:
-    </td>
-    <td>
-        <%  if (user.getInfo().getEmail() == null || "".equals(user.getInfo().getEmail())) { %>
+                <span style="color:#999">
+                <i>Not set.</i>
+                </span>
 
-            <span style="color:#999">
-            <i>Not set.</i>
-            </span>
+            <%  } else { %>
 
-        <%  } else { %>
+                <a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a>
 
-                <i><a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a></i>
-
-        <%  } %>
-    </td>
-</tr>
-<tr class="jive-even">
-    <td wrap width="1%">
-        Registered:
-    </td>
-    <td>
-        <%= formatter.format(user.getInfo().getCreationDate()) %>
-    </td>
-</tr>
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Registered:
+        </td>
+        <td>
+            <%= formatter.format(user.getInfo().getCreationDate()) %>
+        </td>
+    </tr>
+</tbody>
 </table>
 </div>
 
-<br>
+<br><br>
 
-<form action="user-summary.jsp">
-<input type="submit" value="User Summary">
+<form action="user-edit.jsp">
+<input type="submit" value="Edit Properties">
 </form>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

@@ -42,13 +42,6 @@ public class XMPPDOMFragment extends AbstractFragment implements XMPPFragment {
     }
 
     /**
-     * Constructor creates it's own Document to represent the packet.
-     */
-    public XMPPDOMFragment() {
-        root = DocumentHelper.createElement("jive");
-    }
-
-    /**
      * Obtain the root element of the DOM tree representing the data in this fragment.
      *
      * @return the root element of the DOM tree or null if none has been set

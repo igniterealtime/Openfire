@@ -57,9 +57,9 @@ public class DbUserInfoProvider implements UserInfoProvider {
             // databases pad with extra characters when returning the data.
             userInfo = new BasicUserInfo(username,
                     rs.getString(1), // name
-                    rs.getString(3), // email
-                    new java.util.Date(Long.parseLong(rs.getString(5).trim())), // creation date
-                    new java.util.Date(Long.parseLong(rs.getString(6).trim()))); // modification date
+                    rs.getString(2), // email
+                    new java.util.Date(Long.parseLong(rs.getString(3).trim())), // creation date
+                    new java.util.Date(Long.parseLong(rs.getString(4).trim()))); // modification date
 
         }
         catch (SQLException e) {

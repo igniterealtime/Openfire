@@ -50,10 +50,7 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      * @throws NullPointerException If the packet is null or the packet could not be routed
      */
     public void route(XMPPPacket packet) {
-         // Check for registered components
-        Component component = componentManager.getComponent(packet.getRecipient().toBareStringPrep());
-        if(component != null){
-            component.processPacket(packet);
+        if(hasRouted(packet)){
             return;
         }
 
@@ -72,15 +69,34 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
     }
 
     public void route(IQ packet) {
-        iqRouter.route(packet);
+        if(!hasRouted(packet)){
+          iqRouter.route(packet);
+        }
     }
 
     public void route(Message packet) {
-        messageRouter.route(packet);
+        if(!hasRouted(packet)){
+           messageRouter.route(packet);
+        }
     }
 
     public void route(Presence packet) {
-        presenceRouter.route(packet);
+        if(!hasRouted(packet)){
+          presenceRouter.route(packet);
+        }
+    }
+
+    public boolean hasRouted(XMPPPacket packet){
+        if(packet.getRecipient() == null){
+            return false;
+        }
+         // Check for registered components
+        Component component = componentManager.getComponent(packet.getRecipient().toBareStringPrep());
+        if(component != null){
+            component.processPacket(packet);
+            return true;
+        }
+        return false;
     }
 
     protected TrackInfo getTrackInfo() {

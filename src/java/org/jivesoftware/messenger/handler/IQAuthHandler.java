@@ -91,6 +91,17 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     response = IQ.createResultIQ(packet);
                     probeResponse.setParent(null);
                     response.setChildElement(probeResponse);
+                    // This is a workaround. Since we don't want to have an incorrect TO attribute
+                    // value we need to clean up the TO attribute and send directly the response.
+                    // The TO attribute will contain an incorrect value since we are setting a fake
+                    // JID until the user actually authenticates with the server. We need to send
+                    // the response directly since SocketPacketWriterHandler requires a TO or FROM
+                    // attribute which this response doesn't have.
+                    if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+                        response.setTo((JID)null);
+                        session.getConnection().deliver(response);
+                        return null;
+                    }
                 }
                 // Otherwise set query
                 else {

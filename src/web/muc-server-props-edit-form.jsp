@@ -27,6 +27,44 @@
 <c:set var="admin" value="${admin.manager}" />
 <% admin.init(request, response, session, application, out ); %>
 
+<%  // Get parameters
+    boolean save = request.getParameter("save") != null;
+    boolean success = request.getParameter("success") != null;
+    String name = ParamUtils.getParameter(request,"servername");
+    String muc = ParamUtils.getParameter(request,"mucname");
+
+    // Handle a save
+    Map errors = new HashMap();
+    if (save) {
+        // do validation
+        System.err.println("muc: " + muc);
+        if (muc == null  || muc.indexOf('.') >= 0) {
+            errors.put("mucname","mucname");
+        }
+        if (errors.size() == 0) {
+            admin.getMultiUserChatServer().setServiceName(muc);
+            response.sendRedirect("muc-server-props-edit-form.jsp?success=true");
+            return;
+        }
+    }
+    else {
+        name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
+        muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
+        // Remove the server address part from the MUC domain name.
+        int index = muc.indexOf("." + name);
+        if (index > 0) {
+            muc = muc.substring(0, index);
+        }
+    }
+
+    name = admin.getServerInfo().getName();
+    if (errors.size() == 0) {
+        muc = admin.getMultiUserChatServer().getServiceName();
+        int pos = muc.lastIndexOf("." + name);
+        muc = muc.substring(0, pos);
+    }
+%>
+
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
     String title = "Group Chat Properties";
@@ -38,46 +76,32 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-
-<%  // Get parameters
-    boolean save = ParamUtils.getBooleanParameter(request,"save");
-    boolean success = false;
-    String name = ParamUtils.getParameter(request,"servername");
-    String muc = ParamUtils.getParameter(request,"mucname");
-
-    // Handle a save
-    Map errors = new HashMap();
-    if (save) {
-        // do validation
-        if (muc == null  || muc.indexOf('.') >= 0) {
-            errors.put("mucname","mucname");
-        }
-        if (errors.size() == 0) {
-            admin.getMultiUserChatServer().setServiceName(muc);
-            success = true;
-        }
-           name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
-    }
-    else {
-        name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
-        muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
-        // Remove the server address part from the MUC domain name.
-        int index = muc.indexOf("." + name);
-        if (index > 0) {
-            muc = muc.substring(0, index);
-        }
-    }
-%>
-
-
-<br>
-
 <%  if (success) { %>
 
-    <p class="jive-success-text">
-    Server properties edited successfully. You must restart the server in order for
-    the changes to take effect (see <a href="server-status.jsp">Server Status</a>).
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+            Server properties edited successfully. You must <b>restart</b> the server in order for
+            the changes to take effect.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (errors.size() > 0) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error setting the service name.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
 
@@ -88,9 +112,9 @@ Use the form below to edit group chat service settings.
 
 <input type="hidden" name="save" value="true">
 
-<div >
+<div>
 <table class="jive-table" cellpadding="3" cellspacing="1" border="0">
-<form action="muc-server-props-edit-form.jsp">
+<form action="muc-server-props-edit-form.jsp" method="post">
 <tr>
     <td class="c1">
         Server name:
@@ -104,12 +128,12 @@ Use the form below to edit group chat service settings.
         Group chat service name:
     </td>
     <td>
-    <input type="text" size="30" maxlength="150" name="mucname"  value="<%= muc %>">.<%=name%>
+    <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">.<%=name%>
 
     <%  if (errors.get("mucname") != null) { %>
 
         <span class="jive-error-text">
-        Please enter a valid name.
+        <br>Please enter a valid name.
         </span>
 
     <%  } %>
@@ -120,7 +144,7 @@ Use the form below to edit group chat service settings.
 
 <br>
 
-<input type="submit" value="Save Properties">
+<input type="submit" name="save" value="Save Properties">
 <input type="submit" name="cancel" value="Cancel">
 
 </form>

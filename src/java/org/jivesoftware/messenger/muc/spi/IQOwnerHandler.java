@@ -333,6 +333,7 @@ public class IQOwnerHandler {
 
         // Get the new list of admins
         field = completedForm.getField("muc#roomconfig_roomadmins");
+        boolean adminsSent = field != null;
         List<String> admins = new ArrayList<String>();
         if (field != null) {
             values = field.getValues();
@@ -343,6 +344,7 @@ public class IQOwnerHandler {
 
         // Get the new list of owners
         field = completedForm.getField("muc#roomconfig_roomowners");
+        boolean ownersSent = field != null;
         List<String> owners = new ArrayList<String>();
         if (field != null) {
             values = field.getValues();
@@ -352,7 +354,7 @@ public class IQOwnerHandler {
         }
 
         // Answer a conflic error if all the current owners will be removed
-        if (owners.isEmpty()) {
+        if (ownersSent && owners.isEmpty()) {
             throw new ConflictException();
         }
 
@@ -482,25 +484,26 @@ public class IQOwnerHandler {
             presences.addAll(room.addOwners(owners, senderRole));
             presences.addAll(room.addAdmins(admins, senderRole));
 
-            // Change the affiliation to "member" for the current owners that won't be neither
-            // owner nor admin
-            List ownersToRemove = new ArrayList(room.owners);
-            ownersToRemove.removeAll(admins);
-            ownersToRemove.removeAll(owners);
-            String jid;
-            for (Iterator it = ownersToRemove.iterator(); it.hasNext();) {
-                jid = (String)it.next();
-                presences.addAll(room.addMember(jid, null, senderRole));
+            if (ownersSent) {
+                // Change the affiliation to "member" for the current owners that won't be neither
+                // owner nor admin (if the form included the owners field)
+                List<String> ownersToRemove = new ArrayList<String>(room.owners);
+                ownersToRemove.removeAll(admins);
+                ownersToRemove.removeAll(owners);
+                for (String jid : ownersToRemove) {
+                    presences.addAll(room.addMember(jid, null, senderRole));
+                }
             }
 
-            // Change the affiliation to "member" for the current admins that won't be neither
-            // owner nor admin
-            List adminsToRemove = new ArrayList(room.admins);
-            adminsToRemove.removeAll(admins);
-            adminsToRemove.removeAll(owners);
-            for (Iterator it = adminsToRemove.iterator(); it.hasNext();) {
-                jid = (String)it.next();
-                presences.addAll(room.addMember(jid, null, senderRole));
+            if (adminsSent) {
+                // Change the affiliation to "member" for the current admins that won't be neither
+                // owner nor admin (if the form included the admins field)
+                List<String> adminsToRemove = new ArrayList<String>(room.admins);
+                adminsToRemove.removeAll(admins);
+                adminsToRemove.removeAll(owners);
+                for (String jid : adminsToRemove) {
+                    presences.addAll(room.addMember(jid, null, senderRole));
+                }
             }
 
             // Destroy the room if the room is no longer persistent and there are no occupants in

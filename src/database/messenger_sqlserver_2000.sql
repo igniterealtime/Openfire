@@ -82,7 +82,7 @@ CREATE TABLE jiveGroup (
 
 
 CREATE TABLE jiveGroupProp (
-   groupName            NVARCHAR(100)   NOT NULL,
+   groupName            NVARCHAR(50)   NOT NULL,
    name                 NVARCHAR(100)   NOT NULL,
    propValue            NVARCHAR(2000)  NOT NULL,
    CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupName, name)
@@ -90,7 +90,7 @@ CREATE TABLE jiveGroupProp (
 
 
 CREATE TABLE jiveGroupUser (
-  groupName             NVARCHAR(100)   NOT NULL,
+  groupName             NVARCHAR(50)   NOT NULL,
   username              NVARCHAR(32)    NOT NULL,
   administrator         INTEGER         NOT NULL,
   CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupName, username, administrator)

@@ -21,17 +21,13 @@ import org.jivesoftware.messenger.muc.MUCUser;
 import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.messenger.muc.NotAllowedException;
 import org.jivesoftware.util.ElementUtil;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 /**
  * Simple in-memory implementation of a role in a chatroom
  * 
  * @author Gaston Dombiak
  */
-// TODO Review name of this class that represents role and affiliation at the same time.!!!!
 public class MUCRoleImpl implements MUCRole {
 
     /**
@@ -60,14 +56,14 @@ public class MUCRoleImpl implements MUCRole {
     private MultiUserChatServer server;
 
     /**
-     * The role ID.
+     * The role.
      */
-    private int role;
+    private MUCRole.Role role;
 
     /**
-     * The affiliation ID.
+     * The affiliation.
      */
-    private int affiliation;
+    private MUCRole.Affiliation affiliation;
 
     /**
      * The router used to send packets from this role.
@@ -97,7 +93,7 @@ public class MUCRoleImpl implements MUCRole {
      * @param packetRouter the packet router for sending messages from this role.
      */
     public MUCRoleImpl(MultiUserChatServer chatserver, MUCRoomImpl chatroom, String nickname,
-            int role, int affiliation, MUCUserImpl chatuser, Presence presence,
+            MUCRole.Role role, MUCRole.Affiliation affiliation, MUCUserImpl chatuser, Presence presence,
             PacketRouter packetRouter)
     {
         this.room = chatroom;
@@ -137,49 +133,36 @@ public class MUCRoleImpl implements MUCRole {
         }
     }
 
-    public void setRole(int newRole) throws NotAllowedException {
+    public void setRole(MUCRole.Role newRole) throws NotAllowedException {
         // Don't allow to change the role to an owner or admin unless the new role is moderator
-        if (MUCRole.OWNER == affiliation || MUCRole.ADMINISTRATOR == affiliation) {
-            if (MUCRole.MODERATOR != newRole) {
+        if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin == affiliation) {
+            if (MUCRole.Role.moderator != newRole) {
                 throw new NotAllowedException();
             }
         }
         // A moderator cannot be kicked from a room
-        if (MUCRole.MODERATOR == role && MUCRole.NONE_ROLE == newRole) {
+        if (MUCRole.Role.moderator == role && MUCRole.Role.none == newRole) {
             throw new NotAllowedException();
         }
         // TODO A moderator MUST NOT be able to revoke voice from a user whose affiliation is at or
-        // above the moderator's level.
+        // TODO above the moderator's level.
 
         role = newRole;
-        if (MUCRole.NONE_ROLE == role) {
+        if (MUCRole.Role.none == role) {
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
         }
         calculateExtendedInformation();
     }
 
-    public int getRole() {
+    public MUCRole.Role getRole() {
         return role;
     }
 
-    public String getRoleAsString() {
-        if (MUCRole.MODERATOR == role) {
-            return "moderator";
-        }
-        else if (MUCRole.PARTICIPANT == role) {
-            return "participant";
-        }
-        else if (MUCRole.VISITOR == role) {
-            return "visitor";
-        }
-        return "none";
-    }
-
-    public void setAffiliation(int newAffiliation) throws NotAllowedException {
+    public void setAffiliation(MUCRole.Affiliation newAffiliation) throws NotAllowedException {
         // Don't allow to ban an owner or an admin
-        if (MUCRole.OWNER == affiliation || MUCRole.ADMINISTRATOR == affiliation) {
-            if (MUCRole.OUTCAST == newAffiliation) {
+        if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin== affiliation) {
+            if (MUCRole.Affiliation.outcast == newAffiliation) {
                 throw new NotAllowedException();
             }
         }
@@ -188,24 +171,8 @@ public class MUCRoleImpl implements MUCRole {
         calculateExtendedInformation();
     }
 
-    public int getAffiliation() {
+    public MUCRole.Affiliation getAffiliation() {
         return affiliation;
-    }
-
-    public String getAffiliationAsString() {
-        if (MUCRole.OWNER == affiliation) {
-            return "owner";
-        }
-        else if (MUCRole.ADMINISTRATOR == affiliation) {
-            return "admin";
-        }
-        else if (MUCRole.MEMBER == affiliation) {
-            return "member";
-        }
-        else if (MUCRole.OUTCAST == affiliation) {
-            return "outcast";
-        }
-        return "none";
     }
 
     public String getNickname() {
@@ -235,17 +202,7 @@ public class MUCRoleImpl implements MUCRole {
         presence.setFrom(jid);
     }
 
-    public void send(Presence packet) {
-        packet.setTo(user.getAddress());
-        router.route(packet);
-    }
-
-    public void send(Message packet) {
-        packet.setTo(user.getAddress());
-        router.route(packet);
-    }
-
-    public void send(IQ packet) {
+    public void send(Packet packet) {
         packet.setTo(user.getAddress());
         router.route(packet);
     }
@@ -256,7 +213,7 @@ public class MUCRoleImpl implements MUCRole {
      */
     private void calculateExtendedInformation() {
         ElementUtil.setProperty(extendedInformation, "x.item:jid", user.getAddress().toString());
-        ElementUtil.setProperty(extendedInformation, "x.item:affiliation", getAffiliationAsString());
-        ElementUtil.setProperty(extendedInformation, "x.item:role", getRoleAsString());
+        ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
+        ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
     }
 }

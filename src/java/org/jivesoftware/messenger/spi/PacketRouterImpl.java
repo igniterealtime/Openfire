@@ -24,6 +24,7 @@ import org.xmpp.packet.IQ;
  * @author Iain Shigeoka
  */
 public class PacketRouterImpl extends BasicModule implements PacketRouter {
+    
     private IQRouter iqRouter;
     private PresenceRouter presenceRouter;
     private MessageRouter messageRouter;

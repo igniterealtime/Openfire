@@ -25,6 +25,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 
 /**
@@ -33,7 +34,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public interface MUCRoom extends ChatDeliverer {
+public interface MUCRoom {
 
     /**
      * Get the name of this room.
@@ -182,7 +183,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @param bareJID The bare jid of the user of which you'd like to obtain his affiliation.
      * @return the affiliation state of the user in the room.
      */
-    int getAffiliation(String bareJID);
+    MUCRole.Affiliation getAffiliation(String bareJID);
 
     /**
      * Joins the room using the given nickname.
@@ -844,4 +845,11 @@ public interface MUCRoom extends ChatDeliverer {
      * @param from the JID of the invitee that is rejecting the invitation.
      */
     public void sendInvitationRejection(JID to, String reason, JID from);
+
+    /**
+     * Sends a packet to the user.
+     *
+     * @param packet The packet to send
+     */
+    public void send(Packet packet);
 }

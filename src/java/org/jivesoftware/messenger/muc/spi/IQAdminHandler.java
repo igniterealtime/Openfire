@@ -125,8 +125,8 @@ public class IQAdminHandler {
                 Element metaData;
                 if ("outcast".equals(affiliation)) {
                     // The client is requesting the list of outcasts
-                    if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                            && MUCRole.OWNER != senderRole.getAffiliation()) {
+                    if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                            && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
                     for (String jid : room.getOutcasts()) {
@@ -140,8 +140,8 @@ public class IQAdminHandler {
                     // The client is requesting the list of members
                     // In a members-only room members can get the list of members
                     if (!room.isMembersOnly()
-                            && MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                            && MUCRole.OWNER != senderRole.getAffiliation()) {
+                            && MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                            && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
                     for (String jid : room.getMembers()) {
@@ -151,7 +151,7 @@ public class IQAdminHandler {
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             MUCRole role = roles.get(0);
-                            metaData.addAttribute("role", role.getRoleAsString());
+                            metaData.addAttribute("role", role.getRole().toString());
                             metaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
@@ -161,8 +161,8 @@ public class IQAdminHandler {
                 }
                 else if ("moderator".equals(roleAttribute)) {
                     // The client is requesting the list of moderators
-                    if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                            && MUCRole.OWNER != senderRole.getAffiliation()) {
+                    if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                            && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getModerators()) {
@@ -170,12 +170,12 @@ public class IQAdminHandler {
                         metaData.addAttribute("role", "moderator");
                         metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
-                        metaData.addAttribute("affiliation", role.getAffiliationAsString());
+                        metaData.addAttribute("affiliation", role.getAffiliation().toString());
                     }
                 }
                 else if ("participant".equals(roleAttribute)) {
                     // The client is requesting the list of participants
-                    if (MUCRole.MODERATOR != senderRole.getRole()) {
+                    if (MUCRole.Role.moderator != senderRole.getRole()) {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getParticipants()) {
@@ -183,7 +183,7 @@ public class IQAdminHandler {
                         metaData.addAttribute("role", "participant");
                         metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
-                        metaData.addAttribute("affiliation", role.getAffiliationAsString());
+                        metaData.addAttribute("affiliation", role.getAffiliation().toString());
                     }
                 }
                 else {
@@ -238,7 +238,7 @@ public class IQAdminHandler {
                         }
                         else if ("member".equals(target)) {
                             // Add the user as a member of the room based on the bare JID
-                            boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.NONE;
+                            boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.Affiliation.none;
                             presences.addAll(room.addMember(jid.toBareJID(), nick, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
@@ -257,7 +257,7 @@ public class IQAdminHandler {
                             }
                             else {
                                 // Kick the user from the room
-                                if (MUCRole.MODERATOR != senderRole.getRole()) {
+                                if (MUCRole.Role.moderator != senderRole.getRole()) {
                                     throw new ForbiddenException();
                                 }
                                 presences.add(room.kickOccupant(jid,

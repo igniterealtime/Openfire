@@ -20,7 +20,7 @@ import org.xmpp.packet.Packet;
  *
  * @author Iain Shigeoka
  */
-public interface PacketRouter extends IQRouter, MessageRouter, PresenceRouter {
+public interface PacketRouter extends MessageRouter, PresenceRouter {
 
     /**
      * <p>Routes the given packet based on packet recipient and sender.</p>

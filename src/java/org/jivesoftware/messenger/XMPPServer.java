@@ -168,7 +168,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 1, 1, Version.ReleaseStatus.Beta, -1);
+        version = new Version(2, 1, 1, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -234,7 +234,7 @@ public class XMPPServer {
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
         loadModule(PacketRouterImpl.class.getName());
-        loadModule(IQRouterImpl.class.getName());
+        loadModule(IQRouter.class.getName());
         loadModule(MessageRouterImpl.class.getName());
         loadModule(PresenceRouterImpl.class.getName());
         loadModule(PacketTransporterImpl.class.getName());
@@ -762,7 +762,7 @@ public class XMPPServer {
      * @return the <code>IQRouter</code> registered with this server.
      */
     public IQRouter getIQRouter() {
-        return (IQRouter) modules.get(IQRouterImpl.class);
+        return (IQRouter) modules.get(IQRouter.class);
     }
 
     /**

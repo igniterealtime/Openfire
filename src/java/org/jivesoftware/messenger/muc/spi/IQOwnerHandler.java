@@ -74,7 +74,7 @@ public class IQOwnerHandler {
      */
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
-        if (MUCRole.OWNER != role.getAffiliation()) {
+        if (MUCRole.Affiliation.owner != role.getAffiliation()) {
             throw new ForbiddenException();
         }
 
@@ -159,7 +159,7 @@ public class IQOwnerHandler {
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             role = roles.get(0);
-                            ownerMetaData.addAttribute("role", role.getRoleAsString());
+                            ownerMetaData.addAttribute("role", role.getRole().toString());
                             ownerMetaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
@@ -179,7 +179,7 @@ public class IQOwnerHandler {
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             role = roles.get(0);
-                            adminMetaData.addAttribute("role", role.getRoleAsString());
+                            adminMetaData.addAttribute("role", role.getRole().toString());
                             adminMetaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
@@ -247,7 +247,7 @@ public class IQOwnerHandler {
                         }
                         else if ("member".equals(targetAffiliation)) {
                             // Add the new user as a member of the room
-                            boolean hadAffiliation = room.getAffiliation(bareJID) != MUCRole.NONE;
+                            boolean hadAffiliation = room.getAffiliation(bareJID) != MUCRole.Affiliation.none;
                             presences.addAll(room.addMember(bareJID, null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only

@@ -223,16 +223,16 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String jid = rs.getString(1);
-                int affiliation = rs.getInt(2);
+                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
                 try {
                     switch (affiliation) {
-                        case MUCRole.OWNER:
+                        case owner:
                             room.addOwner(jid, room.getRole());
                             break;
-                        case MUCRole.ADMINISTRATOR:
+                        case admin:
                             room.addAdmin(jid, room.getRole());
                             break;
-                        case MUCRole.OUTCAST:
+                        case outcast:
                             room.addOutcast(jid, null, room.getRole());
                             break;
                         default:
@@ -498,7 +498,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String jid = rs.getString(2);
-                int affiliation = rs.getInt(3);
+                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
                 room = (MUCRoomImpl) rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
@@ -506,13 +506,13 @@ public class MUCPersistenceManager {
                 }
                 try {
                     switch (affiliation) {
-                        case MUCRole.OWNER:
+                        case owner:
                             room.addOwner(jid, room.getRole());
                             break;
-                        case MUCRole.ADMINISTRATOR:
+                        case admin:
                             room.addAdmin(jid, room.getRole());
                             break;
-                        case MUCRole.OUTCAST:
+                        case outcast:
                             room.addOutcast(jid, null, room.getRole());
                             break;
                         default:
@@ -676,13 +676,13 @@ public class MUCPersistenceManager {
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
     public static void saveAffiliationToDB(MUCRoom room, String bareJID, String nickname,
-            int newAffiliation, int oldAffiliation)
+            MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
     {
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
-        if (MUCRole.NONE == oldAffiliation) {
-            if (MUCRole.MEMBER == newAffiliation) {
+        if (MUCRole.Affiliation.none == oldAffiliation) {
+            if (MUCRole.Affiliation.member == newAffiliation) {
                 // Add the user to the members table
                 Connection con = null;
                 PreparedStatement pstmt = null;
@@ -713,7 +713,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.setInt(3, newAffiliation);
+                    pstmt.setInt(3, newAffiliation.getValue());
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -728,7 +728,9 @@ public class MUCPersistenceManager {
             }
         }
         else {
-            if (MUCRole.MEMBER == newAffiliation && MUCRole.MEMBER == oldAffiliation) {
+            if (MUCRole.Affiliation.member == newAffiliation &&
+                    MUCRole.Affiliation.member == oldAffiliation)
+            {
                 // Update the member's data in the member table.
                 Connection con = null;
                 PreparedStatement pstmt = null;
@@ -750,7 +752,7 @@ public class MUCPersistenceManager {
                     catch (Exception e) { Log.error(e); }
                 }
             }
-            else if (MUCRole.MEMBER == newAffiliation) {
+            else if (MUCRole.Affiliation.member == newAffiliation) {
                 Connection con = null;
                 PreparedStatement pstmt = null;
                 boolean abortTransaction = false;
@@ -780,7 +782,7 @@ public class MUCPersistenceManager {
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
-            else if (MUCRole.MEMBER == oldAffiliation) {
+            else if (MUCRole.Affiliation.member == oldAffiliation) {
                 Connection con = null;
                 PreparedStatement pstmt = null;
                 boolean abortTransaction = false;
@@ -795,7 +797,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
-                    pstmt.setInt(3, newAffiliation);
+                    pstmt.setInt(3, newAffiliation.getValue());
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -815,7 +817,7 @@ public class MUCPersistenceManager {
                 try {
                     con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(UPDATE_AFFILIATION);
-                    pstmt.setInt(1, newAffiliation);
+                    pstmt.setInt(1, newAffiliation.getValue());
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, bareJID);
                     pstmt.executeUpdate();
@@ -840,9 +842,11 @@ public class MUCPersistenceManager {
      * @param bareJID The bareJID of the user to remove his affiliation.
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
-    public static void removeAffiliationFromDB(MUCRoom room, String bareJID, int oldAffiliation) {
+    public static void removeAffiliationFromDB(MUCRoom room, String bareJID,
+            MUCRole.Affiliation oldAffiliation)
+    {
         if (room.isPersistent() && room.wasSavedToDB()) {
-            if (MUCRole.MEMBER == oldAffiliation) {
+            if (MUCRole.Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
                 Connection con = null;
                 PreparedStatement pstmt = null;

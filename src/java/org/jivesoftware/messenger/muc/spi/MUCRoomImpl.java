@@ -371,20 +371,20 @@ public class MUCRoomImpl implements MUCRoom {
         return answer;
     }
 
-    public int getAffiliation(String bareJID) {
+    public MUCRole.Affiliation getAffiliation(String bareJID) {
         if (owners.contains(bareJID)) {
-            return MUCRole.OWNER;
+            return MUCRole.Affiliation.owner;
         }
         else if (admins.contains(bareJID)) {
-            return MUCRole.ADMINISTRATOR;
+            return MUCRole.Affiliation.admin;
         }
         else if (members.containsKey(bareJID)) {
-            return MUCRole.MEMBER;
+            return MUCRole.Affiliation.member;
         }
         else if (outcasts.contains(bareJID)) {
-            return MUCRole.OUTCAST;
+            return MUCRole.Affiliation.outcast;
         }
-        return MUCRole.NONE;
+        return MUCRole.Affiliation.none;
     }
 
     public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
@@ -425,28 +425,28 @@ public class MUCRoomImpl implements MUCRoom {
             }
 
             // Set the corresponding role based on the user's affiliation
-            int role;
-            int affiliation;
+            MUCRole.Role role;
+            MUCRole.Affiliation affiliation;
             if (isOwner) {
                 // The user is an owner. Set the role and affiliation accordingly.
-                role = MUCRole.MODERATOR;
-                affiliation = MUCRole.OWNER;
+                role = MUCRole.Role.moderator;
+                affiliation = MUCRole.Affiliation.owner;
             }
             else if (server.getSysadmins().contains(user.getAddress().toBareJID())) {
                 // The user is a system administrator of the MUC service. Treat him as an owner 
                 // although he won't appear in the list of owners
-                role = MUCRole.MODERATOR;
-                affiliation = MUCRole.OWNER;
+                role = MUCRole.Role.moderator;
+                affiliation = MUCRole.Affiliation.owner;
             }
             else if (admins.contains(user.getAddress().toBareJID())) {
                 // The user is an admin. Set the role and affiliation accordingly.
-                role = MUCRole.MODERATOR;
-                affiliation = MUCRole.ADMINISTRATOR;
+                role = MUCRole.Role.moderator;
+                affiliation = MUCRole.Affiliation.admin;
             }
             else if (members.containsKey(user.getAddress().toBareJID())) {
                 // The user is a member. Set the role and affiliation accordingly.
-                role = MUCRole.PARTICIPANT;
-                affiliation = MUCRole.MEMBER;
+                role = MUCRole.Role.participant;
+                affiliation = MUCRole.Affiliation.member;
             }
             else if (outcasts.contains(user.getAddress().toBareJID())) {
                 // The user is an outcast. Raise a "Forbidden" exception.
@@ -459,8 +459,8 @@ public class MUCRoomImpl implements MUCRoom {
                     // "Registration Required" exception.
                     throw new RegistrationRequiredException();
                 }
-                role = (isModerated() ? MUCRole.VISITOR : MUCRole.PARTICIPANT);
-                affiliation = MUCRole.NONE;
+                role = (isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant);
+                affiliation = MUCRole.Affiliation.none;
             }
             // Create a new role for this user in this room
             joinRole =
@@ -562,7 +562,7 @@ public class MUCRoomImpl implements MUCRoom {
             }
             // Don't include the occupant's JID if the room is semi-anon and the new occupant
             // is not a moderator
-            if (!canAnyoneDiscoverJID() && MUCRole.MODERATOR != joinRole.getRole()) {
+            if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
                 Element frag = occupantPresence.getChildElement("x",
                         "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);
@@ -715,7 +715,7 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException {
         // Check that if the room is moderated then the sender of the message has to have voice
-        if (isModerated() && senderRole.getRole() > MUCRole.PARTICIPANT) {
+        if (isModerated() && senderRole.getRole().compareTo(MUCRole.Role.participant) > 0) {
             throw new ForbiddenException();
         }
         // Send the message to all occupants
@@ -735,22 +735,21 @@ public class MUCRoomImpl implements MUCRoom {
         }
     }
 
-    public void send(Message packet) {
-        // normal groupchat
-        roomHistory.addMessage(packet);
-        broadcast(packet);
-    }
-
-    public void send(Presence packet) {
-        broadcastPresence(packet);
-    }
-
-    public void send(IQ packet) {
-        packet = packet.createCopy();
-        packet.setError(PacketError.Condition.bad_request);
-        packet.setTo(packet.getFrom());
-        packet.setFrom(role.getRoleAddress());
-        router.route(packet);
+    public void send(Packet packet) {
+        if (packet instanceof Message) {
+            roomHistory.addMessage((Message)packet);
+            broadcast((Message)packet);
+        }
+        else if (packet instanceof Presence) {
+            broadcastPresence((Presence)packet);
+        }
+        else if (packet instanceof IQ) {
+             packet = packet.createCopy();
+            packet.setError(PacketError.Condition.bad_request);
+            packet.setTo(packet.getFrom());
+            packet.setFrom(role.getRoleAddress());
+            router.route(packet);
+        }
     }
 
     /**
@@ -795,7 +794,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Don't include the occupant's JID if the room is semi-anon and the new occupant
             // is not a moderator
             if (!canAnyoneDiscoverJID()) {
-                if (MUCRole.MODERATOR == occupant.getRole()) {
+                if (MUCRole.Role.moderator == occupant.getRole()) {
                     frag.element("item").addAttribute("jid", jid);
                 }
                 else {
@@ -852,26 +851,18 @@ public class MUCRoomImpl implements MUCRoom {
         public void setPresence(Presence presence) {
         }
 
-        public void setRole(int newRole) {
+        public void setRole(MUCRole.Role newRole) {
         }
 
-        public int getRole() {
-            return MUCRole.MODERATOR;
+        public MUCRole.Role getRole() {
+            return MUCRole.Role.moderator;
         }
 
-        public String getRoleAsString() {
-            return "moderator";
+        public void setAffiliation(MUCRole.Affiliation newAffiliation) {
         }
 
-        public void setAffiliation(int newAffiliation) {
-        }
-
-        public int getAffiliation() {
-            return MUCRole.OWNER;
-        }
-
-        public String getAffiliationAsString() {
-            return "owner";
+        public MUCRole.Affiliation getAffiliation() {
+            return MUCRole.Affiliation.owner;
         }
 
         public String getNickname() {
@@ -895,15 +886,7 @@ public class MUCRoomImpl implements MUCRoom {
             return crJID;
         }
 
-        public void send(Message packet) {
-            room.send(packet);
-        }
-
-        public void send(Presence packet) {
-            room.send(packet);
-        }
-
-        public void send(IQ packet) {
+        public void send(Packet packet) {
             room.send(packet);
         }
 
@@ -928,7 +911,7 @@ public class MUCRoomImpl implements MUCRoom {
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin or
      *         if trying to ban an owner or an administrator.
      */
-    private List<Presence> changeOccupantAffiliation(String bareJID, int newAffiliation, int newRole)
+    private List<Presence> changeOccupantAffiliation(String bareJID, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
             throws NotAllowedException {
         List<Presence> presences = new ArrayList<Presence>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
@@ -957,7 +940,7 @@ public class MUCRoomImpl implements MUCRoom {
      * @return the updated presence of the user or null if none.
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      */
-    private Presence changeOccupantRole(JID jid, int newRole) throws NotAllowedException {
+    private Presence changeOccupantRole(JID jid, MUCRole.Role newRole) throws NotAllowedException {
         // Try looking the role in the bare JID list
         MUCRole role = occupantsByFullJID.get(jid);
         if (role != null) {
@@ -974,31 +957,32 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public List<Presence> addOwner(String bareJID, MUCRole sendRole) throws ForbiddenException {
-        int oldAffiliation = MUCRole.NONE;
-        if (MUCRole.OWNER != sendRole.getAffiliation()) {
+        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+        if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         owners.add(bareJID);
         // Remove the user from other affiliation lists
         if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.ADMINISTRATOR;
+            oldAffiliation = MUCRole.Affiliation.admin;
         }
         else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.MEMBER;
+            oldAffiliation = MUCRole.Affiliation.member;
         }
         else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.OUTCAST;
+            oldAffiliation = MUCRole.Affiliation.outcast;
         }
         // Update the DB if the room is persistent
         MUCPersistenceManager.saveAffiliationToDB(
             this,
             bareJID,
             null,
-            MUCRole.OWNER,
+            MUCRole.Affiliation.owner,
             oldAffiliation);
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(bareJID, MUCRole.OWNER, MUCRole.MODERATOR);
+            return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.owner,
+                    MUCRole.Role.moderator);
         }
         catch (NotAllowedException e) {
             // We should never receive this exception....in theory
@@ -1012,8 +996,8 @@ public class MUCRoomImpl implements MUCRoom {
 
     public List<Presence> addAdmin(String bareJID, MUCRole sendRole) throws ForbiddenException,
             ConflictException {
-        int oldAffiliation = MUCRole.NONE;
-        if (MUCRole.OWNER != sendRole.getAffiliation()) {
+        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+        if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         // Check that the room always has an owner
@@ -1023,24 +1007,25 @@ public class MUCRoomImpl implements MUCRoom {
         admins.add(bareJID);
         // Remove the user from other affiliation lists
         if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.OWNER;
+            oldAffiliation = MUCRole.Affiliation.owner;
         }
         else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.MEMBER;
+            oldAffiliation = MUCRole.Affiliation.member;
         }
         else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.OUTCAST;
+            oldAffiliation = MUCRole.Affiliation.outcast;
         }
         // Update the DB if the room is persistent
         MUCPersistenceManager.saveAffiliationToDB(
             this,
             bareJID,
             null,
-            MUCRole.ADMINISTRATOR,
+            MUCRole.Affiliation.admin,
             oldAffiliation);
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(bareJID, MUCRole.ADMINISTRATOR, MUCRole.MODERATOR);
+            return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.admin,
+                    MUCRole.Role.moderator);
         }
         catch (NotAllowedException e) {
             // We should never receive this exception....in theory
@@ -1054,18 +1039,19 @@ public class MUCRoomImpl implements MUCRoom {
 
     public List<Presence> addMember(String bareJID, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
-        int oldAffiliation = (members.containsKey(bareJID) ? MUCRole.MEMBER : MUCRole.NONE);
+        MUCRole.Affiliation oldAffiliation = (members.containsKey(bareJID) ?
+                MUCRole.Affiliation.member : MUCRole.Affiliation.none);
         if (isMembersOnly()) {
             if (!canOccupantsInvite()) {
-                if (MUCRole.ADMINISTRATOR != sendRole.getAffiliation()
-                        && MUCRole.OWNER != sendRole.getAffiliation()) {
+                if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
+                        && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
                     throw new ForbiddenException();
                 }
             }
         }
         else {
-            if (MUCRole.ADMINISTRATOR != sendRole.getAffiliation()
-                    && MUCRole.OWNER != sendRole.getAffiliation()) {
+            if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
+                    && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
                 throw new ForbiddenException();
             }
         }
@@ -1084,24 +1070,25 @@ public class MUCRoomImpl implements MUCRoom {
         members.put(bareJID, (nickname == null ? "" : nickname));
         // Remove the user from other affiliation lists
         if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.OWNER;
+            oldAffiliation = MUCRole.Affiliation.owner;
         }
         else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.ADMINISTRATOR;
+            oldAffiliation = MUCRole.Affiliation.admin;
         }
         else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.OUTCAST;
+            oldAffiliation = MUCRole.Affiliation.outcast;
         }
         // Update the DB if the room is persistent
         MUCPersistenceManager.saveAffiliationToDB(
             this,
             bareJID,
             nickname,
-            MUCRole.MEMBER,
+            MUCRole.Affiliation.member,
             oldAffiliation);
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(bareJID, MUCRole.MEMBER, MUCRole.PARTICIPANT);
+            return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.member,
+                    MUCRole.Role.participant);
         }
         catch (NotAllowedException e) {
             // We should never receive this exception....in theory
@@ -1117,9 +1104,9 @@ public class MUCRoomImpl implements MUCRoom {
 
     public List<Presence> addOutcast(String bareJID, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException, ConflictException {
-        int oldAffiliation = MUCRole.NONE;
-        if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                && MUCRole.OWNER != senderRole.getAffiliation()) {
+        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         // Check that the room always has an owner
@@ -1134,8 +1121,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         List<Presence> updatedPresences = changeOccupantAffiliation(
                 bareJID,
-                MUCRole.OUTCAST,
-                MUCRole.NONE_ROLE);
+                MUCRole.Affiliation.outcast,
+                MUCRole.Role.none);
         Element frag;
         // Add the status code and reason why the user was banned to the presences that will
         // be sent to the room occupants (the banned user will not receive this presences)
@@ -1157,20 +1144,20 @@ public class MUCRoomImpl implements MUCRoom {
         outcasts.add(bareJID);
         // Remove the user from other affiliation lists
         if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.OWNER;
+            oldAffiliation = MUCRole.Affiliation.owner;
         }
         else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.ADMINISTRATOR;
+            oldAffiliation = MUCRole.Affiliation.admin;
         }
         else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.MEMBER;
+            oldAffiliation = MUCRole.Affiliation.member;
         }
         // Update the DB if the room is persistent
         MUCPersistenceManager.saveAffiliationToDB(
             this,
             bareJID,
             null,
-            MUCRole.OUTCAST,
+            MUCRole.Affiliation.outcast,
             oldAffiliation);
         return updatedPresences;
     }
@@ -1181,9 +1168,9 @@ public class MUCRoomImpl implements MUCRoom {
 
     public List<Presence> addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException {
-        int oldAffiliation = MUCRole.NONE;
-        if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                && MUCRole.OWNER != senderRole.getAffiliation()) {
+        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         // Check that the room always has an owner
@@ -1195,30 +1182,30 @@ public class MUCRoomImpl implements MUCRoom {
                 owners.contains(bareJID);
         // Remove the user from ALL the affiliation lists
         if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.OWNER;
+            oldAffiliation = MUCRole.Affiliation.owner;
         }
         else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.ADMINISTRATOR;
+            oldAffiliation = MUCRole.Affiliation.admin;
         }
         else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.MEMBER;
+            oldAffiliation = MUCRole.Affiliation.member;
         }
         else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.OUTCAST;
+            oldAffiliation = MUCRole.Affiliation.outcast;
         }
         // Remove the affiliation of this user from the DB if the room is persistent
         MUCPersistenceManager.removeAffiliationFromDB(this, bareJID, oldAffiliation);
 
         // Update the presence with the new affiliation and inform all occupants
         try {
-            int newRole;
+            MUCRole.Role newRole;
             if (isMembersOnly() && wasMember) {
-                newRole = MUCRole.NONE_ROLE;
+                newRole = MUCRole.Role.none;
             }
             else {
-                newRole = isModerated() ? MUCRole.VISITOR : MUCRole.PARTICIPANT;
+                newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
             }
-            updatedPresences = changeOccupantAffiliation(bareJID, MUCRole.NONE, newRole);
+            updatedPresences = changeOccupantAffiliation(bareJID, MUCRole.Affiliation.none, newRole);
             if (isMembersOnly() && wasMember) {
                 // If the room is members-only, remove the user from the room including a status
                 // code of 321 to indicate that the user was removed because of an affiliation
@@ -1266,8 +1253,8 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public void changeSubject(Message packet, MUCRole role) throws ForbiddenException {
-        if ((canOccupantsChangeSubject() && role.getRole() < MUCRole.VISITOR) ||
-                MUCRole.MODERATOR == role.getRole()) {
+        if ((canOccupantsChangeSubject() && role.getRole().compareTo(MUCRole.Role.visitor) < 0) ||
+                MUCRole.Role.moderator == role.getRole()) {
             // Do nothing if the new subject is the same as the existing one
             if (packet.getSubject().equals(subject)) {
                 return;
@@ -1295,8 +1282,8 @@ public class MUCRoomImpl implements MUCRoom {
     public void sendInvitation(JID to, String reason, MUCRole senderRole, List<Element> extensions)
             throws ForbiddenException {
         if (!isMembersOnly() || canOccupantsInvite()
-                || MUCRole.ADMINISTRATOR == senderRole.getAffiliation()
-                || MUCRole.OWNER == senderRole.getAffiliation()) {
+                || MUCRole.Affiliation.admin == senderRole.getAffiliation()
+                || MUCRole.Affiliation.owner == senderRole.getAffiliation()) {
             // If the room is not members-only OR if the room is members-only and anyone can send
             // invitations or the sender is an admin or an owner, then send the invitation
             Message message = new Message();
@@ -1383,7 +1370,7 @@ public class MUCRoomImpl implements MUCRoom {
     public Collection<MUCRole> getModerators() {
         List<MUCRole> moderators = new ArrayList<MUCRole>();
         for (MUCRole role : occupants.values()) {
-            if (MUCRole.MODERATOR == role.getRole()) {
+            if (MUCRole.Role.moderator == role.getRole()) {
                 moderators.add(role);
             }
         }
@@ -1393,7 +1380,7 @@ public class MUCRoomImpl implements MUCRoom {
     public Collection<MUCRole> getParticipants() {
         List<MUCRole> participants = new ArrayList<MUCRole>();
         for (MUCRole role : occupants.values()) {
-            if (MUCRole.PARTICIPANT == role.getRole()) {
+            if (MUCRole.Role.participant == role.getRole()) {
                 participants.add(role);
             }
         }
@@ -1401,13 +1388,13 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public Presence addModerator(JID jid, MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
-                && MUCRole.OWNER != senderRole.getAffiliation()) {
+        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         // Update the presence with the new role and inform all occupants
         try {
-            return changeOccupantRole(jid, MUCRole.MODERATOR);
+            return changeOccupantRole(jid, MUCRole.Role.moderator);
         }
         catch (NotAllowedException e) {
             // We should never receive this exception....in theory
@@ -1417,11 +1404,11 @@ public class MUCRoomImpl implements MUCRoom {
 
     public Presence addParticipant(JID jid, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException {
-        if (MUCRole.MODERATOR != senderRole.getRole()) {
+        if (MUCRole.Role.moderator != senderRole.getRole()) {
             throw new ForbiddenException();
         }
         // Update the presence with the new role and inform all occupants
-        Presence updatedPresence = changeOccupantRole(jid, MUCRole.PARTICIPANT);
+        Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.participant);
         if (updatedPresence != null) {
             Element frag = updatedPresence.getChildElement(
                     "x", "http://jabber.org/protocol/muc#user");
@@ -1435,16 +1422,16 @@ public class MUCRoomImpl implements MUCRoom {
 
     public Presence addVisitor(JID jid, MUCRole senderRole) throws NotAllowedException,
             ForbiddenException {
-        if (MUCRole.MODERATOR != senderRole.getRole()) {
+        if (MUCRole.Role.moderator != senderRole.getRole()) {
             throw new ForbiddenException();
         }
-        return changeOccupantRole(jid, MUCRole.VISITOR);
+        return changeOccupantRole(jid, MUCRole.Role.visitor);
     }
 
     public Presence kickOccupant(JID jid, JID actorJID, String reason)
             throws NotAllowedException {
         // Update the presence with the new role and inform all occupants
-        Presence updatedPresence = changeOccupantRole(jid, MUCRole.NONE_ROLE);
+        Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.none);
         if (updatedPresence != null) {
             Element frag = updatedPresence.getChildElement(
                     "x", "http://jabber.org/protocol/muc#user");
@@ -1540,7 +1527,7 @@ public class MUCRoomImpl implements MUCRoom {
             // If the room was not members-only and now it is, kick occupants that aren't member
             // of the room
             for (MUCRole occupant : occupants.values()) {
-                if (occupant.getAffiliation() > MUCRole.MEMBER) {
+                if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
                     try {
                         presences.add(kickOccupant(occupant.getRoleAddress(), null,
                                 LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
@@ -1643,7 +1630,7 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public void lock(MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.OWNER != senderRole.getAffiliation()) {
+        if (MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         if (isLocked()) {
@@ -1662,7 +1649,7 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public void unlock(MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.OWNER != senderRole.getAffiliation()) {
+        if (MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
             throw new ForbiddenException();
         }
         if (!isLocked()) {
@@ -1748,8 +1735,8 @@ public class MUCRoomImpl implements MUCRoom {
                     this,
                     owner,
                     null,
-                    MUCRole.OWNER,
-                    MUCRole.NONE);
+                    MUCRole.Affiliation.owner,
+                    MUCRole.Affiliation.none);
             }
             // Save the existing room admins to the DB
             for (String admin : admins) {
@@ -1757,14 +1744,14 @@ public class MUCRoomImpl implements MUCRoom {
                     this,
                     admin,
                     null,
-                    MUCRole.ADMINISTRATOR,
-                    MUCRole.NONE);
+                    MUCRole.Affiliation.admin,
+                    MUCRole.Affiliation.none);
             }
             // Save the existing room members to the DB
             for (Iterator it=members.keySet().iterator(); it.hasNext();) {
                 String bareJID = (String)it.next();
                 MUCPersistenceManager.saveAffiliationToDB(this, bareJID, (String) members
-                        .get(bareJID), MUCRole.MEMBER, MUCRole.NONE);
+                        .get(bareJID), MUCRole.Affiliation.member, MUCRole.Affiliation.none);
             }
             // Save the existing room outcasts to the DB
             for (String outcast : outcasts) {
@@ -1772,8 +1759,8 @@ public class MUCRoomImpl implements MUCRoom {
                     this,
                     outcast,
                     null,
-                    MUCRole.OUTCAST,
-                    MUCRole.NONE);
+                    MUCRole.Affiliation.outcast,
+                    MUCRole.Affiliation.none);
             }
         }
     }

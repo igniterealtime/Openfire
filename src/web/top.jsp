@@ -42,7 +42,7 @@
 <tbody>
     <tr>
         <td>
-            <img src="<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> Admin Console">
+            <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> Admin Console">
         </td>
         <td align="right">
             <table cellpadding="0" cellspacing="0" border="0">
@@ -109,7 +109,7 @@
                 </admin:sidebar>
 
                 <br>
-                <img src="images/blank.gif" width="150" height="1" border="0" alt="">
+                <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
 
             </div>
         </td>

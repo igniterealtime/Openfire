@@ -200,6 +200,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Admin.iml" filepath="$PROJECT_DIR$/Admin.iml" />
       <module fileurl="file://$PROJECT_DIR$/Messenger.iml" filepath="$PROJECT_DIR$/Messenger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Plugins.iml" filepath="$PROJECT_DIR$/Plugins.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="JDK 1.5.0" />

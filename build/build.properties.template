@@ -18,3 +18,8 @@ deploy.jar.dir=
 #                       |- barplugin/
 #
 plugin.dev.dir=
+
+#
+# Path to your Install4j installation. Typically this is c:\Program Files\install4j
+#
+installer.install4j.home=

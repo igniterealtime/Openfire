@@ -125,14 +125,14 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * have no associated user, and don't follow the normal routing rules for
      * priority based fall over.
      */
-    private Map anonymousSessions = new HashMap();
+    private Map<String, Session> anonymousSessions = new HashMap<String, Session>();
 
     /**
      * Simple data structure to track sessions for a single user (tracked by resource
      * and priority).
      */
     private class SessionMap {
-        private Map resources = new HashMap();
+        private Map<String,Session> resources = new HashMap<String,Session>();
         private LinkedList priorityList = new LinkedList();
 
         /**
@@ -159,7 +159,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             if (priorityList.size() > 0) {
                 Iterator iter = priorityList.iterator();
                 for (int i = 0; iter.hasNext(); i++) {
-                    Session sess = (Session)resources.get(iter.next());
+                    Session sess = resources.get(iter.next());
                     if (sess.getPresence().getPriority() <= priority) {
                         priorityList.add(i, resource);
                         break;
@@ -203,7 +203,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @return The session for that resource or null if none found (use getDefaultSession() to obtain default)
          */
         Session getSession(String resource) {
-            return (Session)resources.get(resource);
+            return resources.get(resource);
         }
 
         /**
@@ -228,7 +228,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             }
 
 //            return (Session) resources.get(priorityList.getFirst());
-            Session s = (Session)resources.get(priorityList.getFirst());
+            Session s = resources.get(priorityList.getFirst());
             return s;
         }
 
@@ -247,9 +247,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @param packet
          */
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
-            Iterator entries = resources.values().iterator();
-            while (entries.hasNext()) {
-                Session session = (Session)entries.next();
+            for (Session session : resources.values()) {
                 packet.setTo(session.getAddress());
                 session.getConnection().deliver(packet);
             }
@@ -263,10 +261,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @return An iterator of all sessions
          */
         public Iterator getSessions() {
-            LinkedList list = new LinkedList();
-            Iterator entries = resources.values().iterator();
-            while (entries.hasNext()) {
-                list.add(entries.next());
+            LinkedList<Session> list = new LinkedList<Session>();
+            for (Session session : resources.values()) {
+                list.add(session);
             }
             return list.iterator();
         }
@@ -303,7 +300,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         String username = session.getAddress().getNode().toLowerCase();
         SessionMap resources = null;
         try {
-            resources = (SessionMap)sessions.get(username);
+            resources = sessions.get(username);
             if (resources == null) {
                 resources = new SessionMap();
                 sessions.put(username, resources);
@@ -343,7 +340,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         String username = sender.getNode().toLowerCase();
         sessionLock.writeLock().lock();
         try {
-            SessionMap resources = (SessionMap)sessions.get(username);
+            SessionMap resources = sessions.get(username);
             if (resources == null) {
                 return;
             }
@@ -380,7 +377,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             if (resource != null) {
                 anonymousSessionLock.readLock().lock();
                 try {
-                    session = (Session)anonymousSessions.get(resource);
+                    session = anonymousSessions.get(resource);
                     if(session == null){
                         session = getSession(recipient);
                     }
@@ -394,7 +391,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             username = username.toLowerCase();
             sessionLock.readLock().lock();
             try {
-                SessionMap sessionMap = (SessionMap)sessions.get(username);
+                SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     if (resource == null) {
                         session = sessionMap.getDefaultSession();
@@ -435,7 +432,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             Session session = null;
             sessionLock.readLock().lock();
             try {
-                SessionMap sessionMap = (SessionMap)sessions.get(username);
+                SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     if (resource == null) {
                         hasRoute = !sessionMap.isEmpty();
@@ -483,7 +480,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         if (username == null || "".equals(username)) {
             anonymousSessionLock.readLock().lock();
             try {
-                session = (Session)anonymousSessions.get(resource);
+                session = anonymousSessions.get(resource);
             }
             finally {
                 anonymousSessionLock.readLock().unlock();
@@ -493,7 +490,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             username = username.toLowerCase();
             sessionLock.readLock().lock();
             try {
-                SessionMap sessionMap = (SessionMap)sessions.get(username);
+                SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     session = sessionMap.getSession(resource);
                 }
@@ -654,9 +651,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         // Add anonymous sessions
         anonymousSessionLock.readLock().lock();
         try {
-            Iterator sessionItr = anonymousSessions.values().iterator();
-            while (sessionItr.hasNext()) {
-                sessions.add(sessionItr.next());
+            for (Session session : anonymousSessions.values()) {
+                sessions.add(session);
             }
         }
         finally {
@@ -685,7 +681,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         // Get a copy of the sessions from all users
         sessionLock.readLock().lock();
         try {
-            SessionMap sessionMap = (SessionMap)sessions.get(username);
+            SessionMap sessionMap = sessions.get(username);
             if (sessionMap != null) {
                 Iterator sessionItr = sessionMap.getSessions();
                 while (sessionItr.hasNext()) {
@@ -732,7 +728,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         int sessionCount = 0;
         sessionLock.readLock().lock();
         try {
-            SessionMap sessionMap = (SessionMap)sessions.get(username);
+            SessionMap sessionMap = sessions.get(username);
             if (sessionMap != null) {
                 sessionCount = sessionMap.resources.size();
             }
@@ -766,9 +762,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
         anonymousSessionLock.readLock().lock();
         try {
-            Iterator values = anonymousSessions.values().iterator();
-            while (values.hasNext()) {
-                ((Session)values.next()).getConnection().deliver(packet);
+            for (Session session : anonymousSessions.values()) {
+                session.getConnection().deliver(packet);
             }
         }
         finally {
@@ -786,7 +781,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
         sessionLock.readLock().lock();
         try {
-            SessionMap sessionMap = (SessionMap)sessions.get(username);
+            SessionMap sessionMap = sessions.get(username);
             if (sessionMap != null) {
                 sessionMap.broadcast(packet);
             }
@@ -822,7 +817,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 String username = session.getAddress().getNode().toLowerCase();
                 sessionLock.writeLock().lock();
                 try {
-                    sessionMap = (SessionMap)sessions.get(username);
+                    sessionMap = sessions.get(username);
                     if (sessionMap != null) {
                         sessionMap.removeSession(session);
                         sessionCount--;

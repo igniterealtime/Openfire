@@ -230,10 +230,16 @@ public class MUCUserImpl implements MUCUser {
                                             room.lock.writeLock().unlock();
                                         }
                                     }
+                                    // Try to keep the list of extensions sent together with the 
+                                    // message invitation. These extensions will be sent to the 
+                                    // invitee.
+                                    List<Element> extensions = new ArrayList<Element>(packet
+                                            .getElement().elements());
+                                    extensions.remove(userInfo);
 
                                     // Send the invitation to the user
                                     room.sendInvitation(new JID(info.attributeValue("to")),
-                                            info.elementTextTrim("reason"), role);
+                                            info.elementTextTrim("reason"), role, extensions);
                                 }
                                 else if (userInfo != null
                                         && userInfo.element("decline") != null) {

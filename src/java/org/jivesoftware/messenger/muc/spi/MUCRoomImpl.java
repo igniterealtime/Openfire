@@ -1292,7 +1292,7 @@ public class MUCRoomImpl implements MUCRoom {
         this.subject = subject;
     }
 
-    public void sendInvitation(JID to, String reason, MUCRole senderRole)
+    public void sendInvitation(JID to, String reason, MUCRole senderRole, List<Element> extensions)
             throws ForbiddenException {
         if (!isMembersOnly() || canOccupantsInvite()
                 || MUCRole.ADMINISTRATOR == senderRole.getAffiliation()
@@ -1302,6 +1302,13 @@ public class MUCRoomImpl implements MUCRoom {
             Message message = new Message();
             message.setFrom(role.getRoleAddress());
             message.setTo(to);
+            // Add a list of extensions sent with the original message invitation (if any)
+            if (extensions != null) {
+                for(Element element : extensions) {
+                    element.setParent(null);
+                    message.getElement().add(element);
+                }
+            }
             Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
             // ChatUser will be null if the room itself (ie. via admin console) made the request
             if (senderRole.getChatUser() != null) {

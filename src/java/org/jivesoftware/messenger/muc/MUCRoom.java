@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.Collection;
 
+import org.dom4j.Element;
 import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
 import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
 import org.jivesoftware.util.NotFoundException;
@@ -824,9 +825,11 @@ public interface MUCRoom extends ChatDeliverer {
      * @param to the JID of the user that is being invited.
      * @param reason the reason of the invitation or null if none.
      * @param role the role of the occupant that sent the invitation.
+     * @param extensions the list of extensions sent with the original message invitation or null 
+     *        if none.
      * @throws ForbiddenException If the user is not allowed to send the invitation.
      */
-    public void sendInvitation(JID to, String reason, MUCRole role)
+    public void sendInvitation(JID to, String reason, MUCRole role, List<Element> extensions)
             throws ForbiddenException;
 
     /**

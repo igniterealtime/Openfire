@@ -252,7 +252,7 @@ public class IQOwnerHandler {
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
                             if (!hadAffiliation && room.isMembersOnly()) {
-                                room.sendInvitation(new JID(bareJID), null, senderRole);
+                                room.sendInvitation(new JID(bareJID), null, senderRole, null);
                             }
                         }
                         else if ("none".equals(targetAffiliation)) {

@@ -425,8 +425,6 @@ public interface MUCRoom extends ChatDeliverer {
 
     public boolean isPasswordProtected();
 
-    public void setPasswordProtected(boolean passwordProtected);
-
     public boolean isPersistent();
 
     public void setPersistent(boolean persistent);

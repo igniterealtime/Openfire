@@ -41,15 +41,15 @@ public class MUCPersistenceManager {
 
     private static final String LOAD_ROOM_SURROGATES =
         "SELECT roomID, name, description, canChangeSubject, maxUsers, " +
-        "moderated, invitationRequired, canInvite, passwordProtected, " +
+        "moderated, invitationRequired, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
         "SELECT roomID, description, canChangeSubject, maxUsers, publicRoom, " +
-        "moderated, invitationRequired, canInvite, passwordProtected, " +
-        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
+        "moderated, invitationRequired, canInvite, password, " +
+        "canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid,affiliation FROM mucAffiliation WHERE roomID=?";
@@ -57,12 +57,12 @@ public class MUCPersistenceManager {
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String UPDATE_ROOM = 
         "UPDATE mucRoom SET name=?, description=?, canChangeSubject=?, maxUsers=?, publicRoom=?, " +
-        "moderated=?, invitationRequired=?, canInvite=?, passwordProtected=?, password=?, " +
+        "moderated=?, invitationRequired=?, canInvite=?, password=?, " +
         "canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, inMemory=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, name, description, canChangeSubject, maxUsers, publicRoom, " +
-        "moderated, invitationRequired, canInvite, passwordProtected, password, canDiscoverJID, " +
-        "logEnabled, subject, rolesToBroadcast, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "moderated, invitationRequired, canInvite, password, canDiscoverJID, " +
+        "logEnabled, subject, rolesToBroadcast, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_IN_MEMORY =
@@ -111,13 +111,12 @@ public class MUCPersistenceManager {
                 room.setModerated(rs.getInt(6) == 1 ? true : false);
                 room.setInvitationRequiredToEnter(rs.getInt(7) == 1 ? true : false);
                 room.setCanOccupantsInvite(rs.getInt(8) == 1 ? true : false);
-                room.setPasswordProtected(rs.getInt(9) == 1 ? true : false);
-                room.setPassword(rs.getString(10));
-                room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
-                room.setSubject(rs.getString(13));
+                room.setPassword(rs.getString(9));
+                room.setCanAnyoneDiscoverJID(rs.getInt(10) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(11) == 1 ? true : false);
+                room.setSubject(rs.getString(12));
                 List rolesToBroadcast = new ArrayList();
-                String roles = Integer.toBinaryString(rs.getInt(14));
+                String roles = Integer.toBinaryString(rs.getInt(13));
                 if (roles.charAt(0) == '1') {
                     rolesToBroadcast.add("moderator");
                 }
@@ -204,13 +203,12 @@ public class MUCPersistenceManager {
             room.setModerated(rs.getInt(6) == 1 ? true : false);
             room.setInvitationRequiredToEnter(rs.getInt(7) == 1 ? true : false);
             room.setCanOccupantsInvite(rs.getInt(8) == 1 ? true : false);
-            room.setPasswordProtected(rs.getInt(9) == 1 ? true : false);
-            room.setPassword(rs.getString(10));
-            room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
-            room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
-            room.setSubject(rs.getString(13));
+            room.setPassword(rs.getString(9));
+            room.setCanAnyoneDiscoverJID(rs.getInt(10) == 1 ? true : false);
+            room.setLogEnabled(rs.getInt(11) == 1 ? true : false);
+            room.setSubject(rs.getString(12));
             List rolesToBroadcast = new ArrayList();
-            String roles = Integer.toBinaryString(rs.getInt(14));
+            String roles = Integer.toBinaryString(rs.getInt(13));
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
@@ -298,13 +296,12 @@ public class MUCPersistenceManager {
                 pstmt.setInt(6, (room.isModerated() ? 1 : 0));
                 pstmt.setInt(7, (room.isInvitationRequiredToEnter() ? 1 : 0));
                 pstmt.setInt(8, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setInt(9, (room.isPasswordProtected() ? 1 : 0));
-                pstmt.setString(10, room.getPassword());
-                pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setInt(13, marshallRolesToBroadcast(room));
-                pstmt.setInt(14, 1);
-                pstmt.setLong(15, room.getID());
+                pstmt.setString(9, room.getPassword());
+                pstmt.setInt(10, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(11, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setInt(12, marshallRolesToBroadcast(room));
+                pstmt.setInt(13, 1);
+                pstmt.setLong(14, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -318,13 +315,12 @@ public class MUCPersistenceManager {
                 pstmt.setInt(7, (room.isModerated() ? 1 : 0));
                 pstmt.setInt(8, (room.isInvitationRequiredToEnter() ? 1 : 0));
                 pstmt.setInt(9, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setInt(10, (room.isPasswordProtected() ? 1 : 0));
-                pstmt.setString(11, room.getPassword());
-                pstmt.setInt(12, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(13, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(14, room.getSubject());
-                pstmt.setInt(15, marshallRolesToBroadcast(room));
-                pstmt.setInt(16, 1); // the room starts always "in memory"
+                pstmt.setString(10, room.getPassword());
+                pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setString(13, room.getSubject());
+                pstmt.setInt(14, marshallRolesToBroadcast(room));
+                pstmt.setInt(15, 1); // the room starts always "in memory"
                 pstmt.execute();
             }
         }

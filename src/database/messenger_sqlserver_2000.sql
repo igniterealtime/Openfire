@@ -179,7 +179,6 @@ CREATE TABLE mucRoom (
   moderated           INT           NOT NULL,
   invitationRequired  INT           NOT NULL,
   canInvite           INT           NOT NULL,
-  passwordProtected   INT           NOT NULL,
   password            NVARCHAR(50)  NULL,
   canDiscoverJID      INT           NOT NULL,
   logEnabled          INT           NOT NULL,

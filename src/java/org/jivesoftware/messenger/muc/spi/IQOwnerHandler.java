@@ -432,13 +432,19 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? (String)values.next() : "1");
-                room.setPasswordProtected(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#owner_roomsecret");
-            if (field != null) {
-                values = completedForm.getField("muc#owner_roomsecret").getValues();
-                room.setPassword((values.hasNext() ? (String)values.next() : " "));
+                boolean isPasswordProtected = "1".equals(booleanValue);
+                if (isPasswordProtected) {
+                    // The room is password protected so set the new password
+                    field = completedForm.getField("muc#owner_roomsecret");
+                    if (field != null) {
+                        values = completedForm.getField("muc#owner_roomsecret").getValues();
+                        room.setPassword((values.hasNext() ? (String)values.next() : null));
+                    }
+                }
+                else {
+                    // The room is not password protected so remove any previous password
+                    room.setPassword(null);
+                }
             }
 
             field = completedForm.getField("muc#owner_whois");

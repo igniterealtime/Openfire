@@ -183,14 +183,9 @@ public class MUCRoomImpl implements MUCRoom {
     private boolean canOccupantsInvite = false;
 
     /**
-     * Indicates if the room is password protected.
-     */
-    private boolean passwordProtected = false;
-
-    /**
      * The password that every occupant should provide in order to enter the room.
      */
-    private String password = "";
+    private String password = null;
 
     /**
      * Every presence packet can include the JID of every occupant unless the owner deactives this
@@ -1679,11 +1674,7 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public boolean isPasswordProtected() {
-        return passwordProtected;
-    }
-
-    public void setPasswordProtected(boolean passwordProtected) {
-        this.passwordProtected = passwordProtected;
+        return password != null && password.trim().length() > 0;
     }
 
     public boolean isPersistent() {

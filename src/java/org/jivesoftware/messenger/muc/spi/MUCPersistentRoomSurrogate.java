@@ -107,14 +107,9 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
     private boolean canOccupantsInvite = false;
 
     /**
-     * Indicates if the room is password protected.
-     */
-    private boolean passwordProtected = false;
-
-    /**
      * The password that every occupant should provide in order to enter the room.
      */
-    private String password = "";
+    private String password = null;
 
     /**
      * Every presence packet can include the JID of every occupant unless the owner deactives this
@@ -415,13 +410,9 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
     }
 
     public boolean isPasswordProtected() {
-        return passwordProtected;
+        return password != null && password.trim().length() > 0;
     }
 
-    public void setPasswordProtected(boolean passwordProtected) {
-        this.passwordProtected = passwordProtected;
-    }
-    
     public boolean isPersistent() {
         return true;
     }
@@ -613,7 +604,6 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         size += CacheSizes.sizeOfBoolean();                // moderated
         size += CacheSizes.sizeOfBoolean();                // invitationRequiredToEnter
         size += CacheSizes.sizeOfBoolean();                // canOccupantsInvite
-        size += CacheSizes.sizeOfBoolean();                // passwordProtected
         size += CacheSizes.sizeOfString(password);         // password
         size += CacheSizes.sizeOfBoolean();                // canAnyoneDiscoverJID
         size += CacheSizes.sizeOfBoolean();                // logEnabled

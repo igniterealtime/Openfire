@@ -51,7 +51,7 @@
     }
 %>
 
-<!-- Check if in setup mode -->
+<%-- Check if in setup mode --%>
 <c:if test="${admin.setupMode}">
   <c:redirect url="setup-index.jsp" />
 </c:if>

@@ -110,6 +110,7 @@
         <include name="**/*.html" />
         <include name="**/*.css" />
         <include name="**/*.gif" />
+        <include name="**/*.jpg" />
     </patternset>
 
     <filterset id="docs.filters">

@@ -17,11 +17,11 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.xmpp.packet.Message;
 import org.dom4j.io.SAXReader;
-import org.dom4j.DocumentFactory;
 
 import java.util.*;
 import java.sql.*;
 import java.sql.Connection;
+import java.io.StringReader;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were sent
@@ -54,7 +54,6 @@ public class OfflineMessageStore extends BasicModule {
     }
 
     private SAXReader saxReader = new SAXReader();
-    private DocumentFactory docFactory = new DocumentFactory();
 
     public OfflineMessageStore() {
         super("Offline Message Store");
@@ -70,7 +69,7 @@ public class OfflineMessageStore extends BasicModule {
         if (message == null) {
             return;
         }
-        String username = message.getFrom().getNode();
+        String username = message.getTo().getNode();
         // If the username is null (such as when an anonymous user), don't store.
         if (username == null) {
             return;
@@ -78,9 +77,8 @@ public class OfflineMessageStore extends BasicModule {
 
         long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
 
-        // Get the message in XML format. We add the element to a new document so
-        // that we can easily parse the message from the database later.
-        String msgXML = docFactory.createDocument(message.getElement()).asXML();
+        // Get the message in XML format.
+        String msgXML = message.getElement().asXML();
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -124,7 +122,7 @@ public class OfflineMessageStore extends BasicModule {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                messages.add(new Message(saxReader.read(msgXML).getRootElement()));
+                messages.add(new Message(saxReader.read(new StringReader(msgXML)).getRootElement()));
             }
             rs.close();
             pstmt.close();

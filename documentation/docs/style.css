@@ -3,12 +3,12 @@ BODY {
     background-color : #fff;
 }
 BODY, TD, TH {
-    font-family : tahoma, arial, helvetica;
-    font-size : 0.8em;
+    font-family : arial, helvetica, sans-serif;
+    font-size : 10pt;
 }
 PRE, TT, CODE {
     font-family : courier new, monospaced;
-    font-size : 1.0em;
+    font-size : 9pt;
 }
 A:hover {
     text-decoration : none;
@@ -24,19 +24,31 @@ H1 {
     padding-bottom : 2px;
 }
 H2 {
-    font-size : 12px;
+    font-size : 1.2em;
     font-weight : bold;
 }
 H3 {
-    font-size : 12px;
+    font-size : 1.0em;
     font-weight : bold;
 }
-
-
 TT {
     font-family : courier new;
     font-weight : bold;
     color : #060;
+}
+FIELDSET PRE {
+    padding : 1em;
+    margin : 0px;
+}
+FIELDSET {
+    margin-left : 2em;
+    margin-right : 2em;
+    border : 1px #ccc solid;
+    -moz-border-radius : 5px;
+}
+.comment {
+    color : #666;
+    font-style : italic;
 }
 
 .subheader {

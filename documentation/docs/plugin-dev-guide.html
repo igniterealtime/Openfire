@@ -1,55 +1,121 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
 <head>
-	<title>Jive Messenger Plugin Guide</title>
-  <link href="style.css" rel="stylesheet" type="text/css">
+    <title>Jive Messenger Plugin Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
+
 <body>
-<a name="top"></a>
 
 <h1>Jive Messenger Plugin Developer Guide</h1>
+
+<a name="top"></a>
 
 <h2>Introduction</h2>
 
 <p>
 Plugins enhance the functionality of Jive Messenger. This document is a
-developer's guide for creating plugins.</p>
+developer's guide for creating plugins.
+</p>
 
 <h2>Structure of a Plugin</h2>
 
+<p>
 Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. If
 a plugin is deployed as a JAR file, it will be automatically expanded into
 a directory. The files in a plugin directory are as follows:
+</p>
 
-<pre>
-plugin.xml
-classes/
-lib/
-web/
-  |
-  -- web.xml
-  -- images/</pre>
-	
+<fieldset>
+    <legend>Plugin Structure</legend>
+<pre>myplugin/
+ |- plugin.xml     &lt;- Plugin definition file
+ |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
+ |- lib/           &lt;- Libraries your plugin needs
+ |- src/
+     |- java       &lt;- Java source code for your plugin
+     |   |- com
+     |       |- mycompany
+     |           |- *.java
+     |- web
+         |- *.jsp      &lt;- JSPs your plugin uses for the admin console
+         |- images/    &lt;- Any images your JSP pages need (optional)
+</pre>
+</fieldset>
+
+<p>The <tt>src/web</tt> directory exists for plugins that need to add content
+to the Jive Messenger admin console. Further details are below.</p>
+
+<p>
 The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
 file might look like the following:
+</p>
 
-<pre>
+<fieldset>
+    <legend>Sample plugin.xml</legend>
+<pre class="xml">
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;plugin&gt;
+    <span class="comment">&lt;!-- Main plugin class --&gt;</span>
     &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
+
+    <span class="comment">&lt;!-- Admin console entries --&gt;</span>
+    &lt;adminconsole&gt;
+        <span class="comment">&lt;!-- More on this below --&gt;</span>
+    &lt;/adminconsole&gt;
 &lt;/plugin&gt;
 </pre>
+</fieldset>
 
-<p>Your plugin class must be implement the Plugin interface from the Jive 
-Messenger API. The Plugin interface has methods for initializing and 
-destroying the plugin, as well as methods for retrieving meta-data such as 
-the plugin name, description, version, and author.</p>
+<p>Your plugin class must be implement the
+<tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
+interface from the <a href="javadoc/index.html">Jive Messenger API</a>. The Plugin interface has
+methods for initializing and destroying the plugin, as well as methods for retrieving meta-data
+such as the plugin name, description, version, and author.
+</p>
 
-<p>The <tt>classes</tt> and <tt>lib</tt> directories contain resources
-that will be loaded into the classpath of the plugin.</p>
+<fieldset>
+    <legend>Sample plugin implementation</legend>
+<pre class="java">
+package org.example;
 
-<p>The <tt>web</tt> directory exists for plugins that need to add content
-to the Jive Messenger admin console. Further details are below.</p>
+import org.jivesoftware.messenger.container.Plugin;
+import org.jivesoftware.messenger.container.PluginManager;
+
+import java.io.File;
+
+/**
+ * A sample plugin for Jive Messenger.
+ */
+public class ExamplePlugin implements Plugin {
+
+    public String getName() {
+        return "My Plugin";
+    }
+
+    public String getDescription() {
+        return "A simple plugin";
+    }
+
+    public String getAuthor() {
+        return "Johnny Java Coder";
+    }
+
+    public String getVersion() {
+        return "1.0";
+    }
+
+    public void initialize(PluginManager manager, File pluginDirectory) {
+        <span class="comment">// Your code goes here</span>
+    }
+
+    public void destroy() {
+        <span class="comment">// Your code goes here</span>
+    }
+}
+</pre>
+</fieldset>
 
 <h2>Modifying the Admin Console</h2>
 
@@ -57,41 +123,60 @@ to the Jive Messenger admin console. Further details are below.</p>
 are a several steps to accomplishing this: 
 
 <ul>
-		<li>An &lt;adminconsole/&gt; section must be added to the 
-				<tt>plugin.xml</tt> file.
-		</li>
-		<li>JSP files must be compiled and put into the classpath of the
-			  plugin. A <tt>web.xml</tt> file containing the compiled JSP
-				servlet entries must be put into the <tt>web/</tt> directory
-				of the plugin. <i>Note:</i> the Jive Messenger build script
-				can assist with compiling JSPs and creating the web.xml. This
-				is detailed later in the developer guide.
-		</li>
-		<li>Any images required by your JSP pages must live in <tt>web/images/</tt>
-				directory. Only GIF and PNG images are supported.
-		</li>
+    <li>An &lt;adminconsole/&gt; section must be added to the
+            <tt>plugin.xml</tt> file.
+    </li>
+    <li>JSP files must be compiled and put into the classpath of the
+        plugin. A <tt>web.xml</tt> file containing the compiled JSP
+        servlet entries must be put into the <tt>web/</tt> directory
+        of the plugin. <i>Note:</i> the Jive Messenger build script
+        can assist with compiling JSPs and creating the web.xml. This
+        is detailed below.
+    </li>
+    <li>Any images required by your JSP pages must live in <tt>web/images/</tt>
+        directory. Only GIF and PNG images are supported.
+    </li>
 </ul> 
 
-<p>The &lt;adminconsole/&gt; section of <tt>plugin.xml</tt> defines additional 
+<p>The <tt>&lt;adminconsole /&gt;</tt> section of <tt>plugin.xml</tt> defines additional
 tabs, sections and entries in the Admin Console framework. A sample 
 <tt>plugin.xml</tt> file might look like the following:</p> 
 
-<pre>
+<fieldset>
+    <legend>Sample plugin.xml</legend>
+<pre class="xml">
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;plugin&gt;
+    <span class="comment">&lt;!-- Main plugin class --&gt;</span>
     &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
-    &lt;tab id="example" name="Example" description="Click to try the example tab"&gt;
-        &lt;sidebar name="Test Section"&gt;
-            &lt;item id="test-page" name="Test Page" url="test.jsp" description="Test page" /&gt;
-        &lt;/sidebar&gt;
-    &lt;/tab&gt;
-&lt;/plugin&gt;
-</pre> 
 
-<p>In this example, we've defined a new tab "Example", a sidebar section 
-"Test Section" and a page "Test Page". We've registered <tt>test.jsp</tt>
-as the page.				
+    <span class="comment">&lt;!-- Admin console entries --&gt;</span>
+    &lt;adminconsole&gt;
+        &lt;tab id="mytab" name="Example" url="my-plugin-admin.jsp" description="Click to manage..."&gt;
+            &lt;sidebar id="mysidebar" name="My Plugin"&gt;
+               &lt;item id="my-plugin" name="My Plugin Admin"
+                   url="my-plugin-admin.jsp"
+                   description="Click to administer settings for my plugin" /&gt;
+            &lt;/sidebar&gt;
+        &lt;/tab&gt;
+    &lt;/adminconsole&gt;
+&lt;/plugin&gt;
+</pre>
+</fieldset>
+
+<p>
+In this example, we've defined a new tab "Example", a sidebar section
+"My Plugin" and a page "My Plugin Admin". We've registered <tt>my-plugin-admin.jsp</tt>
+as the page.
+</p>
+
+<h2>Using the Jive Messenger Build Script</h2>
 				   
- 
+<p>
+The Jive Messenger build script is designed to help you build and develop plugins.
+</p>
+
+<br><br>
+
 </body>
 </html>

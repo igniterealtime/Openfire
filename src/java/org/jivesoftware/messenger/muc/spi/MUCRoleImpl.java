@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.muc.spi;
 
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.QName;
 import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.muc.MUCRole;
@@ -108,7 +109,8 @@ public class MUCRoleImpl implements MUCRole {
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
-        extendedInformation = DocumentHelper.createElement("x").addNamespace("", "http://jabber.org/protocol/muc#user");
+        extendedInformation =
+                DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceName(), nick);
         setPresence(room.createPresence(null));

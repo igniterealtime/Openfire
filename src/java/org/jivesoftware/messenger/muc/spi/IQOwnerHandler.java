@@ -592,6 +592,12 @@ public class IQOwnerHandler {
             for (String jid : room.getOwners()) {
                 field.addValue(jid);
             }
+
+            // Remove the old element
+            probeResult.remove(probeResult.element(QName.get("x", "jabber:x:data")));
+            // Add the new representation of configurationForm as an element 
+            probeResult.add(configurationForm.asXMLElement());
+
         }
         finally {
             room.lock.readLock().unlock();

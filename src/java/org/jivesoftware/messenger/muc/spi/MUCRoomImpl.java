@@ -501,7 +501,7 @@ public class MUCRoomImpl implements MUCRoom {
                 if (isRoomNew) {
                     Element frag = joinPresence.getChildElement(
                             "x", "http://jabber.org/protocol/muc#user");
-                    frag.element("status").addAttribute("code", "201");
+                    frag.addElement("status").addAttribute("code", "201");
                 }
                 joinPresence.setFrom(joinRole.getRoleAddress());
                 broadcastPresence(joinPresence);
@@ -648,11 +648,7 @@ public class MUCRoomImpl implements MUCRoom {
                             if (destroy == null) {
                                 destroy = fragment.addElement("destroy");
                             }
-                            Element reasonEl = destroy.element("reason");
-                            if (reasonEl == null) {
-                                reasonEl = destroy.addElement("reason");
-                            }
-                            reasonEl.setText(reason);
+                            destroy.addElement("reason").setText(reason);
                         }
 
                         router.route(presence);
@@ -915,14 +911,12 @@ public class MUCRoomImpl implements MUCRoom {
             throws NotAllowedException {
         List<Presence> presences = new ArrayList<Presence>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
-        List roles = occupantsByBareJID.get(bareJID);
+        List<MUCRole> roles = occupantsByBareJID.get(bareJID);
         if (roles == null) {
             return presences;
         }
-        MUCRole role;
         // Collect all the updated presences of these roles
-        for (Iterator it = roles.iterator(); it.hasNext();) {
-            role = (MUCRole) it.next();
+        for (MUCRole role : roles) {
             // Update the presence with the new affiliation and role
             role.setAffiliation(newAffiliation);
             role.setRole(newRole);
@@ -1125,26 +1119,22 @@ public class MUCRoomImpl implements MUCRoom {
                 bareJID,
                 MUCRole.OUTCAST,
                 MUCRole.NONE_ROLE);
-        if (!updatedPresences.isEmpty()) {
-            Presence presence;
-            Element frag;
-            // Add the status code and reason why the user was banned to the presences that will
-            // be sent to the room occupants (the banned user will not receive this presences)
-            for (Iterator it = updatedPresences.iterator(); it.hasNext();) {
-                presence = (Presence) it.next();
-                frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                // Add the status code 301 that indicates that the user was banned
-                frag.element("status").addAttribute("code", "301");
-                // Add the reason why the user was banned
-                if (reason != null && reason.trim().length() > 0) {
-                    frag.element("item").element("reason").setText(reason);
-                }
-
-                // Remove the banned users from the room. If a user has joined the room from
-                // different client resources, he/she will be kicked from all the client resources
-                // Effectively kick the occupant from the room
-                kickPresence(presence, actorJID);
+        Element frag;
+        // Add the status code and reason why the user was banned to the presences that will
+        // be sent to the room occupants (the banned user will not receive this presences)
+        for (Presence presence : updatedPresences) {
+            frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            // Add the status code 301 that indicates that the user was banned
+            frag.addElement("status").addAttribute("code", "301");
+            // Add the reason why the user was banned
+            if (reason != null && reason.trim().length() > 0) {
+                frag.element("item").addElement("reason").setText(reason);
             }
+
+            // Remove the banned users from the room. If a user has joined the room from
+            // different client resources, he/she will be kicked from all the client resources
+            // Effectively kick the occupant from the room
+            kickPresence(presence, actorJID);
         }
         // Update the affiliation lists
         outcasts.add(bareJID);
@@ -1216,25 +1206,22 @@ public class MUCRoomImpl implements MUCRoom {
                 // If the room is members-only, remove the user from the room including a status
                 // code of 321 to indicate that the user was removed because of an affiliation
                 // change
-                Presence presence;
                 Element frag;
                 // Add the status code to the presences that will be sent to the room occupants
-                for (Iterator it = updatedPresences.iterator(); it.hasNext();) {
-                    presence = (Presence) it.next();
+                for (Presence presence : updatedPresences) {
                     // Set the presence as an unavailable presence
                     presence.setType(Presence.Type.unavailable);
                     frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                     // Add the status code 321 that indicates that the user was removed because of
                     // an affiliation change
-                    frag.element("status").addAttribute("code", "321");
+                    frag.addElement("status").addAttribute("code", "321");
 
                     // Remove the ex-member from the room. If a user has joined the room from
                     // different client resources, he/she will be kicked from all the client
                     // resources.
                     // Effectively kick the occupant from the room
                     MUCUser senderUser = senderRole.getChatUser();
-                    JID actorJID = (senderUser == null ?
-                            null : senderUser.getAddress());
+                    JID actorJID = (senderUser == null ? null : senderUser.getAddress());
                     kickPresence(presence, actorJID);
                 }
             }
@@ -1415,15 +1402,7 @@ public class MUCRoomImpl implements MUCRoom {
                     "x", "http://jabber.org/protocol/muc#user");
             // Add the reason why the user was granted voice
             if (reason != null && reason.trim().length() > 0) {
-                Element item = frag.element("item");
-                if (item == null) {
-                    item = frag.addElement("item");
-                }
-                Element reasonEl = item.element("reason");
-                if (reasonEl == null) {
-                    reasonEl = item.addElement("reason");
-                }
-                reasonEl.setText(reason);
+                frag.element("item").addElement("reason").setText(reason);
             }
         }
         return updatedPresence;
@@ -1446,22 +1425,10 @@ public class MUCRoomImpl implements MUCRoom {
                     "x", "http://jabber.org/protocol/muc#user");
 
             // Add the status code 307 that indicates that the user was kicked
-            Element status = frag.element("status");
-            if (status == null) {
-                status = frag.addElement("status");
-            }
-            status.addAttribute("code", "307");
+            frag.addElement("status").addAttribute("code", "307");
             // Add the reason why the user was kicked
             if (reason != null && reason.trim().length() > 0) {
-                Element item = frag.element("item");
-                if (item == null) {
-                    item = frag.addElement("item");
-                }
-                Element reasonEl = item.element("reason");
-                if (reasonEl == null) {
-                    reasonEl = item.addElement("reason");
-                }
-                reasonEl.setText(reason);
+                frag.element("item").addElement("reason").setText(reason);
             }
 
             // Effectively kick the occupant from the room
@@ -1489,15 +1456,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (actorJID != null && actorJID.toString().length() > 0) {
                 Element frag = kickPresence.getChildElement(
                         "x", "http://jabber.org/protocol/muc#user");
-                Element item = frag.element("item");
-                if (item == null) {
-                    frag.addElement("item");
-                }
-                Element actor = item.element("actor");
-                if (actor == null) {
-                    actor = item.addElement("actor");
-                }
-                actor.addAttribute("jid", actorJID.toString());
+                frag.element("item").addElement("actor").addAttribute("jid", actorJID.toString());
             }
             // Send the unavailable presence to the banned user
             kickedRole.send(kickPresence);

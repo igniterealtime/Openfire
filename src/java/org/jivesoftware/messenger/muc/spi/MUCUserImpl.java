@@ -289,14 +289,13 @@ public class MUCUserImpl implements MUCUser {
                 }
                 else {
                     try {
-                        if ("query".equals(packet.getElement().getNamespacePrefix())
-                                && "http://jabber.org/protocol/muc#owner".equals(packet
-                                        .getElement().getNamespaceURI())) {
+                        Element query = packet.getElement().element("query");
+                        if (query != null &&
+                                "http://jabber.org/protocol/muc#owner".equals(query.getNamespaceURI())) {
                             role.getChatRoom().getIQOwnerHandler().handleIQ(packet, role);
                         }
-                        else if ("query".equals(packet.getElement().getNamespacePrefix())
-                                && "http://jabber.org/protocol/muc#admin".equals(packet
-                                        .getElement().getNamespaceURI())) {
+                        else if (query != null &&
+                                "http://jabber.org/protocol/muc#admin".equals(query.getNamespaceURI())) {
                             role.getChatRoom().getIQAdminHandler().handleIQ(packet, role);
                         }
                         else {

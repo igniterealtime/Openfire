@@ -64,7 +64,8 @@ public class ElementUtil {
         }
 
         // Search for this property by traversing down the XML hierarchy.
-        for (int i = 0; i < propName.length; i++) {
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length; i++) {
             element = element.element(propName[i]);
             if (element == null) {
                 break;
@@ -105,7 +106,8 @@ public class ElementUtil {
             }
 
             // Search for this property by traversing down the XML hierarchy.
-            for (int i = 0; i < propName.length; i++) {
+            int i = propName[0].equals(element.getName()) ? 1 : 0;
+            for (; i < propName.length; i++) {
                 element = element.element(propName[i]);
                 if (element == null) {
                     break;
@@ -113,8 +115,13 @@ public class ElementUtil {
             }
 
             if (element != null) {
-                // The property exists so return true
-                return true;
+                if (attName == null){
+                    // The property exists so return true
+                    return true;
+                } else {
+                    // The property exists if the attribute exists in the element
+                    return element.attribute(attName) != null;
+                }
             }
             else {
                 // The property does not exist so return false
@@ -150,7 +157,8 @@ public class ElementUtil {
         String[] propName = parsePropertyName(name);
 
         // Search for this property by traversing down the XML heirarchy, stopping one short.
-        for (int i = 0; i < propName.length - 1; i++) {
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             if (element == null) {
                 // This node doesn't match this part of the property name which
@@ -191,9 +199,10 @@ public class ElementUtil {
     public static void setProperties(Element element, String name, String[] values) {
         String[] propName = parsePropertyName(name);
         setProperty(element, name, values[0]);
-        // Search for this property by traversing down the XML heirarchy, stopping one short.
 
-        for (int i = 0; i < propName.length - 1; i++) {
+        // Search for this property by traversing down the XML heirarchy, stopping one short.
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             if (element == null) {
                 // This node doesn't match this part of the property name which
@@ -207,9 +216,9 @@ public class ElementUtil {
         while (iter.hasNext()) {
             ((Node) iter.next()).detach();
         }
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != null) {
-                element.addElement(childName).setText(values[i]);
+        for (int j = 0; i < values.length; i++) {
+            if (values[j] != null) {
+                element.addElement(childName).setText(values[j]);
             }
         }
     }
@@ -229,7 +238,8 @@ public class ElementUtil {
         String[] propName = parsePropertyName(parent);
 
         // Search for this property by traversing down the XML heirarchy.
-        for (int i = 0; i < propName.length; i++) {
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length; i++) {
             element = element.element(propName[i]);
             if (element == null) {
                 // This node doesn't match this part of the property name which
@@ -241,8 +251,8 @@ public class ElementUtil {
         List children = element.elements();
         int childCount = children.size();
         String[] childrenNames = new String[childCount];
-        for (int i = 0; i < childCount; i++) {
-            childrenNames[i] = ((Element) children.get(i)).getName();
+        for (int j = 0; i < childCount; i++) {
+            childrenNames[j] = ((Element) children.get(j)).getName();
         }
         return childrenNames;
     }
@@ -280,13 +290,14 @@ public class ElementUtil {
      * @param value the new value for the property.
      */
     public static void setProperty(Element element, String name, String value) {
-        if (name == null) return;
+        if (name == null || name.length() == 0) return;
         if (value == null) value = "";
 
         String[] propName = parsePropertyName(name);
 
         // Search for this property by traversing down the XML heirarchy.
-        for (int i = 0; i < propName.length - 1; i++) {
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length - 1; i++) {
             // If we don't find this part of the property in the XML heirarchy
             // we add it as a new node
             if (element.element(propName[i]) == null) {

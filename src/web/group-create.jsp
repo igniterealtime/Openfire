@@ -8,8 +8,8 @@
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
-
-<%@ page import="org.jivesoftware.util.*,
+<%@ page
+import   ="org.jivesoftware.util.*,
                  java.util.HashMap,
                  java.util.Map,
                  java.util.*,
@@ -23,34 +23,30 @@
                  org.dom4j.xpath.DefaultXPath,
                  org.dom4j.*,
                  org.jivesoftware.messenger.group.*"
-    errorPage="error.jsp"
+errorPage="error.jsp"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<jsp:useBean id="errors" class="java.util.HashMap"/>
+<%
+    webManager.init(request, response, session, application, out);
 %>
-
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<jsp:useBean id="errors" class="java.util.HashMap" />
-<% webManager.init(request, response, session, application, out ); %>
-
-<%  // Get parameters //
+<% // Get parameters //
     boolean create = request.getParameter("create") != null;
     boolean cancel = request.getParameter("cancel") != null;
-    String name = ParamUtils.getParameter(request,"name");
-    String description = ParamUtils.getParameter(request,"description");
-
+    String  name = ParamUtils.getParameter(request, "name");
+    String  description = ParamUtils.getParameter(request, "description");
+    String  users = ParamUtils.getParameter(request, "users");
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("group-summary.jsp");
         return;
     }
-
     // Handle a request to create a group:
     if (create) {
         // Validate
         if (name == null) {
-            errors.put("name","");
+            errors.put("name", "");
         }
-
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
@@ -58,122 +54,139 @@
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-
+                String hostName = webManager.getXMPPServer().getServerInfo().getName();
+                StringTokenizer tokenizer = new StringTokenizer(users, ",");
+                while (tokenizer.hasMoreTokens()) {
+                    String tok = tokenizer.nextToken();
+                    String address = tok;
+                    if (address.indexOf("@") == -1) {
+                        address = address + "@" + hostName;
+                    }
+                    newGroup.getMembers().add(address);
+                }
                 // Successful, so redirect
                 response.sendRedirect("group-properties.jsp?success=true&group=" + newGroup.getName());
                 return;
             }
             catch (GroupAlreadyExistsException e) {
                 e.printStackTrace();
-                errors.put("groupAlreadyExists","");
+                errors.put("groupAlreadyExists", "");
             }
             catch (Exception e) {
                 e.printStackTrace();
-                errors.put("general","");
+                errors.put("general", "");
                 Log.error(e);
             }
         }
     }
 %>
-
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
+    <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
+<% // Title of this page and breadcrumbs
     String title = "Create Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-create.jsp"));
     pageinfo.setPageID("group-create");
 %>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
-
-<c:set var="submit" value="${param.create}" />
-<c:set var="errors" value="${errors}" />
-
-<%  if (errors.get("general") != null) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-        <td class="jive-icon-label">
-        Error creating the group. Please check your error logs.
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
-
-<p>Use the form below to create a new group.</p>
-
-<form name="f" action="group-create.jsp" method="post">
-
-<fieldset>
-    <legend>Create New Group</legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tr valign="top">
-        <td width="1%" nowrap>
-            <label for="gname">Group Name:</label> *
-        </td>
-        <td width="99%">
-            <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
-             id="gname">
-
-            <%  if (errors.get("name") != null) { %>
-
-                <span class="jive-error-text">
-                Invalid name.
-                </span>
-
-            <%  } else if (errors.get("groupAlreadyExists") != null) { %>
-
-                <span class="jive-error-text">
-                Group already exists - please choose a different name.
-                </span>
-
-            <%  } %>
-        </td>
-    </tr>
-    <tr valign="top">
-        <td width="1%" nowrap>
-            <label for="gdesc">Description:</label>
-        </td>
-        <td width="99%">
-            <textarea name="description" cols="30" rows="5" id="gdesc"
-             ><%= ((description!=null) ? description : "") %></textarea>
-
-            <%  if (errors.get("description") != null) { %>
-
-                <span class="jive-error-text">
-                Invalid description.
-                </span>
-
-            <%  } %>
-        </td>
-    </tr>
-    </table>
-    <br>
-    <span class="jive-description">
-    * Required fields
-    </span>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="create" value="Create Group">
-<input type="submit" name="cancel" value="Cancel">
-
-</form>
-
-<script language="JavaScript" type="text/javascript">
-document.f.name.focus();
-
-function checkFields() {
-
-}
-</script>
-
-<jsp:include page="bottom.jsp" flush="true" />
+    <jsp:include page="top.jsp" flush="true"/>
+    <jsp:include page="title.jsp" flush="true"/>
+    <c:set var="submit" value="${param.create}"/>
+    <c:set var="errors" value="${errors}"/>
+<%
+    if (errors.get("general") != null) {
+%>
+        <div class="jive-success">
+            <table cellpadding="0" cellspacing="0" border="0">
+                <tbody>
+                    <tr>
+                        <td class="jive-icon">
+                            <img src="images/success-16x16.gif" width="16" height="16" border="0">
+                        </td>
+                        <td class="jive-icon-label">
+                            Error creating the group. Please check your error logs.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br>
+<%
+    }
+%>
+    <p>
+        Use the form below to create a new group.</p>
+    <form name="f" action="group-create.jsp" method="post">
+        <fieldset>
+            <legend>
+                Create New Group
+            </legend>
+            <div>
+                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                    <tr valign="top">
+                        <td width="1%" nowrap>
+                            <label for="gname">Group Name:</label>
+                            *
+                        </td>
+                        <td width="99%">
+                            <input type="text"                                 name="name" size="30" maxlength="75"
+                                   value="<%= ((name != null) ? name : "") %>" id="gname">
+<%
+                            if (errors.get("name") != null) {
+%>
+                                <span class="jive-error-text"> Invalid name. </span>
+<%
+                            }
+                            else if (errors.get("groupAlreadyExists") != null) {
+%>
+                                <span class="jive-error-text"> Group already exists - please choose a different
+                                name. </span>
+<%
+                            }
+%>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <td width="1%" nowrap>
+                            <label for="gdesc">Description:</label>
+                        </td>
+                        <td width="99%">
+                            <textarea name="description" cols="30" rows="5" id="gdesc"><%= ((description != null) ? description : "") %></textarea>
+<%
+                                if (errors.get("description") != null) {
+%>
+                                                            <span class="jive-error-text"> Invalid description. </span>
+<%
+                                }
+%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td nowrap width="1%">
+                            Add User(s):
+                        </td>
+                        <td nowrap class="c1" align="left">
+                            <input type="text" size="40" name="users"/>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <td width="1%">
+                    </td>
+                    <td nowrap align="left" class="jive-description">
+                        Comma delimited list. Example: "user1@site.com", "user2@site.com"
+                    </td>
+                    </tr>
+                </table>
+                <br>
+                <span class="jive-description"> * Required fields </span>
+            </div>
+        </fieldset>
+        <br>
+        <br>
+        <input type="submit" name="create" value="Create Group"> <input type="submit" name="cancel" value="Cancel">
+    </form>
+    <script language="JavaScript" type="text/javascript">
+        document.f.name.focus();
+        function checkFields() {
+        }
+    </script>
+    <jsp:include page="bottom.jsp" flush="true"/>

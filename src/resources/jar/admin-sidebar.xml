@@ -99,6 +99,10 @@
                             url="group-properties.jsp"
                             description="Click to edit the groups's properties" />
 
+                    <item id="group-edit" name="Edit Group"
+                            url="group-edit-form.jsp"
+                            description="Click to edit the group" />
+
                     <item id="group-delete" name="Delete Group"
                             url="group-delete.jsp"
                             description="Click to delete the group" />

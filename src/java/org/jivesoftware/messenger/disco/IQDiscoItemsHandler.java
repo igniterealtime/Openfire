@@ -19,6 +19,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.StringUtils;
@@ -85,10 +86,11 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
         // together with any possible requested node.  
-        DiscoItemsProvider itemsProvider = getProvider(packet.getTo().getDomain());
+        DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
+                BasicServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
         if (itemsProvider != null) {
             // Get the JID's name
-            String name = packet.getTo().getNode();
+            String name = packet.getTo() == null ? null : packet.getTo().getNode();
             if (name == null || name.trim().length() == 0) {
                 name = null;
             }
@@ -189,10 +191,14 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // Track the implementors of ServerItemsProvider so that we can collect the items
         // provided by the server
         infoHandler = server.getIQDiscoInfoHandler();
-        for (ServerItemsProvider provider : server.getServerItemsProviders()) {
+        setProvider(server.getServerInfo().getName(), getServerItemsProvider());
+    }
+
+    public void start() throws IllegalStateException {
+        super.start();
+        for (ServerItemsProvider provider : BasicServer.getInstance().getServerItemsProviders()) {
             addServerItemsProvider(provider);
         }
-        setProvider(server.getServerInfo().getName(), getServerItemsProvider());
     }
 
     public Iterator getFeatures() {

@@ -10,7 +10,7 @@
 
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
-darwin=true;
+darwin=false;
 case "`uname`" in
   CYGWIN*) cygwin=true ;;
   Darwin*) darwin=true

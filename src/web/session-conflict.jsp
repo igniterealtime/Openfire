@@ -77,7 +77,6 @@
     kickPolicy = admin.getSessionManager().getConflictKickLimit();
 %>
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Conflict Policy</td></tr>
 <tr><td colspan="2" class="text">
 <fmt:message key="title" bundle="${lang}" /> allows multiple logins to the same user account by assigning a unique "resource name"
 to each connection. If a connection requests a resource name that is already in use, the server must

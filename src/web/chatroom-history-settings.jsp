@@ -91,9 +91,9 @@
 //        numMessages = historyStrat.getMaxNumber();
     }
 %>
-<form action="chatroom-history-settings.jsp">
+
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">History Settings</td></tr>
+<form action="chatroom-history-settings.jsp">
 <tr><td class="text" colspan="2" >
 Chatrooms can replay conversation histories to provide context to new members joining a room.
 <fmt:message key="short.title" bundle="${lang}" /> provides several options for controlling how much history to store for each room.

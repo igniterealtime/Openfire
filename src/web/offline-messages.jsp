@@ -158,9 +158,9 @@
 
 <%  } %>
 
-<form action="offline-messages.jsp">
+
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="let">Offline Message Strategy</td></tr>
+<form action="offline-messages.jsp">
 <tr><td class="text" colspan="2">
 XMPP provides the option for servers to store-and-forward IM messages when they sent to a user that
 is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient

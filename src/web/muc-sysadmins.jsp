@@ -67,7 +67,6 @@
     int curPage = (start/range) + 1;
 %>
 
-
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="8">
 Below is the list of system administrators of the Multi-User Chat service. System administrators can
@@ -122,8 +121,8 @@ Total Users: <%= userCount %>.
 
 <%  } %>
 
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="400">
-<tr class="tableHeaderBlue">
+<table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="400">
+<tr>
     <th nowrap align="left">User</th>
     <th>Delete</th>
 </tr>
@@ -187,7 +186,7 @@ Total Users: <%= userCount %>.
 
 <table cellpadding="3" cellspacing="1" border="0" width="400">
 <tr>
-    <td class="jive-label">
+    <td class="c1">
         Enter bare JID of user to add:
     </td>
     <td>

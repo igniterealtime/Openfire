@@ -50,9 +50,9 @@
     }
 %>
 
-<form action="private-data-settings.jsp">
+
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Private Data Settings</td></tr>
+<form action="private-data-settings.jsp">
 <tr><td colspan=2 class="text">
 Private data storage allows XMPP clients to store settings, bookmarks, etc. on the server. Users
 can log into their account and their settings will follow them around (as opposed to having the

@@ -25,10 +25,6 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-  
-  
-  
-  
   <%   // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean auditEnabled = ParamUtils.getBooleanParameter(request,"auditEnabled");
@@ -73,7 +69,7 @@
         if (errors.size() == 0){
         %>
          <p class="jive-success-text">
-           Settings updated.
+           Settings Updated.
          </p>
         <%
         }
@@ -90,20 +86,9 @@
         maxSize = Integer.toString(auditManager.getMaxFileSize());
     }
 %>
-</P>
 
-
-
-
-
-
-
-
-
-
-<form action="audit-policy.jsp">
 <table cellpadding="4" cellspacing="0" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Audit Policy</td></tr>
+<form action="audit-policy.jsp">
 <tr><td colspan="2" class="text">
 Jive Messenger can audit XMPP traffic on the server and save the data to
 XML data files. The amount of data sent via an XMPP server can be substantial.
@@ -145,7 +130,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
         <div class="jive-table">
         <table cellpadding="3" cellspacing="1" border="0" width="100%">
         <tr valign="top">
-            <td width="1%" nowrap class="jive-label">
+            <td width="1%" nowrap class="c1">
                 Maximum file size (MB):
             </td>
             <td width="99%">
@@ -163,7 +148,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
             </td>
         </tr>
         <tr valign="top">
-            <td width="1%" nowrap class="jive-label">
+            <td width="1%" nowrap class="c1">
                 Maximum number of files:
             </td>
             <td width="99%">
@@ -181,7 +166,7 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
             </td>
         </tr>
         <tr valign="top">
-            <td width="1%" nowrap class="jive-label">
+            <td width="1%" nowrap class="c1">
                 Packets to audit:
             </td>
             <td width="99%">

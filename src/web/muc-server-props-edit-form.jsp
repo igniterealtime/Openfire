@@ -85,13 +85,14 @@
 Use the form below to edit Multi-User Chat server properties.
 </p>
 
-<form action="muc-server-props-edit-form.jsp">
+
 <input type="hidden" name="save" value="true">
 
-<div class="jive-table">
-<table cellpadding="3" cellspacing="1" border="0" width="100%">
+<div >
+<table class="jive-table" cellpadding="3" cellspacing="1" border="0">
+<form action="muc-server-props-edit-form.jsp">
 <tr>
-    <td class="jive-label">
+    <td class="c1">
         Server name:
     </td>
     <td>
@@ -99,7 +100,7 @@ Use the form below to edit Multi-User Chat server properties.
     </td>
 </tr>
 <tr>
-    <td class="jive-label">
+    <td class="c1">
         Multi User Chat server name:
     </td>
     <td>

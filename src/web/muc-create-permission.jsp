@@ -1,4 +1,5 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%@ taglib uri="core" prefix="c"%>
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
@@ -70,9 +71,10 @@
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="8">
-Below is a list of users allowed to create rooms. An empty list means that <b>anyone</b> can create 
+Below is a list of users allowed to create rooms. An empty list means that <b>anyone</b> can create
 a room.</td></tr>
 </table>
+
 
 <table cellpadding="3" cellspacing="1" border="0" width="600">
 <tr class="tableHeader"><td colspan="8" align="left">User Summary</td></tr>
@@ -122,8 +124,7 @@ Total Users: <%= userCount %>.
 
 <%  } %>
 
-
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="400">
+<table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="400">
 <tr class="tableHeaderBlue">
     <th nowrap align="left">User</th>
     <th>Delete</th>
@@ -189,7 +190,7 @@ Total Users: <%= userCount %>.
 
 <table cellpadding="3" cellspacing="1" border="0" width="400">
 <tr>
-    <td class="jive-label">
+    <td class="c1">
         Enter bare JID of user to add:
     </td>
     <td>

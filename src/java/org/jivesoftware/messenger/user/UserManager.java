@@ -128,7 +128,7 @@ public class UserManager {
             username = Stringprep.nodeprep(username);
         }
         catch (StringprepException se) {
-            throw new IllegalArgumentException("Invalid username: " + username,  se);
+            throw new UserNotFoundException("Invalid username: " + username,  se);
         }
         User user = (User) userCache.get(username);
         if (user == null) {

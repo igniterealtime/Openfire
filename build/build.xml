@@ -898,8 +898,6 @@
                         </then>
                     </if>
 
-                    <input/>
-
                     <!-- Compile java classes -->
                     <javac
                         destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"

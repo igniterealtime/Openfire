@@ -44,6 +44,12 @@
             for (String user : removeables) {
                 mucServer.removeUserAllowedToCreate(user);
             }
+            mucServer.setRoomCreationRestricted(false);
+            response.sendRedirect("muc-create-permission.jsp?success=true");
+            return;
+        }
+        else {
+            mucServer.setRoomCreationRestricted(true);
             response.sendRedirect("muc-create-permission.jsp?success=true");
             return;
         }
@@ -69,10 +75,6 @@
         response.sendRedirect("muc-create-permission.jsp?deletesuccess=true");
         return;
     }
-
-    if (errors.size() == 0) {
-        openPerms = mucServer.getUsersAllowedToCreate().size() == 0;
-    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -87,8 +89,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below is a list of users allowed to create rooms. An empty list means that <b>anyone</b> can create
-a room.
+Use the form below to set the policy for who can create chat rooms.
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -141,7 +142,7 @@ a room.
             <tr>
                 <td width="1%">
                     <input type="radio" name="openPerms" value="true" id="rb01"
-                     <%= ((openPerms) ? "checked" : "") %>>
+                     <%= ((!mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
                     <label for="rb01">Anyone can create a chat room.</label>
@@ -151,80 +152,80 @@ a room.
                 <td width="1%">
                     <input type="radio" name="openPerms" value="false" id="rb02"
                      onfocus="this.form.userJID.focus();"
-                     <%= ((!openPerms) ? "checked" : "") %>>
+                     <%= ((mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
-                    <label for="rb02">Only specific users can create a chat room:</label>
-                </td>
-            </tr>
-            <tr>
-                <td width="1%">
-                    &nbsp;
-                </td>
-                <td width="99%">
-
-                    <fieldset>
-                        <legend>Allowed Users</legend>
-                        <div>
-                            <p>
-                            Add User (enter JID):
-                            <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
-                             onclick="this.form.openPerms[1].checked=true;">
-                            <input type="submit" name="add" value="Add">
-                            </p>
-
-                            <div class="jive-table" style="width:400px;">
-                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th width="99%">User</th>
-                                    <th width="1%">Remove</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
-
-                                    <tr>
-                                        <td colspan="2">
-                                            No allowed users, use the form above to add one.
-                                        </td>
-                                    </tr>
-
-                                <%  } %>
-
-                                <%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
-                                        String user = (String)obj;
-                                %>
-                                    <tr>
-                                        <td width="99%">
-                                            <%= user %>
-                                        </td>
-                                        <td width="1%" align="center">
-                                            <a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
-                                             title="Click to delete..."
-                                             onclick="return confirm('Are you sure you want to remove this user from the list?');"
-                                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-                                        </td>
-                                    </tr>
-
-                                <%  } %>
-                            </tbody>
-                            </table>
-                            </div>
-                        </div>
-                    </fieldset>
-
+                    <label for="rb02">Only specific users can create a chat room.</label>
                 </td>
             </tr>
         </tbody>
         </table>
+        <br>
+        <input type="submit" name="save" value="Save Settings">
     </div>
 </fieldset>
 
-<br><br>
-
-<input type="submit" name="save" value="Save Settings">
-
 </form>
+
+<br>
+
+<%  if (mucServer.isRoomCreationRestricted()) { %>
+
+    <form action="muc-create-permission.jsp" method="post">
+
+    <fieldset>
+        <legend>Allowed Users</legend>
+        <div>
+        <p>
+        Add User (enter JID):
+        <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+         onclick="this.form.openPerms[1].checked=true;">
+        <input type="submit" name="add" value="Add">
+        </p>
+
+        <div class="jive-table" style="width:400px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <thead>
+            <tr>
+                <th width="99%">User</th>
+                <th width="1%">Remove</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
+
+                <tr>
+                    <td colspan="2">
+                        No allowed users, use the form above to add one.
+                    </td>
+                </tr>
+
+            <%  } %>
+
+            <%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
+                    String user = (String)obj;
+            %>
+                <tr>
+                    <td width="99%">
+                        <%= user %>
+                    </td>
+                    <td width="1%" align="center">
+                        <a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
+                         title="Click to delete..."
+                         onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                    </td>
+                </tr>
+
+            <%  } %>
+        </tbody>
+        </table>
+        </div>
+        </div>
+    </fieldset>
+
+    </form>
+
+<%  } %>
 
 <jsp:include page="bottom.jsp" flush="true" />

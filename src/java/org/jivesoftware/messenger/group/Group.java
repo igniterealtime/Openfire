@@ -405,7 +405,7 @@ public class Group implements Cacheable {
         }
     }
 
-    public void insertProperty(String propName, String propValue) {
+    private void insertProperty(String propName, String propValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -427,7 +427,7 @@ public class Group implements Cacheable {
         }
     }
 
-    public void updateProperty(String propName, String propValue) {
+    private void updateProperty(String propName, String propValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -449,7 +449,7 @@ public class Group implements Cacheable {
         }
     }
 
-    public void deleteProperty(String propName) {
+    private void deleteProperty(String propName) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

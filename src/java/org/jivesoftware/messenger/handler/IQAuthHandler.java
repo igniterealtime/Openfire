@@ -83,6 +83,18 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             ClientSession session = sessionManager.getSession(packet.getFrom());
+            // If no session was found then answer an error (if possible)
+            if (session == null) {
+                Log.error("Error during authentication. Session not found in " +
+                        sessionManager.getPreAuthenticatedKeys() +
+                        " for key " +
+                        packet.getFrom());
+                // This error packet will probably won't make it through
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.internal_server_error);
+                return reply;
+            }
             IQ response = null;
             try {
                 Element iq = packet.getElement();

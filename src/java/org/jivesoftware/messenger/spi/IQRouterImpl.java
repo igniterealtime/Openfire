@@ -11,10 +11,9 @@
 
 package org.jivesoftware.messenger.spi;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
@@ -34,8 +33,8 @@ import org.dom4j.Element;
 public class IQRouterImpl extends BasicModule implements IQRouter {
 
     private RoutingTable routingTable;
-    private LinkedList iqHandlers = new LinkedList();
-    private Map namespace2Handlers = new HashMap();
+    private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
+    private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
     private SessionManager sessionManager;
 
     /**
@@ -170,23 +169,56 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
     }
 
     private IQHandler getHandler(String namespace) {
-        IQHandler handler = null;
-
-        handler = (IQHandler)namespace2Handlers.get(namespace);
+        IQHandler handler = namespace2Handlers.get(namespace);
         if (handler == null) {
-            Iterator handlerIter = iqHandlers.iterator();
-            while (handlerIter.hasNext() && handler == null) {
-                IQHandler handlerCandidate = (IQHandler)handlerIter.next();
+            for (IQHandler handlerCandidate : iqHandlers) {
                 IQHandlerInfo handlerInfo = handlerCandidate.getInfo();
                 if (handlerInfo != null && namespace.equalsIgnoreCase(handlerInfo.getNamespace())) {
                     handler = handlerCandidate;
+                    namespace2Handlers.put(namespace, handler);
+                    break;
                 }
-            }
-            if (handler != null) {
-                namespace2Handlers.put(namespace, handler);
             }
         }
         return handler;
+    }
+
+    /**
+     * <p>Adds a new IQHandler to the list of registered handler. The new IQHandler will be
+     * responsible for handling IQ packet whose namespace matches the namespace of the
+     * IQHandler.</p>
+     *
+     * An IllegalArgumentException may be thrown if the IQHandler to register was already provided
+     * by the server. The server provides a certain list of IQHandlers when the server is
+     * started up.
+     *
+     * @param handler the IQHandler to add to the list of registered handler.
+     */
+    public void addHandler(IQHandler handler) {
+        if (iqHandlers.contains(handler)) {
+            throw new IllegalArgumentException("IQHandler already provided by the server");
+        }
+        // Register the handler as the handler of the namespace
+        namespace2Handlers.put(handler.getInfo().getNamespace(), handler);
+    }
+
+    /**
+     * <p>Removes an IQHandler from the list of registered handler. The IQHandler to remove was
+     * responsible for handling IQ packet whose namespace matches the namespace of the
+     * IQHandler.</p>
+     *
+     * An IllegalArgumentException may be thrown if the IQHandler to remove was already provided
+     * by the server. The server provides a certain list of IQHandlers when the server is
+     * started up.
+     *
+     * @param handler the IQHandler to remove from the list of registered handler.
+     */
+    public void removeHandler(IQHandler handler) {
+        if (iqHandlers.contains(handler)) {
+            throw new IllegalArgumentException("Cannot remove an IQHandler provided by the server");
+        }
+        // Unregister the handler as the handler of the namespace
+        namespace2Handlers.remove(handler.getInfo().getNamespace());
     }
 
     public void initialize(XMPPServer server) {

@@ -25,11 +25,17 @@ import org.jivesoftware.messenger.PrivateStore;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.net.URLEncoder;
 
+/**
+ * A utility bean for Messenger admin console pages.
+ */
 public class WebManager extends WebBean {
-    private LinkedHashMap breadcrumbMap = new LinkedHashMap();
+
+    private Map breadcrumbMap = new LinkedHashMap();
     private String title = "";
     private String sidebar = "";
 
@@ -39,6 +45,9 @@ public class WebManager extends WebBean {
     public WebManager() {
     }
 
+    /**
+     * Returns the auth token redirects to the login page if an auth token is not found.
+     */
     public AuthToken getAuthToken() {
         AuthToken authToken = (AuthToken)session.getAttribute("jive.admin.authToken");
         if (authToken == null) {
@@ -47,10 +56,16 @@ public class WebManager extends WebBean {
         return authToken;
     }
 
+    /**
+     * Returns <tt>true</tt> if the Messenger container is in setup mode, <tt>false</tt> otherwise.
+     */
     public boolean isSetupMode() {
         return getContainer().isSetupMode();
     }
 
+    /**
+     * Returns an instnace of the ServiceLookup.
+     */
     public ServiceLookup getServiceLookup() {
         try {
             return ServiceLookupFactory.getLookup();
@@ -60,10 +75,16 @@ public class WebManager extends WebBean {
         }
     }
 
+    /**
+     * Returns the server's container.
+     */
     public Container getContainer() {
         return (Container)getServiceLookup().lookup(Container.class);
     }
 
+    /**
+     * Returns the XMPP server object -- can get many config items from here.
+     */
     public XMPPServer getXMPPServer() {
         final XMPPServer xmppServer = (XMPPServer)getServiceLookup().lookup(XMPPServer.class);
         if (xmppServer == null) {
@@ -79,7 +100,6 @@ public class WebManager extends WebBean {
         UserManager userManager = (UserManager)getServiceLookup().lookup(UserManager.class);
         return userManager;
     }
-
 
     public PrivateStore getPrivateStore() {
         final PrivateStore privateStore = (PrivateStore)getServiceLookup().lookup(PrivateStore.class);
@@ -102,18 +122,23 @@ public class WebManager extends WebBean {
         return getXMPPServer().getServerInfo();
     }
 
+    /**
+     * Returns the page user or <tt>null</tt> if one is not found.
+     */
     public User getUser() {
         User pageUser = null;
         try {
             pageUser = getUserManager().getUser(getAuthToken().getUserID());
         }
         catch (UserNotFoundException ex) {
-            ex.printStackTrace();
+            Log.error(ex);
         }
         return pageUser;
     }
 
-
+    /**
+     * Returns <tt>true</tt> if the server is in embedded mode, <tt>false</tt> otherwise.
+     */
     public boolean isEmbedded() {
         try {
             ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
@@ -124,7 +149,9 @@ public class WebManager extends WebBean {
         }
     }
 
-
+    /**
+     * Restarts the container then sleeps for 3 seconds.
+     */
     public void restart(Container container) {
         try {
             container.restart();
@@ -135,6 +162,9 @@ public class WebManager extends WebBean {
         sleep();
     }
 
+    /**
+     * Stops the container then sleeps for 3 seconds.
+     */
     public void stop(Container container) {
         try {
             container.stop();
@@ -145,35 +175,8 @@ public class WebManager extends WebBean {
         sleep();
     }
 
-    public void sleep() {
-        // Sleep for a minute:
-        try {
-            Thread.sleep(3000L);
-        }
-        catch (Exception ignored) {
-        }
-    }
-
     public WebManager getManager() {
         return this;
-    }
-
-    public void showLogin() {
-        try {
-            response.sendRedirect("login.jsp");
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void showServerDown() {
-        try {
-            response.sendRedirect("error-serverdown.jsp");
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 
     public void validateService() {
@@ -223,29 +226,77 @@ public class WebManager extends WebBean {
         return getBreadCrumbs().size();
     }
 
-
     public void setStart(int start) {
         this.start = start;
     }
-
 
     public int getStart() {
         return start;
     }
 
-
     public void setRange(int range) {
         this.range = range;
     }
-
 
     public int getRange() {
         return range;
     }
 
-
     public int getCurrentPage() {
         return (start / range) + 1;
     }
 
+    private void sleep() {
+        // Sleep for a minute:
+        try {
+            Thread.sleep(3000L);
+        }
+        catch (Exception ignored) {
+        }
+    }
+
+    private void showLogin() {
+        try {
+            response.sendRedirect(getRedirectURL(null));
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void showServerDown() {
+        try {
+            response.sendRedirect("error-serverdown.jsp");
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private String getRedirectURL(String optionalParams) {
+        StringBuffer buf = new StringBuffer();
+        try {
+            StringBuffer rURL = request.getRequestURL();
+            int pos = rURL.lastIndexOf("/");
+            if ((pos+1) <= rURL.length()) {
+                buf.append(rURL.substring(pos+1, rURL.length()));
+            }
+            String qs = request.getQueryString();
+            if (qs != null) {
+                buf.append("?").append(qs);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        try {
+            String url= "login.jsp?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
+                    + (optionalParams != null ? "&"+optionalParams : "");
+            return url;
+        }
+        catch (Exception e) {
+            Log.error(e);
+            return null;
+        }
+    }
 }

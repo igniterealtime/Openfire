@@ -96,10 +96,6 @@
                     url="session-summary.jsp"
                     description="Click to manage XMPP sessions" />
 
-            <item id="session-settings" name="Session Settings"
-                    url="session-settings.jsp"
-                    description="Click to change session settings" />
-
             <item id="user-message" name="Send Message"
                     url="user-message.jsp"
                     description="Click to send a message" />

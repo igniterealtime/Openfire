@@ -37,9 +37,17 @@
 
 <p>
 This installation of <fmt:message key="title" bundle="${lang}" /> is now complete.
-To continue, please restart the server then
-<a href="index.jsp">login to the admin console</a>.
+To continue:
 </p>
+
+<ol>
+    <li>
+        Please <b style="font-size:1.2em;">restart</b> the server.
+    </li>
+    <li>
+        <a href="index.jsp">Login to the admin console</a>.
+    </li>
+</ol>
 
 <%@ include file="setup-footer.jsp" %>
 

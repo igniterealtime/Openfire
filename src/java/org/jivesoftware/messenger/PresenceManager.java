@@ -132,13 +132,5 @@ public interface PresenceManager {
      * @param prober The user requesting the probe
      * @param probee The XMPPAddress whos presence we would like sent have have probed
      */
-    public void probePresence(String prober, JID probee);
-
-    /**
-     * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
-     *
-     * @param prober The user requesting the probe
-     * @param probee The XMPPAddress whos presence we would like sent have have probed
-     */
     public void probePresence(JID prober, JID probee);
 }

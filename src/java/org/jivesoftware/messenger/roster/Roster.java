@@ -308,7 +308,7 @@ public class Roster implements Cacheable {
             broadcast(item);
         }
         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
-            presenceManager.probePresence(username, item.getJid());
+            probePresence(item.getJid());
         }
     }
 
@@ -496,6 +496,15 @@ public class Roster implements Cacheable {
         broadcast(roster);
     }
 
+    /**
+     * Sends a presence probe to the probee for each connected resource of this user.
+     */
+    private void probePresence(JID probee) {
+        for (ClientSession session : sessionManager.getSessions(username)) {
+            presenceManager.probePresence(session.getAddress(), probee);
+        }
+    }
+
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -589,7 +598,7 @@ public class Roster implements Cacheable {
         broadcast(item);
         // Probe the presence of the new group user
         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
-            presenceManager.probePresence(username, item.getJid());
+            probePresence(item.getJid());
         }
     }
 
@@ -680,7 +689,7 @@ public class Roster implements Cacheable {
         broadcast(item);
         // Probe the presence of the new group user
         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
-            presenceManager.probePresence(username, item.getJid());
+            probePresence(item.getJid());
         }
     }
 

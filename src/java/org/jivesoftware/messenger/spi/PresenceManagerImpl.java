@@ -16,8 +16,6 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -37,11 +35,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private Map<String, Presence> onlineGuests;
     private Map<String, Presence> onlineUsers;
 
-    /**
-     * table: key jid.getUserJid().toLowerCase() (String); value Presence
-     */
-    private Cache foreignUserCache;
-
     private UserManager userManager;
     private SessionManager sessionManager;
     private XMPPServer server;
@@ -57,13 +50,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     private void initializeCaches() {
-        int foreignCacheSize = 128 * 1024 * 8; // 1 MB
-
         // create caches - no size limit and never expire for presence caches
-        long HOUR = JiveConstants.HOUR;
         onlineGuests = new ConcurrentHashMap<String, Presence>();
         onlineUsers = new ConcurrentHashMap<String, Presence>();
-        foreignUserCache = new Cache("Foreign Users", foreignCacheSize, HOUR);
     }
 
     public int getOnlineGuestCount() {
@@ -283,18 +272,21 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         return null;
     }
 
-    public void probePresence(String prober, JID probee) {
+    public void probePresence(JID prober, JID probee) {
         try {
             Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
+                // If the probee is a local user then don't send a probe to the contact's server.
+                // But instead just send the contact's presence to the prober
                 if (probee.getNode() != null && !"".equals(probee.getNode())) {
                     Collection<ClientSession> sessions =
                             sessionManager.getSessions(probee.getNode());
                     for (ClientSession session : sessions) {
                         Presence presencePacket = session.getPresence().createCopy();
                         presencePacket.setFrom(session.getAddress());
+                        presencePacket.setTo(prober);
                         try {
-                            sessionManager.userBroadcast(prober, presencePacket);
+                            deliverer.deliver(presencePacket);
                         }
                         catch (Exception e) {
                             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -303,63 +295,25 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 }
             }
             else if (component != null) {
+                // If the probee belongs to a component then ask the component to process the
+                // probe presence
                 Presence presence = new Presence();
                 presence.setType(Presence.Type.probe);
-                presence.setFrom(server.createJID(prober, ""));
+                presence.setFrom(prober);
                 presence.setTo(probee);
                 component.processPacket(presence);
             }
             else {
-                Presence presence = (Presence) foreignUserCache.get(probee.toBareJID());
-                if (presence != null) {
-                    Presence presencePacket = presence.createCopy();
-                    presencePacket.setFrom(probee);
-                    try {
-                        sessionManager.userBroadcast(prober, presencePacket);
-                    }
-                    catch (Exception e) {
-                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    }
+                String serverDomain = server.getServerInfo().getName();
+                // Check if the probee may be hosted by this server
+                if (!probee.getDomain().contains(serverDomain)) {
+                    // TODO Implete when s2s is implemented
                 }
                 else {
-                    JID proberAddress = server.createJID(prober, "");
-                    componentManager.addPresenceRequest(proberAddress, probee);
-                }
-            }
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-    }
-
-    public void probePresence(JID prober, JID probee) {
-        try {
-            if (server.isLocal(probee)) {
-                Collection<ClientSession> sessions =
-                        sessionManager.getSessions(probee.getNode());
-                for (ClientSession session : sessions) {
-                    Presence presencePacket = session.getPresence().createCopy();
-                    presencePacket.setFrom(session.getAddress());
-                    try {
-                        deliverer.deliver(presencePacket);
-                    }
-                    catch (Exception e) {
-                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    }
-                }
-            }
-            else {
-                Presence presence =
-                        (Presence) foreignUserCache.get(probee.toBareJID());
-                if (presence != null) {
-                    Presence presencePacket = presence.createCopy();
-                    presencePacket.setFrom(probee);
-                    try {
-                        deliverer.deliver(presencePacket);
-                    }
-                    catch (Exception e) {
-                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    }
+                    // The probee may be related to a component that has not yet been connected so
+                    // we will keep a registry of this presence probe. The component will answer
+                    // this presence probe when he becomes online
+                    componentManager.addPresenceRequest(prober, probee);
                 }
             }
         }

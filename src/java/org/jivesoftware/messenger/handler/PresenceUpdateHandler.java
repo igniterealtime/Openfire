@@ -183,7 +183,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }
                 if (item.getSubStatus() == RosterItem.SUB_TO
                         || item.getSubStatus() == RosterItem.SUB_BOTH) {
-                    presenceManager.probePresence(username, item.getJid());
+                    presenceManager.probePresence(session.getAddress(), item.getJid());
                 }
             }
             // deliver offline messages if any

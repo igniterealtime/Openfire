@@ -292,13 +292,8 @@ public class IQAdminHandler {
             }
 
             // Send the updated presences to the room occupants
-            try {
-                for (Presence presence : presences) {
-                    room.send(presence);
-                }
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
+            for (Presence presence : presences) {
+                room.send(presence);
             }
         }
     }

@@ -82,23 +82,6 @@
 </fmt:message>
 </p>
 
-<%  if (errors.size() > 0) { %>
-
-    <%-- print out errors here --%>
-
-<%  } %>
-
-<br/>
-
-<b>System Summary</b>
-
-<ul>
-JDK: <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>,
-Appserver: <%= application.getServerInfo() %>.
-</ul>
-
-<br/>
-
 <form action="setup-index.jsp" name="sform">
 
 <b>Choose Language</b>
@@ -120,7 +103,7 @@ Appserver: <%= application.getServerInfo() %>.
              id="loc01" />
         </td>
         <td colspan="2">
-            <label for="loc01">English (en)</label>
+            <label for="loc01">English</label> (en)
         </td>
     </tr>
     <tr>
@@ -132,7 +115,7 @@ Appserver: <%= application.getServerInfo() %>.
             <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
         </td>
         <td>
-            <label for="loc02">Simplified Chinese (zh_CN)</label>
+            <label for="loc02">Simplified Chinese</label> (zh_CN)
         </td>
     </tr>
 </tbody>

@@ -18,7 +18,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 
 /**
- * <p>Implements the strategy as a basic server module.</p>
+ * Controls what is done with offline messages.
  *
  * @author Iain Shigeoka
  */
@@ -28,7 +28,6 @@ public class OfflineMessageStrategy extends BasicModule {
     private static Type type = Type.store_and_bounce;
     private SessionManager sessionManager;
 
-    private XMPPServer xmppServer;
     private OfflineMessageStore messageStore;
 
     public OfflineMessageStrategy() {
@@ -103,14 +102,7 @@ public class OfflineMessageStrategy extends BasicModule {
     private void bounce(Message message) {
         // Generate a rejection response to the sender
         try {
-            Message response = new Message();
-            response.setTo(message.getFrom());
-            response.setFrom(xmppServer.createJID(null, null));
-            response.setBody("Message could not be delivered to " + message.getTo() +
-                    ". User is offline or unreachable.");
-
             Session session = sessionManager.getSession(message.getFrom());
-            session.getConnection().deliver(response);
 
             Message errorResponse = message.createCopy();
             errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
@@ -124,7 +116,6 @@ public class OfflineMessageStrategy extends BasicModule {
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        xmppServer = server;
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
 

@@ -47,6 +47,7 @@
     <property name="docs.dir" value="${basedir}/documentation" />
     <property name="web.dir" value="${src.dir}/web" />
     <property name="lib.build.dir" value="${basedir}/build/lib" />
+    <property name="lib.build.installer.dir" value="${basedir}/build/installer" />
     <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
     <property name="lib.dist.dir" value="${lib.build.dir}/dist" />
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib" />
@@ -185,7 +186,8 @@
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
             <fileset dir="${src.dir}" includes="database/*.sql" />
-            <fileset dir="${resources.dir}/jar" includes="admin-sidebar.xml" />
+	    <fileset dir="${resources.dir}/jar" includes="admin-sidebar.xml" />
+	    <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>

@@ -16,7 +16,8 @@
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.messenger.group.Group,
-                 org.jivesoftware.messenger.group.GroupNotFoundException"
+                 org.jivesoftware.messenger.group.GroupNotFoundException,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -37,7 +38,7 @@
 
     // Handle a delete
     if (delete) {
-        response.sendRedirect("group-delete.jsp?group=" + groupName);
+        response.sendRedirect("group-delete.jsp?group=" + URLEncoder.encode(groupName, "UTF-8"));
         return;
     }
 
@@ -61,7 +62,7 @@
     String title = "Group Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-properties.jsp?group="+groupName));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-properties.jsp?group="+URLEncoder.encode(groupName)));
     pageinfo.setSubPageID("group-properties");
     pageinfo.setExtraParams("group="+groupName);
 %>
@@ -140,8 +141,8 @@ Below is a summary of the group. To edit properties, click the "Edit" button bel
 
 <br><br>
 
-<form action="group-edit-form.jsp">
-<input type="hidden" name="group" value="<%= group.getName() %>">
+<form action="group-edit.jsp">
+<input type="hidden" name="group" value="<%= URLEncoder.encode(group.getName(), "UTF-8") %>">
 <input type="submit" value="Edit Properties">
 </form>
 

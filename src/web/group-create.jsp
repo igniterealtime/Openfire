@@ -22,7 +22,8 @@ import   ="org.jivesoftware.util.*,
                  java.io.PrintStream,
                  org.dom4j.xpath.DefaultXPath,
                  org.dom4j.*,
-                 org.jivesoftware.messenger.group.*"
+                 org.jivesoftware.messenger.group.*,
+           java.net.URLEncoder"
 errorPage="error.jsp"%>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
@@ -35,7 +36,7 @@ errorPage="error.jsp"%>
     boolean cancel = request.getParameter("cancel") != null;
     String  name = ParamUtils.getParameter(request, "name");
     String  description = ParamUtils.getParameter(request, "description");
-    String  users = ParamUtils.getParameter(request, "users");
+    String  users = ParamUtils.getParameter(request, "users", true);
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("group-summary.jsp");
@@ -54,18 +55,21 @@ errorPage="error.jsp"%>
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-                String hostName = webManager.getXMPPServer().getServerInfo().getName();
-                StringTokenizer tokenizer = new StringTokenizer(users, ",");
-                while (tokenizer.hasMoreTokens()) {
-                    String tok = tokenizer.nextToken();
-                    String address = tok;
-                    if (address.indexOf("@") == -1) {
-                        address = address + "@" + hostName;
+
+                if(users.length() > 0){
+                    String hostName = webManager.getXMPPServer().getServerInfo().getName();
+                    StringTokenizer tokenizer = new StringTokenizer(users, ",");
+                    while (tokenizer.hasMoreTokens()) {
+                        String tok = tokenizer.nextToken();
+                        String address = tok;
+                        if (address.indexOf("@") == -1) {
+                            address = address + "@" + hostName;
+                        }
+                        newGroup.getMembers().add(address);
                     }
-                    newGroup.getMembers().add(address);
                 }
                 // Successful, so redirect
-                response.sendRedirect("group-properties.jsp?success=true&group=" + newGroup.getName());
+                response.sendRedirect("group-properties.jsp?success=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
                 return;
             }
             catch (GroupAlreadyExistsException e) {

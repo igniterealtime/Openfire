@@ -14,7 +14,9 @@
                  java.util.*,
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.group.*"
+                 org.jivesoftware.messenger.group.*,
+                 java.net.URLDecoder,
+                 java.net.URLEncoder"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -120,6 +122,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
     }
     int i = start;
     for (Group group : groups) {
+        String groupName = URLEncoder.encode(group.getName(), "UTF-8");
         i++;
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
@@ -127,7 +130,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
             <%= i %>
         </td>
         <td width="60%">
-            <a href="group-properties.jsp?group=<%= group.getName() %>"><%= group.getName() %></a>
+            <a href="group-edit.jsp?group=<%= groupName %>"><%= group.getName() %></a>
             <% if (group.getDescription() != null) { %>
             <br>
                 <span class="jive-description">
@@ -142,12 +145,12 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
             <%= group.getAdmins().size() %>
         </td>
         <td width="1%" align="center">
-            <a href="group-edit-form.jsp?group=<%= group.getName() %>"
+            <a href="group-edit.jsp?group=<%= groupName %>"
              title="Click to edit..."
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="group-delete.jsp?group=<%= group.getName() %>"
+            <a href="group-delete.jsp?group=<%= groupName %>"
              title="Click to delete..."
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>

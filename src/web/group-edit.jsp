@@ -6,7 +6,9 @@ import="java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  org.xmpp.packet.JID,
                  org.jivesoftware.messenger.group.GroupManager,
-                 org.jivesoftware.messenger.group.Group"%>
+                 org.jivesoftware.messenger.group.Group,
+        java.net.URLEncoder,
+        java.net.URLDecoder"%>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%
@@ -22,7 +24,18 @@ import="java.text.DateFormat,
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String  groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
+    boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
+    String newName = ParamUtils.getParameter(request, "newName");
+
     Group   group = groupManager.getGroup(groupName);
+
+    boolean nameChanged = false;
+    if(newName != null && newName.length() > 0){
+        group.setName(newName);
+        groupName = newName;
+        nameChanged = true;
+    }
+
     if (update) {
         Set adminIDSet = new HashSet();
         for (int i = 0; i < adminIDs.length; i++) {
@@ -50,7 +63,7 @@ import="java.text.DateFormat,
             group.getMembers().add(m);
         }
         // Get admin list and compare it the admin posted list.
-        response.sendRedirect("group-edit-form.jsp?group=" + groupName + "&updatesuccess=true");
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
         return;
     }
     else if (add && users != null) {
@@ -67,7 +80,7 @@ import="java.text.DateFormat,
                 group.getMembers().add(address);
             }
         }
-        response.sendRedirect("group-edit-form.jsp?group=" + groupName + "&success=true");
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&success=true");
         return;
     }
     else if (delete) {
@@ -76,7 +89,7 @@ import="java.text.DateFormat,
             group.getMembers().remove(member);
             group.getAdmins().remove(member);
         }
-        response.sendRedirect("group-edit-form.jsp?group=" + groupName + "&deletesuccess=true");
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true");
         return;
     }
     DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
@@ -86,9 +99,9 @@ import="java.text.DateFormat,
     String     title = "Edit Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit-form.jsp"));
-    pageinfo.setPageID("group-edit");
-    pageinfo.setExtraParams("group=" + groupName);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp"));
+    pageinfo.setPageID("group-summary");
+    pageinfo.setExtraParams("group="+groupName);
 %>
     <jsp:include page="top.jsp" flush="true"/>
     <jsp:include page="title.jsp" flush="true"/>
@@ -103,6 +116,15 @@ import="java.text.DateFormat,
         Below is a summary of properties for the group as well as admins and members. Use the forms on the page to add
         members and optionally designate them as groups administrators.
     </p>
+<%
+    if (nameChanged){
+%>
+            <p class="jive-success-text">
+            Name has been changed successfully.
+            </p>
+<%
+    }
+%>
 <%
     if ("true".equals(request.getParameter("success"))) {
 %>
@@ -128,30 +150,43 @@ import="java.text.DateFormat,
 %>
     <fieldset>
         <legend>
-            User Group Summary
-        </legend>
+            Group Summary
+        </legend><form name="ff" action="group-edit.jsp">
+        <input type="hidden" name="group" value="<%= groupName %>"/>
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
-                <td class="c1">
+                <td  width="1%">
                     Name:
                 </td>
-                <td class="c2">
+                <td align=left nowrap width="1%">
                     <b><%= group.getName() %></b>
                 </td>
-            </tr>
+                <% if(!edit) { %>
+                <td>
+                  <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
+                    <img src="images/edit-16x16.gif" border="0">
+                   </a>
+                </td>
+                <% }else { %>
+
+                <td>
+                New Name:<input type="text" name="newName"><input type="submit" value="Change">
+                </td>
+
+                <% } %>
             <tr>
-                <td class="c1">
+                <td width="1%">
                     Description:
                 </td>
-                <td class="c2">
+                <td colspan="3">
                     <%= ((group.getDescription() != null) ? group.getDescription() : "No Description") %>
                 </td>
             </tr>
         </table>
-    </fieldset>
+    </fieldset> </form>
     <br>
 
-    <form action="group-edit-form.jsp" method="post" name="f">
+    <form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0">
@@ -173,7 +208,7 @@ import="java.text.DateFormat,
         </table>
     </form>
 
-    <form action="group-edit-form.jsp" method="post" name="main">
+    <form action="group-edit.jsp" method="post" name="main">
         <input type="hidden" name="group" value="<%= groupName %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
             <tr>

@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.container;
 
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import java.io.File;
@@ -83,6 +84,8 @@ public class AdminConsolePlugin implements Plugin {
             jetty.start();
 
             Log.info("Started admin console on port: " + port);
+            System.out.println("Admin console listening at http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
         }
         catch (Exception e) {
             Log.error("Trouble initializing admin console", e);

@@ -26,7 +26,7 @@ public interface ConnectionManager {
      *
      * @return Iterator of the ports managed by this connection manager (can be an empty but never null)
      */
-    public Iterator getPorts();
+    public Iterator<ServerPort> getPorts();
 
     /**
      * <p>Adds a socket to be managed by the connection manager.</p>

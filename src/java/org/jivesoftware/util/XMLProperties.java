@@ -465,7 +465,7 @@ public class XMLProperties {
             }
             // Copy new contents to the file.
             try {
-                FileCopier.copy(tempFile, file);
+                copy(tempFile, file);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -498,13 +498,63 @@ public class XMLProperties {
     }
 
     public void setProperties(Map propertyMap) {
-        /*
         Iterator iter = propertyMap.keySet().iterator();
         while (iter.hasNext()) {
             String propertyName = (String) iter.next();
             String propertyValue = (String) propertyMap.get(propertyName);
             setProperty(propertyName, propertyValue);
         }
-        */
+    }
+
+    /**
+     * Copies the inFile to the outFile.
+     *
+     * @param inFile  The file to copy from
+     * @param outFile The file to copy to
+     * @throws IOException If there was a problem making the copy
+     */
+    private static void copy(File inFile, File outFile) throws IOException {
+        FileInputStream fin = null;
+        FileOutputStream fout = null;
+        try {
+            fin = new FileInputStream(inFile);
+            fout = new FileOutputStream(outFile);
+            copy(fin, fout);
+        }
+        finally {
+            try {
+                if (fin != null) fin.close();
+            }
+            catch (IOException e) {
+                // do nothing
+            }
+            try {
+                if (fout != null) fout.close();
+            }
+            catch (IOException e) {
+                // do nothing
+            }
+        }
+    }
+
+    /**
+     * Copies data from an input stream to an output stream
+     *
+     * @param in  The stream to copy data from
+     * @param out The stream to copy data to
+     * @throws IOException if there's trouble during the copy
+     */
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        // do not allow other threads to whack on in or out during copy
+        synchronized (in) {
+            synchronized (out) {
+                byte[] buffer = new byte[256];
+                while (true) {
+                    int bytesRead = in.read(buffer);
+                    if (bytesRead == -1) break;
+                    out.write(buffer, 0, bytesRead);
+                }
+            }
+        }
     }
 }

@@ -33,7 +33,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private SocketAcceptThread socketThread;
     private SSLSocketAcceptThread sslSocketThread;
-    private ArrayList ports;
+    private ArrayList<ServerPort> ports;
 
     private AuditManager auditManager;
     private SessionManager sessionManager;
@@ -44,7 +44,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
-        ports = new ArrayList(2);
+        ports = new ArrayList<ServerPort>(2);
     }
 
     private void createSocket() {
@@ -75,7 +75,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 if ("".equals(algorithm) || algorithm == null) {
                     algorithm = "TLS";
                 }
-                ports.add(new ServerPortImpl(sslSocketThread.getPort(), serverName,
+                ports.add(new ServerPort(sslSocketThread.getPort(), serverName,
                         localIPAddress, true, algorithm));
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
@@ -91,7 +91,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start plain socket unless it's been disabled.
         if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
             socketThread = new SocketAcceptThread(this);
-            ports.add(new ServerPortImpl(socketThread.getPort(),
+            ports.add(new ServerPort(socketThread.getPort(),
                     serverName, localIPAddress, false, null));
             socketThread.setDaemon(true);
             socketThread.start();
@@ -102,7 +102,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    public Iterator getPorts() {
+    public Iterator<ServerPort> getPorts() {
         return ports.iterator();
     }
 

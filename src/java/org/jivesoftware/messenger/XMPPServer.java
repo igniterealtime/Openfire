@@ -27,11 +27,12 @@ import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.messenger.spi.*;
 import org.jivesoftware.messenger.container.Module;
 import org.jivesoftware.messenger.container.PluginManager;
+import org.jivesoftware.messenger.net.MulticastDNSService;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.net.MulticastDNSService;
+import org.jivesoftware.messenger.net.MulticastDNSService;
 import org.dom4j.io.SAXReader;
 import org.dom4j.Document;
 
@@ -47,16 +48,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * <p>The main XMPP server that will load, initialize and start all the server's modules. The server
- * is unique in the JVM and could be obtained by using the getInstance() static method
- * on the XMPPServer class.
- * <p/><p>
- * The loaded modules will be initialized and may access through the server other modules. This
- * means that the only way for a module to locate another module is through the server. The server
- * maintains a list of loaded modules all the time.
- * </p><p>
- * After starting up all the modules the server will load any available plugin. For more information
- * follow this link: {@link org.jivesoftware.messenger.container.PluginManager}
+ * The main XMPP server that will load, initialize and start all the server's
+ * modules. The server is unique in the JVM and could be obtained by using the
+ * {@link #getInstance()} method.<p>
+ *
+ * The loaded modules will be initialized and may access through the server other
+ * modules. This means that the only way for a module to locate another module is
+ * through the server. The server maintains a list of loaded modules.<p>
+ *
+ * After starting up all the modules the server will load any available plugin.
+ * For more information see: {@link org.jivesoftware.messenger.container.PluginManager}.
  * </p>
  *
  * @author Gaston Dombiak
@@ -115,8 +116,9 @@ public class XMPPServer {
         instance = this;
         start();
     }
+
     /**
-     * Obtain a snapshot of the server's status.
+     * Returns a snapshot of the server's status.
      *
      * @return the server information current at the time of the method call.
      */
@@ -135,7 +137,8 @@ public class XMPPServer {
     }
 
     /**
-     * Determines if the given address is local to the server (managed by this server domain).
+     * Returns true if the given address is local to the server (managed by this
+     * server domain).
      *
      * @return true if the address is a local address to this server.
      */

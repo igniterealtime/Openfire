@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger;
 
 import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
  * Represents a port on which the server will listen for connections.
@@ -20,42 +21,70 @@ import java.util.Iterator;
  *
  * @author Iain Shigeoka
  */
-public interface ServerPort {
-    /**
-     * Obtain the port number that is being used
-     *
-     * @return The port number this server port is listening on
-     */
-    public int getPort();
+public class ServerPort {
+
+    private int port;
+    private ArrayList names;
+    private String address;
+    private boolean secure;
+    private String algorithm;
+
+    public ServerPort(int port, String name, String address, boolean isSecure,
+            String algorithm)
+    {
+        this.port = port;
+        this.names = new ArrayList(1);
+        this.names.add(name);
+        this.address = address;
+        this.secure = isSecure;
+        this.algorithm = algorithm;
+    }
 
     /**
-     * Obtain the logical domains for this server port. As multiple
+     * Returns the port number that is being used.
+     *
+     * @return the port number this server port is listening on.
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * Returns the logical domains for this server port. As multiple
      * domains may point to the same server, this helps to define what
      * the server considers "local".
      *
      * @return The server domain name(s) as Strings
      */
-    public Iterator getDomainNames();
+    public Iterator getDomainNames() {
+        return names.iterator();
+    }
 
     /**
-     * Obtains the dot separated IP address for the server.
+     * Returns the dot separated IP address for the server.
      *
      * @return The dot separated IP address for the server
      */
-    public String getIPAddress();
+    public String getIPAddress() {
+        return address;
+    }
 
     /**
      * Determines if the connection is secure.
      *
      * @return True if the connection is secure
      */
-    public boolean isSecure();
+    public boolean isSecure() {
+        return secure;
+    }
 
     /**
-     * Obtain the basic protocol/algorithm being used to secure
+     * Returns the basic protocol/algorithm being used to secure
      * the port connections. An example would be "SSL" or "TLS".
      *
      * @return The protocol used or null if this is not a secure server port
      */
-    public String getSecurityType();
+    public String getSecurityType() {
+        return algorithm;
+    }
 }

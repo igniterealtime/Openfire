@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.net;
+package org.jivesoftware.messenger.net;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.XMPPServer;

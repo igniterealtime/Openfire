@@ -224,10 +224,7 @@ public class DbConnectionManager {
             if (rowNumber > 0) {
                 // Newer oracle JDBC driver do not like fetch-foward result sets to
                 // use absolute(int) or relative(int) calls, so special-case.
-                if (getDatabaseType() == DatabaseType.oracle) {
-                    rs.setFetchDirection(ResultSet.TYPE_SCROLL_INSENSITIVE);
-                }
-                else {
+                if (getDatabaseType() != DatabaseType.oracle) {
                     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
                 }
                 rs.relative(rowNumber);

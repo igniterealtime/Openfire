@@ -220,7 +220,8 @@ public class HistoryStrategy {
         try {
             setType(Type.valueOf(typeName));
         }
-        catch (IllegalArgumentException ie) {
+        catch (Exception e) {
+            Log.warn("Error setting history type from string. Using default type.", e);
             if (parent != null) {
                 setType(Type.defaulType);
             }

@@ -73,7 +73,7 @@
     String title = "User Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-properties.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-properties.jsp?username="+username));
     pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+username);
 %>

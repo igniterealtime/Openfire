@@ -66,7 +66,7 @@
     String title = "Edit User";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-edit-form.jsp?username="+username));
     pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+username);
 %>

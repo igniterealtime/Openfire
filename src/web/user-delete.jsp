@@ -60,7 +60,7 @@
     String title = "Delete User";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-password.jsp?username="+username));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-delete.jsp?username="+username));
     pageinfo.setSubPageID("user-delete");
     pageinfo.setExtraParams("username="+username);
 %>

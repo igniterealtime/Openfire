@@ -22,6 +22,7 @@ import org.dom4j.io.SAXReader;
 import java.sql.*;
 import java.sql.Connection;
 import java.io.StringWriter;
+import java.io.StringReader;
 
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
@@ -150,7 +151,7 @@ public class PrivateStorage extends BasicModule {
                 if (rs.next()) {
                     data.clearContent();
                     String result = rs.getString(1).trim();
-                    Document doc = xmlReader.read(result);
+                    Document doc = xmlReader.read(new StringReader(result));
                     data = doc.getRootElement();
                 }
                 rs.close();

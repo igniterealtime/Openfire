@@ -360,12 +360,45 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 routingTable.addRoute(node, defaultSession);
                 // Add route to the new session
                 routingTable.addRoute(session.getAddress(), session);
+                // Broadcast presence between the user's resources
+                broadcastPresenceToOtherResource(session);
             }
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous (? - shouldn't happen)
             }
             catch (UnauthorizedException e) {
                 // Do nothing
+            }
+        }
+    }
+
+    /**
+     * Broadcast initial presence from the user's new available resource to any of the user's 
+     * existing available resources (if any).
+     * 
+     * @param session the session that received the new presence and therefore will not receive 
+     *        the notification.
+     */
+    private void broadcastPresenceToOtherResource(Session session) throws UserNotFoundException,
+            UnauthorizedException {
+        Presence presence = null;
+        SessionMap sessionMap = sessions.get(session.getUsername());
+        if (sessionMap != null) {
+            for (Session userSession : sessionMap.getAvailableSessions()) {
+                if (userSession != session) {
+                    // Send the presence of an existing session to the session that has just changed
+                    // the presence
+                    if (session.getPresence().isAvailable()) {
+                        presence = userSession.getPresence().createCopy();
+                        presence.setTo(session.getAddress());
+                        session.getConnection().deliver(presence);
+                    }
+                    // Send the presence of the session whose presence has changed to this other
+                    // user's session
+                    presence = session.getPresence().createCopy();
+                    presence.setTo(userSession.getAddress());
+                    userSession.getConnection().deliver(presence);
+                }
             }
         }
     }
@@ -407,6 +440,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                     // Remove the route for the session's BARE address
                     routingTable.removeRoute(new JID(session.getAddress().getNode(),
                             session.getAddress().getDomain(), ""));
+                    // Broadcast presence between the user's resources
+                    broadcastPresenceToOtherResource(session);
                 }
                 else {
                     // Update the route for the session's BARE address
@@ -414,6 +449,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                     routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
                             defaultSession.getAddress().getDomain(), ""),
                             defaultSession);
+                    // Broadcast presence between the user's resources
+                    broadcastPresenceToOtherResource(session);
                 }
             }
             catch (UserNotFoundException e) {

@@ -761,6 +761,10 @@
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*" />
             </copy>
 
+            <!-- Copy the plugin.xml file to the target dir, code below assumes it's there -->
+            <copy todir="${plugin.dest.dir}/@{plugin}" file="@{pluginsrc}/@{plugin}/plugin.xml"
+                    overwrite="true" />
+
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"
                     type="dir" file="@{pluginsrc}/@{plugin}/src/web" />
@@ -810,6 +814,26 @@
 
                     <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
 
+                    <copy tofile="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" file="${plugin.dest.dir}/@{plugin}/plugin.xml"
+                            overwrite="true" />
+
+                    <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                        <copy path="/web-app/servlet" buffer="foobar" />
+                    </xmltask>
+                    <xmltask source="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" dest="${plugin.dest.dir}/@{plugin}/plugin_temp.xml">
+                        <insert path="//plugin" buffer="foobar" />
+                    </xmltask>
+
+                    <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                        <copy path="/web-app/servlet-mapping" buffer="foobar2" />
+                    </xmltask>
+                    <xmltask source="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" dest="${plugin.dest.dir}/@{plugin}/plugin_temp.xml">
+                        <insert path="//plugin" buffer="foobar2" />
+                    </xmltask>
+
+                    <copy tofile="${plugin.dest.dir}/@{plugin}/plugin.xml" file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml"
+                            overwrite="true" />
+                    <delete file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" />
 
                     <!-- Compile java classes -->
                     <javac
@@ -836,13 +860,10 @@
                 </then>
             </if>
 
-            <!-- Copy everything to Messenger's plugin dir -->
+            <!-- Copy everything else to Messenger's plugin dir -->
             <copy todir="${plugin.dest.dir}/@{plugin}">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar" />
-                </fileset>
-                <fileset dir="@{pluginsrc}/@{plugin}">
-                    <include name="plugin.xml" />
                 </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}/src">
                     <include name="web/**/*.*" />

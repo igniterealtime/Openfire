@@ -133,4 +133,25 @@ public interface PresenceManager {
      * @param probee The XMPPAddress whos presence we would like sent have have probed
      */
     public void probePresence(JID prober, JID probee);
+
+    /**
+     * Saves the last unavailable presence of the user so that future presence probes may answer
+     * this presence which may contain valuable information. If a last unavailable presence does
+     * not exist for a contact then no unavailable presence will be sent to the owner of the
+     * contact.
+     *
+     * @param username the name of the user whose last presence is going to be saved to the
+     *        database.
+     * @param presence the last unavailable presence to save to the database for this user.
+     */
+    public void saveLastUnavailablePresence(String username, Presence presence);
+
+    /**
+     * Deletes the last unavailable presence of a user. This may be necessary if the user has
+     * become available.
+     *
+     * @param username the name of the user whose last presence is going to be delete from the
+     *        database.
+     */
+    public void deleteLastUnavailablePresence(String username);
 }

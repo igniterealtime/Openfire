@@ -96,12 +96,27 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         session.setInitialized(true);
                     }
                 }
+                // Delete the last unavailable presence of this user since the user is now
+                // available. Only perform this operation if this is an available presence sent to
+                // THE SERVER and the presence belongs to a local user.
+                if (presence.getTo() == null && localServer.isLocal(presence.getFrom())) {
+                    presenceManager.deleteLastUnavailablePresence(presence.getFrom().getNode());
+                }
             }
             else if (Presence.Type.unavailable == type) {
                 broadcastUpdate(presence.createCopy());
                 broadcastUnavailableForDirectedPresences(presence);
                 if (session != null) {
                     session.setPresence(presence);
+                }
+                // Save the last unavailable presence of this user if the presence contains any
+                // child element such as <status>. Only perform this operation if this is an
+                // unavailable presence sent to THE SERVER and the presence belongs to a local user.
+                if (presence.getTo() == null && localServer.isLocal(presence.getFrom())) {
+                    if (!presence.getElement().elements().isEmpty()) {
+                        presenceManager.saveLastUnavailablePresence(presence.getFrom().getNode(),
+                                presence);
+                    }
                 }
             }
             else {
@@ -373,8 +388,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             Map<ChannelHandler, Set<String>> map = directedPresences.get(update.getFrom().toString());
             if (map != null) {
                 // Iterate over all the entities that the user sent a directed presence
-                for (ChannelHandler handler : map.keySet()) {
-                    for (String jid : map.get(handler)) {
+                for (ChannelHandler handler : new HashSet<ChannelHandler>(map.keySet())) {
+                    Set<String> jids = map.get(handler);
+                    if (jids == null) {
+                        continue;
+                    }
+                    for (String jid : jids) {
                         Presence presence = update.createCopy();
                         presence.setTo(new JID(jid));
                         try {

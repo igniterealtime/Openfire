@@ -21,6 +21,8 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import org.xmpp.component.Component;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Iain Shigeoka
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
+
+    private static final String lastPresenceProp = "lastUnavailablePresence";
 
     private Map<String, Presence> onlineGuests;
     private Map<String, Presence> onlineUsers;
@@ -281,15 +285,46 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 if (probee.getNode() != null && !"".equals(probee.getNode())) {
                     Collection<ClientSession> sessions =
                             sessionManager.getSessions(probee.getNode());
-                    for (ClientSession session : sessions) {
-                        Presence presencePacket = session.getPresence().createCopy();
-                        presencePacket.setFrom(session.getAddress());
-                        presencePacket.setTo(prober);
+                    if (sessions.isEmpty()) {
+                        // If the probee is not online then try to retrieve his last unavailable
+                        // presence which may contain particular information and send it to the
+                        // prober
                         try {
-                            deliverer.deliver(presencePacket);
+                            User probeeUser = UserManager.getInstance().getUser(probee.getNode());
+                            String presenceXML = probeeUser.getProperty(lastPresenceProp);
+                            if (presenceXML != null) {
+                                try {
+                                    // Parse the element
+                                    Document element = DocumentHelper.parseText(presenceXML);
+                                    // Create the presence from the parsed element
+                                    Presence presencePacket = new Presence(element.getRootElement());
+                                    presencePacket.setFrom(probee.toBareJID());
+                                    presencePacket.setTo(prober);
+                                    // Send the presence to the prober
+                                    deliverer.deliver(presencePacket);
+                                }
+                                catch (Exception e) {
+                                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                                }
+
+                            }
                         }
-                        catch (Exception e) {
-                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                        catch (UserNotFoundException e) {
+                        }
+                    }
+                    else {
+                        // The contact is online so send to the prober all the resources where the
+                        // probee is connected
+                        for (ClientSession session : sessions) {
+                            Presence presencePacket = session.getPresence().createCopy();
+                            presencePacket.setFrom(session.getAddress());
+                            presencePacket.setTo(prober);
+                            try {
+                                deliverer.deliver(presencePacket);
+                            }
+                            catch (Exception e) {
+                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                            }
                         }
                     }
                 }
@@ -319,6 +354,30 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+    }
+
+    public void deleteLastUnavailablePresence(String username) {
+        if (username == null) {
+            return;
+        }
+        try {
+            User probeeUser = UserManager.getInstance().getUser(username);
+            probeeUser.deleteProperty(lastPresenceProp);
+        }
+        catch (UserNotFoundException e) {
+        }
+    }
+
+    public void saveLastUnavailablePresence(String username, Presence presence) {
+        if (username == null) {
+            return;
+        }
+        try {
+            User probeeUser = UserManager.getInstance().getUser(username);
+            probeeUser.setProperty(lastPresenceProp, presence.toXML());
+        }
+        catch (UserNotFoundException e) {
         }
     }
 

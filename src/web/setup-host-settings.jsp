@@ -136,7 +136,7 @@ LABEL { font-weight : normal; }
         <label for="rb02">No</label>
         <span class="jive-description">
         <br>
-        Enables or disables secure XMPP connections are allowed.
+        Enables or disables secure XMPP connections.
         </span>
     </td>
 </tr>

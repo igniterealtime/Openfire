@@ -190,6 +190,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @param password The password provided by the user to enter the chatroom or null if none.
      * @param historyRequest The amount of history that the user request or null meaning default.
      * @param user The user joining.
+     * @param presence The presence sent by the user to join the room.
      * @return The role created for the user.
      * @throws UnauthorizedException If the user doesn't have permision to join the room.
      * @throws UserAlreadyExistsException If the nickname is already taken.
@@ -200,10 +201,10 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ConflictException If another user attempts to join the room with a nickname reserved
      *             by the first user.
      */
-    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, MUCUser user)
-            throws UnauthorizedException, UserAlreadyExistsException, RoomLockedException,
-            ForbiddenException, RegistrationRequiredException, NotAllowedException,
-            ConflictException;
+    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, MUCUser user,
+            Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
+            RoomLockedException, ForbiddenException, RegistrationRequiredException,
+            NotAllowedException, ConflictException;
 
     /**
      * Remove a member from the chat room.

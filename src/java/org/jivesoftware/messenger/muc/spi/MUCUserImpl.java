@@ -352,7 +352,8 @@ public class MUCUserImpl implements MUCUser {
                             role = room.joinRoom(recipient.getResource().trim(),
                                     password,
                                     historyRequest,
-                                    this);
+                                    this,
+                                    packet.createCopy());
                             roles.put(group, role);
                             // If the client that created the room is non-MUC compliant then
                             // unlock the room thus creating an "instant" room
@@ -423,11 +424,8 @@ public class MUCUserImpl implements MUCUser {
                             if (resource == null
                                     || role.getNickname().equalsIgnoreCase(resource)) {
                                 // Occupant has changed his availability status
-                                role.setPresence(packet);
-                                Presence presence = (Presence) role.getPresence()
-                                        .createCopy();
-                                presence.setFrom(role.getRoleAddress());
-                                role.getChatRoom().send(presence);
+                                role.setPresence(packet.createCopy());
+                                role.getChatRoom().send(role.getPresence().createCopy());
                             }
                             else {
                                 // Occupant has changed his nickname. Send two presences
@@ -439,10 +437,10 @@ public class MUCUserImpl implements MUCUser {
                                 }
                                 else {
                                     // Send "unavailable" presence for the old nickname
-                                    Presence presence = (Presence) role.getPresence().createCopy();
+                                    Presence presence = role.getPresence().createCopy();
                                     // Switch the presence to OFFLINE
                                     presence.setType(Presence.Type.unavailable);
-                                    presence.setFrom(role.getRoleAddress());
+                                    presence.setStatus(null);
                                     // Add the new nickname and status 303 as properties
                                     Element frag = presence.getChildElement("x",
                                             "http://jabber.org/protocol/muc#user");
@@ -452,12 +450,10 @@ public class MUCUserImpl implements MUCUser {
 
                                     // Send availability presence for the new nickname
                                     String oldNick = role.getNickname();
-                                    role.setPresence(packet);
+                                    role.setPresence(packet.createCopy());
                                     role.changeNickname(resource);
                                     role.getChatRoom().nicknameChanged(oldNick, resource);
-                                    presence = (Presence) role.getPresence().createCopy();
-                                    presence.setFrom(role.getRoleAddress());
-                                    role.getChatRoom().send(presence);
+                                    role.getChatRoom().send(role.getPresence().createCopy());
                                 }
                             }
                         }

@@ -15,7 +15,6 @@ import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
 import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.MUCRoom;
 import org.jivesoftware.messenger.muc.MUCUser;
@@ -94,13 +93,12 @@ public class MUCRoleImpl implements MUCRole {
      * @param role the role of the user in the room.
      * @param affiliation the affiliation of the user in the room.
      * @param chatuser the user on the chat server.
+     * @param presence the presence sent by the user to join the room.
      * @param packetRouter the packet router for sending messages from this role.
-     * @throws UnauthorizedException if the role could not be created due to security or permission
-     *             violations
      */
-    public MUCRoleImpl(MultiUserChatServer chatserver, MUCRoomImpl chatroom,
-            String nickname, int role, int affiliation, MUCUserImpl chatuser,
-            PacketRouter packetRouter) throws UnauthorizedException
+    public MUCRoleImpl(MultiUserChatServer chatserver, MUCRoomImpl chatroom, String nickname,
+            int role, int affiliation, MUCUserImpl chatuser, Presence presence,
+            PacketRouter packetRouter)
     {
         this.room = chatroom;
         this.nick = nickname;
@@ -113,7 +111,7 @@ public class MUCRoleImpl implements MUCRole {
                 DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceName(), nick);
-        setPresence(room.createPresence(null));
+        setPresence(presence);
     }
 
     public Presence getPresence() {
@@ -125,7 +123,14 @@ public class MUCRoleImpl implements MUCRole {
     }
 
     public void setPresence(Presence newPresence) {
+        // Try to remove the element whose namespace is "http://jabber.org/protocol/muc" since we
+        // don't need to include that element in future presence broadcasts
+        Element element = newPresence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc"));
+        if (element != null) {
+            newPresence.getElement().remove(element);
+        }
         this.presence = newPresence;
+        this.presence.setFrom(getRoleAddress());
         if (extendedInformation != null) {
             extendedInformation.setParent(null);
             presence.getElement().add(extendedInformation);
@@ -149,6 +154,7 @@ public class MUCRoleImpl implements MUCRole {
         role = newRole;
         if (MUCRole.NONE_ROLE == role) {
             presence.setType(Presence.Type.unavailable);
+            presence.setStatus(null);
         }
         calculateExtendedInformation();
     }
@@ -212,7 +218,7 @@ public class MUCRoleImpl implements MUCRole {
 
     public void changeNickname(String nickname) {
         this.nick = nickname;
-        rJID = new JID(room.getName(), server.getServiceName(), nick);
+        setRoleAddress(new JID(room.getName(), server.getServiceName(), nick));
     }
 
     public MUCUser getChatUser() {
@@ -225,6 +231,12 @@ public class MUCRoleImpl implements MUCRole {
 
     public JID getRoleAddress() {
         return rJID;
+    }
+
+    private void setRoleAddress(JID jid) {
+        rJID = jid;
+        // Set the new sender of the user presence in the room
+        presence.setFrom(jid);
     }
 
     public void send(Presence packet) {

@@ -388,9 +388,9 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
-            MUCUser user) throws UnauthorizedException, UserAlreadyExistsException,
-            RoomLockedException, ForbiddenException, RegistrationRequiredException,
-            NotAllowedException, ConflictException {
+            MUCUser user, Presence presence) throws UnauthorizedException,
+            UserAlreadyExistsException, RoomLockedException, ForbiddenException,
+            RegistrationRequiredException, NotAllowedException, ConflictException {
         MUCRoleImpl joinRole = null;
         lock.writeLock().lock();
         try {
@@ -463,13 +463,13 @@ public class MUCRoomImpl implements MUCRoom {
                 affiliation = MUCRole.NONE;
             }
             // Create a new role for this user in this room
-            joinRole = new MUCRoleImpl(server, this, nickname, role, affiliation,
-                    (MUCUserImpl) user, router);
+            joinRole =
+                    new MUCRoleImpl(server, this, nickname, role, affiliation, (MUCUserImpl) user,
+                            presence, router);
 
             // Send presence of existing occupants to new occupant
             for (MUCRole occupantsRole : occupants.values()) {
-                Presence occupantsPresence = (Presence) occupantsRole.getPresence()
-                        .createCopy();
+                Presence occupantsPresence = occupantsRole.getPresence().createCopy();
                 // Skip to the next occupant if we cannot send presence of this occupant
                 if (hasToCheckRoleToBroadcastPresence()) {
                     Element frag = occupantsPresence.getChildElement("x",
@@ -479,7 +479,6 @@ public class MUCRoomImpl implements MUCRoom {
                         continue;
                     }
                 }
-                occupantsPresence.setFrom(occupantsRole.getRoleAddress());
                 // Don't include the occupant's JID if the room is semi-anon and the new occupant
                 // is not a moderator
                 if (!canAnyoneDiscoverJID() && MUCRole.MODERATOR != joinRole.getRole()) {
@@ -516,7 +515,6 @@ public class MUCRoomImpl implements MUCRoom {
                             "x", "http://jabber.org/protocol/muc#user");
                     frag.addElement("status").addAttribute("code", "201");
                 }
-                joinPresence.setFrom(joinRole.getRoleAddress());
                 broadcastPresence(joinPresence);
             }
             catch (Exception e) {
@@ -604,10 +602,10 @@ public class MUCRoomImpl implements MUCRoom {
 
         if (leaveRole != null) {
             try {
-                Presence presence = (Presence) leaveRole.getPresence().createCopy();
+                Presence presence = leaveRole.getPresence().createCopy();
                 // Switch the presence to OFFLINE
                 presence.setType(Presence.Type.unavailable);
-                presence.setFrom(leaveRole.getRoleAddress());
+                presence.setStatus(null);
                 broadcastPresence(presence);
                 leaveRole.kick();
             }
@@ -939,9 +937,7 @@ public class MUCRoomImpl implements MUCRoom {
             role.setAffiliation(newAffiliation);
             role.setRole(newRole);
             // Prepare a new presence to be sent to all the room occupants
-            Presence presence = role.getPresence().createCopy();
-            presence.setFrom(role.getRoleAddress());
-            presences.add(presence);
+            presences.add(role.getPresence().createCopy());
         }
         // Answer all the updated presences
         return presences;
@@ -963,9 +959,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Update the presence with the new role
             role.setRole(newRole);
             // Prepare a new presence to be sent to all the room occupants
-            Presence presence = role.getPresence().createCopy();
-            presence.setFrom(role.getRoleAddress());
-            return presence;
+            return role.getPresence().createCopy();
         }
         return null;
     }
@@ -1229,6 +1223,7 @@ public class MUCRoomImpl implements MUCRoom {
                 for (Presence presence : updatedPresences) {
                     // Set the presence as an unavailable presence
                     presence.setType(Presence.Type.unavailable);
+                    presence.setStatus(null);
                     frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                     // Add the status code 321 that indicates that the user was removed because of
                     // an affiliation change

@@ -14,7 +14,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Messenger" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
     <orderEntryProperties />
   </component>
 </module>

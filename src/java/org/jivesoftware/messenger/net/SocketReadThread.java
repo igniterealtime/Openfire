@@ -235,11 +235,11 @@ public class SocketReadThread extends Thread {
         }
 
         // Create the correct session based on the sent namespace
-        if ("jabber:client".equals(xpp.getNamespaceUri(xpp.getDepth()-1))) {
+        if ("jabber:client".equals(xpp.getNamespace(null))) {
             // The connected client is a regular client so create a ClientSession
             session = ClientSession.createSession(serverName, reader, connection);
         }
-        else if ("jabber:component:accept".equals(xpp.getNamespaceUri(xpp.getDepth()-1))) {
+        else if ("jabber:component:accept".equals(xpp.getNamespace(null))) {
             // The connected client is a component so create a ComponentSession
             session = ComponentSession.createSession(serverName, reader, connection);
         }

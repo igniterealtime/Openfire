@@ -163,7 +163,8 @@
     <target name="javadoc" depends="compile" description="Produces Messenger Javadocs">
         <mkdir dir="${javadoc.dest.dir}" />
         <antcall target="-javadoc-impl" />
-    </target><target name="-javadoc-impl" unless="no.javadoc">
+
+        </target><target name="-javadoc-impl" unless="no.javadoc">
         <!-- Run javadoc over all source code -->
         <javadoc
             sourcepath="${src.java.dir}"
@@ -189,6 +190,9 @@
         <mkdir dir="${jspc.java.dest.dir}" />
         <mkdir dir="${jspc.classes.dest.dir}" />
 
+        <antcall target="-jspc-impl" />
+
+        </target><target name="-jspc-impl" unless="no.jspc">
         <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
         <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
             <classpath id="jspc.classpath">

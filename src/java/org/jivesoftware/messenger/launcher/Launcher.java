@@ -88,7 +88,7 @@ public class Launcher {
         toolbar.add(stopButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
         toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
         toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-     
+
         if (splashLabel != null) {
             mainPanel.add(splashLabel, BorderLayout.CENTER);
         }
@@ -163,43 +163,41 @@ public class Launcher {
 
     private synchronized void startApplication() {
         if (messengerd == null) {
+            File binDir = null;
             File libDir = null;
+            File homeDir = null;
             File exe = null;
 
             try {
-                // Aliases keep their cwd rather than the aliased libDir's cwd on MacOS X
+                // Aliases keep their cwd rather than the aliased binDir's cwd on MacOS X
                 // so we'll do a search for messengerd rather than relying on it being where
                 // we think it will be...
-                libDir = new File("").getAbsoluteFile();
+                binDir = new File("").getAbsoluteFile();
+                libDir = new File("../lib").getAbsoluteFile();
+                homeDir = binDir.getParentFile();
 
-                File parentDir = libDir.getParentFile();
 
-                if ("lib".equals(libDir.getName())) {
-                    // Windows
-                    exe = new File(parentDir, "messenger.exe");
+                if (libDir.exists()) {
+                    messengerd = Runtime.getRuntime().exec(new String[]{"java", "-jar", new File(libDir, "startup.jar").toString()});
+                }
+                else {
+                    // MacOS X
+                    exe = new File(homeDir, "messenger.app");
 
                     if (exe.exists()) {
-                        messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
+                        messengerd = Runtime.getRuntime().exec(new String[]{
+                            "open", exe.toString()
+                        });
                     }
                     else {
-                        // MacOS X
-                        exe = new File(parentDir, "messenger.app");
+                        // Unix
+                        exe = new File(homeDir, "messenger");
 
                         if (exe.exists()) {
-                            messengerd = Runtime.getRuntime().exec(new String[]{
-                                "open", exe.toString()
-                            });
+                            messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
                         }
                         else {
-                            // Unix
-                            exe = new File(parentDir, "messenger");
-
-                            if (exe.exists()) {
-                                messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
-                            }
-                            else {
-                                throw new FileNotFoundException();
-                            }
+                            throw new FileNotFoundException();
                         }
                     }
                 }
@@ -207,7 +205,7 @@ public class Launcher {
             catch (Exception e) {
                 // Try one more time using the jar and hope java is on the path
                 try {
-                    if (libDir != null) {
+                    if (binDir != null) {
                         messengerd = Runtime.getRuntime().exec(new String[]{
                             "java", "-jar", new File(libDir, "startup.jar").toString()
                         });
@@ -250,7 +248,7 @@ public class Launcher {
             BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
         }
         catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());
         }
     }
 }

@@ -453,6 +453,11 @@ public class DbConnectionManager {
             databaseType = DatabaseType.MYSQL;
             transactionsSupported = false;
         }
+        // HSQL properties
+        else if (dbName.indexOf("hsql") != -1) {
+            databaseType = DatabaseType.HSQL;
+            scrollResultsSupported = false;
+        }
     }
 
     /**
@@ -537,6 +542,7 @@ public class DbConnectionManager {
         public static final DatabaseType ORACLE = new DatabaseType();
         public static final DatabaseType POSTGRES = new DatabaseType();
         public static final DatabaseType MYSQL = new DatabaseType();
+        public static final DatabaseType HSQL = new DatabaseType();
         public static final DatabaseType OTHER = new DatabaseType();
 
         private DatabaseType() {

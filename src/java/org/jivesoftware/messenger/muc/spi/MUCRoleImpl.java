@@ -127,7 +127,8 @@ public class MUCRoleImpl implements MUCRole {
     public void setPresence(Presence newPresence) {
         this.presence = newPresence;
         if (extendedInformation != null) {
-            presence.getElement().add(extendedInformation.createCopy());
+            extendedInformation.setParent(null);
+            presence.getElement().add(extendedInformation);
         }
     }
 

@@ -1456,7 +1456,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (actorJID != null && actorJID.toString().length() > 0) {
                 Element frag = kickPresence.getChildElement(
                         "x", "http://jabber.org/protocol/muc#user");
-                frag.element("item").addElement("actor").addAttribute("jid", actorJID.toString());
+                frag.element("item").addElement("actor").addAttribute("jid", actorJID.toBareJID());
             }
             // Send the unavailable presence to the banned user
             kickedRole.send(kickPresence);

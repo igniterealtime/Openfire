@@ -50,8 +50,8 @@ public final class MUCRoomHistory {
     public void addMessage(Message packet) {
         // Don't keep messages whose sender is the room itself (thus address without resource)
         // unless the message is changing the room's subject
-        if ((packet.getFrom() == null
-                || packet.getFrom().toString().length() == 0) &&
+        if ((packet.getFrom() == null || packet.getFrom().toString().length() == 0 ||
+                packet.getFrom().equals(room.getRole().getRoleAddress())) &&
                 packet.getSubject() == null) {
             return;
         }

@@ -92,7 +92,7 @@ Below is a summary of the group. To edit properties, click the "Edit" button bel
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Group properties updated successfully.
+        Group updated successfully.
         </td></tr>
     </tbody>
     </table>

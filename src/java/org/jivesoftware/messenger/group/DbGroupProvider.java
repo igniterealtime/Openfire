@@ -57,7 +57,7 @@ public class DbGroupProvider implements GroupProvider {
         "INSERT INTO jiveGroupUser (groupName, username, administrator) VALUES (?, ?, ?)";
     private static final String USER_GROUPS =
         "SELECT groupName FROM jiveGroupUser WHERE username=?";
-    private static final String ALL_GROUPS = "SELECT name FROM jiveGroup";
+    private static final String ALL_GROUPS = "SELECT name FROM jiveGroup ORDER BY name";
 
     public Group createGroup(String name) throws GroupAlreadyExistsException {
         Connection con = null;

@@ -130,15 +130,17 @@ Sorted by Group Name
         </td>
         <td width="60%">
             <a href="group-properties.jsp?group=<%= group.getName() %>"><%= group.getName() %></a>
+            <% if (group.getDescription() != null) { %>
             <br>
                 <span class="jive-description">
                 <%= group.getDescription() %>
                 </span>
+             <% } %>
         </td>
-        <td width="10%">
+        <td width="10%" align="center">
             <%= group.getMembers().size() %>
         </td>
-        <td width="10%">
+        <td width="10%" align="center">
             <%= group.getAdministrators().size() %>
         </td>
         <td width="1%" align="center">

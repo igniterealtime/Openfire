@@ -240,7 +240,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserIterator((String [])users.toArray());
+        return new UserIterator((String [])users.toArray(new String[users.size()]));
     }
 
     public Iterator users(int startIndex, int numResults) throws UnauthorizedException {
@@ -276,7 +276,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserIterator((String [])users.toArray());
+        return new UserIterator((String [])users.toArray(new String[users.size()]));
     }
 
     // #####################################################################

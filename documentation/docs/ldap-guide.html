@@ -31,103 +31,99 @@ functionality and allows Jive Messenger to:
 Use a LDAP server to authenticate a user's identity.
 </li>
 <li>
-Load and store user profile information in a LDAP directory.
+Load user profile information in a LDAP directory.
 </li>
 </ul>
 </p>
 <p>
-This document will guide you through preparing your LDAP server and provide 
-details about how to install the LDAP module on Jive Messenger. These 
+This document will guide you through configuring LDAP support in Jive Messenger. These
 instructions assume that you're a competent LDAP user, and that you're familiar 
-with Jive Messenger setup issues. The iPlanet Directory Server 5.0 LDAP server 
-was used for development and testing, but any LDAP compliant server should also 
-work.
-</p>
-<h2>Choosing an LDAP storage mode</h2>
-<p>Two modes for storing user data in an LDAP directory are supported:
-<ol>
-<li>
-Mixed Mode (LDAP and User Database) -- Username, name and email are stored in 
-LDAP. All Jive-specific data is stored in the Jive Messenger user database. 
-This mode requires no changes to your LDAP directory.
-</li>
-<li>
-Pure LDAP Mode -- All user data is stored in LDAP, including Messenger-specific 
-data. This mode requires you to make changes to your LDAP schema.
-</li>
-</ol>
-The first option is easier to setup and is generally the better solution. 
-However, the second option is also appropriate in some cases.
+with Jive Messenger setup issues.
 </p>
 
 <h2>Configuration</h2>
 <p>
-In order to configure your server to use LDAP you need complete the following 
-tasks:
+In order to configure your server to use LDAP:
 <ol>
 <li>
-Stop Messenger.
+Stop Jive Messenger.
 </li>
-<li>Edit <tt>MESSENGER_HOME/config/jive-messenger.xml</tt> as described below.
+<li>Edit <tt>MESSENGER_HOME/conf/jive-messenger.xml</tt> as described below.
 </li>
 <li>
-Restart Messenger.
+Restart Jive Messenger.
 </li>
 </ol>
 </p>
-<h3>Configure Messenger</h3>
+<h3>Editing the Config File</h3>
 <p>
-Open the Messenger configuration file <tt>MESSENGER_HOME/config/jive-messenger.xml</tt> in your favorite
+Open the configuration file <tt>MESSENGER_HOME/conf/jive-messenger.xml</tt> in your favorite
 editor and add or change the following settings:
 </p>
 <ul>
-<li>UserProvider.properties.className</li>
-<li>UserProvider.info.className</li>
-<li>ldap.host - LDAP server host; e.g. localhost or machine.example.com, etc.</li>
-<li>ldap.port - LDAP server port number</li>
-<li>ldap.usernameField - The field name that the username lookups will be performed on.</li>
-<li>ldap.baseDN - The starting DN that searches for users will performed with. The entire subtree under the base
-    DN will be searched for user accounts.
+<li>provider.user.className -- set the value to "org.jivesoftware.messenger.ldap.LdapUserProvider".</li>
+<li>provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
+<li>ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
+<li>ldap.port -- LDAP server port number</li>
+<li>ldap.usernameField -- the field name that the username lookups will be performed on.</li>
+<li>ldap.baseDN -- the starting DN that searches for users will performed with. The entire subtree
+    under the base DN will be searched for user accounts.
 </li>
-<li>ldap.nameField - The field name that holds the user's name.</li>
-<li>ldap.emailField - The field name that holds the user's email address.</li>
-<li>ldap.adminDN - A directory administrator's DN. All directory operations will be performed with this account.
-    For normal usage of the module, the admin should have full administrative controls over the directory.
+<li>ldap.nameField -- the field name that holds the user's name.</li>
+<li>ldap.emailField -- the field name that holds the user's email address.</li>
+<li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
+    with this account. The admin must be able to perform searches and load user records.
 </li>
-<li>ldap.adminPassword - The password for the directory administrator.</li>
-<li>ldap.debugEnabled - A value of "true" if debugging should be turned on. When on, trace information about
-    buffers sent and received by the LDAP provider is written to System.out</li>
-<li>ldap.sslEnabled - Enable SSL connections to your LDAP server. If you enable SSL connections, the LDAP server port
-    number most likely should be changed to 636.
+<li>ldap.adminPassword -- the password for the directory administrator.</li>
+<li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
+    information about buffers sent and received by the LDAP provider is written to System.out</li>
+<li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If you
+    enable SSL connections, the LDAP server port number most likely should be changed to 636.
 </li>
 </ul>
 <p>
-Below is a sample set up.
+Below is a sample config file section:
 </p>
 <pre><code>
 &lt;jive&gt;
 ...
-  &lt;UserProvider&gt;
-    &lt;properties&gt;
-      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider&lt;/className&gt;
-    &lt;/properties&gt;
-    &lt;info&gt;
-      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserInfoProvider&lt;/className&gt;
-    &lt;/info&gt;
-  &lt;UserProvider&gt;
-  &lt;ldap&gt;
-    &lt;host&gt;myhost.com&lt;/host&gt;
-    &lt;port&gt;389&lt;/port&gt;
-    &lt;usernameField&gt;uid&lt;/usernameField&gt;
-    &lt;emailField&gt;mail&lt;/emailField&gt;
-    &lt;baseDN&gt;o=mycompany, c=mycountry&lt;/baseDN&gt;
-    &lt;nameField&gt;cn&lt;/nameField&gt;
-    &lt;adminDN&gt;cn=ldap-administrator&lt;/adminDN&gt;
-    &lt;adminPassword&gt;adm1npwd&lt;/adminPassword&gt;
-    &lt;debugEnabled&gt;false&lt;/debugEnabled&gt;
-    &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
-  &lt;/ldap&gt;
+    &lt;ldap&gt;
+        &lt;host&gt;&lt;/host&gt;
+        &lt;port>389&lt;/port&gt;
+        <&lt;usernameField&gt;uid&lt;/usernameField&gt;
+        &lt;nameField&gt;cn&lt;/nameField&gt;
+        &lt;emailField&gt;mail&lt;/emailField&gt;
+        &lt;baseDN&gt;&lt;/baseDN&gt;
+        &lt;adminDN&gt;&lt;/adminDN&gt;
+        &lt;adminPassword&gt;&lt;/adminPassword&gt;
+    &lt;/ldap&gt;
+    &lt;provider&gt;
+        &lt;user&gt;
+            &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+        &lt;auth&gt;
+            &lt;className&gt;org.jivesoftware.messenger.ldap.LdapAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+    &lt;/provider&gt;
+...
+&lt;/jive&gt;
+</code></pre>
+
+<p>Finally, you'll most likely want to change which usernames are authorized to login to the
+admin console. By default, only the user with username "admin" is allowed to login. However,
+you may have different users in your LDAP directory that you'd like to be administrators. The
+list of authorized usernames is controlled via the <tt>adminConsole.authorizedUsernames</tt>
+property. For example, to let the usersnames "joe" and "jane" login to the admin console:</p>
+
+<pre><code>
+&lt;jive&gt;
+...
+    &lt;adminConsole&gt;
+    ...
+        &lt;authorizedUsernames&gt;joe, jane&lt;/authorizedUsernames&gt;
+    &lt;/adminConsole&gt;
 ...
 &lt;/jive&gt;
 </code></pre>
 </body>
+</html>

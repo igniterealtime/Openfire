@@ -15,3 +15,4 @@ dom4j.jar            | 1.5.2
 jaxen.jar            | 1.1 beta 4 (from DOM4J 1.5.2)
 junit.jar            | 3.8.1
 ant-contrib.jar      | 0.6
+ant-subdirtask.jar   | Revision 1.2 (CVS)

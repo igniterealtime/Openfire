@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 
 /**
  * Implements the TYPE_IQ vcard-temp protocol. Clients
@@ -83,10 +84,10 @@ public class IQvCardHandler extends IQHandler {
                 User user = userManager.getUser(recipient.getName());
                 result = packet.createResult();
 
-                XMPPDOMFragment frag = new XMPPDOMFragment();
+                Element vcard = DocumentHelper.createElement(QName.get("VCARD", "vcard-temp"));
+                XMPPDOMFragment frag = new XMPPDOMFragment(vcard);
                 result.setChildFragment(frag);
 
-                Element vcard = frag.getRootElement().addElement("VCARD", "vcard-temp");
                 Iterator names = user.getVCardPropertyNames();
                 while (names.hasNext()) {
                     String name = (String)names.next();

@@ -37,8 +37,8 @@ import java.sql.SQLException;
  */
 public class DbUserInfoProvider implements UserInfoProvider {
 
-    private static final String LOAD_USER_BY_ID =
-            "SELECT name, email, creationDate, modificationDate FROM jiveUser WHERE username=?";
+    private static final String LOAD_USER_BY_USERNAME =
+        "SELECT name, email, creationDate, modificationDate FROM jiveUser WHERE username=?";
 
     public UserInfo getInfo(String username) throws UserNotFoundException {
         BasicUserInfo userInfo = null;
@@ -46,7 +46,7 @@ public class DbUserInfoProvider implements UserInfoProvider {
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_USER_BY_ID);
+            pstmt = con.prepareStatement(LOAD_USER_BY_USERNAME);
             pstmt.setString(1, username);
 
             ResultSet rs = pstmt.executeQuery();

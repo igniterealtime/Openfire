@@ -100,10 +100,10 @@ public class UserManagerImpl extends BasicModule implements UserManager {
                     pstmt.setString(1, username);
                     pstmt.setString(2, password);
                     pstmt.setString(3, "");
-                    pstmt.setString(5, email);
+                    pstmt.setString(4, email);
                     Date now = new Date();
-                    pstmt.setString(7, StringUtils.dateToMillis(now));
-                    pstmt.setString(8, StringUtils.dateToMillis(now));
+                    pstmt.setString(5, StringUtils.dateToMillis(now));
+                    pstmt.setString(6, StringUtils.dateToMillis(now));
                     pstmt.execute();
                 }
                 catch (Exception e) {
@@ -119,7 +119,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             }
             catch (UserNotFoundException e) {
                 throw new UnauthorizedException("Created an account but could not load it. username: "
-                        + username + " pass: " + password + " email: " + email);
+                        + username + " pass: " + password + " email: " + email, e);
             }
         }
         return newUser;
@@ -132,15 +132,13 @@ public class UserManagerImpl extends BasicModule implements UserManager {
         username = NodePrep.prep(username);
         User user = (User)userCache.get(username);
         if (user == null) {
+            // Hack to make sure user exists.
+            UserProviderFactory.getUserInfoProvider().getInfo(username);
             user = loadUser(username);
-        }
-        else {
-            user = (User)userCache.get(username);
         }
         if (user == null) {
             throw new UserNotFoundException();
         }
-
         return user;
     }
 

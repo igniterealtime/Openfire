@@ -233,6 +233,13 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="Ant">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/build/lib/ant.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />

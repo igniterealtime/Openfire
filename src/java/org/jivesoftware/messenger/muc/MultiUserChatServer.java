@@ -39,7 +39,7 @@ public interface MultiUserChatServer {
      * 
      * @param name The chat server name (host name).
      */
-    void setChatServerName(String name);
+    void setServiceName(String name);
 
     /**
      * Returns the list of JIDs that are system administrators of the MUC service. A sysadmin has 

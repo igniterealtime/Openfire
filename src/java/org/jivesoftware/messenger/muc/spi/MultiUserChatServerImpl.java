@@ -11,9 +11,7 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.messenger.container.TrackInfo;
+import org.jivesoftware.messenger.container.*;
 import org.jivesoftware.messenger.disco.DiscoInfoProvider;
 import org.jivesoftware.messenger.disco.DiscoItemsProvider;
 import org.jivesoftware.messenger.disco.DiscoServerItem;
@@ -387,12 +385,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     /**
-     * Set the address of the server.
+     * Set the name of the MUC service.
      *
-     * @param name the new server address.
+     * @param name the new service name.
      */
-    public void setChatServerName(String name) {
-        JiveGlobals.setProperty("xmpp.muc.domain", name);
+    public void setServiceName(String name) {
+        JiveGlobals.setProperty("xmpp.muc.service", name);
     }
 
     public List getUsersAllowedToCreate() {
@@ -440,7 +438,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void initialize(Container container) {
-        chatServerName = JiveGlobals.getProperty("xmpp.muc.domain");
+        super.initialize(container);
+
+        chatServerName = JiveGlobals.getProperty("xmpp.muc.service");
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext("xmpp.muc.history");
         // Load the list of JIDs that are sysadmins of the MUC service
@@ -488,7 +488,24 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
         }
         if (chatServerName == null) {
-            chatServerName = "conference.127.0.0.1";
+            chatServerName = "conference";
+        }
+        String serverName = null;
+        try {
+            XMPPServer server = (XMPPServer)lookup.lookup(XMPPServer.class);
+            if (server != null) {
+                serverName = server.getServerInfo().getName();
+            }
+            else {
+                // Try to get serverName directly.
+                serverName = JiveGlobals.getProperty("xmpp.domain");
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        if (serverName != null) {
+            chatServerName += "." + serverName;
         }
         chatServerAddress = new XMPPAddress(null, chatServerName, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
@@ -501,7 +518,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // server went down unexpectedly
         MUCPersistenceManager.resetRoomInMemory();
         initializeCaches();
-        super.initialize(container);
     }
 
     public void start() {

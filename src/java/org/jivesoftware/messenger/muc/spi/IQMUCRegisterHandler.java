@@ -76,38 +76,38 @@ public class IQMUCRegisterHandler extends IQHandler {
 
             XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
             field.setType(FormField.TYPE_HIDDEN);
-            field.addValue("http://jabber.org/protocol/muc#user");
+            field.addValue("http://jabber.org/protocol/muc#register");
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_first");
+            field = new XFormFieldImpl("muc#register_first");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
             field.setRequired(true);
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_last");
+            field = new XFormFieldImpl("muc#register_last");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
             field.setRequired(true);
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_roomnick");
+            field = new XFormFieldImpl("muc#register_roomnick");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
             field.setRequired(true);
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_url");
+            field = new XFormFieldImpl("muc#register_url");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_email");
+            field = new XFormFieldImpl("muc#register_email");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("muc#user_faqentry");
+            field = new XFormFieldImpl("muc#register_faqentry");
             field.setType(FormField.TYPE_TEXT_MULTI);
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
             registrationForm.addField(field);
@@ -140,7 +140,7 @@ public class IQMUCRegisterHandler extends IQHandler {
                 currentRegistration.setProperty("query.registered", null);
                 XDataFormImpl form = (XDataFormImpl) currentRegistration.getFragment("x",
                         "jabber:x:data");
-                form.getField("muc#user_roomnick").addValue(nickname);
+                form.getField("muc#register_roomnick").addValue(nickname);
                 reply.setChildFragment(currentRegistration);
             }
             else {
@@ -171,7 +171,8 @@ public class IQMUCRegisterHandler extends IQHandler {
                         XDataFormImpl registrationForm = new XDataFormImpl();
                         registrationForm.parse(formElement);
                         // Get the desired nickname sent in the form
-                        Iterator values = registrationForm.getField("muc#user_roomnick").getValues();
+                        Iterator values = registrationForm.getField("muc#register_roomnick")
+                                .getValues();
                         String nickname = (values.hasNext() ? (String)values.next() : null);
 
                         // TODO The rest of the fields of the form are ignored. If we have a

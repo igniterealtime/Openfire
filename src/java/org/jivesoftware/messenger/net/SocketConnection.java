@@ -190,6 +190,7 @@ public class SocketConnection extends BasicConnection {
                     xmlSerializer.flush();
                 }
                 catch (IOException e) {
+                    Log.error("Problem sending the following packet: "+packet.toXML());
                     Log.error(e);
                 }
             }

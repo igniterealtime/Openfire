@@ -16,6 +16,8 @@ import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.stringprep.Stringprep;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -230,22 +232,29 @@ public class Group implements Cacheable {
         }
 
         public boolean add(Object member) {
-            String user = (String) member;
+            String username = (String) member;
+            try {
+                username = Stringprep.nodeprep(username);
+                UserManager.getInstance().getUser(username);
+            }
+            catch (Exception e) {
+                throw new IllegalArgumentException("Invalid user.", e);
+            }
             if (adminCollection) {
-                if (members.contains(user)) {
+                if (members.contains(username)) {
                     throw new IllegalArgumentException("The user is already a member of the group");
                 }
             }
             else {
-                if (administrators.contains(user)) {
+                if (administrators.contains(username)) {
                     throw new IllegalArgumentException("The user is already an admin of the group");
                 }
             }
-            if (users.add(user)) {
+            if (users.add(username)) {
                 // Add the group user to the backend store
-                provider.addMember(name, user, adminCollection);
+                provider.addMember(name, username, adminCollection);
                 // Update the group users' roster
-                XMPPServer.getInstance().getRosterManager().groupUserAdded(Group.this, user);
+                XMPPServer.getInstance().getRosterManager().groupUserAdded(Group.this, username);
                 return true;
             }
             return false;

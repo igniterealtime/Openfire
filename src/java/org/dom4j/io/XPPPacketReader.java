@@ -267,59 +267,52 @@ public class XPPPacketReader {
             int type = -1;
             type = pp.nextToken();
             switch (type) {
-                case XmlPullParser.PROCESSING_INSTRUCTION:
-                    {
-                        String text = pp.getText();
-                        int loc = text.indexOf(" ");
-                        if (loc >= 0) {
-                            document.addProcessingInstruction(text.substring(0, loc), text.substring(loc + 1));
-                        }
-                        else
-                            document.addProcessingInstruction(text, "");
-                        break;
+                case XmlPullParser.PROCESSING_INSTRUCTION: {
+                    String text = pp.getText();
+                    int loc = text.indexOf(" ");
+                    if (loc >= 0) {
+                        document.addProcessingInstruction(text.substring(0, loc), text.substring(loc + 1));
                     }
-                case XmlPullParser.COMMENT:
-                    {
-                        if (parent != null)
-                            parent.addComment(pp.getText());
-                        else
-                            document.addComment(pp.getText());
-                        break;
+                    else
+                        document.addProcessingInstruction(text, "");
+                    break;
+                }
+                case XmlPullParser.COMMENT: {
+                    if (parent != null)
+                        parent.addComment(pp.getText());
+                    else
+                        document.addComment(pp.getText());
+                    break;
+                }
+                case XmlPullParser.CDSECT: {
+                    String text = pp.getText();
+                    if (parent != null) {
+                        parent.addCDATA(text);
                     }
-                case XmlPullParser.CDSECT:
-                    {
-                        String text = pp.getText();
-                        if (parent != null) {
-                            parent.addCDATA(text);
+                    else {
+                        if (text.trim().length() > 0) {
+                            throw new DocumentException("Cannot have text content outside of the root document");
                         }
-                        else {
-                            if (text.trim().length() > 0) {
-                                throw new DocumentException("Cannot have text content outside of the root document");
-                            }
-                        }
-                        break;
+                    }
+                    break;
 
+                }
+                case XmlPullParser.ENTITY_REF: {
+                    String text = pp.getText();
+                    if (parent != null) {
+                        parent.addText(text);
                     }
-                case XmlPullParser.ENTITY_REF:
-                    {
-                        String text = pp.getText();
-                        if (parent != null) {
-                            parent.addText(text);
+                    else {
+                        if (text.trim().length() > 0) {
+                            throw new DocumentException("Cannot have an entityref outside of the root document");
                         }
-                        else {
-                            if (text.trim().length() > 0) {
-                                throw new DocumentException("Cannot have an entityref outside of the root document");
-                            }
-                        }
-                        break;
                     }
-
-                case XmlPullParser.END_DOCUMENT:
-                    {
-                        return document;
-                    }
-                case XmlPullParser.START_TAG:
-                    {
+                    break;
+                }
+                case XmlPullParser.END_DOCUMENT: {
+                    return document;
+                }
+                case XmlPullParser.START_TAG: {
                         QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
                         Element newElement = null;
                         if ("jabber:client".equals(qname.getNamespaceURI())) {
@@ -348,34 +341,32 @@ public class XPPPacketReader {
                         count++;
                         break;
                     }
-                case XmlPullParser.END_TAG:
-                    {
-                        if (parent != null) {
-                            parent = parent.getParent();
-                        }
-                        count--;
-                        if (count == 0) {
-                            return document;
-                        }
-                        break;
+                case XmlPullParser.END_TAG: {
+                    if (parent != null) {
+                        parent = parent.getParent();
                     }
-                case XmlPullParser.TEXT:
-                    {
-                        String text = pp.getText();
-                        if (parent != null) {
-                            parent.addText(text);
-                        }
-                        else {
-                            if (text.trim().length() > 0) {
-                                throw new DocumentException("Cannot have text content outside of the root document");
-                            }
-                        }
-                        break;
+                    count--;
+                    if (count == 0) {
+                        return document;
                     }
+                    break;
+                }
+                case XmlPullParser.TEXT: {
+                    String text = pp.getText();
+                    if (parent != null) {
+                        parent.addText(text);
+                    }
+                    else {
+                        if (text.trim().length() > 0) {
+                            throw new DocumentException("Cannot have text content outside of the root document");
+                        }
+                    }
+                    break;
+                }
                 default:
-                    {
-                        ;
-                    }
+                {
+                    ;
+                }
             }
         }
     }
@@ -398,7 +389,6 @@ public class XPPPacketReader {
         return new BufferedReader(new InputStreamReader(in));
     }
 }
-
 
 /*
  * Redistribution and use of this software and associated documentation

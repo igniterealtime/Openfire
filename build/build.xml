@@ -112,10 +112,6 @@
         <include name="**/*.gif" />
     </patternset>
 
-    <filterset id="docs.filters">
-        <filter token="version" value="${version}" />
-    </filterset>
-
     <!-- ======================================================================================= -->
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
@@ -420,16 +416,16 @@
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" />
-            <filterset refid="docs.filters" />
             <filterset>
                 <filter token="builddate" value="${builddate}" />
+                <filter token="version" value="${version}" />
             </filterset>
         </copy>
         <copy todir="${release.src.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" />
-            <filterset refid="docs.filters" />
             <filterset>
                 <filter token="builddate" value="${builddate}" />
+                <filter token="version" value="${version}" />
             </filterset>
         </copy>
 

@@ -10,17 +10,11 @@
 <h2>Introduction</h2>
 <p>
 This document outlines the data type conventions and tables in the Jive
-Messenger 1.1 database
+Messenger 2.1 database
 schema. Some information, like column indexes and foreign keys, is
 omitted. For this, please
 read the individual schema of the database you're interested in.
-The <a href="database10-guide.html">Messenger 1.0 schema</a> is
-documented separately as well a <a
- href="database10_11-upgrade-guide.html">1.0 to 1.1 database upgrade
-guide</a> for those that need to know the changes to database schema.
-An upgrade script is provided for each database in the <tt>database/upgrade</tt>
-directory of the distribution that automatically upgrade Messenger 1.0
-databases to 1.1.<br>
+<br>
 </p>
 <h2>Data Type Conventions</h2>
 <p>
@@ -46,9 +40,6 @@ database schema.
 A <span class="primary-key">yellow row</span> denotes a primary key.
 </p>
 <ul>
-  <li><a href="#jiveChatbot">jiveChatbot</a></li>
-  <li><a href="#jiveDomain">jiveDomain</a><br>
-  </li>
   <li><a href="#jiveGroup">jiveGroup</a> </li>
   <li><a href="#jiveGroupProp">jiveGroupProp</a> </li>
   <li><a href="#jiveGroupUser">jiveGroupUser</a> </li>
@@ -56,105 +47,21 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#jiveOffline">jiveOffline</a><br>
   </li>
   <li><a href="#jivePrivate">jivePrivate</a> </li>
-  <li><a href="#jiveUser">jiveUser</a></li>
-  <li><a href="#jiveUserID">jiveUserID</a><br>
+  <li><a href="#jiveUser">jiveUser</a><br>
   </li>
   <li><a href="#jiveUserProp">jiveUserProp</a> </li>
   <li><a href="#jiveRoster">jiveRoster</a> </li>
   <li><a href="#jiveRosterGroups">jiveRosterGroups</a> </li>
   <li><a href="#jiveVCard">jiveVCard</a> </li>
+  <li><a href="#jiveProperty">jiveProperty</a><br>
+  </li>
+  <li><a href="#mucRoom">mucRoom</a> </li>
+  <li><a href="#mucAffiliation">mucAffiliation</a> </li>
+  <li><a href="#mucMember">mucMember</a> </li>
+  <li><a href="#mucConversationLog">mucConversationLog</a> </li>
 </ul>
 <br>
-<a name="jiveChatbot"></a>
-<table class="dbtable">
-  <tbody>
-    <tr>
-      <th colspan="4">jiveChatbot (Chatbot addresses)</th>
-    </tr>
-    <tr>
-      <th>Column Name</th>
-      <th>Type</th>
-      <th>Length</th>
-      <th>Description</th>
-    </tr>
-    <tr class="primary-key">
-      <td>chatbotID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Chatbot ID (Primary Key)</td>
-    </tr>
-    <tr>
-      <td>description</td>
-      <td>VARCHAR</td>
-      <td>4000</td>
-      <td>Chatbot Description</td>
-    </tr>
-    <tr>
-      <td>creationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Creation Date</td>
-    </tr>
-    <tr>
-      <td>modificationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Last Modified Date</td>
-    </tr>
-  </tbody>
-</table>
-&nbsp;<a href="#top" class="top">top of page</a>
-<br>
-<br>
-<br>
-<a name="jiveDomain"></a>
-<table class="dbtable">
-  <tbody>
-    <tr>
-      <th colspan="4">jiveDomain (Messenger account domains)</th>
-    </tr>
-    <tr>
-      <th>Column Name</th>
-      <th>Type</th>
-      <th>Length</th>
-      <th>Description</th>
-    </tr>
-    <tr class="primary-key">
-      <td>domainID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Domain ID (Primary Key)</td>
-    </tr>
-    <tr>
-      <td>name</td>
-      <td>VARCHAR</td>
-      <td>255</td>
-      <td>Domain Name</td>
-    </tr>
-    <tr>
-      <td>description</td>
-      <td>VARCHAR</td>
-      <td>4000</td>
-      <td>Domain Description</td>
-    </tr>
-    <tr>
-      <td>creationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Creation Date</td>
-    </tr>
-    <tr>
-      <td>modificationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Last Modified Date</td>
-    </tr>
-  </tbody>
-</table>
-&nbsp;<a href="#top" class="top">top of page</a>
-<br>
-<br>
-<br>
+
 <a name="jiveGroup"></a>
 <table class="dbtable">
   <tbody>
@@ -168,34 +75,16 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>groupID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Group ID (Primary Key)</td>
-    </tr>
-    <tr>
-      <td>name</td>
+      <td>groupName</td>
       <td>VARCHAR</td>
-      <td>255</td>
-      <td>Group Name</td>
+      <td>50</td>
+      <td>Group Name (Primary Key)</td>
     </tr>
     <tr>
       <td>description</td>
       <td>VARCHAR</td>
-      <td>4000</td>
+      <td>255</td>
       <td>Group Description</td>
-    </tr>
-    <tr>
-      <td>creationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Creation Date</td>
-    </tr>
-    <tr>
-      <td>modificationDate</td>
-      <td>VARCHAR</td>
-      <td>15</td>
-      <td>Last Modified Date</td>
     </tr>
   </tbody>
 </table>
@@ -217,16 +106,16 @@ Group)</th>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>groupID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Group ID</td>
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Group Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td>name</td>
       <td>VARCHAR</td>
       <td>100</td>
-      <td>Group Property Name</td>
+      <td>Group Property Name (Primary Key)</td>
     </tr>
     <tr>
       <td>propValue</td>
@@ -253,16 +142,16 @@ Group)</th>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>groupID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Group ID (Primary Key)</td>
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Group Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td>administrator</td>
@@ -320,11 +209,10 @@ ID Sequence Generator)</td>
       <th>Change</th>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)<br>
-      </td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td style="vertical-align: top;">messageID<br>
@@ -348,7 +236,7 @@ Key)<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">size<br>
+      <td style="vertical-align: top;">messageSize<br>
       </td>
       <td style="vertical-align: top;">NUMBER<br>
       </td>
@@ -386,10 +274,10 @@ Key)<br>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td>name</td>
@@ -429,10 +317,10 @@ Key)<br>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr>
       <td>password</td>
@@ -447,22 +335,10 @@ Key)<br>
       <td>Name</td>
     </tr>
     <tr>
-      <td>nameVisible</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Is Name Visible (Boolean)</td>
-    </tr>
-    <tr>
       <td>email</td>
       <td>VARCHAR</td>
       <td>100</td>
       <td>Email Address</td>
-    </tr>
-    <tr>
-      <td>emailVisible</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>Is Email Visible (Boolean)</td>
     </tr>
     <tr>
       <td>creationDate</td>
@@ -482,54 +358,6 @@ Key)<br>
 <br>
 <br>
 <br>
-<a name="jiveUserID"></a>
-<table class="dbtable">
-  <tbody>
-    <tr>
-      <th colspan="4">jiveUserID (User account IDs - address
-reservations)</th>
-    </tr>
-    <tr>
-      <th>Column Name</th>
-      <th>Type</th>
-      <th>Length</th>
-      <th>Description</th>
-    </tr>
-    <tr class="primary-key">
-      <td>username</td>
-      <td>VARCHAR</td>
-      <td>30<br>
-      </td>
-      <td>User name (Primary Key)</td>
-    </tr>
-    <tr class="primary-key">
-      <td>domainID</td>
-      <td>NUMBER</td>
-      <td>n/a<br>
-      </td>
-      <td>The domain this account belongs to (Primary Key)</td>
-    </tr>
-    <tr>
-      <td>objectType</td>
-      <td>NUMBER</td>
-      <td>n/a<br>
-      </td>
-      <td>Address type (0 - user, 1 - chatbot)<br>
-      </td>
-    </tr>
-    <tr>
-      <td>objectID</td>
-      <td>NUMBER</td>
-      <td>n/a<br>
-      </td>
-      <td>ID of the corresponding account</td>
-    </tr>
-  </tbody>
-</table>
-&nbsp;<a href="#top" class="top">top of page</a>
-<br>
-<br>
-<br ="">
 <a name="jiveUserProp"></a>
 <table class="dbtable">
   <tbody>
@@ -543,20 +371,20 @@ reservations)</th>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td>name</td>
       <td>VARCHAR</td>
       <td>100</td>
-      <td>User Property Name</td>
+      <td>User Property Name (Primary Key)</td>
     </tr>
     <tr>
       <td>propValue</td>
-      <td>NUMBER</td>
+      <td>VARCHAR</td>
       <td>4000</td>
       <td>User Property Value</td>
     </tr>
@@ -585,10 +413,10 @@ reservations)</th>
       <td>ID of roster (Primary Key)</td>
     </tr>
     <tr>
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">jid<br>
@@ -699,10 +527,10 @@ roster)</th>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
-      <td>userID</td>
-      <td>NUMBER</td>
-      <td>n/a</td>
-      <td>User ID (Primary Key)</td>
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
       <td>name</td>
@@ -715,6 +543,288 @@ roster)</th>
       <td>TEXT</td>
       <td>n/a</td>
       <td>Value of the vCard entry</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveProperty"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveProperty (server properties)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Value of the vCard entry</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="mucRoom"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">mucRoom (Groupchat room data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Name of the room used as the public ID</td>
+    </tr>
+    <tr>
+      <td>naturalName</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Natural name of the room</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Room Description</td>
+    </tr>
+    <tr>
+      <td>canChangeSubject</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether participants can change the subject</td>
+    </tr>
+    <tr>
+      <td>maxUsers</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Max number of room occupants</td>
+    </tr>
+    <tr>
+      <td>canChangeSubject</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether participants can change the subject or not</td>
+    </tr>
+    <tr>
+      <td>publicRoom</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room will be listed in the directory or not</td>
+    </tr>
+    <tr>
+      <td>moderated</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room is moderated or not</td>
+    </tr>
+    <tr>
+      <td>invitationRequired</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room is members-only or not</td>
+    </tr>
+    <tr>
+      <td>canInvite</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether occupants can invite other users</td>
+    </tr>
+    <tr>
+      <td>password</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Password Data for joining the room</td>
+    </tr>
+    <tr>
+      <td>canDiscoverJID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether real JID of occupants is public or not</td>
+    </tr>
+    <tr>
+      <td>logEnabled</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether room conversations are logged or not</td>
+    </tr>
+    <tr>
+      <td>subject</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Last known subject of the room</td>
+    </tr>
+    <tr>
+      <td>rolesToBroadcast</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Binary representation of the roles to broadcast</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="mucAffiliation"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">mucAffiliation (affiliation of room users)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>User JID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>affiliation</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Number representing the affiliation level</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="mucMember"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">mucMember (rooms members information)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>User JID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>nickname</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Reserved nickname of the member</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="mucConversationLog"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">mucConversationLog (rooms conversations log)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room</td>
+    </tr>
+    <tr>
+      <td>sender</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>JID of the user that sent the message to the room</td>
+    </tr>
+    <tr>
+      <td>nickname</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Nickname used by the user when sending the message</td>
+    </tr>
+    <tr>
+      <td>time</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Date when the message was sent to the room</td>
+    </tr>
+    <tr>
+      <td>subject</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>New subject changed with the message</td>
+    </tr>
+    <tr>
+      <td>body</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Body of the message</td>
     </tr>
   </tbody>
 </table>

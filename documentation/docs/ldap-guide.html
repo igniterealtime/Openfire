@@ -12,8 +12,8 @@
 <h2>Introduction</h2>
 
 <p>
-This document details how to configure your Jive Messenger installation to use an external LDAP store when
-authenticating users.
+This document details how to configure your Jive Messenger installation to use 
+an external LDAP store when authenticating users and loading user profile information.
 </p>
 <h2>Background</h2>
 <p>
@@ -31,10 +31,10 @@ functionality and allows Jive Messenger to:
 Use a LDAP server to authenticate a user's identity.
 </li>
 <li>
-Load user profile information from a LDAP directory. Note that Jive Messenger treats the LDAP directory
-as read-only.
+Load user profile information from a LDAP directory.
 </li>
 </ul>
+<b>Note:</b> Jive Messenger treats the LDAP directory as read-only.
 </p>
 <p>
 This document will guide you through configuring LDAP support in Jive Messenger. These
@@ -59,32 +59,44 @@ Restart Jive Messenger.
 <h3>Editing the Config File</h3>
 <p>
 Open the configuration file <tt>conf/jive-messenger.xml</tt> from your Jive Messenger installation in your favorite
-editor and add or change the following settings:
+editor and add or change the following settings. Properties flagged with (<font color="red"><b>*</b></font>) must be set, 
+all other properties are optional:
 </p>
 <ul>
-<li>provider.user.className -- set the value to "org.jivesoftware.messenger.ldap.LdapUserProvider".</li>
-<li>provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
-<li>ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
-<li>ldap.port -- LDAP server port number</li>
-<li>ldap.usernameField -- the field name that the username lookups will be performed on. If this property is not set,
-    the default value is <tt>uid</tt></li>
-<li>ldap.baseDN -- the starting DN that searches for users will performed with. The entire subtree
+<li><font color="red"><b>*</b></font> provider.user.className -- set the value to "org.jivesoftware.messenger.ldap.LdapUserProvider".</li>
+<li><font color="red"><b>*</b></font> provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
+<li><font color="red"><b>*</b></font> ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
+<li>ldap.port -- LDAP server port number. If this property is not set, the default value is 389.</li>
+<li><font color="red"><b>*</b></font> ldap.baseDN -- the starting DN that searches for users will performed with. The entire subtree
     under the base DN will be searched for user accounts.
 </li>
+<li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
+    with this account. The admin must be able to perform searches and load user records. The user does
+    not need to be able to make changes to the directory, as Jive Messenger treats the directory as read-only.
+		If this property is not set, an anonymous login to the server will be attempted.
+</li>
+<li>ldap.adminPassword -- the password for the directory administrator.</li>
+<li>ldap.usernameField -- the field name that the username lookups will be performed on. If this property is not set,
+    the default value is <tt>uid</tt></li>
 <li>ldap.nameField -- the field name that holds the user's name. If this property is not set, the default value is
     <tt>cn</tt></li>
 <li>ldap.emailField -- the field name that holds the user's email address. If this property is not set,
     the default value is <tt>mail</tt>.</li>
-<li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
-    with this account. The admin must be able to perform searches and load user records. The user does
-    not need to be able to make changes to the directory, as Jive Messenger treats the directory as read-only.
-</li>
-<li>ldap.adminPassword -- the password for the directory administrator.</li>
 <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
     information about buffers sent and received by the LDAP provider is written to System.out</li>
 <li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If you
-    enable SSL connections, the LDAP server port number most likely should be changed to 636.
-</li>
+    enable SSL connections, the LDAP server port number most likely should be changed to 636.</li>
+<li>ldap.initialContextFactory --  the name of the class that should be used as an initial context
+ 		factory. if this value is not specified, "com.sun.jndi.ldap.LdapCtxFactory" will be used instead.
+		Most users will not need to set this value.
+<li>ldap.autoFollowReferrals -- a value of "true" indicates that LDAP referrals should be automatically
+		followed. If this property is not set or is set to "false", the referral policy used is left up to
+		to the provider. A referral is an entity that is used to redirect a client's request to another server. 
+		A referral  contains the names and locations of other objects. It is sent by the server to indicate 
+		that the information that the client has requested can be found at another location (or locations), 
+		possibly at another server or several servers. 
+<li>ldap.connectionPoolEnabled -- a value of "false" disables LDAP connection pooling. If this
+		property is not set, the default value is "true".
 </ul>
 <p>
 Below is a sample config file section:
@@ -95,7 +107,7 @@ Below is a sample config file section:
     &lt;ldap&gt;
         &lt;host&gt;&lt;/host&gt;
         &lt;port>389&lt;/port&gt;
-        <&lt;usernameField&gt;uid&lt;/usernameField&gt;
+        &lt;usernameField&gt;uid&lt;/usernameField&gt;
         &lt;nameField&gt;cn&lt;/nameField&gt;
         &lt;emailField&gt;mail&lt;/emailField&gt;
         &lt;baseDN&gt;ou=People;dc=example;dc=com&lt;/baseDN&gt;
@@ -114,7 +126,7 @@ Below is a sample config file section:
 &lt;/jive&gt;
 </code></pre>
 
-<p>Finally, you'll most likely want to change which usernames are authorized to login to the
+<p>You'll most likely want to change which usernames are authorized to login to the
 admin console. By default, only the user with username "admin" is allowed to login. However,
 you may have different users in your LDAP directory that you'd like to be administrators. The
 list of authorized usernames is controlled via the <tt>adminConsole.authorizedUsernames</tt>
@@ -130,5 +142,79 @@ property. For example, to let the usersnames "joe" and "jane" login to the admin
 ...
 &lt;/jive&gt;
 </code></pre>
+
+
+<p><a name="debugging"><h2>Custom Inital Context Factory</h2></a></p>
+
+<p>
+Some LDAP servers or application servers may require that a different LDAP
+initial context factory be used rather than the default (com.sun.jndi.ldap.LdapCtxFactory).
+You can set a custom initial context factory by adding the following to jive_config.xml:
+
+<pre>&lt;ldap&gt;
+    ... other ldap settings here 
+    &lt;initialContextFactory&gt;com.foo.factoryClass&lt;/initialContextFactory&gt;
+&lt;/ldap&gt;</pre>   
+</p>
+
+<p><a name="connectionPool"><h2>Connection Pooling</h2></a></p>
+
+The default LDAP provider (Sun's) support pooling of connections to the LDAP
+server. Connection pooling can greatly improve performance, especially on
+systems with high load. Connection pooling is enabled by default, but can
+be disabled by setting the Jive property <tt>ldap.connectionPoolEnabled</tt> 
+to <tt>false</tt>:
+
+<pre>&lt;ldap&gt;
+    ... other ldap settings here 
+    &lt;connectionPoolEnabled&gt;false&lt;/connectionPoolEnabled&gt;
+&lt;/ldap&gt;</pre></p>
+
+<p>
+You should set several Java system properties to change default pool settings.
+For more information, see the following pages:
+<ul>
+
+<li> <a href="http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html">
+http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html</a>
+<li> <a href="http://java.sun.com/products/jndi/tutorial/ldap/connect/config.html">
+http://java.sun.com/products/jndi/tutorial/ldap/connect/config.html</a>
+
+</ul>
+</p>
+	    
+<p>Note that if you turn on LDAP debugging, connection pooling will not be enabled.
+If SSL LDAP mode is enabled, you must set a system property to enable pooling of
+SSL LDAP connections.</p>    
+
+<h2>LDAP FAQ</h2>
+<p>
+
+<b>Can I create new users through Jive Messenger when using LDAP?</b>
+<ul>No, Jive Messenger treats LDAP directories as read-only. Therefore, it's
+not possible to create or edit users through the application.</ul>
+
+<b>Why is the list of usernames not sorted in the admin console when using LDAP?</b>
+<ul>Several popular LDAP servers such as OpenLDAP do not support server-side
+sorting of search results. On those servers, users will appear out of order.</ul>
+
+<b>I switched to LDAP and now cannot login to the admin console. What happened?</b>
+<ul>If you can no longer login to the admin console after switching, one of two
+things most likely happened:<ol>
+			 <li>By default, only the username "admin" is allowed to login to the
+			 admin console. Your directory may not contain a user with a username
+			 of "admin". In that case, you should modify the list of usernames authorized 
+			 to login to the admin console (see above).
+			 <li>You may have set the baseDN to an incorrect value. The LDAP module
+			 recursively searches for users under the node in the directory specified 
+			 by the baseDN. When the baseDN is incorrect, no users will be found.
+</ol>
+You can also enable debugging to get more information from the LDAP module. To
+do this, add &lt;log&gt;&lt;debug&gt;&lt;enabled&gt;true&lt;/enabled&gt;&lt;/debug&gt;&lt;/log&gt; 
+to your <tt>conf/jive_messenger.xml</tt> file. Log statements will be written 
+to the <tt>logs/debug.log</tt> file.
+</ul>
+
+
 </body>
 </html>

@@ -16,6 +16,9 @@ import org.jivesoftware.util.Log;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.SortControl;
+import javax.naming.ldap.LdapContext;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -105,9 +108,15 @@ public class LdapUserProvider implements UserProvider {
 
     public Collection<User> getUsers() {
         List<String> usernames = new ArrayList<String>();
-        DirContext ctx = null;
+        LdapContext ctx = null;
         try {
             ctx = manager.getContext();
+            // Sort on username field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -127,7 +136,12 @@ public class LdapUserProvider implements UserProvider {
             Log.error(e);
         }
         finally {
-            try { ctx.close(); }
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
             catch (Exception ignored) { }
         }
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
@@ -135,9 +149,15 @@ public class LdapUserProvider implements UserProvider {
 
     public Collection<User> getUsers(int startIndex, int numResults) {
         List<String> usernames = new ArrayList<String>();
-        DirContext ctx = null;
+        LdapContext ctx = null;
         try {
             ctx = manager.getContext();
+            // Sort on username field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -165,7 +185,12 @@ public class LdapUserProvider implements UserProvider {
             Log.error(e);
         }
         finally {
-            try { ctx.close(); }
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
             catch (Exception ignored) { }
         }
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));

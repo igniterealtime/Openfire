@@ -18,21 +18,26 @@ import org.jivesoftware.util.Log;
 import java.util.Hashtable;
 import java.net.URLEncoder;
 import javax.naming.*;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.InitialLdapContext;
 import javax.naming.directory.*;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method
  * should be used to get an instace. The following configure this manager:<ul>
- *      <li> ldap.host
- *      <li> ldap.port
- *      <li> ldap.usernameField
- *      <li> ldap.baseDN
- *      <li> ldap.adminDN
- *      <li> ldap.adminPassword
- *      <li> ldap.ldapDebugEnabled
- *      <li> ldap.sslEnabled
- *      <li> ldap.initialContextFactory --  if this value is not specified,
- *          "com.sun.jndi.ldap.LdapCtxFactory" will be used instead.
+ *      <li>ldap.host</li>
+ *      <li>ldap.port</li>
+ *      <li>ldap.baseDN</li>
+ *      <li>ldap.adminDN</li>
+ *      <li>ldap.adminPassword</li>
+ *      <li>ldap.usernameField -- default value is "uid".</li>
+ *      <li>ldap.nameField -- default value is "cn".</li>
+ *      <li>ldap.emailField -- default value is "mail".</li>
+ *      <li>ldap.ldapDebugEnabled</li>
+ *      <li>ldap.sslEnabled</li>
+ *      <li>ldap.autoFollowReferrals</li>
+ *      <li>ldap.initialContextFactory --  if this value is not specified,
+ *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
  * </ul>
  *
  * @author Matt Tucker
@@ -51,6 +56,7 @@ public class LdapManager {
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
     private String initialContextFactory;
+    private boolean followReferrals = false;
     private boolean connectionPoolEnabled = true;
 
     private static LdapManager instance = new LdapManager();
@@ -98,8 +104,12 @@ public class LdapManager {
         }
         this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
         this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
-        this.ldapDebugEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.ldapDebugEnabled"));
-        this.sslEnabled = "true".equals(JiveGlobals.getXMLProperty("ldap.sslEnabled"));
+        this.ldapDebugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
+                "ldap.ldapDebugEnabled")).booleanValue();
+        this.sslEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
+                "ldap.sslEnabled")).booleanValue();
+        this.followReferrals = Boolean.valueOf(JiveGlobals.getXMLProperty(
+                "ldap.autoFollowReferrals")).booleanValue();
         this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -131,6 +141,7 @@ public class LdapManager {
             Log.debug("\t sslEnabled: " + sslEnabled);
             Log.debug("\t initialContextFactory: " + initialContextFactory);
             Log.debug("\t connectionPoolEnabled: " + connectionPoolEnabled);
+            Log.debug("\t autoFollowReferrals: " + followReferrals);
         }
     }
 
@@ -142,7 +153,7 @@ public class LdapManager {
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
      */
-    public DirContext getContext() throws NamingException {
+    public LdapContext getContext() throws NamingException {
         return getContext(baseDN);
     }
 
@@ -155,7 +166,7 @@ public class LdapManager {
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
      */
-    public DirContext getContext(String baseDN) throws NamingException {
+    public LdapContext getContext(String baseDN) throws NamingException {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
             Log.debug("Creating a DirContext in LdapManager.getContext()...");
@@ -172,25 +183,33 @@ public class LdapManager {
         }
 
         // Use simple authentication to connect as the admin.
-        env.put(Context.SECURITY_AUTHENTICATION, "simple");
         if (adminDN != null) {
+            env.put(Context.SECURITY_AUTHENTICATION, "simple");
             env.put(Context.SECURITY_PRINCIPAL, adminDN);
+            if (adminPassword != null) {
+                env.put(Context.SECURITY_CREDENTIALS, adminPassword);
+            }
         }
-        if (adminPassword != null) {
-            env.put(Context.SECURITY_CREDENTIALS, adminPassword);
+        // No login information so attempt to use anonymous login.
+        if (adminDN != null) {
+            env.put(Context.SECURITY_AUTHENTICATION, "none");
         }
+
         if (ldapDebugEnabled) {
             env.put("com.sun.jndi.ldap.trace.ber", System.err);
         }
         if (connectionPoolEnabled) {
             env.put("com.sun.jndi.ldap.connect.pool", "true");
         }
+        if (followReferrals) {
+            env.put(Context.REFERRAL, "follow");
+        }
 
         if (debug) {
             Log.debug("Created hashtable with context values, attempting to create context...");
         }
         // Create new initial context
-        DirContext context = new InitialDirContext(env);
+        LdapContext context = new InitialLdapContext(env, null);
         if (debug) {
             Log.debug("... context created successfully, returning.");
         }

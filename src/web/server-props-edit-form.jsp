@@ -38,7 +38,6 @@
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = false;
     String name = ParamUtils.getParameter(request,"servername");
-    String muc = ParamUtils.getParameter(request,"mucname");
 
     
 
@@ -49,11 +48,7 @@
         if (name == null) {
             errors.put("servername","servername");
         }
-        if (muc == null || muc.indexOf('.') >= 0) {
-            errors.put("mucname","mucname");
-        }
         if (errors.size() == 0) {
-            admin.getMultiUserChatServer().setServiceName(muc);
             admin.getXMPPServer().getServerInfo().setName(name);
             success = true;
         }
@@ -61,8 +56,6 @@
     else {
         name = admin.getServerInfo().getName() == null
                 ? "" : admin.getServerInfo().getName();
-        muc = admin.getMultiUserChatServer().getServiceName() == null
-                ? "" : admin.getMultiUserChatServer().getServiceName();
     }
 %>
 
@@ -96,23 +89,6 @@ Use the form below to edit server properties.
      value="<%= name %>">
 
     <%  if (errors.get("servername") != null) { %>
-
-        <span class="jive-error-text">
-        Please enter a valid name.
-        </span>
-
-    <%  } %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Multi User Chat server name:
-    </td>
-    <td>
-    <input type="text" size="30" maxlength="150" name="mucname"
-     value="<%= muc %>">
-
-    <%  if (errors.get("mucname") != null) { %>
 
         <span class="jive-error-text">
         Please enter a valid name.

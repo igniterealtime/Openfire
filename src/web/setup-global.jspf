@@ -12,37 +12,15 @@
                  java.sql.Statement,
                  java.sql.SQLException,
                  java.util.Map,
-                 org.jivesoftware.util.ClassUtils" %>
+                 org.jivesoftware.util.ClassUtils,
+                 org.jivesoftware.messenger.container.ServiceLookupFactory"
+%>
+
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
+<% admin.init(request, response, session, application, out ); %>
 
 <%  // Figure out if we've already run setup:
-
-	boolean doSetup = false;
-    //
-    try {
-        // ServiceLookup lookup = ServiceLookupFactory.getServiceLookup();
-        Class serviceLookupFactoryClass = loadClass("org.jivesoftware.messenger.container.ServiceLookupFactory");
-        Method getLookupMethod = serviceLookupFactoryClass.getMethod("getServiceLookup", (Class[])null);
-        Object serviceLookupObj = getLookupMethod.invoke(serviceLookupFactoryClass, (Object)null);
-
-        // Container container = (Container)lookup.lookup(Container.class);
-        Method lookupMethod = serviceLookupObj.getClass().getMethod("lookup", (Class[])new Class[]{java.lang.Class.class});
-        Object containerObj = lookupMethod.invoke(serviceLookupObj, (Object[])new Class[]{org.jivesoftware.messenger.container.Container.class});
-
-        // boolean isSetup = container.isSetupMode()
-        Method isSetupModeMethod = containerObj.getClass().getMethod("isSetupMode", (Class[])null);
-        Object isSetupObj = isSetupModeMethod.invoke(containerObj, (Object)null);
-        boolean setupMode = ((Boolean)isSetupObj).booleanValue();
-
-        if (setupMode) {
-            doSetup = true;
-        }
-    }
-    catch (Throwable t) {
-        //t.printStackTrace();
-        doSetup = true;
-    }
-
-    if (!doSetup) {
+	if (!admin.isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }

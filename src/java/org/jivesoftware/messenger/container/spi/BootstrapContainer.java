@@ -349,13 +349,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             File[] plugins = pluginDir.listFiles();
             for (int i = 0; i < plugins.length; i++) {
                 if (plugins[i].isDirectory()) {
-                    if (setupMode) {
-                        // Only load web-admin plug-in
-                        if ("admin".equals(plugins[i].getName())) {
-                            loadPlugin(plugins[i]);
-                        }
-                    }
-                    else {
+                    if (!setupMode) {
                         loadPlugin(plugins[i]);
                     }
                 }

@@ -75,7 +75,6 @@ public class AdminConsole {
 
     /**
      * Returns the URL (relative or absolute) of the main logo image for the admin console.
-     * @return
      */
     public static String getLogoImage() {
         return logoImage;

@@ -133,8 +133,7 @@ public class TabsTag extends BodyTagSupport {
             String body = getBodyContent().getString();
             // For each root item, print out an LI
             AdminConsole.Item root = AdminConsole.getRootByChildID(pageID);
-            for (Iterator<AdminConsole.Item> iter=items.iterator(); iter.hasNext(); ) {
-                AdminConsole.Item item = iter.next();
+            for (AdminConsole.Item item : items) {
                 String value = body;
                 if (value != null) {
                     value = StringUtils.replace(value, "[id]", clean(item.getId()));

@@ -151,7 +151,7 @@ public class IQMUCRegisterHandler extends IQHandler {
         else if (IQ.SET.equals(packet.getType())) {
             try {
                 // Keep a registry of the updated presences
-                List presences = new ArrayList();
+                List<Presence> presences = new ArrayList<Presence>();
 
                 reply = packet.createResult();
                 XMPPFragment iq = packet.getChildFragment();
@@ -171,9 +171,9 @@ public class IQMUCRegisterHandler extends IQHandler {
                         XDataFormImpl registrationForm = new XDataFormImpl();
                         registrationForm.parse(formElement);
                         // Get the desired nickname sent in the form
-                        Iterator values = registrationForm.getField("muc#register_roomnick")
+                        Iterator<String> values = registrationForm.getField("muc#register_roomnick")
                                 .getValues();
-                        String nickname = (values.hasNext() ? (String)values.next() : null);
+                        String nickname = (values.hasNext() ? values.next() : null);
 
                         // TODO The rest of the fields of the form are ignored. If we have a
                         // requirement in the future where we need those fields we'll have to change
@@ -190,8 +190,8 @@ public class IQMUCRegisterHandler extends IQHandler {
                 }
                 // Send the updated presences to the room occupants
                 try {
-                    for (Iterator it = presences.iterator(); it.hasNext();) {
-                        room.send((Presence)it.next());
+                    for (Presence presence : presences) {
+                        room.send(presence);
                     }
                 }
                 catch (UnauthorizedException e) {

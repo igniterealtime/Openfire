@@ -36,8 +36,8 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
     private String label;
     private String variable;
     private String type;
-    private List options = new ArrayList();
-    private List values = new ArrayList();
+    private List<Option> options = new ArrayList<Option>();
+    private List<String> values = new ArrayList<String>();
     private ConcurrentHashSet fragments = new ConcurrentHashSet();
 
     public XFormFieldImpl() {
@@ -90,18 +90,18 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
         }
         // Loop through all the values and append them to the stream writer
         if (values.size() > 0) {
-            Iterator valuesItr = getValues();
+            Iterator<String> valuesItr = getValues();
             while (valuesItr.hasNext()) {
                 xmlSerializer.writeStartElement("jabber:x:data", "value");
-                xmlSerializer.writeCharacters((String)valuesItr.next());
+                xmlSerializer.writeCharacters(valuesItr.next());
                 xmlSerializer.writeEndElement();
             }
         }
         // Loop through all the options and append them to the stream writer
         if (options.size() > 0) {
-            Iterator optionsItr = getOptions();
+            Iterator<Option> optionsItr = getOptions();
             while (optionsItr.hasNext()) {
-                ((Option)optionsItr.next()).send(xmlSerializer, version);
+                (optionsItr.next()).send(xmlSerializer, version);
             }
         }
         Iterator frags = fragments.iterator();
@@ -132,16 +132,16 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
         }
         // Loop through all the values and append them to the stream writer
         if (values.size() > 0) {
-            Iterator valuesItr = getValues();
+            Iterator<String> valuesItr = getValues();
             while (valuesItr.hasNext()) {
-                field.addElement("value").addText((String)valuesItr.next());
+                field.addElement("value").addText(valuesItr.next());
             }
         }
         // Loop through all the options and append them to the stream writer
         if (options.size() > 0) {
-            Iterator optionsItr = getOptions();
+            Iterator<Option> optionsItr = getOptions();
             while (optionsItr.hasNext()) {
-                field.add(((Option)optionsItr.next()).asXMLElement());
+                field.add((optionsItr.next()).asXMLElement());
             }
         }
 
@@ -161,8 +161,8 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
         copy.required = this.required;
         copy.label = this.label;
         copy.type = this.type;
-        copy.options = (List)((ArrayList)this.options).clone();
-        copy.values = (List)((ArrayList)this.values).clone();
+        copy.options = (List<Option>)((ArrayList)this.options).clone();
+        copy.values = (List<String>)((ArrayList)this.values).clone();
 
         Iterator fragmentIter = getFragments();
         while (fragmentIter.hasNext()) {
@@ -247,9 +247,9 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
         return variable;
     }
 
-    public Iterator getValues() {
+    public Iterator<String> getValues() {
         synchronized (values) {
-            return Collections.unmodifiableList(new ArrayList(values)).iterator();
+            return Collections.unmodifiableList(new ArrayList<String>(values)).iterator();
         }
     }
 
@@ -263,9 +263,9 @@ public class XFormFieldImpl implements XMPPFragment, FormField {
      *
      * @return Iterator for the available options.
      */
-    private Iterator getOptions() {
+    private Iterator<Option> getOptions() {
         synchronized (options) {
-            return Collections.unmodifiableList(new ArrayList(options)).iterator();
+            return Collections.unmodifiableList(new ArrayList<Option>(options)).iterator();
         }
     }
 

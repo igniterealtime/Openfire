@@ -256,19 +256,19 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         registrationForm = new XDataFormImpl();
                         registrationForm.parse(formElement);
                         // Get the username sent in the form
-                        Iterator values = registrationForm.getField("username").getValues();
-                        username = (values.hasNext() ? (String)values.next() : " ");
+                        Iterator<String> values = registrationForm.getField("username").getValues();
+                        username = (values.hasNext() ? values.next() : " ");
                         // Get the password sent in the form
                         field = registrationForm.getField("password");
                         if (field != null) {
                             values = field.getValues();
-                            password = (values.hasNext() ? (String)values.next() : " ");
+                            password = (values.hasNext() ? values.next() : " ");
                         }
                         // Get the email sent in the form
                         field = registrationForm.getField("email");
                         if (field != null) {
                             values = field.getValues();
-                            email = (values.hasNext() ? (String)values.next() : " ");
+                            email = (values.hasNext() ? values.next() : " ");
                         }
                     }
                     else {
@@ -316,21 +316,21 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
                     // Set and save the extra user info (e.g. Full name, name visible, etc.)
                     if (newUser != null && registrationForm != null) {
-                        Iterator values;
+                        Iterator<String> values;
                         // Get the full name sent in the form
                         field = registrationForm.getField("name");
                         if (field != null) {
                             values = field.getValues();
-                            String name = (values.hasNext() ? (String)values.next() : " ");
+                            String name = (values.hasNext() ? values.next() : " ");
                             newUser.getInfo().setName(name);
                         }
                         // Get the name visible flag sent in the form
                         values = registrationForm.getField("x-nameVisible").getValues();
-                        String visible = (values.hasNext() ? (String)values.next() : "1");
+                        String visible = (values.hasNext() ? values.next() : "1");
                         boolean nameVisible = ("1".equals(visible) ? true : false);
                         // Get the email visible flag sent in the form
                         values = registrationForm.getField("x-emailVisible").getValues();
-                        visible = (values.hasNext() ? (String)values.next() : "0");
+                        visible = (values.hasNext() ? values.next() : "0");
                         boolean emailVisible = ("1".equals(visible) ? true : false);
                         // Save the extra user info
                         newUser.getInfo().setNameVisible(nameVisible);

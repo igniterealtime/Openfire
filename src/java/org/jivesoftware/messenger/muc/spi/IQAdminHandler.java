@@ -102,8 +102,8 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     String jid;
-                    for (Iterator it = room.getOutcasts(); it.hasNext();) {
-                        jid = (String)it.next();
+                    for (Iterator<String> it = room.getOutcasts(); it.hasNext();) {
+                        jid = it.next();
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:affiliation", "outcast");
@@ -123,15 +123,15 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     String jid;
-                    for (Iterator it = room.getMembers(); it.hasNext();) {
-                        jid = (String)it.next();
+                    for (Iterator<String> it = room.getMembers(); it.hasNext();) {
+                        jid = it.next();
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:affiliation", "member");
                         metaData.setProperty("item:jid", jid);
                         try {
-                            List roles = room.getOccupantsByBareJID(jid);
-                            role = (MUCRole)roles.get(0);
+                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
+                            role = roles.get(0);
                             metaData.setProperty("item:role", role.getRoleAsString());
                             metaData.setProperty("item:nick", role.getNickname());
                         }
@@ -150,8 +150,8 @@ public class IQAdminHandler {
                             && MUCRole.OWNER != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    for (Iterator roles = room.getModerators(); roles.hasNext();) {
-                        role = (MUCRole)roles.next();
+                    for (Iterator<MUCRole> roles = room.getModerators(); roles.hasNext();) {
+                        role = roles.next();
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:role", "moderator");
@@ -170,8 +170,8 @@ public class IQAdminHandler {
                     if (MUCRole.MODERATOR != senderRole.getRole()) {
                         throw new ForbiddenException();
                     }
-                    for (Iterator roles = room.getParticipants(); roles.hasNext();) {
-                        role = (MUCRole)roles.next();
+                    for (Iterator<MUCRole> roles = room.getParticipants(); roles.hasNext();) {
+                        role = roles.next();
                         metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
                                 "item");
                         metaData.setProperty("item:role", "participant");
@@ -195,10 +195,11 @@ public class IQAdminHandler {
             String jid = null;
             String nick;
             String target = null;
-            boolean hasAffiliation = ((Element) itemsList.get(0)).attributeValue("affiliation") != null;
+            boolean hasAffiliation = ((Element) itemsList.get(0)).attributeValue("affiliation") !=
+                    null;
 
             // Keep a registry of the updated presences
-            List presences = new ArrayList(itemsList.size());
+            List<Presence> presences = new ArrayList<Presence>(itemsList.size());
 
             // Collect the new affiliations or roles for the specified jids
             for (Iterator items = itemsList.iterator(); items.hasNext();) {
@@ -288,8 +289,8 @@ public class IQAdminHandler {
 
             // Send the updated presences to the room occupants
             try {
-                for (Iterator it = presences.iterator(); it.hasNext();) {
-                    room.send((Presence)it.next());
+                for (Presence presence : presences) {
+                    room.send(presence);
                 }
             }
             catch (UnauthorizedException e) {

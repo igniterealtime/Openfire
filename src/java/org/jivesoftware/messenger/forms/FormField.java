@@ -125,7 +125,7 @@ public interface FormField {
      *
      * @return an Iterator for the default values or answered values of the question.
      */
-    public abstract Iterator getValues();
+    public abstract Iterator<String> getValues();
 
     /**
      * Returns an indicative of the format for the data to answer. Valid formats are:

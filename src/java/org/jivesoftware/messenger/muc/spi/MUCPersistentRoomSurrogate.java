@@ -237,26 +237,26 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         throw new UnsupportedOperationException();
     }
 
-    public List addOwner(String bareJID, MUCRole sendRole) throws ForbiddenException {
+    public List<Presence> addOwner(String bareJID, MUCRole sendRole) throws ForbiddenException {
         throw new UnsupportedOperationException();
     }
 
-    public List addAdmin(String bareJID, MUCRole sendRole) throws ForbiddenException,
+    public List<Presence> addAdmin(String bareJID, MUCRole sendRole) throws ForbiddenException,
             ConflictException {
         throw new UnsupportedOperationException();
     }
 
-    public List addMember(String bareJID, String nickname, MUCRole sendRole)
+    public List<Presence> addMember(String bareJID, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
         throw new UnsupportedOperationException();
     }
 
-    public List addOutcast(String bareJID, String reason, MUCRole sendRole)
+    public List<Presence> addOutcast(String bareJID, String reason, MUCRole sendRole)
             throws NotAllowedException, ForbiddenException, ConflictException {
         throw new UnsupportedOperationException();
     }
 
-    public List addNone(String bareJID, MUCRole sendRole) throws ForbiddenException,
+    public List<Presence> addNone(String bareJID, MUCRole sendRole) throws ForbiddenException,
             ConflictException {
         throw new UnsupportedOperationException();
     }
@@ -470,12 +470,13 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         throw new UnsupportedOperationException();
     }
 
-    public List addAdmins(List newAdmins, MUCRole sendRole) throws ForbiddenException,
-            ConflictException {
+    public List<Presence> addAdmins(List<String> newAdmins, MUCRole sendRole)
+            throws ForbiddenException, ConflictException {
         throw new UnsupportedOperationException();
     }
 
-    public List addOwners(List newOwners, MUCRole sendRole) throws ForbiddenException {
+    public List<Presence> addOwners(List<String> newOwners, MUCRole sendRole)
+            throws ForbiddenException {
         throw new UnsupportedOperationException();
     }
 

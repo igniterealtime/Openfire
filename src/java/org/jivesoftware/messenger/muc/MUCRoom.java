@@ -222,7 +222,7 @@ public interface MUCRoom extends ChatDeliverer {
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List addOwner(String bareJID, MUCRole senderRole) throws ForbiddenException;
+    public List<Presence> addOwner(String bareJID, MUCRole senderRole) throws ForbiddenException;
 
     /**
      * Adds a list of users to the list of owners.
@@ -233,7 +233,8 @@ public interface MUCRoom extends ChatDeliverer {
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List addOwners(List newOwners, MUCRole senderRole) throws ForbiddenException;
+    public List<Presence> addOwners(List<String> newOwners, MUCRole senderRole)
+            throws ForbiddenException;
 
     /**
      * Adds a list of users to the list of admins.
@@ -245,8 +246,8 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addAdmins(List newAdmins, MUCRole senderRole) throws ForbiddenException,
-            ConflictException;
+    public List<Presence> addAdmins(List<String> newAdmins, MUCRole senderRole)
+            throws ForbiddenException, ConflictException;
 
     /**
      * Adds a new user to the list of admins.
@@ -258,7 +259,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addAdmin(String bareJID, MUCRole senderRole) throws ForbiddenException,
+    public List<Presence> addAdmin(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException;
 
     /**
@@ -273,7 +274,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ConflictException If the desired room nickname is already reserved for the room or if
      *             the room was going to lose all its owners.
      */
-    public List addMember(String bareJID, String nickname, MUCRole senderRole)
+    public List<Presence> addMember(String bareJID, String nickname, MUCRole senderRole)
             throws ForbiddenException, ConflictException;
 
     /**
@@ -288,7 +289,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ForbiddenException If the user is not allowed to modify the outcast list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addOutcast(String bareJID, String reason, MUCRole senderRole)
+    public List<Presence> addOutcast(String bareJID, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException, ConflictException;
 
     /**
@@ -301,7 +302,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws ForbiddenException If the user is not allowed to modify the none list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
+    public List<Presence> addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException;
 
     /**

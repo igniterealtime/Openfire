@@ -83,6 +83,7 @@
             	}
             	catch (SQLException sqle) {
                     success = false;
+                    sqle.printStackTrace();
                     errors.put("general","The Jive Messenger database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");

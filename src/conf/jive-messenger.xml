@@ -48,5 +48,5 @@
         <className>org.jivesoftware.messenger.ldap.LdapAuthProvider</className>
     </AuthProvider>
     -->
-    <! -- End Example LDAP Settings -->
+    <!-- End Example LDAP Settings -->
 </jive>

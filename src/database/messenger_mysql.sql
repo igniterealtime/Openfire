@@ -21,9 +21,9 @@ CREATE TABLE jiveUserProp (
 );
 
 CREATE TABLE jiveGroup (
-  name                  VARCHAR(50)     NOT NULL,
+  groupName              VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  PRIMARY KEY (name)
+  PRIMARY KEY (groupName)
 );
 
 CREATE TABLE jiveGroupProp (
@@ -116,7 +116,6 @@ CREATE TABLE mucRoom (
   logEnabled          TINYINT       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    TINYINT       NOT NULL,
-  lastActiveDate      CHAR(15)      NULL,
   PRIMARY KEY (name),
   INDEX mucRoom_roomid_idx (roomID)
 );
@@ -142,7 +141,7 @@ CREATE TABLE mucConversationLog (
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,
   body                TEXT          NULL,
-  INDEX mucLog_time_idx (time, roomID)
+  INDEX mucLog_time_idx (time)
 );
 
 # Finally, insert default table values.

@@ -75,9 +75,9 @@ CREATE TABLE jiveVCard (
 
 
 CREATE TABLE jiveGroup (
-  name                  VARCHAR(50)     NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  CONSTRAINT jiveGroup_pk PRIMARY KEY (name)
+  CONSTRAINT jiveGroup_pk PRIMARY KEY (groupName)
 );
 
 
@@ -129,7 +129,6 @@ CREATE TABLE mucRoom (
   logEnabled          INTEGER       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    INTEGER       NOT NULL,
-  lastActiveDate      CHAR(15)      NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );
 
@@ -157,7 +156,7 @@ CREATE TABLE mucConversationLog (
   subject             VARCHAR(255)   NULL,
   body                TEXT           NULL
 );
-CREATE INDEX mucLog_time_idx ON mucConversationLog (time, roomID);
+CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 
 -- Finally, insert default table values.
 

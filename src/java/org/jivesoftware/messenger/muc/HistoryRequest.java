@@ -115,47 +115,6 @@ public class HistoryRequest {
     }
 
     /**
-     * Sets the total number of characters to receive in the history.
-     * 
-     * @param maxChars the total number of characters to receive in the history.
-     */
-    public void setMaxChars(int maxChars) {
-        this.maxChars = maxChars;
-    }
-
-    /**
-     * Sets the total number of messages to receive in the history.
-     * 
-     * @param maxStanzas the total number of messages to receive in the history.
-     */
-    public void setMaxStanzas(int maxStanzas) {
-        this.maxStanzas = maxStanzas;
-    }
-
-    /**
-     * Sets the number of seconds to use to filter the messages received during that time. 
-     * In other words, only the messages received in the last "X" seconds will be included in 
-     * the history.
-     * 
-     * @param seconds the number of seconds to use to filter the messages received during 
-     * that time.
-     */
-    public void setSeconds(int seconds) {
-        this.seconds = seconds;
-    }
-
-    /**
-     * Sets the since date to use to filter the messages received during that time. 
-     * In other words, only the messages received since the datetime specified will be 
-     * included in the history.
-     * 
-     * @param since the since date to use to filter the messages received during that time.
-     */
-    public void setSince(Date since) {
-        this.since = since;
-    }
-
-    /**
      * Returns true if the history has been configured with some values.
      * 
      * @return true if the history has been configured with some values.

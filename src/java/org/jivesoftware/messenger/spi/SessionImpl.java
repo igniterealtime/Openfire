@@ -81,7 +81,9 @@ public class SessionImpl implements Session {
         this.serverName = serverName;
         String id = streamID.getID();
         this.address = new JID(null, serverName, id);
+        // Set an unavailable initial presence
         presence = new Presence();
+        presence.setType(Presence.Type.unavailable);
 
         this.sessionManager = SessionManager.getInstance();
 
@@ -158,7 +160,20 @@ public class SessionImpl implements Session {
     public Presence setPresence(Presence presence) {
         Presence oldPresence = this.presence;
         this.presence = presence;
-        if (oldPresence.getPriority() != this.presence.getPriority()) {
+        if (oldPresence.isAvailable() && !this.presence.isAvailable()) {
+            // The client is no longer available
+            sessionManager.sessionUnavailable(this);
+            // Mark that the session is no longer initialized. This means that if the user sends
+            // an available presence again the session will be initialized again thus receiving
+            // offline messages and offline presence subscription requests
+            setInitialized(false);
+        }
+        else if (!oldPresence.isAvailable() && this.presence.isAvailable()) {
+            // The client is available
+            sessionManager.sessionAvailable(this);
+        }
+        else if (oldPresence.getPriority() != this.presence.getPriority()) {
+            // The client has changed the priority of his presence
             sessionManager.changePriority(getAddress(), this.presence.getPriority());
         }
         return oldPresence;

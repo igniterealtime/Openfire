@@ -200,19 +200,31 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
 
         /**
-         * Returns the default session for the user based on presence
-         * priority.
+         * Returns the default session for the user based on presence priority. It's possible to
+         * indicate if only available sessions (i.e. with an available presence) should be
+         * included in the search.
          *
+         * @param filterAvailable flag that indicates if only available sessions should be
+         *        considered.
          * @return The default session for the user.
          */
-        Session getDefaultSession() {
+        Session getDefaultSession(boolean filterAvailable) {
             if (priorityList.isEmpty()) {
                 return null;
             }
 
-//            return (Session) resources.get(priorityList.getFirst());
-            Session s = resources.get(priorityList.getFirst());
-            return s;
+            if (!filterAvailable) {
+                return resources.get(priorityList.getFirst());
+            }
+            else {
+                for (int i=0; i < priorityList.size(); i++) {
+                    Session s = resources.get(priorityList.get(i));
+                    if (s.getPresence().isAvailable()) {
+                        return s;
+                    }
+                }
+                return null;
+            }
         }
 
         /**
@@ -230,6 +242,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @param packet
          */
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
+            // TODO Should we filter existing sessions whose presence is not available?
             for (Session session : resources.values()) {
                 packet.setTo(session.getAddress());
                 session.getConnection().deliver(packet);
@@ -249,6 +262,21 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 list.add(session);
             }
             return list.iterator();
+        }
+
+        /**
+         * Returns a collection of all the sessions whose presence is available.
+         *
+         * @return a collection of all the sessions whose presence is available.
+         */
+        public Collection<Session> getAvailableSessions() {
+            LinkedList<Session> list = new LinkedList<Session>();
+            for (Session session : resources.values()) {
+                if (session.getPresence().isAvailable()) {
+                    list.add(session);
+                }
+            }
+            return list;
         }
     }
 
@@ -304,19 +332,83 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
-        if (success) {
-            Session defaultSession = resources.getDefaultSession();
-            JID node = new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), null);
-            // Add route to default session (used when no resource is specified)
-            routingTable.addRoute(node, defaultSession);
-            // Add route to the new session
-            routingTable.addRoute(session.getAddress(), session);
-        }
         return success;
     }
 
     /**
-     * Change the priority of a session associated with the sender.
+     * Notification message sent when a client sent an available presence for the session. Making
+     * the session available means that the session is now eligible for receiving messages from
+     * other clients. Sessions whose presence is not available may only receive packets (IQ packets)
+     * from the server. Therefore, an unavailable session remains invisible to other clients.
+     *
+     * @param session the session that receieved an available presence.
+     */
+    public void sessionAvailable(Session session) {
+        if (anonymousSessions.containsValue(session)) {
+            // Anonymous session always have resources so we only need to add one route. That is
+            // the route to the anonymous session
+            routingTable.addRoute(session.getAddress(), session);
+        }
+        else {
+            // A non-anonymous session is now available
+            Session defaultSession = null;
+            try {
+                defaultSession = sessions.get(session.getUsername()).getDefaultSession(true);
+                JID node = new JID(defaultSession.getAddress().getNode(),
+                        defaultSession.getAddress().getDomain(), null);
+                // Add route to default session (used when no resource is specified)
+                routingTable.addRoute(node, defaultSession);
+                // Add route to the new session
+                routingTable.addRoute(session.getAddress(), session);
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing since the session is anonymous (? - shouldn't happen)
+            }
+            catch (UnauthorizedException e) {
+                // Do nothing
+            }
+        }
+    }
+
+    /**
+     * Notification message sent when a client sent an unavailable presence for the session. Making
+     * the session unavailable means that the session is not eligible for receiving messages from
+     * other clients.
+     *
+     * @param session the session that receieved an unavailable presence.
+     */
+    public void sessionUnavailable(Session session) {
+        if (session.getAddress() != null && routingTable != null &&
+                session.getAddress().toBareJID().trim().length() != 0) {
+            // Remove route to the removed session (anonymous or not)
+            routingTable.removeRoute(session.getAddress());
+            try {
+                SessionMap sessionMap = sessions.get(session.getUsername());
+                // If all the user sessions are gone then remove the route to the default session
+                if (sessionMap.getAvailableSessions().isEmpty()) {
+                    // Remove the route for the session's BARE address
+                    routingTable.removeRoute(new JID(session.getAddress().getNode(),
+                            session.getAddress().getDomain(), ""));
+                }
+                else {
+                    // Update the route for the session's BARE address
+                    Session defaultSession = sessionMap.getDefaultSession(true);
+                    routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
+                            defaultSession.getAddress().getDomain(), ""),
+                            defaultSession);
+                }
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing since the session is anonymous
+            }
+            catch (UnauthorizedException e) {
+                // Do nothing
+            }
+        }
+    }
+
+    /**
+     * Change the priority of a session, that was already available, associated with the sender.
      *
      * @param sender   The sender who's session just changed priority
      * @param priority The new priority for the session
@@ -331,23 +423,22 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             resources.changePriority(sender, priority);
 
             // Get the session with highest priority
-            Session defaultSession = resources.getDefaultSession();
+            Session defaultSession = resources.getDefaultSession(true);
             // Update the route to the bareJID with the session with highest priority
-            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
+            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
+                    defaultSession.getAddress().getDomain(), ""),
                     defaultSession);
         }
     }
 
 
     /**
-     * Retrieve the best route to deliver packets to this session
-     * given the recipient jid. If no active routes exist, this method
-     * returns a reference to itself (the account can store the packet).
-     * A null recipient chooses the default active route for this account
-     * if one exists. If the recipient can't be reached by this account
-     * (wrong account) an exception is thrown.
+     * Retrieve the best route to deliver packets to this session given the recipient jid. If the
+     * requested JID does not have a node (i.e. username) then the best route will be looked up
+     * in the anonymous sessions list. Otherwise, try to find a root for the exact JID
+     * (i.e. including the resource) and if none is found then answer the deafult session if any.
      *
-     * @param recipient The recipient ID to send to or null to select the default route
+     * @param recipient The recipient ID to deliver packets to
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
     public Session getBestRoute(JID recipient) {
@@ -368,12 +459,12 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     if (resource == null) {
-                        session = sessionMap.getDefaultSession();
+                        session = sessionMap.getDefaultSession(false);
                     }
                     else {
                         session = sessionMap.getSession(resource);
                         if (session == null) {
-                            session = sessionMap.getDefaultSession();
+                            session = sessionMap.getDefaultSession(false);
                         }
                     }
                 }
@@ -680,6 +771,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param packet The packet to be broadcast
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
+        // TODO Should we filter existing sessions whose presence is not available?
         Iterator values = sessions.values().iterator();
         while (values.hasNext()) {
             ((SessionMap)values.next()).broadcast(packet);
@@ -698,6 +790,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param packet The packet to be broadcast
      */
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
+        // TODO Should we filter existing sessions whose presence is not available?
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
             sessionMap.broadcast(packet);
@@ -743,23 +836,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
-        if (session.getAddress() != null && routingTable != null && session.getAddress().toBareJID().trim().length() != 0) {
-            // Remove route to the removed session
-            routingTable.removeRoute(session.getAddress());
-            if (sessionMap != null) {
-                // If all the user sessions are gone then remove the route to the default session
-                if (sessionMap.isEmpty()) {
-                    // Remove the route for the session's BARE address
-                    routingTable.removeRoute(new JID(session.getAddress().getNode(), session.getAddress().getDomain(), ""));
-                }
-                else {
-                    // Update the route for the session's BARE address
-                    Session defaultSession = sessionMap.getDefaultSession();
-                    routingTable.addRoute(new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), ""),
-                            defaultSession);
-                }
-            }
-        }
     }
 
     public void addAnonymousSession(Session session) {
@@ -768,9 +844,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             session.getConnection().registerCloseListener(this, session);
             // Remove the session from the pre-Authenticated sessions list
             preAuthenticatedSessions.remove(session.getAddress().toString());
-            // Anonymous session always have resources so we only need to add one route. That is
-            // the route to the anonymous session
-            routingTable.addRoute(session.getAddress(), session);
         }
         catch (UnauthorizedException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

@@ -68,7 +68,7 @@ public interface MUCUser extends ChannelHandler {
      * @return Iterator over all roles for this user
      * @throws UnauthorizedException If the caller doesn't have permission
      */
-    Iterator getRoles() throws UnauthorizedException;
+    Iterator<MUCRole> getRoles() throws UnauthorizedException;
 
     /**
      * Removes the role of the use in a particular room.<p>

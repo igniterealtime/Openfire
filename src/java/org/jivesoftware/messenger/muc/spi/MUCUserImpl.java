@@ -72,7 +72,7 @@ public class MUCUserImpl implements MUCUser {
         return role;
     }
 
-    public Iterator getRoles() throws UnauthorizedException {
+    public Iterator<MUCRole> getRoles() throws UnauthorizedException {
         return Collections.unmodifiableCollection(roles.values()).iterator();
     }
 

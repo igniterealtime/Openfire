@@ -125,6 +125,7 @@ public class RosterItem implements Cacheable {
     protected String nickname;
     protected List<String> groups;
     protected Set<String> sharedGroups = new HashSet<String>();
+    protected Set<String> invisibleSharedGroups = new HashSet<String>();
     protected SubType subStatus;
     protected AskType askStatus;
     private long rosterID;
@@ -344,12 +345,35 @@ public class RosterItem implements Cacheable {
     }
 
     /**
+     * Returns the invisible shared groups for the item. These groups are for internal use
+     * and help track the reason why a roster item has a presence subscription of type FROM
+     * when using shared groups.
+     *
+     * @return The shared groups this item belongs to.
+     */
+    public Collection<String> getInvisibleSharedGroups() {
+        return invisibleSharedGroups;
+    }
+
+    /**
      * Adds a new group to the shared groups list.
      *
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
     public void addSharedGroup(String sharedGroup) {
         sharedGroups.add(sharedGroup);
+        invisibleSharedGroups.remove(sharedGroup);
+    }
+
+    /**
+     * Adds a new group to the list shared groups that won't be sent to the user. These groups
+     * are for internal use and help track the reason why a roster item has a presence
+     * subscription of type FROM when using shared groups.
+     *
+     * @param sharedGroup The shared group to add to the list of shared groups.
+     */
+    public void addInvisibleSharedGroup(String sharedGroup) {
+        invisibleSharedGroups.add(sharedGroup);
     }
 
     /**
@@ -359,6 +383,7 @@ public class RosterItem implements Cacheable {
      */
     public void removeSharedGroup(String sharedGroup) {
         sharedGroups.remove(sharedGroup);
+        invisibleSharedGroups.remove(sharedGroup);
     }
 
     /**
@@ -368,7 +393,7 @@ public class RosterItem implements Cacheable {
      * @return true if this item belongs to a shared group.
      */
     public boolean isShared() {
-        return !sharedGroups.isEmpty();
+        return !sharedGroups.isEmpty() || !invisibleSharedGroups.isEmpty();
     }
 
     /**
@@ -379,7 +404,7 @@ public class RosterItem implements Cacheable {
      * @return true if this item belongs ONLY to shared groups.
      */
     public boolean isOnlyShared() {
-        return !sharedGroups.isEmpty() && groups.isEmpty();
+        return isShared() && groups.isEmpty();
     }
 
     /**

@@ -19,7 +19,6 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.SharedGroupException;
-import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.event.GroupEventListener;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.group.Group;
@@ -218,20 +217,25 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             if (currentValue.equals(originalValue)) {
                 return;
             }
-            // Remove the group from all users's rosters (if the group was a shared group)
-            Collection<String> users = getAffectedUsers(group, originalValue,
+            // Get the users of the group
+            Collection<String> users = new HashSet<String>(group.getMembers());
+            users.addAll(group.getAdmins());
+            // Get the users whose roster will be affected
+            Collection<String> affectedUsers = getAffectedUsers(group, originalValue,
                     group.getProperties().get("sharedRoster.groupList"));
+            // Remove the group members from the affected rosters
             for (String deletedUser : users) {
-                groupUserDeleted(group, users, deletedUser);
+                groupUserDeleted(group, affectedUsers, deletedUser);
             }
 
-            // Get the users of the group
-            users = new HashSet<String>(group.getMembers());
-            users.addAll(group.getAdmins());
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
+            //Collection<Group> visibleGroups = getVisibleGroups(group);
             for (String user : users) {
                 groupUserAdded(group, user);
+                /*for (Group visibleGroup : visibleGroups) {
+                    addSharedGroupToRoster(visibleGroup, user);
+                }*/
             }
         }
         else if ("sharedRoster.groupList".equals(keyChanged)) {
@@ -240,20 +244,25 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             if (currentValue.equals(originalValue)) {
                 return;
             }
-            // Remove the group from all users's rosters (if the group was a shared group)
-            Collection<String> users = getAffectedUsers(group,
+            // Get the users of the group
+            Collection<String> users = new HashSet<String>(group.getMembers());
+            users.addAll(group.getAdmins());
+            // Get the users whose roster will be affected
+            Collection<String> affectedUsers = getAffectedUsers(group,
                     group.getProperties().get("sharedRoster.showInRoster"), originalValue);
+            // Remove the group members from the affected rosters
             for (String deletedUser : users) {
-                groupUserDeleted(group, users, deletedUser);
+                groupUserDeleted(group, affectedUsers, deletedUser);
             }
 
-            // Get the users of the group
-            users = new HashSet<String>(group.getMembers());
-            users.addAll(group.getAdmins());
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
+            //Collection<Group> visibleGroups = getVisibleGroups(group);
             for (String user : users) {
                 groupUserAdded(group, user);
+                /*for (Group visibleGroup : visibleGroups) {
+                    addSharedGroupToRoster(visibleGroup, user);
+                }*/
             }
         }
         else if ("sharedRoster.displayName".equals(keyChanged)) {
@@ -365,10 +374,14 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 if (roster != null) {
                     roster.addSharedUser(group, addedUser);
                 }
-                // Update the roster of the newly added group user. Only add users of the group to
-                // the roster of the new group user
-                if (addedUserRoster != null && group.isUser(userToUpdate)) {
-                    addedUserRoster.addSharedUser(group, userToUpdate);
+                // Update the roster of the newly added group user.
+                if (addedUserRoster != null) {
+                    try {
+                        User user = UserManager.getInstance().getUser(userToUpdate);
+                        Collection<Group> groups = GroupManager.getInstance().getGroups(user);
+                        addedUserRoster.addSharedUser(userToUpdate, groups, group);
+                    }
+                    catch (UserNotFoundException e) {}
                 }
             }
         }
@@ -405,10 +418,14 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             if (roster != null) {
                 roster.deleteSharedUser(groupName, deletedUser);
             }
-            // Update the roster of the newly deleted group user. Only remove users of the group
-            // from the roster of the deleted group user
-            if (deletedUserRoster != null && group.isUser(userToUpdate)) {
-                deletedUserRoster.deleteSharedUser(groupName, userToUpdate);
+            // Update the roster of the newly deleted group user.
+            if (deletedUserRoster != null) {
+                try {
+                    User user = UserManager.getInstance().getUser(userToUpdate);
+                    Collection<Group> groups = GroupManager.getInstance().getGroups(user);
+                    deletedUserRoster.deleteSharedUser(userToUpdate, groups, group);
+                }
+                catch (UserNotFoundException e) {}
             }
         }
     }
@@ -417,6 +434,9 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         Collection<Group> answer = new HashSet<Group>();
         Collection<Group> groups = GroupManager.getInstance().getGroups();
         for (Group group : groups) {
+            if (groupToCheck == group) {
+                continue;
+            }
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
             if ("onlyGroup".equals(showInRoster)) {
                 // Check if the user belongs to a group that may see this group
@@ -426,10 +446,48 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                     answer.add(group);
                 }
             }
+            else if ("everybody".equals(showInRoster)) {
+                answer.add(group);
+            }
         }
         return answer;
     }
 
+    /**
+     * Returns true if a given group is visible to a given user. That means, if the user can
+     * see the group in his roster.
+     *
+     * @param group the group to check if the user can see.
+     * @param username the user to check if he may see the group.
+     * @return true if a given group is visible to a given user.
+     */
+    boolean isGroupVisible(Group group, String username) {
+        String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if ("everybody".equals(showInRoster)) {
+            return true;
+        }
+        else if ("onlyGroup".equals(showInRoster)) {
+            if (group.isUser(username)) {
+                 return true;
+            }
+            // Check if the user belongs to a group that may see this group
+            Collection<Group> groupList = parseGroups(group.getProperties().get(
+                    "sharedRoster.groupList"));
+            for (Group groupInList : groupList) {
+                if (groupInList.isUser(username)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds the group users of the given shared group to the roster of the specified user.
+     *
+     * @param group the shared group to add to the roster of a user.
+     * @param username the name of the user to add a shared group to his roster.
+     */
     private void addSharedGroupToRoster(Group group, String username) {
         // Get the group users to add to the user's roster
         Collection<String> users = new HashSet<String>(group.getMembers());
@@ -448,7 +506,12 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             }
             // Update the roster of the user
             if (userRoster != null) {
-                userRoster.addSharedUser(group, userToAdd);
+                try {
+                    User user = UserManager.getInstance().getUser(userToAdd);
+                    Collection<Group> groups = GroupManager.getInstance().getGroups(user);
+                    userRoster.addSharedUser(userToAdd, groups, group);
+                }
+                catch (UserNotFoundException e) {}
             }
         }
     }
@@ -473,7 +536,12 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             }
             // Update the roster of the user
             if (userRoster != null) {
-                userRoster.deleteSharedUser(groupName, userToRemove);
+                try {
+                    User user = UserManager.getInstance().getUser(userToRemove);
+                    Collection<Group> groups = GroupManager.getInstance().getGroups(user);
+                    userRoster.deleteSharedUser(userToRemove, groups, group);
+                }
+                catch (UserNotFoundException e) {}
             }
         }
     }
@@ -493,7 +561,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     }
 
     /**
-     * This method is similar to {@link #getRelatedUsers(Group, boolean)} except that it receives
+     * This method is similar to {@link #getAffectedUsers(Group)} except that it receives
      * some group properties. The group properties are passed as parameters since the called of this
      * method may want to obtain the related users of the group based in some properties values.
      *
@@ -510,9 +578,13 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         users.addAll(group.getAdmins());
         // Check if anyone can see this shared group
         if ("everybody".equals(showInRoster)) {
+            // Add all users in the system
+            for (User user : UserManager.getInstance().getUsers()) {
+                users.add(user.getUsername());
+            }
             // Add all logged users. We don't need to add all users in the system since only the
             // logged ones will be affected.
-            users.addAll(SessionManager.getInstance().getSessionUsers());
+            //users.addAll(SessionManager.getInstance().getSessionUsers());
         }
         else {
             // Add the users that may see the group
@@ -558,5 +630,51 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             }
         }
         return users;
+    }
+
+    /**
+     * Returns true if a group in the first collection may mutually see a group of the
+     * second collection. More precisely, return true if both collections contain a public
+     * group (i.e. anybody can see the group) or if both collection have a group that may see
+     * each other and the users are members of those groups.
+     *
+     * @param user the name of the user associated to the first collection of groups.
+     * @param groups a collection of groups to check against the other collection of groups.
+     * @param otherUser the name of the user associated to the second collection of groups.
+     * @param otherGroups the other collection of groups to check against the first collection.
+     * @return true if a group in the first collection may mutually see a group of the
+     *         second collection.
+     */
+    boolean hasMutualVisibility(String user, Collection<Group> groups, String otherUser,
+            Collection<Group> otherGroups) {
+        for (Group group : groups) {
+            for (Group otherGroup : otherGroups) {
+                // Skip this groups if the users are not group users of the groups
+                if (!group.isUser(user) || !otherGroup.isUser(otherUser)) {
+                    continue;
+                }
+                if (group == otherGroup) {
+                     return true;
+                }
+                String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+                String otherShowInRoster = otherGroup.getProperties().get("sharedRoster.showInRoster");
+                // Return true if both groups are public groups (i.e. anybody can see them)
+                if ("everybody".equals(showInRoster) && "everybody".equals(otherShowInRoster)) {
+                    return true;
+                }
+                else if ("onlyGroup".equals(showInRoster) && "onlyGroup".equals(otherShowInRoster)) {
+                    String groupNames = group.getProperties().get("sharedRoster.groupList");
+                    String otherGroupNames = otherGroup.getProperties().get("sharedRoster.groupList");
+                    // Return true if each group may see the other group
+                    if (groupNames != null && otherGroupNames != null) {
+                        if (groupNames.contains(otherGroup.getName()) &&
+                                otherGroupNames.contains(group.getName())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

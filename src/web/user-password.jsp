@@ -154,4 +154,4 @@ Use the form below to change the user's password.
 document.passform.password.focus();
 </script>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

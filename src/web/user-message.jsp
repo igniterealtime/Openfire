@@ -1,8 +1,12 @@
-<%@ taglib uri="core" prefix="c"%>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -13,10 +17,11 @@
                  java.text.DateFormat,
                  java.util.HashMap,
                  org.jivesoftware.messenger.user.*,
-                 java.util.Map" %>
+                 java.util.Map"
+    errorPage="error.jsp"
+%>
 
-
-<c:set var="sbar" value="session" scope="page" />  
+<%@ taglib uri="core" prefix="c"%>
 
 <%  // Get parameters
     String username = ParamUtils.getParameter(request,"username");
@@ -30,16 +35,10 @@
     String message = ParamUtils.getParameter(request,"message");
 %>
 
-
-
-<%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(pageContext); %>
 
-
-
 <%
-
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
         if (username == null) {
@@ -91,10 +90,13 @@
                     sessionManager.sendServerMessage(XMPPAddress.parseJID(jid),null,message);
                 }
             }
-            if(username != null){
-              response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
+            if (username != null){
+                response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
             }
-                return;
+            else {
+                response.sendRedirect("user-message.jsp?success=true");
+            }
+            return;
         }
     }
 
@@ -110,6 +112,7 @@
         }
     }
 %>
+
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
     String title = "Send Administrative Message";
@@ -118,29 +121,24 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
     pageinfo.setPageID("user-message");
 %>
-<%@ include file="top.jsp" %>
+
+<jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
-
-
-
-<%  if (tabs && username != null) { %>
-    <br>
-    <c:set var="tab" value="message" />
-    <%@ include file="user-tabs.jsp" %>
-
-<%  } %>
 
 <%  if (success) { %>
 
-    <p class="jive-success-text">
-    Message was sent successfully!
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Message sent successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
-
-<p>
-
-</p>
 
 <script language="JavaScript" type="text/javascript">
 function updateSelect(el) {
@@ -262,4 +260,4 @@ function updateSelect(el) {
 document.f.message.focus();
 </script>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

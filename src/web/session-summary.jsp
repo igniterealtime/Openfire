@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -9,33 +14,20 @@
                  org.jivesoftware.messenger.*,
                  java.util.Date,
                  org.jivesoftware.admin.*,
-                 java.text.DateFormat" %>
+                 java.text.DateFormat"
+    errorPage="error.jsp"
+%>
 
+<%@ taglib uri="core" prefix="c"%>
 
-
-<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
-
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Session Summary";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-summary.jsp"));
-    pageinfo.setPageID("session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
-
-
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",15);
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String jid = ParamUtils.getParameter(request,"jid");
-
 
     // Get the user manager
     SessionManager sessionManager = admin.getSessionManager();
@@ -67,6 +59,18 @@
     // Date dateFormatter for all dates on this page:
     DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT);
 %>
+
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Session Summary";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-summary.jsp"));
+    pageinfo.setPageID("session-summary");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
     <p class="jive-success-text">
@@ -102,55 +106,54 @@ Active Sessions: <b><%= sessionCount %></b>,
     </p>
 
 <%  } %>
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="8" align="left">Current Sessions</td></tr>
-<tr><td colspan="8" class="text">
+
+<p>
 Below is a list of sessions on this server.
-</tr>
+</p>
 
-
-
-</table>
-<table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="600">
-
-<tr>
-    <th>&nbsp;</th>
-    <th>Name</th>
-    <th>Resource</th>
-    <th>Status</th>
-    <th nowrap colspan="2">Presence (if authenticated)</th>
-    <th nowrap>Client IP</th>
-    <th nowrap>Close Connection</th>
-</tr>
-
-<%  // Get the iterator of sessions, print out session info if any exist.
-    SessionResultFilter filter = new SessionResultFilter();
-    filter.setStartIndex(start);
-    filter.setNumResults(range);
-    Iterator sessions = sessionManager.getSessions(filter);
-    if (!sessions.hasNext()) {
-%>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
     <tr>
-        <td colspan="8">
-
-            No Sessions
-
-        </td>
+        <th>&nbsp;</th>
+        <th>Name</th>
+        <th>Resource</th>
+        <th>Status</th>
+        <th nowrap colspan="2">Presence (if authenticated)</th>
+        <th nowrap>Client IP</th>
+        <th nowrap>Close Connection</th>
     </tr>
+</thead>
+<tbody>
+    <%  // Get the iterator of sessions, print out session info if any exist.
+        SessionResultFilter filter = new SessionResultFilter();
+        filter.setStartIndex(start);
+        filter.setNumResults(range);
+        Iterator sessions = sessionManager.getSessions(filter);
+        if (!sessions.hasNext()) {
+    %>
+        <tr>
+            <td colspan="8">
 
-<%  } %>
+                No Sessions
 
-<%  int count = start;
-    boolean current = false; // needed in session-row.jspf
-    String linkURL = "session-details.jsp";
-    while (sessions.hasNext()) {
-        Session sess = (Session)sessions.next();
-        count++;
-%>
-    <%@ include file="session-row.jspf" %>
+            </td>
+        </tr>
 
-<%  } %>
+    <%  } %>
 
+    <%  int count = start;
+        boolean current = false; // needed in session-row.jspf
+        String linkURL = "session-details.jsp";
+        while (sessions.hasNext()) {
+            Session sess = (Session)sessions.next();
+            count++;
+    %>
+        <%@ include file="session-row.jspf" %>
+
+    <%  } %>
+
+</tbody>
 </table>
 </div>
 

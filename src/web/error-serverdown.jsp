@@ -19,4 +19,4 @@ Jive Messenger is currently down. Please see the
 <a href="server-status.jsp">server status</a> page for more details.
 </p>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

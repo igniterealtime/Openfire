@@ -150,7 +150,7 @@
         <%= sess.getConnection().getInetAddress().getHostAddress() %>
     </td>
 
-    <td width="1%" nowrap align="center">
+    <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
         <a href="session-summary.jsp?jid=<%= sess.getAddress() %>&close=true"
          title="Click to kill session..."
          onclick="return confirm('Are you sure you want to close this connection?');"

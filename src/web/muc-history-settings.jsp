@@ -17,10 +17,10 @@
 <%  admin.init(request, response, session, application, out ); %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "MultiUser Chat History Settings";
+    String title = "Group Chat History Settings";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-history-settings.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat History", "muc-history-settings.jsp"));
     pageinfo.setPageID("muc-history");
 %>
 <jsp:include page="top.jsp" flush="true" />

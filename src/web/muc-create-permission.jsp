@@ -210,4 +210,4 @@ Total Users: <%= userCount %>.
 <br>
 
 <input type="submit" value="Add">
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

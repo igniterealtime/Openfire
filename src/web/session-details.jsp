@@ -2,18 +2,26 @@
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
-<%@ taglib uri="core" prefix="c"%>
+
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
                  java.text.DateFormat,
                  java.text.NumberFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User" %>
+                 org.jivesoftware.messenger.user.User"
+    errorPage="error.jsp"
+%>
+
+<%@ taglib uri="core" prefix="c"%>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-
 
 <%  // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
@@ -65,175 +73,179 @@
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-details.jsp"));
-    pageinfo.setSubPageID("session-details");
+    pageinfo.setSubPageID("session-summary");
 %>
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
-
 
 <p>
 Below are session details for the session <b><%= address.toString() %></b>. If the
 user <b><%= address.getName() %></b> has multiple sessions open, they will appear below.
 </p>
 
-<p>
-<b>Session Details</b>
-</p>
-
 <div class="jive-table">
-<table cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr>
-    <td class="jive-label">
-        Session ID:
-    </td>
-    <td>
-        <%= address.toString() %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        User Name &amp; Resource:
-    </td>
-    <td>
-        <%  String n = address.getName(); %>
-        <%  if (n == null || "".equals(n)) { %>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
+    <tr>
+        <th colspan="2">
+            Session Details
+        </th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td class="c1">
+            Session ID:
+        </td>
+        <td>
+            <%= address.toString() %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            User Name &amp; Resource:
+        </td>
+        <td>
+            <%  String n = address.getName(); %>
+            <%  if (n == null || "".equals(n)) { %>
 
-            <i>Anonymous</i> - <%= address.getResource() %>
+                <i>Anonymous</i> - <%= address.getResource() %>
 
-        <%  } else { %>
+            <%  } else { %>
 
-            <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
-            - <%= address.getResource() %>
+                <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
+                - <%= address.getResource() %>
 
-        <%  } %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Status:
-    </td>
-    <td>
-        <%
-            int status = currentSess.getStatus();
-            if (status == Session.STATUS_CLOSED) {
-        %>
-            Closed
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Status:
+        </td>
+        <td>
+            <%
+                int status = currentSess.getStatus();
+                if (status == Session.STATUS_CLOSED) {
+            %>
+                Closed
 
-        <%
-            } else if (status == Session.STATUS_CONNECTED) {
-        %>
+            <%
+                } else if (status == Session.STATUS_CONNECTED) {
+            %>
 
-            Connected
+                Connected
 
-        <%
-            } else if (status == Session.STATUS_STREAMING) {
-        %>
+            <%
+                } else if (status == Session.STATUS_STREAMING) {
+            %>
 
-            Streaming
+                Streaming
 
-        <%
-            } else if (status == Session.STATUS_AUTHENTICATED) {
-        %>
+            <%
+                } else if (status == Session.STATUS_AUTHENTICATED) {
+            %>
 
-            Authenticated
+                Authenticated
 
-        <%
-            } else {
-        %>
+            <%
+                } else {
+            %>
 
-            Unknown
+                Unknown
 
-        <%
-            }
-        %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Presence:
-    </td>
-    <td>
-        <%
-            int show = currentSess.getPresence().getShow();
-            if (show == Presence.SHOW_AWAY) {
-        %>
+            <%
+                }
+            %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Presence:
+        </td>
+        <td>
+            <%
+                int show = currentSess.getPresence().getShow();
+                if (show == Presence.SHOW_AWAY) {
+            %>
 
-            <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
-            Away - <%= currentSess.getPresence().getStatus() %>
+                <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
+                Away - <%= currentSess.getPresence().getStatus() %>
 
-        <%
-            } else if (show == Presence.SHOW_CHAT) {
-        %>
+            <%
+                } else if (show == Presence.SHOW_CHAT) {
+            %>
 
-            <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
-            Available to Chat
-        <%
-            } else if (show == Presence.SHOW_DND) {
-        %>
+                <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
+                Available to Chat
+            <%
+                } else if (show == Presence.SHOW_DND) {
+            %>
 
-            <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
-            Do Not Disturb - <%= currentSess.getPresence().getStatus() %>
+                <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
+                Do Not Disturb - <%= currentSess.getPresence().getStatus() %>
 
-        <%
-            } else if (show == Presence.SHOW_NONE) {
-        %>
+            <%
+                } else if (show == Presence.SHOW_NONE) {
+            %>
 
-            <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
-            Online
+                <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
+                Online
 
-        <%
-            } else if (show == Presence.SHOW_XA) {
-        %>
+            <%
+                } else if (show == Presence.SHOW_XA) {
+            %>
 
-            <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">
-            Extended Away - <%= currentSess.getPresence().getStatus() %>
+                <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">
+                Extended Away - <%= currentSess.getPresence().getStatus() %>
 
-        <%
-            } else {
-        %>
+            <%
+                } else {
+            %>
 
-            Unknown/Not Recognized
+                Unknown/Not Recognized
 
-        <%
-            }
-        %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Session Created:
-    </td>
-    <td>
-        <%= dateFormatter.format(currentSess.getCreationDate()) %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Session Last Active:
-    </td>
-    <td>
-        <%= dateFormatter.format(currentSess.getLastActiveDate()) %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Session Statistics:
-    </td>
-    <td>
-        Packets Received/Sent:
-        <%= numFormatter.format(currentSess.getNumClientPackets()) %>/<%= numFormatter.format(currentSess.getNumServerPackets()) %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Client IP / Hostname:
-    </td>
-    <td>
-        <%= currentSess.getConnection().getInetAddress().getHostAddress() %>
-        /
-        <%= currentSess.getConnection().getInetAddress().getHostName() %>
-    </td>
-</tr>
+            <%
+                }
+            %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Session Created:
+        </td>
+        <td>
+            <%= dateFormatter.format(currentSess.getCreationDate()) %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Session Last Active:
+        </td>
+        <td>
+            <%= dateFormatter.format(currentSess.getLastActiveDate()) %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Session Statistics:
+        </td>
+        <td>
+            Packets Received/Sent:
+            <%= numFormatter.format(currentSess.getNumClientPackets()) %>/<%= numFormatter.format(currentSess.getNumServerPackets()) %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Client IP / Hostname:
+        </td>
+        <td>
+            <%= currentSess.getConnection().getInetAddress().getHostAddress() %>
+            /
+            <%= currentSess.getConnection().getInetAddress().getHostName() %>
+        </td>
+    </tr>
+</tbody>
 </table>
 </div>
 
@@ -306,4 +318,4 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
 </center>
 </form>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

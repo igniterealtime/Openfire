@@ -29,7 +29,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Edit MultiUser Chat Properties";
+    String title = "Group Chat Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-server-props-edit-form.jsp"));
@@ -101,7 +101,7 @@ Use the form below to edit Multi-User Chat server properties.
 </tr>
 <tr>
     <td class="c1">
-        Multi User Chat server name:
+        Group chat service name:
     </td>
     <td>
     <input type="text" size="30" maxlength="150" name="mucname"  value="<%= muc %>">.<%=name%>

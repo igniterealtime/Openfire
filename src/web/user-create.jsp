@@ -242,4 +242,4 @@ function checkFields() {
 }
 </script>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

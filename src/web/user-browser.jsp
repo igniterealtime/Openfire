@@ -112,7 +112,7 @@
 
     </form>
 
-    <%@ include file="footer.jsp" %>
+    <jsp:include page="bottom.jsp" flush="true" />
 
 <%  } else if ("main".equals(panel)) { %>
 
@@ -230,6 +230,6 @@
 
     <%  } %>
 
-    <%@ include file="footer.jsp" %>
+    <jsp:include page="bottom.jsp" flush="true" />
 
 <%  } %>

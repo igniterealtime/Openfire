@@ -161,4 +161,4 @@ Use the form below to edit user properties.
 
 </form>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

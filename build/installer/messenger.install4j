@@ -131,7 +131,7 @@
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="false" postUninstallActionClass="" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="" />
     <standardScreens>
       <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
-      <screen id="license" enabled="true" file="%RELEASE_FULL_PATH%/GPL.txt" />
+      <screen id="license" enabled="true" file="%RELEASE_FULL_PATH%/LICENSE.html" />
       <screen id="location" enabled="true" showSpace="true" suggestAppDir="true" />
       <screen id="components" enabled="true" allSelected="true" firstMandatory="true">
         <selectedComponents />

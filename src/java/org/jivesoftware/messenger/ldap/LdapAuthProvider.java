@@ -13,18 +13,43 @@ package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.messenger.auth.AuthProvider;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.StringUtils;
 
 /**
- * Implementation of auth provider interface for LDAP
- * authentication service plug-in.
+ * Implementation of auth provider interface for LDAP authentication service plug-in.
+ * Only plaintext authentication is currently supported.<p>
+ *
+ * Optionally, an authentication cache can be enabled. When enabled, a hashed version
+ * of the user's password is cached for a variable length of time (2 hours by default).
+ * This can decrease load on the directory and preserve some level of service even
+ * when the directory becomes unavailable for a period of time.<ul>
+ *
+ *  <li><tt>ldap.authCache.enabled</tt> -- true to enable the auth cache.</li>
+ *  <li><tt>ldap.authCache.size</tt> -- size in bytes of the auth cache. If property is
+ *      not set, the default value is 524288 (512 K).
+ *  <li><tt>ldap.authCache.maxLifetime</tt> -- maximum amount of time a hashed password
+ *      can be cached in milleseconds. If property is not set, the default value is
+ *      7200000 (2 hours).
+ * </tt>
  *
  * @author Matt Tucker
  */
 public class LdapAuthProvider implements AuthProvider {
+
     private LdapManager manager;
+    private Cache authCache = null;
 
     public LdapAuthProvider() {
         manager = LdapManager.getInstance();
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.authCache.enabled")).booleanValue()) {
+            int maxSize = JiveGlobals.getXMLProperty("ldap.authCache.size", 512*1024);
+            long maxLifetime = (long)JiveGlobals.getXMLProperty("ldap.authCache.maxLifetime",
+                    (int)JiveConstants.HOUR * 2);
+            authCache = new Cache("LDAP Auth Cache", maxSize, maxLifetime);
+        }
     }
 
     public boolean isPlainSupported() {
@@ -39,6 +64,15 @@ public class LdapAuthProvider implements AuthProvider {
         if (username == null || password == null) {
             throw new UnauthorizedException();
         }
+
+        // If cache is enabled, see if the auth is in cache.
+        if (authCache != null && authCache.containsKey(username)) {
+            String hash = (String)authCache.get(username);
+            if (StringUtils.hash(password).equals(hash)) {
+                return;
+            }
+        }
+
         String userDN = null;
         try {
             // The username by itself won't help us much with LDAP since we
@@ -60,6 +94,11 @@ public class LdapAuthProvider implements AuthProvider {
         }
         catch (Exception e) {
             throw new UnauthorizedException(e);
+        }
+
+        // If cache is enabled, add the item to cache.
+        if (authCache != null) {
+            authCache.put(username, StringUtils.hash(password));
         }
     }
 

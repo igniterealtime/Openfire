@@ -10,15 +10,12 @@
 <h2>Introduction</h2>
 <p>
 This document outlines how to configure your SSL setup. Jive
-Messenger's SSL support
-is built using the standard Java security SSL implementation
-(javax.net.ssl.SSLServerSocket).
-Java security allows implementations of the JVM flexibility in how
-security is implemented.
+Messenger's SSL support is built using the standard Java security
+SSL implementation (javax.net.ssl.SSLServerSocket). Java security
+allows implementations of the JVM flexibility in how security is implemented.
 Unfortunately, the flexibility means there is no definitive mechanism
-for configuring SSL security on
-all JVMs. You must consult the documentation for your JVM in creating a
-valid keystore and truststore
+for configuring SSL security on all JVMs. You must consult the
+documentation for your JVM in creating a valid keystore and truststore
 and populating those with the SSL certificates needed for your
 deployment. In this document, we will describe how use the standard JDK
 1.5 tools to accomplish these tasks.
@@ -29,77 +26,62 @@ A server SSL connection uses two sets of certificates to secure the
 connection. The first set is called a "keystore". The keystore contains
 the keys and certificates for the server. These security credentials
 are used to prove to clients that the server is legitimately operating
-on behalf of a particular domain.
-If your server will only need to act as one domain, you only need one
-key entry and certificate in the keystore.
+on behalf of a particular domain. If your server will only need to act
+as one domain, you only need one key entry and certificate in the keystore.
 Keys are stored in the keystore under aliases. Each alias corresponds
 to a domain name (e.g. "server.com").
 </p>
 <p>
 The second set of certificates is called the "truststore" and is used
-to verify that a client is legitimately
-operating on behalf of a particular user. In the vast majority of
-cases, the truststore is empty and the server
-will not attempt to validate client connections using SSL. Instead, the
-XMPP authentication process verifies users
+to verify that a client is legitimately operating on behalf of a
+particular user. In the vast majority of cases, the truststore is
+empty and the server will not attempt to validate client connections
+using SSL. Instead, the XMPP authentication process verifies users
 in-band. However, you may wish to require SSL authentication for
-certain clients when security is especially
-important and the number of clients connection to the server is
-relatively small.
+certain clients when security is especially important and the number
+of clients connection to the server is relatively small.
 </p>
 <p>
 Certificates attempt to guarantee that a particular party is who they
-claim to be.
-Certificates are trusted based on who signed the certificate. If you
-only require light security,
-are deploying for internal use on trusted networks, etc. you can use
-"self-signed" certificates.
+claim to be. Certificates are trusted based on who signed the certificate.
+If you only require light security, are deploying for internal use on
+trusted networks, etc. you can use "self-signed" certificates.
 Self-signed certificates encrypts the communication channel between
-client and server. However
-the client must verify the legitimacy of the self-signed certificate
-through some other
-channel. The most common client reaction to a self-signed certificate
-is to ask the user whether
+client and server. However the client must verify the legitimacy of the
+self-signed certificate through some other channel. The most common client
+reaction to a self-signed certificate is to ask the user whether
 to trust the certificate, or to silently trust the certificate is
 legitimate. Unfortunately, blindly accepting self-signed certificates
 opens up the system to 'man-in-the-middle' attacks.
 </p>
 <p>
 The advantage of a self-signed certificate is you can create them for
-free which is great
-when cost is a major concern, or for testing and evaluation. In
-addition, you can safely
-use a self-signed certificate if you can verify that the certificate
-you're using is legitimate. So if
-a system administrator creates a self-signed certificate, then
-personally installs it on a client's
+free which is great when cost is a major concern, or for testing and evaluation.
+In addition, you can safely use a self-signed certificate if you can verify
+that the certificate you're using is legitimate. So if a system administrator
+creates a self-signed certificate, then personally installs it on a client's
 truststore (so that the certificate is trusted) you can be assured that
-the SSL connection will only
-work between the client and the correct server.
+the SSL connection will only work between the client and the correct server.
 </p>
 <p>
 For higher security deployments, you should get your certificate signed
-by a certificate authority (CA).
-Clients truststores will usually contain the certificates of the major
-CA's and can verify that a CA has
-signed a certificate. This chain of trust allows clients to trust
-certificate from servers they've never
-interacted with before. Certificate signing is similar to a public
-notary (with equivalent amounts of
-verification of identity, record keeping, and costs).
+by a certificate authority (CA). Clients truststores will usually contain
+the certificates of the major CA's and can verify that a CA has signed a
+certificate. This chain of trust allows clients to trust certificate from
+servers they've never interacted with before. Certificate signing is similar
+to a public notary (with equivalent amounts of verification of identity,
+record keeping, and costs).
 </p>
 <h2>Sun JDK 1.5 security tools</h2>
 <p>
 The Sun JDK (version 1.5.x) ships with all the security tools you need
-to configure SSL with Jive
-Messenger. The most important is the <tt>keytool</tt> located in the <tt>JAVA_HOME/bin
-directory</tt> of the JDK.
-Sun JVMs persist keystores and truststores on the filesystem as
-encrypted files. The <tt>keytool</tt> is used to
-create, read, update, and delete entries in these files. Jive Messenger
-ships with a self-signed "dummy" certificate
-designed for initial evaluation testing. You will need to adjust the
-default configuration for most deployments.
+to configure SSL with Jive Messenger. The most important is the
+<tt>keytool</tt> located in the <tt>JAVA_HOME/bin directory</tt> of the
+JDK. Sun JVMs persist keystores and truststores on the filesystem as
+encrypted files. The <tt>keytool</tt> is used to create, read, update,
+and delete entries in these files. Jive Messenger ships with a self-signed
+"dummy" certificate designed for initial evaluation testing. You will need
+to adjust the default configuration for most deployments.
 </p>
 <p>
 In order to configure SSL on your server you need complete the
@@ -129,9 +111,8 @@ truststore settings.</li>
 <h3>1 Decide on a Server Domain</h3>
 <p>
 The Messenger server domain should match the host name of the server;
-for example, "server.com". Your
-user accounts will have addresses with the format "user@server.com"
-like email addresses. We'll assume
+for example, "server.com". Your user accounts will have addresses with
+the format "user@server.com" like email addresses. We'll assume
 the domain is "server.com" for the rest of the examples.
 </p>
 <h3>2 Create a self-signed server certificate</h3>
@@ -152,17 +133,14 @@ Now we'll create a certificate using the keytool:
 <p><tt>keytool -genkey -keystore keystore -alias server.com</tt></p>
 <p>
 where you should substitute your server's name for <tt>server.com</tt>.
-The keytool will
-ask for the store password, then several pieces of information required
-for the certificate.
-Enter all the information and the keytool will ask you to verify the
-information and set
-a key password. <b>You must use the same key password as the store
-password.</b> By default
-you get this by simply hitting 'enter' when prompted for a key
-password.</p>
-<p>If you later change the keystore password remember to
-change the entries' password as well using the keytool:</p>
+The keytool will ask for the store password, then several pieces of
+information required for the certificate. Enter all the information and
+the keytool will ask you to verify the information and set a key password.
+<b>You must use the same key password as the store password.</b> By default
+you get this by simply hitting 'enter' when prompted for a key password.</p>
+<p>If you later change the keystore password remember to change the entries'
+password as well using the keytool:</p>
+
 <p><tt>keytool -keypasswd -alias server.com -keystore keystore</tt>
 </p>
 <h3>3 Obtain a CA signed certificate</h3>
@@ -213,20 +191,20 @@ Open the Jive Messenger Admin Console in your favorite
 browser and add or change the following system properties:
 </p>
 <ul>
-  <li>xmpp.socket.ssl.active - set to 'true' to active SSL</li>
-  <li>xmpp.socket.ssl.port - the port to use for SSL (default is
+  <li>xmpp.socket.ssl.active -- set to 'true' to active SSL</li>
+  <li>xmpp.socket.ssl.port -- the port to use for SSL (default is
 5223 for XMPP)</li>
-  <li>xmpp.socket.ssl.storeType - the store type used ("JKS" is
+  <li>xmpp.socket.ssl.storeType -- the store type used ("JKS" is
 the Sun Java Keystore format used by the JDK keytool). If this property is 
 not defined, Messenger will assume a value of "jks".</li>
-  <li>xmpp.socket.ssl.keystore - The location of the keystore file
+  <li>xmpp.socket.ssl.keystore -- the location of the keystore file
 relative to the <tt>MESSENGER_HOME</tt> root directory.</li>
-  <li>xmpp.socket.ssl.keypass - The keystore/key password you
+  <li>xmpp.socket.ssl.keypass -- the keystore/key password you
 changed in step 2.</li>
-  <li>xmpp.socket.ssl.truststore - Leave blank to not use a
+  <li>xmpp.socket.ssl.truststore -- leave blank to not use a
 truststore, otherwise the location of the truststore file relative to
 the <tt>MESSENGER_HOME</tt> root directory.</li>
-  <li>xmpp.socket.ssl.trustpass - The truststore/key password you
+  <li>xmpp.socket.ssl.trustpass -- the truststore/key password you
 changed in step 5.</li>
 </ul>
 You will need to restart the server after you have modified any of the above system properties.

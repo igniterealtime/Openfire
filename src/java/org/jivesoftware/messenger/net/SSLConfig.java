@@ -22,7 +22,7 @@ import java.net.ServerSocket;
 import java.security.KeyStore;
 
 /**
- * Configuration of Messenger's SSL settings.
+ * Configuration of Jive Messenger's SSL settings.
  *
  * @author Iain Shigeoka
  */
@@ -42,17 +42,21 @@ public class SSLConfig {
     static {
         String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
         String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
+
         // Get the keystore location. The default location is security/keystore
         keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
-                JiveGlobals.getMessengerHome() + File.separator + "resources" + File.separator +
-                "security" + File.separator + "keystore");
+                "resources" + File.separator + "security" + File.separator + "keystore");
+        keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
+
         // Get the keystore password. The default password is "changeit".
         keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
         keypass = keypass.trim();
+
         // Get the truststore location; default at security/truststore
         trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
-                JiveGlobals.getMessengerHome() + File.separator + "resources" + File.separator +
-                "security" + File.separator + "truststore");
+                "resources" + File.separator + "security" + File.separator + "truststore");
+        trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator + trustStoreLocation;
+
         // Get the truststore passwprd; default is "changeit".
         trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
         trustpass = trustpass.trim();
@@ -64,12 +68,16 @@ public class SSLConfig {
             trustStore = KeyStore.getInstance(storeType);
             trustStore.load(new FileInputStream(trustStoreLocation), trustpass.toCharArray());
 
-            sslFactory = (SSLJiveServerSocketFactory)
-                    SSLJiveServerSocketFactory.getInstance(algorithm,
-                    keyStore, trustStore);
+            sslFactory = (SSLJiveServerSocketFactory)SSLJiveServerSocketFactory.getInstance(
+                    algorithm, keyStore, trustStore);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error("SSLConfig startup problem.\n" +
+                    "  storeType: [" + storeType + "]\n" +
+                    "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
+                    "  keypass: [" + keypass + "]\n" +
+                    "  trustStoreLocation: [" + trustStoreLocation+ "]\n" +
+                    "  trustpass: [" + trustpass + "]", e);
             keyStore = null;
             trustStore = null;
             sslFactory = null;

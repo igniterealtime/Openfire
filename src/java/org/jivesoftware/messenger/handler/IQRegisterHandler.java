@@ -199,6 +199,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 }
             }
             else {
+                // This is a workaround. Since we don't want to have an incorrect TO attribute
+                // value we need to clean up the TO attribute. The TO attribute will contain an
+                // incorrect value since we are setting a fake JID until the user actually
+                // authenticates with the server.
+                reply.setTo((JID) null);
                 reply.setChildElement(probeResult);
             }
         }
@@ -223,6 +228,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         session.getConnection().deliver(reply);
                         // Close the user's connection
                         session.getConnection().close();
+                        // The reply has been sent so clean up the variable
+                        reply = null;
                     }
                     else {
                         throw new UnauthorizedException();

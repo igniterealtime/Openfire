@@ -50,7 +50,7 @@
         PrintWriter pout = new PrintWriter(sout);
         exception.printStackTrace(pout);
 %>
-    Messenger Exception:
+    Exception:
     <pre>
 <%= sout.toString() %>
     </pre>

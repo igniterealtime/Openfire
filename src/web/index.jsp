@@ -104,8 +104,8 @@ some of the server settings. Some settings can not be changed.
     <tr>
         <td class="c1">Version:</td>
         <td class="c2">
-            <fmt:message key="title" bundle="${lang}" />
-            <%= webManager.getXMPPServer().getServerInfo().getVersion().getVersionString() %>
+            <%= AdminConsole.getAppName() %>
+            <%= AdminConsole.getVersionString() %>
         </td>
     </tr>
     <tr>

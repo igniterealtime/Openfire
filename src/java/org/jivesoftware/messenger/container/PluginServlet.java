@@ -112,7 +112,11 @@ public class PluginServlet extends HttpServlet {
         // lives in plugins/[pluginName]/web/web.xml
         String pluginName = webXML.getParentFile().getParentFile().getName();
         try {
-            SAXReader saxReader = new SAXReader();
+            // Make the reader non-validating so that it doesn't try to resolve external
+            // DTD's. Trying to resolve external DTD's can break on some firewall configurations.
+            SAXReader saxReader = new SAXReader(false);
+            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                    false);
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
             List classes = doc.selectNodes("//servlet");

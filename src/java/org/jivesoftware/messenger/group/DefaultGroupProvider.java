@@ -42,6 +42,8 @@ public class DefaultGroupProvider implements GroupProvider {
         "UPDATE jiveGroupUser SET groupName=? WHERE groupName=?";
     private static final String DELETE_GROUP_USERS =
         "DELETE FROM jiveGroupUser WHERE groupName=?";
+    private static final String DELETE_PROPERTIES =
+        "DELETE FROM jiveGroupProp WHERE groupName=?";
     private static final String DELETE_GROUP =
         "DELETE FROM jiveGroup WHERE groupName=?";
     private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
@@ -179,6 +181,11 @@ public class DefaultGroupProvider implements GroupProvider {
             con = DbConnectionManager.getTransactionConnection();
             // Remove all users in the group.
             pstmt = con.prepareStatement(DELETE_GROUP_USERS);
+            pstmt.setString(1, groupName);
+            pstmt.executeUpdate();
+            pstmt.close();
+            // Remove all properties of the group.
+            pstmt = con.prepareStatement(DELETE_PROPERTIES);
             pstmt.setString(1, groupName);
             pstmt.executeUpdate();
             pstmt.close();

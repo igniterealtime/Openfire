@@ -185,6 +185,7 @@ public class AdminConsole {
         private boolean active;
         private Map<String,Item> items;
         private Item parent;
+        private static int idSeq = 0;
 
         /**
          * Creates a new item given its main attributes.
@@ -212,6 +213,9 @@ public class AdminConsole {
 
         private void init() {
             items = Collections.synchronizedMap(new LinkedHashMap<String,Item>());
+            if (id == null) {
+                id = String.valueOf(idSeq++);
+            }
         }
 
         /**

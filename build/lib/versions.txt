@@ -20,3 +20,4 @@ xmltask.jar          | 1.10.5
 jstl.jar             | Jakarta standard taglib 1.1.2
 standard.jar         | Jakarta standard taglib 1.1.2
 xpp3.jar             | XPP_3 1.1.3.4.K
+whack.jar            | Dec-2-2004

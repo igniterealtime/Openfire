@@ -141,7 +141,8 @@ CREATE TABLE mucConversationLog (
   nickname            VARCHAR(255)  NULL,
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,
-  body                TEXT          NULL
+  body                TEXT          NULL,
+  INDEX mucLog_time_idx (time, roomID)
 );
 
 # Finally, insert default table values.

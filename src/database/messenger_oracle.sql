@@ -150,6 +150,7 @@ CREATE TABLE mucConversationLog (
   subject             VARCHAR2(255)  NULL,
   body                VARCHAR2(4000) NULL
 );
+CREATE INDEX mucLog_time_idx ON mucConversationLog (time, roomID);
 
 REM // Finally, insert default table values.
 

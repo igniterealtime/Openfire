@@ -277,7 +277,7 @@ public class AdminConsole {
         // Load the admin-sidebar.xml file from the jiveforums.jar file:
         InputStream in = ClassUtils.getResourceAsStream("/admin-sidebar.xml");
         if (in == null) {
-            Log.error("Failed to load admin-sidebar.xml file from Jive Forums classes - admin "
+            Log.error("Failed to load admin-sidebar.xml file from Jive Messenger classes - admin "
                     + "console will not work correctly.");
             return;
         }

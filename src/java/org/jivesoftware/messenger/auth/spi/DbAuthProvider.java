@@ -38,7 +38,7 @@ import java.sql.SQLException;
  * AuthFactory.createAuthorization(HttpServletRequest request,
  * HttpServletResponse response) method automatically handles this logic.<p>
  *
- * If you wish to integrate Jive Forums with your own authentication or
+ * If you wish to integrate Jive Messenger with your own authentication or
  * single sign-on system, you'll need  your own implementation of the
  * AuthProvider interface. See that interface for further details.<p>
  *

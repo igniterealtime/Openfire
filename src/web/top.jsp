@@ -39,7 +39,7 @@
 <tbody>
     <tr>
         <td>
-            <img src="images/header-title.gif" width="289" height="38" border="0" alt="Jive Forums Admin Console">
+            <img src="images/header-title.gif" width="289" height="38" border="0" alt="Jive Messenger Admin Console">
         </td>
         <td align="right">
             <table cellpadding="0" cellspacing="0" border="0">

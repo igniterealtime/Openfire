@@ -147,7 +147,7 @@ public class JiveGlobals {
      * file. Any Servlet 2.3 compliant application servers also supports the
      * method HttpServletRequest.setCharacterEncoding(String). A Servlet 2.3
      * Filter called SetCharacterEncodingFilter is installed in the default
-     * Jive Forums web.xml file, which  will set the incoming character encoding
+     * Jive Messenger web.xml file, which  will set the incoming character encoding
      * to the one reported by this method.
      *
      * @return the global Jive character encoding.
@@ -194,7 +194,7 @@ public class JiveGlobals {
      * file. Any Servlet 2.3 compliant application servers also supports the
      * method HttpServletRequest.setCharacterEncoding(String). A Servlet 2.3
      * Filter called SetCharacterEncodingFilter is installed in the default
-     * Jive Forums web.xml file, which  will set the incoming character encoding
+     * Jive Messenger web.xml file, which  will set the incoming character encoding
      * to the one reported by this method.
      *
      * @param characterEncoding the global Jive character encoding.

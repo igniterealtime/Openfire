@@ -6,7 +6,7 @@
 <taglib>
 	<tlibversion>1.0</tlibversion>
 	<jspversion>1.1</jspversion>
-	<shortname>Tag Library for Jive Forums 4.0</shortname>
+	<shortname>Tag Library for Jive Messenger 2.0</shortname>
 	<uri>http://www.jivesoftware.com/</uri>
 	<info>Tab Library for Jive Messenger Admin Console</info>
 	<tag>

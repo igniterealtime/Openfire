@@ -1,24 +1,73 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.messenger.net.SSLConfig,
-                 com.sun.net.ssl.KeyManager,
-                 com.sun.net.ssl.TrustManager,
+                 javax.net.ssl.KeyManager,
+                 javax.net.ssl.TrustManager,
                  java.security.KeyStore,
                  java.security.cert.CertificateFactory,
                  java.security.cert.Certificate,
                  java.io.ByteArrayInputStream,
                  org.jivesoftware.admin.*"
+    errorPage="error.jsp"
 %>
+
+<%@ taglib uri="core" prefix="c" %>
+
+<%  try { %>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
+
+<%  // Get parameters:
+    String type = ParamUtils.getParameter(request, "type");
+    String cert = ParamUtils.getParameter(request, "cert");
+    String alias = ParamUtils.getParameter(request, "alias");
+    boolean install = request.getParameter("install") != null;
+
+    KeyStore keyStore = SSLConfig.getKeyStore();
+    KeyStore trustStore = SSLConfig.getTrustStore();
+
+    Map errors = new HashMap();
+    if (install) {
+        if (cert == null){
+            errors.put("cert","");
+        }
+        if (alias == null) {
+            errors.put("alias","");
+        }
+        if (errors.size() == 0) {
+            try {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(cert.getBytes()));
+                if ("client".equals(type)){
+                    trustStore.setCertificateEntry(alias,certificate);
+                }
+                else {
+                    keyStore.setCertificateEntry(alias,certificate);
+                }
+                SSLConfig.saveStores();
+                response.sendRedirect("ssl-settings.jsp?success=true");
+                return;
+            }
+            catch (Exception e) {
+                errors.put("general","");
+            }
+        }
+    }
+%>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
@@ -31,192 +80,177 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-
-<%  // Get parameters:
-    boolean update = request.getParameter("update") != null;
-    KeyStore keyStore = SSLConfig.getKeyStore();
-    KeyStore trustStore = SSLConfig.getTrustStore();
-
-    Map errors = new HashMap();
-    if (update) {
-        // All done, redirect
-        String type = request.getParameter("type");
-        String cert = request.getParameter("cert");
-        String alias = request.getParameter("alias");
-        if (cert == null || cert.trim().length() == 0){
-            errors.put("cert","");
-        }
-        if (alias == null || alias.trim().length() == 0){
-            errors.put("alias","");
-        }
-        if (errors.size() == 0){
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            Certificate certificate = cf.generateCertificate(
-                                        new ByteArrayInputStream(cert.getBytes()));
-            if ("client".equals(type)){
-                trustStore.setCertificateEntry(alias,certificate);
-            }
-            else {
-                keyStore.setCertificateEntry(alias,certificate);
-            }
-            SSLConfig.saveStores();
-            response.sendRedirect("ssl-settings.jsp?success=true");
-        }
-        return;
-    }
-
-    // Set page vars
-    if (errors.size() == 0) {
-        //
-    }
-%>
-
 <%  if (ParamUtils.getBooleanParameter(request,"success")) { %>
 
-    <p class="jive-success-text">
-    Settings updated.
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (errors.size() > 0) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error installing the certificate, please see the form below.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
 
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
-
-<tr><td colspan="2" class="text">
+<p>
 SSL/TLS allows secure connections to be made between the server and clients.
-This page displays your current SSL/TLS setup.
-</td></tr>
+This page displays installed certificates. Use the form at the bottom of the page to
+install a new certificate.
+</p>
 
-<tr>
-    <th class="jive-label">Default Cipher Suites</th>
-    <th class="jive-label">Supported Cipher Suites</th>
-</tr>
-<tr valign="top">
-    <td>
-<%  String[] defaults = SSLConfig.getDefaultCipherSuites();
-    for (int i = 0; i < defaults.length; i++){ %>
+<p><b>Installed Certificates</b></p>
 
-    <%= defaults[i] %><br>
-    <% } %>
-    </td><td>
-<%  String[] supported = SSLConfig.getDefaultCipherSuites();
-    for (int i = 0; i < supported.length; i++){ %>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
+    <tr>
+        <th>&nbsp;</th>
+        <th>
+            Alias (host)
+        </th>
+        <th>
+            Certificate Type
+        </th>
+        <th>
+            Uninstall
+        </th>
+    </tr>
+</thead>
+<tbody>
 
-    <%= supported[i] %><br>
-    <% } %>
-    </td>
-</table>
-<br/>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr class="tableHeaderBlue"><td colspan="3" align="center">Server Certificates</td></tr>
-<tr><td colspan="3" class="text">
-These certificates identify the server to connecting clients.
-</td></tr>
-<tr>
-    <th class="jive-label">Alias (domain)</th>
-    <th class="jive-label">Delete</th>
-    <th class="jive-label">Certificate summary</th>
-</tr>
-<%
-    Enumeration aliases = keyStore.aliases();
-    while (aliases.hasMoreElements()){
-        String alias = aliases.nextElement().toString();
+<%  int i=0;
+    for (Enumeration aliases=keyStore.aliases(); aliases.hasMoreElements();) {
+        i++;
+        String a = (String)aliases.nextElement();
+        Certificate c = keyStore.getCertificate(a);
 %>
-<tr valign="top">
-    <td class="jive-label" width="1%">
-    <%= alias %>
-    </td>
-    <td class="jive-label" width="1%" align="center">
-    <a href="ssl-delete.jsp?alias=<%= alias %>&type=server"
-             title="Click to delete..."
+    <tr valign="top">
+        <td width="1" rowspan="2"><%= (i) %>.</td>
+        <td width="29%">
+            <%= a %>
+        </td>
+        <td width="69%">
+            <%= c.getType() %>
+        </td>
+        <td width="1" align="center">
+            <a href="ssl-delete.jsp?alias=<%= a %>&type=server"
+             title="Click to uninstall..."
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-    </td><td width="99%">
-    <pre>
-    <%= keyStore.getCertificate(alias).toString() %>
-    </pre>
-    </td>
-<tr>
-<% } %>
-</table>
-<br/>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr class="tableHeaderBlue"><td colspan="3" align="center">Client Certificates</td></tr>
-<tr><td class="text" colspan="3">
-These certificates identify connecting clients to the server and
-is often empty.
-</td></tr>
-<tr>
-    <th class="jive-label">Alias (username)</th>
-    <th class="jive-label">Delete</th>
-    <th class="jive-label">Certificate summary</th>
-</tr>
-<%
-    aliases = trustStore.aliases();
-    while (aliases.hasMoreElements()){
-        String alias = aliases.nextElement().toString();
-%>
-<tr valign="top">
-    <td class="jive-label" width="1%">
-    <%= alias %>
-    </td>
-    <td class="jive-label" width="1%" align="center">
-    <a href="ssl-delete.jsp?alias=<%= alias %>&type=client"
-             title="Click to delete..."
-             ><img src="images/delete-16x6.gif" width="16" height="16" border="0"></a>
-    </td><td width="99%">
-    <pre>
-    <%= trustStore.getCertificate(alias).toString() %>
-    </pre>
-    </td>
-</tr>
-<% } %>
-</table>
-<br>
-<form action="ssl-settings.jsp">
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr class="tableHeaderBlue"><td colspan="3" align="center">Add Certificate</td></tr>
-<tr><td class="text" colspan="3">
-New X.509 certificates can be added to the system by pasting in the certificate
-data sent to you by a Certificate Authority (e.g. Verisign) or you can
-generate your own self-signed certificates.
-
-<table cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr>
-    <td class="jive-label">Certificate Type</td>
-    <td><select name="type" size="1">
-        <option value="server">Server Certificate</option>
-        <option value="client">Client Certificate</option>
-        </select>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">Alias</td>
-    <td><input name="alias" type="text" size="50"></td>
-
-        <%  if (errors.get("alias") != null) { %>
-
-            <span class="jive-error-text">
-            You must specify a non-empty alias.
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <span class="jive-description">
+            Public Key:
             </span>
+<textarea cols="40" rows="3" style="width:100%;font-size:8pt;" wrap="virtual">
+<%= c.getPublicKey() %></textarea>
+        </td>
+    </tr>
 
-        <%  } %>
+<%  } %>
 
-</tr>
-<tr>
-    <td class="jive-label" valign="top">Certificate</td>
-    <td>Paste in the certificate sent to you by the CA
-    or the self-signed certificate generated via the keytool.
-    <textarea name="cert" cols="55" rows="10" wrap="virtual"></textarea></td>
-        <%  if (errors.get("cert") != null) { %>
-
-            <span class="jive-error-text">
-            You must include the complete certificate text.
-            </span>
-
-        <%  } %>
-</tr>
+</tbody>
 </table>
+</div>
 
-<input type="submit" name="update" value="Add Certificate">
+<br><br>
+
+<form action="ssl-settings.jsp" method="post">
+
+<fieldset>
+    <legend>Install Certificate</legend>
+    <div>
+    <p>
+    New X.509 certificates can be added to the system by pasting in the certificate
+    data sent to you by a Certificate Authority (e.g. Verisign) or you can
+    generate your own self-signed certificates.
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <%  if (errors.containsKey("alias")) { %>
+            <tr><td>&nbsp;</td>
+                <td>
+                    <span class="jive-error-text">
+                    Please enter a valid alias.
+                    </span>
+                </td>
+            </tr>
+        <%  } else if (errors.containsKey("cert")) { %>
+            <tr><td>&nbsp;</td>
+                <td>
+                    <span class="jive-error-text">
+                    Please enter a valid certificate.
+                    </span>
+                </td>
+            </tr>
+        <%  } else if (errors.containsKey("general")) {
+                String error = (String)errors.get("general");
+        %>
+            <tr><td>&nbsp;</td>
+                <td>
+                    <span class="jive-error-text">
+                    Error installing the certificate.
+                    <%  if (error != null && !"".equals(error.trim())) { %>
+                        Error reported: <%= error %>.
+                    <%  } %>
+                    </span>
+                </td>
+            </tr>
+        <%  } %>
+        <tr>
+            <td nowrap>Certificate Type:</td>
+            <td>
+                <select name="type" size="1">
+                    <option value="server">Server Certificate</option>
+                    <option value="client">Client Certificate</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>Alias:</td>
+            <td>
+                <input name="alias" type="text" size="50" maxlength="255" value="<%= (alias != null ? alias : "") %>">
+            </td>
+        </tr>
+        <tr valign="top">
+            <td nowrap>Certificate:</td>
+            <td>
+                <span class="jive-description">
+                Paste in the certificate sent to you by the CA or the self-signed certificate generated via the keytool.<br>
+                </span>
+                <textarea name="cert" cols="55" rows="7" wrap="virtual" style="font-size:8pt;"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <br>
+                <input type="submit" name="install" value="Add Certificate">
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
 </form>
-<br />
+
+<%  } catch (Throwable t) { t.printStackTrace(); } %>
+
 <jsp:include page="bottom.jsp" flush="true" />

@@ -15,6 +15,8 @@ import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PacketException;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.admin.AdminConsole;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.dom4j.DocumentHelper;
@@ -24,22 +26,8 @@ import org.xmpp.packet.IQ;
 
 /**
  * Implements the TYPE_IQ jabber:iq:version protocol (version info). Allows
- * Jabber entities to query each other's application versions.  The server
+ * XMPP entities to query each other's application versions.  The server
  * will respond with its current version info.
- * <p/>
- * <h2>Assumptions</h2>
- * This handler assumes that the request is addressed to itself.
- * An appropriate TYPE_IQ tag matcher should be placed in front of this
- * one to route TYPE_IQ requests not addressed to the server to
- * another channel (probably for direct delivery to the recipient).
- * <p/>
- * <h2>Warning</h2>
- * There should be a way of determining whether a session has
- * authorization to access this feature. I'm not sure it is a good
- * idea to do authorization in each handler. It would be nice if
- * the framework could assert authorization policies across channels.
- *
- * <p>TODO: Verify responding to an iq 'get'</p>
  *
  * @author Iain Shigeoka
  */
@@ -55,7 +43,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         info = new IQHandlerInfo("query", "jabber:iq:version");
         if (bodyElement == null) {
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
-            bodyElement.addElement("name").setText("Jive Messenger");
+            bodyElement.addElement("name").setText(AdminConsole.getAppName());
             bodyElement.addElement("os").setText("Java 5");
             versionElement = bodyElement.addElement("version");
         }
@@ -63,7 +51,8 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
 
     public IQ handleIQ(IQ packet) throws PacketException {
         // Could cache this information for every server we see
-        versionElement.setText(localServer.getServerInfo().getVersion().getVersionString());
+        bodyElement.element("name").setText(AdminConsole.getAppName());
+        versionElement.setText(AdminConsole.getVersionString());
         IQ result = null;
         result = IQ.createResultIQ(packet);
         bodyElement.setParent(null);

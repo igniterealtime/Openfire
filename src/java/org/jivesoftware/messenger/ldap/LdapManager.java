@@ -12,7 +12,7 @@
 package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 
 import java.util.Hashtable;
@@ -399,7 +399,7 @@ public class LdapManager {
                 if (debug) {
                     Log.debug("User DN based on username '" + username + "' not found.");
                 }
-                throw new UnauthorizedException("Username " + username + " not found");
+                throw new UserNotFoundException("Username " + username + " not found");
             }
             String userDN = ((SearchResult)answer.next()).getName();
             // Make sure there are no more search results. If there are, then
@@ -412,7 +412,7 @@ public class LdapManager {
                     Log.debug("Search for userDN based on username '" + username + "' found multiple " +
                             "responses, throwing exception.");
                 }
-                throw new Exception ("LDAP username lookup for " + username +
+                throw new UserNotFoundException("LDAP username lookup for " + username +
                         " matched multiple entries.");
             }
             return userDN;

@@ -252,7 +252,13 @@ public class AdminConsole {
             if (appVersion != null) {
                 Element existingVersion = (Element)generatedModel.selectSingleNode(
                         "//adminconsole/global/version");
-                existingVersion.setText(appVersion.getText());
+                if (existingVersion != null) {
+                    existingVersion.setText(appVersion.getText());
+                }
+                else {
+                    ((Element)generatedModel.selectSingleNode(
+                            "//adminconsole/global")).add(appVersion.createCopy());
+                }
             }
             // Tabs
             for (Iterator i=element.selectNodes("//tab").iterator(); i.hasNext(); ) {

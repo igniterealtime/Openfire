@@ -168,7 +168,7 @@ public class IQAdminHandler {
                     for (MUCRole role : room.getModerators()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "moderator");
-                        metaData.addAttribute("jid", role.getChatUser().getAddress().toBareJID());
+                        metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
                         metaData.addAttribute("affiliation", role.getAffiliationAsString());
                     }
@@ -181,7 +181,7 @@ public class IQAdminHandler {
                     for (MUCRole role : room.getParticipants()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "participant");
-                        metaData.addAttribute("jid", role.getChatUser().getAddress().toBareJID());
+                        metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
                         metaData.addAttribute("affiliation", role.getAffiliationAsString());
                     }

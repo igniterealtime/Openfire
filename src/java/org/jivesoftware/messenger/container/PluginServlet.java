@@ -27,6 +27,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -71,10 +72,12 @@ public class PluginServlet extends HttpServlet {
             // Handle JSP requests.
             if (pathInfo.endsWith(".jsp")) {
                 handleJSP(pathInfo, request, response);
+                return;
             }
             // Handle image requests.
             else if (pathInfo.endsWith(".gif") || pathInfo.endsWith(".png")) {
                 handleImage(pathInfo, response);
+                return;
             }
             // Anything else results in a 404.
             else {
@@ -166,7 +169,14 @@ public class PluginServlet extends HttpServlet {
      */
     private void handleImage(String pathInfo, HttpServletResponse response) throws IOException
     {
-        File image = new File(pluginDirectory, pathInfo.replaceAll("/", File.separator));
+        String [] parts = pathInfo.split("/");
+        // Image request must be in correct format.
+        if (parts.length != 4) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        File image = new File(pluginDirectory, parts[1] + File.separator + "web" +
+                File.separator + "images" + File.separator + parts[3]);
         if (!image.exists()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;

@@ -219,7 +219,7 @@
 
             <tr>
                 <td>
-                    <input type="text" name="username" size="15" maxlength="50" id="u01">
+                    <input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>">
                 </td>
                 <td>
                     <input type="password" name="password" size="15" maxlength="50" id="p01">
@@ -266,7 +266,11 @@
 
 <script language="JavaScript" type="text/javascript">
 <!--
-	document.loginForm.username.focus();
+    if (document.loginForm.username.value == '')  {
+	    document.loginForm.username.focus();
+    } else {
+        document.loginForm.password.focus();
+    }
 //-->
 </script>
 

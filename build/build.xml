@@ -476,7 +476,7 @@
         <copy todir="${prepare.out.dir}">
             <fileset dir="${src.dir}" includes="bin/**/*" />
         </copy>
-        <fixcrlf srcdir="${prepare.out.dir}/bin" eol="lf" eof="remove" includes="*.sh" />
+        <fixcrlf srcdir="${prepare.out.dir}/bin" eol="lf" eof="remove" includes="*.sh,extra/*.*" />
 
         <!-- Create a logs dir in the binary release -->
         <mkdir dir="${prepare.out.dir}/logs" />

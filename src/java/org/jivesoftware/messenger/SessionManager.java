@@ -998,6 +998,16 @@ public class SessionManager extends BasicModule {
         return conflictLimit;
     }
 
+    /**
+     * Returns the temporary keys used by the sessions that has not been authenticated yet. This
+     * is an utility method useful for debugging situations.
+     *
+     * @return the temporary keys used by the sessions that has not been authenticated yet.
+     */
+    public Collection<String> getPreAuthenticatedKeys() {
+        return preAuthenticatedSessions.keySet();
+    }
+
     public void setConflictKickLimit(int limit) {
         conflictLimit = limit;
         JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));

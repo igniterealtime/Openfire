@@ -19,7 +19,6 @@ import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.JiveGlobals;
 
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * Manages groups.
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 public class GroupManager {
 
     Cache groupCache;
-    Cache groupMemberCache;
     private GroupProvider provider;
 
     private static GroupManager instance = new GroupManager();
@@ -49,7 +47,6 @@ public class GroupManager {
         CacheManager.initializeCache("group", 128 * 1024);
         CacheManager.initializeCache("group member", 32 * 1024);
         groupCache = CacheManager.getCache("group");
-        groupMemberCache = CacheManager.getCache("group member");
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
                 "org.jivesoftware.messenger.group.DefaultGroupProvider");
@@ -98,8 +95,14 @@ public class GroupManager {
         Group group = (Group)groupCache.get(name);
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
-            group = provider.getGroup(name);
-            groupCache.put(name, group);
+            synchronized (name.intern()) {
+                group = (Group)groupCache.get(name);
+                // If ID wan't found in cache, load it up and put it there.
+                if (group == null) {
+                    group = provider.getGroup(name);
+                    groupCache.put(name, group);
+                }
+            }
         }
         return group;
     }
@@ -110,18 +113,11 @@ public class GroupManager {
      * @param group the group to delete.
      */
     public void deleteGroup(Group group) {
-        // Make a copy of the group members.
-        Collection<String> members = new ArrayList<String>(group.getMembers());
-
         // Delete the group.
         provider.deleteGroup(group.getName());
 
         // Expire all relevant caches.
         groupCache.remove(group.getName());
-        // Remove entries in the group membership cache for all members of the group.
-        for (String username : members) {
-            groupMemberCache.remove("userGroups-" + username);
-        }
     }
 
     /**

@@ -31,7 +31,8 @@ functionality and allows Jive Messenger to:
 Use a LDAP server to authenticate a user's identity.
 </li>
 <li>
-Load user profile information in a LDAP directory.
+Load user profile information from a LDAP directory. Note that Jive Messenger treats the LDAP directory
+as read-only.
 </li>
 </ul>
 </p>
@@ -48,7 +49,7 @@ In order to configure your server to use LDAP:
 <li>
 Stop Jive Messenger.
 </li>
-<li>Edit <tt>MESSENGER_HOME/conf/jive-messenger.xml</tt> as described below.
+<li>Edit <tt>conf/jive-messenger.xml</tt> in your Jive Messenger installation folder as described below.
 </li>
 <li>
 Restart Jive Messenger.
@@ -57,7 +58,7 @@ Restart Jive Messenger.
 </p>
 <h3>Editing the Config File</h3>
 <p>
-Open the configuration file <tt>MESSENGER_HOME/conf/jive-messenger.xml</tt> in your favorite
+Open the configuration file <tt>conf/jive-messenger.xml</tt> from your Jive Messenger installation in your favorite
 editor and add or change the following settings:
 </p>
 <ul>
@@ -65,14 +66,18 @@ editor and add or change the following settings:
 <li>provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
 <li>ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
 <li>ldap.port -- LDAP server port number</li>
-<li>ldap.usernameField -- the field name that the username lookups will be performed on.</li>
+<li>ldap.usernameField -- the field name that the username lookups will be performed on. If this property is not set,
+    the default value is <tt>uid</tt></li>
 <li>ldap.baseDN -- the starting DN that searches for users will performed with. The entire subtree
     under the base DN will be searched for user accounts.
 </li>
-<li>ldap.nameField -- the field name that holds the user's name.</li>
-<li>ldap.emailField -- the field name that holds the user's email address.</li>
+<li>ldap.nameField -- the field name that holds the user's name. If this property is not set, the default value is
+    <tt>cn</tt></li>
+<li>ldap.emailField -- the field name that holds the user's email address. If this property is not set,
+    the default value is <tt>mail</tt>.</li>
 <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
-    with this account. The admin must be able to perform searches and load user records.
+    with this account. The admin must be able to perform searches and load user records. The user does
+    not need to be able to make changes to the directory, as Jive Messenger treats the directory as read-only.
 </li>
 <li>ldap.adminPassword -- the password for the directory administrator.</li>
 <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
@@ -93,8 +98,8 @@ Below is a sample config file section:
         <&lt;usernameField&gt;uid&lt;/usernameField&gt;
         &lt;nameField&gt;cn&lt;/nameField&gt;
         &lt;emailField&gt;mail&lt;/emailField&gt;
-        &lt;baseDN&gt;&lt;/baseDN&gt;
-        &lt;adminDN&gt;&lt;/adminDN&gt;
+        &lt;baseDN&gt;ou=People;dc=example;dc=com&lt;/baseDN&gt;
+        &lt;adminDN&gt;cn=Directory Administrator&lt;/adminDN&gt;
         &lt;adminPassword&gt;&lt;/adminPassword&gt;
     &lt;/ldap&gt;
     &lt;provider&gt;

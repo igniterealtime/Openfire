@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
 
 /**
  * <p>The initial container that hosts all other modules (and containers).</p>
@@ -503,13 +504,12 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             try {
                 in = getClass().getResourceAsStream("/messenger_init.xml");
                 if (in != null) {
-                    Document doc = XPPReader.parseDocument(new InputStreamReader(in),
-                            this.getClass());
+                    SAXReader reader = new SAXReader();
+                    Document doc = reader.read(in);
                     String path = doc.getRootElement().getText();
                     try {
                         if (path != null) {
-                            messengerHome = verifyHome(path,
-                                    jiveConfigName);
+                            messengerHome = verifyHome(path, jiveConfigName);
                         }
                     }
                     catch (FileNotFoundException fe) {
@@ -522,11 +522,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 e.printStackTrace();
             }
             finally {
-                try {
-                    if (in != null) {
-                        in.close();
-                    }
-                }
+                try { if (in != null) { in.close(); } }
                 catch (Exception e) {
                     System.err.println("Could not close open connection");
                     e.printStackTrace();

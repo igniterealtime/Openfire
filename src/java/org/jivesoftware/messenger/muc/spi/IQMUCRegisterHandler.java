@@ -36,6 +36,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.PacketError;
 
 /**
  * This class is not an actual IQHandler since all the packets with namespace
@@ -54,7 +55,7 @@ import org.xmpp.packet.Presence;
  */
 public class IQMUCRegisterHandler extends IQHandler {
 
-    private static MetaDataFragment probeResult;
+    private static Element probeResult;
     private IQHandlerInfo info;
     private MultiUserChatServer mucServer;
 
@@ -115,30 +116,29 @@ public class IQMUCRegisterHandler extends IQHandler {
             registrationForm.addField(field);
 
             // Create the probeResult and add the basic info together with the registration form
-            probeResult = new MetaDataFragment(element);
-            probeResult.addFragment(registrationForm);
+            probeResult = element;
+            probeResult.add(registrationForm.asXMLElement());
         }
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, XMLStreamException {
-        Session session = packet.getOriginatingSession();
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+        Session session = SessionManager.getInstance().getSession(packet.getFrom());
         IQ reply = null;
         // Get the target room
-        MUCRoom room = mucServer.getChatRoom(packet.getRecipient().getNamePrep());
+        MUCRoom room = mucServer.getChatRoom(packet.getTo().getNode());
         if (room == null) {
             // The room doesn't exist so answer a NOT_FOUND error
-            reply = packet.createResult();
-            reply.setError(XMPPError.Code.NOT_FOUND);
+            reply = IQ.createResultIQ(packet);
+            reply.setError(PacketError.Condition.item_not_found);
             return reply;
         }
 
         if (IQ.Type.get == packet.getType()) {
-            reply = packet.createResult();
-            String nickname = room.getReservedNickname(packet.getSender().toBareStringPrep());
+            reply = IQ.createResultIQ(packet);
+            String nickname = room.getReservedNickname(packet.getFrom().toBareJID());
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
-                MetaDataFragment currentRegistration = (MetaDataFragment) probeResult
-                        .createDeepCopy();
+                Element currentRegistration = probeResult.createCopy();
                 currentRegistration.setProperty("query.registered", null);
                 XDataFormImpl form = (XDataFormImpl) currentRegistration.getFragment("x",
                         "jabber:x:data");

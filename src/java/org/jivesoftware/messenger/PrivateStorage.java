@@ -15,9 +15,9 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.XPPReader;
 import org.dom4j.Element;
 import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
 
 import java.sql.*;
 import java.sql.Connection;
@@ -45,6 +45,8 @@ public class PrivateStorage extends BasicModule {
     //     "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
 
     private boolean enabled = JiveGlobals.getBooleanProperty("xmpp.privateStorageEnabled", true);
+
+    SAXReader xmlReader = new SAXReader();
 
     /**
      * Constructs a new PrivateStore instance.
@@ -148,8 +150,8 @@ public class PrivateStorage extends BasicModule {
                 pstmt.setString(2, data.getNamespaceURI());
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
-                    StringReader reader = new StringReader(rs.getString(1).trim());
-                    Document doc = XPPReader.parseDocument(reader, this.getClass());
+                    String result = rs.getString(1).trim();
+                    Document doc = xmlReader.read(result);
                     data = doc.getRootElement();
                 }
                 rs.close();

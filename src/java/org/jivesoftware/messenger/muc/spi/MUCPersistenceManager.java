@@ -725,7 +725,7 @@ public class MUCPersistenceManager {
             return true;
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("Error saving conversation log entry", sqle);
             return false;
         }
         finally {

@@ -242,6 +242,20 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
+    /**
+     * Logs all the remaining conversation log entries to the database. Use this method to force
+     * saving all the conversation log entries before the service becomes unavailable.
+     */
+    private void logAllConversation() {
+        ConversationLogEntry entry = null;
+        while (!logQueue.isEmpty()) {
+            entry = logQueue.poll();
+            if (entry != null) {
+                MUCPersistenceManager.saveConversationLogEntry(entry);
+            }
+        }
+    }
+
     public MUCRoom getChatRoom(String roomName, XMPPAddress userjid) throws UnauthorizedException {
         MUCRoom room = null;
         synchronized (rooms) {
@@ -550,6 +564,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         timer.cancel();
+        logAllConversation();
         if (registerHandler != null) {
             registerHandler.removeDelegate(getServiceName());
         }
@@ -802,6 +817,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 MUCRole role;
                 Element item;
                 for (Iterator<MUCRole> members = room.getOccupants(); members.hasNext();) {
+                    // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
                     role = members.next();
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", role.getRoleAddress().toStringPrep());

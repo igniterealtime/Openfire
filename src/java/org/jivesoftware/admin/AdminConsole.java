@@ -13,10 +13,13 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XMLProperties;
+import org.jivesoftware.util.XPPReader;
+import org.dom4j.Document;
+import org.dom4j.Element;
 
 import java.util.*;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 
 /**
@@ -36,14 +39,16 @@ import java.net.URL;
  */
 public class AdminConsole {
 
-    private static Collection items;
-    private static Map idMap; // map of item ids -> item objs
+    private static Map<String,Item> items;
     private static String appName;
     private static String logoImage;
 
     static {
-        items = new ArrayList();
-        idMap = new HashMap();
+        init();
+    }
+
+    private static void init() {
+        items = Collections.synchronizedMap(new LinkedHashMap<String,Item>());
         load();
     }
 
@@ -77,14 +82,20 @@ public class AdminConsole {
     }
 
     /**
-     * Returns all items starting from the root. Getting the iterator from this collection returns
+     * Returns all root items. Getting the iterator from this collection returns
      * all root items (should be used as tabs in the admin tool).
      *
      * @return a collection of all items - the root items are returned by calling the
      *      <tt>iterator()</tt> method.
      */
-    public static Collection getItems() {
-        return items;
+    public static Collection<Item> getItems() {
+        List<Item> rootItems = new ArrayList<Item>();
+        for (Item i : items.values()) {
+            if (i.getParent() == null) {
+                rootItems.add(i);
+            }
+        }
+        return rootItems;
     }
 
     /**
@@ -94,7 +105,7 @@ public class AdminConsole {
      * @return an item given its ID or <tt>null</tt> if it can't be found.
      */
     public static Item getItem(String id) {
-        return (Item)idMap.get(id);
+        return items.get(id);
     }
 
     /**
@@ -150,10 +161,12 @@ public class AdminConsole {
         Item item = getItem(subPageID);
         if (item != null) {
             Item parent = item.getParent();
-            while (parent.getId() == null) {
+            if (parent != null) {
                 parent = parent.getParent();
+                if (parent != null) {
+                    pageID = parent.getId();
+                }
             }
-            pageID = parent.getId();
         }
         return pageID;
     }
@@ -170,7 +183,7 @@ public class AdminConsole {
         private String description;
         private String url;
         private boolean active;
-        private Collection items;
+        private Map<String,Item> items;
         private Item parent;
 
         /**
@@ -198,26 +211,7 @@ public class AdminConsole {
         }
 
         private void init() {
-            items = Collections.synchronizedList(new ArrayList());
-//            items = Collections.synchronizedList(new ArrayList(){
-//                public boolean add(Object obj) {
-//                    Item item = (Item)obj;
-//                    if (contains(item)) {
-//                        Item i = (Item)get(indexOf(item));
-//                        i.setName(item.getName());
-//                        i.setDescription(item.getDescription());
-//                        i.setUrl(item.getUrl());
-//                        return true;
-//                    }
-//                    else {
-//                        super.add(item);
-//                        return true;
-//                    }
-//                };
-//            });
-            if (id != null && !"".equals(id.trim())) {
-                idMap.put(id, this);
-            }
+            items = Collections.synchronizedMap(new LinkedHashMap<String,Item>());
         }
 
         /**
@@ -297,11 +291,15 @@ public class AdminConsole {
             this.parent = parent;
         }
 
+        public void addItem(Item item) {
+            items.put(item.getId(), item);
+        }
+
         /**
          * Returns the items as a collection. Use the Collection API to get/set/remove items.
          */
-        public Collection getItems() {
-            return items;
+        public Collection<Item> getItems() {
+            return items.values();
         }
 
         public boolean equals(Object o) {
@@ -315,7 +313,7 @@ public class AdminConsole {
                 return false;
             }
             Item i = (Item) o;
-            if (!id.equals(i.id)) {
+            if (id == null || !id.equals(i.id)) {
                 return false;
             }
             return true;
@@ -377,85 +375,164 @@ public class AdminConsole {
     }
 
     private static void addToModel(InputStream in) throws Exception {
-        // Build an XMLPropertiesTest object from the input stream:
-        XMLProperties xml = new XMLProperties(in);
+
+        Document doc = XPPReader.parseDocument(new InputStreamReader(in), AdminConsole.class);
         // Set any global properties
-        if (xml.getProperty("global.appname") != null) {
-            appName = xml.getProperty("global.appname");
+        String globalAppname = getProperty(doc, "global.appname");
+        if (globalAppname != null) {
+            appName = globalAppname;
         }
-        if (xml.getProperty("global.logo-image") != null) {
-            logoImage = xml.getProperty("global.logo-image");
+        String globalLogoImage = getProperty(doc, "global.logo-image");
+        if (globalLogoImage != null) {
+            logoImage = globalLogoImage;
         }
+
         // Get all children of the 'tabs' element - should be 'tab' items:
-        String[] tabs = xml.getChildrenProperties("tabs");
-        for (int i=0; i<tabs.length; i++) {
-            String propName = "tabs." + tabs[i];
+        List tabs = doc.getRootElement().elements("tab");
+        for (int i=0; i<tabs.size(); i++) {
+            Element tab = (Element)tabs.get(i);
+
             // Create a new top level item with data from the xml file:
-            String id = xml.getProperty(propName + ".id");
-            String name = xml.getProperty(propName + ".name");
-            String description = xml.getProperty(propName + ".description");
+            String id = tab.attributeValue("id");
+            String name = tab.attributeValue("name");
+            String description = tab.attributeValue("description");
             Item item = new Item(id, name, description, null);
             // Add that item to the item collection
-            getItems().add(item);
+            items.put(id, item);
+
             // Delve down into this item's sidebars - build up a model of these then add into
             // the item above.
-            String[] sidebars = xml.getChildrenProperties(propName + ".sidebars");
-            for (int j=0; j<sidebars.length; j++) {
-                String sidebarName = propName + ".sidebars." + sidebars[j];
-                name = xml.getProperty(sidebarName + ".name");
+            List sidebars = tab.elements("sidebar");
+            for (int j=0; j<sidebars.size(); j++) {
+                Element sidebar = (Element)sidebars.get(j);
+
+                name = sidebar.attributeValue("name");
                 // Create a new item, set its name
-                Item subItem = new Item(null, name, null, null);
-                // Now iterate down another level, get the items for this item - this will be the
-                // specific links on the sidebar
-                String[] subitems = xml.getChildrenProperties(sidebarName + ".items");
-                for (int k=0; k<subitems.length; k++) {
-                    String subitemName = sidebarName + ".items." + subitems[k];
+                Item sidebarItem = new Item(null, name, null, null);
+                // Get all items of this sidebar:
+                List subitems = sidebar.elements("item");
+                for (int k=0; k<subitems.size(); k++) {
+                    Element subitem = (Element)subitems.get(k);
                     // Get the id, name, descr and url attributes:
-                    String subID = xml.getProperty(subitemName + ".id");
-                    String subName = xml.getProperty(subitemName + ".name");
-                    String subDescr = xml.getProperty(subitemName + ".description");
-                    String subURL = xml.getProperty(subitemName + ".url");
+                    String subID = subitem.attributeValue("id");
+                    String subName = subitem.attributeValue("name");
+                    String subDescr = subitem.attributeValue("description");
+                    String subURL = subitem.attributeValue("url");
                     // Build an item with this, add it to the subItem we made above
-                    Item kItem = new Item(subID, subName, subDescr, subURL, subItem);
-                    subItem.getItems().add(kItem);
+                    Item kItem = new Item(subID, subName, subDescr, subURL, sidebarItem);
+                    items.put(kItem.getId(), kItem);
+                    sidebarItem.addItem(kItem);
                     // Build any sub-sub menus:
-                    subAddtoModel(subitemName, xml, kItem);
+                    subAddtoModel(subitem, kItem);
                     // If this is the first item, set the root menu item's URL as this URL:
                     if (j==0 && k == 0) {
                         item.setUrl(subURL);
                     }
                 }
                 // Add the subItem to the item created above
-                subItem.setParent(item);
-                item.getItems().add(subItem);
+                sidebarItem.setParent(item);
+                items.put(sidebarItem.getId(), sidebarItem);
+                item.addItem(sidebarItem);
             }
         }
     }
 
-    private static void subAddtoModel(String path, XMLProperties props, Item parent) {
-        String propName = path + ".subsidebars";
-        String[] subsidebars = props.getChildrenProperties(propName);
-        for (int i=0; i<subsidebars.length; i++) {
-            String child = propName + "." + subsidebars[i];
-            String[] subsidebarchildren = props.getChildrenProperties(child);
-            for (int j=0; j<subsidebarchildren.length; j++) {
-                String root = propName  + ".subsidebar" + i + "." + subsidebarchildren[j];
-                String name = props.getProperty(root + ".name");
-                Item header = new Item(null, name, null, null, parent);
-                // Get the children of this
-                String subPath = root + ".items";
-                String[] allitems = props.getChildrenProperties(subPath);
-                for (int k=0; k<allitems.length; k++) {
-                    String subName = subPath + "." + allitems[k];
-                    String itemID = props.getProperty(subName + ".id");
-                    String itemName = props.getProperty(subName + ".name");
-                    String itemDescr = props.getProperty(subName + ".description");
-                    String itemURL = props.getProperty(subName + ".url");
-                    Item si = new Item(itemID, itemName, itemDescr, itemURL, header);
-                    header.getItems().add(si);
-                }
-                parent.getItems().add(header);
+    private static String getProperty(Document doc, String propName) {
+        String[] name = parsePropertyName(propName);
+        String value = null;
+        // Search for this property by traversing down the XML heirarchy.
+        Element element = doc.getRootElement();
+        for (int i = 0; i < name.length; i++) {
+            element = element.element(name[i]);
+            if (element == null) {
+                value = null;
+                break;
             }
+        }
+        // At this point, we found a matching property, so return its value.
+        // Empty strings are returned as null.
+        if (element != null) {
+            value = element.getTextTrim();
+            if ("".equals(value)) {
+                value = null;
+            }
+        }
+        return value;
+    }
+
+    private static String getAttribute(Document doc, String propName, String attribute) {
+        String[] name = parsePropertyName(propName);
+        String value = null;
+        // Search for this property by traversing down the XML heirarchy.
+        Element element = doc.getRootElement();
+        for (int i = 0; i < name.length; i++) {
+            element = element.element(name[i]);
+            if (element == null) {
+                value = null;
+                break;
+            }
+        }
+        // At this point, we found a matching property, so return its value.
+        // Empty strings are returned as null.
+        value = element.attributeValue(attribute);
+        if ("".equals(value)) {
+            value = null;
+        }
+        return value;
+    }
+
+    private static Element[] getChildElements(Document doc, String propName) {
+        String[] name = parsePropertyName(propName);
+        // Search for this property by traversing down the XML heirarchy.
+        Element element = doc.getRootElement();
+        for (int i = 0; i < name.length; i++) {
+            element = element.element(name[i]);
+            if (element == null) {
+                // This node doesn't match this part of the property name which
+                // indicates this property doesn't exist so return empty array.
+                return new Element[]{};
+            }
+        }
+        // We found matching property, return names of children.
+        List children = element.elements();
+        int childCount = children.size();
+        Element[] elements = new Element[childCount];
+        for (int i=0; i<childCount; i++) {
+            elements[i] = (Element)children.get(i);
+        }
+        return elements;
+    }
+
+    private static String[] parsePropertyName(String name) {
+        List propName = new ArrayList(5);
+        // Use a StringTokenizer to tokenize the property name.
+        StringTokenizer tokenizer = new StringTokenizer(name, ".");
+        while (tokenizer.hasMoreTokens()) {
+            propName.add(tokenizer.nextToken());
+        }
+        return (String[])propName.toArray(new String[propName.size()]);
+    }
+
+    private static void subAddtoModel(Element parentElement, Item parentItem) {
+
+        List subsidebars = parentElement.elements("subsidebar");
+        for (int i=0; i<subsidebars.size(); i++) {
+            Element subsidebar = (Element)subsidebars.get(i);
+            String subsidebarName = subsidebar.attributeValue("name");
+            Item subsidebarItem = new Item(null, subsidebarName, null, null, parentItem);
+            // Get the items under it
+            List subitems = subsidebar.elements("item");
+            for (int j=0; j<subitems.size(); j++) {
+                Element item = (Element)subitems.get(j);
+                String id = item.attributeValue("id");
+                String name = item.attributeValue("name");
+                String url = item.attributeValue("url");
+                String descr = item.attributeValue("description");
+                Item newItem = new Item(id, name, descr, url, subsidebarItem);
+                subsidebarItem.addItem(newItem);
+                items.put(id, newItem);
+            }
+            parentItem.addItem(subsidebarItem);
         }
     }
 
@@ -470,9 +547,8 @@ public class AdminConsole {
         return classLoaders;
     }
 
+    // Called by test classes to wipe and reload the internal data
     private static void clear() {
-        items = new ArrayList();
-        idMap = new HashMap();
-        load();
+        init();
     }
 }

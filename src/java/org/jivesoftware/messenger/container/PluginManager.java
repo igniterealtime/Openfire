@@ -1,31 +1,57 @@
 /**
+
  * $RCSfile$
+
  * $Revision$
+
  * $Date$
+
  *
+
  * Copyright (C) 2004 Jive Software. All rights reserved.
+
  *
+
  * This software is published under the terms of the GNU Public License (GPL),
+
  * a copy of which is included in this distribution.
+
  */
 
 package org.jivesoftware.messenger.container;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Version;
+
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.XMPPServer;
+
 import org.jivesoftware.admin.AdminConsole;
+
 import org.dom4j.Document;
+
 import org.dom4j.Element;
+
 import org.dom4j.Attribute;
+
 import org.dom4j.io.SAXReader;
 
+
+
 import java.io.*;
+
 import java.util.*;
+
 import java.util.jar.JarFile;
+
 import java.util.jar.JarEntry;
+
 import java.util.zip.ZipFile;
+
 import java.util.concurrent.ScheduledExecutorService;
+
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,11 +61,13 @@ import java.util.concurrent.TimeUnit;
  * @see Plugin
  * @author Matt Tucker
  */
+
 public class PluginManager {
 
     private File pluginDirectory;
     private Map<String,Plugin> plugins;
     private Map<Plugin,PluginClassLoader> classloaders;
+    private Map<Plugin,File> pluginDirs;
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
 
@@ -51,6 +79,7 @@ public class PluginManager {
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
         plugins = new HashMap<String,Plugin>();
+        pluginDirs = new HashMap<Plugin,File>();
         classloaders = new HashMap<Plugin,PluginClassLoader>();
     }
 
@@ -72,9 +101,10 @@ public class PluginManager {
         }
         // Shutdown all installed plugins.
         for (Plugin plugin : plugins.values()) {
-            plugin.destroy();
+            plugin.destroyPlugin();
         }
         plugins.clear();
+        pluginDirs.clear();
         classloaders.clear();
     }
 
@@ -112,11 +142,29 @@ public class PluginManager {
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
                 Document pluginXML = saxReader.read(pluginConfig);
+                // See if the plugin specifies a version of Jive Messenger
+                // required to run.
+                Element minServerVersion = (Element)pluginXML.selectSingleNode(
+                        "/plugin/minServerVersion");
+                if (minServerVersion != null) {
+                    String requiredVersion = minServerVersion.getTextTrim();
+                    Version version = XMPPServer.getInstance().getServerInfo().getVersion();
+                    String hasVersion = version.getMajor() + "." + version.getMinor() + "." +
+                            version.getMicro();
+                    if (hasVersion.compareTo(requiredVersion) < 0) {
+                        String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
+                                "server version " + requiredVersion;
+                        Log.warn(msg);
+                        System.out.println(msg);
+                        return;
+                    }
+                }
                 PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
-                plugin.initialize(this, pluginDir);
+                plugin.initializePlugin(this, pluginDir);
                 plugins.put(pluginDir.getName(), plugin);
+                pluginDirs.put(plugin, pluginDir);
                 classloaders.put(plugin, pluginLoader);
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "web.xml");
@@ -157,7 +205,7 @@ public class PluginManager {
     }
 
     /**
-     * Unloads a plugin. The {@link Plugin#destroy()} method will be called and then
+     * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then
      * any resources will be released.
      *
      * @param pluginName the name of the plugin to unload.
@@ -176,9 +224,10 @@ public class PluginManager {
         }
 
         PluginClassLoader classLoader = classloaders.get(plugin);
-        plugin.destroy();
+        plugin.destroyPlugin();
         classLoader.destroy();
         plugins.remove(pluginName);
+        pluginDirs.remove(plugin);
         classloaders.remove(plugin);
     }
 
@@ -187,6 +236,80 @@ public class PluginManager {
     {
         PluginClassLoader loader = classloaders.get(plugin);
         return loader.loadClass(className);
+    }
+
+    /**
+     * Returns the name of a plugin. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's name.
+     */
+    public String getName(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/name");
+    }
+
+    /**
+     * Returns the description of a plugin. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's description.
+     */
+    public String getDescription(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/description");
+    }
+
+    /**
+     * Returns the author of a plugin. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's author.
+     */
+    public String getAuthor(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/author");
+    }
+
+    /**
+     * Returns the version of a plugin. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's version.
+     */
+    public String getVersion(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/version");
+    }
+
+    /**
+     * Returns the value of an element selected via an xpath expression from
+     * a Plugin's plugin.xml file.
+     *
+     * @param plugin the plugin.
+     * @param xpath the xpath expression.
+     * @return the value of the element selected by the xpath expression.
+     */
+    private String getElementValue(Plugin plugin, String xpath) {
+        File pluginDir = pluginDirs.get(plugin);
+        if (pluginDir == null) {
+            return null;
+        }
+        try {
+            File pluginConfig = new File(pluginDir, "plugin.xml");
+            if (pluginConfig.exists()) {
+                SAXReader saxReader = new SAXReader();
+                Document pluginXML = saxReader.read(pluginConfig);
+                Element element = (Element)pluginXML.selectSingleNode(xpath);
+                if (element != null) {
+                    return element.getTextTrim();
+                }
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        return null;
     }
 
     /**
@@ -296,7 +419,7 @@ public class PluginManager {
          *
          * @param pluginName the name of the plugin.
          * @param file the JAR file
-         * @param dir the directory to extract the plugin to. 
+         * @param dir the directory to extract the plugin to.
          */
         private void unzipPlugin(String pluginName, File file, File dir) {
             try {

@@ -22,9 +22,9 @@ developer's guide for creating plugins.
 <h2>Structure of a Plugin</h2>
 
 <p>
-Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. If
-a plugin is deployed as a JAR file, it will be automatically expanded into
-a directory. The files in a plugin directory are as follows:
+Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. When a plugin
+is deployed as a JAR file, it is automatically expanded into a directory. The files in a 
+plugin directory are as follows:
 </p>
 
 <fieldset>
@@ -54,7 +54,14 @@ file might look like the following:
 &lt;plugin&gt;
     <span class="comment">&lt;!-- Main plugin class --&gt;</span>
     &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
-
+    
+    <span class="comment">&lt;!-- Plugin meta-data --&gt;</span>
+    &lt;name&gt;Example Plugin&lt;/name&gt;
+    &lt;description&gt;This is an example plugin.&lt;/description&gt;
+    &lt;author&gt;Jive Software&lt;/author&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+    &lt;minServerVersion&gt;2.1.2&lt;/minServerVersion&gt;
+    
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
     &lt;adminconsole&gt;
         <span class="comment">&lt;!-- More on this below --&gt;</span>
@@ -63,12 +70,23 @@ file might look like the following:
 </pre>
 </fieldset>
 
+<p>The meta-data fields that can be set in the plugin.xml file:
+
+<ul> 
+    <li>name -- the name of the plugin.</li>
+    <li>description -- the description of the plugin.</li>
+    <li>author -- the author of the plugin.</li>
+    <li>version -- the version of the pluginn.</li>
+    <li>minServerVersion -- the minimum version of Jive Messenger required
+          to run the plugin (supported by Jive Messenger 2.1.2 and later). If the
+          server version is less than the required value, the plugin will not be started.</li>
+</ul></p> 
+ 
 <p>Your plugin class must be implement the
 <tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
 interface from the <a href="javadoc/index.html">Jive Messenger API</a> as 
 well as have a default (no argument) contructor. The Plugin interface has
-methods for initializing and destroying the plugin, as well as methods for retrieving meta-data
-such as the plugin name, description, version, and author.
+methods for initializing and destroying the plugin.
 </p>
 
 <fieldset>
@@ -85,22 +103,6 @@ import java.io.File;
  * A sample plugin for Jive Messenger.
  */
 public class ExamplePlugin implements Plugin {
-
-    public String getName() {
-        return "My Plugin";
-    }
-
-    public String getDescription() {
-        return "A simple plugin";
-    }
-
-    public String getAuthor() {
-        return "Johnny Java Coder";
-    }
-
-    public String getVersion() {
-        return "1.0";
-    }
 
     public void initialize(PluginManager manager, File pluginDirectory) {
         <span class="comment">// Your code goes here</span>

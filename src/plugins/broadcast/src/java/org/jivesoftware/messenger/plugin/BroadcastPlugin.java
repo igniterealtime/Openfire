@@ -50,6 +50,7 @@ public class BroadcastPlugin implements Plugin, Component {
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
     private ComponentManager componentManager;
+    private PluginManager pluginManager;
 
     /**
      * Constructs a new broadcast plugin.
@@ -63,23 +64,8 @@ public class BroadcastPlugin implements Plugin, Component {
 
     // Plugin Interface
 
-    public String getName() {
-        return "Broadcast Plugin";
-    }
-
-    public String getDescription() {
-        return "Broadcasts messages to users.";
-    }
-
-    public String getAuthor() {
-        return "Jive Software";
-    }
-
-    public String getVersion() {
-        return "1.0";
-    }
-
-    public void initialize(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        pluginManager = manager;
         sessionManager = SessionManager.getInstance();
         groupManager = GroupManager.getInstance();
 
@@ -93,7 +79,7 @@ public class BroadcastPlugin implements Plugin, Component {
         }
     }
 
-    public void destroy() {
+    public void destroyPlugin() {
         // Unregister component.
         try {
             componentManager.removeComponent(serviceName);
@@ -101,6 +87,8 @@ public class BroadcastPlugin implements Plugin, Component {
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        componentManager = null;
+        pluginManager = null;
         sessionManager = null;
         groupManager = null;
         allowedUsers.clear();
@@ -115,6 +103,16 @@ public class BroadcastPlugin implements Plugin, Component {
     }
 
     // Component Interface
+
+    public String getName() {
+        // Get the name from the plugin.xml file.
+        return pluginManager.getName(this);
+    }
+
+    public String getDescription() {
+        // Get the description from the plugin.xml file.
+        return pluginManager.getDescription(this);
+    }
 
     public void processPacket(Packet packet) {
         // Only respond to incoming messages. TODO: handle disco, presence, etc.

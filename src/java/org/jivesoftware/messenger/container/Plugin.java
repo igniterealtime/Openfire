@@ -41,6 +41,11 @@ import java.io.File;
  * &lt;?xml version="1.0" encoding="UTF-8"?&gt;
  * &lt;plugin&gt;
  *     &lt;class&gt;org.example.YourPlugin&lt;/class&gt;
+ *     &lt;name&gt;Example Plugin&lt;/name&gt;
+ *     &lt;description&gt;This is an example plugin.&lt;/description&gt;
+ *     &lt;author&gt;Foo Inc.&lt;/author&gt;
+ *     &lt;version&gt;1.0&lt;/version&gt;
+ *     &lt;minServerVersion&gt;2.1.2&lt;/minServerVersion&gt;
  * &lt;/plugin&gt;</pre>
  *
  * Each plugin will be loaded in its own class loader.
@@ -50,44 +55,22 @@ import java.io.File;
 public interface Plugin {
 
     /**
-     * Returns the name of this plugin.
-     *
-     * @return the plugin's name.
-     */
-    public String getName();
-
-    /**
-     * Returns the description of the plugin or <tt>null</tt> if there is no description.
-     *
-     * @return this plugin's description.
-     */
-    public String getDescription();
-
-    /**
-     * Returns the author of this plugin.
-     *
-     * @return the plugin's author.
-     */
-    public String getAuthor();
-
-    /**
-     * The plugin's version.
-     *
-     * @return the version of the plugin.
-     */
-    public String getVersion();
-
-    /**
      * Initializes the plugin.
      *
      * @param manager the plugin manager.
      * @param pluginDirectory the directory where the plugin is located.
      */
-    public void initialize(PluginManager manager, File pluginDirectory);
+    public void initializePlugin(PluginManager manager, File pluginDirectory);
 
     /**
-     * Destroys the plugin.
+     * Destroys the plugin.<p>
+     *
+     * Implementations of this method must release all resources held
+     * by the plugin such as file handles, database or network connections,
+     * and references to core Jive Messenger classes. In other words, a
+     * garbage collection executed after this method is called must be able
+     * to clean up all plugin classes.
      */
-    public void destroy();
+    public void destroyPlugin();
 
 }

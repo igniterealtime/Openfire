@@ -81,7 +81,6 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)userCount/(double)range);
     int curPage = (start/range) + 1;
-    System.err.println("curPage: " + curPage);
 
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);

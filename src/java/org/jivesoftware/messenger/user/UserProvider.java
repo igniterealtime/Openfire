@@ -28,7 +28,7 @@ public interface UserProvider {
      * @return the User.
      * @throws UserNotFoundException if the User could not be loaded.
      */
-    User loadUser(String username) throws UserNotFoundException;
+    public User loadUser(String username) throws UserNotFoundException;
 
     /**
      * Creates a new user. This method should throw an
@@ -42,7 +42,7 @@ public interface UserProvider {
      * @return a new User.
      * @throws UserAlreadyExistsException if the username is already in use.
      */
-    User createUser(String username, String password, String name, String email)
+    public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException;
 
     /**
@@ -52,7 +52,7 @@ public interface UserProvider {
      *
      * @param username the username to delete.
      */
-    void deleteUser(String username);
+    public void deleteUser(String username);
 
     /**
      * Returns the number of users in the system.
@@ -90,6 +90,19 @@ public interface UserProvider {
     public Collection<User> getUsers(int startIndex, int numResults);
 
     /**
+     * Returns the user's password. This method should throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @return the user's password.
+     * @throws UserNotFoundException if the given user could not be loaded.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException;
+
+    /**
      * Sets the users's password. This method should throw an UnsupportedOperationException
      * if this operation is not supported by the backend user store.
      *
@@ -100,7 +113,7 @@ public interface UserProvider {
      *      support the operation (this is an optional operation).
      */
     public void setPassword(String username, String password)
-            throws UserNotFoundException;
+            throws UserNotFoundException, UnsupportedOperationException;
 
     /**
      * Sets the user's name. This method should throw an UnsupportedOperationException
@@ -143,6 +156,41 @@ public interface UserProvider {
      * @param modificationDate the date the user was last modified.
      * @throws UserNotFoundException if the user could not be found.
      */
-    public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException;
+    public void setModificationDate(String username, Date modificationDate)
+            throws UserNotFoundException;
+
+    /**
+     * Returns the set of fields that can be used for searching for users. Each field
+     * returned must support wild-card and keyword searching. For example, an
+     * implementation might send back the set {"Username", "Name", "Email"}. Any of
+     * those three fields can then be used in a search with the
+     * {@link #findUsers(String,String)} method.<p>
+     *
+     * This method should throw an UnsupportedOperationException if this
+     * operation is not supported by the backend user store.
+     *
+     * @return the valid search fields.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public Collection<String> getSearchFields() throws UnsupportedOperationException;
+
+    /**
+     * Searches for users based on a field an query string. The field must be one
+     * of the values returned by {@link #getSearchFields()}. The query can include
+     * wildcards. For example, a search on the field "Name" with a query of "Ma*"
+     * might return user's with the name "Matt", "Martha" and "Madeline".<p>
+     *
+     * This method should throw an UnsupportedOperationException if this
+     * operation is not supported by the backend user store. 
+     *
+     * @param field the field to search on.
+     * @param query the query string.
+     * @return a Collection of users that match the search.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public Collection<User> findUsers(String field, String query)
+            throws UnsupportedOperationException;
 
 }

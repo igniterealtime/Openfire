@@ -52,6 +52,8 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE jiveUser SET creationDate=? WHERE username=?";
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE jiveUser SET modificationDate=? WHERE username=?";
+    private static final String LOAD_PASSWORD =
+            "SELECT password FROM jiveUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
             "UPDATE jiveUser SET password=? WHERE username=?";
 
@@ -336,6 +338,30 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    public String getPassword(String username) throws UserNotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PASSWORD);
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new UserNotFoundException(username);
+            }
+            return rs.getString(1);
+        }
+        catch (SQLException sqle) {
+            throw new UserNotFoundException(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
     public void setPassword(String username, String password) throws UserNotFoundException
     {
         Connection con = null;
@@ -356,5 +382,58 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
+    }
+
+    public Collection<String> getSearchFields() throws UnsupportedOperationException {
+        return Arrays.asList("Username", "Name", "Email");
+    }
+
+    public Collection<User> findUsers(String field, String query) throws UnsupportedOperationException {
+        if (!getSearchFields().contains(field)) {
+            throw new IllegalArgumentException("Search field " + field + " is invalid.");
+        }
+        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
+        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // surrounding the whole query with two '%'. This will return more data than desired,
+        // but is better than returning less data than desired.
+        query = "%" + query.replace('*', '%') + "%";
+        if (query.endsWith("%%")) {
+            query = query.substring(0, query.length()-1);
+        }
+
+        List<String> usernames = new ArrayList<String>(500);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            if (field.equals("Username")) {
+                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE username LIKE ?");
+            }
+            else if (field.equals("Name")) {
+                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE name LIKE ?");
+            }
+            else {
+                pstmt = con.prepareStatement("SELECT username FROM jiveUser WHERE email LIKE ?");
+            }
+            pstmt.setString(1, query);
+            ResultSet rs = pstmt.executeQuery();
+            // Set the fetch size. This will prevent some JDBC drivers from trying
+            // to load the entire result set into memory.
+            DbConnectionManager.setFetchSize(rs, 500);
+            while (rs.next()) {
+                usernames.add(rs.getString(1));
+            }
+            rs.close();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
     }
 }

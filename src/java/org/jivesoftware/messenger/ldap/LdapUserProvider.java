@@ -31,9 +31,29 @@ import java.util.*;
 public class LdapUserProvider implements UserProvider {
 
     private LdapManager manager;
+    private Map<String, String> searchFields;
 
     public LdapUserProvider() {
         manager = LdapManager.getInstance();
+        searchFields = new HashMap<String,String>();
+        String fieldList = JiveGlobals.getXMLProperty("ldap.searchFields");
+        // If the value isn't present, default to to username, name, and email.
+        if (fieldList == null) {
+            searchFields.put("Username", manager.getUsernameField());
+            searchFields.put("Name", manager.getNameField());
+            searchFields.put("Email", manager.getEmailField());
+        }
+        else {
+            try {
+                for (StringTokenizer i=new StringTokenizer(fieldList, ","); i.hasMoreTokens(); ) {
+                    String[] field = i.nextToken().split("/");
+                    searchFields.put(field[0], field[1]);
+                }
+            }
+            catch (Exception e) {
+                Log.error("Error parsing LDAP search fields: " + fieldList, e);
+            }
+        }
     }
 
     public User loadUser(String username) throws UserNotFoundException {
@@ -215,6 +235,12 @@ public class LdapUserProvider implements UserProvider {
         return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
     }
 
+    public String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
     public void setPassword(String username, String password) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
@@ -233,5 +259,61 @@ public class LdapUserProvider implements UserProvider {
 
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         throw new UnsupportedOperationException();
+    }
+
+    public Collection<String> getSearchFields() throws UnsupportedOperationException {
+        return Collections.unmodifiableCollection(searchFields.keySet());
+    }
+
+    public Collection<User> findUsers(String field, String query)
+            throws UnsupportedOperationException
+    {
+        String searchAttribute = searchFields.get(field);
+        if (searchAttribute == null) {
+            throw new IllegalArgumentException("Search field " + field + " is invalid.");
+        }
+        List<String> usernames = new ArrayList<String>();
+        LdapContext ctx = null;
+        try {
+            ctx = manager.getContext();
+            // Sort on username field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
+            // Search for the dn based on the username.
+            SearchControls constraints = new SearchControls();
+            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            String filter = "(" + searchAttribute + "=" + query + ")";
+            NamingEnumeration answer = ctx.search("", filter, constraints);
+            while (answer.hasMoreElements()) {
+                // Get the next userID.
+                usernames.add(
+                    (String)((SearchResult)answer.next()).getAttributes().get(
+                    manager.getUsernameField()).get()
+                );
+            }
+            // If client-side sorting is enabled, sort.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
+                    "ldap.clientSideSorting")).booleanValue())
+            {
+                Collections.sort(usernames);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) { }
+        }
+        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
     }
 }

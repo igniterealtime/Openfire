@@ -176,4 +176,43 @@ public class UserManager {
     public Collection<User> getUsers(int startIndex, int numResults) {
         return provider.getUsers(startIndex, numResults);
     }
+
+    /**
+     * Returns the set of fields that can be used for searching for users. Each field
+     * returned must support wild-card and keyword searching. For example, an
+     * implementation might send back the set {"Username", "Name", "Email"}. Any of
+     * those three fields can then be used in a search with the
+     * {@link #findUsers(String,String)} method.<p>
+     *
+     * This method should throw an UnsupportedOperationException if this
+     * operation is not supported by the backend user store.
+     *
+     * @return the valid search fields.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public Collection<String> getSearchFields() throws UnsupportedOperationException {
+        return provider.getSearchFields();
+    }
+
+    /**
+     * Searches for users based on a field an query string. The field must be one
+     * of the values returned by {@link #getSearchFields()}. The query can include
+     * wildcards. For example, a search on the field "Name" with a query of "Ma*"
+     * might return user's with the name "Matt", "Martha" and "Madeline".<p>
+     *
+     * This method should throw an UnsupportedOperationException if this
+     * operation is not supported by the backend user store.
+     *
+     * @param field the field to search on.
+     * @param query the query string.
+     * @return a Collection of users that match the search.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public Collection<User> findUsers(String field, String query)
+            throws UnsupportedOperationException
+    {
+        return provider.findUsers(field, query);
+    }
 }

@@ -631,7 +631,7 @@
         <antcall target="-plugins-impl" />
         <antcall target="-plugins-impl-dev" />
 
-        </target><target name="-plugins-impl" if="${dirlist}">
+        </target><target name="-plugins-impl" if="dirlist">
 
         <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
         <for list="${dirlist}" param="plugin" trim="true">
@@ -640,14 +640,14 @@
             </sequential>
         </for>
 
-        </target><target name="-plugins-impl-dev" if="${plugin.dev.dir}">
+        </target><target name="-plugins-impl-dev" if="plugin.dev.dir">
 
         <!-- Get a list of plugins in the optional dev dir -->
         <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml" />
 
         <antcall target="-plugin-impl-dev-build" />
 
-        </target><target name="-plugin-impl-dev-build" if="${dirlist2}">
+        </target><target name="-plugin-impl-dev-build" if="dirlist2">
 
         <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
         <for list="${dirlist2}" param="plugin" trim="true">

@@ -57,19 +57,20 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String UPDATE_ROOM = 
-        "UPDATE mucRoom SET name=?, modificationDate=?, description=?, canChangeSubject=?, maxUsers=?, " +
+        "UPDATE mucRoom SET modificationDate=?, name=?, description=?, canChangeSubject=?, maxUsers=?, " +
         "publicRoom=?, moderated=?, invitationRequired=?, canInvite=?, password=?, " +
         "canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, inMemory=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, description, canChangeSubject, " +
         "maxUsers, publicRoom, moderated, invitationRequired, canInvite, password, canDiscoverJID, " +
-        "logEnabled, subject, rolesToBroadcast, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "logEnabled, subject, rolesToBroadcast, lastActiveDate, inMemory) " +
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_IN_MEMORY =
-        "UPDATE mucRoom SET inMemory=? WHERE roomID=?";
+        "UPDATE mucRoom SET lastActiveDate=?, inMemory=? WHERE roomID=?";
     private static final String RESET_IN_MEMORY =
-        "UPDATE mucRoom SET inMemory=0 WHERE inMemory=1";
+        "UPDATE mucRoom SET lastActiveDate=?, inMemory=0 WHERE inMemory=1";
     private static final String DELETE_ROOM =
         "DELETE FROM mucRoom WHERE roomID=?";
     private static final String DELETE_AFFILIATIONS =
@@ -326,7 +327,8 @@ public class MUCPersistenceManager {
                 pstmt.setInt(14, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setString(15, room.getSubject());
                 pstmt.setInt(16, marshallRolesToBroadcast(room));
-                pstmt.setInt(17, 1); // the room starts always "in memory"
+                pstmt.setString(17, StringUtils.dateToMillis(nowDate));
+                pstmt.setInt(18, 1); // the room starts always "in memory"
                 pstmt.execute();
             }
         }
@@ -394,13 +396,16 @@ public class MUCPersistenceManager {
             return;
         }
 
+        long now = System.currentTimeMillis();
+        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_IN_MEMORY);
-            pstmt.setBoolean(1, inMemory);
-            pstmt.setLong(2, room.getID());
+            pstmt.setString(1, StringUtils.dateToMillis(nowDate));
+            pstmt.setBoolean(2, inMemory);
+            pstmt.setLong(3, room.getID());
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -420,11 +425,14 @@ public class MUCPersistenceManager {
      * the service is starting up (again).
      */
     public static void resetRoomInMemory() {
+        long now = System.currentTimeMillis();
+        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(RESET_IN_MEMORY);
+            pstmt.setString(1, StringUtils.dateToMillis(nowDate));
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

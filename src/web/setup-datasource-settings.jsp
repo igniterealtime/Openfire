@@ -48,10 +48,10 @@
             ConnectionProvider conProvider = new EmbeddedConnectionProvider();
             DbConnectionManager.setConnectionProvider(conProvider);
             if (testConnection(errors)) {
-                // update the sidebar status
+                // Update the sidebar status
                 session.setAttribute("jive.setup.sidebar.3","done");
                 session.setAttribute("jive.setup.sidebar.4","in_progress");
-                // redirect
+                // Redirect
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
             }

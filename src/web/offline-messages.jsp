@@ -56,7 +56,7 @@
     int strategy = ParamUtils.getIntParameter(request,"strategy",-1);
     int storeStrategy = ParamUtils.getIntParameter(request,"storeStrategy",-1);
     double quota = ParamUtils.getIntParameter(request,"quota",0);
-    DecimalFormat format = new DecimalFormat("#0.0");
+    DecimalFormat format = new DecimalFormat("#0.00");
 
     // Get the offline message manager
     OfflineMessageStrategy manager = admin.getXMPPServer().getOfflineMessageStrategy();
@@ -190,6 +190,11 @@ user that is not logged in. Supporting store-and-forward of 'offline messages' c
 feature of an XMPP deployment. However, offline messages, like email, can take up a significant
 amount of space on a server. There are several options for handling offline messages; select
 the policy that best suites your needs.
+</p>
+
+<p>
+Current size of all offline message:
+<b><%= format.format(OfflineMessageStore.getInstance().getSize()/1024.0/1024.0) %> MB</b>
 </p>
 
 <form action="offline-messages.jsp">

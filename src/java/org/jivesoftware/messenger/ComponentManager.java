@@ -13,7 +13,6 @@ package org.jivesoftware.messenger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -56,7 +55,7 @@ public class ComponentManager {
      * @param component the <code>Component</code> to register.
      */
     public void addComponent(String jid, Component component) {
-        jid = validateJID(jid);
+        jid = new JID(jid).toBareJID();
         components.put(jid, component);
 
         // Check for potential interested users.
@@ -69,7 +68,7 @@ public class ComponentManager {
      * @param jid the jid mapped to the particular component.
      */
     public void removeComponent(String jid) {
-        components.remove(validateJID(jid));
+        components.remove(new JID(jid).toBareJID());
     }
 
     /**
@@ -80,18 +79,19 @@ public class ComponentManager {
      * @return the component with the specified id.
      */
     public Component getComponent(String jid) {
-        if (components.containsKey(validateJID(jid))) {
-            return components.get(validateJID(jid));
+        jid = new JID(jid).toBareJID();
+        if (components.containsKey(jid)) {
+            return components.get(jid);
         }
         else {
-            String serverName = StringUtils.parseServer(validateJID(jid));
+            String serverName = new JID(jid).getDomain();
             int index = serverName.indexOf(".");
             if (index != -1) {
                 String serviceName = serverName.substring(0, index);
                 jid = serviceName;
             }
         }
-        return components.get(validateJID(jid));
+        return components.get(jid);
     }
 
     /**
@@ -116,11 +116,6 @@ public class ComponentManager {
         if (router != null) {
             router.route(packet);
         }
-    }
-
-    private String validateJID(String jid) {
-        jid = jid.trim().toLowerCase();
-        return jid;
     }
 
     private void checkPresences() {

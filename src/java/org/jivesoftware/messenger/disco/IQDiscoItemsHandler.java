@@ -22,7 +22,6 @@ import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -178,7 +177,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             serverItems.add(element);
             
             // Add the new item as a valid entity that could receive info and items disco requests
-            String host = StringUtils.parseServer(discoItem.getJID());
+            String host = new JID(discoItem.getJID()).getDomain();
             infoHandler.setProvider(host, discoItem.getDiscoInfoProvider());
             setProvider(host, discoItem.getDiscoItemsProvider());
         }
@@ -209,8 +208,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private DiscoItemsProvider getServerItemsProvider() {
         DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
-            public Iterator<Element> getItems(String name, String node, JID senderJID)
-                    throws UnauthorizedException {
+            public Iterator<Element> getItems(String name, String node, JID senderJID) {
                 return serverItems.iterator();
             }
         };

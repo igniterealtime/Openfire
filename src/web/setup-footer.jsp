@@ -16,7 +16,7 @@
 </table><br>
 
 <div class="jive-setup-footer">
-&copy; <a href="http://www.jivesoftware.org" target="_blank">Jive Software</a>, 2004
+&copy; <a href="http://www.jivesoftware.org" target="_blank">Jive Software</a>, 2005
 </div>
 
 </body>

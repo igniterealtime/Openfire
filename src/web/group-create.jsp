@@ -110,6 +110,22 @@ errorPage="error.jsp"%>
     <jsp:include page="title.jsp" flush="true"/>
     <c:set var="submit" value="${param.create}"/>
     <c:set var="errors" value="${errors}"/>
+
+    <script language="javascript">
+    <!--
+    function refreshDisplayName(showCheck)
+    {
+        document.forms.f.display.disabled=!showCheck.checked;
+    }
+    function setDisplayName()
+    {
+        if (document.forms.f.display.value == "") {
+            document.forms.f.display.value=document.forms.f.name.value;
+        }
+    }
+    //-->
+    </script>
+
 <%
     if (errors.get("general") != null) {
 %>
@@ -147,7 +163,7 @@ errorPage="error.jsp"%>
                         </td>
                         <td width="99%">
                             <input type="text"                                 name="name" size="30" maxlength="75"
-                                   value="<%= ((name != null) ? name : "") %>" id="gname">
+                                   value="<%= ((name != null) ? name : "") %>" id="gname" onChange="setDisplayName()">
 <%
                             if (errors.get("name") != null) {
 %>
@@ -179,11 +195,21 @@ errorPage="error.jsp"%>
                         </td>
                     </tr>
                     <tr>
+                        <td nowrap width="1%">
+                            Initial Member(s):
+                        </td>
+                        <td nowrap class="c1" align="left">
+                            <input type="text" size="40" name="users"/>
+                            &nbsp;
+                        </td>
+                    </tr>
+					<tr><td height="15" colspan="3"><img src="images/blank.gif"></td>
+                    <tr>
                         <td width="1%" nowrap>
                             <label for="gshow">Show group in group members' rosters:</label>
                         </td>
                         <td width="99%">
-                            <input type="checkbox" name="show" value="true" id="gshow"/>
+                            <input type="checkbox" name="show" value="true" id="gshow" onclick="refreshDisplayName(this)"/>
                         </td>
                     </tr>
                     <tr>
@@ -191,7 +217,7 @@ errorPage="error.jsp"%>
                             <label for="gdisplay">Display name in roster:</label>
                         </td>
                         <td nowrap class="c1" align="left">
-                            <input type="text" size="40" name="display" id="gdisplay"/>
+                            <input type="text" size="40" name="display" id="gdisplay" disabled/>
 <%
                                 if (errors.get("display") != null) {
 %>
@@ -199,15 +225,6 @@ errorPage="error.jsp"%>
 <%
                                 }
 %>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td nowrap width="1%">
-                            Initial Member(s):
-                        </td>
-                        <td nowrap class="c1" align="left">
-                            <input type="text" size="40" name="users"/>
-                            &nbsp;
                         </td>
                     </tr>
                 </table>

@@ -163,6 +163,16 @@ import="java.text.DateFormat,
         Edit group settings and add or remove group members and administrators
         using the forms below.
     </p>
+
+    <script language="javascript">
+    <!--
+    function refreshDisplayName(showCheck)
+    {
+    document.forms.ff.newDisplay.disabled=!showCheck.checked;
+    }
+    //-->
+    </script>
+
 <%
     if (success) {
 %>
@@ -250,11 +260,12 @@ import="java.text.DateFormat,
 
                 <% } %>
             </tr>
+            <tr><td height="15" colspan="3"><img src="images/blank.gif"></td>
             <tr>
                 <td width="1%" nowrap>
                     Show group in group members' rosters:
                 </td>
-                <%  boolean showInRoster = "true".equals(group.getProperties().get("showInRoster"));
+                <%  boolean showInRoster = "true".equals(group.getProperties().get("showInRoster")) || errors.get("display") != null;
                     if(!edit) { %>
                 <td colspan="2">
                     <%= (showInRoster ? "Enabled" : "Disabled") %>
@@ -262,7 +273,7 @@ import="java.text.DateFormat,
                 <% } else { %>
 
                 <td>
-                <input type="checkbox" name="newShow" value="true" <%= (showInRoster ? "checked" : "") %>/>
+                <input type="checkbox" name="newShow" value="true" <%= (showInRoster ? "checked" : "") %> onclick="refreshDisplayName(this)"/>
                 </td>
 
                 <% } %>
@@ -279,7 +290,7 @@ import="java.text.DateFormat,
                 <% } else { %>
 
                 <td>
-                <input type="text" size="40" name="newDisplay" value="<%= displayName %>"/>
+                <input type="text" size="40" name="newDisplay" value="<%= displayName %>" <%= showInRoster ? "" : "disabled"%>/>
 <%
                 if (errors.get("display") != null) {
 %>

@@ -66,7 +66,7 @@ public class ComponentManager {
      * to the specified JID.
      *
      * @param jid the jid mapped to the component.
-     * @return
+     * @return the component with the specified id.
      */
     public Component getComponent(String jid) {
         if (components.containsKey(validateJID(jid))) {

@@ -270,9 +270,10 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private StreamIDFactory streamIDFactory;
 
     /**
-     * Creates a new <code>Session</code>
+     * Creates a new <tt>Session</tt>.
+     *
      * @param conn the connection to create the session from.
-     * @return
+     * @return a newly created session.
      * @throws UnauthorizedException
      */
     public Session createSession(Connection conn) throws UnauthorizedException {

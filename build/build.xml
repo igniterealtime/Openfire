@@ -48,7 +48,9 @@
     <property name="version.major" value="2" />
     <property name="version.minor" value="1" />
     <property name="version.revision" value="3" />
-     
+    <property name="version.extra" value="" /> <!-- For 'beta' or 'alpha' -->
+    <property name="dist.prefix" value="jive_messenger" />
+
     <property file="${basedir}/build/build.properties" />
 
     <property name="src.dir" value="${basedir}/src" />
@@ -90,16 +92,22 @@
     <property name="war.name" value="messenger.war" />
     <property name="war.dest.dir" value="${target.dir}/war" />
     <property name="release.dest.dir" value="${target.dir}/release" />
-    <property name="version.extra" value="" />
-    <property name="dist.prefix" value="jive_messenger" />
     <property name="overwrite" value="false" />
     <property name="deploy.jar.dir" value="${jar.dest.dir}" />
     <property name="anttools.src.dir" value="${src.dir}/tools" />
     <property name="anttools.target.dir" value="${target.dir}/tools" />
+
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j" />
     <property name="installer.src" value="${basedir}/build/installer" />
     <property name="installer.dest.dir" value="${release.dest.dir}/installers" />
     <property name="installer.install4j.srcfile" value="${installer.src}/messenger.install4j" />
+    <property name="installer.app_name" value="Jive Messenger" />
+    <property name="installer.app_short_name" value="jive_messenger" />
+    <property name="installer.product_name" value="messenger" />
+    <property name="installer.publisher" value="Jive Software" />
+    <property name="installer.publisher_url" value="www.jivesoftware.org" />
+    <property name="installer.file_prefix" value="${installer.app_short_name}" />
+    <property name="installer.release_root_path" value="${release.dest.dir}" />
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -161,6 +169,7 @@
 
     <!-- init ================================================================================== -->
     <target name="init">
+
         <!-- Check for min build requirements -->
         <condition property="ant.not.ok" value="true"><not><contains string="${ant.version}" substring="1.6" /></not></condition>
         <condition property="java.not.ok" value="true"><not><contains string="${ant.java.version}" substring="1.5" /></not></condition>
@@ -177,7 +186,7 @@
 
         <mkdir dir="${target.dir}" />
 
-        <!-- Setup the versions correctly -->
+        <!-- Setup the full version property correctly -->
         <if>
             <equals arg1="${version.extra}" arg2="" />
             <then>
@@ -340,7 +349,7 @@
         </target><target name="-jspc-impl" unless="no.jspc">
 
         <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
-        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasper">
+        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperA">
             <classpath id="jspc.classpath">
                 <pathelement location="${java.home}/../lib/tools.jar" />
                 <pathelement path="${compile.dir}" />
@@ -522,11 +531,17 @@
 
         <!-- Create a new prop for the final release dirs then create the dirs -->
 
-        <property name="release.out.name" value="${dist.prefix}_${version.filename}" />
-        <property name="release.src.out.name" value="${dist.prefix}_src_${version.filename}" />
+        <!-- ie: jive_messenger -->
+        <property name="release.name" value="${dist.prefix}" />
+        <!-- ie: jive_messenger_src -->
+        <property name="release.name.src" value="${dist.prefix}_src" />
+        <!-- ie: jive_messenger_2_1_2 -->
+        <property name="release.fullname" value="${dist.prefix}_${version.filename}" />
+        <!-- ie: jive_messenger_src_2_1_2 -->
+        <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}" />
 
-        <property name="release.out.dir" value="${release.dest.dir}/${release.out.name}" />
-        <property name="release.src.out.dir" value="${release.dest.dir}/${release.src.out.name}" />
+        <property name="release.out.dir" value="${release.dest.dir}/${release.name}" />
+        <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}" />
 
         <mkdir dir="${release.out.dir}" />
         <mkdir dir="${release.src.out.dir}" />
@@ -629,24 +644,26 @@
         <property name="package.dest.dir" value="${release.dest.dir}" />
 
         <!-- ZIP -->
-        <zip zipfile="${package.dest.dir}/${release.out.name}.zip"
+        <zip zipfile="${package.dest.dir}/${release.fullname}.zip"
             basedir="${release.out.dir}/.."
-            includes="${release.out.name}/**/*"
+            includes="${release.name}/**/*"
         />
-        <zip zipfile="${package.dest.dir}/${release.src.out.name}.zip"
+        <zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
             basedir="${release.src.out.dir}/.."
-            includes="${release.src.out.name}/**/*"
+            includes="${release.name.src}/**/*"
         />
         <!-- TAR.GZ -->
-        <tar tarfile="${package.dest.dir}/${release.out.name}.tar.gz"
+        <tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
             basedir="${release.out.dir}/.."
-            includes="${release.out.name}/**/*"
+            includes="${release.name}/**/*"
             compression="gzip"
+            longfile="gnu"
         />
-        <tar tarfile="${package.dest.dir}/${release.src.out.name}.tar.gz"
+        <tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
             basedir="${release.src.out.dir}/.."
-            includes="${release.src.out.name}/**/*"
+            includes="${release.name.src}/**/*"
             compression="gzip"
+            longfile="gnu"
         />
 
     </target>
@@ -682,6 +699,13 @@
             <variable name="VERSION_MAJOR" value="${version.major}" />
             <variable name="VERSION_MINOR" value="${version.minor}" />
             <variable name="VERSION_REVISION" value="${version.revision}" />
+            <variable name="APP_NAME" value="${installer.app_name}" />
+            <variable name="APP_SHORT_NAME" value="${installer.app_short_name}" />
+            <variable name="PRODUCT_NAME" value="${installer.product_name}" />
+            <variable name="PUBLISHER" value="${installer.publisher}" />
+            <variable name="PUBLISHER_URL" value="${installer.publisher_url}" />
+            <variable name="FILE_PREFIX" value="${installer.app_short_name}" />
+            <variable name="RELEASE_ROOT_PATH" value="${installer.release_root_path}" />
         </install4j>
 
     </target>
@@ -700,8 +724,8 @@
         <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->
         <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin" />
 
-        <antcall target="-plugins-impl" />
         <antcall target="-plugins-impl-dev" />
+        <antcall target="-plugins-impl" />
 
         </target><target name="-plugins-impl" if="dirlist">
 
@@ -809,7 +833,7 @@
                     </copy>
 
                     <!-- Declare the jspc task with our plugin's classpath -->
-                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasper">
+                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperB">
                         <classpath>
                             <pathelement location="${java.home}/../lib/tools.jar" />
                             <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />

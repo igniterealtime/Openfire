@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.launcher;
 
-import com.jivesoftware.xmpp.workgroup.utils.URLFileSystem;
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
 import org.jivesoftware.messenger.JiveGlobals;
@@ -341,11 +340,11 @@ public class Launcher {
     }
 
     private void installPlugin(final File plugin) {
-        final JDialog dialog = new JDialog(frame, "Installing Plugin", true);
+        final JDialog dialog = new JDialog(frame, "Installing Plug in", true);
         dialog.getContentPane().setLayout(new BorderLayout());
         JProgressBar bar = new JProgressBar();
         bar.setIndeterminate(true);
-        bar.setString("Installing Plugin.  Please wait...");
+        bar.setString("Installing Plug in.  Please wait...");
         bar.setStringPainted(true);
         dialog.getContentPane().add(bar, BorderLayout.CENTER);
         dialog.pack();

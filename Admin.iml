@@ -26,9 +26,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Generic" level="application_server_libraries" />
     <orderEntry type="library" name="Messenger" level="project" />
     <orderEntry type="module" module-name="Messenger" />
+    <orderEntry type="library" name="Generic" level="application_server_libraries" />
     <orderEntryProperties />
   </component>
   <component name="WebModuleBuildComponent">

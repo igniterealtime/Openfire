@@ -384,8 +384,22 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             routingTable.removeRoute(session.getAddress());
             try {
                 SessionMap sessionMap = sessions.get(session.getUsername());
+                // If sessionMap is null, which is an irregular case, try to clean up the routes to
+                // the user from the routing table
+                if (sessionMap == null) {
+                    JID userJID = new JID(session.getUsername(), serverName, "");
+                    try {
+                        routingTable.getRoute(userJID);
+                        // Remove the route for the session's BARE address
+                        routingTable.removeRoute(new JID(session.getAddress().getNode(),
+                                session.getAddress().getDomain(), ""));
+                    }
+                    catch (NoSuchRouteException e) {
+                        // Do nothing since the routingTable does not have routes to this user
+                    }
+                }
                 // If all the user sessions are gone then remove the route to the default session
-                if (sessionMap.getAvailableSessions().isEmpty()) {
+                else if (sessionMap.getAvailableSessions().isEmpty()) {
                     // Remove the route for the session's BARE address
                     routingTable.removeRoute(new JID(session.getAddress().getNode(),
                             session.getAddress().getDomain(), ""));
@@ -469,6 +483,12 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                     }
                 }
             }
+        }
+        // Sanity check - check if the underlying session connection is closed. Remove the session
+        // from the list of sessions if the session is closed and proceed to look for another route.
+        if (session != null && session.getConnection().isClosed()) {
+            removeSession(session);
+            return getBestRoute(recipient);
         }
         return session;
     }
@@ -733,11 +753,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         return sessionList;
     }
 
-    public int getTotalSessionCount() throws UnauthorizedException {
+    public int getTotalSessionCount() {
         return sessionCount;
     }
 
-    public int getSessionCount() throws UnauthorizedException {
+    public int getSessionCount() {
         int sessionCount = 0;
         Iterator users = getSessionUsers();
         while (users.hasNext()) {
@@ -747,11 +767,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         return sessionCount;
     }
 
-    public int getAnonymousSessionCount() throws UnauthorizedException {
+    public int getAnonymousSessionCount() {
         return anonymousSessions.size();
     }
 
-    public int getSessionCount(String username) throws UnauthorizedException {
+    public int getSessionCount(String username) {
         int sessionCount = 0;
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
@@ -801,9 +821,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * TODO Requires better error checking to ensure the session count is maintained properly (removal actually does remove)
      *
      * @param session
-     * @throws UnauthorizedException
      */
-    public void removeSession(Session session) throws UnauthorizedException {
+    public void removeSession(Session session) {
         if (session == null) {
             return;
         }
@@ -813,6 +832,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             sessionCount--;
         }
         else {
+            // If this is a non-anonymous session then remove the session from the SessionMap
             if (session.getAddress() != null && session.getAddress().getNode() != null) {
                 String username = session.getAddress().getNode().toLowerCase();
                 synchronized (username.intern()) {
@@ -827,7 +847,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
                 }
             }
         }
-
+        // If the user is still available then send an unavailable presence
         Presence presence = session.getPresence();
         if (presence == null || presence.isAvailable()) {
             Presence offline = new Presence();
@@ -835,6 +855,10 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             offline.setTo(new JID(null, serverName, null));
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
+        }
+        else if (preAuthenticatedSessions.containsValue(session)) {
+            // Remove the session from the pre-Authenticated sessions list
+            preAuthenticatedSessions.remove(session.getAddress().toString());
         }
     }
 
@@ -878,9 +902,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             }
             // Remove the session
             removeSession(session);
-        }
-        catch (UnauthorizedException e) {
-            // Do nothing
         }
         catch (Exception e) {
             // Can't do anything about this problem...

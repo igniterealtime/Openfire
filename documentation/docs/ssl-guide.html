@@ -29,7 +29,7 @@ are used to prove to clients that the server is legitimately operating
 on behalf of a particular domain. If your server will only need to act
 as one domain, you only need one key entry and certificate in the keystore.
 Keys are stored in the keystore under aliases. Each alias corresponds
-to a domain name (e.g. "server.com").
+to a domain name (e.g. "example.com").
 </p>
 <p>
 The second set of certificates is called the "truststore" and is used
@@ -108,18 +108,18 @@ skip this step.</li>
   <li>Adjust the Messenger configuration with proper keystore and
 truststore settings.</li>
 </ol>
-<h3>1 Decide on a Server Domain</h3>
+<h3>1. Decide on a Server Domain</h3>
 <p>
 The Messenger server domain should match the host name of the server;
-for example, "server.com". Your user accounts will have addresses with
-the format "user@server.com" like email addresses. We'll assume
-the domain is "server.com" for the rest of the examples.
+for example, "example.com". Your user accounts will have addresses with
+the format "user@example.com" like email addresses. We'll assume
+the domain is "example.com" for the rest of the examples.
 </p>
-<h3>2 Create a self-signed server certificate</h3>
+<h3>2. Create a self-signed server certificate</h3>
 <p>
 In order to create a self-signed server certificate go to the command
-line and change directories to the <tt>MESSENGER_HOME/security</tt>
-directory. You should see the default
+line and change directories to the <tt>resources/security</tt>
+directory of your Jive Messenger installation. You should see the default
 <tt>keystore</tt> and <tt>truststore</tt> files. First, you should
 change the default keystore
 password:
@@ -130,9 +130,9 @@ keytool will ask for the old password (by default it is <tt>changeit</tt>)
 then the new password.
 Now we'll create a certificate using the keytool:
 </p>
-<p><tt>keytool -genkey -keystore keystore -alias server.com</tt></p>
+<p><tt>keytool -genkey -keystore keystore -alias example.com</tt></p>
 <p>
-where you should substitute your server's name for <tt>server.com</tt>.
+where you should substitute your server's name for <tt>example.com</tt>.
 The keytool will ask for the store password, then several pieces of
 information required for the certificate. Enter all the information and
 the keytool will ask you to verify the information and set a key password.
@@ -141,36 +141,36 @@ you get this by simply hitting 'enter' when prompted for a key password.</p>
 <p>If you later change the keystore password remember to change the entries'
 password as well using the keytool:</p>
 
-<p><tt>keytool -keypasswd -alias server.com -keystore keystore</tt>
+<p><tt>keytool -keypasswd -alias example.com -keystore keystore</tt>
 </p>
-<h3>3 Obtain a CA signed certificate</h3>
+<h3>3. Obtain a CA signed certificate</h3>
 <p>
 If you decide to get a CA signed certificate, you must first export the
 certificate in the
 standard CSR format. You can do this with the keytool:
 </p>
-<p><tt>keytool -certreq -keystore keystore -alias server.com -file
+<p><tt>keytool -certreq -keystore keystore -alias example.com -file
 certificate_file</tt></p>
 <p>
-Where you should substitute your server's name for <tt>server.com</tt>
+Where you should substitute your server's name for <tt>example.com</tt>
 and the name of the
 certificate file you wish to produce for <tt>certificate_file</tt>.
 Submit the generated CSR to the CA and follow their instructions to get
 it signed.
 </p>
-<h3>4 Import server certificates</h3>
+<h3>4. Import server certificates</h3>
 <p>
 If you had a CA sign your server certificate, or if you have an
 existing SSL certificate,
 you must import it using the keytool.
 </p>
-<p><tt>keytool -import -keystore keystore -alias server.com -file
+<p><tt>keytool -import -keystore keystore -alias example.com -file
 signed_certificate_file</tt></p>
 <p>
 It is important that the alias not already have an associated key or
 you'll receive an error.
 </p>
-<h3>5 Import client certificates</h3>
+<h3>5. Import client certificates</h3>
 <p>
 If you require clients to verify themselves using certificates, obtain
 their certificates and import them into the truststore file rather than
@@ -185,7 +185,7 @@ Now import each certificate using the keytool:
 </p>
 <p><tt>keytool -import -keystore truststore -alias user_name -file
 certificate_file</tt></p>
-<h3>6 Configure Messenger</h3>
+<h3>6. Configure Messenger</h3>
 <p>
 Open the Jive Messenger Admin Console in your favorite
 browser and add or change the following system properties:
@@ -198,12 +198,13 @@ browser and add or change the following system properties:
 the Sun Java Keystore format used by the JDK keytool). If this property is 
 not defined, Messenger will assume a value of "jks".</li>
   <li>xmpp.socket.ssl.keystore -- the location of the keystore file
-relative to the <tt>MESSENGER_HOME</tt> root directory.</li>
+relative to your Jive Messenger installation root directory. You can leave this property
+blank to use the default keystore.</li>
   <li>xmpp.socket.ssl.keypass -- the keystore/key password you
 changed in step 2.</li>
   <li>xmpp.socket.ssl.truststore -- leave blank to not use a
 truststore, otherwise the location of the truststore file relative to
-the <tt>MESSENGER_HOME</tt> root directory.</li>
+your Jive Messenger installation root directory.</li>
   <li>xmpp.socket.ssl.trustpass -- the truststore/key password you
 changed in step 5.</li>
 </ul>

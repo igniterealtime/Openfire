@@ -21,6 +21,8 @@ import java.util.List;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.MUCRoom;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 
@@ -37,6 +39,13 @@ import org.jivesoftware.util.StringUtils;
  */
 public class MUCPersistenceManager {
 
+    private static final String LOAD_ROOM_SURROGATES =
+        "SELECT roomID, name, description, canChangeSubject, maxUsers, " +
+        "moderated, invitationRequired, canInvite, passwordProtected, " +
+        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
+        "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
+    private static final String GET_RESERVED_NAME =
+        "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
         "SELECT roomID, description, canChangeSubject, maxUsers, publicRoom, " +
         "moderated, invitationRequired, canInvite, passwordProtected, " +
@@ -80,6 +89,94 @@ public class MUCPersistenceManager {
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO mucConversationLog (roomID,sender,nickname,time,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
+
+    public static List<MUCPersistentRoomSurrogate> getRoomSurrogates(MultiUserChatServer chatserver,
+                                                                     PacketRouter packetRouter) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        List<MUCPersistentRoomSurrogate> answer = new ArrayList<MUCPersistentRoomSurrogate>();
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_ROOM_SURROGATES);
+            ResultSet rs = pstmt.executeQuery();
+            MUCPersistentRoomSurrogate room = null;
+            while (rs.next()) {
+                room = new MUCPersistentRoomSurrogate(chatserver, rs.getString(2), packetRouter);
+                room.setID(rs.getLong(1));
+                room.setDescription(rs.getString(3));
+                room.setCanOccupantsChangeSubject(rs.getInt(4) == 1 ? true : false);
+                room.setMaxUsers(rs.getInt(5));
+                room.setModerated(rs.getInt(6) == 1 ? true : false);
+                room.setInvitationRequiredToEnter(rs.getInt(7) == 1 ? true : false);
+                room.setCanOccupantsInvite(rs.getInt(8) == 1 ? true : false);
+                room.setPasswordProtected(rs.getInt(9) == 1 ? true : false);
+                room.setPassword(rs.getString(10));
+                room.setCanAnyoneDiscoverJID(rs.getInt(11) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(12) == 1 ? true : false);
+                room.setSubject(rs.getString(13));
+                List rolesToBroadcast = new ArrayList();
+                String roles = Integer.toBinaryString(rs.getInt(14));
+                if (roles.charAt(0) == '1') {
+                    rolesToBroadcast.add("moderator");
+                }
+                if (roles.length() > 1 && roles.charAt(1) == '1') {
+                    rolesToBroadcast.add("participant");
+                }
+                if (roles.length() > 2 && roles.charAt(2) == '1') {
+                    rolesToBroadcast.add("visitor");
+                }
+                room.setRolesToBroadcastPresence(rolesToBroadcast);
+                answer.add(room);
+            }
+            rs.close();
+            pstmt.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+        return answer;
+    }
+
+    /**
+     * Returns the reserved room nickname for the bare JID in a given room or null if none.
+     *
+     * @param room the room where the user would like to obtain his reserved nickname. 
+     * @param bareJID The bare jid of the user of which you'd like to obtain his reserved nickname.
+     * @return the reserved room nickname for the bare JID or null if none.
+     */
+    public static String getReservedNickname(MUCRoom room, String bareJID) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        String answer = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_RESERVED_NAME);
+            pstmt.setLong(1, room.getID());
+            pstmt.setString(2, bareJID);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                answer = rs.getString(1);
+            }
+            rs.close();
+            pstmt.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+        return answer;
+    }
 
     /**
      * Loads the room configuration from the database if the room was persistent.

@@ -17,7 +17,10 @@ import java.util.List;
 
 import org.jivesoftware.messenger.muc.*;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.spi.MessageImpl;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -38,12 +41,33 @@ import org.jivesoftware.messenger.muc.MUCRole;
  * 
  * @author Gaston Dombiak
  */
-class MUCPersistentRoomSurrogate implements MUCRoom {
+class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
+
+    /**
+     * The server hosting the room.
+     */
+    private MultiUserChatServer server;
 
     /**
      * The name of the room.
      */
     private String name;
+
+    /**
+     * The role of the room itself.
+     */
+    private MUCRole role;
+
+    /**
+     * The router used to send packets for the room.
+     */
+    private PacketRouter router;
+
+    /**
+     * Description of the room. The owner can change the description using the room configuration
+     * form.
+     */
+    private String description;
 
     /**
      * Indicates if occupants are allowed to change the subject of the room. 
@@ -61,12 +85,6 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
      * feature is useful for implementing "invisible" occupants.
      */
     private List rolesToBroadcastPresence = new ArrayList();
-
-    /**
-     * Persistent rooms are saved to the database so that when the last occupant leaves the room,
-     * the room is removed from memory but it's configuration is saved in the database.
-     */
-    private boolean persistent = false;
 
     /**
      * Moderated rooms enable only participants to speak. Users that join the room and aren't
@@ -122,6 +140,21 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
      */
     private long roomID = -1;
 
+    /**
+     * Create a new chat room.
+     *
+     * @param chatserver the server hosting the room.
+     * @param roomname the name of the room.
+     * @param packetRouter the router for sending packets from the room.
+     */
+    MUCPersistentRoomSurrogate(MultiUserChatServer chatserver, String roomname,
+                               PacketRouter packetRouter) {
+        this.server = chatserver;
+        this.name = roomname;
+        this.router = packetRouter;
+        role = new MUCPersistentRoomSurrogate.RoomRole(this);
+    }
+
     public String getName() {
         return name;
     }
@@ -135,20 +168,19 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
     }
 
     public MUCRole getRole() throws UnauthorizedException {
-        // TODO Implement this
-        return null;
+        return role;
     }
 
     public MUCRole getOccupant(String nickname) throws UserNotFoundException {
-        return null;
+        throw new UserNotFoundException();
     }
 
     public List<MUCRole> getOccupantsByBareJID(String jid) throws UserNotFoundException {
-        return null;
+        throw new UserNotFoundException();
     }
 
     public MUCRole getOccupantByFullJID(String jid) throws UserNotFoundException {
-        return null;
+        throw new UserNotFoundException();
     }
 
     public Iterator<MUCRole> getOccupants() throws UnauthorizedException {
@@ -164,8 +196,7 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
     }
 
     public String getReservedNickname(String bareJID) {
-        // TODO Implement this
-        return null;
+        return MUCPersistenceManager.getReservedNickname(this, bareJID);
     }
 
     public int getAffiliation(String bareJID) {
@@ -335,11 +366,11 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
     }
 
     public String getDescription() {
-        return null;
+        return description;
     }
 
     public void setDescription(String description) {
-        throw new UnsupportedOperationException();
+        this.description = description;
     }
 
     public boolean isInvitationRequiredToEnter() {
@@ -391,11 +422,11 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
     }
     
     public boolean isPersistent() {
-        return persistent;
+        return true;
     }
 
     public void setPersistent(boolean persistent) {
-        this.persistent = persistent;
+        throw new UnsupportedOperationException();
     }
 
     public boolean wasSavedToDB() {
@@ -456,7 +487,19 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
                                         String reason,
                                         XMPPAddress sender,
                                         Session session) {
-        // TODO Implement this???
+        Message message = new MessageImpl();
+        message.setOriginatingSession(session);
+        message.setSender(role.getRoleAddress());
+        message.setRecipient(XMPPAddress.parseJID(to));
+        MetaDataFragment frag = new MetaDataFragment("http://jabber.org/protocol/muc#user", "x");
+        frag.setProperty("x.decline:from", sender.toBareStringPrep());
+        if (reason != null && reason.length() > 0) {
+            frag.setProperty("x.decline.reason", reason);
+        }
+        message.addFragment(frag);
+
+        // Send the message with the invitation
+        router.route(message);
     }
 
     public void send(Message packet) throws UnauthorizedException {
@@ -471,4 +514,109 @@ class MUCPersistentRoomSurrogate implements MUCRoom {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * An empty role that represents the room itself in the chatroom. Chatrooms need to be able to
+     * speak (server messages) and so must have their own role in the chatroom.
+     */
+    private class RoomRole implements MUCRole {
+
+        private MUCRoom room;
+
+        private RoomRole(MUCRoom room) {
+            this.room = room;
+        }
+
+        public Presence getPresence() throws UnauthorizedException {
+            return null;
+        }
+
+        public MetaDataFragment getExtendedPresenceInformation() throws UnauthorizedException {
+            return null;
+        }
+
+        public void setPresence(Presence presence) throws UnauthorizedException {
+        }
+
+        public void setRole(int newRole) throws UnauthorizedException {
+        }
+
+        public int getRole() {
+            return MUCRole.MODERATOR;
+        }
+
+        public String getRoleAsString() {
+            return "moderator";
+        }
+
+        public void setAffiliation(int newAffiliation) throws UnauthorizedException {
+        }
+
+        public int getAffiliation() {
+            return MUCRole.OWNER;
+        }
+
+        public String getAffiliationAsString() {
+            return "owner";
+        }
+
+        public String getNickname() {
+            return null;
+        }
+
+        public void kick() throws UnauthorizedException {
+        }
+
+        public MUCUser getChatUser() {
+            return null;
+        }
+
+        public MUCRoom getChatRoom() {
+            return room;
+        }
+
+        private XMPPAddress crJID = null;
+
+        public XMPPAddress getRoleAddress() {
+            if (crJID == null) {
+                crJID = new XMPPAddress(room.getName(), server.getChatServerName(), "");
+            }
+            return crJID;
+        }
+
+        public void send(Message packet) throws UnauthorizedException {
+            room.send(packet);
+        }
+
+        public void send(Presence packet) throws UnauthorizedException {
+            room.send(packet);
+        }
+
+        public void send(IQ packet) throws UnauthorizedException {
+            room.send(packet);
+        }
+
+        public void changeNickname(String nickname) {
+        }
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();                 // overhead of object
+        size += CacheSizes.sizeOfLong();                   // roomID
+        size += CacheSizes.sizeOfString(name);             // name
+        size += CacheSizes.sizeOfBoolean();                // canOccupantsChangeSubject
+        size += CacheSizes.sizeOfInt();                    // maxUsers
+        size += CacheSizes.sizeOfList(rolesToBroadcastPresence); // rolesToBroadcastPresence
+        size += CacheSizes.sizeOfBoolean();                // moderated
+        size += CacheSizes.sizeOfBoolean();                // invitationRequiredToEnter
+        size += CacheSizes.sizeOfBoolean();                // canOccupantsInvite
+        size += CacheSizes.sizeOfBoolean();                // passwordProtected
+        size += CacheSizes.sizeOfString(password);         // password
+        size += CacheSizes.sizeOfBoolean();                // canAnyoneDiscoverJID
+        size += CacheSizes.sizeOfBoolean();                // logEnabled
+        size += CacheSizes.sizeOfString(subject);          // subject
+        return size;
+    }
 }

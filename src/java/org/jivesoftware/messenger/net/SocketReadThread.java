@@ -21,10 +21,7 @@ import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Roster;
+import org.xmpp.packet.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -191,14 +188,48 @@ public class SocketReadThread extends Thread {
 
             String tag = doc.getName();
             if ("message".equals(tag)) {
-                Message packet = new Message(doc);
+                Message packet = null;
+                try {
+                    packet = new Message(doc);
+                }
+                catch(IllegalArgumentException e) {
+                    // The original packet contains a malformed JID so answer an error
+                    Message reply = new Message();
+                    if (doc.attributeValue("id") != null) {
+                        reply.setID(doc.attributeValue("id"));
+                    }
+                    reply.setTo(session.getAddress());
+                    if (doc.attributeValue("to") != null) {
+                        reply.getElement().addAttribute("from", doc.attributeValue("to"));
+                    }
+                    reply.setError(PacketError.Condition.jid_malformed);
+                    session.process(reply);
+                    continue;
+                }
                 packet.setFrom(session.getAddress());
                 auditor.audit(packet, session);
                 router.route(packet);
                 session.incrementClientPacketCount();
             }
             else if ("presence".equals(tag)) {
-                Presence packet = new Presence(doc);
+                Presence packet = null;
+                try {
+                    packet = new Presence(doc);
+                }
+                catch(IllegalArgumentException e) {
+                    // The original packet contains a malformed JID so answer an error
+                    Presence reply = new Presence();
+                    if (doc.attributeValue("id") != null) {
+                        reply.setID(doc.attributeValue("id"));
+                    }
+                    reply.setTo(session.getAddress());
+                    if (doc.attributeValue("to") != null) {
+                        reply.getElement().addAttribute("from", doc.attributeValue("to"));
+                    }
+                    reply.setError(PacketError.Condition.jid_malformed);
+                    session.process(reply);
+                    continue;
+                }
                 packet.setFrom(session.getAddress());
                 auditor.audit(packet, session);
                 router.route(packet);
@@ -207,7 +238,27 @@ public class SocketReadThread extends Thread {
                 clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
             }
             else if ("iq".equals(tag)) {
-                IQ packet = getIQ(doc);
+                IQ packet = null;
+                try {
+                    packet = getIQ(doc);
+                }
+                catch(IllegalArgumentException e) {
+                    // The original packet contains a malformed JID so answer an error
+                    IQ reply = new IQ();
+                    if (!doc.elements().isEmpty()) {
+                        reply.setChildElement(((Element) doc.elements().get(0)).createCopy());
+                    }
+                    if (doc.attributeValue("id") != null) {
+                        reply.setID(doc.attributeValue("id"));
+                    }
+                    reply.setTo(session.getAddress());
+                    if (doc.attributeValue("to") != null) {
+                        reply.getElement().addAttribute("from", doc.attributeValue("to"));
+                    }
+                    reply.setError(PacketError.Condition.jid_malformed);
+                    session.process(reply);
+                    continue;
+                }
                 packet.setFrom(session.getAddress());
                 auditor.audit(packet, session);
                 router.route(packet);

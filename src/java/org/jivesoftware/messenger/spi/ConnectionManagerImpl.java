@@ -29,7 +29,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager {
 
@@ -109,7 +108,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public XMPPServer server;
     public PacketFactory packetFactory;
 
-    public void addSocket(Socket sock, boolean isSecure) throws XMLStreamException {
+    public void addSocket(Socket sock, boolean isSecure)  {
         try {
             // the order of these calls is critical (stupid huh?)
             Connection conn = new SocketConnection(deliverer,
@@ -118,7 +117,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     isSecure);
             Session session = sessionManager.createSession(conn);
             SocketReadThread reader = new SocketReadThread(router,
-                    packetFactory, serverName, auditManager.getAuditor(),
+                    serverName, auditManager.getAuditor(),
                     sock, session);
             reader.setDaemon(true);
             reader.start();

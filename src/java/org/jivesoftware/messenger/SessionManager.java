@@ -25,7 +25,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import javax.xml.stream.XMLStreamException;
 import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.Container;
@@ -41,6 +40,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -261,7 +261,7 @@ public class SessionManager implements ConnectionCloseListener {
          *
          * @param packet
          */
-        private void broadcast(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
+        private void broadcast(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
             Iterator entries = resources.values().iterator();
             while (entries.hasNext()) {
                 Session session = (Session)entries.next();
@@ -746,7 +746,7 @@ public class SessionManager implements ConnectionCloseListener {
      *
      * @param packet The packet to be broadcast
      */
-    public void broadcast(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
+    public void broadcast(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
         sessionLock.readLock().lock();
         try {
             Iterator values = sessions.values().iterator();
@@ -776,7 +776,7 @@ public class SessionManager implements ConnectionCloseListener {
      *
      * @param packet The packet to be broadcast
      */
-    public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
+    public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
         sessionLock.readLock().lock();
         try {
             SessionMap sessionMap = (SessionMap)sessions.get(username);

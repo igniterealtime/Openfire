@@ -11,22 +11,31 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
-
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import javax.xml.stream.*;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.XMLWriter;
+import org.dom4j.io.XPPPacketReader;
+import org.jivesoftware.messenger.Connection;
+import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.audit.Auditor;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
 
 /**
- * @author Iain Shigeoka
+ * @author Derek DeMoro
  */
 public class SocketReadThread extends Thread {
 
@@ -36,14 +45,10 @@ public class SocketReadThread extends Thread {
      */
     private String charset = "UTF-8";
 
-    private XMLInputFactory xppFactory;
-    private XMLStreamReader xpp;
-
     private Session session;
     private Connection connection;
 
-    private static final String ETHERX_NAMESPACE =
-            "http://etherx.jabber.org/streams";
+    private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
 
     private String serverName;
     /**
@@ -56,9 +61,10 @@ public class SocketReadThread extends Thread {
      */
     private Auditor auditor;
 
-    private PacketFactory packetFactory;
-
     private boolean clearSignout = false;
+    XmlPullParserFactory factory = null;
+    XPPPacketReader reader = null;
+
 
     /**
      * Create dedicated read thread for this socket.
@@ -69,22 +75,15 @@ public class SocketReadThread extends Thread {
      * @param sock       The socket to read from
      * @param session    The session being read
      */
-    public SocketReadThread(PacketRouter router,
-                            PacketFactory packetFactory,
-                            String serverName,
-                            Auditor auditor,
-                            Socket sock,
+    public SocketReadThread(PacketRouter router, String serverName, Auditor auditor, Socket sock,
                             Session session) {
         super("SRT reader");
         this.serverName = serverName;
         this.router = router;
-        this.packetFactory = packetFactory;
         this.auditor = auditor;
         this.session = session;
         connection = session.getConnection();
         this.sock = sock;
-        xppFactory = XMLInputFactory.newInstance();
-        xppFactory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);
     }
 
     /**
@@ -93,9 +92,16 @@ public class SocketReadThread extends Thread {
      */
     public void run() {
         try {
-            xpp =
-                    xppFactory.createXMLStreamReader(new InputStreamReader(sock.getInputStream(),
-                            charset));
+            factory = XmlPullParserFactory.newInstance();
+            // factory.setNamespaceAware(true);
+
+            reader = new XPPPacketReader();
+            reader.setXPPFactory(factory);
+
+
+            reader.getXPPParser().setInput(new InputStreamReader(sock.getInputStream(),
+                    charset));
+
 
             // Read in the opening tag and prepare for packet stream
             createSession();
@@ -109,8 +115,8 @@ public class SocketReadThread extends Thread {
         catch (EOFException eof) {
             // Normal disconnect
         }
-        catch (XMLStreamException ie) {
-            // Check if the user abruptly cut the connection without sending previously an 
+        catch (XmlPullParserException ie) {
+            // Check if the user abruptly cut the connection without sending previously an
             // unavailable presence
             if (clearSignout == false) {
                 if (session != null && session.getStatus() == Session.STATUS_AUTHENTICATED) {
@@ -119,7 +125,6 @@ public class SocketReadThread extends Thread {
                         // Simulate an unavailable presence sent by the user.
                         Presence packet = presence.createCopy();
                         packet.setType(Presence.Type.unavailable);
-                        packet.setType(null);
                         packet.setFrom(session.getAddress());
                         router.route(packet);
                         clearSignout = true;
@@ -165,52 +170,41 @@ public class SocketReadThread extends Thread {
      * for incoming data. To prevent clients from stalling channel handlers,
      * a watch dog timer is used. Packets that take longer than the watch
      * dog limit to read will cause the session to be closed.
-     *
-     * @throws XMLStreamException if there is trouble reading from the socket
      */
-    private void readStream() throws UnauthorizedException, XMLStreamException {
-
+    private void readStream() throws Exception {
         while (true) {
-            for (int eventType = xpp.next();
-                 eventType != XMLStreamConstants.START_ELEMENT;
-                 eventType = xpp.next()) {
-                if (eventType == XMLStreamConstants.CHARACTERS) {
-                    if (!xpp.isWhiteSpace()) {
-                        throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.packet.text"));
-                    }
-                }
-                else if (eventType == XMLStreamConstants.END_DOCUMENT) {
-                    return;
-                }
-            }
+            Document document = reader.parseDocument();
 
-            String tag = xpp.getLocalName();
+            if (document != null) {
+                Element doc = document.getRootElement();
 
-            if ("message".equals(tag)) {
-                Message packet = packetFactory.getMessage(xpp);
-                packet.setFrom(session.getAddress());
-                auditor.audit(packet);
-                router.route(packet);
-                session.incrementClientPacketCount();
-            }
-            else if ("presence".equals(tag)) {
-                Presence packet = packetFactory.getPresence(xpp);
-                packet.setFrom(session.getAddress());
-                auditor.audit(packet);
-                router.route(packet);
-                session.incrementClientPacketCount();
-                // Update the flag that indicates if the user made a clean sign out
-                clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
-            }
-            else if ("iq".equals(tag)) {
-                IQ packet = packetFactory.getIQ(xpp);
-                packet.setFrom(session.getAddress());
-                auditor.audit(packet);
-                router.route(packet);
-                session.incrementClientPacketCount();
-            }
-            else {
-                throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
+                String tag = doc.getName();
+                if ("message".equals(tag)) {
+                    Message packet = new Message(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
+                }
+                else if ("presence".equals(tag)) {
+                    Presence packet = new Presence(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
+                    // Update the flag that indicates if the user made a clean sign out
+                    clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
+                }
+                else if ("iq".equals(tag)) {
+                    IQ packet = new IQ(doc);
+                    packet.setFrom(session.getAddress());
+                    auditor.audit(packet);
+                    router.route(packet);
+                    session.incrementClientPacketCount();
+                }
+                else {
+                    throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
+                }
             }
         }
     }
@@ -226,34 +220,40 @@ public class SocketReadThread extends Thread {
      *
      * @throws UnauthorizedException If the caller did not have permission
      *                               to use this method.
-     * @throws XMLStreamException    If the stream is not valid XML
      */
-    private void createSession() throws UnauthorizedException, XMLStreamException {
-
+    private void createSession() throws UnauthorizedException, XmlPullParserException, IOException, Exception {
+        XmlPullParser xpp = reader.getXPPParser();
         for (int eventType = xpp.getEventType();
-             eventType != XMLStreamConstants.START_ELEMENT;
+             eventType != XmlPullParser.START_TAG;
              eventType = xpp.next()) {
         }
 
         // Conduct error checking, the opening tag should be 'stream'
         // in the 'etherx' namespace
-        if (!xpp.getLocalName().equals("stream")) {
-            throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
+        if (!xpp.getName().equals("stream")) {
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
         }
-        if (!xpp.getNamespaceURI(xpp.getPrefix()).equals(ETHERX_NAMESPACE)) {
-            throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
+        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE)) {
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
         }
 
-        XMLStreamWriter xser = connection.getSerializer();
-        xser.writeStartDocument();
-        xser.writeStartElement("stream", "stream", "http://etherx.jabber.org/streams");
-        xser.writeNamespace("stream", "http://etherx.jabber.org/streams");
-        xser.writeDefaultNamespace("jabber:client");
-        xser.writeAttribute("from", serverName);
-        xser.writeAttribute("id", session.getStreamID().toString());
-        xser.writeCharacters(" ");
+        // Flush this to the Connection to start up.
+        XMLWriter xser = connection.getSerializer();
+        String s = "<stream:stream to=\"jivesoftware.com\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\" >";
+        Element streamElement = null;
+        try {
+            streamElement = DocumentHelper.createElement(s);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        streamElement.addAttribute("from", serverName);
+        streamElement.addAttribute("id", session.getStreamID().toString());
+        xser.write(streamElement);
         xser.flush();
 
         // TODO: check for SASL support in opening stream tag
     }
+
+
 }

@@ -11,18 +11,13 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.JiveGlobals;
@@ -74,6 +69,10 @@ import org.xmpp.packet.Presence;
 public class MultiUserChatServerImpl extends BasicModule implements MultiUserChatServer,
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
 
+    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+    static {
+        dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+    }
     /**
      * The time to elapse between clearing of idle chat users.
      */
@@ -878,6 +877,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.language"));
                 field.addValue(room.getLanguage());
                 dataForm.addField(field);*/
+
+                field = new XFormFieldImpl("x-muc#roominfo_creationdate");
+                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
+                field.addValue(dateFormatter.format(room.getCreationDate()));
+                dataForm.addField(field);
 
                 return dataForm;
             }

@@ -22,9 +22,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Packet;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * In-memory implementation of a session.
@@ -108,25 +106,13 @@ public class SessionImpl implements Session {
         address = new JID(user.getUsername(), serverName, resource);
         authToken = auth;
 
-        List params = new ArrayList();
-        params.add(address.toBareJID());
-        params.add(getConnection().toString());
-        // Log.info(LocaleUtils.getLocalizedString("admin.authenticated",params));
-
         sessionManager.addSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
     }
 
     public void setAnonymousAuth() {
-        address = new JID("", serverName, "");
-        // Registering with the session manager assigns the resource
         sessionManager.addAnonymousSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
-
-        List params = new ArrayList();
-        params.add(address.toString());
-        params.add(getConnection().toString());
-        //   Log.info(LocaleUtils.getLocalizedString("admin.authenticated",params));
     }
 
     public AuthToken getAuthToken() {

@@ -230,6 +230,9 @@
         <root url="jar://$PROJECT_DIR$/build/lib/dist/servlet.jar!/" />
         <root url="file://$PROJECT_DIR$/src/resources/jar" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/jaxen.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/merge/standard.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/merge/jstl.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/whack.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

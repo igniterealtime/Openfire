@@ -680,7 +680,7 @@
                 <classpath>
                     <path refid="plugin.dependencies" />
                     <!-- Jars used by the plugin to compile with -->
-                    <pathelement location="@{pluginsrc}/@{plugin}/lib/*.jar" />
+                    <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
                 </classpath>
             </javac>
 
@@ -713,7 +713,7 @@
                 <classpath>
                     <pathelement location="${java.home}/../lib/tools.jar" />
                     <path refid="jspc.dependencies" />
-                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
+                    <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
                     <pathelement path="${compile.dir}" />
                 </classpath>
             </taskdef>
@@ -739,7 +739,7 @@
                 <classpath>
                     <path refid="jspc.dependencies" />
                     <pathelement path="${compile.dir}" />
-                    <pathelement location="@{pluginsrc}/@{plugin}/lib/*.jar" />
+                    <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
                 </classpath>
             </javac>
 

@@ -1,19 +1,25 @@
-<%@ taglib uri="core" prefix="c"%>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
-
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.XMPPAddress"
+    errorPage="error.jsp"
 %>
+
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
-
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -49,11 +55,6 @@
     }
 %>
 
-
-
-
-<c:set var="sbar" value="users" scope="page" />
-
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
     String title = "Delete User";
@@ -63,13 +64,8 @@
     pageinfo.setSubPageID("user-delete");
     pageinfo.setExtraParams("username="+username);
 %>
-<c:set var="tab" value="delete" />
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
-
-
-
-<%@ include file="user-tabs.jsp" %>
 
 <p>
 Are you sure you want to delete the user
@@ -90,4 +86,4 @@ from the system?
 <input type="submit" name="cancel" value="Cancel">
 </form>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

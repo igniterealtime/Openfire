@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -10,9 +15,12 @@
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.admin.AdminPageBean"
+    errorPage="error.jsp"
 %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 
+<%@ taglib uri="core" prefix="c"%>
+
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -37,7 +45,7 @@
         if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
             user.setPassword(password);
             // Done, so redirect
-            response.sendRedirect("user-password-success.jsp?username=" + username);
+            response.sendRedirect("user-password.jsp?success=true&username=" + username);
             return;
         }
         else {
@@ -46,7 +54,6 @@
     }
 %>
 
-<c:set var="sbar" value="users" scope="page" />
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
     String title = "Change Password";
@@ -56,68 +63,88 @@
     pageinfo.setSubPageID("user-password");
     pageinfo.setExtraParams("username="+username);
 %>
-<c:set var="tab" value="pass" />
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<%@ include file="user-tabs.jsp" %>
-<br>
-
 <%  if (errors) { %>
 
-    <p class="jive-error-text">
-    Error setting the password. Please make sure the password you enter is valid and
-    matches the confirmation password.
-    </p>
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error setting the password. Please make sure the password you enter is valid and
+        matches the confirmation password.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (request.getParameter("success") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Password updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<form action="user-password.jsp" name="passform">
-<tr><td colspan="2" class="text">
-Use the form below to change the user's password
-</td></tr>
-</table>
-<table cellpadding="3" cellspacing="1" border="0">
 
+<p>
+Use the form below to change the user's password.
+</p>
+
+<form action="user-password.jsp" name="passform" method="post">
 <input type="hidden" name="username" value="<%= username %>">
 
+<fieldset>
+    <legend>Change Password</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td class="c1">
+                User ID:
+            </td>
+            <td class="c2">
+                <%= user.getUsername() %>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                Username:
+            </td>
+            <td class="c2">
+                <%= user.getUsername() %>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                New Password:
+            </td>
+            <td clas="c2">
+                <input type="password" name="password" value="" size="20" maxlength="50">
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                Confirm New Password:
+            </td>
+            <td class="c2">
+                <input type="password" name="passwordConfirm" value="" size="20" maxlength="50">
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
 
-<tr>
-    <td class="c1">
-        User ID:
-    </td>
-    <td class="c2">
-        <%= user.getUsername() %>
-    </td>
-</tr>
-<tr>
-    <td class="c1">
-        Username:
-    </td>
-    <td class="c2">
-        <%= user.getUsername() %>
-    </td>
-</tr>
-<tr>
-    <td class="c1">
-        New Password:
-    </td>
-    <td clas="c2">
-        <input type="password" name="password" value="" size="20" maxlength="50">
-    </td>
-</tr>
-<tr>
-    <td class="c1">
-        Confirm New Password:
-    </td>
-    <td class="c2">
-        <input type="password" name="passwordConfirm" value="" size="20" maxlength="50">
-    </td>
-</tr>
-</table>
-
-
-<br>
+<br><br>
 
 <input type="submit" value="Update Password" name="update">
 <input type="submit" value="Cancel" name="cancel">

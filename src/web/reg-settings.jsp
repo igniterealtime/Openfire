@@ -16,7 +16,7 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -63,7 +63,7 @@ Use the forms below to change various aspects of user registration and login.
 
 <form action="reg-settings.jsp">
 
-<c:if test="${success}" >
+<c:if test="success" >
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">

@@ -19,13 +19,12 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
-<c:set var="admin" value="${admin}" />
 
 <%! // List of allowed usernames:
     static Map allowedUsernames = null;

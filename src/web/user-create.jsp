@@ -1,4 +1,4 @@
-<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -27,10 +27,14 @@
                  org.dom4j.*"
     errorPage="error.jsp"
 %>
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
-<jsp:useBean id="errors" class="java.util.HashMap"/>
-<%  webManager.init(request, response, session, application, out ); %>
-<%   // Get parameters //
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<jsp:useBean id="errors" class="java.util.HashMap" />
+<% webManager.init(request, response, session, application, out ); %>
+
+<%  // Get parameters //
     boolean create = request.getParameter("create") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String username = ParamUtils.getParameter(request,"username");

@@ -20,8 +20,8 @@
 
 %>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -119,7 +119,7 @@ some of the server settings. Some settings can not be changed.
             Server Name:
         </td>
         <td class="c2">
-            <c:out value="${webManager.serverInfo.name}" />
+            ${webManager.serverInfo.name}
         </td>
     </tr>
     <c:if test="${!empty webManager.multiUserChatServer}">
@@ -128,7 +128,7 @@ some of the server settings. Some settings can not be changed.
                 Group Chat Service Name:
             </td>
             <td class="c2">
-                <c:out value="${webManager.multiUserChatServer.serviceName}" />
+                ${webManager.multiUserChatServer.serviceName}
             </td>
         </tr>
     </c:if>
@@ -147,7 +147,7 @@ some of the server settings. Some settings can not be changed.
                 <%= i %>: IP:Port, Security:
             </td>
             <td class="c2">
-                <c:out value="${port.IPAddress}" />:<c:out value="${port.port}" />,
+                ${port.IPAddress}:${port.port},
                 <c:choose>
                     <c:when test="${empty port.securityType}">
                         NORMAL

@@ -20,7 +20,7 @@
                  org.jivesoftware.admin.AdminPageBean"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 

@@ -1,15 +1,18 @@
-<%@ taglib uri="core" prefix="c"%>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
 --%>
+
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  java.util.HashMap,
                  org.jivesoftware.admin.*,
                  java.util.Map" 
 %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%   webManager.init(request, response, session, application, out ); %>

@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -10,7 +10,7 @@
 
 <html>
 <head>
-	<title><fmt:message key="short.title" bundle="${lang}" /> Setup</title>
+	<title><fmt:message key="short.title" /> Setup</title>
 
 	<link rel="stylesheet" type="text/css" href="setup-style.css">
 </head>
@@ -21,7 +21,7 @@
 <table cellpadding="8" cellspacing="0" border="0" width="100%">
 <tr>
     <td width="99%">
-        <fmt:message key="short.title" bundle="${lang}" /> Setup
+        <fmt:message key="short.title" /> Setup
     </td>
     <td width="1%" nowrap>
         <font size="-2" face="arial,helvetica,sans-serif" color="#ffffff">
@@ -57,7 +57,7 @@
 
         <p>
         It appears setup has already been run. To administer your community, please use the
-        <a href="index.jsp"><fmt:message key="short.title" bundle="${lang}" /> Admin Tool</a>. To re-run
+        <a href="index.jsp"><fmt:message key="short.title" /> Admin Tool</a>. To re-run
         setup, you need to stop your appserver, delete the "setup" property from the
         jive-messenger.xml file, restart Messenger then reload the setup tool.
         </p>

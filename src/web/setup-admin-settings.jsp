@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -21,6 +19,9 @@
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.messenger.auth.spi.DbAuthProvider,
                  org.jivesoftware.messenger.user.spi.UserManagerImpl" %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%! // Global vars, methods, etc
     void setSetupFinished(HttpSession session) {
@@ -181,7 +182,7 @@ function checkClick() {
          value="<%= ((password!=null) ? password : "") %>">
         <span class="jive-description">
         <br>
-        If this is a new <fmt:message key="short.title" bundle="${lang}" /> installation, the current password will be <b>admin</b>.
+        If this is a new <fmt:message key="short.title" /> installation, the current password will be <b>admin</b>.
         </span>
         <%  if (errors.get("password") != null) { %>
             <span class="jive-error-text">

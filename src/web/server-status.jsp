@@ -19,8 +19,8 @@
                  org.jivesoftware.admin.AdminPageBean"
 %>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
@@ -38,7 +38,7 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Below is the status of your <fmt:message key="short.title" bundle="${lang}" /> server.
+Below is the status of your <fmt:message key="short.title" /> server.
 </p>
 
 

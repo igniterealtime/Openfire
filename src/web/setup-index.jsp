@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -66,7 +66,7 @@ Installation Checklist
 <p>
 
 
-Welcome to <fmt:message key="title" bundle="${lang}" />  Setup. This tool will lead you through the initial configuration process
+Welcome to <fmt:message key="title" />  Setup. This tool will lead you through the initial configuration process
 of the application. Before continuing, verify that your environment meets all the requirements
 below.
 </p>
@@ -113,7 +113,7 @@ below.
 </tr>
 <tr>
     <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" bundle="${lang}" /> Classes
+        <fmt:message key="title" /> Classes
     </td>
 </tr>
 <tr>
@@ -121,7 +121,7 @@ below.
         messenger.jar
         <br>
         <span class="jive-info">
-        <fmt:message key="title" bundle="${lang}" /> classes.
+        <fmt:message key="title" /> classes.
         </span>
     </td>
     <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
@@ -129,7 +129,7 @@ below.
 </tr>
 <tr>
     <td colspan="3" class="jive-setup-category-header">
-        <fmt:message key="title" bundle="${lang}" /> Configuration Files
+        <fmt:message key="title" /> Configuration Files
     </td>
 </tr>
 <tr>

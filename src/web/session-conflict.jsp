@@ -9,8 +9,8 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.Iterator,
@@ -88,7 +88,7 @@
 %>
 
 <p>
-<fmt:message key="title" bundle="${lang}" /> allows multiple logins to the same user account by assigning a unique "resource name"
+<fmt:message key="title" /> allows multiple logins to the same user account by assigning a unique "resource name"
 to each connection. If a connection requests a resource name that is already in use, the server must
 decide how to handle the conflict. The options on this page allow you to determine if the server
 always kicks off existing connections, never kicks off existing connections, or sets the number of

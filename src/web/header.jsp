@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -10,7 +10,7 @@
 
 <html>
 <head>
-    <title><fmt:message key="title" bundle="${lang}" /> Admin</title>
+    <title><fmt:message key="title" /> Admin</title>
     <meta http-equiv="content-type" content="text/html; charset=">
     <script language="JavaScript" type="text/javascript">
     <!-- // code for window popups

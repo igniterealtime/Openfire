@@ -18,8 +18,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
 
 <%!  // Global vars and methods:
 
@@ -99,7 +99,7 @@
 
 <p>
 Group Chat rooms can replay conversation histories to provide context to new members joining a room.
-<fmt:message key="short.title" bundle="${lang}"/> provides several options for controlling how much
+<fmt:message key="short.title"/> provides several options for controlling how much
 history to store for each room.
 </p>
 

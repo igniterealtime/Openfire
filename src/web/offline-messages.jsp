@@ -20,8 +20,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" scope="page" />
 <% admin.init(request, response, session, application, out ); %>
@@ -187,7 +187,7 @@
 XMPP provides the option for servers to store-and-forward IM messages when they sent to a user that
 is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient
 feature of an XMPP deployment. However, offline messages, like email, can take up a significant
-amount of space on a server. <fmt:message key="title" bundle="${lang}" /> provides the option to handle offline messages in a
+amount of space on a server. <fmt:message key="title" /> provides the option to handle offline messages in a
 variety of ways. Select the offline message handling strategy that best suites your needs.
 </p>
 

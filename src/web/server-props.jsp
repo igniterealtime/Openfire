@@ -19,15 +19,14 @@
                  org.jivesoftware.messenger.JiveGlobals"
 %>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
-<c:set var="admin" value="${admin.manager}" />
 
 <%
     // Get parameters

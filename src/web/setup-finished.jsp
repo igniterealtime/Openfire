@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -32,11 +32,11 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-<fmt:message key="title" bundle="${lang}" /> Setup Complete!
+<fmt:message key="title" /> Setup Complete!
 </p>
 
 <p>
-This installation of <fmt:message key="title" bundle="${lang}" /> is now complete.
+This installation of <fmt:message key="title" /> is now complete.
 To continue:
 </p>
 

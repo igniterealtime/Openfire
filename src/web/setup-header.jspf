@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -10,7 +8,7 @@
 
 <html>
 <head>
-	<title><fmt:message key="title" bundle="${lang}" /> Setup</title>
+	<title><fmt:message key="title" /> Setup</title>
 	<link rel="stylesheet" type="text/css" href="setup-style.css">
 </head>
 
@@ -20,7 +18,7 @@
 <table cellpadding="8" cellspacing="0" border="0" width="100%">
 <tr>
     <td width="99%">
-        <fmt:message key="title" bundle="${lang}" /> Setup
+        <fmt:message key="title" /> Setup
     </td>
     <td width="1%" nowrap>
         <font size="-2" face="arial,helvetica,sans-serif" color="#ffffff">

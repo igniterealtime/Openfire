@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -78,7 +78,7 @@ Datasource Settings - JNDI Connection
 </p>
 
 <p>
-Choose a JNDI datasource below to connect to the <fmt:message key="short.title" bundle="${lang}" /> database.
+Choose a JNDI datasource below to connect to the <fmt:message key="short.title" /> database.
 The name varies between application servers, but it is generally of the form:
 <tt>java:comp/env/jdbc/[DataSourceName]</tt>. Please consult your application server's
 documentation for more information.

@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -71,7 +71,7 @@ Datasource Settings
 </p>
 
 <p>
-Choose how you would like to connect to the <fmt:message key="short.title" bundle="${lang}" /> database.
+Choose how you would like to connect to the <fmt:message key="short.title" /> database.
 </p>
 
 <%  if (errors.size() > 0) { %>

@@ -18,8 +18,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -104,7 +104,7 @@
 
 <p>
 Chatrooms can replay conversation histories to provide context to new members joining a room.
-<fmt:message key="short.title" bundle="${lang}" /> provides several options for controlling how
+<fmt:message key="short.title" /> provides several options for controlling how
 much history to store for each room.
 </p>
 

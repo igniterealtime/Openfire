@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -12,6 +10,9 @@
                  java.util.Map,
                  org.jivesoftware.util.*" %>
 
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -22,8 +23,6 @@
 <c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="license-details.jsp" />
 <jsp:include page="top.jsp" flush="true" />
-  
-
 
 <%  // Get parameters
     String licenseText = ParamUtils.getParameter(request,"licenseText");
@@ -46,12 +45,12 @@
 %>
 
 <p>
-The following is a summary of your <fmt:message key="short.title" bundle="${lang}" /> license.
+The following is a summary of your <fmt:message key="short.title" /> license.
 </p>
 
 
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center"><fmt:message key="short.title" bundle="${lang}" /> License Details</td></tr>
+<tr class="tableHeaderBlue"><td colspan="2" align="center"><fmt:message key="short.title" /> License Details</td></tr>
 <tr>
     <td class="jive-label">
         License Type:

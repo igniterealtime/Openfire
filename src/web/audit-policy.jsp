@@ -16,8 +16,7 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -112,7 +111,8 @@
 %>
 
 <p>
-<fmt:message key="title" bundle="${lang}" /> can audit XMPP traffic on the server and save
+<fmt:message key="title" />
+can audit XMPP traffic on the server and save
 the data to XML data files. The amount of data sent via an XMPP server can be substantial.
 Messenger provides several settings to control whether to audit packets, how
 audit files are created, and the types of packets to save. In most cases, logging

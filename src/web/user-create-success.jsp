@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -12,6 +10,10 @@
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.messenger.user.UserAlreadyExistsException"
 %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -37,7 +39,7 @@
 
 
 <!-- Define BreadCrumbs -->
-<fmt:message key="title" bundle="${lang}" var="t" />
+<fmt:message key="title" var="t" />
 <c:set var="title" value="${t} Admin"  />
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="index.jsp" />

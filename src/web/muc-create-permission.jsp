@@ -18,7 +18,7 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>

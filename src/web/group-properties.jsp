@@ -20,7 +20,7 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 

@@ -1,5 +1,5 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -154,7 +154,7 @@ Datasource Settings - Standard Connection
 
 <p>
 Specify a JDBC driver and connection properties to connect to your database. If you need more
-information about this process please see the database documentation distributed with <fmt:message key="title" bundle="${lang}" />.
+information about this process please see the database documentation distributed with <fmt:message key="title" />.
 </p>
 
 <p>

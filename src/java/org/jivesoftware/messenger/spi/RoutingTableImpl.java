@@ -47,14 +47,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     public ChannelHandler addRoute(JID node, RoutableChannelHandler destination) {
 
         ChannelHandler route = null;
+        String nodeJID = node.getNode() == null ? "" : node.getNode();
+        String resourceJID = node.getResource() == null ? "" : node.getResource();
 
         routeLock.writeLock().lock();
         try {
-            if (node.getNode() == null) {
-                Object item = routes.put(node.getDomain(), destination);
-                if (item instanceof ChannelHandler) {
-                    route = (ChannelHandler)item;
-                }
+            if (routes.isEmpty()) {
+                routes.put(node.getDomain(), destination);
             }
             else {
                 Object nameRoutes = routes.get(node.getDomain());
@@ -62,29 +61,21 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                     nameRoutes = new Hashtable();
                     routes.put(node.getDomain(), nameRoutes);
                 }
-                if (node.getResource() == null) {
-                    Object item = ((Hashtable)nameRoutes).put(node.getNode(),
-                            destination);
-                    if (item instanceof ChannelHandler) {
-                        route = (ChannelHandler)item;
-                    }
+                if (((Hashtable)nameRoutes).isEmpty()) {
+                    ((Hashtable)nameRoutes).put(nodeJID, destination);
                 }
                 else {
-                    Object resourceRoutes =
-                            ((Hashtable)nameRoutes).get(node.getNode());
-                    if (resourceRoutes == null
-                            || resourceRoutes instanceof ChannelHandler) {
+                    Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
+                    if (resourceRoutes == null || resourceRoutes instanceof ChannelHandler) {
                         resourceRoutes = new Hashtable();
-                        Object item = ((Hashtable)nameRoutes).put(node.getNode(),
-                                resourceRoutes);
+                        Object item = ((Hashtable)nameRoutes).put(nodeJID, resourceRoutes);
                         if (item instanceof ChannelHandler) {
                             // Associate the previous Route with the bare JID
                             ((Hashtable)resourceRoutes).put("", item);
                         }
                     }
                     Object resourceRoute =
-                            ((Hashtable)resourceRoutes).put(node.getResource(),
-                                    destination);
+                            ((Hashtable)resourceRoutes).put(resourceJID, destination);
                     if (resourceRoute != null) {
                         if (resourceRoute instanceof ChannelHandler) {
                             route = (ChannelHandler)resourceRoute;
@@ -102,6 +93,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException {
         RoutableChannelHandler route = null;
+        String nodeJID = node.getNode() == null ? "" : node.getNode();
+        String resourceJID = node.getResource() == null ? "" : node.getResource();
+
         routeLock.readLock().lock();
         try {
             Object nameRoutes = routes.get(node.getDomain());
@@ -109,13 +103,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                 route = (RoutableChannelHandler)nameRoutes;
             }
             else {
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(node.getNode());
+                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
                 if (resourceRoutes instanceof ChannelHandler) {
                     route = (RoutableChannelHandler)resourceRoutes;
                 }
                 else if (resourceRoutes != null) {
-                    String resource = node.getResource() == null ? "" : node.getResource();
-                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resource);
+                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resourceJID);
                 }
                 else {
                     throw new NoSuchRouteException(node.toString());
@@ -235,42 +228,35 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     public ChannelHandler removeRoute(JID node) {
 
         ChannelHandler route = null;
+        String nodeJID = node.getNode() == null ? "" : node.getNode();
+        String resourceJID = node.getResource() == null ? "" : node.getResource();
 
         routeLock.writeLock().lock();
-        //System.err.println("Remove route " + node.toString());
         try {
-            if (node.getNode() == null) {
-                // Chop off all hosted names for this domain
-                Object item = routes.remove(node.getDomain());
-                if (item instanceof ChannelHandler) {
-                    route = (ChannelHandler)item;
+            Object nameRoutes = routes.get(node.getDomain());
+            if (nameRoutes instanceof Hashtable) {
+                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
+                if (resourceRoutes instanceof Hashtable) {
+                    // Remove the requested resource for this user
+                    route = (ChannelHandler) ((Hashtable)resourceRoutes).remove(resourceJID);
+                    if (((Hashtable)resourceRoutes).isEmpty()) {
+                        ((Hashtable)nameRoutes).remove(nodeJID);
+                        if (((Hashtable)nameRoutes).isEmpty()) {
+                            routes.remove(node.getDomain());
+
+                        }
+                    }
+                }
+                else {
+                    // Remove the unique route to this node
+                    ((Hashtable)nameRoutes).remove(nodeJID);
                 }
             }
             else {
-                Object nameRoutes = routes.get(node.getDomain());
-                if (nameRoutes instanceof Hashtable) {
-                    if (node.getResource() == null || node.getResource().trim().length() == 0) {
-                        // Chop off all hosted resources for the given name
-                        Object item = ((Hashtable)nameRoutes).remove(node.getNode());
-                        if (item instanceof ChannelHandler) {
-                            route = (ChannelHandler)item;
-                        }
-                    }
-                    else {
-                        Object resourceRoutes =
-                                ((Hashtable)nameRoutes).get(node.getNode());
-                        if (resourceRoutes instanceof Hashtable) {
-                            route = (ChannelHandler)
-                                    ((Hashtable)resourceRoutes).remove(node.getResource());
-                            if (((Hashtable)resourceRoutes).isEmpty()) {
-                                ((Hashtable)nameRoutes).remove(node.getNode());
-                                if (((Hashtable)nameRoutes).isEmpty()) {
-                                    routes.remove(node.getDomain());
-
-                                }
-                            }
-                        }
-                    }
+                // The retrieved route points to a RoutableChannelHandler
+                if (((RoutableChannelHandler)nameRoutes).getAddress().equals(node)) {
+                    // Remove the route to this domain
+                    routes.remove(node.getDomain());
                 }
             }
         }

@@ -121,10 +121,6 @@
             }
         }
     }
-
-    if (errors.size() == 0) {
-
-    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
@@ -232,49 +228,6 @@ for who should see this group in their rosters.
         </td>
     </tr>
     </table>
-
-<%--					<tr><td height="15" colspan="3"><img src="images/blank.gif"></td>--%>
-<%--                    <tr>--%>
-<%--                        <td width="1%" nowrap>--%>
-<%--                            <label for="gshow">Show group in rosters for:</label>--%>
-<%--                        </td>--%>
-<%--                        <td width="99%">--%>
-<%--                            <label for="onlyGroup">Only group users</label>--%>
-<%--                            <input type="radio" name="show" id="onlyGroup" value="onlyGroup" onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;--%>
-<%--                            <label for="everybody">Everybody</label>--%>
-<%--                            <input type="radio" name="show" id="everybody" value="everybody" onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;--%>
-<%--                            <label for="nobody">Nobody</label>--%>
-<%--                            <input type="radio" name="show" id="nobody" value="nobody" checked onclick="refreshDisplayName(this)"/>--%>
-<%----%>
-<%--                        </td>--%>
-<%--                    </tr>--%>
-<%--                    <tr>--%>
-<%--                        <td nowrap width="1%">--%>
-<%--                            <label for="gdisplay">Display name in roster:</label>--%>
-<%--                        </td>--%>
-<%--                        <td nowrap class="c1" align="left">--%>
-<%--                            <input type="text" size="40" name="display" id="gdisplay" disabled/>--%>
-<%--<%--%>
-<%--                                if (errors.get("display") != null) {--%>
-<%--%>--%>
-<%--                                                            <span class="jive-error-text"> Please enter a display name. </span>--%>
-<%--<%--%>
-<%--                                }--%>
-<%--%>--%>
-<%--                        </td>--%>
-<%--                    </tr>--%>
-<%--                    <tr>--%>
-<%--                        <td nowrap width="1%">--%>
-<%--                            <label for="gGroupList">Viewable by groups:</label>--%>
-<%--                        </td>--%>
-<%--                        <td width="99%">--%>
-<%--                            <textarea name="groupList" cols="30" rows="2" id="gGroupList"><%= ((groupList != null) ? groupList : "") %></textarea>--%>
-<%--                        </td>--%>
-<%--                    </tr>--%>
-<%--                </table>--%>
-<%----%>
-<%--                <br>--%>
-
 
     <br>
     <p><b>Shared Roster Groups</b></p>

@@ -52,8 +52,6 @@ public class JiveGlobals {
 
     private static String JIVE_CONFIG_FILENAME = "jive-messenger.xml";
 
-    private static final String DEFAULT_CHAR_ENCODING = "UTF-8";
-
     /**
      * Location of the jiveHome directory. All configuration files should be
      * located here.
@@ -67,7 +65,6 @@ public class JiveGlobals {
 
     private static Locale locale = null;
     private static TimeZone timeZone = null;
-    private static String characterEncoding = null;
     private static DateFormat dateFormat = null;
     private static DateFormat dateTimeFormat = null;
 
@@ -80,14 +77,16 @@ public class JiveGlobals {
      */
     public static Locale getLocale() {
         if (locale == null) {
-            if (properties != null) {
-                String language = (String)properties.get("locale.language");
+            if (xmlProperties != null) {
+                String [] localeArray = ((String)xmlProperties.getProperty("locale")).split("_");
+
+                String language = localeArray[0];
                 if (language == null) {
                     language = "";
                 }
-                String country = (String)properties.get("locale.country");
-                if (country == null) {
-                    country = "";
+                String country = "";
+                if (localeArray.length == 2) {
+                    country = localeArray[1];
                 }
                 // If no locale info is specified, return the system default Locale.
                 if (language.equals("") && country.equals("")) {
@@ -114,93 +113,14 @@ public class JiveGlobals {
     public static void setLocale(Locale newLocale) {
         locale = newLocale;
         // Save values to Jive properties.
-        setProperty("locale.country", locale.getCountry());
-        setProperty("locale.language", locale.getLanguage());
+        setXMLProperty("locale", locale.toString());
+
         // Reset the date formatter objects
         dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
         dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
                 DateFormat.MEDIUM, locale);
         dateFormat.setTimeZone(timeZone);
         dateTimeFormat.setTimeZone(timeZone);
-    }
-
-    /**
-     * Returns the character set that Jive uses for encoding. This
-     * is used for displaying content in skins, sending email watch
-     * updates, etc. The default encoding is ISO-8895-1, which is suitable for
-     * most Latin languages. If you need to support double byte character sets
-     * such as Chinese or Japanese, it's recommend that you use utf-8
-     * as the charset (Unicode). Unicode offers simultaneous support for a
-     * large number of languages and is easy to convert into native charsets
-     * as necessary. You may also specifiy any other charset that is supported
-     * by your JVM. A list of encodings supported by the Sun JVM can be found
-     * <a href="http://java.sun.com/j2se/1.3/docs/guide/intl/encoding.doc.html">
-     * here.</a><p>
-     *
-     * In order for a particular encoding to work (such as Unicode), your
-     * application server and database may need to be specially configured.
-     * Please consult your server documentation for more information. For
-     * example, SQLServer has a special column type for Unicode text, and the
-     * Resin application server can be configured to use a custom charset by
-     * adding a &lt;character-encoding&gt; element to the web.xml/resin.conf
-     * file. Any Servlet 2.3 compliant application servers also supports the
-     * method HttpServletRequest.setCharacterEncoding(String). A Servlet 2.3
-     * Filter called SetCharacterEncodingFilter is installed in the default
-     * Jive Messenger web.xml file, which  will set the incoming character encoding
-     * to the one reported by this method.
-     *
-     * @return the global Jive character encoding.
-     */
-    public static String getCharacterEncoding() {
-        if (characterEncoding == null) {
-            if (properties != null) {
-                String charEncoding = (String)properties.get("locale.characterEncoding");
-                if (charEncoding != null) {
-                    characterEncoding = charEncoding;
-                }
-                else {
-                    // The default encoding is ISO-8859-1. We use the version of
-                    // the encoding name that seems to be most widely compatible.
-                    characterEncoding = DEFAULT_CHAR_ENCODING;
-                }
-            }
-            else {
-                return DEFAULT_CHAR_ENCODING;
-            }
-        }
-        return characterEncoding;
-    }
-
-    /**
-     * Sets the character set that Jive uses for encoding. This
-     * is used for displaying content in skins, sending email watch
-     * updates, etc. The default encoding is ISO-8859-1, which is suitable for
-     * most Latin languages. If you need to support double byte character sets
-     * such as Chinese or Japanese, it's recommend that you use utf-8
-     * as the charset (Unicode). Unicode offers simultaneous support for a
-     * large number of languages and is easy to convert into native charsets
-     * as necessary. You may also specifiy any other charset that is supported
-     * by your JVM. A list of encodings supported by the Sun JVM can be found
-     * <a href="http://java.sun.com/j2se/1.3/docs/guide/intl/encoding.doc.html">
-     * here.</a><p>
-     *
-     * In order for a particular encoding to work (such as Unicode), your
-     * application server and database may need to be specially configured.
-     * Please consult your server documentation for more information. For
-     * example, SQLServer has a special column type for Unicode text, and the
-     * Resin application server can be configured to use a custom charset by
-     * adding a &lt;character-encoding&gt; element to the web.xml/resin.conf
-     * file. Any Servlet 2.3 compliant application servers also supports the
-     * method HttpServletRequest.setCharacterEncoding(String). A Servlet 2.3
-     * Filter called SetCharacterEncodingFilter is installed in the default
-     * Jive Messenger web.xml file, which  will set the incoming character encoding
-     * to the one reported by this method.
-     *
-     * @param characterEncoding the global Jive character encoding.
-     */
-    public static void setCharacterEncoding(String characterEncoding) {
-        JiveGlobals.characterEncoding = characterEncoding;
-        setProperty("locale.characterEncoding", characterEncoding);
     }
 
     /**
@@ -306,7 +226,6 @@ public class JiveGlobals {
         messengerHome = mHome;
         locale = null;
         timeZone = null;
-        characterEncoding = null;
         dateFormat = null;
         dateTimeFormat = null;
 

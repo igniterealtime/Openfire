@@ -91,31 +91,34 @@
          <tr>
             <td class="c1"><fmt:message key="index.uptime" /></td>
             <td>
-                <%  DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-                    long now = System.currentTimeMillis();
-                    long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
-                    long uptime = (now - lastStarted) / 1000L;
+                <%
                     String uptimeDisplay = null;
-                    if (uptime < 60) {
-                        uptimeDisplay = "Less than 1 minute";
-                    }
-                    else if (uptime < 60*60) {
-                        long mins = uptime / (60);
-                        uptimeDisplay = "Approx " + mins + ((mins==1) ? " minute" : " minutes");
-                    }
-                    else if (uptime < 60*60*24) {
-                        long days = uptime / (60*60);
-                        uptimeDisplay = "Approx " + days + ((days==1) ? " hour" : " hours");
+                    if ("en".equals(JiveGlobals.getLocale().getLanguage())) {
+                        long now = System.currentTimeMillis();
+                        long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
+                        long uptime = (now - lastStarted) / 1000L;
+
+                        if (uptime < 60) {
+                            uptimeDisplay = "Less than 1 minute";
+                        }
+                        else if (uptime < 60*60) {
+                            long mins = uptime / (60);
+                            uptimeDisplay = "Approx " + mins + ((mins==1) ? " minute" : " minutes");
+                        }
+                        else if (uptime < 60*60*24) {
+                            long days = uptime / (60*60);
+                            uptimeDisplay = "Approx " + days + ((days==1) ? " hour" : " hours");
+                        }
                     }
                 %>
 
                 <%  if (uptimeDisplay != null) { %>
 
-                    <%= uptimeDisplay %> --
+                    <%= uptimeDisplay %> -- started
 
                 <%  } %>
 
-                started <%= formatter.format(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
+                <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
 
                 <% if (webManager.getXMPPServer().isStandAlone()){ %>
                         &nbsp;&nbsp;<input type="submit" value="<fmt:message key="global.stop" />" name="stop" <%= ((serverOn) ? "" : "disabled") %>>

@@ -13,7 +13,6 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.JiveGlobals;
 import java.io.IOException;
 import java.sql.*;
 import java.util.Properties;
@@ -399,8 +398,7 @@ public class ConnectionPool implements Runnable {
 
             if (mysqlUseUnicode) {
                 Properties props = new Properties();
-                String encoding = JiveGlobals.getCharacterEncoding();
-                props.put("characterEncoding", encoding);
+                props.put("characterEncoding", "UTF-8");
                 props.put("useUnicode", "true");
                 if (username != null) {
                     props.put("user", username);

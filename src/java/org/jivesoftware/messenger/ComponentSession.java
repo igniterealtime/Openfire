@@ -153,16 +153,16 @@ public class ComponentSession extends Session {
                 return null;
             }
             else {
-                // Bind the domain to this component
-                ExternalComponent component = ((ComponentSession) session).getExternalComponent();
-                InternalComponentManager.getInstance().addComponent(domain, component);
-                // Set the service name to the component
-                component.setServiceName(domain);
                 // Component has authenticated fine
                 session.setStatus(Session.STATUS_AUTHENTICATED);
                 // Send empty handshake element to acknowledge success
                 writer.write("<handshake></handshake>");
                 writer.flush();
+                // Bind the domain to this component
+                ExternalComponent component = ((ComponentSession) session).getExternalComponent();
+                InternalComponentManager.getInstance().addComponent(domain, component);
+                // Set the service name to the component
+                component.setServiceName(domain);
                 return session;
             }
         }

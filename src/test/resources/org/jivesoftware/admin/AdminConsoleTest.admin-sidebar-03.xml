@@ -3,11 +3,5 @@
 <!-- Insert a tab with the same ID to overwrite the tab -->
 
 <adminconsole>
-    <tabs>
-        <tab0>
-            <id>server</id>
-            <name>New Server Title</name>
-            <description>Testing 1 2 3</description>
-        </tab0>
-    </tabs>
+    <tab id="server" name="New Server Title" description="Testing 1 2 3" />
 </adminconsole>

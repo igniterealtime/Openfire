@@ -762,8 +762,7 @@
             </copy>
 
             <!-- Copy the plugin.xml file to the target dir, code below assumes it's there -->
-            <copy todir="${plugin.dest.dir}/@{plugin}" file="@{pluginsrc}/@{plugin}/plugin.xml"
-                    overwrite="true" />
+            <copy todir="${plugin.dest.dir}/@{plugin}" file="@{pluginsrc}/@{plugin}/plugin.xml" />
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"
@@ -785,6 +784,7 @@
                         <fileset dir="@{pluginsrc}/@{plugin}/src/web" />
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*" />
+                            <exclude name="WEB-INF/web.xml" />
                             <exclude name="WEB-INF/web.xml.startup.servlet" />
                             <exclude name="WEB-INF/classes/messenger_init.xml" />
                             <exclude name="WEB-INF/tmp/**/*.*" />
@@ -813,29 +813,28 @@
                     />
 
                     <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
+                    <available property="plugin.@{plugin}.webxml.available"
+                            type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" />
+                    <if>
+                        <equals arg1="${plugin.@{plugin}.webxml.available}" arg2="true" />
+                        <then>
 
-                    <!--
-                    <copy tofile="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" file="${plugin.dest.dir}/@{plugin}/plugin.xml"
-                            overwrite="true" />
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
+                                <copy path="/web-app/servlet" buffer="foobar" />
+                            </xmltask>
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                                <insert path="//web-app/servlet[last()]" buffer="foobar" position="after" />
+                            </xmltask>
 
-                    <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                        <copy path="/web-app/servlet" buffer="foobar" />
-                    </xmltask>
-                    <xmltask source="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" dest="${plugin.dest.dir}/@{plugin}/plugin_temp.xml">
-                        <insert path="//plugin" buffer="foobar" />
-                    </xmltask>
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
+                                <copy path="/web-app/servlet-mapping" buffer="foobar2" />
+                            </xmltask>
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                                <insert path="//web-app/servlet-mapping[last()]" buffer="foobar2" position="after" />
+                            </xmltask>
 
-                    <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                        <copy path="/web-app/servlet-mapping" buffer="foobar2" />
-                    </xmltask>
-                    <xmltask source="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" dest="${plugin.dest.dir}/@{plugin}/plugin_temp.xml">
-                        <insert path="//plugin" buffer="foobar2" />
-                    </xmltask>
-
-                    <copy tofile="${plugin.dest.dir}/@{plugin}/plugin.xml" file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml"
-                            overwrite="true" />
-                    <delete file="${plugin.dest.dir}/@{plugin}/plugin_temp.xml" />
-                    -->
+                        </then>
+                    </if>
 
                     <!-- Compile java classes -->
                     <javac
@@ -869,6 +868,7 @@
                 </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}/src">
                     <include name="web/**/*.*" />
+                    <exclude name="web/WEB-INF/web.xml" />
                     <exclude name="web/**/*.jsp" />
                     <exclude name="web/**/*.jspf" />
                     <exclude name="web/**/*.html" />

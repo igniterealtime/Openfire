@@ -27,6 +27,11 @@ import javax.xml.stream.*;
 public class SocketReadThread extends Thread {
 
     private Socket sock;
+    /**
+     * The utf-8 charset for decoding and encoding Jabber packet streams.
+     */
+    private String charset = "UTF-8";
+
     private XMLInputFactory xppFactory;
     private XMLStreamReader xpp;
 
@@ -84,8 +89,9 @@ public class SocketReadThread extends Thread {
      */
     public void run() {
         try {
-            xpp = xppFactory.createXMLStreamReader(new InputStreamReader(sock.getInputStream()));
-            // TODO: need to force to UTF-8 ?
+            xpp =
+                    xppFactory.createXMLStreamReader(new InputStreamReader(sock.getInputStream(),
+                            charset));
 
             // Read in the opening tag and prepare for packet stream
             createSession();

@@ -295,6 +295,26 @@ public class SessionManager extends BasicModule {
             }
             return list;
         }
+
+        /**
+         * This specified session has received an available presence so we need to recalculate the
+         * order of the sessions so we can have update the default session.
+         *
+         * @param session the session that received an available presence.
+         */
+        public void sessionAvailable(ClientSession session) {
+            changePriority(session.getAddress(), session.getPresence().getPriority());
+        }
+
+        /**
+         * This specified session has received an unavailable presence so we need to recalculate the
+         * order of the sessions so we can have update the default session.
+         *
+         * @param session the session that received an unavailable presence.
+         */
+        public void sessionUnavailable(ClientSession session) {
+            changePriority(session.getAddress(), 0);
+        }
     }
 
     /**
@@ -378,7 +398,10 @@ public class SessionManager extends BasicModule {
             // A non-anonymous session is now available
             Session defaultSession = null;
             try {
-                defaultSession = sessions.get(session.getUsername()).getDefaultSession(true);
+                SessionMap sessionMap = sessions.get(session.getUsername());
+                // Update the order of the sessions based on the new presence of this session
+                sessionMap.sessionAvailable(session);
+                defaultSession = sessionMap.getDefaultSession(true);
                 JID node = new JID(defaultSession.getAddress().getNode(),
                         defaultSession.getAddress().getDomain(), null);
                 // Add route to default session (used when no resource is specified)
@@ -471,6 +494,8 @@ public class SessionManager extends BasicModule {
                     broadcastPresenceToOtherResource(session);
                 }
                 else {
+                    // Update the order of the sessions based on the new presence of this session
+                    sessionMap.sessionUnavailable(session);
                     // Update the route for the session's BARE address
                     Session defaultSession = sessionMap.getDefaultSession(true);
                     routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),

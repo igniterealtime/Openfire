@@ -11,16 +11,33 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.*;
 import java.util.Iterator;
 import java.util.List;
 import javax.xml.stream.XMLStreamException;
+import org.jivesoftware.messenger.ChannelHandler;
+import org.jivesoftware.messenger.PresenceManager;
+import org.jivesoftware.messenger.RoutingTable;
+import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.ServiceLookupFactory;
+import org.jivesoftware.messenger.user.BasicRoster;
+import org.jivesoftware.messenger.user.BasicRosterItem;
+import org.jivesoftware.messenger.user.CachedRoster;
+import org.jivesoftware.messenger.user.CachedRosterItem;
+import org.jivesoftware.messenger.user.IQRoster;
+import org.jivesoftware.messenger.user.IQRosterItem;
+import org.jivesoftware.messenger.user.RosterItem;
+import org.jivesoftware.messenger.user.RosterItemProvider;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.UserProviderFactory;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>A roster implemented against a JDBC database.</p>
@@ -36,6 +53,10 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
     private RosterItemProvider rosterItemProvider;
     private String username;
+    private SessionManager sessionManager;
+    private XMPPServer server;
+    private RoutingTable routingTable;
+
 
     /**
      * <p>Create a roster for the given user, pulling the existing roster items
@@ -44,12 +65,14 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
      * @param username The username of the user that owns this roster
      */
     public CachedRosterImpl(String username) {
+        sessionManager = SessionManager.getInstance();
+
         this.username = username;
         rosterItemProvider = UserProviderFactory.getRosterItemProvider();
         Iterator items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
-            rosterItems.put(item.getJid().toBareStringPrep(), item);
+            rosterItems.put(item.getJid().toBareJID(), item);
         }
     }
 
@@ -88,12 +111,9 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
                 RosterItem item = (RosterItem)items.next();
                 if (item.getSubStatus() == RosterItem.SUB_BOTH
                         || item.getSubStatus() == RosterItem.SUB_FROM) {
-                    XMPPAddress searchNode =
-                            new XMPPAddress(item.getJid().getName(),
-                                    item.getJid().getHost(),
-                                    null);
+                    JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
                     Iterator sessions = routingTable.getRoutes(searchNode);
-                    packet.setRecipient(item.getJid());
+                    packet.setTo(item.getJid());
                     while (sessions.hasNext()) {
                         ChannelHandler session = (ChannelHandler)sessions.next();
                         try {
@@ -112,18 +132,16 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
     }
 
-    protected RosterItem provideRosterItem(XMPPAddress user, String nickname, List group)
-            throws UserAlreadyExistsException, UnauthorizedException {
+    protected RosterItem provideRosterItem(JID user, String nickname, List group) throws UserAlreadyExistsException, UnauthorizedException {
         return provideRosterItem(new BasicRosterItem(user, nickname, group));
     }
 
-    protected RosterItem provideRosterItem(RosterItem item)
-            throws UserAlreadyExistsException, UnauthorizedException {
+    protected RosterItem provideRosterItem(RosterItem item) throws UserAlreadyExistsException, UnauthorizedException {
         item = rosterItemProvider.createItem(username, new BasicRosterItem(item));
 
         // Broadcast the roster push to the user
         IQRoster roster = new IQRoster();
-        roster.setType(IQ.SET);
+        roster.setType(IQ.Type.set);
         roster.createRosterItem(item);
         broadcast(roster);
 
@@ -156,7 +174,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
             try {
                 IQRoster roster = new IQRoster();
-                roster.setType(IQ.SET);
+                roster.setType(IQ.Type.set);
                 roster.createRosterItem(cachedItem);
                 broadcast(roster);
             }
@@ -174,7 +192,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
     }
 
-    public synchronized RosterItem deleteRosterItem(XMPPAddress user) throws UnauthorizedException {
+    public synchronized RosterItem deleteRosterItem(JID user) throws UnauthorizedException {
 
         // Note that the super cache will always only hold cached roster items
         CachedRosterItem item = (CachedRosterItem)super.deleteRosterItem(user);
@@ -185,7 +203,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             try {
                 // broadcast the update to the user
                 IQRoster roster = new IQRoster();
-                roster.setType(IQ.SET);
+                roster.setType(IQ.Type.set);
                 IQRosterItem iqItem = (IQRosterItem)roster.createRosterItem(user);
                 iqItem.setSubStatus(RosterItem.SUB_REMOVE);
                 broadcast(roster);
@@ -197,20 +215,17 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         return item;
     }
 
-    private SessionManager sessionManager;
-    private XMPPServer server;
-    private RoutingTable routingTable;
+
 
     private void broadcast(IQRoster roster) throws UnauthorizedException {
         try {
             if (server == null) {
                 server = (XMPPServer)ServiceLookupFactory.getLookup().lookup(XMPPServer.class);
             }
-            XMPPAddress recipient = server.createJID(username, null);
-            roster.setRecipient(recipient);
-            roster.setOriginatingSession(server.getSession());
+            JID recipient = server.createJID(username, null);
+            roster.setTo(recipient);
             if (sessionManager == null) {
-                sessionManager = (SessionManager)ServiceLookupFactory.getLookup().lookup(SessionManager.class);
+                sessionManager = SessionManager.getInstance();
             }
             sessionManager.userBroadcast(username, roster);
         }

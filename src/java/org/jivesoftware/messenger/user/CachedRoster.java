@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.user;
 import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Cacheable;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>A Roster that is cached in memory and persisted to some backend storage system.</p>

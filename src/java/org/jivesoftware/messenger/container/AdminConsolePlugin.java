@@ -77,38 +77,46 @@ public class AdminConsolePlugin implements Plugin {
             jetty = new Server();
 
             // Configure HTTP socket listener
+            boolean plainStarted = false;
             port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
-            jetty.addListener(Integer.toString(port));
+            if (port > 0) {
+                jetty.addListener(Integer.toString(port));
+                plainStarted = true;
+            }
 
             boolean secureStarted = false;
             try {
-                SunJsseListener listener = new SunJsseListener();
-                // Get the keystore location. The default location is security/keystore
-                String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
-                        "resources" + File.separator + "security" + File.separator + "keystore");
-                keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
-
-                // Get the keystore password. The default password is "changeit".
-                String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
-                keypass = keypass.trim();
-
-                // Get the truststore location; default at security/truststore
-                String trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
-                        "resources" + File.separator + "security" + File.separator + "truststore");
-                trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator + trustStoreLocation;
-
-                // Get the truststore passwprd; default is "changeit".
-                String trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
-                trustpass = trustpass.trim();
-
-                listener.setKeystore(keyStoreLocation);
-                listener.setKeyPassword(keypass);
-                listener.setPassword(keypass);
                 securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
-                listener.setPort(securePort);
+                if (securePort > 0) {
+                    SunJsseListener listener = new SunJsseListener();
+                    // Get the keystore location. The default location is security/keystore
+                    String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
+                            "resources" + File.separator + "security" + File.separator + "keystore");
+                    keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
 
-                jetty.addListener(listener);
-                secureStarted = true;
+                    // Get the keystore password. The default password is "changeit".
+                    String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
+                    keypass = keypass.trim();
+
+                    // Get the truststore location; default at security/truststore
+                    String trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
+                            "resources" + File.separator + "security" + File.separator + "truststore");
+                    trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator +
+                            trustStoreLocation;
+
+                    // Get the truststore passwprd; default is "changeit".
+                    String trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
+                    trustpass = trustpass.trim();
+
+                    listener.setKeystore(keyStoreLocation);
+                    listener.setKeyPassword(keypass);
+                    listener.setPassword(keypass);
+
+                    listener.setPort(securePort);
+
+                    jetty.addListener(listener);
+                    secureStarted = true;
+                }
             }
             catch (Exception e) {
                 Log.error(e);
@@ -121,18 +129,30 @@ public class AdminConsolePlugin implements Plugin {
 
             jetty.start();
 
-            Log.info("Started admin console on port: " + port);
-            if (!secureStarted) {
+            if (!plainStarted && !secureStarted) {
+                Log.info("Warning: admin console not started due to configuration settings.");
+                System.out.println("Warning: admin console not started due to configuration settings.");
+            }
+            else if (!plainStarted && secureStarted) {
+                Log.info("Admin console listening at https://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+                System.out.println("Admin console listening at https://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+            }
+            else if (!secureStarted && plainStarted) {
+                Log.info("Admin console listening at http://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
                 System.out.println("Admin console listening at http://" +
                         XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
             }
             else {
-                Log.info("Started secure admin console on port: " + securePort);
-                System.out.println("Admin console listening at:");
-                System.out.println("  http://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
-                System.out.println("  https://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+                String msg = "Admin console listening at:\n" +
+                        "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                        port + "\n" +
+                        "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                        securePort;
+                Log.info(msg);
+                System.out.println(msg);
             }
         }
         catch (Exception e) {

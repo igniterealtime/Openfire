@@ -329,7 +329,7 @@ public class JiveGlobals {
      * @return the property value specified by name or <tt>defaultValue</tt>.
      */
     public static int getXMLProperty(String name, int defaultValue) {
-        String value = getProperty(name);
+        String value = getXMLProperty(name);
         if (value != null) {
             try {
                 return Integer.parseInt(value);

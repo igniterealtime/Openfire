@@ -17,6 +17,7 @@
 <!-- root element, all properties must be under this element -->
 <jive>
     <adminConsole>
+        <!-- Disable either port by setting the value to -1 -->
         <port>9090</port>
         <securePort>9091</securePort>
         <!-- By default, only the user with the username "admin" can login

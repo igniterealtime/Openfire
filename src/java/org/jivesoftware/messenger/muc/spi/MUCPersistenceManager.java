@@ -41,7 +41,7 @@ public class MUCPersistenceManager {
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
-        "SELECT roomID, creationDate, modificationDate, naturalName, description, " +
+        "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
@@ -54,7 +54,7 @@ public class MUCPersistenceManager {
         "WHERE time>? AND roomID=? AND (nickname != \"\" OR subject IS NOT NULL) ORDER BY time";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
-        "canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
+        "lockedDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom";
     private static final String LOAD_ALL_AFFILIATIONS =
@@ -71,11 +71,13 @@ public class MUCPersistenceManager {
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
-        "description, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast)" +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "description, lockedDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
+        "membersOnly, canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast)" +
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
+    private static final String UPDATE_LOCK =
+        "UPDATE mucRoom SET lockedDate=? WHERE roomID=?";
     private static final String DELETE_ROOM =
         "DELETE FROM mucRoom WHERE roomID=?";
     private static final String DELETE_AFFILIATIONS =
@@ -139,7 +141,7 @@ public class MUCPersistenceManager {
      * 
      * @param room the room to load from the database if persistent
      */
-    public static void loadFromDB(MUCRoom room) {
+    public static void loadFromDB(MUCRoomImpl room) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -155,18 +157,19 @@ public class MUCPersistenceManager {
             room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
             room.setNaturalLanguageName(rs.getString(4));
             room.setDescription(rs.getString(5));
-            room.setCanOccupantsChangeSubject(rs.getInt(6) == 1 ? true : false);
-            room.setMaxUsers(rs.getInt(7));
-            room.setPublicRoom(rs.getInt(8) == 1 ? true : false);
-            room.setModerated(rs.getInt(9) == 1 ? true : false);
-            room.setMembersOnly(rs.getInt(10) == 1 ? true : false);
-            room.setCanOccupantsInvite(rs.getInt(11) == 1 ? true : false);
-            room.setPassword(rs.getString(12));
-            room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
-            room.setLogEnabled(rs.getInt(14) == 1 ? true : false);
-            room.setSubject(rs.getString(15));
+            room.setLockedDate(new Date(Long.parseLong(rs.getString(6).trim())));
+            room.setCanOccupantsChangeSubject(rs.getInt(7) == 1 ? true : false);
+            room.setMaxUsers(rs.getInt(8));
+            room.setPublicRoom(rs.getInt(9) == 1 ? true : false);
+            room.setModerated(rs.getInt(10) == 1 ? true : false);
+            room.setMembersOnly(rs.getInt(11) == 1 ? true : false);
+            room.setCanOccupantsInvite(rs.getInt(12) == 1 ? true : false);
+            room.setPassword(rs.getString(13));
+            room.setCanAnyoneDiscoverJID(rs.getInt(14) == 1 ? true : false);
+            room.setLogEnabled(rs.getInt(15) == 1 ? true : false);
+            room.setSubject(rs.getString(16));
             List<String> rolesToBroadcast = new ArrayList<String>();
-            String roles = Integer.toBinaryString(rs.getInt(16));
+            String roles = Integer.toBinaryString(rs.getInt(17));
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
@@ -269,7 +272,7 @@ public class MUCPersistenceManager {
      * 
      * @param room The room to save its configuration.
      */
-    public static void saveToDB(MUCRoom room) {
+    public static void saveToDB(MUCRoomImpl room) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -300,17 +303,18 @@ public class MUCPersistenceManager {
                 pstmt.setString(4, room.getName());
                 pstmt.setString(5, room.getNaturalLanguageName());
                 pstmt.setString(6, room.getDescription());
-                pstmt.setInt(7, (room.canOccupantsChangeSubject() ? 1 : 0));
-                pstmt.setInt(8, room.getMaxUsers());
-                pstmt.setInt(9, (room.isPublicRoom() ? 1 : 0));
-                pstmt.setInt(10, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(11, (room.isMembersOnly() ? 1 : 0));
-                pstmt.setInt(12, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setString(13, room.getPassword());
-                pstmt.setInt(14, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(15, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(16, room.getSubject());
-                pstmt.setInt(17, marshallRolesToBroadcast(room));
+                pstmt.setString(7, StringUtils.dateToMillis(room.getLockedDate()));
+                pstmt.setInt(8, (room.canOccupantsChangeSubject() ? 1 : 0));
+                pstmt.setInt(9, room.getMaxUsers());
+                pstmt.setInt(10, (room.isPublicRoom() ? 1 : 0));
+                pstmt.setInt(11, (room.isModerated() ? 1 : 0));
+                pstmt.setInt(12, (room.isMembersOnly() ? 1 : 0));
+                pstmt.setInt(13, (room.canOccupantsInvite() ? 1 : 0));
+                pstmt.setString(14, room.getPassword());
+                pstmt.setInt(15, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(16, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setString(17, room.getSubject());
+                pstmt.setInt(18, marshallRolesToBroadcast(room));
                 pstmt.executeUpdate();
             }
         }
@@ -382,7 +386,7 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ALL_ROOMS);
             ResultSet rs = pstmt.executeQuery();
-            MUCRoom room = null;
+            MUCRoomImpl room = null;
             while (rs.next()) {
                 room = new MUCRoomImpl(chatserver, rs.getString(4), packetRouter);
                 room.setID(rs.getLong(1));
@@ -390,18 +394,19 @@ public class MUCPersistenceManager {
                 room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
                 room.setNaturalLanguageName(rs.getString(5));
                 room.setDescription(rs.getString(6));
-                room.setCanOccupantsChangeSubject(rs.getInt(7) == 1 ? true : false);
-                room.setMaxUsers(rs.getInt(8));
-                room.setPublicRoom(rs.getInt(9) == 1 ? true : false);
-                room.setModerated(rs.getInt(10) == 1 ? true : false);
-                room.setMembersOnly(rs.getInt(11) == 1 ? true : false);
-                room.setCanOccupantsInvite(rs.getInt(12) == 1 ? true : false);
-                room.setPassword(rs.getString(13));
-                room.setCanAnyoneDiscoverJID(rs.getInt(14) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(15) == 1 ? true : false);
-                room.setSubject(rs.getString(16));
+                room.setLockedDate(new Date(Long.parseLong(rs.getString(7).trim())));
+                room.setCanOccupantsChangeSubject(rs.getInt(8) == 1 ? true : false);
+                room.setMaxUsers(rs.getInt(9));
+                room.setPublicRoom(rs.getInt(10) == 1 ? true : false);
+                room.setModerated(rs.getInt(11) == 1 ? true : false);
+                room.setMembersOnly(rs.getInt(12) == 1 ? true : false);
+                room.setCanOccupantsInvite(rs.getInt(13) == 1 ? true : false);
+                room.setPassword(rs.getString(14));
+                room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(16) == 1 ? true : false);
+                room.setSubject(rs.getString(17));
                 List<String> rolesToBroadcast = new ArrayList<String>();
-                String roles = Integer.toBinaryString(rs.getInt(17));
+                String roles = Integer.toBinaryString(rs.getInt(18));
                 if (roles.charAt(0) == '1') {
                     rolesToBroadcast.add("moderator");
                 }
@@ -425,7 +430,7 @@ public class MUCPersistenceManager {
             // Load the rooms conversations from the last two days
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = rooms.get(rs.getLong(1));
+                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -463,7 +468,7 @@ public class MUCPersistenceManager {
             while (rs.next()) {
                 String jid = rs.getString(2);
                 int affiliation = rs.getInt(3);
-                room = rooms.get(rs.getLong(1));
+                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
                 try {
                     switch (affiliation) {
                         case MUCRole.OWNER:
@@ -490,7 +495,7 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ALL_MEMBERS);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = rooms.get(rs.getLong(1));
+                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
                 try {
                     room.addMember(rs.getString(2), rs.getString(3), room.getRole());
                 }
@@ -523,9 +528,8 @@ public class MUCPersistenceManager {
      * Updates the room's subject in the database. 
      * 
      * @param room the room to update its subject in the database.
-     * @param subject the new subject of the room.
      */
-    public static void updateRoomSubject(MUCRoom room, String subject) {
+    public static void updateRoomSubject(MUCRoom room) {
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -535,7 +539,37 @@ public class MUCPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_SUBJECT);
-            pstmt.setString(1, subject);
+            pstmt.setString(1, room.getSubject());
+            pstmt.setLong(2, room.getID());
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    /**
+     * Updates the room's lock status in the database.
+     *
+     * @param room the room to update its lock status in the database.
+     */
+    public static void updateRoomLock(MUCRoomImpl room) {
+        if (!room.isPersistent() || !room.wasSavedToDB()) {
+            return;
+        }
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_LOCK);
+            pstmt.setString(1, StringUtils.dateToMillis(room.getLockedDate()));
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
         }

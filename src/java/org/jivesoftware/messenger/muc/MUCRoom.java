@@ -382,6 +382,15 @@ public interface MUCRoom extends ChatDeliverer {
     public boolean isLocked();
 
     /**
+     * Returns true if the room is locked and it was locked by a room owner after the room was
+     * initially configured.
+     *
+     * @return true if the room is locked and it was locked by a room owner after the room was
+     *         initially configured.
+     */
+    public boolean isManuallyLocked();
+
+    /**
      * An event callback fired whenever an occupant changes his nickname within the chatroom.
      *  
      * @param oldNick old nickname within the room.
@@ -768,13 +777,23 @@ public interface MUCRoom extends ChatDeliverer {
     public boolean canBroadcastPresence(String roleToBroadcast);
 
     /**
+     * Locks the room so that users cannot join the room. Only the owner of the room can lock/unlock
+     * the room.
+     *
+     * @param senderRole the role of the occupant that locked the room.
+     * @throws ForbiddenException If the user is not an owner of the room.
+     */
+    public void lock(MUCRole senderRole) throws ForbiddenException;
+
+    /**
      * Unlocks the room so that users can join the room. The room is locked when created and only
      * the owner of the room can unlock it by sending the configuration form to the Multi-User Chat
      * service.
      *
      * @param senderRole the role of the occupant that unlocked the room.
+     * @throws ForbiddenException If the user is not an owner of the room.
      */
-    public void unlockRoom(MUCRole senderRole);
+    public void unlock(MUCRole senderRole) throws ForbiddenException;
 
     /**
      * Sends an invitation to a user. The invitation will be sent as if the room is inviting the 

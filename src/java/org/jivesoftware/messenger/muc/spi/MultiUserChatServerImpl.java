@@ -276,7 +276,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 try {
                     // Try to load the room's configuration from the database (if the room is
                     // persistent but was added to the DB after the server was started up)
-                    MUCPersistenceManager.loadFromDB(room);
+                    MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
                 }
                 catch (IllegalArgumentException e) {
                     // The room does not exist so check for creation permissions

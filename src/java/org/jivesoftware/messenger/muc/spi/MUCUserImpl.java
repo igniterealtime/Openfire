@@ -356,8 +356,8 @@ public class MUCUserImpl implements MUCUser {
                             roles.put(group, role);
                             // If the client that created the room is non-MUC compliant then
                             // unlock the room thus creating an "instant" room
-                            if (room.isLocked() && mucInfo == null) {
-                                room.unlockRoom(role);
+                            if (mucInfo == null && room.isLocked() && !room.isManuallyLocked()) {
+                                room.unlock(role);
                             }
                         }
                         catch (UnauthorizedException e) {

@@ -37,14 +37,6 @@ import org.dom4j.Element;
 public class MUCRoomImpl implements MUCRoom {
 
     /**
-     * The timeout period to unlock a room. If the period expired the default means that the default
-     * configuration was accepted for the room.
-     */
-    // TODO Set this variable from a default configuration. Add setters and getters.
-    // Default value is 30 min ( 30(min) * 60(sec) * 1000(mill) )
-    public static long LOCK_TIMEOUT = 1800000;
-
-    /**
      * The server hosting the room.
      */
     private MultiUserChatServer server;
@@ -108,14 +100,9 @@ public class MUCRoomImpl implements MUCRoom {
     private MUCRoomHistory roomHistory;
 
     /**
-     * Flag that indicates whether a room is locked or not.
+     * Time when the room was locked. A value of zero means that the room is unlocked.
      */
-    private boolean roomLocked;
-
-    /**
-     * The time when the room was locked.
-     */
-    long lockedTime;
+    private long lockedTime;
 
     /**
      * List of chatroom's owner. The list contains only bare jid.
@@ -273,7 +260,6 @@ public class MUCRoomImpl implements MUCRoom {
         this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
         this.iqAdminHandler = new IQAdminHandler(this, packetRouter);
         // No one can join the room except the room's owner
-        this.roomLocked = true;
         this.lockedTime = startTime;
         // Set the default roles for which presence is broadcast
         rolesToBroadcastPresence.add("moderator");
@@ -394,7 +380,7 @@ public class MUCRoomImpl implements MUCRoom {
             }
             boolean isOwner = owners.contains(user.getAddress().toBareJID());
             // If the room is locked and this user is not an owner raise a RoomLocked exception
-            if (roomLocked) {
+            if (isLocked()) {
                 if (!isOwner) {
                     throw new RoomLockedException();
                 }
@@ -500,8 +486,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         if (joinRole != null) {
             // It is assumed that the room is new based on the fact that it's locked and
-            // it has only one occupants (the owner).
-            boolean isRoomNew = roomLocked && occupants.size() == 1;
+            // that it was locked when it was created.
+            boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
             try {
                 // Send the presence of this new occupant to existing occupants
                 Presence joinPresence = joinRole.getPresence().createCopy();
@@ -512,7 +498,6 @@ public class MUCRoomImpl implements MUCRoom {
                 }
                 joinPresence.setFrom(joinRole.getRoleAddress());
                 broadcastPresence(joinPresence);
-
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -520,6 +505,15 @@ public class MUCRoomImpl implements MUCRoom {
             // If the room has just been created send the "room locked until configuration is
             // confirmed" message
             if (isRoomNew) {
+                Message message = new Message();
+                message.setType(Message.Type.groupchat);
+                message.setBody(LocaleUtils.getLocalizedString("muc.new"));
+                message.setFrom(role.getRoleAddress());
+                message.setTo(user.getAddress());
+                router.route(message);
+            }
+            else if (isLocked()) {
+                // Warn the owner that the room is locked but it's not new
                 Message message = new Message();
                 message.setType(Message.Type.groupchat);
                 message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
@@ -1231,11 +1225,11 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public boolean isLocked() {
-        if (System.currentTimeMillis() - startTime > LOCK_TIMEOUT) {
-            // Unlock the room. The default configuration is assumed to be accepted by the owner.
-            roomLocked = false;
-        }
-        return roomLocked;
+        return lockedTime > 0;
+    }
+
+    public boolean isManuallyLocked() {
+        return lockedTime > 0 && creationDate.getTime() != lockedTime;
     }
 
     public void nicknameChanged(String oldNick, String newNick) {
@@ -1254,7 +1248,7 @@ public class MUCRoomImpl implements MUCRoom {
             }
             // Set the new subject to the room
             subject = packet.getSubject();
-            MUCPersistenceManager.updateRoomSubject(this, subject);
+            MUCPersistenceManager.updateRoomSubject(this);
             // Notify all the occupants that the subject has changed
             packet.setFrom(role.getRoleAddress());
             send(packet);
@@ -1578,11 +1572,6 @@ public class MUCRoomImpl implements MUCRoom {
     
     public void setSavedToDB(boolean saved) {
         this.savedToDB = saved;
-        if (saved) {
-            // Unlock the room now. This is necessary only when a persistent room has been
-            // retrieved from the database.
-            this.roomLocked = false;
-        }
     }
     
     public void setPersistent(boolean persistent) {
@@ -1609,7 +1598,7 @@ public class MUCRoomImpl implements MUCRoom {
 
     /**
      * Returns true if we need to check whether a presence could be sent or not.
-     * 
+     *
      * @return true if we need to check whether a presence could be sent or not.
      */
     private boolean hasToCheckRoleToBroadcastPresence() {
@@ -1621,9 +1610,35 @@ public class MUCRoomImpl implements MUCRoom {
         return "none".equals(roleToBroadcast) || rolesToBroadcastPresence.contains(roleToBroadcast);
     }
 
-    public void unlockRoom(MUCRole senderRole) {
-        roomLocked = false;
-        this.lockedTime = 0;
+    public void lock(MUCRole senderRole) throws ForbiddenException {
+        if (MUCRole.OWNER != senderRole.getAffiliation()) {
+            throw new ForbiddenException();
+        }
+        if (isLocked()) {
+            // Do nothing if the room was already locked
+            return;
+        }
+        setLocked(true);
+        if (senderRole.getChatUser() != null) {
+            // Send to the occupant that locked the room a message saying so
+            Message message = new Message();
+            message.setType(Message.Type.groupchat);
+            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
+            message.setFrom(getRole().getRoleAddress());
+            message.setTo(senderRole.getChatUser().getAddress());
+            router.route(message);
+        }
+    }
+
+    public void unlock(MUCRole senderRole) throws ForbiddenException {
+        if (MUCRole.OWNER != senderRole.getAffiliation()) {
+            throw new ForbiddenException();
+        }
+        if (!isLocked()) {
+            // Do nothing if the room was already unlocked
+            return;
+        }
+        setLocked(false);
         if (senderRole.getChatUser() != null) {
             // Send to the occupant that unlocked the room a message saying so
             Message message = new Message();
@@ -1633,6 +1648,40 @@ public class MUCRoomImpl implements MUCRoom {
             message.setTo(senderRole.getChatUser().getAddress());
             router.route(message);
         }
+    }
+
+    private void setLocked(boolean locked) {
+        if (locked) {
+            this.lockedTime = System.currentTimeMillis();
+        }
+        else {
+            this.lockedTime = 0;
+        }
+        MUCPersistenceManager.updateRoomLock(this);
+    }
+
+    /**
+     * Sets the date when the room was locked. Initially when the room is created it is locked so
+     * the locked date is the creation date of the room. Afterwards, the room may be manually
+     * locked and unlocked so the locked date may be in these cases different than the creation
+     * date. A Date with time 0 means that the the room is unlocked.
+     *
+     * @param lockedTime the date when the room was locked.
+     */
+    void setLockedDate(Date lockedTime) {
+        this.lockedTime = lockedTime.getTime();
+    }
+
+    /**
+     * Returns the date when the room was locked. Initially when the room is created it is locked so
+     * the locked date is the creation date of the room. Afterwards, the room may be manually
+     * locked and unlocked so the locked date may be in these cases different than the creation
+     * date. When the room is unlocked a Date with time 0 is returned.
+     *
+     * @return the date when the room was locked.
+     */
+    Date getLockedDate() {
+        return new Date(lockedTime);
     }
 
     public List<Presence> addAdmins(List<String> newAdmins, MUCRole senderRole)

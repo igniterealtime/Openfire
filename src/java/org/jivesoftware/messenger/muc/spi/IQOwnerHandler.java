@@ -309,8 +309,8 @@ public class IQOwnerHandler {
             }
             // If the room was locked, unlock it and send to the owner the "room is now unlocked"
             // message
-            if (room.isLocked()) {
-                room.unlockRoom(senderRole);
+            if (room.isLocked() && !room.isManuallyLocked()) {
+                room.unlock(senderRole);
             }
         }
     }

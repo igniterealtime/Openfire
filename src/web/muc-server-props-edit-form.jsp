@@ -34,7 +34,7 @@
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
+<% admin.init(pageContext); %>
 
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -45,23 +45,26 @@
     // Handle a save
     Map errors = new HashMap();
     if (save) {
+        // Make sure that the MUC Service is lower cased.
+        muc = muc.toLowerCase();
+
         // do validation
         if (muc == null  || muc.indexOf('.') >= 0) {
             errors.put("mucname","mucname");
         }
         if (errors.size() == 0) {
             admin.getMultiUserChatServer().setServiceName(muc);
-            response.sendRedirect("muc-server-props-edit-form.jsp?success=true");
+            response.sendRedirect("muc-server-props-edit-form.jsp?success=true&mucname="+muc);
             return;
         }
     }
-    else {
+    else if(muc == null) {
         name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
         muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
     }
 
     name = admin.getServerInfo().getName();
-    if (errors.size() == 0) {
+    if (errors.size() == 0 && muc == null) {
         muc = admin.getMultiUserChatServer().getServiceName();
     }
 %>
@@ -109,7 +112,8 @@
 
 <%  } %>
 
-<form action="muc-server-props-edit-form.jsp?save" method="post">
+<form action="muc-server-props-edit-form.jsp" method="post">
+<input type="hidden" name="save" value="true">
 
 <fieldset>
     <legend><fmt:message key="groupchat.service.properties.legend" /></legend>

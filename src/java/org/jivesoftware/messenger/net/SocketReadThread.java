@@ -184,14 +184,14 @@ public class SocketReadThread extends Thread {
                 if ("message".equals(tag)) {
                     Message packet = new Message(doc);
                     packet.setFrom(session.getAddress());
-                    auditor.audit(packet);
+                    auditor.audit(packet, session);
                     router.route(packet);
                     session.incrementClientPacketCount();
                 }
                 else if ("presence".equals(tag)) {
                     Presence packet = new Presence(doc);
                     packet.setFrom(session.getAddress());
-                    auditor.audit(packet);
+                    auditor.audit(packet, session);
                     router.route(packet);
                     session.incrementClientPacketCount();
                     // Update the flag that indicates if the user made a clean sign out
@@ -200,7 +200,7 @@ public class SocketReadThread extends Thread {
                 else if ("iq".equals(tag)) {
                     IQ packet = getIQ(doc);
                     packet.setFrom(session.getAddress());
-                    auditor.audit(packet);
+                    auditor.audit(packet, session);
                     router.route(packet);
                     session.incrementClientPacketCount();
                 }

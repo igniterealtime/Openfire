@@ -60,21 +60,21 @@ public class AuditorImpl implements Auditor {
         auditManager = manager;
     }
 
-    public void audit(Packet packet) {
+    public void audit(Packet packet, Session session) {
         if (auditManager.isEnabled()) {
             if (packet instanceof Message) {
                 if (auditManager.isAuditMessage()) {
-                    writePacket(packet);
+                    writePacket(packet, session);
                 }
             }
             else if (packet instanceof Presence) {
                 if (auditManager.isAuditPresence()) {
-                    writePacket(packet);
+                    writePacket(packet, session);
                 }
             }
             else if (packet instanceof IQ) {
                 if (auditManager.isAuditIQ()) {
-                    writePacket(packet);
+                    writePacket(packet, session);
                 }
             }
         }
@@ -103,10 +103,10 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void writePacket(Packet packet) {
+    private void writePacket(Packet packet, Session session) {
         if (!closed) {
             // Add to the logging queue this new entry that will be saved later
-            logQueue.add(new AuditPacket(packet.createCopy()));
+            logQueue.add(new AuditPacket(packet.createCopy(), session));
         }
     }
 
@@ -228,32 +228,34 @@ public class AuditorImpl implements Auditor {
 
         private Element element;
 
-        public AuditPacket(Packet packet) {
+        public AuditPacket(Packet packet, Session session) {
             element = docFactory.createElement("packet", "http://www.jivesoftware.org");
-            Session session = SessionManager.getInstance().getSession(packet.getFrom());
-            if (session != null) {
-                if (session.getStreamID() != null) {
-                    element.addAttribute("streamID", session.getStreamID().toString());
-                }
-                switch (session.getStatus()) {
-                    case Session.STATUS_AUTHENTICATED:
-                        element.addAttribute("status", "auth");
-                        break;
-                    case Session.STATUS_CLOSED:
-                        element.addAttribute("status", "closed");
-                        break;
-                    case Session.STATUS_CONNECTED:
-                        element.addAttribute("status", "connected");
-                        break;
-                    case Session.STATUS_STREAMING:
-                        element.addAttribute("status", "stream");
-                        break;
-                    default:
-                        element.addAttribute("status", "unknown");
-                        break;
-                }
+            if (session.getStreamID() != null) {
+                element.addAttribute("streamID", session.getStreamID().toString());
             }
-            element.addAttribute("timestap", new Date().toString());
+            switch (session.getStatus()) {
+                case Session.STATUS_AUTHENTICATED:
+                    element.addAttribute("status", "auth");
+                    break;
+                case Session.STATUS_CLOSED:
+                    element.addAttribute("status", "closed");
+                    break;
+                case Session.STATUS_CONNECTED:
+                    element.addAttribute("status", "connected");
+                    // This is a workaround. Since we don't want to have an incorrect FROM attribute
+                    // value we need to clean up the FROM attribute. The FROM attribute will contain
+                    // an incorrect value since we are setting a fake JID until the user actually
+                    // authenticates with the server.
+                    packet.setFrom((String) null);
+                    break;
+                case Session.STATUS_STREAMING:
+                    element.addAttribute("status", "stream");
+                    break;
+                default:
+                    element.addAttribute("status", "unknown");
+                    break;
+            }
+            element.addAttribute("timestamp", new Date().toString());
             element.add(packet.getElement());
         }
 

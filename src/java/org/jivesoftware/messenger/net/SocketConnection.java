@@ -188,7 +188,7 @@ public class SocketConnection extends BasicConnection {
                     Log.error(e);
                 }
             }
-            auditor.audit(packet);
+            auditor.audit(packet, session);
             session.incrementServerPacketCount();
         }
     }

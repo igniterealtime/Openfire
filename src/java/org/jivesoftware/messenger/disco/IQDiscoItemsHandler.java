@@ -183,6 +183,35 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
+    /**
+     * Registers a new disco item for a component. The jid attribute of the item will match the jid
+     * of the component and the name should be the name of the component discovered using disco.
+     *
+     * @param jid the jid of the component.
+     * @param name the discovered name of the component.
+     */
+    public void addComponentItem(String jid, String name) {
+        // Create a new element based on the provided DiscoItem
+        Element element = DocumentHelper.createElement("item");
+        element.addAttribute("jid", jid);
+        element.addAttribute("name", name);
+        // Add the element to the list of items related to the server
+        serverItems.add(element);
+    }
+
+    /**
+     * Removes a disco item for a component that has been removed from the server.
+     *
+     * @param jid the jid of the component being removed.
+     */
+    public void removeComponentItem(String jid) {
+        for (Iterator<Element> it = serverItems.iterator(); it.hasNext();) {
+            if (jid.equals(it.next().attributeValue("jid"))) {
+                it.remove();
+            }
+        }
+    }
+
     public void initialize(XMPPServer server) {
         super.initialize(server);
         // Track the implementors of ServerItemsProvider so that we can collect the items

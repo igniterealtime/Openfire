@@ -47,7 +47,7 @@ public class XMLProperties {
     private Map propertyCache = new HashMap();
 
     /**
-     * Creates a new XMLProperties object.
+     * Creates a new XMLPropertiesTest object.
      *
      * @param fileName the full path the file that properties should be read from
      *                 and written to.
@@ -69,7 +69,7 @@ public class XMLProperties {
     }
 
     /**
-     * Creates a new XMLProperties object.
+     * Creates a new XMLPropertiesTest object.
      *
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.

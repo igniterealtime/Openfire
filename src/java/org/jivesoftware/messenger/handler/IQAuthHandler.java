@@ -104,7 +104,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 }
                 // Otherwise set query
                 else {
-                    if (iq.elements().isEmpty()) {
+                    if (query.elements().isEmpty()) {
                         // Anonymous authentication
                         response = anonymousLogin(session, packet);
                     }

@@ -2,7 +2,7 @@
 
 # jive-messengerd
 #
-# chckconfig: 2345 20 80
+# chkconfig: 2345 20 80
 # description: Used to start and stop the jive messenger XMPP server
 # 
 # Script used to start jive messenger as daemon

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user.spi;
+package org.jivesoftware.messenger.roster.spi;
 
 import java.util.Iterator;
 import java.util.List;
@@ -22,15 +22,14 @@ import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.BasicRoster;
-import org.jivesoftware.messenger.user.BasicRosterItem;
-import org.jivesoftware.messenger.user.CachedRoster;
-import org.jivesoftware.messenger.user.CachedRosterItem;
-import org.jivesoftware.messenger.user.RosterItem;
-import org.jivesoftware.messenger.user.RosterItemProvider;
+import org.jivesoftware.messenger.roster.BasicRoster;
+import org.jivesoftware.messenger.roster.BasicRosterItem;
+import org.jivesoftware.messenger.roster.CachedRoster;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.roster.CachedRosterItem;
+import org.jivesoftware.messenger.roster.*;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.UserProviderFactory;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -68,7 +67,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         sessionManager = SessionManager.getInstance();
 
         this.username = username;
-        rosterItemProvider = UserProviderFactory.getRosterItemProvider();
+        rosterItemProvider =  RosterItemProvider.getInstance();
         Iterator items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();

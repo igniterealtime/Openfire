@@ -15,6 +15,7 @@ import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
 import org.jivesoftware.messenger.container.Module;
@@ -27,10 +28,8 @@ import org.jivesoftware.messenger.handler.*;
 import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.messenger.transport.TransportHandler;
-import org.jivesoftware.messenger.user.RosterManager;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.spi.RosterManagerImpl;
-import org.jivesoftware.messenger.user.spi.UserManagerImpl;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
@@ -193,8 +192,7 @@ public class BasicServer implements XMPPServer {
         // Load boot modules
         loadModule(RoutingTableImpl.class.getName());
         loadModule(AuditManagerImpl.class.getName());
-        loadModule(UserManagerImpl.class.getName());
-        loadModule(RosterManagerImpl.class.getName());
+        loadModule(RosterManager.class.getName());
         loadModule(PrivateStorage.class.getName());
         // Load core modules
         loadModule(ConnectionManagerImpl.class.getName());
@@ -541,7 +539,7 @@ public class BasicServer implements XMPPServer {
     }
 
     public RosterManager getRosterManager() {
-        return (RosterManager) modules.get(RosterManagerImpl.class);
+        return (RosterManager) modules.get(RosterManager.class);
     }
 
     public PresenceManager getPresenceManager() {
@@ -603,7 +601,7 @@ public class BasicServer implements XMPPServer {
     }
 
     public UserManager getUserManager() {
-        return (UserManager) modules.get(UserManagerImpl.class);
+        return UserManager.getInstance();
     }
 
     public AuditManager getAuditManager() {

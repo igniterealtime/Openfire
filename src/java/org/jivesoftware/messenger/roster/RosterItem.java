@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.messenger.roster;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.IntEnum;

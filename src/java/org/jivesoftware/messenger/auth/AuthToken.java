@@ -12,32 +12,40 @@
 package org.jivesoftware.messenger.auth;
 
 /**
- * Proves that a user has successfully logged in. The existence of an AuthToken object indicates
- * that a person has logged in correctly and has authentication to act as the user associated with
- * the authentication. An instance of this object can be obtained from the AuthFactory and
- * must be passed in to to get an instance of KBFactory or ForumFactory.<p>
- * <p/>
- * In the case of using the core faq or forum services through a web interface, the expected
- * behavior is to have a user login and then store the AuthToken object in their session. In
- * some app servers, all objects put in the session must be serializable. The default AuthToken
- * implementation obeys this rule, but ensure that custom AuthToken classes do as well.
+ * A token that proves that a user has successfully authenticated.
  *
- * @author Iain Shigeoka
+ * @author Matt Tucker
  * @see AuthFactory
  */
-public interface AuthToken {
+public class AuthToken {
+
+    private static final long serialVersionUID = 01L;
+    private String username;
+
+    /**
+     * Constucts a new AuthToken with the specified username.
+     *
+     * @param username the username to create an authToken token with.
+     */
+    public AuthToken(String username) {
+        this.username = username;
+    }
 
     /**
      * Returns the username associated with this AuthToken.
      *
      * @return the username associated with this AuthToken.
      */
-    public String getUsername();
+    public String getUsername() {
+        return username;
+    }
 
     /**
      * Returns true if this AuthToken is the Anonymous auth token.
      *
      * @return true if this token is the anonymous AuthToken.
      */
-    public boolean isAnonymous();
+    public boolean isAnonymous() {
+        return username == null;
+    }
 }

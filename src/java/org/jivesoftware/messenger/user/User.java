@@ -11,53 +11,150 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.Permissions;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import java.util.Iterator;
+import org.jivesoftware.messenger.spi.BasicServer;
+import org.jivesoftware.messenger.roster.CachedRoster;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.database.DbConnectionManager;
+
+import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
- * <p>The User interface provides information about and services for users of the system. Users can be
- * identified by a unique id or username. Users can also be organized into groups for easier
- * management of permissions.</p>
- * <p/>
- * <p>Security for User objects is provide by UserProxy protection proxy objects.</p>
+ * Encapsulates information about a user. New users are created using
+ * {@link UserManager#createUser(String, String, String, String)}. All user
+ * properties are loaded on demand and are read from the <tt>jiveUserProp</tt>
+ * database table. The currently-installed {@link UserProvider} is used for
+ * setting all other user data and some operations may not be supported
+ * depending on the capabilities of the {@link UserProvider}.
  *
- * @author Iain Shigeoka
+ * @author Matt Tucker
  */
-public interface User {
+public class User implements Cacheable {
+
+    private static final String LOAD_PROPERTIES =
+        "SELECT name, propValue FROM jiveUserProp WHERE username=?";
+    private static final String DELETE_PROPERTY =
+        "DELETE FROM jiveUserProp WHERE username=? AND name=?";
+    private static final String UPDATE_PROPERTY =
+        "UPDATE jiveUserProp SET propValue=? WHERE name=? AND username=?";
+    private static final String INSERT_PROPERTY =
+        "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
+
+    private String username;
+    private String name;
+    private String email;
+    private Date creationDate;
+    private Date modificationDate;
+
+    private Map<String,String> properties = null;
 
     /**
-     * <p>Returns the entity's username.</p>
-     * <p/>
-     * <p>All usernames must be unique in the system.</p>
+     * Constructs a new user. All arguments can be <tt>null</tt> except the username.
+     * Typically, User objects should not be constructed by end-users of the API.
+     * Instead, user objects should be retrieved using {@link UserManager#getUser(String)}.
      *
-     * @return the username of the entity.
+     * @param username the username.
+     * @param name the name.
+     * @param email the email address.
+     * @param creationDate the date the user was created.
+     * @param modificationDate the date the user was last modified.
      */
-    String getUsername();
+    public User(String username, String name, String email, Date creationDate,
+            Date modificationDate)
+    {
+        if (username == null) {
+            throw new NullPointerException("Username cannot be null");
+        }
+        this.username = username;
+        this.name = name;
+        this.email = email;
+        this.creationDate = creationDate;
+        this.modificationDate = modificationDate;
+    }
 
     /**
-     * <p>Sets a new password for the user.</p>
+     * Returns this user's username.
      *
-     * @param password The new password for the user
-     * @throws UnauthorizedException If the provider does not allow password changes or the caller does not have permission
+     * @return the username..
      */
-    void setPassword(String password) throws UnauthorizedException;
+    public String getUsername() {
+        return username;
+    }
 
     /**
-     * <p>Returns meta information for this user such as full name, email address, etc.</p>
+     * Sets a new password for this user.
      *
-     * @return Meta information about the user
-     * @throws UserNotFoundException If no information is available for this user
+     * @param password the new password for the user.
      */
-    UserInfo getInfo() throws UserNotFoundException;
+    public void setPassword(String password) {
+        try {
+            UserManager.getUserProvider().setPassword(username, password);
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+        }
+    }
 
-    /**
-     * <p>Saves the user info associated with this user to persistent storage.</p>
-     *
-     * @throws UnauthorizedException If the user info provider does not support the updating of user info
-     */
-    void saveInfo() throws UnauthorizedException;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        try {
+            UserManager.getUserProvider().setName(username, name);
+            this.name = name;
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+        }
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        try {
+            UserManager.getUserProvider().setEmail(username, email);
+            this.email = email;
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+        }
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        try {
+            UserManager.getUserProvider().setCreationDate(username, creationDate);
+            this.creationDate = creationDate;
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+        }
+    }
+
+    public Date getModificationDate() {
+        return modificationDate;
+    }
+
+    public void setModificationDate(Date modificationDate) {
+        try {
+            UserManager.getUserProvider().setCreationDate(username, modificationDate);
+            this.modificationDate = modificationDate;
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+        }
+    }
 
     /**
      * Returns an extended property of the user. Each user can have an arbitrary number of extended
@@ -67,7 +164,12 @@ public interface User {
      * @param name the name of the property to get.
      * @return the value of the property
      */
-    String getProperty(String name);
+    public String getProperty(String name) {
+        if (properties == null) {
+            loadPropertiesFromDb();
+        }
+        return properties.get(name);
+    }
 
     /**
      * Sets an extended property of the user. Each user can have an arbitrary number of extended
@@ -77,86 +179,192 @@ public interface User {
      *
      * @param name  the name of the property to set.
      * @param value the new value for the property.
-     * @throws UnauthorizedException if not allowed to edit.
      */
-    void setProperty(String name, String value) throws UnauthorizedException;
+    public void setProperty(String name, String value) {
+        if (properties == null) {
+            loadPropertiesFromDb();
+        }
+        // Make sure the property name and value aren't null.
+        if (name == null || value == null || "".equals(name) || "".equals(value)) {
+            throw new NullPointerException("Cannot set property with empty or null value.");
+        }
+        // See if we need to update a property value or insert a new one.
+        if (properties.containsKey(name)) {
+            // Only update the value in the database if the property value
+            // has changed.
+            if (!(value.equals(properties.get(name)))) {
+                properties.put(name, value);
+                updatePropertyInDb(name, value);
+            }
+        }
+        else {
+            properties.put(name, value);
+            insertPropertyIntoDb(name, value);
+        }
+    }
 
     /**
      * Deletes an extended property. If the property specified by <code>name</code> does not exist,
      * this method will do nothing.
      *
      * @param name the name of the property to delete.
-     * @throws UnauthorizedException if not allowed to edit.
      */
-    void deleteProperty(String name) throws UnauthorizedException;
+    public void deleteProperty(String name) {
+        if (properties == null) {
+            loadPropertiesFromDb();
+        }
+        properties.remove(name);
+        deletePropertyFromDb(name);
+    }
 
     /**
-     * Returns an Iterator for all the names of the extended user properties.
+     * Returns a Collection of all the names of the extended user properties.
      *
-     * @return an Iterator for the property names.
+     * @return a Collection of all the property names.
      */
-    Iterator getPropertyNames();
+    public Collection<String> getPropertyNames() {
+        if (properties == null) {
+            loadPropertiesFromDb();
+        }
+        return Collections.unmodifiableCollection(properties.keySet());
+    }
 
     /**
      * Returns the user's roster. A roster is a list of users that the user wishes to know
      * if they are online. Rosters are similar to buddy groups in popular IM clients.
      *
      * @return the user's roster.
-     * @throws UnauthorizedException if not the user or an administrator.
      */
-    CachedRoster getRoster() throws UnauthorizedException;
+    public CachedRoster getRoster() {
+        try {
+            return BasicServer.getInstance().getRosterManager().getRoster(username);
+        }
+        catch (UserNotFoundException unfe) {
+            Log.error(unfe);
+            return null;
+        }
+    }
 
-    /**
-     * Returns the permissions for the user that correspond to the passed-in AuthToken.
-     *
-     * @param authToken the auth token to look up permissions with.
-     */
-    Permissions getPermissions(AuthToken authToken);
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();              // overhead of object
+        size += CacheSizes.sizeOfLong();                // id
+        size += CacheSizes.sizeOfString(username);      // username
+        size += CacheSizes.sizeOfString(email);         // email
+        size += CacheSizes.sizeOfDate() * 2;            // creationDate and modificationDate
+        size += CacheSizes.sizeOfMap(properties);       // properties
+        return size;
+    }
 
-    /**
-     * Returns true if the handle on the object has the permission specified. A list of possible
-     * permissions can be found in the Permissions class. Certain methods of this class are
-     * restricted to certain permissions as specified in the method comments.
-     *
-     * @param permissionType the permission to check for.
-     * @see Permissions
-     */
-    boolean isAuthorized(long permissionType);
+    public String toString() {
+        return username;
+    }
 
-    /**
-     * Sets the user's vCard information. Advanced user systems can use vCard
-     * information to link to user directory information or store other
-     * relevant user information.
-     *
-     * @param name  The name of the vcard property
-     * @param value The value of the vcard property
-     * @throws UnauthorizedException If the caller doesn't have permission to change the user's vcard
-     */
-    void setVCardProperty(String name, String value) throws UnauthorizedException;
+    public int hashCode() {
+        return username.hashCode();
+    }
 
-    /**
-     * Obtains the user's vCard information for a given vcard property name.
-     * Advanced user systems can use vCard
-     * information to link to user directory information or store other
-     * relevant user information.
-     *
-     * @param name The name of the vcard property to retrieve
-     * @return The vCard value found
-     */
-    String getVCardProperty(String name);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object != null && object instanceof User) {
+            return username.equals(((User)object).getUsername());
+        }
+        else {
+            return false;
+        }
+    }
 
-    /**
-     * Deletes a given vCard property from the user account.
-     *
-     * @param name The name of the vcard property to remove
-     * @throws UnauthorizedException If not the user or administrator
-     */
-    void deleteVCardProperty(String name) throws UnauthorizedException;
+    private synchronized void loadPropertiesFromDb() {
+        properties = new Hashtable<String,String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PROPERTIES);
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                properties.put(rs.getString(1), rs.getString(2));
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
 
-    /**
-     * Obtain an iterator for all vcard property names.
-     *
-     * @return the iterator over all vcard property names.
-     */
-    Iterator getVCardPropertyNames();
+    private void insertPropertyIntoDb(String name, String value) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(INSERT_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, name);
+            pstmt.setString(3, value);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    private void updatePropertyInDb(String name, String value) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_PROPERTY);
+            pstmt.setString(1, value);
+            pstmt.setString(2, name);
+            pstmt.setString(3, username);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    private void deletePropertyFromDb(String name) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, name);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
 }

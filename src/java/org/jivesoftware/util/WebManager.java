@@ -15,12 +15,13 @@ import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.RosterManager;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.PrivateStorage;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.group.GroupManager;
 

@@ -105,15 +105,16 @@
 
 <%  } %>
 
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<form name="f" action="group-create.jsp" method="post">
-<tr><td class="text" colspan="2">
-Use the form below to create a new group in the system.
-</td></tr>
+<p>Use the form below to create a new group.</p>
 
-<tr class="jive-even">
+<form name="f" action="group-create.jsp" method="post">
+<fieldset>
+<legend>Create New Group</legend>
+<div>
+<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
+<tr valign="middle" class="jive-even">
     <td>
-        Group: *
+        Group Name: *
     </td>
     <td>
         <input type="text" name="name" size="30" maxlength="75"
@@ -134,7 +135,7 @@ Use the form below to create a new group in the system.
         <%  } %>
     </td>
 </tr>
-<tr class="jive-odd">
+<tr valign="middle" class="jive-odd">
     <td>
         Description:
     </td>
@@ -152,11 +153,12 @@ Use the form below to create a new group in the system.
     </td>
 </tr>
 </table>
-</div>
-
-<p>
+<br>
 * Required fields
-</p>
+</div>
+</fieldset>
+
+<br><br>
 
 <input type="submit" name="create" value="Create Group">
 <input type="submit" name="cancel" value="Cancel">
@@ -167,7 +169,7 @@ Use the form below to create a new group in the system.
 document.f.name.focus();
 
 function checkFields() {
-  
+
 }
 </script>
 

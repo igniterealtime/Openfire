@@ -9,14 +9,16 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user.spi;
+package org.jivesoftware.messenger.roster.spi;
 
 import java.util.List;
 import java.util.LinkedList;
 
-import org.jivesoftware.messenger.user.BasicRosterItem;
-import org.jivesoftware.messenger.user.CachedRosterItem;
-import org.jivesoftware.messenger.user.RosterItem;
+import org.jivesoftware.messenger.roster.BasicRosterItem;
+import org.jivesoftware.messenger.roster.CachedRosterItem;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.roster.CachedRosterItem;
 import org.jivesoftware.util.CacheSizes;
 import org.xmpp.packet.JID;
 

@@ -9,11 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.messenger.roster;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.roster.*;
 import org.jivesoftware.util.Cacheable;
 import org.xmpp.packet.*;
+import org.xmpp.packet.Roster;
 
 /**
  * <p>A Roster that is cached in memory and persisted to some backend storage system.</p>
@@ -25,7 +27,7 @@ import org.xmpp.packet.*;
  *         <p/>
  *
  */
-public interface CachedRoster extends Roster, Cacheable {
+public interface CachedRoster extends org.jivesoftware.messenger.roster.Roster, Cacheable {
 
     /**
      * <p>Return the username of the user or chatbot that owns this roster.</p>

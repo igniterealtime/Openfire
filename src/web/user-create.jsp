@@ -14,7 +14,6 @@
                  java.util.Map,
                  org.jivesoftware.messenger.user.UserManager,
                  org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.messenger.user.spi.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
@@ -68,12 +67,8 @@
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
-                User newUser = webManager.getUserManager().createUser(username, password, email);
-                if (name != null) {
-                    newUser.getInfo().setName(name);
-                }
-                newUser.saveInfo();
-                
+                User newUser = webManager.getUserManager().createUser(username, password, name, email);
+
                 // Successful, so redirect
                 response.sendRedirect("user-properties.jsp?success=true&username=" + newUser.getUsername());
                 return;

@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.ArrayList;
 
 /**
- * Manages groups
+ * Manages groups.
  *
  * @see Group
  * @author Matt Tucker
@@ -51,15 +51,15 @@ public class GroupManager {
         groupCache = CacheManager.getCache("group");
         groupMemberCache = CacheManager.getCache("group member");
         // Load a group provider.
-        String className = JiveGlobals.getXMLProperty("group.provider.className",
-                "org.jivesoftware.messenger.group.DbGroupProvider");
+        String className = JiveGlobals.getXMLProperty("provider.group.className",
+                "org.jivesoftware.messenger.group.DefaultGroupProvider");
         try {
             Class c = ClassUtils.forName(className);
             provider = (GroupProvider)c.newInstance();
         }
         catch (Exception e) {
             Log.error("Error loading group provider: " + className, e);
-            provider = new DbGroupProvider();
+            provider = new DefaultGroupProvider();
         }
     }
 

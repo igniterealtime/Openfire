@@ -15,10 +15,12 @@ import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.roster.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.messenger.user.Roster;
+import org.jivesoftware.messenger.roster.Roster;
 import org.xmpp.packet.*;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -204,7 +206,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(Roster roster, JID sender, org.xmpp.packet.Roster.Item item)
+    private void removeItem(org.jivesoftware.messenger.roster.Roster roster, JID sender, org.xmpp.packet.Roster.Item item)
             throws UnauthorizedException
     {
 

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.messenger.roster;
 
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.roster.Roster;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 import org.xmpp.packet.JID;

@@ -12,7 +12,7 @@
 package org.jivesoftware.util;
 
 import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.Permissions;
+import org.jivesoftware.messenger.Permissions;
 
 /**
  * An interface that defines a method to create proxy objects based on an authToken and permissions.

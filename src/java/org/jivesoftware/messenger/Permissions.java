@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.messenger;
 
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.StringUtils;

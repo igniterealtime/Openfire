@@ -18,7 +18,8 @@ import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.Permissions;
+import org.jivesoftware.messenger.Permissions;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
 
@@ -163,7 +164,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     currentRegistration.addElement("registered");
                     currentRegistration.element("username").setText(user.getUsername());
                     currentRegistration.element("password").setText("");
-                    currentRegistration.element("email").setText(user.getInfo().getEmail());
+                    currentRegistration.element("email").setText(user.getEmail());
                     
                     Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
                     Iterator fields = form.elementIterator("field");
@@ -174,10 +175,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             field.addElement("value").addText(user.getUsername());
                         }
                         else if ("name".equals(field.attributeValue("var"))) {
-                            field.addElement("value").addText(user.getInfo().getName());
+                            field.addElement("value").addText(user.getName());
                         }
                         else if ("email".equals(field.attributeValue("var"))) {
-                            field.addElement("value").addText(user.getInfo().getEmail());
+                            field.addElement("value").addText(user.getEmail());
                         }
                     }
                     reply.setChildElement(currentRegistration);
@@ -279,17 +280,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         if (user != null) {
                             if (user.getUsername().equalsIgnoreCase(username)) {
                                 user.setPassword(password);
-                                user.getInfo().setEmail(email);
+                                user.setEmail(email);
                                 newUser = user;
                             }
                             else {
                                 // An admin can create new accounts when logged in.
-                                if (user.isAuthorized(Permissions.SYSTEM_ADMIN)) {
-                                    newUser = userManager.createUser(username, password, email);
-                                }
-                                else {
-                                    throw new UnauthorizedException();
-                                }
+                                newUser = userManager.createUser(username, password, null, email);
                             }
                         }
                         else {
@@ -297,9 +293,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                     }
                     else {
-                        newUser = userManager.createUser(username, password, email);
+                        newUser = userManager.createUser(username, password, null, email);
                     }
-                    // Set and save the extra user info (e.g. Full name, name visible, etc.)
+                    // Set and save the extra user info (e.g. full name, etc.)
                     if (newUser != null && registrationForm != null) {
                         Iterator<String> values;
                         // Get the full name sent in the form
@@ -307,9 +303,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         if (field != null) {
                             values = field.getValues();
                             String name = (values.hasNext() ? values.next() : " ");
-                            newUser.getInfo().setName(name);
+                            newUser.setName(name);
                         }
-                        newUser.saveInfo();
                     }
 
                     reply = IQ.createResultIQ(packet);

@@ -178,10 +178,11 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         if (response == null) {
             AuthToken token = null;
             if (password != null && AuthFactory.isPlainSupported()) {
-                token = AuthFactory.getAuthToken(username, password);
+                token = AuthFactory.authenticate(username, password);
             }
             else if (digest != null && AuthFactory.isDigestSupported()) {
-                token = AuthFactory.getAuthToken(username, session.getStreamID().toString(), digest);
+                token = AuthFactory.authenticate(username, session.getStreamID().toString(),
+                        digest);
             }
             if (token == null) {
                 throw new UnauthorizedException();

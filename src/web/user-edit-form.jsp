@@ -50,9 +50,8 @@
             errors.put("email","email");
         }
         if (errors.size() == 0) {
-            user.getInfo().setEmail(email);
-            user.getInfo().setName(name);
-            user.saveInfo();
+            user.setEmail(email);
+            user.setName(name);
 
             // Changes good, so redirect
             response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + username);
@@ -116,7 +115,7 @@ Use the form below to edit user properties.
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
-                 value="<%= ((user.getInfo().getName()!=null) ? user.getInfo().getName() : "") %>">
+                 value="<%= ((user.getName()!=null) ? user.getName() : "") %>">
 
                 <%  if (errors.get("name") != null) { %>
 
@@ -133,7 +132,7 @@ Use the form below to edit user properties.
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="email"
-                 value="<%= ((user.getInfo().getEmail()!=null) ? user.getInfo().getEmail() : "") %>">
+                 value="<%= ((user.getEmail()!=null) ? user.getEmail() : "") %>">
 
                 <%  if (errors.get("email") != null) { %>
 

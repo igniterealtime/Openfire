@@ -19,6 +19,8 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collection;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -90,12 +92,12 @@ public class IQvCardHandler extends IQHandler {
                 Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
                 result.setChildElement(vcard);
 
-                Iterator names = user.getVCardPropertyNames();
-                while (names.hasNext()) {
-                    String name = (String)names.next();
+                VCardManager vManager = VCardManager.getInstance();
+                Collection<String> names = vManager.getVCardPropertyNames(user.getUsername());
+                for (String name : names) {
                     String path = name.replace(':', '/');
                     Element node = DocumentHelper.makeElement(vcard, path);
-                    node.setText(user.getVCardProperty(name));
+                    node.setText(vManager.getVCardProperty(user.getUsername(), name));
                 }
             }
             else {
@@ -125,7 +127,8 @@ public class IQvCardHandler extends IQHandler {
             String value = child.getTextTrim();
             if (value != null) {
                 if (!"".equals(value)) {
-                    user.setVCardProperty(createName(nameStack), value);
+                    VCardManager.getInstance().setVCardProperty(user.getUsername(),
+                            createName(nameStack), value);
                 }
             }
             readVCard(child, nameStack, user);

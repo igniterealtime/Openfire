@@ -16,8 +16,17 @@ import org.jivesoftware.messenger.user.User;
 import java.util.Collection;
 
 /**
- * Group providers load and store group information from a back-end store
- * such as a database table, LDAP, etc.
+ * Provider interface for groups. Users that wish to integrate with
+ * their own group system must implement this class and then register
+ * the implementation with Jive Messenger in the <tt>jive-messenger.xml</tt>
+ * file. An entry in that file would look like the following:
+ *
+ * <pre>
+ *   &lt;provider&gt;
+ *     &lt;group&gt;
+ *       &lt;className&gt;com.foo.auth.CustomGroupProvider&lt;/className&gt;
+ *     &lt;/group&gt;
+ *   &lt;/provider&gt;</pre>
  *
  * @author Matt Tucker
  */

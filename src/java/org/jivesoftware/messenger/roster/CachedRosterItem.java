@@ -9,9 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.messenger.roster;
 
 import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.messenger.roster.RosterItem;
 
 /**
  * <p>Represents a persistently stored roster item.</p>

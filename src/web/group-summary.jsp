@@ -47,7 +47,7 @@
 %>             
 
 <p>
-Below is a list of groups in the system.
+Below is a list of the groups in the system.
 </p>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -72,7 +72,6 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
     Showing <%= (start+1) %>-<%= (start+range) %>,
 
 <%  } %>
-Sorted by Group Name
 </p>
 
 <%  if (numPages > 1) { %>
@@ -125,7 +124,7 @@ Sorted by Group Name
         i++;
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="1%">
+        <td width="1%" valign="top">
             <%= i %>
         </td>
         <td width="60%">
@@ -144,7 +143,7 @@ Sorted by Group Name
             <%= group.getAdministrators().size() %>
         </td>
         <td width="1%" align="center">
-            <a href="user-edit-form.jsp?group=<%= group.getName() %>"
+            <a href="group-edit-form.jsp?group=<%= group.getName() %>"
              title="Click to edit..."
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>

@@ -28,7 +28,7 @@ import java.util.Collection;
  *
  * @author Iain Shigeoka
  */
-public class DbGroupProvider implements GroupProvider {
+public class DefaultGroupProvider implements GroupProvider {
 
     private static final String INSERT_GROUP =
         "INSERT INTO jiveGroup (groupName, description) VALUES (?, ?)";

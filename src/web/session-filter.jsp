@@ -6,7 +6,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.SessionManager,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.messenger.Session" %>
 
 <%@ include file="global.jsp" %>
@@ -106,8 +106,9 @@ their username in the box below.
     </td>
     <td width="98%">
         <select size="1" name="usernameSEL" onfocus="this.form.choose[1].checked=true;">
-            <%  for (Iterator users=userManager.users(); users.hasNext(); ) {
-                    User user = (User)users.next();
+            <%
+                Collection<User> users = userManager.getUsers();
+                for (User user: users) {
             %>
                 <option value="<%= user.getUsername() %>"><%= user.getUsername() %></option>
 

@@ -32,17 +32,14 @@
         <adminDN></adminDN>
         <adminPassword></adminPassword>
     </ldap> 
-    <UserProvider>
-        <properties>
-            <className>org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider</className>
-        </properties>
-        <info>
-             <className>org.jivesoftware.messenger.ldap.LdapUserInfoProvider</className>
-        </info>
-    </UserProvider>
-    <AuthProvider>
-        <className>org.jivesoftware.messenger.ldap.LdapAuthProvider</className>
-    </AuthProvider>
+    <provider>
+        <user>
+            <className>org.jivesoftware.messenger.ldap.LdapUserProvider</className>
+        </user>
+        <auth>
+            <className>org.jivesoftware.messenger.ldap.LdapAuthProvider</className>
+        </auth>
+    </provider>
     -->
     <!-- End Example LDAP Settings -->
 </jive>

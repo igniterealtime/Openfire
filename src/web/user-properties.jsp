@@ -173,7 +173,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             Name:
         </td>
         <td>
-            <%  if (user.getInfo().getName() == null || "".equals(user.getInfo().getName())) { %>
+            <%  if (user.getName() == null || "".equals(user.getName())) { %>
 
                 <span style="color:#999">
                 <i>Not set.</i>
@@ -181,7 +181,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
 
             <%  } else { %>
 
-                <%= user.getInfo().getName() %>
+                <%= user.getName() %>
 
             <%  } %>
         </td>
@@ -191,7 +191,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             Email:
         </td>
         <td>
-            <a href="mailto:<%= user.getInfo().getEmail() %>"><%= user.getInfo().getEmail() %></a>
+            <a href="mailto:<%= user.getEmail() %>"><%= user.getEmail() %></a>
             &nbsp;
         </td>
     </tr>
@@ -200,7 +200,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             Registered:
         </td>
         <td>
-            <%= formatter.format(user.getInfo().getCreationDate()) %>
+            <%= formatter.format(user.getCreationDate()) %>
         </td>
     </tr>
 </tbody>

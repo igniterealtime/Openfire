@@ -124,7 +124,7 @@ There are several options for controlling how much history to store for each roo
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-        <tr valign="top" class="">
+        <tr valign="middle" class="">
             <td width="1%" nowrap>
                 <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
             </td>
@@ -134,7 +134,7 @@ There are several options for controlling how much history to store for each roo
                 </label>- Do not show a chat history to users joining a room.
             </td>
         </tr>
-        <tr valign="top">
+        <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
             </td>
@@ -154,7 +154,7 @@ There are several options for controlling how much history to store for each roo
                 </label>- Show a specific number of the most recent messages in the chat. Use the box below to specify that number.
             </td>
         </tr>
-        <tr valign="top" class="">
+        <tr valign="middle" class="">
             <td width="1%" nowrap>&nbsp;</td>
             <td width="99%">
                 <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> messages

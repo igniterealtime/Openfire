@@ -12,7 +12,7 @@
 package org.jivesoftware.messenger;
 
 import org.xmpp.packet.JID;
-import org.jivesoftware.messenger.user.RosterManager;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.handler.IQRegisterHandler;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
@@ -24,6 +24,7 @@ import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.disco.ServerItemsProvider;
 import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
 import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.roster.RosterManager;
 
 import java.util.List;
 

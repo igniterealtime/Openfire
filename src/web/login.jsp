@@ -76,7 +76,7 @@
                     throw new UnauthorizedException("Only user 'admin' may login.");
                 }
             }
-            authToken = AuthFactory.getAuthToken(username, password);
+            authToken = AuthFactory.authenticate(username, password);
             session.setAttribute("jive.admin.authToken", authToken);
             response.sendRedirect(go(url));
             return;

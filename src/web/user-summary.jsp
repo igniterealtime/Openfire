@@ -11,7 +11,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
-                 java.util.Iterator,
+                 java.util.*,
                  org.jivesoftware.messenger.user.UserManager,
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
@@ -117,8 +117,8 @@ Sorted by Username
 <tbody>
 
 <%  // Print the list of users
-    Iterator users = webManager.getUserManager().users(start, range);
-    if (!users.hasNext()) {
+    Collection<User> users = webManager.getUserManager().getUsers(start, range);
+    if (users.isEmpty()) {
 %>
     <tr>
         <td align="center" colspan="7">
@@ -129,8 +129,7 @@ Sorted by Username
 <%
     }
     int i = start;
-    while (users.hasNext()) {
-        User user = (User)users.next();
+    for (User user : users) {
         i++;
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
@@ -167,10 +166,10 @@ Sorted by Username
             <a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a>
         </td>
         <td width="40%">
-            <%= user.getInfo().getName() %> &nbsp;
+            <%= user.getName() %> &nbsp;
         </td>
         <td width="26%">
-            <%= dateFormatter.format(user.getInfo().getCreationDate()) %>
+            <%= dateFormatter.format(user.getCreationDate()) %>
         </td>
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= user.getUsername() %>"

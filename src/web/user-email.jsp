@@ -7,8 +7,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.UserManager,
                  java.text.DateFormat,
-                 org.jivesoftware.messenger.user.User,
-                 org.jivesoftware.messenger.user.spi.UserManagerImpl"
+                 org.jivesoftware.messenger.user.User"
     errorPage="error.jsp"
 %>
 
@@ -60,7 +59,7 @@ Use the form below to send an email to the user.
         From:
     </td>
     <td>
-        <%= pageUser.getUsername() %> &lt;<%= pageUser.getInfo().getEmail() %>&gt;
+        <%= pageUser.getUsername() %> &lt;<%= pageUser.getEmail() %>&gt;
         (<a href="user-edit-form.jsp?username=<%= user.getUsername() %>">Edit User</a>)
     </td>
 </tr>
@@ -69,7 +68,7 @@ Use the form below to send an email to the user.
         TO:
     </td>
     <td>
-        <input type="text" name="to" value="<%= user.getUsername() %> &lt;<%= user.getInfo().getEmail() %>&gt;"
+        <input type="text" name="to" value="<%= user.getUsername() %> &lt;<%= user.getEmail() %>&gt;"
          size="45" maxlength="150">
     </td>
 </tr>

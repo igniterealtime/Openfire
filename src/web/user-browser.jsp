@@ -5,8 +5,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.util.Iterator,
-                 org.jivesoftware.messenger.user.User"
+                 org.jivesoftware.messenger.user.User,
+                 java.util.*"
     errorPage="error.jsp"
 %>
 
@@ -168,8 +168,8 @@
         <th align="center">Add</th>
     </tr>
     <%  // Print the list of users
-        Iterator users = userManager.users(start, range);
-        if (!users.hasNext()) {
+        Collection<User> users = userManager.getUsers(start, range);
+        if (users.isEmpty()) {
     %>
         <tr>
             <td align="center" colspan="4">
@@ -180,8 +180,7 @@
     <%
         }
         int i = start;
-        while (users.hasNext()) {
-            User user = (User)users.next();
+        for (User user: users) {
             i++;
     %>
         <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
@@ -192,7 +191,7 @@
                 <%= user.getUsername() %>
             </td>
             <td width="50%">
-                <%= user.getInfo().getName() %>
+                <%= user.getName() %>
             </td>
             <td width="1%" align="center">
                 <input type="submit" name="" value="Add User" class="jive-sm-button"

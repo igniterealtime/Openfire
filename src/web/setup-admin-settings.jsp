@@ -14,8 +14,7 @@
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.JiveGlobals,
-                 org.jivesoftware.messenger.auth.spi.DbAuthProvider,
-                 org.jivesoftware.messenger.user.spi.UserManagerImpl,
+                 org.jivesoftware.messenger.auth.DefaultAuthProvider,
                  org.jivesoftware.messenger.spi.BasicServer" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -76,19 +75,17 @@
         if (errors.size() == 0) {
             try {
                 // Get the service
-                UserManager userManager = new UserManagerImpl();
-                userManager.initialize(BasicServer.getInstance());
+                UserManager userManager = UserManager.getInstance();
 
                 User adminUser = userManager.getUser("admin");
 
                 adminUser.setPassword(newPassword);
                 if (email != null) {
-                    adminUser.getInfo().setEmail(email);
+                    adminUser.setEmail(email);
                 }
                 Date now = new Date();
-                adminUser.getInfo().setCreationDate(now);
-                adminUser.getInfo().setModificationDate(now);
-                adminUser.saveInfo();
+                adminUser.setCreationDate(now);
+                adminUser.setModificationDate(now);
 
                 // TODO: Check for Plugin
 

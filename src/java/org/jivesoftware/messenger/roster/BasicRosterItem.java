@@ -9,12 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.messenger.roster;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import org.xmpp.packet.JID;
+import org.jivesoftware.messenger.roster.RosterItem;
 
 /**
  * <p>Implements the basic RosterItem interface storing all data into simple fields.</p>

@@ -15,11 +15,13 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.spi.SessionImpl;
-import org.jivesoftware.messenger.user.CachedRoster;
-import org.jivesoftware.messenger.user.RosterItem;
-import org.jivesoftware.messenger.user.RosterManager;
+import org.jivesoftware.messenger.roster.CachedRoster;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.roster.RosterManager;
+import org.jivesoftware.messenger.roster.CachedRoster;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
 

@@ -1,6 +1,6 @@
 Name                 |  Version
 ---------------------------------------------
-hsqldb.jar           | 1.7.1
+hsqldb.jar           | 1.7.3_1
 mysql.jar            | 3.0.16
 postgres.jar         | 7.4 version 215
 ant.jar              | Jetty 5.1.2pre0

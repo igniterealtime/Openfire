@@ -889,6 +889,9 @@
                 <fileset dir="${plugin.dest.dir}/@{plugin}" />
             </jar>
 
+            <!-- Delete the exploded plugin -->
+            <delete dir="${plugin.dest.dir}/@{plugin}" />
+
         </sequential>
     </macrodef>
 

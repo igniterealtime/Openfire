@@ -226,7 +226,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
-    public void setOffline(JID jid) throws UnauthorizedException {
+    public void setOffline(JID jid) {
     }
 
     public boolean isAvailable(User user) {

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.roster;
 
-import org.jivesoftware.messenger.roster.spi.CachedRosterItemImpl;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
@@ -85,12 +84,11 @@ public class RosterItemProvider {
      * @param item the settings for the roster item to create
      * @return The created roster item
      */
-    public CachedRosterItem createItem(String username, RosterItem item)
+    public RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException
     {
         Connection con = null;
         PreparedStatement pstmt = null;
-        CachedRosterItem cachedItem = null;
         try {
             con = DbConnectionManager.getConnection();
 
@@ -105,15 +103,7 @@ public class RosterItemProvider {
             pstmt.setString(7, item.getNickname());
             pstmt.executeUpdate();
 
-            if (item instanceof CachedRosterItemImpl) {
-                // If a RosterItemImpl we can reuse it by setting the new roster ID
-                cachedItem = (CachedRosterItem)item;
-                ((CachedRosterItemImpl)cachedItem).setID(rosterID);
-            }
-            else {
-                // Otherwise, just create a coyy of the item with the new roster ID
-                cachedItem = new CachedRosterItemImpl(rosterID, item);
-            }
+            item.setID(rosterID);
             insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
         }
         catch (SQLException e) {
@@ -125,7 +115,7 @@ public class RosterItemProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return cachedItem;
+        return item;
     }
 
     /**
@@ -137,7 +127,7 @@ public class RosterItemProvider {
      * @param item   The roster item to update
      * @throws org.jivesoftware.messenger.user.UserNotFoundException         If no entry could be found to update
      */
-    public void updateItem(String username, CachedRosterItem item) throws UserNotFoundException {
+    public void updateItem(String username, RosterItem item) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         long rosterID = item.getID();
@@ -292,7 +282,7 @@ public class RosterItemProvider {
             // TODO: this code must be refactored ASAP. Not legal to have two open pstmts
             // TODO: on many databases.
             while (rs.next()) {
-                CachedRosterItem item = new CachedRosterItemImpl(rs.getLong(2),
+                RosterItem item = new RosterItem(rs.getLong(2),
                         new JID(rs.getString(1)),
                         RosterItem.SubType.getTypeFromInt(rs.getInt(3)),
                         RosterItem.AskType.getTypeFromInt(rs.getInt(4)),

@@ -15,9 +15,7 @@ import org.xmpp.packet.JID;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.roster.spi.CachedRosterImpl;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 import java.util.Iterator;
 
@@ -48,17 +46,17 @@ public class RosterManager extends BasicModule {
      * @throws org.jivesoftware.messenger.user.UserNotFoundException if the ID does not correspond to a known
      *      entity on the server.
      */
-    public CachedRoster getRoster(String username) throws UserNotFoundException {
+    public Roster getRoster(String username) throws UserNotFoundException {
         if (rosterCache == null) {
             rosterCache = CacheManager.getCache("username2roster");
         }
         if (rosterCache == null) {
             throw new UserNotFoundException("Could not load caches");
         }
-        CachedRoster roster = (CachedRoster)rosterCache.get(username);
+        Roster roster = (Roster)rosterCache.get(username);
         if (roster == null) {
             // Not in cache so load a new one:
-            roster = new CachedRosterImpl(username);
+            roster = new Roster(username);
             rosterCache.put(username, roster);
         }
         if (roster == null) {
@@ -80,7 +78,7 @@ public class RosterManager extends BasicModule {
             Roster roster = (Roster)CacheManager.getCache("username2roster").get(username);
             if (roster == null) {
                 // Not in cache so load a new one:
-                roster = new CachedRosterImpl(username);
+                roster = new Roster(username);
             }
             // Remove each roster item from the user's roster
             Iterator<RosterItem> items = roster.getRosterItems();
@@ -99,16 +97,13 @@ public class RosterManager extends BasicModule {
                 roster = (Roster)CacheManager.getCache("username2roster").get(username);
                 if (roster == null) {
                     // Not in cache so load a new one:
-                    roster = new CachedRosterImpl(username);
+                    roster = new Roster(username);
                 }
                 // Remove the deleted user reference from this roster
                 roster.deleteRosterItem(user);
             }
         }
         catch (UnsupportedOperationException e) {
-            // Do nothing
-        }
-        catch (UnauthorizedException e) {
             // Do nothing
         }
     }

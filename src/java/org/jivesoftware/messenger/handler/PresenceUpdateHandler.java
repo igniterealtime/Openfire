@@ -18,8 +18,8 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.spi.SessionImpl;
-import org.jivesoftware.messenger.roster.CachedRoster;
 import org.jivesoftware.messenger.roster.RosterManager;
+import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
 
@@ -175,7 +175,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // Only user sessions need to be authenticated
         if (!"".equals(session.getAddress().getNode())) {
             String username = session.getAddress().getNode();
-            CachedRoster roster = rosterManager.getRoster(username);
+            Roster roster = rosterManager.getRoster(username);
             Iterator items = roster.getRosterItems();
             while (items.hasNext()) {
                 RosterItem item = (RosterItem)items.next();
@@ -232,7 +232,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
-                    CachedRoster roster = rosterManager.getRoster(name);
+                    Roster roster = rosterManager.getRoster(name);
                     roster.broadcastPresence(update);
                 }
             }
@@ -297,7 +297,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             try {
                 if (name != null && !"".equals(name)) {
                     name = name.toLowerCase();
-                    CachedRoster roster = rosterManager.getRoster(name);
+                    Roster roster = rosterManager.getRoster(name);
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavialable presence to the entity

@@ -157,7 +157,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
         try {
             User sessionUser = userManager.getUser(session.getUsername());
-            CachedRoster cachedRoster = (CachedRoster)sessionUser.getRoster();
+            Roster cachedRoster = sessionUser.getRoster();
             if (IQ.Type.get == type) {
                 returnPacket = cachedRoster.getReset();
                 returnPacket.setType(IQ.Type.result);
@@ -177,7 +177,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                     else {
                         if (cachedRoster.isRosterItem(item.getJID())) {
                             // existing item
-                            CachedRosterItem cachedItem = (CachedRosterItem)cachedRoster.getRosterItem(item.getJID());
+                            RosterItem cachedItem = cachedRoster.getRosterItem(item.getJID());
                             cachedItem.setAsCopyOf(item);
                             cachedRoster.updateRosterItem(cachedItem);
                         }
@@ -206,17 +206,15 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(org.jivesoftware.messenger.roster.Roster roster, JID sender, org.xmpp.packet.Roster.Item item)
-            throws UnauthorizedException
-    {
-
+    private void removeItem(org.jivesoftware.messenger.roster.Roster roster, JID sender,
+            org.xmpp.packet.Roster.Item item) {
         JID recipient = item.getJID();
         // Remove recipient from the sender's roster
         roster.deleteRosterItem(item.getJID());
         // Forward set packet to the subscriber
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
-                CachedRoster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
+                Roster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
                 recipientRoster.deleteRosterItem(sender);
             }
             catch (UserNotFoundException e) {

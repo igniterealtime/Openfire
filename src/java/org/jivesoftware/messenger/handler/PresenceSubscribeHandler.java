@@ -20,7 +20,6 @@ import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.messenger.roster.spi.CachedRosterImpl;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
@@ -128,7 +127,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             roster = (Roster)CacheManager.getCache("username2roster").get(username);
             if (roster == null) {
                 // Not in cache so load a new one:
-                roster = new CachedRosterImpl(username);
+                roster = new Roster(username);
                 CacheManager.getCache("username2roster").put(username, roster);
             }
         }
@@ -143,10 +142,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param target    The roster target's jid (the item's jid to be changed)
      * @param isSending True if the request is being sent by the owner
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
-     * @throws UnauthorizedException If a security access violation occurs
      */
     private void manageSub(JID target, boolean isSending, Presence.Type type,
-            Roster roster) throws UnauthorizedException, UserAlreadyExistsException
+            Roster roster) throws UserAlreadyExistsException
     {
         try {
             RosterItem item;
@@ -156,9 +154,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             else {
                 item = roster.createRosterItem(target);
             }
-            //System.out.println("A " + item + " is " + item.getSubStatus() + " " + item.getAskStatus() + " " + item.getRecvStatus());
             updateState(item, type, isSending);
-            //System.out.println("B " + item + " is " + item.getSubStatus() + " " + item.getAskStatus() + " " + item.getRecvStatus());
             roster.updateRosterItem(item);
         }
         catch (UserNotFoundException e) {
@@ -348,7 +344,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param action    The new state change request
      * @param isSending True if the roster owner of the item is sending the new state change request
      */
-    private static void updateState(RosterItem item, Presence.Type action, boolean isSending) throws UnauthorizedException {
+    private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
         Map srTable = (Map)stateTable.get(item.getSubStatus());
         Map changeTable = (Map)srTable.get(isSending ? "send" : "recv");
         Change change = (Change)changeTable.get(action);

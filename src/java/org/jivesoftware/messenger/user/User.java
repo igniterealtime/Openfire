@@ -11,7 +11,7 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.roster.CachedRoster;
+import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
@@ -235,7 +235,7 @@ public class User implements Cacheable {
      *
      * @return the user's roster.
      */
-    public CachedRoster getRoster() {
+    public Roster getRoster() {
         try {
             return XMPPServer.getInstance().getRosterManager().getRoster(username);
         }

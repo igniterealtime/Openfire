@@ -9,7 +9,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Jive Messenger Server Down";
     String[][] breadcrumbs = {
-        { "Home", "main.jsp" },
+        { "Home", "index.jsp" },
         { title, "error-serverdown.jsp" }
     };
 %>

@@ -20,7 +20,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Users allowed to create rooms";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
     pageinfo.setPageID("muc-perms");
 %>

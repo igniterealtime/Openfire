@@ -27,7 +27,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Chat Room History Settings";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "chatroom-history-settings.jsp"));
     pageinfo.setPageID("server-chatroom-history");
 %>

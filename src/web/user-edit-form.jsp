@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
@@ -12,6 +17,9 @@
                  java.util.HashMap,
                  java.util.Map"
 %>
+
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 
@@ -64,7 +72,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Edit User";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
     pageinfo.setSubPageID("user-edit");
     pageinfo.setExtraParams("username="+username);

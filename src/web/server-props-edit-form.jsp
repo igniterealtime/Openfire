@@ -27,7 +27,7 @@
 <!-- Define BreadCrumbs -->
 <c:set var="title" value="Edit Server Properties"  />
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
+<c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
 <c:set target="${breadcrumbs}" property="Server Properties" value="server-props.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="server-props-edit-form.jsp" />
 <jsp:include page="top.jsp" flush="true" />

@@ -40,7 +40,7 @@
 <fmt:message key="title" bundle="${lang}" var="t" />
 <c:set var="title" value="${t} Admin"  />
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
+<c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-create.jsp" />
 <jsp:include page="top.jsp" flush="true" />
 

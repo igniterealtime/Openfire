@@ -60,7 +60,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Filter Session Summary by User";
     String[][] breadcrumbs = {
-        {"Home", "main.jsp"},
+        {"Home", "index.jsp"},
         {"Session Summary", "session-summary.jsp"},
         {title, "session-filter.jsp"}
     };

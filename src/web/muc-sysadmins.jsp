@@ -19,7 +19,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "System Administrators For MultiUser Chat Rooms";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-sysadmins.jsp"));
     pageinfo.setPageID("muc-sysadmins");
 %>

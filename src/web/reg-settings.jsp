@@ -25,7 +25,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Registration Settings";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "reg-settings.jsp"));
     pageinfo.setPageID("server-reg-and-login");
 %>

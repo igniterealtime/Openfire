@@ -30,7 +30,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Server Status";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-status.jsp"));
     pageinfo.setPageID("server-status");
 %>

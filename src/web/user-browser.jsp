@@ -129,7 +129,7 @@
     <%  // Title of this page and breadcrumbs
         String title = "User Browser";
         String[][] breadcrumbs = {
-            { "Home", "main.jsp" },
+            { "Home", "index.jsp" },
             { title, "user-browser.jsp" }
         };
     %>

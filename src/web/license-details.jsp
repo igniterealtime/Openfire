@@ -19,7 +19,7 @@
 <!-- Define BreadCrumbs -->
 <c:set var="title" value="License Details"  />
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
+<c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="license-details.jsp" />
 <jsp:include page="top.jsp" flush="true" />
   

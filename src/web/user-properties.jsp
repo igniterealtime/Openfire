@@ -83,7 +83,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "User Properties";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-properties.jsp"));
     pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+username);
@@ -215,7 +215,8 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
 
 <br><br>
 
-<form action="user-edit.jsp">
+<form action="user-edit-form.jsp">
+<input type="hidden" name="username" value="<%= user.getUsername() %>">
 <input type="submit" value="Edit Properties">
 </form>
 

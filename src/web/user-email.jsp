@@ -31,7 +31,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Email User";
     String[][] breadcrumbs = {
-        { "Home", "main.jsp" },
+        { "Home", "index.jsp" },
         { "User Summary", "user-summary.jsp" },
         { "Edit User", "user-edit-form.jsp?username="+username },
         { title, "user-email.jsp?username="+username }

@@ -43,7 +43,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "System Settings";
+    String title = "Server Settings";
     pageinfo.setTitle(title);
     pageinfo.setPageID("server-settings");
 %>

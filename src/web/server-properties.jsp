@@ -103,7 +103,7 @@
 %>
 
 <%  // Title of this page and breadcrumbs
-    String title = "Server Properties";
+    String title = "System Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-properties.jsp"));
@@ -120,7 +120,7 @@ the full value or to see both the full name and value, click the edit icon next 
 property.
 </p>
 
-<p><b>Jive Forums System Properties</b></p>
+<p><b>System Properties</b></p>
 
 <%  if (errors.size() > 0) { %>
 

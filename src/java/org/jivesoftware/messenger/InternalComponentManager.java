@@ -11,11 +11,16 @@
 
 package org.jivesoftware.messenger;
 
+import org.dom4j.Element;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.component.Component;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.component.Log;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.xmpp.component.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,16 +29,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages the registration and delegation of Components. The ComponentManager
  * is responsible for managing registration and delegation of {@link Component Components},
  * as well as offering a facade around basic server functionallity such as sending and
- * receiving of packets.
+ * receiving of packets.<p>
+ *
+ * This component manager will be an internal service whose JID will be component.[domain]. So the
+ * component manager will be able to send packets to other internal or external components and also
+ * receive packets from other components or even from trusted clients (e.g. ad-hoc commands).
  *
  * @author Derek DeMoro
  */
-public class InternalComponentManager implements ComponentManager {
+public class InternalComponentManager implements ComponentManager, RoutableChannelHandler {
 
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
 
     private static InternalComponentManager instance;
+    /**
+     * XMPP address of this internal service. The address is of the form: component.[domain]
+     */
+    private JID serviceAddress;
+    /**
+     * Holds the domain of the server. We are using an iv since we use this value many times
+     * in many methods.
+     */
+    private String serverDomain;
 
     static {
         instance = new InternalComponentManager();
@@ -45,13 +63,18 @@ public class InternalComponentManager implements ComponentManager {
     }
 
     private InternalComponentManager() {
+        XMPPServer server = XMPPServer.getInstance();
+        serverDomain = server.getServerInfo().getName();
+        // Set the address of this internal service. component.[domain]
+        serviceAddress = new JID(null, "component." + serverDomain, null);
+        // Add a route to this service
+        server.getRoutingTable().addRoute(getAddress(), this);
     }
 
     public void addComponent(String subdomain, Component component) {
         components.put(subdomain, component);
 
-        JID componentJID = new JID(subdomain + "." +
-                XMPPServer.getInstance().getServerInfo().getName());
+        JID componentJID = new JID(subdomain + "." + serverDomain);
 
         // Add the route to the new service provided by the component
         XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
@@ -59,18 +82,23 @@ public class InternalComponentManager implements ComponentManager {
 
         // Check for potential interested users.
         checkPresences();
+        // Send a disco#info request to the new component. If the component provides information
+        // then it will be added to the list of discoverable server items.
+        checkDiscoSupport(component, componentJID);
     }
 
     public void removeComponent(String subdomain) {
         components.remove(subdomain);
 
-        JID componentJID = new JID(subdomain + "." +
-                XMPPServer.getInstance().getServerInfo().getName());
+        JID componentJID = new JID(subdomain + "." + serverDomain);
 
         // Remove the route for the service provided by the component
         if (XMPPServer.getInstance().getRoutingTable() != null) {
             XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
         }
+
+        // Remove the disco item from the server for the component that is being removed
+        XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
     }
 
     public void sendPacket(Component component, Packet packet) {
@@ -143,6 +171,57 @@ public class InternalComponentManager implements ComponentManager {
 
                 // No reason to hold onto prober reference.
                 presenceMap.remove(prober);
+            }
+        }
+    }
+
+    /**
+     *  Send a disco#info request to the new component. If the component provides information
+     *  then it will be added to the list of discoverable server items.
+     *
+     * @param component the new component that was added to this manager.
+     * @param componentJID the XMPP address of the new component.
+     */
+    private void checkDiscoSupport(Component component, JID componentJID) {
+        // Build a disco#info request that will be sent to the component
+        IQ iq = new IQ(IQ.Type.get);
+        iq.setFrom(getAddress());
+        iq.setTo(componentJID);
+        iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+        // Send the disco#info request to the component. The reply (if any) will be processed in
+        // #process(Packet)
+        sendPacket(component, iq);
+    }
+
+    public JID getAddress() {
+        return serviceAddress;
+    }
+
+    /**
+     * Processes packets that were sent to this service. Currently only packets that were sent from
+     * registered components are being processed. In the future, we may also process packet of
+     * trusted clients. Trusted clients may be able to execute ad-hoc commands such as adding or
+     * removing components.
+     *
+     * @param packet the packet to process.
+     */
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
+        Component component = getComponent(packet.getFrom().getDomain());
+        // Only process packets that were sent by registered components
+        if (component != null) {
+            if (packet instanceof IQ && IQ.Type.result == ((IQ) packet).getType()) {
+                IQ iq = (IQ) packet;
+                Element childElement = iq.getChildElement();
+                String namespace = null;
+                if (childElement != null) {
+                    namespace = childElement.getNamespaceURI();
+                }
+                if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+                    // Add a disco item to the server for the component that supports disco
+                    XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
+                            .toBareJID(),
+                            childElement.element("identity").attributeValue("name"));
+                }
             }
         }
     }

@@ -38,7 +38,7 @@ CREATE TABLE jiveOffline (
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  message               LONG            NOT NULL,
+  message               TEXT            NOT NULL,
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 

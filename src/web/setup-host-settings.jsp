@@ -15,7 +15,6 @@
 
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
-    String chatService = ParamUtils.getParameter(request,"chatService");
     int port = ParamUtils.getIntParameter(request,"port",-1);
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
     int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
@@ -29,9 +28,6 @@
         // Validate parameters
         if (domain == null) {
             errors.put("domain","domain");
-        }
-        if (chatService == null || chatService.indexOf('.') >= 0) {
-            errors.put("chatService","chatService");
         }
         if (port < 0) {
             errors.put("port","port");
@@ -49,7 +45,6 @@
             Map xmppSettings = new HashMap();
 
             xmppSettings.put("xmpp.domain",domain);
-            xmppSettings.put("xmpp.muc.service",chatService);
             xmppSettings.put("xmpp.socket.plain.port",Integer.toString(port));
             xmppSettings.put("embedded-web.port",Integer.toString(embeddedPort));
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
@@ -70,7 +65,6 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
-        chatService = JiveGlobals.getProperty("xmpp.muc.service");
         try {
             port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port"));
         } catch (Exception ignored) {}
@@ -82,12 +76,9 @@
         } catch (Exception ignored) {}
         sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
 
-        // If the domain and chat domain are still blank, guess at their values:
+        // If the domain is still blank, guess at the value:
         if (domain == null) {
             domain = InetAddress.getLocalHost().getHostName();
-            if (domain != null && chatService == null) {
-                chatService = "conference";
-            }
         }
     }
 %>
@@ -133,26 +124,6 @@ function toggle(form,disabled) {
         <span class="jive-description">
         <br>
         Hostname or IP address of the IM server.
-        </span>
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        Chat Domain:
-        <%  if (errors.get("chatService") != null) { %>
-
-            <span class="jive-error-text"><br>
-            Invalid multi-user chat service name.
-            </span>
-
-        <%  } %>
-    </td>
-    <td width="99%">
-        <input type="text" size="30" maxlength="150" name="chatService"
-         value="<%= ((chatService != null) ? chatService : "conference") %>">
-        <span class="jive-description">
-        <br>
-        Multi-user chat service name. Default is "conference".
         </span>
     </td>
 </tr>

@@ -10,11 +10,16 @@
         <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
         <param-value>messenger_i18n_en</param-value>
     </context-param>
+    <!-- Uncomment if running in application server only 
     <servlet>
         <servlet-name>XMPPBootServlet</servlet-name>
         <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
 </servlet>
+    -->
+
+    <!--@@JSPC-SERVLETS@@-->
+
     <taglib>
         <taglib-uri>core</taglib-uri>
         <taglib-location>/WEB-INF/c.tld</taglib-location>
@@ -24,4 +29,5 @@
         <taglib-location>/WEB-INF/fmt.tld</taglib-location>
     </taglib>
 </web-app>
+
 

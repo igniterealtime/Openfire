@@ -236,6 +236,7 @@
         <copy todir="${war.dest.dir}/messengerHome">
             <fileset dir="${target.dir}">
                 <include name="conf/**/*.*" />
+                <include name="resources/**/*.*" />
             </fileset>
         </copy>
         <!-- Force create the logs dir (will be empty) -->

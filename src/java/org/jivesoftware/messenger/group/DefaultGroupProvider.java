@@ -26,7 +26,7 @@ import java.util.Collection;
 /**
  * Database implementation of the GroupManager interface.
  *
- * @author Iain Shigeoka
+ * @author Matt Tucker
  */
 public class DefaultGroupProvider implements GroupProvider {
 
@@ -49,7 +49,7 @@ public class DefaultGroupProvider implements GroupProvider {
         "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupName=?";
     private static final String LOAD_MEMBERS =
         "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=?";
-    private static final String SELECT_GROUP_BY_NAME =
+    private static final String LOAD_GROUP =
         "SELECT description FROM jiveGroup WHERE groupName=?";
     private static final String REMOVE_USER =
         "DELETE FROM jiveGroupUser WHERE groupName=? AND username=?";
@@ -90,16 +90,14 @@ public class DefaultGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(SELECT_GROUP_BY_NAME);
+            pstmt = con.prepareStatement(LOAD_GROUP);
             pstmt.setString(1, name);
             ResultSet rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new GroupNotFoundException("Group with name "
                     + name + " not found.");
             }
-            if (rs.next()) {
-                description = rs.getString(1);
-            }
+            description = rs.getString(1);
         }
         catch (SQLException e) {
             Log.error(e);

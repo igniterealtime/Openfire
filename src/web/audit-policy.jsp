@@ -44,6 +44,7 @@
     String[] xpathQuery = ParamUtils.getParameters(request,"xpathQuery");
     String maxCount = ParamUtils.getParameter(request,"maxCount");
     String maxSize = ParamUtils.getParameter(request,"maxSize");
+    String logTimeout = ParamUtils.getParameter(request,"logTimeout");
 
     // Get an audit manager:
     AuditManager auditManager = (AuditManager)admin.getServiceLookup().lookup(AuditManager.class);
@@ -73,6 +74,11 @@
         } catch (Exception e){
             errors.put("maxSize","maxSize");
         }
+        try {
+            auditManager.setLogTimeout(Integer.parseInt(logTimeout) * 1000);
+        } catch (Exception e){
+            errors.put("logTimeout","logTimeout");
+        }
         // All done, redirect
         if (errors.size() == 0){
         %>
@@ -101,6 +107,7 @@
         auditXPath = auditManager.isAuditXPath();
         maxCount = Integer.toString(auditManager.getMaxFileCount());
         maxSize = Integer.toString(auditManager.getMaxFileSize());
+        logTimeout = Integer.toString(auditManager.getLogTimeout() / 1000);
     }
 %>
 
@@ -186,6 +193,24 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
+                        Flush Interval (seconds):
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="15" maxlength="50" name="logTimeout"
+                         value="<%= ((logTimeout != null) ? logTimeout : "") %>">
+
+                    <%  if (errors.get("logTimeout") != null) { %>
+
+                        <span class="jive-error-text">
+                        Please enter a valid number.
+                        </span>
+
+                    <%  } %>
+
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
                         Packets to audit:
                     </td>
                     <td width="99%">
@@ -228,6 +253,14 @@ and IQ packets are primarily useful for tracing and troubleshooting XMPP deploym
                             </td>
                         </tr>
                         </table>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        Queued packets:
+                    </td>
+                    <td width="99%">
+                         <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
                     </td>
                 </tr>
                 </table>

@@ -11,9 +11,6 @@
 
 package org.jivesoftware.messenger.audit;
 
-import org.jivesoftware.messenger.IQ;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.XMPPPacket;
 
 /**
@@ -35,43 +32,29 @@ public interface Auditor {
     void audit(XMPPPacket packet);
 
     /**
-     * Audit a message packet.
-     *
-     * @param packet the packet being audited.
-     */
-    void audit(Message packet);
-
-    /**
-     * Audit a presence packet.
-     *
-     * @param packet the packet being audited.
-     * @param transition the presence transition type from AuditManager.
-     */
-    void audit(Presence packet, int transition);
-
-    /**
-     * Audit an IQ packet.
-     *
-     * @param packet the packet being audited.
-     */
-    void audit(IQ packet);
-
-    /**
      * Audit any packet that was dropped (undeliverables, etc).
      *
      * @param packet the packet that was dropped.
      */
-    void auditDroppedPacket(XMPPPacket packet);
+    //void auditDroppedPacket(XMPPPacket packet);
 
     /**
      * Audit a non-packet event.
      *
      * @param event the event being audited.
      */
-    void audit(AuditEvent event);
+    //void audit(AuditEvent event);
 
     /**
      * Prepares the auditor for system shutdown.
      */
-    void close();
+    void stop();
+
+    /**
+     * Returns the number of queued packets that are still in memory and need to be saved to a
+     * permanent store.
+     *
+     * @return the number of queued packets that are still in memory.
+     */
+    int getQueuedPacketsNumber();
 }

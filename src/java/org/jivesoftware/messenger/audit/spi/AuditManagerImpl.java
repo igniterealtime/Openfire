@@ -30,8 +30,10 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private AuditorImpl auditor = null;
     private int maxSize;
     private int maxCount;
+    private int logTimeout;
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_FILE_COUNT = 10;
+    private static final int DEFAULT_LOG_TIMEOUT = 120000;
 
     public AuditManagerImpl() {
         super("Audit Manager");
@@ -61,6 +63,16 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         maxSize = size;
         auditor.setMaxValues(maxSize, maxCount);
         JiveGlobals.setProperty("xmpp.audit.maxsize", Integer.toString(size));
+    }
+
+    public int getLogTimeout() {
+        return logTimeout;
+    }
+
+    public void setLogTimeout(int logTimeout) {
+        this.logTimeout = logTimeout;
+        auditor.setLogTimeout(logTimeout);
+        JiveGlobals.setProperty("xmpp.audit.logtimeout", Integer.toString(logTimeout));
     }
 
     public int getMaxFileCount() {
@@ -135,11 +147,11 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
 
     public void initialize(Container container) {
         super.initialize(container);
-        setEnabled(JiveGlobals.getBooleanProperty("xmpp.audit.active"));
-        setEnabled(JiveGlobals.getBooleanProperty("xmpp.audit.message"));
-        setEnabled(JiveGlobals.getBooleanProperty("xmpp.audit.presence"));
-        setEnabled(JiveGlobals.getBooleanProperty("xmpp.audit.iq"));
-        setEnabled(JiveGlobals.getBooleanProperty("xmpp.audit.xpath"));
+        enabled = JiveGlobals.getBooleanProperty("xmpp.audit.active");
+        auditMessage = JiveGlobals.getBooleanProperty("xmpp.audit.message");
+        auditPresence = JiveGlobals.getBooleanProperty("xmpp.audit.presence");
+        auditIQ = JiveGlobals.getBooleanProperty("xmpp.audit.iq");
+        auditXPath = JiveGlobals.getBooleanProperty("xmpp.audit.xpath");
         // TODO: load xpath values!
 //        String[] filters = context.getProperties("xmpp.audit.filter.xpath");
 //        for (int i = 0; i < filters.length; i++) {
@@ -147,13 +159,15 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
 //        }
         maxSize = JiveGlobals.getIntProperty("xmpp.audit.maxsize", MAX_FILE_SIZE);
         maxCount = JiveGlobals.getIntProperty("xmpp.audit.maxcount", MAX_FILE_COUNT);
+        logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxSize, maxCount);
+        auditor.setLogTimeout(logTimeout);
     }
 
     public void stop() {
         if (auditor != null) {
-            auditor.close();
+            auditor.stop();
         }
     }
 }

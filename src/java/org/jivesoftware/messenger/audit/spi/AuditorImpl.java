@@ -22,9 +22,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Date;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 
 public class AuditorImpl implements Auditor {
 
@@ -35,7 +39,19 @@ public class AuditorImpl implements Auditor {
     private static final int MEGABYTE = 1024 * 1024;
     private int maxSize;
     private long maxCount;
+    private int logTimeout;
     private boolean closed = false;
+
+    /**
+     * Queue that holds the audited packets that will be later saved to an XML file.
+     */
+    private Queue<AuditPacket> logQueue = new LinkedBlockingQueue<AuditPacket>();
+
+    /**
+     * Timer to save queued logs to the XML file.
+     */
+    private Timer timer = new Timer();
+    private SaveQueuedPacketsTask saveQueuedPacketsTask;
 
     public AuditorImpl(AuditManager manager) {
         auditManager = manager;
@@ -44,55 +60,40 @@ public class AuditorImpl implements Auditor {
     public void audit(XMPPPacket packet) {
         if (auditManager.isEnabled()) {
             if (packet instanceof Message) {
-                if (auditManager.isEnabled() && auditManager.isAuditMessage()) {
+                if (auditManager.isAuditMessage()) {
                     writePacket(packet, false);
                 }
             }
             else if (packet instanceof Presence) {
-                if (auditManager.isEnabled() && auditManager.isAuditPresence()) {
+                if (auditManager.isAuditPresence()) {
                     writePacket(packet, false);
                 }
             }
             else if (packet instanceof IQ) {
-                if (auditManager.isEnabled() && auditManager.isAuditIQ()) {
+                if (auditManager.isAuditIQ()) {
                     writePacket(packet, false);
                 }
             }
         }
     }
 
-    public synchronized void audit(Message packet) {
-        if (auditManager.isEnabled() && auditManager.isAuditMessage()) {
-            writePacket(packet, false);
-        }
-    }
-
-    public synchronized void audit(Presence packet, int transition) {
-        if (auditManager.isEnabled() && auditManager.isAuditPresence()) {
-            writePacket(packet, false);
-        }
-    }
-
-    public synchronized void audit(IQ packet) {
-        if (auditManager.isEnabled() && auditManager.isAuditIQ()) {
-            writePacket(packet, false);
-        }
-    }
-
-    public synchronized void auditDroppedPacket(XMPPPacket packet) {
+    /*public void auditDroppedPacket(XMPPPacket packet) {
         writePacket(packet, true);
     }
 
-    public synchronized void audit(AuditEvent event) {
-        try {
-            prepareAuditFile();
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
+    public void audit(AuditEvent event) {
+        // TODO Implement this functionality. Not used currently.
+    }*/
+
+    public void stop() {
+        // Stop the scheduled task for saving queued packets to the XML file
+        timer.cancel();
+        // Save all remaining queued packets to the XML file
+        saveQueuedPackets();
+        close();
     }
 
-    public void close() {
+    private void close() {
         if (xmlSerializer != null) {
             try {
                 xmlSerializer.writeEndElement();
@@ -109,48 +110,9 @@ public class AuditorImpl implements Auditor {
 
     private void writePacket(XMPPPacket packet, boolean dropped) {
         if (!closed) {
-            try {
-                prepareAuditFile();
-                xmlSerializer.writeStartElement("packet");
-                xmlSerializer.writeDefaultNamespace("http://jivesoftware.org");
-                Session session = packet.getOriginatingSession();
-                if (session != null) {
-                    if (session.getStreamID() != null) {
-                        xmlSerializer.writeAttribute("session", session.getStreamID().toString());
-                    }
-                    switch (session.getStatus()) {
-                        case Session.STATUS_AUTHENTICATED:
-                            xmlSerializer.writeAttribute("status", "auth");
-                            break;
-                        case Session.STATUS_CLOSED:
-                            xmlSerializer.writeAttribute("status", "closed");
-                            break;
-                        case Session.STATUS_CONNECTED:
-                            xmlSerializer.writeAttribute("status", "connected");
-                            break;
-                        case Session.STATUS_STREAMING:
-                            xmlSerializer.writeAttribute("status", "stream");
-                            break;
-                        default:
-                            xmlSerializer.writeAttribute("status", "unknown");
-                            break;
-                    }
-                }
-                xmlSerializer.writeAttribute("timestamp", new Date().toString());
-                if (packet.isSending()) {
-                    xmlSerializer.writeAttribute("sending", "true");
-                }
-                if (dropped) {
-                    xmlSerializer.writeAttribute("dropped", "true");
-                }
-                packet.send(xmlSerializer, 0);
-                xmlSerializer.writeEndElement();
-                xmlSerializer.flush();
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-        } // closed
+            // Add to the logging queue this new entry that will be saved later
+            logQueue.add(new AuditPacket((XMPPPacket) packet.createDeepCopy(), dropped));
+        }
     }
 
     private void prepareAuditFile() throws IOException, XMLStreamException {
@@ -162,6 +124,22 @@ public class AuditorImpl implements Auditor {
     protected void setMaxValues(int size, int count) {
         maxSize = size * MEGABYTE;
         maxCount = count;
+    }
+
+    public void setLogTimeout(int newTimeout) {
+        // Cancel any existing task because the timeout has changed
+        if (saveQueuedPacketsTask != null) {
+            saveQueuedPacketsTask.cancel();
+        }
+        this.logTimeout = newTimeout;
+        // Create a new task and schedule it with the new timeout
+        saveQueuedPacketsTask = new SaveQueuedPacketsTask();
+        timer.schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
+
+    }
+
+    public int getQueuedPacketsNumber() {
+        return logQueue.size();
     }
 
     private void rotateFiles() throws IOException, XMLStreamException {
@@ -203,4 +181,117 @@ public class AuditorImpl implements Auditor {
         xmlSerializer.writeStartElement("jive", "jive", "http://jivesoftware.org");
         xmlSerializer.writeNamespace("jive", "http://jivesoftware.org");
     }
+
+    /**
+     * Saves the queued entries to an XML file.
+     */
+    private class SaveQueuedPacketsTask extends TimerTask {
+        public void run() {
+            try {
+                saveQueuedPackets();
+            }
+            catch (Throwable e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+    }
+
+    private void saveQueuedPackets() {
+        AuditPacket entry;
+        int batchSize = logQueue.size();
+        for (int index = 0; index < batchSize; index++) {
+            entry = logQueue.poll();
+            if (entry != null) {
+                try {
+                    prepareAuditFile();
+                    entry.send(xmlSerializer);
+                    xmlSerializer.flush();
+                }
+                catch (IOException e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    // Add again the entry to the queue to save it later
+                    logQueue.add(entry);
+                }
+                catch (XMLStreamException e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    // Add again the entry to the queue to save it later
+                    logQueue.add(entry);
+                }
+            }
+        }
+    }
+
+    /**
+     * Wrapper on a Packet with information about the packet's status at the moment when the message
+     * was queued.<p>
+     *
+     * The idea is to wrap every packet that is needed to be audited and then add the wrapper to a
+     * queue that will be later processed (i.e. saved to the XML file).
+     */
+    private class AuditPacket {
+        private XMPPPacket packet;
+        private String streamID;
+        private String sessionStatus;
+        private Date timestamp;
+        private boolean sending;
+        private boolean dropped;
+
+        public AuditPacket(XMPPPacket packet, boolean dropped) {
+            this.packet = packet;
+            this.dropped = dropped;
+            this.timestamp = new Date();
+            this.sending = packet.isSending();
+            Session session = packet.getOriginatingSession();
+            if (session != null) {
+                if (session.getStreamID() != null) {
+                    this.streamID = session.getStreamID().toString();
+                }
+                switch (session.getStatus()) {
+                    case Session.STATUS_AUTHENTICATED:
+                        this.sessionStatus =  "auth";
+                        break;
+                    case Session.STATUS_CLOSED:
+                        this.sessionStatus = "closed";
+                        break;
+                    case Session.STATUS_CONNECTED:
+                        this.sessionStatus = "connected";
+                        break;
+                    case Session.STATUS_STREAMING:
+                        this.sessionStatus = "stream";
+                        break;
+                    default:
+                        this.sessionStatus = "unknown";
+                        break;
+                }
+            }
+        }
+
+        public void send(XMLStreamWriter xmlSerializer) {
+            try {
+                xmlSerializer.writeStartElement("packet");
+                xmlSerializer.writeDefaultNamespace("http://jivesoftware.org");
+
+                if (streamID != null) {
+                    xmlSerializer.writeAttribute("session", streamID);
+                }
+                if (sessionStatus != null) {
+                    xmlSerializer.writeAttribute("status", sessionStatus);
+                }
+                xmlSerializer.writeAttribute("timestamp", timestamp.toString());
+                if (sending) {
+                    xmlSerializer.writeAttribute("sending", "true");
+                }
+                if (dropped) {
+                    xmlSerializer.writeAttribute("dropped", "true");
+                }
+                packet.send(xmlSerializer, 0);
+                xmlSerializer.writeEndElement();
+            }
+            catch (Exception e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+
+    }
+
 }

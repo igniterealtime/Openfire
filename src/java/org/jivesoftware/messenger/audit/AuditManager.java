@@ -89,6 +89,24 @@ public interface AuditManager {
     void setMaxFileCount(int count);
 
     /**
+     * Returns the time in milliseconds between successive executions of the task that will save
+     * the queued audited packets to a permanent store.
+     *
+     * @return the time in milliseconds between successive executions of the task that will save
+     *         the queued audited packets to a permanent store.
+     */
+    int getLogTimeout();
+
+    /**
+     * Sets the time in milliseconds between successive executions of the task that will save
+     * the queued audited packets to a permanent store.
+     *
+     * @param logTimeout the time in milliseconds between successive executions of the task that will save
+     *        the queued audited packets to a permanent store. 
+     */
+    void setLogTimeout(int logTimeout);
+
+    /**
      * <p>Determines if the server will audit all message packets.</p>
      * <p>This is a speed optimization and convenience for logging all message packets
      * rather than using an XPath expression.</p>

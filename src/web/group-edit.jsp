@@ -148,11 +148,14 @@ import="java.text.DateFormat,
 <%
     }
 %>
+<form name="ff" action="group-edit.jsp">
+<input type="hidden" name="group" value="<%= groupName %>"/>
+
     <fieldset>
         <legend>
             Group Summary
-        </legend><form name="ff" action="group-edit.jsp">
-        <input type="hidden" name="group" value="<%= groupName %>"/>
+        </legend>
+
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td  width="1%">

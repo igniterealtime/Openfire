@@ -522,6 +522,10 @@ public class SessionManager extends BasicModule {
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
     public Session getBestRoute(JID recipient) {
+        // Return null if the JID belongs to a foreign server
+        if (!serverName.equals(recipient.getDomain())) {
+             return null;
+        }
         ClientSession session = null;
         String resource = recipient.getResource();
         String username = recipient.getNode();
@@ -598,11 +602,13 @@ public class SessionManager extends BasicModule {
 
     /**
      * Returns the session responsible for this JID.
+     *
      * @param from the sender of the packet.
      * @return the <code>Session</code> associated with the JID.
      */
     public ClientSession getSession(JID from) {
-        if (from == null) {
+        // Return null if the JID is null or belongs to a foreign server
+        if (from == null || !serverName.equals(from.getDomain())) {
             return null;
         }
 

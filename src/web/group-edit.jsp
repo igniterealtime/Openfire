@@ -138,7 +138,7 @@
         return;
     }
     else if (add && users != null) {
-        StringTokenizer tokenizer = new StringTokenizer(users, ",");
+        StringTokenizer tokenizer = new StringTokenizer(users, ", \t\n\r\f");
         int count = 0;
         while (tokenizer.hasMoreTokens()) {
             String username = tokenizer.nextToken();
@@ -195,9 +195,9 @@
             String glist = group.getProperties().get("sharedRoster.groupList");
             List l = new ArrayList();
             if (glist != null) {
-                StringTokenizer tokenizer = new StringTokenizer(glist,",");
+                StringTokenizer tokenizer = new StringTokenizer(glist,", \t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
-                    String tok = tokenizer.nextToken().trim();
+                    String tok = tokenizer.nextToken();
                     l.add(tok.trim());
                 }
             }

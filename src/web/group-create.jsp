@@ -97,9 +97,9 @@
                 }
 
                 if (users.length() > 0){
-                    StringTokenizer tokenizer = new StringTokenizer(users, ",");
+                    StringTokenizer tokenizer = new StringTokenizer(users, ", \t\n\r\f");
                     while (tokenizer.hasMoreTokens()) {
-                        String username = tokenizer.nextToken().trim();
+                        String username = tokenizer.nextToken();
                         try {
                             UserManager.getInstance().getUser(username);
                             newGroup.getMembers().add(username);

@@ -141,8 +141,8 @@ public class LdapUserProvider implements UserProvider {
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { "jiveUserID" });
-            String filter = "(jiveUserID=*)";
+            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            String filter = "(" + manager.getUsernameField() + "=*)";
             NamingEnumeration answer = ctx.search("", filter, constraints);
             for (int i = 0; i < startIndex; i++) {
                 answer.next();
@@ -153,7 +153,7 @@ public class LdapUserProvider implements UserProvider {
                     // Get the next userID.
                     usernames.add(
                         (String)((SearchResult)answer.next()).getAttributes().get(
-                        "jiveUserID").get()
+                        manager.getUsernameField()).get()
                     );
                 }
                 else {

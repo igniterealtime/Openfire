@@ -176,8 +176,8 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             }
             startCoreModules();
             // Load plugins.
-            File pluginDir = new File(messengerHome + "/plugins");
-            pluginManager = new PluginManager(pluginDir, this);
+            File pluginDir = new File(messengerHome, "plugins");
+            pluginManager = new PluginManager(pluginDir);
             pluginManager.start();
         }
         catch (Exception e) {

@@ -3,26 +3,16 @@
  * $Revision$
  * $Date$
  *
- * Copyright 2004 Jive Software.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * All rights reserved. Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
 
 package org.jivesoftware.messenger.container;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLProperties;
-import org.jivesoftware.messenger.container.spi.JiveModuleLoader;
 import org.jivesoftware.messenger.JiveGlobals;
 
 import java.io.*;
@@ -40,16 +30,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class PluginManager {
 
-    private Container container;
     private File pluginDirectory;
-    private Map<String,Module> plugins;
+    private Map<String,Plugin> plugins;
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
 
-    public PluginManager(File pluginDir, Container container) {
+    public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
-        this.container = container;
-        plugins = new HashMap<String,Module>();
+        plugins = new HashMap<String,Plugin>();
     }
 
     /**
@@ -57,7 +45,7 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(2);
-        executor.scheduleWithFixedDelay(new PluginLoader(), 0, 5, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
     }
 
     /**
@@ -69,9 +57,8 @@ public class PluginManager {
             executor.shutdown();
         }
         // Shutdown all installed plugins.
-        for (Module module : plugins.values()) {
-            module.stop();
-            module.destroy();
+        for (Plugin plugin : plugins.values()) {
+            plugin.destroy();
         }
     }
 
@@ -93,22 +80,20 @@ public class PluginManager {
         if (setupMode && !(pluginDir.getName().equals("admin"))) {
             return;
         }
-//        ClassLoader
         Log.debug("Loading plugin " + pluginDir.getName());
-        Module mod = null;
+        Plugin plugin = null;
         try {
-            File moduleConfig = new File(pluginDir, "module.xml");
-            if (moduleConfig.exists()) {
-                XMLProperties moduleProps = new XMLProperties(moduleConfig);
-                JiveModuleLoader modLoader = new JiveModuleLoader(pluginDir.toString());
-                mod = modLoader.loadModule(moduleProps.getProperty("module"));
-                mod.initialize(container);
-                mod.start();
-                plugins.put(pluginDir.getName(), mod);
+            File pluginConfig = new File(pluginDir, "plugin.xml");
+            if (pluginConfig.exists()) {
+                XMLProperties pluginProps = new XMLProperties(pluginConfig);
+                PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
+                String className = pluginProps.getProperty("class");
+                plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
+                plugin.initialize(this, pluginDir);
+                plugins.put(pluginDir.getName(), plugin);
             }
             else {
-                Log.warn("Plugin " + pluginDir +
-                        " not loaded: no module.xml configuration file not found");
+                Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
             }
         }
         catch (Exception e) {
@@ -121,7 +106,7 @@ public class PluginManager {
      * checks for new plugin JAR files and extracts them if they haven't already
      * been extracted. Then, any new plugin directories are loaded.
      */
-    private class PluginLoader implements Runnable {
+    private class PluginMonitor implements Runnable {
 
         public void run() {
             try {
@@ -142,7 +127,7 @@ public class PluginManager {
                         try {
                             ZipFile zipFile = new ZipFile(jarFile);
                             // Ensure that this JAR is a plugin.
-                            if (zipFile.getEntry("module.xml") == null) {
+                            if (zipFile.getEntry("plugin.xml") == null) {
                                 continue;
                             }
                             dir.mkdir();

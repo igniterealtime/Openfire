@@ -11,26 +11,11 @@
         <param-value>messenger_i18n_en</param-value>
     </context-param>
      <servlet>
-    <servlet-name>UploadServlet</servlet-name>
-    <servlet-class>com.jivesoftware.liveassistant.UploadServlet</servlet-class>
-  </servlet>
-  <servlet>
-    <servlet-name>ImageRetrieveServlet</servlet-name>
-    <servlet-class>com.jivesoftware.liveassistant.ImageRetrieveServlet</servlet-class>
-  </servlet>
     <servlet>
         <servlet-name>XMPPBootServlet</servlet-name>
         <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
 </servlet>
-  <servlet-mapping>
-    <servlet-name>UploadServlet</servlet-name>
-    <url-pattern>/upload</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-    <servlet-name>ImageRetrieveServlet</servlet-name>
-    <url-pattern>/getimage</url-pattern>
-  </servlet-mapping>
     <taglib>
         <taglib-uri>core</taglib-uri>
         <taglib-location>/WEB-INF/c.tld</taglib-location>

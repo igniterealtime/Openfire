@@ -272,7 +272,6 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         for (Module module : modules) {
             boolean started = false;
             try {
-                System.out.println(module);
                 module.start();
             }
             catch (Exception e) {

@@ -31,7 +31,6 @@ import org.xmpp.packet.PacketError;
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
     protected PacketDeliverer deliverer;
-    protected IQRouter router;
     private SessionManager sessionManager;
 
     /**
@@ -41,10 +40,6 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
      */
     public IQHandler(String moduleName) {
         super(moduleName);
-    }
-
-    public void setRouter(IQRouter router) {
-        this.router = router;
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {

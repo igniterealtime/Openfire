@@ -365,7 +365,4 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
     }
-
-    public void setRouter(PresenceRouter router) {
-    }
 }

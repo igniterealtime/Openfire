@@ -17,7 +17,7 @@
                  java.util.*,
                  java.text.*,
                  org.jivesoftware.admin.AdminPageBean"
-    errorPage="error.jsp"
+
 %>
 
 <%@ taglib uri="core" prefix="c" %>
@@ -27,11 +27,11 @@
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters //
-    boolean serverOn = (admin.getXMPPServer() != null);
+    boolean serverOn = (webManager.getXMPPServer() != null);
 %>
 
 <%  // Title of this page and breadcrumbs
@@ -40,7 +40,8 @@
     pageinfo.setPageID("server-props");
 %>
 
-<jsp:include page="top.jsp" flush="true" />
+<%@ include file="top.jsp" %>
+
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
@@ -80,7 +81,7 @@ some of the server settings. Some settings can not be changed.
             <td>
                 <%  DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
                     long now = System.currentTimeMillis();
-                    long lastStarted = admin.getXMPPServer().getServerInfo().getLastStarted().getTime();
+                    long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
                     long uptime = (now - lastStarted) / 1000L;
                     String uptimeDisplay = null;
                     if (uptime < 60) {
@@ -102,7 +103,7 @@ some of the server settings. Some settings can not be changed.
 
                 <%  } %>
 
-                started <%= formatter.format(admin.getXMPPServer().getServerInfo().getLastStarted()) %>
+                started <%= formatter.format(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
             </td>
         </tr>
 
@@ -112,7 +113,7 @@ some of the server settings. Some settings can not be changed.
         <td class="c1">Version:</td>
         <td class="c2">
             <fmt:message key="title" bundle="${lang}" />
-            <%= admin.getXMPPServer().getServerInfo().getVersion().getVersionString() %>
+            <%= webManager.getXMPPServer().getServerInfo().getVersion().getVersionString() %>
         </td>
     </tr>
     <tr>
@@ -126,20 +127,20 @@ some of the server settings. Some settings can not be changed.
             Server Name:
         </td>
         <td class="c2">
-            <c:out value="${admin.serverInfo.name}" />
+            <c:out value="${webManager.serverInfo.name}" />
         </td>
     </tr>
-    <c:if test="${!empty admin.multiUserChatServer}">
+    <c:if test="${!empty webManager.multiUserChatServer}">
         <tr>
             <td class="c1">
                 Group Chat Service Name:
             </td>
             <td class="c2">
-                <c:out value="${admin.multiUserChatServer.serviceName}" />
+                <c:out value="${webManager.multiUserChatServer.serviceName}" />
             </td>
         </tr>
     </c:if>
-    <c:forEach var="port" items="${admin.serverInfo.serverPorts}">
+    <c:forEach var="port" items="${webManager.serverInfo.serverPorts}">
         <tr>
             <td class="c1">
                 IP and Port:

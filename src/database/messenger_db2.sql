@@ -18,7 +18,7 @@ CREATE TABLE jiveUserProp (
   username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveUsrProp_pk PRIMARY KEY (userID, name)
+  CONSTRAINT jiveUsrProp_pk PRIMARY KEY (username, name)
 );
 
 
@@ -27,7 +27,7 @@ CREATE TABLE jivePrivate (
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 LONG VARCHAR    NOT NULL,
-  CONSTRAINT JivePrivate_pk PRIMARY KEY (userID, name, namespace)
+  CONSTRAINT JivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
 
@@ -37,7 +37,7 @@ CREATE TABLE jiveOffline (
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
   message               LONG VARCHAR    NOT NULL,
-  CONSTRAINT jiveOffline_pk PRIMARY KEY (userID, messageID)
+  CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
 
@@ -67,16 +67,7 @@ CREATE TABLE jiveVCard (
   username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT JiveVCard_pk PRIMARY KEY (userID, name)
-);
-
-
-CREATE TABLE jiveChatbot (
-  chatbotID             INTEGER         NOT NULL,
-  description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveChatbot_pk PRIMARY KEY (chatbotID)
+  CONSTRAINT JiveVCard_pk PRIMARY KEY (username, name)
 );
 
 
@@ -102,7 +93,7 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupID               INTEGER         NOT NULL,
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   administrator         INTEGER         NOT NULL,
   CONSTRAINT jiveGrpUser PRIMARY KEY (groupID, userID, administrator)
 );
@@ -173,24 +164,12 @@ CREATE TABLE mucConversationLog (
 
 
 -- Finally, insert default table values
-
-INSERT INTO jiveID (idType, id) VALUES (0, 1);
-INSERT INTO jiveID (idType, id) VALUES (1, 1);
-INSERT INTO jiveID (idType, id) VALUES (2, 1);
 INSERT INTO jiveID (idType, id) VALUES (3, 2);
 INSERT INTO jiveID (idType, id) VALUES (4, 1);
-INSERT INTO jiveID (idType, id) VALUES (13, 1);
-INSERT INTO jiveID (idType, id) VALUES (14, 2);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
-insert INTO jiveID (idType, id) VALUES (23, 1);
+INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
--- Entry for admin user -- password is "admin"
-INSERT INTO jiveUserID (username, domainID, objectType, objectID) VALUES ('admin', 1, 0, 1);
-INSERT INTO jiveUser (userID, name, password, email, emailVisible, nameVisible, creationDate, modificationDate)
-    VALUES (1, 'Administrator', 'admin', 'admin@example.com', 1, 1, '0', '0');
-
--- Make the administrator an admin member of the Administrators group
-INSERT INTO jiveGroup (groupID, name, description, creationDate, modificationDate)
-    VALUES (1, 'Administrators', 'Messenger Server administrators', '0', '0');
-INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (1, 1, 1);
+-- Entry for admin user
+INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

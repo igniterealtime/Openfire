@@ -3,12 +3,10 @@ REM // $Revision$
 REM // $Date$
 
 CREATE TABLE jiveUser (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)     NOT NULL,
   password              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100),
-  nameVisible           INTEGER         NOT NULL,
   email                 VARCHAR2(100),
-  emailVisible          INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
   CONSTRAINT jiveUser_pk PRIMARY KEY (userID)
@@ -17,55 +15,43 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate ASC);
 
 
 CREATE TABLE jiveUserProp (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
-  propValue             VARCHAR2(4000)  NOT NULL,
-  CONSTRAINT jiveUserProp_pk PRIMARY KEY (userID, name)
+  propValue             VARCHAR2(1024)  NOT NULL,
+  CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveUserProp ADD CONSTRAINT jiveUserProp_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
 
 
 CREATE TABLE jivePrivate (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
   namespace             VARCHAR2(200)   NOT NULL,
   value                 LONG            NOT NULL,
-  CONSTRAINT jivePrivate_pk PRIMARY KEY (userID, name, namespace)
+  CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jivePrivate ADD CONSTRAINT jivePrivate_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
 
 
 CREATE TABLE jiveOffline (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
   message               LONG            NOT NULL,
-  CONSTRAINT jiveOffline_pk PRIMARY KEY (userID, messageID)
+  CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveRoster ADD CONSTRAINT jiveRoster_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
 
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  userID                INTEGER         NOT NULL,
-  jid                   VARCHAR2(4000)  NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
+  jid                   VARCHAR2(1024)  NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
   nick                  VARCHAR2(255),
   CONSTRAINT jiveRoster_pk PRIMARY KEY (rosterID)
 );
-CREATE INDEX jiveRoster_userid_idx ON jiveRoster (userID ASC);
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveRoster ADD CONSTRAINT jiveRoster_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
+CREATE INDEX jiveRoster_username_idx ON jiveRoster (username ASC);
 
 
 CREATE TABLE jiveRosterGroups (
@@ -79,44 +65,11 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 
 CREATE TABLE jiveVCard (
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
   propValue             VARCHAR2(4000)  NOT NULL,
-  CONSTRAINT JiveVCard_pk PRIMARY KEY (userID, name)
+  CONSTRAINT JiveVCard_pk PRIMARY KEY (username, name)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveVCard ADD CONSTRAINT jiveVCard_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
-
-
-CREATE TABLE jiveDomain (
-  domainID              INTEGER         NOT NULL,
-  name                  VARCHAR2(100)   UNIQUE NOT NULL,
-  description           VARCHAR2(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveDomain_pk PRIMARY KEY (domainID)
-);
-
-
-CREATE TABLE jiveChatbot (
-  chatbotID             INTEGER         NOT NULL,
-  description           VARCHAR2(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveChatbot_pk PRIMARY KEY (chatbotID)
-);
-
-
-CREATE TABLE jiveUserID (
-  username              VARCHAR2(30)     UNIQUE NOT NULL,
-  domainID              INTEGER          NOT NULL,
-  objectType            INTEGER          NOT NULL,
-  objectID              INTEGER          NOT NULL,
-  CONSTRAINT jiveUserID_pk PRIMARY KEY (username, domainID)
-);
-CREATE INDEX jiveUserID_object_idx ON jiveUserID (objectType, objectID);
-
 
 CREATE TABLE jiveGroup (
   groupID               INTEGER         NOT NULL,
@@ -129,29 +82,19 @@ CREATE TABLE jiveGroup (
 CREATE INDEX jiveGroup_cDate_idx ON jiveGroup (creationDate ASC);
 CREATE INDEX jiveGroup_name_idx ON jiveGroup (name);
 
-
 CREATE TABLE jiveGroupProp (
   groupID               INTEGER         NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
   propValue             VARCHAR2(4000)  NOT NULL,
   CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupID, name)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveGroupProp ADD CONSTRAINT jiveGroupProp_groupID_fk FOREIGN KEY (groupID) REFERENCES jiveGroup INITIALLY DEFERRED DEFERRABLE;
-
 
 CREATE TABLE jiveGroupUser (
   groupID               INTEGER         NOT NULL,
-  userID                INTEGER         NOT NULL,
+  username              VARCHAR2(32)    NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGroupUser PRIMARY KEY (groupID, userID, administrator)
+  CONSTRAINT jiveGroupUser PRIMARY KEY (groupID, username, administrator)
 );
-REM Commented out since this will cause a third party user system to break
-REM If you do not use a third part user system, uncomment these constraints
-REM ALTER TABLE jiveGroupUser ADD CONSTRAINT jiveGroupUser_groupID_fk FOREIGN KEY (groupID) REFERENCES jiveGroup INITIALLY DEFERRED DEFERRABLE;
-REM ALTER TABLE jiveGroupUser ADD CONSTRAINT jiveGroupUser_userID_fk FOREIGN KEY (userID) REFERENCES jiveUser INITIALLY DEFERRED DEFERRABLE;
-
 
 CREATE TABLE jiveID (
   idType                INTEGER         NOT NULL,
@@ -193,21 +136,21 @@ CREATE INDEX mucRoom_roomid_idx ON mucRoom (roomID);
 
 CREATE TABLE mucAffiliation (
   roomID              INT            NOT NULL,
-  jid                 VARCHAR2(4000) NOT NULL,
+  jid                 VARCHAR2(1024) NOT NULL,
   affiliation         INTEGER        NOT NULL,
   CONSTRAINT mucAffiliation_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucMember (
   roomID              INT            NOT NULL,
-  jid                 VARCHAR2(4000) NOT NULL,
+  jid                 VARCHAR2(3000) NOT NULL,
   nickname            VARCHAR2(255)  NULL,
   CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucConversationLog (
   roomID              INT            NOT NULL,
-  sender              VARCHAR2(4000) NOT NULL,
+  sender              VARCHAR2(1024) NOT NULL,
   nickname            VARCHAR2(255)  NULL,
   time                CHAR(15)       NOT NULL,
   subject             VARCHAR2(255)  NULL,
@@ -218,23 +161,12 @@ REM // Finally, insert default table values.
 
 REM // Unique ID entry for user, group
 REM // The User ID entry starts at 2 (after admin user entry).
-INSERT INTO jiveID (idType, id) VALUES (0, 1);
-INSERT INTO jiveID (idType, id) VALUES (1, 1);
-INSERT INTO jiveID (idType, id) VALUES (2, 1);
 INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 2);
-INSERT INTO jiveID (idType, id) VALUES (13, 1);
-INSERT INTO jiveID (idType, id) VALUES (14, 2);
+INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-REM // Entry for admin user -- password is "admin"
-INSERT INTO jiveUserID (username, domainID, objectType, objectID) VALUES ('admin', 1, 0, 1);
-INSERT INTO jiveUser (userID, name, password, email, emailVisible, nameVisible, creationDate, modificationDate)
-    VALUES (1, 'Administrator', 'admin', 'admin@example.com', 1, 1, '0', '0');
-
-REM // Make the administrator an admin member of the Administrators group
-INSERT INTO jiveGroup (groupID, name, description, creationDate, modificationDate)
-    VALUES (1, 'Administrators', 'Messenger Server administrators', '0', '0');
-INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (1, 1, 1);
+REM // Entry for admin user
+INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

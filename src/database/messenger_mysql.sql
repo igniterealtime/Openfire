@@ -65,7 +65,7 @@ CREATE TABLE jiveOffline (
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(32)     NOT NULL,
-  jid                   TEXT            NOT NULL,
+  jid                   VARCHAR(1024)   NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
   recv                  TINYINT         NOT NULL,
@@ -87,14 +87,6 @@ CREATE TABLE jiveVCard (
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (username, name)
-);
-
-CREATE TABLE jiveChatbot (
-  chatbotID             BIGINT          NOT NULL,
-  description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
-  PRIMARY KEY (chatbotID)
 );
 
 CREATE TABLE jiveID (
@@ -137,21 +129,21 @@ CREATE TABLE mucRoom (
 
 CREATE TABLE mucAffiliation (
   roomID              BIGINT        NOT NULL,
-  jid                 TEXT          NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   affiliation         TINYINT       NOT NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 
 CREATE TABLE mucMember (
   roomID              BIGINT        NOT NULL,
-  jid                 TEXT          NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 
 CREATE TABLE mucConversationLog (
   roomID              BIGINT        NOT NULL,
-  sender              TEXT          NOT NULL,
+  sender              VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,
@@ -162,13 +154,8 @@ CREATE TABLE mucConversationLog (
 
 # Unique ID entry for user, group
 # The User ID entry starts at 2 (after admin user entry).
-INSERT INTO jiveID (idType, id) VALUES (0, 1);
-INSERT INTO jiveID (idType, id) VALUES (1, 1);
-INSERT INTO jiveID (idType, id) VALUES (2, 1);
 INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 2);
-INSERT INTO jiveID (idType, id) VALUES (13, 1);
-INSERT INTO jiveID (idType, id) VALUES (14, 2);
+INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
@@ -183,6 +170,6 @@ CREATE TABLE jiveUserPerm (
   INDEX jiveUserPerm_uname_idx (username)
 );
 
-# Entry for admin user -- password is "admin"
+# Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

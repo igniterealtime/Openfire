@@ -44,7 +44,7 @@ CREATE TABLE jiveOffline (
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(32)     NOT NULL,
-  jid                   VARCHAR(3071)   NOT NULL,
+  jid                   VARCHAR(1024)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
@@ -152,21 +152,21 @@ CREATE INDEX mucRoom_roomid_idx ON mucRoom(roomID);
 
 CREATE TABLE mucAffiliation (
   roomID              BIGINT        NOT NULL,
-  jid                 VARCHAR(3071) NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   affiliation         INTEGER       NOT NULL,
   PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucMember (
   roomID              BIGINT        NOT NULL,
-  jid                 VARCHAR(3071) NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucConversationLog (
   roomID              BIGINT        NOT NULL,
-  sender              VARCHAR(3071) NOT NULL,
+  sender              VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   time                CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,
@@ -177,13 +177,8 @@ CREATE TABLE mucConversationLog (
 
 // Unique ID entry for user, group
 // The User ID entry starts at 2 (after admin user entry).
-INSERT INTO jiveID (idType, id) VALUES (0, 1);
-INSERT INTO jiveID (idType, id) VALUES (1, 1);
-INSERT INTO jiveID (idType, id) VALUES (2, 1);
 INSERT INTO jiveID (idType, id) VALUES (3, 2);
-INSERT INTO jiveID (idType, id) VALUES (4, 2);
-INSERT INTO jiveID (idType, id) VALUES (13, 1);
-INSERT INTO jiveID (idType, id) VALUES (14, 2);
+INSERT INTO jiveID (idType, id) VALUES (4, 1);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);

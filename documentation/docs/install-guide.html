@@ -21,17 +21,18 @@ Run the Jive Messenger installer. The application will be installed to <tt>c:\Pr
  
  <h3>Linux/Unix</h3>
  
- Choose either the RPM or tar.gz build. If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
+ Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Jive Messenger to <tt>/opt/jive_messenger</tt>:
+
+ <p><tt>rpm -ivh jive_messenger_2_1_1.rpm</tt></p>
+ 
+ If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
 
  <p><tt>tar -xzvf jive_messenger_2_1_1.tar.gz<br>
  mv jive_messenger /opt</tt></p>
 
- If using the RPM, run it using your package manager:
+ <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime. Therefore, you must have JDK 1.5.0 (Java 5) or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting http://java.sun.com.</p>
 
- <p><tt>rpm -ivh jive_messenger_2_1_1.rpm</tt></p>
-
- which will install Jive Messenger in /opt/jive_messenger.<p>
- </ul>
+  </ul>
 <h2>Setup Overview</h2>
 <p>To complete the installation of Jive Messenger, you'll need to
 perform each of the following steps: </p>
@@ -65,7 +66,7 @@ sub-directories omitted for brevity): </p>
 configuration files.</li>
   <li>The <tt>bin</tt> directory contains the server executables. Depending
 on which distribution you installed, different executables will be available.</li>
-  <li>The <tt>jre</tt> directory contains a Java 5 runtime that is bundled with Jive Messenger.</li>
+  <li>The <tt>jre</tt> directory contains a Java 5 runtime that is bundled with the Windows and RPM versions of Jive Messenger.</li>
   <li>The <tt>lib</tt> directory contains libraries necessary for
 running Jive Messenger.</li>
   <li>The <tt>plugins</tt> directory contains server plugins. By

@@ -174,7 +174,7 @@
       <variables />
       <customScriptLines />
     </linuxRPM>
-    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_messenger" allLaunchers="false" includedJRE="linux-x86-1.5.0" manualJREEntry="false" customScriptMode="1" customScriptFile="">
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_messenger" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>

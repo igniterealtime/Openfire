@@ -163,14 +163,6 @@ public interface MultiUserChatServer {
     public long getTotalChatTime();
 
     /**
-     * An event callback for rooms being renamed.
-     * 
-     * @param oldName old name of the room.
-     * @param newName new name of the room.
-     */
-    void roomRenamed(String oldName, String newName);
-
-    /**
      * Logs that a given message was sent to a room as part of a conversation. Every message sent
      * to the room that is allowed to be broadcasted and that was sent either from the room itself 
      * or from an occupant will be logged.<p>

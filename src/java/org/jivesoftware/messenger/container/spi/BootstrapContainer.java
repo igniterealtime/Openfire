@@ -280,7 +280,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     }
 
     /**
-     * <p>Following the loading and initialization of all the plug-ins
+     * <p>Following the loading and initialization of all the plugins
      * this method is called to iterate through the known modules and
      * start them.</p>
      */

@@ -46,7 +46,7 @@ public interface Roster {
      *
      * @return an iterator of users in this roster.
      */
-    public Iterator getRosterItems() throws UnauthorizedException;
+    public Iterator<RosterItem> getRosterItems() throws UnauthorizedException;
 
     /**
      * Returns the total number of users in the roster.

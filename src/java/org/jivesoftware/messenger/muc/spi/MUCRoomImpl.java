@@ -319,6 +319,9 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public MUCRole getOccupant(String nickname) throws UserNotFoundException {
+        if (nickname == null) {
+             throw new UserNotFoundException();
+        }
         MUCRole role = occupants.get(nickname.toLowerCase());
         if (role != null) {
             return role;
@@ -329,7 +332,7 @@ public class MUCRoomImpl implements MUCRoom {
     public List<MUCRole> getOccupantsByBareJID(String jid) throws UserNotFoundException {
         List<MUCRole> roles = occupantsByBareJID.get(jid);
         if (roles != null && !roles.isEmpty()) {
-            return (List<MUCRole>)Collections.unmodifiableCollection(roles);
+            return Collections.unmodifiableList(roles);
         }
         throw new UserNotFoundException();
     }
@@ -342,7 +345,7 @@ public class MUCRoomImpl implements MUCRoom {
         throw new UserNotFoundException();
     }
 
-    public Iterator<MUCRole> getOccupants() throws UnauthorizedException {
+    public Iterator<MUCRole> getOccupants() {
         return occupants.values().iterator();
     }
 
@@ -350,7 +353,7 @@ public class MUCRoomImpl implements MUCRoom {
         return occupants.size();
     }
 
-    public boolean hasOccupant(String nickname) throws UnauthorizedException {
+    public boolean hasOccupant(String nickname) {
         return occupants.containsKey(nickname.toLowerCase());
     }
 
@@ -549,7 +552,7 @@ public class MUCRoomImpl implements MUCRoom {
         return joinRole;
     }
 
-    public void leaveRoom(String nickname) throws UnauthorizedException, UserNotFoundException {
+    public void leaveRoom(String nickname) throws UserNotFoundException {
         MUCRole leaveRole = null;
         lock.writeLock().lock();
         try {
@@ -617,7 +620,7 @@ public class MUCRoomImpl implements MUCRoom {
         occupantsByFullJID.remove(user.getAddress().toStringPrep());
     }
 
-    public void destroyRoom(String alternateJID, String reason) throws UnauthorizedException {
+    public void destroyRoom(String alternateJID, String reason) {
         MUCRole leaveRole = null;
         lock.writeLock().lock();
         try {
@@ -684,7 +687,7 @@ public class MUCRoomImpl implements MUCRoom {
         return presence;
     }
 
-    public void serverBroadcast(String msg) throws UnauthorizedException {
+    public void serverBroadcast(String msg) {
         Message message = new MessageImpl();
         message.setType(Message.GROUP_CHAT);
         message.setBody(msg);
@@ -717,17 +720,17 @@ public class MUCRoomImpl implements MUCRoom {
         }
     }
 
-    public void send(Message packet) throws UnauthorizedException {
+    public void send(Message packet) {
         // normal groupchat
         roomHistory.addMessage(packet);
         broadcast(packet);
     }
 
-    public void send(Presence packet) throws UnauthorizedException {
+    public void send(Presence packet) {
         broadcastPresence(packet);
     }
 
-    public void send(IQ packet) throws UnauthorizedException {
+    public void send(IQ packet) {
         packet = (IQ) packet.createDeepCopy();
         packet.setError(XMPPError.Code.BAD_REQUEST);
         packet.setRecipient(packet.getSender());
@@ -885,15 +888,15 @@ public class MUCRoomImpl implements MUCRoom {
             return crJID;
         }
 
-        public void send(Message packet) throws UnauthorizedException {
+        public void send(Message packet) {
             room.send(packet);
         }
 
-        public void send(Presence packet) throws UnauthorizedException {
+        public void send(Presence packet) {
             room.send(packet);
         }
 
-        public void send(IQ packet) throws UnauthorizedException {
+        public void send(IQ packet) {
             room.send(packet);
         }
 
@@ -1133,7 +1136,11 @@ public class MUCRoomImpl implements MUCRoom {
             throw new ConflictException();
         }
         // Update the presence with the new affiliation and inform all occupants
-        String actorJID = senderRole.getChatUser().getAddress().toBareStringPrep();
+        String actorJID = null;
+        // actorJID will be null if the room itself (ie. via admin console) made the request
+        if (senderRole.getChatUser() != null) {
+            actorJID = senderRole.getChatUser().getAddress().toBareStringPrep();
+        }
         List<Presence> updatedPresences = changeOccupantAffiliation(
                 bareJID,
                 MUCRole.OUTCAST,
@@ -1199,7 +1206,8 @@ public class MUCRoomImpl implements MUCRoom {
             throw new ConflictException();
         }
         List<Presence> updatedPresences = null;
-        boolean wasMember = members.containsKey(bareJID);
+        boolean wasMember = members.containsKey(bareJID) || admins.contains(bareJID) ||
+                owners.contains(bareJID);
         // Remove the user from ALL the affiliation lists
         if (removeOwner(bareJID)) {
             oldAffiliation = MUCRole.OWNER;
@@ -1283,8 +1291,12 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void changeSubject(Message packet, MUCRole role) throws UnauthorizedException,
             ForbiddenException {
-        if ((canOccupantsChangeSubject() && role.getRole() > MUCRole.VISITOR) ||
+        if ((canOccupantsChangeSubject() && role.getRole() < MUCRole.VISITOR) ||
                 MUCRole.MODERATOR == role.getRole()) {
+            // Do nothing if the new subject is the same as the existing one
+            if (packet.getSubject().equals(subject)) {
+                return;
+            }
             // Set the new subject to the room
             subject = packet.getSubject();
             MUCPersistenceManager.updateRoomSubject(this, subject);
@@ -1303,6 +1315,15 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void setSubject(String subject) {
         this.subject = subject;
+        // TODO Remove this when persistent room's history gets implemented
+        // Add the room's subject to the history
+        if (subject != null && subject.length() > 0) {
+            Message message = new MessageImpl();
+            message.setType(Message.GROUP_CHAT);
+            message.setSubject(subject);
+            message.setSender(getRole().getRoleAddress());
+            roomHistory.addMessage(message);
+        }
     }
 
     public void sendInvitation(String to, String reason, MUCRole senderRole, Session session)
@@ -1317,8 +1338,11 @@ public class MUCRoomImpl implements MUCRoom {
             message.setSender(role.getRoleAddress());
             message.setRecipient(XMPPAddress.parseJID(to));
             MetaDataFragment frag = new MetaDataFragment("http://jabber.org/protocol/muc#user", "x");
-            frag.setProperty("x.invite:from", senderRole.getChatUser().getAddress()
-                    .toBareStringPrep());
+            // ChatUser will be null if the room itself (ie. via admin console) made the request
+            if (senderRole.getChatUser() != null) {
+                frag.setProperty("x.invite:from", senderRole.getChatUser().getAddress()
+                        .toBareStringPrep());
+            }
             if (reason != null && reason.length() > 0) {
                 frag.setProperty("x.invite.reason", reason);
             }
@@ -1366,11 +1390,11 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public Iterator<String> getOwners() {
-        return Collections.unmodifiableCollection(owners).iterator();
+        return Collections.unmodifiableList(owners).iterator();
     }
 
     public Iterator<String> getAdmins() {
-        return Collections.unmodifiableCollection(admins).iterator();
+        return Collections.unmodifiableList(admins).iterator();
     }
 
     public Iterator<String> getMembers() {
@@ -1378,7 +1402,7 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public Iterator<String> getOutcasts() {
-        return Collections.unmodifiableCollection(outcasts).iterator();
+        return Collections.unmodifiableList(outcasts).iterator();
     }
 
     public Iterator<MUCRole> getModerators() {
@@ -1480,21 +1504,16 @@ public class MUCRoomImpl implements MUCRoom {
         // Get the role to kick
         kickedRole = occupants.get(kickPresence.getSender().getResourcePrep());
         if (kickedRole != null) {
-            try {
-                kickPresence = (Presence) kickPresence.createDeepCopy();
-                // Add the actor's JID that kicked this user from the room
-                if (actorJID != null && actorJID.trim().length() > 0) {
-                    MetaDataFragment frag = (MetaDataFragment) kickPresence.getFragment(
-                            "x",
-                            "http://jabber.org/protocol/muc#user");
-                    frag.setProperty("x.item.actor:jid", actorJID);
-                }
-                // Send the unavailable presence to the banned user
-                kickedRole.send(kickPresence);
+            kickPresence = (Presence) kickPresence.createDeepCopy();
+            // Add the actor's JID that kicked this user from the room
+            if (actorJID != null && actorJID.trim().length() > 0) {
+                MetaDataFragment frag = (MetaDataFragment) kickPresence.getFragment(
+                        "x",
+                        "http://jabber.org/protocol/muc#user");
+                frag.setProperty("x.item.actor:jid", actorJID);
             }
-            catch (UnauthorizedException e) {
-                // Do nothing
-            }
+            // Send the unavailable presence to the banned user
+            kickedRole.send(kickPresence);
             // Remove the occupant from the room's occupants lists
             removeOccupantRole(kickedRole);
             try {

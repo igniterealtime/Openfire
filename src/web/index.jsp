@@ -123,16 +123,6 @@ some of the server settings. Some settings can not be changed.
             ${webManager.serverInfo.name}
         </td>
     </tr>
-    <c:if test="${!empty webManager.multiUserChatServer}">
-        <tr>
-            <td class="c1">
-                Group Chat Service Name:
-            </td>
-            <td class="c2">
-                ${webManager.multiUserChatServer.serviceName}
-            </td>
-        </tr>
-    </c:if>
 </tbody>
 <thead>
     <tr>

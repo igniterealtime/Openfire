@@ -20,7 +20,8 @@
                  java.net.URLDecoder,
                  org.jivesoftware.messenger.user.UserManager,
                  org.jivesoftware.messenger.user.UserNotFoundException,
-                 org.jivesoftware.stringprep.Stringprep"
+                 org.jivesoftware.stringprep.Stringprep,
+                 java.io.UnsupportedEncodingException"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
@@ -38,7 +39,6 @@
     boolean cancel = request.getParameter("cancel") != null;
     String users = ParamUtils.getParameter(request, "users");
     String [] adminIDs = ParamUtils.getParameters(request, "admin");
-    String [] oldAdminIDs = ParamUtils.getParameters(request, "oldAdmin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
@@ -48,7 +48,6 @@
     String newShowInRosterType = ParamUtils.getParameter(request, "newShow");
     boolean newShowInRoster = "onlyGroup".equals(newShowInRosterType) || "everybody".equals(newShowInRosterType);
     String  newDisplayName = ParamUtils.getParameter(request, "newDisplay");
-    String newGroupList = ParamUtils.getParameter(request, "newGroupList");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
@@ -86,7 +85,7 @@
                     if (groupDisplayName != null) {
                         group.getProperties().put("sharedRoster.displayName", groupDisplayName);
                     }
-                    group.getProperties().put("sharedRoster.groupList", toList(groupNames));
+                    group.getProperties().put("sharedRoster.groupList", toList(groupNames, "UTF-8"));
                 }
                 else {
                     group.getProperties().put("sharedRoster.showInRoster", "nobody");
@@ -221,26 +220,6 @@
         Edit group settings and add or remove group members and administrators
         using the forms below.
     </p>
-
-    <script language="javascript">
-    <!--
-    function refreshDisplayName(showCheck)
-    {
-    if ("onlyGroup" == showCheck.value) {
-        document.forms.ff.newDisplay.disabled=false;
-        document.forms.ff.newGroupList.disabled=false;
-    }
-    else if ("everybody" == showCheck.value) {
-        document.forms.ff.newDisplay.disabled=false;
-        document.forms.ff.newGroupList.disabled=true;
-    }
-    else {
-        document.forms.ff.newDisplay.disabled=true;
-        document.forms.ff.newGroupList.disabled=true;
-    }
-    }
-    //-->
-    </script>
 
 <%
     if (success) {
@@ -560,14 +539,21 @@
 
 
 <%!
-    private static String toList(String[] array) {
+    private static String toList(String[] array, String enc) {
         if (array == null || array.length == 0) {
             return "";
         }
         StringBuffer buf = new StringBuffer();
         String sep = "";
         for (int i=0; i<array.length; i++) {
-            buf.append(sep).append(array[i]);
+            String item;
+            try {
+                item = URLDecoder.decode(array[i], enc);
+            }
+            catch (UnsupportedEncodingException e) {
+                item = array[i];
+            }
+            buf.append(sep).append(item);
             sep = ",";
         }
         return buf.toString();

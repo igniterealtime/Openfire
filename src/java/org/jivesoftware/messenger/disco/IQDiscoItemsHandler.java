@@ -72,9 +72,6 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
-        reply.setType(IQ.Type.result);
-        reply.setTo(packet.getFrom());
-        reply.setFrom(packet.getFrom());
         
         // TODO Implement publishing client items
         if (IQ.Type.set == packet.getType()) {

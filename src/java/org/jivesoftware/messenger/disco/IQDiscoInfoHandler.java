@@ -69,9 +69,6 @@ public class IQDiscoInfoHandler extends IQHandler {
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
-        reply.setType(IQ.Type.result);
-        reply.setTo(packet.getFrom());
-        reply.setFrom(packet.getTo());
 
         // Look for a DiscoInfoProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 

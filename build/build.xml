@@ -23,16 +23,6 @@
     </description>
 
     <!-- ======================================================================================= -->
-    <!-- GLOBAL TASKDEFS                                                                         -->
-    <!-- ======================================================================================= -->
-
-    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/xmltask.jar"/>
-        </classpath>
-    </taskdef>
-
-    <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
@@ -41,6 +31,8 @@
     <property name="src.dir" value="${basedir}/src" />
     <property name="src.java.dir" value="${src.dir}/java" />
     <property name="src.i18n.dir" value="${src.dir}/i18n" />
+    <property name="src.test.dir" value="${src.dir}/test" />
+    <property name="src.test.java.dir" value="${src.test.dir}/java" />
     <property name="web.dir" value="${src.dir}/web" />
     <property name="lib.build.dir" value="${basedir}/build/lib" />
     <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
@@ -49,25 +41,36 @@
     <property name="target.dir" value="${basedir}/target" />
     <property name="compile.dir" value="${basedir}/target/classes" />
     <property name="jar.name" value="messengerd.jar" />
-    <property name="jar.dest.dir" value="${target.dir}/lib" />
-    <property name="javadoc.dir" value="${basedir}/target/javadoc" />
+    <property name="jar.dest.dir" value="${target.dir}/app" />
+    <property name="javadoc.src.dir" value="${src.dir}/javadoc" />
+    <property name="javadoc.dest.dir" value="${basedir}/target/javadoc" />
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
     <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java" />
     <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes" />
+    <property name="test.dest.dir" value="${target.dir}/test" />
+    <property name="test.classes.dest.dir" value="${test.dest.dir}/classes" />
+    <property name="test.results.dest.dir" value="${test.dest.dir}/results" />
     <property name="webapp.dest.dir" value="${target.dir}/webapp" />
     <property name="release.dest.dir" value="${target.dir}/release" />
+    <property name="version.major" value="2" />
+    <property name="version.minor" value="0" />
+    <property name="version.revision" value="0" />
+    <property name="version.extra" value="beta" />
+    <property name="version" value="${version.major}.${version.minor}.${version.revision}" />
+    <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}" />
+    <property name="dist.prefix" value="jive_messenger" />
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs                                                                     -->
     <!-- ======================================================================================= -->
 
     <path id="javadoc.dependencies">
-        <fileset dir="${lib.build.dir}" includes="*.jar" />
+        <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar" />
+        <fileset dir="${lib.merge.dir}" includes="*.jar" />
     </path>
 
     <path id="compile.dependencies">
         <path refid="javadoc.dependencies" />
-        <fileset dir="${lib.merge.dir}" includes="*.jar" />
     </path>
 
     <path id="jspc.dependencies">
@@ -75,8 +78,17 @@
         <fileset dir="${lib.web.dir}" includes="*.jar" />
     </path>
 
+    <path id="test.dependencies">
+        <path refid="compile.dependencies" />
+        <fileset dir="${lib.build.dir}" includes="junit.jar" />
+    </path>
+
     <patternset id="compile.sources">
         <include name="**/*.java" />
+    </patternset>
+
+    <patternset id="test.sources">
+        <include name="**/*Test.java" />
     </patternset>
 
     <!-- ======================================================================================= -->
@@ -116,17 +128,23 @@
     </target>
 
     <!-- jar =================================================================================== -->
-    <target name="jar" depends="compile" description="Produces a JAR of Messenger app code">
+    <target name="jar" depends="compile, jspc" description="Produces a JAR of Messenger app code">
         <mkdir dir="${jar.dest.dir}" />
+        <!-- Make main Messenger jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}">
             <fileset dir="${compile.dir}" includes="**/*.class" />
+            <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
-                <attribute name="Main-Class" value="org.jivesoftware.SplashScreen"/>
-                <attribute name="Built-By" value="Jive Software"/>
+                <attribute name="Main-Class" value="org.jivesoftware.messenger.starter.XMPPServerStarter" />
+                <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>
+        <!-- Copy application dependent jars -->
+        <copy todir="${jar.dest.dir}/lib">
+            <fileset dir="${lib.dist.dir}" includes="*.jar" />
+        </copy>
     </target>
 
     <!-- war =================================================================================== -->
@@ -135,6 +153,24 @@
 
     <!-- javadoc =============================================================================== -->
     <target name="javadoc" description="Produces Messenger Javadocs">
+        <mkdir dir="${javadoc.dest.dir}" />
+        <!-- Run javadoc over all source code -->
+        <javadoc
+            sourcepath="${src.java.dir}"
+            packagenames="org.jivesoftware.*"
+            destdir="${javadoc.dest.dir}"
+            windowtitle="Jive Messenger ${version} ${version.extra} Javadoc"
+            overview="${src.java.dir}/overview.html"
+            failonerror="yes"
+        >
+            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Jive Messenger ${version} ${version.extra} Javadoc</font>]]></doctitle>
+            <header><![CDATA[<b>Jive Messenger ${version} ${version.extra} Javadoc</b>]]></header>
+            <bottom><![CDATA[<i>Copyright &copy; 1999-2004 Jive Software.</i>]]></bottom>
+            <classpath>
+                <path refid="javadoc.dependencies" />
+            </classpath>
+            <link offline="true" href="http://java.sun.com/j2se/1.5.0/docs/api/" packagelistLoc="${javadoc.src.dir}/jdk15"/>
+        </javadoc>
     </target>
 
     <!-- jspc ================================================================================== -->
@@ -186,17 +222,61 @@
 
     </target>
 
-    <!-- jspcjar =============================================================================== -->
-    <target name="jspcjar" description="Creates a JAR of generated JSP files">
+    <!-- test ================================================================================== -->
+    <target name="test" depends="jar" description="Compiles and runs test cases">
+        <!-- Compile all test code -->
+        <mkdir dir="${test.classes.dest.dir}" />
+        <javac
+            destdir="${test.classes.dest.dir}"
+            includeAntRuntime="no"
+            debug="on"
+            source="1.5"
+        >
+            <src path="${src.test.java.dir}" />
+            <patternset refid="test.sources" />
+            <classpath>
+                <path refid="test.dependencies" />
+                <pathelement path="${compile.dir}" />
+            </classpath>
+        </javac>
 
+        <!-- Copy test resources -->
+<!--        <copy todir="${test.dest.dir}">-->
+<!--            <fileset dir="${src.test.dir}">-->
+<!--                <include name="resources/**/*.*" />-->
+<!--            </fileset>-->
+<!--        </copy>-->
+
+        <!-- Run jUnit -->
+        <mkdir dir="${test.results.dest.dir}" />
+        <junit printsummary="yes" haltonfailure="no" fork="yes" dir="${src.test.dir}">
+
+            <!-- We must add our own classes to the classpath for testing -->
+            <classpath>
+                <path refid="test.dependencies" />
+                <pathelement path="${compile.dir}" />
+                <pathelement path="${test.classes.dest.dir}" />
+            </classpath>
+
+            <formatter type="plain" />
+
+            <batchtest todir="${test.results.dest.dir}">
+                <fileset dir="${src.test.java.dir}">
+                    <patternset refid="test.sources" />
+                </fileset>
+            </batchtest>
+        </junit>
     </target>
 
     <!-- release =============================================================================== -->
-    <target name="release" description="Creates a distribution">
-    </target>
+    <target name="release" depends="jar,javadoc" description="Creates a distribution">
+        <mkdir dir="${release.dest.dir}" />
 
-    <!-- test ================================================================================== -->
-    <target name="test" description="Runs test cases">
+        <!-- Create a new prop for the final release dir then create the dir -->
+        <property name="release.out.dir" value="${release.dest.dir}/${dist.prefix}_${version.filename}" />
+        <mkdir dir="${release.out.dir}" />
+
+
     </target>
 
     <!-- clean ================================================================================= -->
@@ -207,6 +287,11 @@
     <!-- clean-jspc ============================================================================ -->
     <target name="clean-jspc" description="Cleans all JSPC output">
         <delete dir="${jspc.dest.dir}" />
+    </target>
+
+    <!-- clean-test ============================================================================ -->
+    <target name="clean-test" description="Cleans all compiled test classes">
+        <delete dir="${test.classes.dest.dir}" />
     </target>
 
 </project>

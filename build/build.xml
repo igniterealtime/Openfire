@@ -527,21 +527,21 @@
         <!-- ZIP -->
         <zip zipfile="${package.dest.dir}/${release.out.name}.zip"
             basedir="${release.out.dir}/.."
-            includes="${release.out.name}/**/*.*"
+            includes="${release.out.name}/**/*"
         />
         <zip zipfile="${package.dest.dir}/${release.src.out.name}.zip"
             basedir="${release.src.out.dir}/.."
-            includes="${release.src.out.name}/**/*.*"
+            includes="${release.src.out.name}/**/*"
         />
         <!-- TAR.GZ -->
         <tar tarfile="${package.dest.dir}/${release.out.name}.tar.gz"
             basedir="${release.out.dir}/.."
-            includes="${release.out.name}/**/*.*"
+            includes="${release.out.name}/**/*"
             compression="gzip"
         />
         <tar tarfile="${package.dest.dir}/${release.src.out.name}.tar.gz"
             basedir="${release.src.out.dir}/.."
-            includes="${release.src.out.name}/**/*.*"
+            includes="${release.src.out.name}/**/*"
             compression="gzip"
         />
 

@@ -1,4 +1,10 @@
-version 1.0.1
+version 1.0.3
+---------------
+* Fixed incompatiblity issue with psi
+* Fixed bug where a list of all the users in the system would be returned when using psi
+
+
+version 1.0.2
 ---------------
 * Removed plugin info jsp from admin console tab/sidebar
 

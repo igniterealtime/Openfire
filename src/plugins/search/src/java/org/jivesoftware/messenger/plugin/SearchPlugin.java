@@ -99,15 +99,14 @@ public class SearchPlugin implements Component, Plugin {
         if (probeResult == null) {
             probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
 
-            XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_RESULT);
+            XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
             searchForm.setTitle("User Search");
             searchForm.addInstruction("The following fields are available for search. "
                             + "Wildcard (*) characters are allowed as part the of query.");
-
+            
             Iterator iter = searchFields.iterator();
             while (iter.hasNext()) {
                 String searchField = (String) iter.next();
-                probeResult.addElement(searchField);
 
                 XFormFieldImpl field = new XFormFieldImpl(searchField);
                 field.setType(FormField.TYPE_TEXT_SINGLE);
@@ -192,7 +191,7 @@ public class SearchPlugin implements Component, Plugin {
 
     private IQ processSetPacket(IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
-
+        
         for (String fieldName: searchFields) {
             XFormFieldImpl field = new XFormFieldImpl(fieldName);
             field.setLabel(initCap(fieldName));
@@ -212,20 +211,26 @@ public class SearchPlugin implements Component, Plugin {
                 Element queryField = (Element) iter.next();
 
                 Iterator foundIter = null;
-                if (userManager != null) {
-                    foundIter = userManager.findUsers(new HashSet<String>(
-                            Arrays.asList(searchField.attributeValue("var"))),
-                            queryField.getTextTrim()).iterator();
+                if (userManager != null) {                    
+                    String query = queryField.getTextTrim();
+                    //psi returns every field even if it is empty
+                    if (query.length() > 0) {
+                        foundIter = userManager.findUsers(new HashSet<String>(
+                                Arrays.asList(searchField.attributeValue("var"))), query).iterator();
+                    }
                 }
                 else {
                     foundIter = findUsers(searchField.attributeValue("var"),
                         queryField.getTextTrim()).iterator();
                 }
+                
                 // filter out all duplicate users
-                while (foundIter.hasNext()) {
-                    User user = (User) foundIter.next();
-                    if (!users.contains(user)) {
-                        users.add(user);
+                if (foundIter != null) {
+                    while (foundIter.hasNext()) {
+                        User user = (User) foundIter.next();
+                        if (!users.contains(user)) {
+                            users.add(user);
+                        }
                     }
                 }
             }
@@ -237,15 +242,15 @@ public class SearchPlugin implements Component, Plugin {
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
 
-            XFormFieldImpl fieldUsername = new XFormFieldImpl("username");
+            XFormFieldImpl fieldUsername = new XFormFieldImpl("Username");
             fieldUsername.addValue(user.getUsername());
             items.add(fieldUsername);
 
-            XFormFieldImpl fieldName = new XFormFieldImpl("name");
+            XFormFieldImpl fieldName = new XFormFieldImpl("Name");
             fieldName.addValue(user.getName());
             items.add(fieldName);
 
-            XFormFieldImpl fieldEmail = new XFormFieldImpl("email");
+            XFormFieldImpl fieldEmail = new XFormFieldImpl("Email");
             fieldEmail.addValue(user.getEmail());
             items.add(fieldEmail);
 

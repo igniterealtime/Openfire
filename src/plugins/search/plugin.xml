@@ -2,9 +2,9 @@
 
 <plugin>
     <class>org.jivesoftware.messenger.plugin.SearchPlugin</class>
-    <name>Search</name>
-    <description>Provides support for searching for users (JEP-0055).</description>
+    <name>Search Plugin</name>
+    <description>Provides support for Jabber Search (JEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <minServerVersion>2.1.2</minServerVersion>
 </plugin>

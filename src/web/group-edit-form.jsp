@@ -86,8 +86,8 @@ import="java.text.DateFormat,
     String     title = "Edit Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-summary.jsp"));
-    pageinfo.setPageID("group-summary");
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit-form.jsp"));
+    pageinfo.setPageID("group-edit");
     pageinfo.setExtraParams("group=" + groupName);
 %>
     <jsp:include page="top.jsp" flush="true"/>

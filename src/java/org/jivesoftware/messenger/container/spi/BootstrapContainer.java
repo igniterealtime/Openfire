@@ -253,6 +253,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 this.modules.add(mod);
             }
             catch (Exception e) {
+                e.printStackTrace();
                 if (isInitialized) {
                     mod.stop();
                     mod.destroy();
@@ -499,20 +500,24 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * @throws FileNotFoundException if there was a problem with the home
      *                               directory provided
      */
-    private File verifyHome(String homeGuess, String jiveConfigName) throws
-            FileNotFoundException {
-        String forumsConfigName = "jive_config.xml";
+    private File verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
         File realHome = null;
         File guess = new File(homeGuess);
         File configFileGuess = new File(guess, jiveConfigName);
         if (configFileGuess.exists()) {
             realHome = guess;
         }
-        File forumsHome = new File(guess, forumsConfigName);
-        if (forumsHome.exists()) {
+        File forumsHome = new File(guess, jiveConfigName);
+        if (!forumsHome.exists()) {
             throw new FileNotFoundException();
         }
-        return realHome;
+
+        try{
+            return new File(realHome.getCanonicalPath());
+        }
+        catch(Exception ex){
+           throw new FileNotFoundException();
+        }
     }
 
     /**

@@ -76,7 +76,7 @@ public class Launcher {
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
                 String fileName = file.getName();
-                if (fileName.endsWith("*.jar")) {
+                if (fileName.endsWith(".jar")) {
                     installPlugin(file);
                 }
             }
@@ -360,12 +360,15 @@ public class Launcher {
 
                 // Copy Plugin into Dir.
                 try {
+                    // Just for fun. Show no matter what for two seconds.
+                    Thread.sleep(2000);
+
                     WebManager.copy(plugin.toURL(), tempPluginsFile);
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);
                 }
-                catch (IOException e) {
+                catch (Exception e) {
                     e.printStackTrace();
                 }
                 return realPluginsFile;
@@ -379,6 +382,8 @@ public class Launcher {
         // Start installation
         installerThread.start();
 
+        dialog.setLocationRelativeTo(frame);
+        dialog.setVisible(true);
     }
 }
 

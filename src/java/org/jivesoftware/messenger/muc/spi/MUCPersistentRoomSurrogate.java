@@ -487,7 +487,7 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
     }
 
     public boolean canBroadcastPresence(String roleToBroadcast) {
-        throw new UnsupportedOperationException();
+        return "none".equals(roleToBroadcast) || rolesToBroadcastPresence.contains(roleToBroadcast);
     }
 
     public void unlockRoom(MUCRole senderRole) {

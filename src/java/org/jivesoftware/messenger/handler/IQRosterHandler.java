@@ -161,16 +161,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 // a presence probe from all contacts
                 deliverer.deliver(returnPacket);
                 returnPacket = null;
-
-                String username = sessionUser.getUsername();
-                Iterator items = cachedRoster.getRosterItems();
-                while (items.hasNext()) {
-                    RosterItem cachedItem = (RosterItem)items.next();
-                    if (cachedItem.getSubStatus() == RosterItem.SUB_BOTH
-                            || cachedItem.getSubStatus() == RosterItem.SUB_TO) {
-                        presenceManager.probePresence(username, cachedItem.getJid());
-                    }
-                }
             }
             else if (IQ.SET == type) {
 

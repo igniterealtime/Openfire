@@ -18,6 +18,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.io.IOException;
 import javax.xml.stream.XMLStreamWriter;
 
 public class ServerSession implements Session {
@@ -163,6 +164,10 @@ public class ServerSession implements Session {
         public void deliver(XMPPPacket packet)
                 throws UnauthorizedException {
 
+        }
+
+        public void deliver(String text) throws UnauthorizedException, IOException {
+            
         }
     }
 }

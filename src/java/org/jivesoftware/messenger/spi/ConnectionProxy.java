@@ -17,6 +17,7 @@ import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.IOException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -130,4 +131,16 @@ public class ConnectionProxy implements Connection {
         }
     }
 
+    public void deliver(String text) throws UnauthorizedException, IOException {
+        //if (permissions.hasPermission(Permissions.SYSTEM_ADMIN
+        // | Permissions.USER_ADMIN)) {
+        // Look into doing something about limiting delivery
+        // of packets until properly authenticated
+        if (true) {
+            conn.deliver(text);
+        }
+        else {
+            throw new UnauthorizedException();
+        }
+    }
 }

@@ -14,6 +14,7 @@ package org.jivesoftware.messenger;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.IOException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -129,5 +130,14 @@ public interface Connection {
      * @throws XMLStreamException    if there was a problem sending the packet
      */
     void deliver(XMPPPacket packet) throws UnauthorizedException, XMLStreamException;
+
+    /**
+     * Delivers an arbitraty text to this XMPPAddress without checking the recipient.
+     *
+     * @param text The text to deliver.
+     * @throws UnauthorizedException If caller doesn't have permission to access this resource
+     * @throws IOException    if there was a i/o problem sending the text
+     */
+    void deliver(String text) throws UnauthorizedException, IOException;
 
 }

@@ -744,8 +744,22 @@
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
             <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
-<!--                <fileset dir="@{pluginsrc}/@{plugin}/src/include" />-->
             </jar>
+            <available file="@{pluginsrc}/@{plugin}/src/include" type="dir" property="@{plugin}.include.exists" />
+            <if>
+                <equals arg1="${@{plugin}.include.exists}" arg2="true" />
+                <then>
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"
+                            update="true">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/include" includes="**/*.*" />
+                    </jar>
+                </then>
+            </if>
+
+            <!-- Copy anything in the plugin's lib dir to the target lib dir -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false">
+                <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*" />
+            </copy>
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"

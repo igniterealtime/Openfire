@@ -312,6 +312,20 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return answer;
     }
 
+    public List<MUCRoom> getChatRooms() {
+        List<MUCRoom> answer = new ArrayList<MUCRoom>(rooms.size() * 2);
+        synchronized (rooms) {
+            answer.addAll(rooms.values());
+            synchronized (persistentRoomSurrogateCache) {
+                if (persistentRoomSurrogateCache.size() == 0) {
+                    populateRoomSurrogateCache();
+                }
+            }
+            answer.addAll(persistentRoomSurrogateCache.values());
+        }
+        return answer;
+    }
+
     private void populateRoomSurrogateCache() {
         for (MUCRoom room : MUCPersistenceManager.getRoomSurrogates(this, router)) {
             persistentRoomSurrogateCache.put(room.getName(), room);

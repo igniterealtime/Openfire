@@ -131,6 +131,14 @@ public interface MultiUserChatServer {
     MUCRoom getChatRoom(String roomName);
 
     /**
+     * Retuns a list with a snapshot of all the rooms in the server (i.e. persistent or not,
+     * in memory or not).
+     *
+     * @return a list with a snapshot of all the rooms.
+     */
+    List<MUCRoom> getChatRooms();
+
+    /**
      * Returns true if the server includes a chatroom with the requested name.
      * 
      * @param roomName the name of the chatroom to check.

@@ -6,5 +6,4 @@ REM # $Revision$
 REM # $Date$
 REM #
 
-java -jar ..\lib\startup.jar 
-
+start "Jive Messenger" java -jar ..\lib\startup.jar

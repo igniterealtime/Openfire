@@ -380,4 +380,13 @@ public class XMPPAddress implements Cacheable {
             return cachedPrep.hashCode();
         }
     }
+
+    /**
+     * Returns true if all the portions of the addresss are null.
+     *
+     * @return true if all the portions of the addresss are null.
+     */
+    public boolean isEmpty() {
+        return name == null && host == null && resource == null;
+    }
 }

@@ -803,7 +803,7 @@ public class SessionManagerImpl extends BasicModule implements SessionManager,
             offline.setAvailable(false);
             router.route(offline);
         }
-        if (session.getAddress() != null && routingTable != null) {
+        if (session.getAddress() != null && routingTable != null && !session.getAddress().isEmpty()) {
             routingTable.removeRoute(session.getAddress());
             if (sessionMap != null) {
                 if (sessionMap.isEmpty()) {

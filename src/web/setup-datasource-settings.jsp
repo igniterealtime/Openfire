@@ -60,7 +60,14 @@
 
     // Defaults
     if (mode == null) {
-        mode = STANDARD;
+        // If the "embedded-database" directory exists, select to the embedded db as the default.
+        if (new File(JiveGlobals.getMessengerHome(), "embedded-db").exists()) {
+            mode = EMBEDDED;
+        }
+        // Otherwise default to standard.
+        else {
+            mode = STANDARD;
+        }
     }
 %>
 

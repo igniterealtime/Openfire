@@ -154,13 +154,6 @@ LABEL { font-weight : normal; }
 <script language="JavaScript" type="text/javascript">
 // give focus to domain field
 document.f.domain.focus();
-// set default disabled state of ssl
-if (document.f.sslEnabled[0].checked) {
-    toggle(document.f,false);
-}
-else {
-    toggle(document.f,true);
-}
 </script>
 
 <%@ include file="setup-footer.jsp" %>

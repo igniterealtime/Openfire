@@ -17,15 +17,8 @@
 <span class="jive-setup-header">
 <table cellpadding="8" cellspacing="0" border="0" width="100%">
 <tr>
-    <td width="99%">
+    <td>
         <fmt:message key="title" /> Setup
-    </td>
-    <td width="1%" nowrap>
-        <font size="-2" face="arial,helvetica,sans-serif" color="#ffffff">
-        <b>
-        Jive Software
-        </b>
-        </font>
     </td>
 </tr>
 </table>

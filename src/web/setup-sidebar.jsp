@@ -26,7 +26,7 @@
 
     String[] items = {step1, step2, step3, step4};
     String[] names = {
-        "Install Checklist", "Server Settings", "Datasource Settings", "Admin Account"
+        "Setup Checklist", "Server Settings", "Datasource Settings", "Admin Account"
     };
     String[] links = {
         "setup-index.jsp",

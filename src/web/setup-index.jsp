@@ -57,14 +57,14 @@
 <%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
-Installation Checklist
+Setup Checklist
 </p>
 
 <p>
 
 
-Welcome to <fmt:message key="title" />  Setup. This tool will lead you through the initial configuration process
-of the application. Before continuing, verify that your environment meets all the requirements
+Welcome to <fmt:message key="title" />  Setup. This tool will lead you through the initial setup or
+upgrade process. Before continuing, verify that your environment meets all the requirements
 below.
 </p>
 
@@ -91,18 +91,6 @@ below.
         <br>
         <span class="jive-info">
         Found: JVM <%= System.getProperty("java.version") %> - <%= System.getProperty("java.vendor") %>
-        </span>
-    </td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
-    <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-</tr>
-<tr>
-    <td class="jive-setup-category">
-        At least Servlet 2.2 API
-        <br>
-        <span class="jive-info">
-        Appserver: <%= application.getServerInfo() %>,
-        Supports Servlet 2.3 API and JSP 1.2.
         </span>
     </td>
     <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>

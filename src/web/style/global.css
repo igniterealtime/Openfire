@@ -1,119 +1,249 @@
-BODY {
-    font-size : 100%;
-}
-BODY, TD, TH {
+BODY, DIV, P, TD, TH {
     font-family : arial, helvetica, sans-serif;
+    font-size : 100%;
     font-size : 10pt;
 }
-A {
-    color : #00f;
+BODY {
+    margin : 0px;
+    padding : 0px;
+    background-color : #fff;
 }
-A:visited {
-    color : #00f;
+#jive-body {
+    background-image : url("../images/page-background.gif");
+    background-repeat : repeat-y;
 }
-A:hover {
-    color : #f00;
+P {
+    margin-top : 0px;
+}
+
+/* --------------------------------------------- */
+/*  Header                                       */
+/* --------------------------------------------- */
+
+#jive-header {
+    width : 100%;
+    height : 62px;
+    border : 0px;
+    background-image : url("../images/header-background.gif");
+    background-repeat : repeat-x;
+    background-color : #369;
+}
+#jive-header .info {
+    font-size : 8pt;
+    color : #fff;
+    padding-right : 2em;
+    text-align : right;
+}
+
+#jive-content {
+    padding : 1em;
+}
+
+/* --------------------------------------------- */
+/*  Main tabs                                    */
+/* --------------------------------------------- */
+
+#jive-header #jive-tabs UL, #jive-header #jive-tabs LI {
+    display : inline;
+    padding : 3px;
+    margin : 0px;
+}
+#jive-header #jive-tabs LI {
+    font-family : verdana;
+    font-size : 8pt;
+    font-weight : bold;
+}
+#jive-header #jive-tabs LI A {
+    color : #CEE1FA;
+    text-decoration : none;
+    padding : 3px 5px 3px 5px;
+}
+#jive-header #jive-tabs LI A:hover {
+    color : #fff;
+    text-decoration : underline;
+}
+#jive-header #jive-tabs .currentlink A {
+    color : #fff;
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Logviewer tabs                               */
+/* --------------------------------------------- */
+
+#logviewer .jive-tabs TD {
+    font-family : verdana;
+    font-size : 8pt;
+}
+#logviewer .jive-tabs .jive-tab, .jive-tabs .jive-tab-active {
+    border : 1px #ccc solid;
+    white-space : nowrap;
+    padding : 4px 1em 4px 1em;
+    background-color : #ddd;
+}
+#logviewer .jive-tabs .jive-tab-active {
+    border-bottom : 1px #fff solid;
+    background-color : #fff;
+}
+#logviewer .jive-tabs .jive-spacer, .jive-tabs .jive-stretch {
+    border-bottom : 1px #ccc solid;
+}
+#logviewer .jive-tabs .jive-tab A, #logviewer .jive-tabs .jive-tab-active A {
+    text-decoration : none;
+    font-weight : bold;
+    color : #000;
+}
+#logviewer .jive-tabs .jive-tab A:hover, #logviewer .jive-tabs .jive-tab-active A:hover {
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Logout link                                  */
+/* --------------------------------------------- */
+
+#jive-header #jive-logout {
+    white-space : nowrap;
+}
+#jive-header #jive-logout A {
+    color : #CEE1FA;
+    font-size : 8pt;
+    font-family : verdana;
+    font-weight : bold;
     text-decoration : none;
 }
+#jive-header #jive-logout A:hover {
+    color : #fff;
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Titles                                       */
+/* --------------------------------------------- */
+
+#jive-main #jive-title {
+    font-size : 12pt;
+    font-weight : bold;
+    padding-bottom : 1em;
+}
+
+/* --------------------------------------------- */
+/*  Breadcrumbs                                  */
+/* --------------------------------------------- */
+
+#jive-main #jive-breadcrumbs {
+    font-size : 8pt;
+    /* font-weight : bold; */
+    font-family : verdana;
+    white-space : nowrap;
+    padding-top : 2px;
+}
+#jive-main #jive-breadcrumbs A {
+    color : #000;
+    text-decoration : none;
+}
+#jive-main #jive-breadcrumbs A:hover {
+    color : #000;
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Sidebar                                      */
+/* --------------------------------------------- */
+
+#jive-main #jive-sidebar {
+    padding : 0px 5px 5px 5px;
+}
+#jive-main #jive-sidebar ul {
+	margin: 0; /*removes indent IE and Opera*/
+	padding: 0 0 0 0; /*removes indent Mozilla and NN7*/
+	list-style-type: none; /*turns off display of bullet*/
+	font-family: verdana, Arial, Helvetica, sans-serif;
+	font-size: 8pt;
+}
+#jive-main #jive-sidebar li {
+	margin: 0 15px 2px 0px;
+	width : 140px;
+}
+#jive-main #jive-sidebar a {
+	/*/*/display: block;
+	padding: 2px 2px 2px 10px;
+	border: 1px solid #fff;
+	width: 140px;
+	-moz-border-radius : 3px;
+	background-color: #fff; /* */
+}
+#jive-main #jive-sidebar a:link, #jive-main #jive-sidebar a:visited {
+	color: #000;
+	/*/*/color: #000;
+	text-decoration: none; /* */
+}
+#jive-main #jive-sidebar a:hover {
+    /*
+	border: 1px solid #369;
+    background-color : #CBDDEE;
+	color: #333;
+	*/
+	border : 1px solid #963;
+	background-color : #ffc;
+}
+#jive-main #jive-sidebar .currentlink a,
+#jive-main #jive-sidebar .currentlink a:link,
+#jive-main #jive-sidebar .currentlink a:visited,
+#jive-main #jive-sidebar .currentlink a:hover
+{
+	/*/*/border: 1px solid #369;
+	background-color: #CBDDEE;
+	color: #333; /* */
+}
+#jive-main #jive-sidebar .category {
+    padding-top : 1.5em;
+    padding-bottom : 0.5em;
+    font-weight : bold;
+}
+#jive-main #jive-sidebar .subitems LI {
+    margin-left : 10px;
+    width : 130px;
+}
+#jive-main #jive-sidebar .subitems LI A {
+    margin-left : 10px;
+    padding : 2px 2px 2px 5px;
+    width : 120px;
+}
+
+/* --------------------------------------------- */
+/*  Tasks                                        */
+/* --------------------------------------------- */
+
+#jive-runningtask {
+    margin-left : 1em;
+}
+
+
+/* --------------------------------------------- */
+/*  Older styles                                 */
+/* --------------------------------------------- */
+
 PRE, TT {
     font-size : 10pt;
     font-family : courier new, monospaced;
 }
 
-/* errors */
-.jive-error-text {
+/* Messages - errors, success and info */
+.jive-error TABLE, .jive-info TABLE, .jive-success TABLE {
+    border : 1px #ccc solid;
+}
+.jive-error TD, .jive-info TD, .jive-success TD {
+    padding : 3px;
+    vertical-align : top;
+}
+.jive-error-text, .jive-error .jive-icon-label, .jive-error-text A, .jive-error .jive-icon-label A {
     color : #f00;
 }
-
-/* success */
-.jive-success-text {
+.jive-success-text, .jive-success .jive-icon-label, .jive-success-text A, .jive-success .jive-icon-label A {
     color : #090;
 }
-
-/* tabs */
-.jive-selected-tab {
-    border-width : 1px 1px 0px 1px;
-    background-color : #fff;
-}
-.jive-tab {
-    border-width : 1px 1px 1px 1px;
-}
-.jive-tab-spacer, .jive-tab-spring {
-    border-width : 0px 0px 1px 0px;
-}
-.jive-tab-bar {
-    background-color : #fff;
-    border-width : 0px 1px 1px 1px;
-}
-.jive-selected-tab, .jive-tab, .jive-tab-spacer, .jive-tab-spring, .jive-tab-bar
-{
-    border-color : #95B2CB;
-    border-style : solid;
-}
-/* tab colors, spacings, fonts */
-.jive-tab, .jive-selected-tab {
-    padding : 4px 10px 4px 10px;
-    font-family : tahoma;
-    font-size : 8pt;
-}
-.jive-selected-tab A {
-    color : #000 !important;
-    text-decoration : none;
-    font-weight : bold;
-}
-.jive-tab A {
-    color : #333 !important;
-    text-decoration : none;
-    font-weight : bold;
-}
-.jive-tab A:hover, .jive-selected-tab A:hover {
-    text-decoration : underline;
-}
-.jive-tab {
-    background-color : #ddd;
-}
-.jive-tab-bar TD {
-    font-family : tahoma;
-    font-weight : bold;
-}
-.jive-tab-bar A {
-    color : #000;
-    text-decoration : none;
-}
-.jive-tab-bar A:hover {
-    text-decoration : underline;
-}
-.jive-tab-section TD {
-    font-weight : normal;
-    font-family : verdana;
-    font-size : 8pt;
-}
-.jive-tab-section A {
-    color : #333 !important;
-    padding-right : 6px;
-    font-weight : normal;
-}
-.jive-tab-spring {
-    font-size : 8pt;
-}
-.jive-tab-logout {
-    font-size : 8pt;
-}
-
-/* sidebar */
-.jive-admin-sidebar-header {
-    font-weight : bold;
-}
-
-/* page titles */
-.jive-admin-page-title TD {
-    font-family : tahoma, arial, helvetica, sans-serif;
-    font-size : 12;
-    font-weight : bold;
-}
-.jive-admin-page-title TABLE {
-    margin-top : 5px;
-    border-bottom : 1px #95B2CB solid;
+.jive-info-text, .jive-info .jive-icon-label, .jive-info-text A, .jive-info .jive-icon-label A {
+    color : #306;
 }
 
 /* tables */
@@ -122,15 +252,13 @@ PRE, TT {
     border-style : solid;
     border-width : 1px 1px 0px 1px;
 }
-.jive-table TABLE {
-    width : 100%;
-}
 .jive-table TH, .jive-table TD {
-    padding : 3px;
+    padding : 4px;
 }
 .jive-table TH {
     background-color : #eee;
     border-bottom : 1px #bbb solid;
+    border-right : 1px #bbb solid;
     text-align : left;
     font-family : verdana;
     font-size : 8pt;
@@ -153,6 +281,7 @@ PRE, TT {
     background-color : #ddd;
     font-family : verdana;
     font-size : 8pt;
+    border-right : 1px #bbb solid;
 }
 .jive-table TD TD {
     border-width : 0px;
@@ -162,86 +291,35 @@ PRE, TT {
     font-size : 8pt;
 }
 
-.jive-description {
-    font-family : verdana;
+.jive-description, .jive-description A, .jive-table .jive-date, .jive-description INPUT,
+.jive-description SELECT
+{
+    font-family : verdana,arial,helvetica,sans-serif;
     font-size : 8pt;
 }
 
 .jive-label {
-    background-color : #f8f8f8;
+    background-color : #eee;
     padding-right : 10px;
     width : 1%;
     white-space : nowrap;
 }
 
-.jive-even {
-    background-color : #f8f8f8;
-    width : 1%;
-    white-space : nowrap;
+.jive-buttons .jive-icon {
+    padding : 3px;
 }
-
-.jive-odd {
-    background-color : #ffffff;
-    width : 1%;
+.jive-buttons .jive-icon-label {
+    padding : 3px;
     white-space : nowrap;
-}
-
-/* breadcrumbs */
-.jive-breadcrumbs {
+    padding-right : 1em;
     font-size : 8pt;
-    font-weight : bold;
-    font-family : tahoma;
-}
-.jive-breadcrumbs A {
-    color : #000 !important;
-    text-decoration : none;
-}
-.jive-breadcrumbs A:hover {
-    text-decoration : underline;
+    font-family : verdana, arial, helvetica, sans-serif;
 }
 
-/* sidebar */
-.sidebar-group TH {
-    padding-left : 10px;
-    font-weight : bold;
-    text-align : left;
-}
-.sidebar-group .bullet {
-    padding-left : 10px;
-    text-align : right;
-    vertical-align : top;
-    width : 1%;
-}
+/* --------------------------------------------- */
+/*  Calendar styles                              */
+/* --------------------------------------------- */
 
-/* paginators */
-.jive-current {
-    background-color : #eee;
-    color : #000 !important;
-    padding : 1px 2px 1px 2px;
-    font-weight : bold;
-    text-decoration : none;
-    border : 1px #ccc solid;
-}
-
-/* styles for on/off services */
-.jive-on {
-    border : 1px #333 solid;
-    background-color : #093;
-    color : #fff;
-    font-weight : bold;
-    text-align : center;
-    padding : 3px;
-}
-.jive-off {
-    border : 1px #333 solid;
-    background-color : #930;
-    color : #fff;
-    font-weight : bold;
-    text-align : center;
-    padding : 3px;
-}
-
-<%-- styles for the calendar popup on the poll page --%>
 TABLE.calBgColor {
     padding : 0px;
 }
@@ -318,59 +396,22 @@ A.cal:Hover {
   text-decoration : none;
 }
 
-TABLE.box {
-	BORDER: #cccccc 1px solid;
-}
-TABLE.boxLayout {
-	BORDER-RIGHT: #003399 1px solid; PADDING-RIGHT: 0px; BORDER-TOP: #003399 1px solid; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; MARGIN: 0px; BORDER-LEFT: #003399 1px solid; PADDING-TOP: 0px; BORDER-BOTTOM: #003399 1px solid
-}
-TABLE.boxLayoutGrey {
-	BORDER-RIGHT: #cccccc 1px solid; PADDING-RIGHT: 0px; BORDER-TOP:#cccccc 1px solid; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; MARGIN: 0px; BORDER-LEFT: #cccccc 1px solid; PADDING-TOP: 0px; BORDER-BOTTOM: #cccccc 1px solid
-}
+/* --------------------------------------------- */
+/*  Quote original styles                        */
+/* --------------------------------------------- */
 
-.text {font-family: Arial, Helvetica, sans-serif; font-size: 12px; margin-top: 6; padding:8px; color: #000000;}
-
-
-.strongLink {
-	FONT-WEIGHT: bold; FONT-SIZE: 12px; COLOR: #003399; LINE-HEIGHT: 16px; FONT-STYLE: normal; FONT-FAMILY: helvetica,arial,sans-serif,verdana; TEXT-DECORATION: none
-}
-.strongLinkLarge {
-	FONT-WEIGHT: bold; FONT-SIZE: 14px; COLOR: #003399; LINE-HEIGHT: 14px; FONT-STYLE: normal; FONT-FAMILY: helvetica,arial,sans-serif,verdana; TEXT-DECORATION: none
-}
-.tableHeader {
-	FONT-WEIGHT: bold; BORDER-RIGHT: #ffffff 0px solid; BORDER-TOP: #000000 0px solid; BORDER-LEFT: #cccccc 0px solid; BORDER-BOTTOM: #999999 1px solid; BACKGROUND-COLOR: #ffffff
-}
-.tableHeaderBlue {
-	FONT-WEIGHT: bold; background-image: url("/images/admin-back.gif"); COLOR:black; BORDER-RIGHT: #ffffff 0px solid; BORDER-TOP: #000000 0px solid; BORDER-LEFT: #cccccc 0px solid; BORDER-BOTTOM: #999999 1px solid;
-}  
-.textStrong {
-	FONT-WEIGHT: bold; FONT-SIZE: 12px; LINE-HEIGHT: 16px; FONT-FAMILY: helvetica,arial,sans-serif,verdana; TEXT-ALIGN: justify; TEXT-DECORATION: none
-}
-.error {
-	FONT-WEIGHT: bold; FONT-SIZE: 12px; COLOR: #cc0000; LINE-HEIGHT: 16px; FONT-FAMILY: helvetica,arial,sans-serif,verdana; TEXT-ALIGN: justify; TEXT-DECORATION: none
-}
-.content {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt; color: #666666}
-.nicetext {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt; color: #666666}
-.nicetextsmall {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 8pt; color: #666666}
-.subhead { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; color: #000066}
-.subtitle{ 
-		font-size: 14px;   
-		color: #336699; 
-		margin-bottom:10px;
-		font-weight:bold;
-}
-.highlight {
-	color: #990000;
-}
-
-/* page titles */
-.jive-admin-page-title TABLE {
-    margin-top : 5px;
-    border-bottom : 1px #ccc solid;
-}
-.jive-admin-page-title TD {
-    font-family : tahoma, arial, helvetica, sans-serif;
-    font-size : 9pt;
+.jive-quoteheader {
     font-weight : bold;
+    width : 90%;
+    margin-left : 15px;
 }
-
+.jive-quote {
+    border : #d1d7dc 1px solid;
+    /* font-size : 11px; */
+    color : #444;
+    /* line-height : 125%; */
+    /* font-family : Verdana, Arial, Helvetica, sans-serif; */
+    background-color : #fafafa;
+    width : 90%;
+    margin-left : 15px;
+}

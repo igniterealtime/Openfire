@@ -24,7 +24,7 @@
                  org.dom4j.*"
 %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
@@ -36,7 +36,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set var="sbar" value="users" scope="page" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-create.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 <%  // Get parameters //

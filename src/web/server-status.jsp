@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="ftm" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -14,7 +12,11 @@
                  org.jivesoftware.messenger.spi.BasicServer,
                  org.jivesoftware.messenger.auth.UnauthorizedException"
 %>
-<!-- Define Administration Bean -->
+
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="ftm" %>
+
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -23,7 +25,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="server-status.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 <%  // Get parameters //
@@ -132,4 +134,4 @@ by stopping or restarting your application server.</td></tr></table>
 <a href="server-props.jsp">View Server Properties</a>
 </p>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

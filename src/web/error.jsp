@@ -20,19 +20,6 @@
     }
 %>
 
-<%@ include file="header.jsp" %>
-
-<%  // Title of this page and breadcrumbs
-    String title = "Jive Messenger Admin Error";
-    String[][] breadcrumbs = {
-        { "Home", "main.jsp" },
-        { title, "error.jsp" }
-    };
-%>
-<%@ include file="title.jsp" %>
-
-
-
 <%  if (exception instanceof UnauthorizedException) { %>
 
     <p>
@@ -62,19 +49,14 @@
     
 <%  } %>
 
-
 <%  if (exception != null) {
         StringWriter sout = new StringWriter();
         PrintWriter pout = new PrintWriter(sout);
         exception.printStackTrace(pout);
 %>
-    <p style="color:#999;">
-    Exception:
-    <pre style="color:#999;">
+    Messenger Exception:
+    <pre>
 <%= sout.toString() %>
     </pre>
-    </p>
 
 <%  } %>
-
-<%@ include file="footer.jsp" %>

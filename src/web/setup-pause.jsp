@@ -11,7 +11,7 @@
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException" %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 

@@ -26,7 +26,7 @@
     User user = userManager.getUser(userID);
 %>
 
-<%@ include file="header.jsp" %>
+<jsp:include page="header.jsp" flush="true" />
 
 <%  // Title of this page and breadcrumbs
     String title = "Email User";
@@ -37,7 +37,7 @@
         { title, "user-email.jsp?userID="+userID }
     };
 %>
-<%@ include file="title.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 <p>
 Use the form below to send an email to the user.
@@ -108,4 +108,4 @@ Use the form below to send an email to the user.
 document.emailform.subject.focus();
 </script>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="footer.jsp" flush="true" />

@@ -11,7 +11,7 @@
                  org.jivesoftware.messenger.muc.HistoryStrategy,
                  org.jivesoftware.messenger.muc.MultiUserChatServer"%>
                  
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"/>
 <%  admin.init(request, response, session, application, out ); %>
 <!-- Define BreadCrumbs -->
@@ -19,7 +19,9 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"/>
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp"/>
 <c:set target="${breadcrumbs}" property="${title}" value="muc-history-settings.jsp"/>
-<%@ include file="top.jsp"%>
+
+<jsp:include page="top.jsp" flush="true" />
+
 <%!  // Global vars and methods:
 
     // Strategy definitions:

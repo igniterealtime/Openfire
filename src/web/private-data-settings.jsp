@@ -8,7 +8,7 @@
                  java.util.*,
                  org.jivesoftware.messenger.*"
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -17,7 +17,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="private-data-settings.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 
@@ -86,4 +86,4 @@ may enable or disable this feature.
 
 </form>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

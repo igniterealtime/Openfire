@@ -58,7 +58,7 @@
 <c:set target="${breadcrumbs}" property="User Properties" value="user-properties.jsp?userID=${param.userID}" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-password.jsp?userID=${param.userID}" />
 <c:set var="tab" value="pass" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 <%@ include file="user-tabs.jsp" %>

@@ -80,7 +80,7 @@
 <c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-properties.jsp?userID=${param.userID}" />
 <c:set var="tab" value="props" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <%@ include file="user-tabs.jsp" %>
 <br/>

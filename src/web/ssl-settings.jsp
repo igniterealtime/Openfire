@@ -15,7 +15,7 @@
                  java.security.cert.Certificate,
                  java.io.ByteArrayInputStream"
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -26,7 +26,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="ssl-settings.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -215,4 +215,4 @@ generate your own self-signed certificates.
 <input type="submit" name="update" value="Add Certificate">
 </form>
 <br />
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

@@ -12,7 +12,7 @@
                  org.jivesoftware.messenger.PresenceManager"
 %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -23,7 +23,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-summary.jsp" />
 <c:set var="sbar" value="users"/>
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 
@@ -171,4 +171,4 @@ Sorted by User ID
 
 <%  } %>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

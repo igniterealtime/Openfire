@@ -21,7 +21,7 @@
 <c:set target="${breadcrumbs}" property="Session Summary" value="session-summary.jsp" />
 <c:set target="${breadcrumbs}" property="Summary Details" value="session-details.jsp" />
 <c:set var="sbar" value="session" scope="page" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <%  // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");

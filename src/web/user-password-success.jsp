@@ -12,7 +12,7 @@
                  java.text.DateFormat"
 %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -24,7 +24,7 @@
 <c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
 <c:set target="${breadcrumbs}" property="User Properties" value="user-edit-form.jsp?userID=${param.userID}" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-password?userID=${param.userID}" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 <c:set var="tab" value="pass" />
 
 

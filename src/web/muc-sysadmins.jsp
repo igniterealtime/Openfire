@@ -10,7 +10,7 @@
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  java.util.Iterator"
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -60,7 +60,7 @@
     int curPage = (start/range) + 1;
 %>
 
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="8">

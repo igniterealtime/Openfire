@@ -21,7 +21,7 @@
 <%@ taglib uri="core" prefix="c" %>
 <%@ taglib uri="fmt" prefix="fmt" %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 <c:set var="admin" value="${admin}" />

@@ -14,7 +14,7 @@
                  java.util.HashMap,
                  java.util.Map" %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" scope="page" />
 <% admin.init(request, response, session, application, out ); %>
 <!-- Define BreadCrumbs -->
@@ -22,7 +22,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="offline-messages.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <c:set var="success" />
 
@@ -279,4 +279,4 @@ variety of ways. Select the offline message handling strategy that best suites y
 
 </form>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

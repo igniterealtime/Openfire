@@ -55,7 +55,7 @@
     }
 %>
 
-<%@ include file="header.jsp" %>
+<jsp:include page="header.jsp" flush="true" />
 
 <%  // Title of this page and breadcrumbs
     String title = "Filter Session Summary by User";
@@ -65,7 +65,7 @@
         {title, "session-filter.jsp"}
     };
 %>
-<%@ include file="title.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 <p>
 To filter the list of sessions by user, select the user from the list below or enter
@@ -140,4 +140,4 @@ their username in the box below.
 <%  } %>
 </script>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="footer.jsp" flush="true" />

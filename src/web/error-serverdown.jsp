@@ -13,7 +13,6 @@
         { title, "error-serverdown.jsp" }
     };
 %>
-<%@ include file="title.jsp" %>
 
 <p>
 Jive Messenger is currently down. Please see the

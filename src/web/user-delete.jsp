@@ -55,7 +55,7 @@
 <c:set target="${breadcrumbs}" property="User Properties" value="user-properties.jsp?userID=${param.userID}" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-delete.jsp?userID=${param.userID}" />
 <c:set var="tab" value="delete" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 

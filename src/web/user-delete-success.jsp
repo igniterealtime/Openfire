@@ -9,7 +9,7 @@
                      org.jivesoftware.messenger.user.UserManager"
 %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -20,7 +20,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-delete-success.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <p>
 The user has been deleted successfully.
@@ -30,4 +30,4 @@ The user has been deleted successfully.
 <input type="submit" name="" value="Go To User Summary">
 </form>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

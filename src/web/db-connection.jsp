@@ -11,7 +11,7 @@
                  java.sql.*,
                  org.jivesoftware.database.DbConnectionManager" %>
                  
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -21,7 +21,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set var="sbar" value="database" scope="page" />
 <c:set target="${breadcrumbs}" property="${title}" value="db-connection.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 <%  // Get metadata about the database
@@ -140,4 +140,4 @@ Below is a brief summary of your database connection information.
         catch (SQLException e) { Log.error(e); }
     }
 %>
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

@@ -2,10 +2,12 @@
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
-
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.HashMap,
@@ -13,19 +15,30 @@
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.messenger.user.*,
                  java.util.*,
-                 java.text.*"
+                 java.text.*,
+                 org.jivesoftware.admin.AdminPageBean"
 %>
+
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="fmt" %>
+
 <%@ include file="global.jsp" %>
-<!-- Define Administration Bean -->
+
+<%-- Define page bean for header and sidebar --%>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<% admin.init(request, response, session, application, out); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Jive Messenger Admin"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="index.jsp" />
+<%  // Title of this page and breadcrumbs
+    String title = "Jive Messenger Admin";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.setPageID("server-status");
+%>
 
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <p>Welcome to the Jive Messenger Admin tool.</p>
 
@@ -59,4 +72,4 @@
 </table>
 </div>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="top.jsp" flush="true" />

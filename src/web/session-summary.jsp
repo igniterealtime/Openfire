@@ -12,7 +12,7 @@
 
 
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -22,7 +22,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="session-summary.jsp" />
 <c:set var="sbar" value="session" scope="page" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 
@@ -181,4 +181,4 @@ Below is a list of sessions on this server.
 List last updated: <%= dateFormatter.format(new Date()) %>
 </p>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

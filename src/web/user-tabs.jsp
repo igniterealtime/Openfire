@@ -10,7 +10,7 @@
                  org.jivesoftware.messenger.user.*"
     
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="ad" class="org.jivesoftware.util.WebManager"  />
 <% ad.init(request, response, session, application, out ); %>
 

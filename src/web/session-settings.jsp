@@ -11,7 +11,7 @@
                  java.text.DateFormat,
                  org.jivesoftware.messenger.handler.IQAuthHandler" %>
 
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -21,7 +21,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="session-settings.jsp" />
 <c:set var="sbar" value="session" scope="page" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <c:set var="success" value="${param.success}" />
 
@@ -92,4 +92,4 @@
 
 </form>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

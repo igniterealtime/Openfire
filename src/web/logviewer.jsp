@@ -15,7 +15,7 @@
                  org.jivesoftware.messenger.user.*,
                  java.util.*"
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -25,7 +25,7 @@
 <c:set var="log" value="${param.log}" />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="logviewer.jsp?log=${log}" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 <%
 String log = ParamUtils.getParameter(request, "log");
@@ -680,4 +680,4 @@ SELECT {
 
 </form>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

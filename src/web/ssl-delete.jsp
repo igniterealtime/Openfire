@@ -39,7 +39,7 @@
     }
 %>
 
-<%@ include file="header.jsp" %>
+<jsp:include page="header.jsp" flush="true" />
 
 <%  // Title of this page and breadcrumbs
     String title = "Delete SSL Certificate";
@@ -49,7 +49,7 @@
         { title, "ssl-delete.jsp?alias=" + alias + "&type=" + type}
     };
 %>
-<%@ include file="title.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 <br>
 
@@ -66,4 +66,4 @@ from the system?
 <input type="submit" name="cancel" value="Cancel">
 </form>
 
-<%@ include file="footer.jsp" %>
+<jsp:include page="footer.jsp" flush="true" />

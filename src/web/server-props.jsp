@@ -11,7 +11,7 @@
                  java.util.Iterator,
                  org.jivesoftware.messenger.ServerPort"
 %>
-<!-- Define Administration Bean -->
+<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 <c:set var="admin" value="${admin.manager}" />
@@ -21,7 +21,7 @@
 <c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="server-props.jsp" />
-<%@ include file="top.jsp" %>
+<jsp:include page="top.jsp" flush="true" />
 
 
 
@@ -136,4 +136,4 @@ Below is a list of information for this <fmt:message key="short.title" bundle="$
     </div>
 </c:forEach>
 
-<%@ include file="bottom.jsp" %>
+<jsp:include page="bottom.jsp" flush="true" />

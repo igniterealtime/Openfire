@@ -46,9 +46,12 @@ public class MUCPersistenceManager {
         "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
         "FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
-        "SELECT jid,affiliation FROM mucAffiliation WHERE roomID=?";
+        "SELECT jid, affiliation FROM mucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
+    private static final String LOAD_HISTORY =
+        "SELECT sender, nickname, time, subject, body FROM mucConversationLog " +
+        "WHERE time>? AND roomID=? AND (nickname != \"\" OR subject IS NOT NULL) ORDER BY time";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, canInvite, " +
@@ -58,10 +61,13 @@ public class MUCPersistenceManager {
         "SELECT roomID,jid,affiliation FROM mucAffiliation";
     private static final String LOAD_ALL_MEMBERS =
         "SELECT roomID,jid, nickname FROM mucMember";
+    private static final String LOAD_ALL_HISTORY =
+        "SELECT roomID, sender, nickname, time, subject, body FROM mucConversationLog " +
+        "WHERE time>? AND (nickname != \"\" OR subject IS NOT NULL) ORDER BY time";
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
-        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
+        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
@@ -174,6 +180,32 @@ public class MUCPersistenceManager {
             room.setPersistent(true);
             rs.close();
             pstmt.close();
+
+            pstmt = con.prepareStatement(LOAD_HISTORY);
+            // Recreate the history until two days ago
+            long from = System.currentTimeMillis() - (86400000 * 2);
+            pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+            pstmt.setLong(2, room.getID());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
+                // Recreate the history only for the rooms that have the conversation logging
+                // enabled
+                if (room.isLogEnabled()) {
+                    room.getRoomHistory().addOldMessage(rs.getString(1), rs.getString(2), sentDate,
+                            rs.getString(4), rs.getString(5));
+                }
+            }
+            rs.close();
+            pstmt.close();
+
+            // If the room does not include the last subject in the history then recreate one if
+            // possible
+            if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
+                    room.getSubject().length() > 0) {
+                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toStringPrep(),
+                        null, room.getModificationDate(), room.getSubject(), null);
+            }
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
@@ -386,6 +418,42 @@ public class MUCPersistenceManager {
             }
             rs.close();
             pstmt.close();
+
+            pstmt = con.prepareStatement(LOAD_ALL_HISTORY);
+            // Recreate the history until two days ago
+            long from = System.currentTimeMillis() - (86400000 * 2);
+            pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+            // Load the rooms conversations from the last two days
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                room = rooms.get(rs.getLong(1));
+                Date sentDate = new Date(Long.parseLong(rs.getString(4).trim()));
+                try {
+                    // Recreate the history only for the rooms that have the conversation logging
+                    // enabled
+                    if (room.isLogEnabled()) {
+                        room.getRoomHistory().addOldMessage(rs.getString(2), rs.getString(3),
+                                sentDate, rs.getString(5), rs.getString(6));
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+            rs.close();
+            pstmt.close();
+
+            // Add the last known room subject to the room history only for those rooms that still
+            // don't have in their histories the last room subject
+            for (MUCRoom loadedRoom : rooms.values()) {
+                if (!loadedRoom.getRoomHistory().hasChangedSubject() &&
+                        loadedRoom.getSubject() != null &&
+                        loadedRoom.getSubject().length() > 0) {
+                    loadedRoom.getRoomHistory().addOldMessage(loadedRoom.getRole().getRoleAddress()
+                            .toStringPrep(), null,
+                            loadedRoom.getModificationDate(), loadedRoom.getSubject(), null);
+                }
+            }
 
             pstmt = con.prepareStatement(LOAD_ALL_AFFILIATIONS);
             rs = pstmt.executeQuery();

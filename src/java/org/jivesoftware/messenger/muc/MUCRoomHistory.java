@@ -19,6 +19,8 @@ import java.util.TimeZone;
 
 import org.jivesoftware.messenger.Message;
 import org.jivesoftware.messenger.MetaDataFragment;
+import org.jivesoftware.messenger.XMPPAddress;
+import org.jivesoftware.messenger.spi.MessageImpl;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 
 /**
@@ -124,5 +126,60 @@ public final class MUCRoomHistory {
      */
     public ListIterator getReverseMessageHistory() {
         return historyStrategy.getReverseMessageHistory();
+    }
+
+    /**
+     * Creates a new message and adds it to the history. The new message will be created based on
+     * the provided information. This information will likely come from the database when loading
+     * the room history from the database.
+     *
+     * @param senderJID the sender's JID of the message to add to the history.
+     * @param nickname the sender's nickname of the message to add to the history.
+     * @param sentDate the date when the message was sent to the room.
+     * @param subject the subject included in the message.
+     * @param body the body of the message.
+     */
+    public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
+            String body) {
+        Message packetToAdd = new MessageImpl();
+        packetToAdd.setType(Message.GROUP_CHAT);
+        packetToAdd.setSubject(subject);
+        packetToAdd.setBody(body);
+        // Set the sender of the message
+        if (nickname != null && nickname.trim().length() > 0) {
+            XMPPAddress roomJID = room.getRole().getRoleAddress();
+            // Recreate the sender address based on the nickname and room's JID
+            packetToAdd.setSender(new XMPPAddress(roomJID.getNamePrep(), roomJID.getHostPrep(),
+                    nickname));
+        }
+        else {
+            // Set the room as the sender of the message
+            packetToAdd.setSender(room.getRole().getRoleAddress());
+        }
+
+        // Add the delay information to the message
+        MetaDataFragment delayInformation = new MetaDataFragment("jabber:x:delay", "x");
+        delayInformation.setProperty("x:stamp", UTC_FORMAT.format(sentDate));
+        if (room.canAnyoneDiscoverJID()) {
+            // Set the Full JID as the "from" attribute
+            delayInformation.setProperty("x:from", senderJID);
+        }
+        else {
+            // Set the Room JID as the "from" attribute
+            delayInformation.setProperty("x:from", room.getRole().getRoleAddress().toStringPrep());
+        }
+        packetToAdd.addFragment(delayInformation);
+        historyStrategy.addMessage(packetToAdd);
+    }
+
+    /**
+     * Returns true if there is a message within the history of the room that has changed the
+     * room's subject.
+     *
+     * @return true if there is a message within the history of the room that has changed the
+     *         room's subject.
+     */
+    public boolean hasChangedSubject() {
+        return historyStrategy.hasChangedSubject();
     }
 }

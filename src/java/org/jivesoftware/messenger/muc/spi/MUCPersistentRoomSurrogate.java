@@ -386,8 +386,9 @@ class MUCPersistentRoomSurrogate implements MUCRoom, Cacheable {
         return invitationRequiredToEnter;
     }
 
-    public void setInvitationRequiredToEnter(boolean invitationRequiredToEnter) {
+    public List<Presence> setInvitationRequiredToEnter(boolean invitationRequiredToEnter) {
         this.invitationRequiredToEnter = invitationRequiredToEnter;
+        return Collections.EMPTY_LIST;
     }
 
     public boolean isLogEnabled() {

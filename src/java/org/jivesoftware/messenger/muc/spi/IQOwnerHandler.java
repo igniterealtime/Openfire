@@ -412,7 +412,8 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setInvitationRequiredToEnter(("1".equals(booleanValue) ? true : false));
+                presences.addAll(room.setInvitationRequiredToEnter(("1".equals(booleanValue) ?
+                        true : false)));
             }
 
             field = completedForm.getField("muc#roomconfig_allowinvites");

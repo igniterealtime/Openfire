@@ -1531,8 +1531,27 @@ public class MUCRoomImpl implements MUCRoom {
         return invitationRequiredToEnter;
     }
 
-    public void setInvitationRequiredToEnter(boolean invitationRequiredToEnter) {
+    public List<Presence> setInvitationRequiredToEnter(boolean invitationRequiredToEnter) {
+        List<Presence> presences = new ArrayList<Presence>();
+        if (invitationRequiredToEnter && !this.invitationRequiredToEnter) {
+            // If the room was not members-only and now it is, kick occupants that aren't member
+            // of the room
+            for (MUCRole occupant : occupants.values()) {
+                if (occupant.getAffiliation() > MUCRole.MEMBER) {
+                    try {
+                        presences.add(kickOccupant(occupant.getChatUser().getAddress()
+                                .toStringPrep(), null,
+                                LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
+                    }
+                    catch (NotAllowedException e) {
+                        // Do Nothing
+                    }
+                }
+            }
+
+        }
         this.invitationRequiredToEnter = invitationRequiredToEnter;
+        return presences;
     }
 
     public boolean isLogEnabled() {

@@ -583,8 +583,10 @@ public interface MUCRoom extends ChatDeliverer {
      * whether the room is members-only or not.
      *
      * @param invitationRequiredToEnter if true then the room is members-only.
+     * @return the list of updated presences of all the occupants that aren't members of the room if
+     *         the room is now members-only.
      */
-    public void setInvitationRequiredToEnter(boolean invitationRequiredToEnter);
+    public List<Presence> setInvitationRequiredToEnter(boolean invitationRequiredToEnter);
 
     /**
      * Returns true if the room's conversation is being logged. If logging is activated the room

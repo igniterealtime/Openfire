@@ -129,6 +129,11 @@ public class MUCRoomImpl implements MUCRoom {
     private List<String> outcasts = new ArrayList<String>();
 
     /**
+     * The natural language name of the room.
+     */
+    private String naturalLanguageName;
+
+    /**
      * Description of the room. The owner can change the description using the room configuration
      * form.
      */
@@ -237,12 +242,12 @@ public class MUCRoomImpl implements MUCRoom {
     MUCRoomImpl(MultiUserChatServer chatserver, String roomname, PacketRouter packetRouter) {
         this.server = chatserver;
         this.name = roomname;
+        this.naturalLanguageName = roomname;
         this.description = roomname;
         this.router = packetRouter;
         this.startTime = System.currentTimeMillis();
         // TODO Allow to set the history strategy from the configuration form?
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(server.getHistoryStrategy()));
-        roomHistory.setStartTime(startTime);
         role = new RoomRole(this);
         this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
         this.iqAdminHandler = new IQAdminHandler(this, packetRouter);
@@ -463,14 +468,6 @@ public class MUCRoomImpl implements MUCRoom {
             joinRole = new MUCRoleImpl(server, this, nickname, role, affiliation,
                     (MUCUserImpl) user, router);
 
-            // Handle ChatRoomHistory
-            if (roomHistory.getUserID() == null) {
-                roomHistory.setUserID(nickname);
-            }
-            else {
-                roomHistory.userJoined(user, new java.util.Date());
-            }
-
             // Send presence of existing occupants to new occupant
             Iterator iter = occupants.values().iterator();
             while (iter.hasNext()) {
@@ -584,16 +581,7 @@ public class MUCRoomImpl implements MUCRoom {
             // (if provided) as defined under the "Destroying a Room" use case.
 
             if (occupants.isEmpty()) {
-                // Adding new ChatTranscript logic.
                 endTime = System.currentTimeMillis();
-
-                // Update RoomHistory with HistoryStrategy
-                roomHistory.setEndTime(System.currentTimeMillis());
-
-                // Update ChatManager
-                //ChatManager cManager = ChatManager.getInstance();
-                //cManager.addChatHistory(roomHistory);
-                //cManager.fireChatRoomClosed(server.getChatRoom(name));
 
                 server.removeChatRoom(name);
             }
@@ -638,8 +626,6 @@ public class MUCRoomImpl implements MUCRoom {
             }
         }
         occupantsByFullJID.remove(user.getAddress().toStringPrep());
-
-        roomHistory.userLeft(user, new java.util.Date());
     }
 
     public void destroyRoom(String alternateJID, String reason) throws UnauthorizedException {
@@ -680,17 +666,7 @@ public class MUCRoomImpl implements MUCRoom {
                     }
                 }
             }
-
-            // Adding new ChatTranscript logic.
             endTime = System.currentTimeMillis();
-
-            // Update RoomHistory with HistoryStrategy
-            roomHistory.setEndTime(System.currentTimeMillis());
-
-            // Update ChatAuditManager
-            //ChatAuditManager cManager = ChatAuditManager.getInstance();
-            //cManager.addChatHistory(roomHistory);
-            //cManager.fireChatRoomClosed(server.getChatRoom(name));
 
             MUCPersistenceManager.deleteFromDB(this);
             server.removeChatRoom(name);
@@ -1625,6 +1601,14 @@ public class MUCRoomImpl implements MUCRoom {
         this.canOccupantsInvite = canOccupantsInvite;
     }
 
+    public String getNaturalLanguageName() {
+        return naturalLanguageName;
+    }
+
+    public void setNaturalLanguageName(String naturalLanguageName) {
+        this.naturalLanguageName = naturalLanguageName;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -1726,18 +1710,6 @@ public class MUCRoomImpl implements MUCRoom {
 
     public boolean canBroadcastPresence(String roleToBroadcast) {
         return "none".equals(roleToBroadcast) || rolesToBroadcastPresence.contains(roleToBroadcast);
-    }
-
-    public void setName(String name) {
-        if (name == null || name.length() == 0) {
-            return;
-        }
-        if (!this.name.equals(name)) {
-            String oldName = this.name;
-            this.name = name;
-            // Notify the server that the name of this room has changed
-            server.roomRenamed(oldName, name);
-        }
     }
 
     public void unlockRoom(MUCRole senderRole) {

@@ -9,14 +9,7 @@
 
 package org.dom4j.io;
 
-import java.io.BufferedReader;
-import java.io.CharArrayReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.net.URL;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -24,7 +17,6 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.ElementHandler;
 import org.dom4j.QName;
-import org.dom4j.DocumentHelper;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -273,12 +265,7 @@ public class XPPPacketReader {
         int count = 0;
         while (true) {
             int type = -1;
-            try {
-              type = pp.nextToken();
-            }
-            catch(Exception ex){
-                return null;
-            }
+            type = pp.nextToken();
             switch (type) {
                 case XmlPullParser.PROCESSING_INSTRUCTION:
                     {

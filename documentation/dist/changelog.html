@@ -11,6 +11,11 @@
             font-family : tahoma, verdana, arial, helvetica, sans-serif;
             font-size : 0.8em;
         }
+				H2 {
+					 font-size : 10pt;
+					 font-weight : bold;
+					 padding-left : 1em;
+				}
         A:hover {
             text-decoration : none;
         }
@@ -40,9 +45,12 @@
             font-size : 100%;
         }
         .footer {
-            font-size : 0.8em;
+            font-size : 8pt;
             color : #666;
             text-align : center;
+						margin-top : 2em;
+						padding-top : 0.5em;
+						border-top : 1px #CCC solid;
         }
         .important {
             color : #c00;
@@ -59,6 +67,24 @@
 <div class="header">
 Jive Messenger Changelog
 </div>
+ 
+<p>
+<b>2.0.1</b> -- November 16, 2004
+<p>
+
+<h2>Bugs</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-28'>JM-28</a>] - Fixed i18n bug: incoming streams were using the default encoding instead of UTF-8.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-30'>JM-30</a>] - DB2 and Oracle database scripts had incorrect references to userID.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-31'>JM-31</a>] - Fixed UI issues in the group chat portion of the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-32'>JM-32</a>] - The resources/security directory is now part of all releases.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-33'>JM-33</a>] - The Postgres database script contained a LONG column type instead of TEXT.</li>
+</ul>
+            
+<h2>Improvements</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-25'>JM-25</a>] - Greatly improved performance of the audit service.</li>
+</ul>
 
 <p>
 <b>2.0.0</b> -- November 15, 2004
@@ -69,13 +95,10 @@ Jive Messenger Changelog
     </li>
 </ul>
 
-</ul>
-<br><br>
-<center>
-<hr size="1" width="60%" color="#666666">
-<font size="-2" face="verdana" color="#666666">
-Copyright &copy; Jive Software, 2000-2004</font>
-</center>
+
+<div class="footer">
+Copyright &copy; Jive Software, 2004
+</div>
 
 </body>
 </html>

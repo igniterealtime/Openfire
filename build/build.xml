@@ -459,7 +459,7 @@
 
         <!-- Copy database scripts -->
         <copy todir="${prepare.out.dir}/resources">
-            <fileset dir="${src.dir}" includes="database/*.*"></fileset>
+            <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
         </copy>
 
         <!-- Copy security resources -->

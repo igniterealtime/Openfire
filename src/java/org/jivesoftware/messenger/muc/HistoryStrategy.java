@@ -249,4 +249,15 @@ public class HistoryStrategy {
             }
         }
     }
+
+    /**
+     * Returns true if there is a message within the history of the room that has changed the
+     * room's subject.
+     *
+     * @return true if there is a message within the history of the room that has changed the
+     *         room's subject.
+     */
+    public boolean hasChangedSubject() {
+        return roomSubject != null;
+    }
 }

@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.sql.*;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.event.PropertyEventDispatcher;
 
 /**
  * Retrieves and stores Jive properties. Properties are stored in the database.
@@ -162,6 +163,11 @@ public class JiveProperties implements Map {
             }
         }
         deleteProperty((String)key);
+
+        // Generate event.
+        PropertyEventDispatcher.dispatchEvent((String)key,
+                PropertyEventDispatcher.EventType.property_deleted, Collections.emptyMap());
+
         return value;
     }
 
@@ -185,6 +191,13 @@ public class JiveProperties implements Map {
         else {
             insertProperty((String)key, (String)value);
         }
+
+        // Generate event.
+        Map params = new HashMap();
+        params.put("value", value);
+        PropertyEventDispatcher.dispatchEvent((String)key,
+                PropertyEventDispatcher.EventType.property_set, params);
+
         return properties.put((String)key, (String)value);
     }
 

@@ -16,6 +16,7 @@ import java.util.*;
 import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.io.*;
+import org.jivesoftware.messenger.event.PropertyEventDispatcher;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -314,6 +315,12 @@ public class XMLProperties {
             element.addElement(childName).setText(value);
         }
         saveProperties();
+
+        // Generate event.
+        Map params = new HashMap();
+        params.put("value", values);
+        PropertyEventDispatcher.dispatchEvent((String)name,
+                PropertyEventDispatcher.EventType.xml_property_set, params);
     }
 
     /**
@@ -375,8 +382,14 @@ public class XMLProperties {
         }
         // Set the value of the property in this node.
         element.setText(value);
-        // write the XML properties to disk
+        // Write the XML properties to disk
         saveProperties();
+
+        // Generate event.
+        Map params = new HashMap();
+        params.put("value", value);
+        PropertyEventDispatcher.dispatchEvent((String)name,
+                PropertyEventDispatcher.EventType.xml_property_set, params);
     }
 
     /**
@@ -402,6 +415,10 @@ public class XMLProperties {
         element.remove(element.element(propName[propName.length - 1]));
         // .. then write to disk.
         saveProperties();
+
+        // Generate event.
+        PropertyEventDispatcher.dispatchEvent((String)name,
+                PropertyEventDispatcher.EventType.xml_property_deleted, Collections.emptyMap());
     }
 
     /**

@@ -196,7 +196,9 @@ not possible to create or edit users through the application.</ul>
 
 <b>Why is the list of usernames not sorted in the admin console when using LDAP?</b>
 <ul>Several popular LDAP servers such as OpenLDAP do not support server-side
-sorting of search results. On those servers, users will appear out of order.</ul>
+sorting of search results. On those servers, users will appear out of order.
+However, you can enable client-side sorting of search results by setting 
+<tt>ldap.clientSideSorting</tt> to true in the XML configuration file.</ul>
 
 <b>I switched to LDAP and now cannot login to the admin console. What happened?</b>
 <ul>If you can no longer login to the admin console after switching, one of two

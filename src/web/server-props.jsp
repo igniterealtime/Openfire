@@ -73,9 +73,13 @@ Below is a list of information for this <fmt:message key="short.title" bundle="$
       <td class="jive-label">
           Multi User Chat Server Name:
       </td>
-      <td colspan=2>
+      <td>
         <c:out value="${admin.multiUserChatServer.serviceName}" />
-      </td>
+      </td><td align=right nowrap>
+        <a href="muc-server-props-edit-form.jsp"
+         title="Click to edit..."
+         >Edit <img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
+     </td>
   </tr>
 </c:if>
 </table>

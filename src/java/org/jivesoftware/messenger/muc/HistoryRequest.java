@@ -151,7 +151,8 @@ public class HistoryRequest {
             while (iterator.hasPrevious()) {
                 message = (Message)iterator.previous();
                 // Update number of characters to send
-                accumulatedChars += message.getBody().length();
+                String text = message.getBody() == null ? message.getSubject() : message.getBody();
+                accumulatedChars += text.length();
                 if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
                     // Stop collecting history since we have exceded a limit
                     break;
@@ -181,7 +182,7 @@ public class HistoryRequest {
                             }
                         }
                     }
-                    catch (ParseException e) {
+                    catch (Exception e) {
                         Log.error("Error parsing date from historic message", e);
                     }
 

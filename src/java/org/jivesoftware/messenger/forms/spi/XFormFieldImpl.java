@@ -11,17 +11,13 @@
 
 package org.jivesoftware.messenger.forms.spi;
 
-import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.io.IOException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.io.XMLWriter;
-import org.xmlpull.v1.XmlPullParserException;
+import org.jivesoftware.messenger.forms.FormField;
 
 /**
  * A concrete FormField capable of sending itself to a writer and recover its state from an XMPP
@@ -244,23 +240,6 @@ public class XFormFieldImpl implements FormField {
          */
         public String getValue() {
             return value;
-        }
-
-        public void send(XMLWriter xmlSerializer, int version) throws XmlPullParserException {
-            Element jabber = DocumentHelper.createElement("option").addNamespace("", "jabber:x:data");
-            if (getLabel() != null) {
-                jabber.addAttribute("label", getLabel());
-            }
-            if (getValue() != null) {
-                Element subElement = jabber.addElement("value", "jabber:x:data");
-                subElement.addText(getValue());
-            }
-            try {
-                xmlSerializer.write(jabber);
-            }
-            catch (IOException e) {
-                Log.error(e);
-            }
         }
 
         public Element asXMLElement() {

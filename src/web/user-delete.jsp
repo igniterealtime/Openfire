@@ -49,7 +49,7 @@
         }
         else {
             // Done, so redirect
-            response.sendRedirect("user-delete-success.jsp");
+            response.sendRedirect("user-summary.jsp?deletesuccess=true");
         }
         return;
     }

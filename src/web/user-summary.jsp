@@ -57,6 +57,21 @@
 Below is a list of users in the system.
 </p>
 
+<%  if (request.getParameter("deletesuccess") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        User deleted successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } %>
+
 <p>
 Total Users: <%= webManager.getUserManager().getUserCount() %>,
 <%  if (numPages > 1) { %>
@@ -152,7 +167,7 @@ Sorted by Username
             <a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a>
         </td>
         <td width="40%">
-            <%= user.getInfo().getName() %>
+            <%= user.getInfo().getName() %> &nbsp;
         </td>
         <td width="26%">
             <%= dateFormatter.format(user.getInfo().getCreationDate()) %>

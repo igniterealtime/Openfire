@@ -1,7 +1,12 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
+  -
+  - Copyright (C) 2004 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
@@ -20,9 +25,11 @@
                  java.io.PrintStream,
                  org.dom4j.xpath.DefaultXPath,
                  org.dom4j.*"
+    errorPage="error.jsp"
 %>
 
-<%-- Define Administration Bean --%>
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
@@ -69,7 +76,7 @@
                 newUser.saveInfo();
                 
                 // Successful, so redirect
-                response.sendRedirect("user-create-success.jsp?username=" + newUser.getUsername());
+                response.sendRedirect("user-properties.jsp?success=true&username=" + newUser.getUsername());
                 return;
             }
             catch (UserAlreadyExistsException e) {
@@ -84,8 +91,6 @@
         }
     }
 %>
-
-
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
@@ -103,9 +108,16 @@
 
 <%  if (errors.get("general") != null) { %>
 
-    <p class="jive-error-text">
-    Error creating the user account. Please check your error logs.
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error creating the user account. Please check your error logs.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
 

@@ -11,8 +11,6 @@
 
 package org.jivesoftware.messenger.starter;
 
-import org.jivesoftware.messenger.container.starter.JiveClassLoader;
-
 import java.io.File;
 
 /**

@@ -180,8 +180,8 @@ public class SocketConnection extends BasicConnection {
         }
         else {
             synchronized (writer) {
-              //  packet.send(xmlSerializer, 0);
                 try {
+                    xmlSerializer.write(packet.getElement());
                     xmlSerializer.flush();
                 }
                 catch (IOException e) {

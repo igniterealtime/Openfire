@@ -210,9 +210,9 @@ public class DbConnectionManager {
     }
 
     /**
-     * Scrolls forward in a result set to the specified row number. If the JDBC driver supports
-     * the feature, the cursor will be moved directly. Otherwise, we scroll through results one by
-     * one manually by calling <tt>rs.next()</tt>.
+     * Scrolls forward in a result set the specified number of rows. If the JDBC driver
+     * supports the feature, the cursor will be moved directly. Otherwise, we scroll
+     * through results one by one manually by calling <tt>rs.next()</tt>.
      *
      * @param rs the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
@@ -223,7 +223,7 @@ public class DbConnectionManager {
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
                 rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-                rs.absolute(rowNumber);
+                rs.relative(rowNumber);
             }
         }
         // Otherwise, manually scroll to the correct row.
@@ -422,8 +422,16 @@ public class DbConnectionManager {
         transactionsSupported = metaData.supportsTransactions();
         // Supports subqueries?
         subqueriesSupported = metaData.supportsCorrelatedSubqueries();
-        // Supports scroll insensitive result sets?
-        scrollResultsSupported = metaData.supportsResultSetType(ResultSet.TYPE_SCROLL_INSENSITIVE);
+        // Supports scroll insensitive result sets? Try/catch block is a
+        // workaround for DB2 JDBC driver, which throws an exception on
+        // the method call.
+        try {
+            scrollResultsSupported = metaData.supportsResultSetType(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE);
+        }
+        catch (Exception e) {
+            scrollResultsSupported = false;
+        }
         // Supports batch updates
         batchUpdatesSupported = metaData.supportsBatchUpdates();
 

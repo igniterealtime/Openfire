@@ -59,23 +59,23 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
 
     public IQ handleIQ(IQ packet) {
         IQ response = null;
-
-        buildResponse();
-
         response = IQ.createResultIQ(packet);
+        response.setChildElement(buildResponse());
         return response;
     }
 
     /**
      * Build the responseElement packet
      */
-    private void buildResponse() {
+    private Element buildResponse() {
+        Element response = responseElement.createCopy();
         Date current = new Date();
-        responseElement.element("utc").setText(UTC_FORMAT.format(current));
+        response.element("utc").setText(UTC_FORMAT.format(current));
         StringBuffer display = new StringBuffer(DATE_FORMAT.format(current));
         display.append(' ');
         display.append(TIME_FORMAT.format(current));
-        responseElement.element("display").setText(display.toString());
+        response.element("display").setText(display.toString());
+        return response;
     }
 
 

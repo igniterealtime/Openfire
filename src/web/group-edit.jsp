@@ -1,31 +1,44 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ page
-import="java.text.DateFormat,
+<%--
+  -	$RCSfile$
+  -	$Revision$
+  -	$Date$
+  -
+  - Copyright (C) 2005 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
+--%>
+
+<%@ page import="java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.admin.*,
                  org.xmpp.packet.JID,
                  org.jivesoftware.messenger.group.GroupManager,
                  org.jivesoftware.messenger.group.Group,
-        java.net.URLEncoder,
-        java.net.URLDecoder,
-        org.jivesoftware.messenger.user.UserManager,
-        org.jivesoftware.messenger.user.UserNotFoundException,
-        org.jivesoftware.stringprep.Stringprep"%>
+                 java.net.URLEncoder,
+                 java.net.URLDecoder,
+                 org.jivesoftware.messenger.user.UserManager,
+                 org.jivesoftware.messenger.user.UserNotFoundException,
+                 org.jivesoftware.stringprep.Stringprep"
+%>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
+
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <jsp:useBean id="errors" class="java.util.HashMap"/>
-<%
-    webManager.init(pageContext);
-%>
-<%
-    // Get parameters
+
+<%  webManager.init(pageContext); %>
+
+<%  // Get parameters
     boolean add = request.getParameter("add") != null;
     boolean delete = request.getParameter("remove") != null;
     boolean update = request.getParameter("save") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String users = ParamUtils.getParameter(request, "users");
     String [] adminIDs = ParamUtils.getParameters(request, "admin");
+    String [] oldAdminIDs = ParamUtils.getParameters(request, "oldAdmin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
@@ -525,7 +538,7 @@ import="java.text.DateFormat,
                         &nbsp;
                     </td>
                     <td align="center">
-                        <input type="submit" name="update" value="Update">
+                        <input type="submit" name="save" value="Update">
                     </td>
                     <td align="center">
                         <input type="submit" name="remove" value="Remove">

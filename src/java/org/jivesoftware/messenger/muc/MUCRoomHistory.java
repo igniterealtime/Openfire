@@ -153,7 +153,7 @@ public final class MUCRoomHistory {
         }
 
         // Add the delay information to the message
-        Element delayInformation = message.addChildElement("x", "jabber:x:deley");
+        Element delayInformation = message.addChildElement("x", "jabber:x:delay");
         delayInformation.addAttribute("stamp", UTC_FORMAT.format(sentDate));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute

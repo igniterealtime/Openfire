@@ -4,36 +4,30 @@
     <tabs>
         <tab0>
             <id>server</id>
-            <name>Server Manager</name>
+            <name>Server</name>
             <description>Click to manage server settings</description>
             <sidebars>
                 <sidebar0>
                     <name>Server Manager</name>
                     <items>
                         <item0>
-                            <id>server-main</id>
+                            <id>server-props</id>
                             <url>index.jsp</url>
-                            <name>Main</name>
-                            <description>Click for the main overview page</description>
+                            <name>Server Properties</name>
+                            <description>Click to see server properties</description>
                         </item0>
                         <item1>
-                            <id>server-status</id>
-                            <url>server-status.jsp</url>
-                            <name>Server Status</name>
-                            <description>Click to see the current status of the server</description>
+                            <id>server-db</id>
+                            <url>server-db.jsp</url>
+                            <name>Database</name>
+                            <description>Click to see database connection information</description>
                         </item1>
                         <item2>
-                            <id>server-props</id>
-                            <url>server-props.jsp</url>
-                            <name>Server Properties</name>
-                            <description>Click to edit server properties</description>
-                        </item2>
-                        <item3>
                             <id>server-logs</id>
                             <url>logviewer.jsp</url>
-                            <name>Server Logs</name>
+                            <name>Logs</name>
                             <description>Click to view server logs</description>
-                        </item3>
+                        </item2>
                     </items>
                 </sidebar0>
                 <sidebar1>
@@ -50,26 +44,8 @@
             </sidebars>
         </tab0>
         <tab1>
-            <id>database</id>
-            <name>Database Manager</name>
-            <description>Click to manage database settings</description>
-            <sidebars>
-                <sidebar0>
-                    <name>Database Connection</name>
-                    <items>
-                        <item0>
-                            <id>db-connection</id>
-                            <url>db-connection.jsp</url>
-                            <name>Connection Info</name>
-                            <description>Click to see database connection information</description>
-                        </item0>
-                    </items>
-                </sidebar0>
-            </sidebars>
-        </tab1>
-        <tab2>
             <id>users</id>
-            <name>User Manager</name>
+            <name>Users</name>
             <description>Click to manage users</description>
             <sidebars>
                 <sidebar0>
@@ -84,10 +60,10 @@
                     </items>
                 </sidebar0>
             </sidebars>
-        </tab2>
-        <tab3>
+        </tab1>
+        <tab2>
             <id>session</id>
-            <name>Session Manager</name>
+            <name>Sessions</name>
             <description>Click to manage connected sessions</description>
             <sidebars>
                 <sidebar0>
@@ -102,10 +78,10 @@
                     </items>
                 </sidebar0>
             </sidebars>
-        </tab3>
-        <tab4>
-            <id>muc</id>
-            <name>MUC Manager</name>
+        </tab2>
+        <tab3>
+            <id>groupchat</id>
+            <name>Group Chat</name>
             <description>Click to manage MUC (multi-user chat) settings</description>
             <sidebars>
                 <sidebar0>
@@ -120,6 +96,6 @@
                     </items>
                 </sidebar0>
             </sidebars>
-        </tab4>
+        </tab3>
     </tabs>
 </jivesidebar>

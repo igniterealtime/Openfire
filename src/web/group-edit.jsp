@@ -31,8 +31,10 @@ import="java.text.DateFormat,
     boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
     String newName = ParamUtils.getParameter(request, "newName");
     String newDescription = ParamUtils.getParameter(request, "newDescription");
-    boolean newShowInRoster = ParamUtils.getBooleanParameter(request, "newShow", false);
+    String newShowInRosterType = ParamUtils.getParameter(request, "newShow");
+    boolean newShowInRoster = "onlyGroup".equals(newShowInRosterType) || "everybody".equals(newShowInRosterType);
     String  newDisplayName = ParamUtils.getParameter(request, "newDisplay");
+    String newGroupList = ParamUtils.getParameter(request, "newGroupList");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     Group group = groupManager.getGroup(groupName);
@@ -48,12 +50,14 @@ import="java.text.DateFormat,
             group.setName(newName);
             group.setDescription(newDescription);
             if (newShowInRoster) {
-                group.getProperties().put("showInRoster", "true");
-                group.getProperties().put("displayName", newDisplayName);
+                group.getProperties().put("sharedRoster.showInRoster", newShowInRosterType);
+                group.getProperties().put("sharedRoster.displayName", newDisplayName);
+                group.getProperties().put("sharedRoster.groupList", newGroupList == null ? "" : newGroupList);
             }
             else {
-                group.getProperties().put("showInRoster", "false");
-                group.getProperties().put("displayName", "");
+                group.getProperties().put("sharedRoster.showInRoster", "nobody");
+                group.getProperties().put("sharedRoster.displayName", "");
+                group.getProperties().put("sharedRoster.groupList", "");
             }
             groupName = newName;
             groupInfoChanged = true;
@@ -169,7 +173,18 @@ import="java.text.DateFormat,
     <!--
     function refreshDisplayName(showCheck)
     {
-    document.forms.ff.newDisplay.disabled=!showCheck.checked;
+    if ("onlyGroup" == showCheck.value) {
+        document.forms.ff.newDisplay.disabled=false;
+        document.forms.ff.newGroupList.disabled=false;
+    }
+    else if ("everybody" == showCheck.value) {
+        document.forms.ff.newDisplay.disabled=false;
+        document.forms.ff.newGroupList.disabled=true;
+    }
+    else {
+        document.forms.ff.newDisplay.disabled=true;
+        document.forms.ff.newGroupList.disabled=true;
+    }
     }
     //-->
     </script>
@@ -258,7 +273,7 @@ import="java.text.DateFormat,
                 <% } else { %>
 
                 <td>
-                <input type="text" name="newDescription" value="<%= group.getDescription() != null ? group.getDescription() : "" %>">
+                <textarea name="newDescription" cols="40" rows="4"><%= group.getDescription() != null ? group.getDescription() : "" %></textarea>
                 </td>
 
                 <% } %>
@@ -266,17 +281,36 @@ import="java.text.DateFormat,
             <tr><td height="15" colspan="3"><img src="images/blank.gif"></td>
             <tr>
                 <td width="1%" nowrap>
-                    Show group in group members' rosters:
+                    Show group in rosters for:
                 </td>
-                <%  boolean showInRoster = "true".equals(group.getProperties().get("showInRoster")) || errors.get("display") != null;
+                <%  boolean showInRoster = webManager.getRosterManager().isSharedGroup(group) || errors.get("display") != null;
                     if(!edit) { %>
                 <td colspan="2">
-                    <%= (showInRoster ? "Enabled" : "Disabled") %>
+                    <% if ("onlyGroup".equals(group.getProperties().get("sharedRoster.showInRoster"))) {
+                           out.print("Only group users");
+                       }
+                       else if ("everybody".equals(group.getProperties().get("sharedRoster.showInRoster"))) {
+                           out.print("Everybody");
+                       }
+                       else {
+                           out.print("Nobody");
+                       }
+                    %>
                 </td>
-                <% } else { %>
+                <% } else {
+                        String showInRosterType = group.getProperties().get("sharedRoster.showInRoster");
+                        if (errors.get("display") != null && newShowInRosterType != null) {
+                            showInRosterType = newShowInRosterType;
+                        }
+                %>
 
                 <td>
-                <input type="checkbox" name="newShow" value="true" <%= (showInRoster ? "checked" : "") %> onclick="refreshDisplayName(this)"/>
+                <label for="onlyGroup">Only group users</label>
+                <input type="radio" name="newShow" id="onlyGroup" value="onlyGroup" <%= ("onlyGroup".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
+                <label for="everybody">Everybody</label>
+                <input type="radio" name="newShow" id="everybody" value="everybody" <%= ("everybody".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
+                <label for="nobody">Nobody</label>
+                <input type="radio" name="newShow" id="nobody" value="nobody" <%= (!"onlyGroup".equals(showInRosterType) && !"everybody".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>
                 </td>
 
                 <% } %>
@@ -285,7 +319,7 @@ import="java.text.DateFormat,
                 <td width="1%" nowrap>
                     Display name in roster:
                 </td>
-                <%  String displayName = (group.getProperties().get("displayName") == null ? "" : group.getProperties().get("displayName"));
+                <%  String displayName = (group.getProperties().get("sharedRoster.displayName") == null ? "" : group.getProperties().get("sharedRoster.displayName"));
                     if(!edit) { %>
                 <td colspan="2">
                     <%= displayName %>
@@ -298,6 +332,31 @@ import="java.text.DateFormat,
                 if (errors.get("display") != null) {
 %>
                 <span class="jive-error-text"> Please enter a display name. </span>
+<%
+                }
+%>
+                </td>
+
+                <% } %>
+            </tr>
+            <tr>
+                <td width="1%" nowrap>
+                    Viewable by groups:
+                </td>
+                <%  boolean enableGroupList = "onlyGroup".equals(group.getProperties().get("sharedRoster.showInRoster")) || errors.get("display") != null;
+                    String groupList = (group.getProperties().get("sharedRoster.groupList") == null ? "" : group.getProperties().get("sharedRoster.groupList"));
+                    if(!edit) { %>
+                <td colspan="2">
+                    <%= groupList %>
+                </td>
+                <% } else { %>
+
+                <td>
+                <textarea name="newGroupList" cols="40" rows="2" <%= enableGroupList ? "" : "disabled"%>><%= groupList %></textarea>
+<%
+                if (errors.get("groupList") != null) {
+%>
+                <span class="jive-error-text"> Please enter existing group names separated by commas. </span>
 <%
                 }
 %>

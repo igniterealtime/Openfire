@@ -209,13 +209,7 @@ public class RosterItem implements Cacheable {
      * @return The subscription status of the item
      */
     public SubType getSubStatus() {
-        if (isShared()) {
-            // Redefine the sub status since the item belongs to a shared group
-            return SUB_BOTH;
-        }
-        else {
-            return subStatus;
-        }
+        return subStatus;
     }
 
     /**

@@ -721,9 +721,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     private void copyUserSessions(List sessions) {
         // Get a copy of the sessions from all users
-        Iterator users = getSessionUsers();
-        while (users.hasNext()) {
-            Collection<Session> usrSessions = getSessions((String)users.next());
+        for (String username : getSessionUsers()) {
+            Collection<Session> usrSessions = getSessions(username);
             for (Session session : usrSessions) {
                 sessions.add(session);
             }
@@ -759,9 +758,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public int getSessionCount() {
         int sessionCount = 0;
-        Iterator users = getSessionUsers();
-        while (users.hasNext()) {
-            sessionCount += getSessionCount((String)users.next());
+        for (String username : getSessionUsers()) {
+            sessionCount += getSessionCount(username);
         }
         sessionCount += anonymousSessions.size();
         return sessionCount;
@@ -780,8 +778,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         return sessionCount;
     }
 
-    public Iterator getSessionUsers() {
-        return Arrays.asList(sessions.keySet().toArray()).iterator();
+    public Collection<String> getSessionUsers() {
+        return Collections.unmodifiableCollection(sessions.keySet());
     }
 
     /**

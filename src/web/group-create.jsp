@@ -38,8 +38,10 @@ errorPage="error.jsp"%>
     boolean cancel = request.getParameter("cancel") != null;
     String  name = ParamUtils.getParameter(request, "name");
     String  description = ParamUtils.getParameter(request, "description");
-    boolean showInRoster = ParamUtils.getBooleanParameter(request, "show", false);
+    String showInRosterType = ParamUtils.getParameter(request, "show");
+    boolean showInRoster = "onlyGroup".equals(showInRosterType) || "everybody".equals(showInRosterType);
     String  displayName = ParamUtils.getParameter(request, "display");
+    String groupList = ParamUtils.getParameter(request, "groupList");
     String  users = ParamUtils.getParameter(request, "users", true);
     // Handle a cancel
     if (cancel) {
@@ -63,12 +65,14 @@ errorPage="error.jsp"%>
                     newGroup.setDescription(description);
                 }
                 if (showInRoster) {
-                    newGroup.getProperties().put("showInRoster", "true");
-                    newGroup.getProperties().put("displayName", displayName);
+                    newGroup.getProperties().put("sharedRoster.showInRoster", showInRosterType);
+                    newGroup.getProperties().put("sharedRoster.displayName", displayName);
+                    newGroup.getProperties().put("sharedRoster.groupList", groupList == null ? "" : groupList);
                 }
                 else {
-                    newGroup.getProperties().put("showInRoster", "false");
-                    newGroup.getProperties().put("displayName", "");
+                    newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
+                    newGroup.getProperties().put("sharedRoster.displayName", "");
+                    newGroup.getProperties().put("sharedRoster.groupList", "");
                 }
 
                 if(users.length() > 0){
@@ -115,7 +119,18 @@ errorPage="error.jsp"%>
     <!--
     function refreshDisplayName(showCheck)
     {
-        document.forms.f.display.disabled=!showCheck.checked;
+        if ("onlyGroup" == showCheck.value) {
+            document.forms.f.newDisplay.disabled=false;
+            document.forms.f.newGroupList.disabled=false;
+        }
+        else if ("everybody" == showCheck.value) {
+            document.forms.f.newDisplay.disabled=false;
+            document.forms.f.newGroupList.disabled=true;
+        }
+        else {
+            document.forms.f.newDisplay.disabled=true;
+            document.forms.f.newGroupList.disabled=true;
+        }
     }
     function setDisplayName()
     {
@@ -206,10 +221,16 @@ errorPage="error.jsp"%>
 					<tr><td height="15" colspan="3"><img src="images/blank.gif"></td>
                     <tr>
                         <td width="1%" nowrap>
-                            <label for="gshow">Show group in group members' rosters:</label>
+                            <label for="gshow">Show group in rosters for:</label>
                         </td>
                         <td width="99%">
-                            <input type="checkbox" name="show" value="true" id="gshow" onclick="refreshDisplayName(this)"/>
+                            <label for="onlyGroup">Only group users</label>
+                            <input type="radio" name="show" id="onlyGroup" value="onlyGroup" onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
+                            <label for="everybody">Everybody</label>
+                            <input type="radio" name="show" id="everybody" value="everybody" onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
+                            <label for="nobody">Nobody</label>
+                            <input type="radio" name="show" id="nobody" value="nobody" checked onclick="refreshDisplayName(this)"/>
+
                         </td>
                     </tr>
                     <tr>
@@ -225,6 +246,14 @@ errorPage="error.jsp"%>
 <%
                                 }
 %>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td nowrap width="1%">
+                            <label for="gGroupList">Viewable by groups:</label>
+                        </td>
+                        <td width="99%">
+                            <textarea name="groupList" cols="30" rows="2" id="gGroupList"><%= ((groupList != null) ? groupList : "") %></textarea>
                         </td>
                     </tr>
                 </table>

@@ -73,13 +73,7 @@ public class Roster implements Cacheable {
         Collection<Group> sharedGroups = null;
         try {
             User rosterUser = UserManager.getInstance().getUser(getUsername());
-            sharedGroups = GroupManager.getInstance().getGroups(rosterUser);
-            // Remove groups that are not being shown in group members' rosters
-            for (Iterator<Group> it=sharedGroups.iterator(); it.hasNext();) {
-                if (!"true".equals(it.next().getProperties().get("showInRoster"))) {
-                    it.remove();
-                }
-            }
+            sharedGroups = XMPPServer.getInstance().getRosterManager().getSharedGroups(rosterUser);
         }
         catch (UserNotFoundException e) {
             sharedGroups = new ArrayList<Group>();
@@ -95,22 +89,32 @@ public class Roster implements Cacheable {
             for (Group group : sharedGroups) {
                 if (group.isUser(item.getJid().getNode())) {
                     // TODO Group name conflicts are not being considered (do we need this?)
-                    item.addSharedGroup(group.getProperties().get("displayName"));
+                    item.addSharedGroup(group.getProperties().get("sharedRoster.displayName"));
                 }
             }
             rosterItems.put(item.getJid().toBareJID(), item);
         }
         // Add RosterItems that belong only to shared groups
-        Map<JID,List<String>> sharedUsers = getSharedUsers(sharedGroups);
+        Map<JID,List<Group>> sharedUsers = getSharedUsers(sharedGroups);
         for (JID jid : sharedUsers.keySet()) {
             try {
+                RosterItem.SubType type = RosterItem.SUB_TO;
                 User user = UserManager.getInstance().getUser(jid.getNode());
                 String nickname = "".equals(user.getName()) ? jid.getNode() : user.getName();
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname , null);
-                for (String group : sharedUsers.get(jid)) {
-                    item.addSharedGroup(group);
+                if (sharedUsers.get(jid).isEmpty()) {
+                    type = RosterItem.SUB_FROM;
                 }
+                else {
+                    for (Group group : sharedUsers.get(jid)) {
+                        item.addSharedGroup(group.getProperties().get("sharedRoster.displayName"));
+                        if (group.isUser(username)) {
+                            type = RosterItem.SUB_BOTH;
+                        }
+                    }
+                }
+                item.setSubStatus(type);
                 rosterItems.put(item.getJid().toBareJID(), item);
             }
             catch (UserNotFoundException e) {
@@ -231,7 +235,7 @@ public class Roster implements Cacheable {
             Collection<Group> sharedGroups = GroupManager.getInstance().getGroups();
             for (String group : groups) {
                 for (Group sharedGroup : sharedGroups) {
-                    if (group.equals(sharedGroup.getProperties().get("displayName"))) {
+                    if (group.equals(sharedGroup.getProperties().get("sharedRoster.displayName"))) {
                         throw new SharedGroupException("Cannot add an item to a shared group");
                     }
                 }
@@ -400,26 +404,29 @@ public class Roster implements Cacheable {
      * @param sharedGroups the shared groups of this user.
      * @return the list of users that belong ONLY to a shared group of this user.
      */
-    private Map<JID,List<String>> getSharedUsers(Collection<Group> sharedGroups) {
+    private Map<JID,List<Group>> getSharedUsers(Collection<Group> sharedGroups) {
         // Get the users to process from the shared groups. Users that belong to different groups
         // will have one entry in the map associated with all the groups
-        Map<JID,List<String>> sharedGroupUsers = new HashMap<JID,List<String>>();
+        Map<JID,List<Group>> sharedGroupUsers = new HashMap<JID,List<Group>>();
         for (Group group : sharedGroups) {
-            // Get all the group users
-            Collection<String> users = new ArrayList<String>(group.getMembers());
-            users.addAll(group.getAdmins());
+            // Get all the users that can have this group in their rosters
+            Collection<String> users = XMPPServer.getInstance().getRosterManager().getRelatedUsers(group, false);
             // Add the users of the group to the general list of users to process
-            for (String groupUser : users) {
+            for (String user : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
                 // (since we have already added the user to the answer)
-                JID jid = XMPPServer.getInstance().createJID(groupUser, null);
-                if (!isRosterItem(jid) && !getUsername().equals(groupUser)) {
-                    List<String> groups = sharedGroupUsers.get(jid);
+                JID jid = XMPPServer.getInstance().createJID(user, null);
+                if (!isRosterItem(jid) && !getUsername().equals(user)) {
+                    List<Group> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
-                        groups = new ArrayList<String>();
+                        groups = new ArrayList<Group>();
                         sharedGroupUsers.put(jid, groups);
                     }
-                    groups.add(group.getProperties().get("displayName"));
+                    // Only associate the group with the user if the user is an actual user of
+                    // the group
+                    if (group.isUser(user)) {
+                        groups.add(group);
+                    }
                 }
             }
         }
@@ -475,17 +482,19 @@ public class Roster implements Cacheable {
      * group will be added to the shared groups lists. In any case an update broadcast will be sent
      * to all the users logged resources.
      *
-     * @param sharedGroup the shared group where the user was added.
+     * @param group the shared group where the user was added.
      * @param addedUser the contact to update in the roster.
      */
-    void addSharedUser(String sharedGroup, String addedUser) {
+    void addSharedUser(Group group, String addedUser) {
         RosterItem item = null;
         JID jid = XMPPServer.getInstance().createJID(addedUser, "");
+        // Get the display name of the group
+        String groupName = group.getProperties().get("sharedRoster.displayName");
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(jid);
             // Do nothing if the item already includes the shared group
-            if (item.getSharedGroups().contains(sharedGroup)) {
+            if (item.getSharedGroups().contains(groupName)) {
                 return;
             }
         }
@@ -501,17 +510,31 @@ public class Roster implements Cacheable {
                 rosterItems.put(item.getJid().toBareJID(), item);
             }
             catch (UserNotFoundException ex) {
-                Log.error("Group (" + sharedGroup + ") includes non-existent username (" +
+                Log.error("Group (" + groupName + ") includes non-existent username (" +
                         addedUser +
                         ")");
             }
         }
-        // Add the shared group to the list of shared groups
-        item.addSharedGroup(sharedGroup);
+        // Update the subscription status depending on the group membership of the new user and
+        // this user
+        if (group.isUser(addedUser) && !group.isUser(getUsername())) {
+            item.setSubStatus(RosterItem.SUB_TO);
+            // Add the shared group to the list of shared groups
+            item.addSharedGroup(groupName);
+        }
+        else if (!group.isUser(addedUser) && group.isUser(getUsername())) {
+            item.setSubStatus(RosterItem.SUB_FROM);
+        }
+        else {
+            // Add the shared group to the list of shared groups
+            item.addSharedGroup(groupName);
+        }
         // Brodcast to all the user resources of the updated roster item
         broadcast(item);
-        // Presences of shared users are of type BOTH so probe for presences
-        presenceManager.probePresence(username, item.getJid());
+        // Probe the presence of the new group user
+        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
+            presenceManager.probePresence(username, item.getJid());
+        }
     }
 
     /**

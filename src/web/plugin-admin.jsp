@@ -155,20 +155,22 @@
 <%
     }
 
+    int count = 0;
     for (int i=0; i<plugins.size(); i++) {
         Plugin plugin = plugins.get(i);
         String dirName = pluginManager.getPluginDirectory(plugin).getName();
         // Skip the admin plugin.
         if (!"admin".equals(dirName)) {
+            count++;
             String pluginName = pluginManager.getName(plugin);
             String pluginDescription = pluginManager.getDescription(plugin);
             String pluginAuthor = pluginManager.getAuthor(plugin);
             String pluginVersion = pluginManager.getVersion(plugin);
 %>
 
-	    <tr class="jive-<%= (((i%2)==1) ? "even" : "odd") %>">
+	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
-	            <%= i+1 %>
+	            <%= count %>
 	        </td>
 	        <td width="20%" nowrap>
 	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;

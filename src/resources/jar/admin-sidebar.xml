@@ -149,6 +149,33 @@
                     url="muc-tasks.jsp"
                     description="" />
         </sidebar>
+
+        <sidebar id="sidebar-groupchat-administration" name="Room Administration">
+
+        <item id="muc-room-summary" name="Room Summary"
+                url="muc-room-summary.jsp"
+                description="Click to see a list of rooms in the service" >
+            <sidebar id="sidebar-groupchat-options" name="Room Options">
+
+                <item id="muc-room-edit-form" name="Room Settings"
+                        url="muc-room-edit-form.jsp"
+                        description="Click to edit the room's configuration" />
+
+                <item id="muc-room-affiliations" name="User Permissions"
+                        url="muc-room-affiliations.jsp"
+                        description="Click to edit user permissions" />
+
+                <item id="muc-room-delete" name="Delete Room"
+                        url="muc-room-delete.jsp"
+                        description="Click to delete the room" />
+            </sidebar>
+        </item>
+
+        <item id="muc-room-create" name="Create New Room"
+                url="muc-room-create.jsp"
+                description="Click to add a new room to the service" />
+
+        </sidebar>
     </tab>
 
 </adminconsole>

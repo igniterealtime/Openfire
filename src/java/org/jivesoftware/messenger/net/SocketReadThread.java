@@ -33,6 +33,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Roster;
+import org.xmpp.packet.Packet;
 
 /**
  * @author Derek DeMoro
@@ -127,7 +128,7 @@ public class SocketReadThread extends Thread {
                         packet.setType(Presence.Type.unavailable);
                         packet.setFrom(session.getAddress());
 
-                        CompositePacket<Presence> compPacket = new CompositePacket<Presence>(packet, session);
+                        CompositePacket compPacket = new CompositePacket(packet, session);
                         router.route(compPacket);
                         clearSignout = true;
                     }
@@ -179,32 +180,34 @@ public class SocketReadThread extends Thread {
 
             if (document != null) {
                 Element doc = document.getRootElement();
-                CompositePacket packet = null;
+
+                Packet packet = null;
                 String tag = doc.getName();
                 if ("message".equals(tag)) {
-                    Message message = new Message(doc);
-                    packet = new CompositePacket<Message>(message, session);
+                    packet = new Message(doc);
                 }
                 else if ("presence".equals(tag)) {
-                    Presence presence = new Presence(doc);
-                    packet = new CompositePacket<Presence>(presence, session);
+                    packet = new Presence(doc);
 
+                    Presence.Type type = ((Presence)packet).getType();
                     // Update the flag that indicates if the user made a clean sign out
-                    clearSignout = (Presence.Type.unavailable == presence.getType() ? true : false);
+                    clearSignout = (Presence.Type.unavailable == type ? true : false);
                 }
                 else if ("iq".equals(tag)) {
-                    IQ iq = getIQ(doc);
-                    packet = new CompositePacket<IQ>(iq, session);
+                    packet = getIQ(doc);
                 }
                 else {
                     throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
                 }
 
+                // Create the composite packet
+                CompositePacket compositePacket = new CompositePacket(packet, session);
+
                 // Route to the Packet Auditor
-                auditor.audit(packet);
+                auditor.audit(compositePacket);
 
                 // Route to PacketRouter
-                router.route(packet);
+                router.route(compositePacket);
 
                 // Increment number of sessions.
                 session.incrementClientPacketCount();

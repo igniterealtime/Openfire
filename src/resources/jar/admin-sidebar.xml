@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xmlTest version="1.0"?>
 
 <jivesidebar>
     <tabs>
@@ -11,23 +11,29 @@
                     <name>Server Manager</name>
                     <items>
                         <item0>
+                            <id>server-main</id>
+                            <url>index.jsp</url>
+                            <name>Main</name>
+                            <description>Click for the main overview page</description>
+                        </item0>
+                        <item1>
                             <id>server-status</id>
                             <url>server-status.jsp</url>
                             <name>Server Status</name>
                             <description>Click to see the current status of the server</description>
-                        </item0>
-                        <item1>
+                        </item1>
+                        <item2>
                             <id>server-props</id>
                             <url>server-props.jsp</url>
                             <name>Server Properties</name>
                             <description>Click to edit server properties</description>
-                        </item1>
-                        <item2>
+                        </item2>
+                        <item3>
                             <id>server-logs</id>
                             <url>logviewer.jsp</url>
                             <name>Server Logs</name>
                             <description>Click to view server logs</description>
-                        </item2>
+                        </item3>
                     </items>
                 </sidebar0>
                 <sidebar1>
@@ -43,5 +49,77 @@
                 </sidebar1>
             </sidebars>
         </tab0>
+        <tab1>
+            <id>database</id>
+            <name>Database Manager</name>
+            <description>Click to manage database settings</description>
+            <sidebars>
+                <sidebar0>
+                    <name>Database Connection</name>
+                    <items>
+                        <item0>
+                            <id>db-connection</id>
+                            <url>db-connection.jsp</url>
+                            <name>Connection Info</name>
+                            <description>Click to see database connection information</description>
+                        </item0>
+                    </items>
+                </sidebar0>
+            </sidebars>
+        </tab1>
+        <tab2>
+            <id>users</id>
+            <name>User Manager</name>
+            <description>Click to manage users</description>
+            <sidebars>
+                <sidebar0>
+                    <name>Users</name>
+                    <items>
+                        <item0>
+                            <id>user-summary</id>
+                            <url>user-summary.jsp</url>
+                            <name>User Summary</name>
+                            <description>Click to see a list of users in the system</description>
+                        </item0>
+                    </items>
+                </sidebar0>
+            </sidebars>
+        </tab2>
+        <tab3>
+            <id>session</id>
+            <name>Session Manager</name>
+            <description>Click to manage connected sessions</description>
+            <sidebars>
+                <sidebar0>
+                    <name>Sessions</name>
+                    <items>
+                        <item0>
+                            <id>session-summary</id>
+                            <url>session-summary.jsp</url>
+                            <name>Session Manager</name>
+                            <description>Click to manage XMPP sessions</description>
+                        </item0>
+                    </items>
+                </sidebar0>
+            </sidebars>
+        </tab3>
+        <tab4>
+            <id>muc</id>
+            <name>MUC Manager</name>
+            <description>Click to manage MUC (multi-user chat) settings</description>
+            <sidebars>
+                <sidebar0>
+                    <name>MUC Manager</name>
+                    <items>
+                        <item0>
+                            <id>muc-properties</id>
+                            <url>muc-server-props-edit-form.jsp</url>
+                            <name>Server Properties</name>
+                            <description>Click to edit MUC settings</description>
+                        </item0>
+                    </items>
+                </sidebar0>
+            </sidebars>
+        </tab4>
     </tabs>
 </jivesidebar>

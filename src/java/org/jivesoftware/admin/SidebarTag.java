@@ -18,7 +18,6 @@ import org.dom4j.Element;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Iterator;
@@ -219,6 +218,7 @@ public class SidebarTag extends BodyTagSupport {
                                 }
                                 buf.append("<li class=\"").append(hcss).append("\">").append(clean(i18n(header))).append("</li>");
                                 // Now print all items:
+
                                 for (Iterator subitems=sidebar.elementIterator(); subitems.hasNext(); ) {
                                     Element item = (Element)subitems.next();
                                     String subitemID = item.attributeValue("id");

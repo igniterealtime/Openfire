@@ -92,6 +92,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             probeResult.addElement("username");
             probeResult.addElement("password");
             probeResult.addElement("email");
+            probeResult.addElement("name");
 
             // Create the registration form to include in the probeResult. The form will include
             // the basic information plus name and visibility of name and email.
@@ -161,7 +162,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     currentRegistration.element("username").setText(user.getUsername());
                     currentRegistration.element("password").setText("");
                     currentRegistration.element("email").setText(user.getEmail());
-                    
+                    currentRegistration.element("name").setText(user.getName());
+
                     Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
                     Iterator fields = form.elementIterator("field");
                     Element field;
@@ -220,6 +222,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     String username = null;
                     String password = null;
                     String email = null;
+                    String name = null;
                     User newUser = null;
                     XDataFormImpl registrationForm = null;
                     FormField field;
@@ -245,12 +248,19 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             values = field.getValues();
                             email = (values.hasNext() ? values.next() : " ");
                         }
+                        // Get the name sent in the form
+                        field = registrationForm.getField("name");
+                        if (field != null) {
+                            values = field.getValues();
+                            name = (values.hasNext() ? values.next() : " ");
+                        }
                     }
                     else {
                         // Get the registration info from the query elements
                         username = iqElement.elementText("username");
                         password = iqElement.elementText("password");
                         email = iqElement.elementText("email");
+                        name = iqElement.elementText("name");
                     }
                     if (email == null || "".equals(email)) {
                         email = " ";
@@ -285,15 +295,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         newUser = userManager.createUser(username, password, null, email);
                     }
                     // Set and save the extra user info (e.g. full name, etc.)
-                    if (newUser != null && registrationForm != null) {
-                        Iterator<String> values;
-                        // Get the full name sent in the form
-                        field = registrationForm.getField("name");
-                        if (field != null) {
-                            values = field.getValues();
-                            String name = (values.hasNext() ? values.next() : " ");
-                            newUser.setName(name);
-                        }
+                    if (newUser != null && name != null) {
+                        newUser.setName(name);
                     }
 
                     reply = IQ.createResultIQ(packet);

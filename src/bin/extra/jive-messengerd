@@ -51,7 +51,7 @@ function execCommand() {
 	OLD_PWD=`pwd`
 	cd $MESSENGER_HOME/bin
 	CMD="./messenger $1"
-	su -c"$CMD" $MESSENGER_USER &
+	su -c "$CMD" $MESSENGER_USER &
 	cd $OLD_PWD
 }
 

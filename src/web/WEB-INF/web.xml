@@ -18,7 +18,7 @@
         <filter-class>org.jivesoftware.admin.AuthCheckFilter</filter-class>
         <init-param>
             <param-name>excludes</param-name>
-            <param-value>login.jsp,index.jsp?logout=true,setup-,.gif,.png</param-value>
+            <param-value>login.jsp,index.jsp?logout=true,setup-,.gif,.png,error-serverdown.jsp</param-value>
         </init-param>
     </filter>
 
@@ -47,6 +47,15 @@
         <servlet-class>org.jivesoftware.messenger.container.PluginServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
+
+    <!-- Uncomment this servlet when starting the server in a webapp -->
+    <!--
+    <servlet>
+        <servlet-name>XMPPBootServlet</servlet-name>
+        <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    -->
 
     <!--@@STARTUP-SERVLET@@-->
 

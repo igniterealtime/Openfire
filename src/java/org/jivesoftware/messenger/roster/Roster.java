@@ -65,6 +65,7 @@ public class Roster implements Cacheable {
      * @param username The username of the user that owns this roster
      */
     public Roster(String username) {
+        presenceManager = XMPPServer.getInstance().getPresenceManager();
         sessionManager = SessionManager.getInstance();
         this.username = username;
 
@@ -271,11 +272,7 @@ public class Roster implements Cacheable {
                 && item.getAskStatus() == RosterItem.ASK_NONE)) {
             broadcast(item);
         }
-        if (item.getSubStatus() == RosterItem.SUB_BOTH
-                || item.getSubStatus() == RosterItem.SUB_TO) {
-            if (presenceManager == null) {
-                presenceManager = XMPPServer.getInstance().getPresenceManager();
-            }
+        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
             presenceManager.probePresence(username, item.getJid());
         }
     }
@@ -408,8 +405,7 @@ public class Roster implements Cacheable {
             for (String groupUser : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
                 // (since we have already added the user to the answer)
-                JID jid = new JID(groupUser, XMPPServer.getInstance().getServerInfo().getName(),
-                        null);
+                JID jid = XMPPServer.getInstance().createJID(groupUser, null);
                 if (!isRosterItem(jid) && !getUsername().equals(groupUser)) {
                     List<String> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
@@ -476,26 +472,21 @@ public class Roster implements Cacheable {
      * @param addedUser the contact to update in the roster.
      */
     void addSharedUser(String sharedGroup, String addedUser) {
-        JID jid = new JID(addedUser, XMPPServer.getInstance().getServerInfo().getName(), "");
+        RosterItem item = null;
+        JID jid = XMPPServer.getInstance().createJID(addedUser, "");
         try {
             // Get the RosterItem for the *local* user to add
-            RosterItem item = getRosterItem(jid);
-            // Add the shared group to the list of shared groups
-            item.addSharedGroup(sharedGroup);
-            // Brodcast to all the user resources of the updated roster item
-            broadcast(item);
+            item = getRosterItem(jid);
         }
         catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
                 User user = UserManager.getInstance().getUser(addedUser);
-                RosterItem item = new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
-                        RosterItem.RECV_NONE, user.getName(), null);
-                item.addSharedGroup(sharedGroup);
+                item =
+                        new RosterItem(jid, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
+                                RosterItem.RECV_NONE, user.getName(), null);
                 // Add the new item to the list of items
                 rosterItems.put(item.getJid().toBareJID(), item);
-                // Brodcast to all the user resources of the updated roster item
-                broadcast(item);
             }
             catch (UserNotFoundException ex) {
                 Log.error("Group (" + sharedGroup + ") includes non-existent username (" +
@@ -503,6 +494,12 @@ public class Roster implements Cacheable {
                         ")");
             }
         }
+        // Add the shared group to the list of shared groups
+        item.addSharedGroup(sharedGroup);
+        // Brodcast to all the user resources of the updated roster item
+        broadcast(item);
+        // Presences of shared users are of type BOTH so probe for presences
+        presenceManager.probePresence(username, item.getJid());
     }
 
     /**
@@ -516,7 +513,7 @@ public class Roster implements Cacheable {
      * @param deletedUser the contact to update in the roster.
      */
     void deleteSharedUser(String sharedGroup, String deletedUser) {
-        JID jid = new JID(deletedUser, XMPPServer.getInstance().getServerInfo().getName(), "");
+        JID jid = XMPPServer.getInstance().createJID(deletedUser, "");
         try {
             // Get the RosterItem for the *local* user to remove
             RosterItem item = getRosterItem(jid);

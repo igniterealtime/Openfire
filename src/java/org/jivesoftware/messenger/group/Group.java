@@ -217,12 +217,13 @@ public class Group implements Cacheable {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    iter.remove();
                     String user = (String)current;
-                    // Remove the group user from the backend store
-                    provider.deleteMember(name, user);
                     // Update the group users' roster
                     XMPPServer.getInstance().getRosterManager().groupUserDeleted(Group.this, user);
+                    // Remove the user from the collection in memory
+                    iter.remove();
+                    // Remove the group user from the backend store
+                    provider.deleteMember(name, user);
                 }
             };
         }

@@ -146,6 +146,9 @@ public class RosterManager extends BasicModule {
         // Get all the group users
         Collection<String> users = new ArrayList<String>(group.getMembers());
         users.addAll(group.getAdmins());
+        // Get the roster of the added user.
+        Roster addedUserRoster = (Roster) CacheManager.getCache("username2roster").get(addedUser);
+
         // Iterate on all the group users and update their rosters
         for (String userToUpdate : users) {
             if (!addedUser.equals(userToUpdate)) {
@@ -154,6 +157,10 @@ public class RosterManager extends BasicModule {
                 // Only update rosters in memory
                 if (roster != null) {
                     roster.addSharedUser(group.getName(), addedUser);
+                }
+                // Update the roster of the newly added group user
+                if (addedUserRoster != null) {
+                    addedUserRoster.addSharedUser(group.getName(), userToUpdate);
                 }
             }
         }
@@ -169,6 +176,9 @@ public class RosterManager extends BasicModule {
         // Get all the group users
         Collection<String> users = new ArrayList<String>(group.getMembers());
         users.addAll(group.getAdmins());
+        // Get the roster of the deleted user.
+        Roster deletedUserRoster = (Roster) CacheManager.getCache("username2roster").get(deletedUser);
+
         // Iterate on all the group users and update their rosters
         for (String userToUpdate : users) {
             if (!deletedUser.equals(userToUpdate)) {
@@ -177,6 +187,10 @@ public class RosterManager extends BasicModule {
                 // Only update rosters in memory
                 if (roster != null) {
                     roster.deleteSharedUser(group.getName(), deletedUser);
+                }
+                // Update the roster of the newly deleted group user
+                if (deletedUserRoster != null) {
+                    deletedUserRoster.deleteSharedUser(group.getName(), userToUpdate);
                 }
             }
         }

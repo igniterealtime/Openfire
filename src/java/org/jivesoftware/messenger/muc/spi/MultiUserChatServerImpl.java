@@ -124,7 +124,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * Timer to monitor chatroom participants. If they've been idle for too long, probe for
      * presence.
      */
-    private Timer timer = new Timer();
+    private Timer timer = new Timer("MUC cleanup");
 
     /**
      * Flag that indicates if the service should provide information about locked rooms when

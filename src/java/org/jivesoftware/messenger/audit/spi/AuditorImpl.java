@@ -50,7 +50,7 @@ public class AuditorImpl implements Auditor {
     /**
      * Timer to save queued logs to the XML file.
      */
-    private Timer timer = new Timer();
+    private Timer timer = new Timer("Auditor");
     private SaveQueuedPacketsTask saveQueuedPacketsTask;
 
     public AuditorImpl(AuditManager manager) {

@@ -3,7 +3,6 @@ BODY {
 }
 BODY, TD, TH {
     font-family : arial, helvetica, sans-serif;
-    font-size : 0.8em;
     font-size : 10pt;
 }
 A {
@@ -17,7 +16,6 @@ A:hover {
     text-decoration : none;
 }
 PRE, TT {
-    font-size : 1.0em;
     font-size : 10pt;
     font-family : courier new, monospaced;
 }
@@ -56,7 +54,7 @@ PRE, TT {
 .jive-tab, .jive-selected-tab {
     padding : 4px 10px 4px 10px;
     font-family : tahoma;
-    font-size : 0.7em;
+    font-size : 8pt;
 }
 .jive-selected-tab A {
     color : #000 !important;
@@ -88,7 +86,7 @@ PRE, TT {
 .jive-tab-section TD {
     font-weight : normal;
     font-family : verdana;
-    font-size : 0.7em;
+    font-size : 8pt;
 }
 .jive-tab-section A {
     color : #333 !important;
@@ -96,10 +94,10 @@ PRE, TT {
     font-weight : normal;
 }
 .jive-tab-spring {
-    font-size : 0.7em;
+    font-size : 8pt;
 }
 .jive-tab-logout {
-    font-size : 0.7em;
+    font-size : 8pt;
 }
 
 /* sidebar */
@@ -166,7 +164,7 @@ PRE, TT {
 
 .jive-description {
     font-family : verdana;
-    font-size : 0.8em;
+    font-size : 8pt;
 }
 
 .jive-label {
@@ -190,7 +188,7 @@ PRE, TT {
 
 /* breadcrumbs */
 .jive-breadcrumbs {
-    font-size : 0.7em;
+    font-size : 8pt;
     font-weight : bold;
     font-family : tahoma;
 }
@@ -361,124 +359,8 @@ TABLE.boxLayoutGrey {
 		margin-bottom:10px;
 		font-weight:bold;
 }
-
 .highlight {
 	color: #990000;
-}
-
-
-
-
-BODY {
-    font-size : 100%;
-}
-BODY, TD, TH {
-    font-family : tahoma, arial, helvetica, sans-serif;
-    font-size : 0.8em;
-}
-A {
-    color : #00f;
-}
-A:visited {
-    color : #00f;
-}
-A:hover {
-    color : #f00;
-    text-decoration : none;
-}
-PRE, TT {
-    font-size : 1.0em;
-    font-family : courier new, monospaced;
-}
-
-/* errors */
-.jive-error-text {
-    color : #f00;
-}
-
-/* success */
-.jive-success-text {
-    color : #090;
-}
-
-/* warning */
-.jive-warning-text {
-    color : #f00;
-}
-
-/* tabs */
-.jive-selected-tab {
-    border-width : 1px 1px 0px 1px;
-    background-color : #fff;
-}
-.jive-tab {
-    border-width : 1px 1px 1px 1px;
-}
-.jive-tab-spacer, .jive-tab-spring {
-    border-width : 0px 0px 1px 0px;
-}
-.jive-tab-bar {
-    background-color : #fff;
-    border-width : 0px 1px 1px 1px;
-}
-.jive-selected-tab, .jive-tab, .jive-tab-spacer, .jive-tab-spring, .jive-tab-bar
-{
-    border-color : #bbb;
-    border-style : solid;
-}
-/* tab colors, spacings, fonts */
-.jive-tab, .jive-selected-tab {
-    padding : 4px 10px 4px 10px;
-    font-family : tahoma;
-    font-size : 0.7em;
-}
-.jive-selected-tab A {
-    color : #000 !important;
-    text-decoration : none;
-    font-weight : bold;
-}
-.jive-tab A {
-    color : #333 !important;
-    text-decoration : none;
-    font-weight : bold;
-}
-.jive-tab A:hover, .jive-selected-tab A:hover {
-    text-decoration : underline;
-}
-.jive-tab {
-    background-color : #E8E8DE;
-}
-.jive-tab-bar TD {
-    font-family : tahoma;
-    font-weight : bold;
-}
-.jive-tab-bar A {
-    color : #000;
-    text-decoration : none;
-}
-.jive-tab-bar A:hover {
-    text-decoration : underline;
-}
-.jive-tab-section TD {
-    font-weight : normal;
-    font-family : verdana;
-    font-size : 0.7em;
-}
-.jive-tab-section A {
-    color : #333 !important;
-    padding-right : 6px;
-    font-weight : normal;
-}
-.jive-tab-spring {
-    font-size : 0.7em;
-}
-.jive-tab-logout {
-    font-size : 0.7em;
-}
-
-/* sidebar */
-.jive-admin-sidebar-header {
-    font-weight : bold;
 }
 
 /* page titles */
@@ -488,92 +370,7 @@ PRE, TT {
 }
 .jive-admin-page-title TD {
     font-family : tahoma, arial, helvetica, sans-serif;
-    font-size : 0.9em;
+    font-size : 9pt;
     font-weight : bold;
 }
-
-/* tables */
-.jive-table TABLE {
-    border : 1px #ccc solid;
-}
-.jive-table TH {
-    background-color : #ddd;
-    color : #000;
-    font-size : 0.7em;
-    font-weight : bold;
-    border-bottom : 1px #bbb solid;
-    padding-left : 6px;
-    padding-right : 6px;
-}
-.jive-description {
-    font-family : verdana;
-    font-size : 0.8em;
-}
-.jive-table .jive-odd {
-}
-.jive-table .jive-even TD {
-    background-color : #f8f8f8;
-    width : 1%;
-    white-space : nowrap;
-}
-.jive-table .jive-current TD {
-    background-color : #ffc;
-}
-.jive-table .jive-label {
-    background-color : #f4f4f4;
-    padding-right : 3px;
-    border : 1px #ccc solid;
-    width : 1%;
-    white-space : nowrap;
-}
-
-/* breadcrumbs */
-.jive-breadcrumbs {
-    font-size : 14px !important;
-    font-weight : plain !important;
-    font-family : tahoma !important;
-}
-.jive-breadcrumbs A {
-    color : #000 !important;
-}
-.jive-breadcrumbs A:hover {
-    text-decoration : underline !important;
-}
-
-/* sidebar */
-.sidebar-group TH {
-    padding-left : 10px;
-    font-weight : bold;
-    text-align : left;
-}
-.sidebar-group .bullet {
-    padding-left : 10px;
-    text-align : right;
-    vertical-align : top;
-    width : 1%;
-}
-
-/* paginators */
-.jive-current {
-    color : #000;
-    font-weight : bold;
-    background-color : #eee;
-    padding-left : 2px;
-    padding-right : 2px;
-    text-decoration : none;
-    border : 1px #ccc solid;
-}
-.jive-current:visited {
-    color : #000;
-}
-.jive-sm-button {
-    font-size : 11px;
-    font-family : tahoma;
-}
-
-
-#a:link {color: #000000; text-decoration: none; }
-#a:active {color: #000000; text-decoration: none; }
-#a:visited {color: #000000; text-decoration: none; }
-#a:hover {color: red; text-decoration: underline; }
 

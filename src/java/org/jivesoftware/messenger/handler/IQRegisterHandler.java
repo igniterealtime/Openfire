@@ -127,20 +127,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             field.setRequired(true);
             registrationForm.addField(field);
 
-            field = new XFormFieldImpl("x-nameVisible");
-            field.setType(FormField.TYPE_BOOLEAN);
-            field.setLabel("Show name");
-            field.addValue("1");
-            field.setRequired(true);
-            registrationForm.addField(field);
-
-            field = new XFormFieldImpl("x-emailVisible");
-            field.setType(FormField.TYPE_BOOLEAN);
-            field.setLabel("Show email");
-            field.addValue("0");
-            field.setRequired(true);
-            registrationForm.addField(field);
-
             // Create the probeResult and add the basic info together with the registration form
             probeResult = new MetaDataFragment(element);
             probeResult.addFragment(registrationForm);

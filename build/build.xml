@@ -157,7 +157,7 @@
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
-                <attribute name="Main-Class" value="org.jivesoftware.messenger.starter.XMPPServerStarter" />
+                <attribute name="Main-Class" value="org.jivesoftware.messenger.starter.ServerStarter" />
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>

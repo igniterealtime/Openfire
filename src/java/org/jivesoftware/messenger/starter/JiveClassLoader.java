@@ -8,7 +8,7 @@
  * This software is the proprietary information of CoolServlets, Inc.
  * Use is subject to license terms.
  */
-package org.jivesoftware.messenger.container.starter;
+package org.jivesoftware.messenger.starter;
 
 import java.io.File;
 import java.io.FilenameFilter;

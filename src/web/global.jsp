@@ -61,7 +61,7 @@
     // embedded mode?
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.messenger.container.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}

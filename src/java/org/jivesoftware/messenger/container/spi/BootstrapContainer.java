@@ -147,7 +147,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     private boolean setupMode = true;
 
     private static final String STARTER_CLASSNAME =
-            "org.jivesoftware.messenger.container.starter.ServerStarter";
+            "org.jivesoftware.messenger.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
 

@@ -121,7 +121,7 @@ public class WebManager extends WebBean {
 
     public boolean isEmbedded() {
         try {
-            ClassUtils.forName("org.jivesoftware.messenger.container.starter.ServerStarter");
+            ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
             return true;
         }
         catch (Exception ignored) {

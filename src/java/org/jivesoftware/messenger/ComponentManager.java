@@ -1,13 +1,13 @@
 package org.jivesoftware.messenger;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.ServiceLookupFactory;
-import org.jivesoftware.messenger.spi.PacketDelivererImpl;
+import org.jivesoftware.messenger.spi.PacketRouterImpl;
 import org.jivesoftware.messenger.spi.PresenceImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Manages the registration and delegation of Components.</p>
@@ -98,6 +98,7 @@ public class ComponentManager {
 
     /**
      * Registers Probeers who have not yet been serviced.
+     *
      * @param prober the jid probing.
      * @param probee the presence being probed.
      */
@@ -108,21 +109,21 @@ public class ComponentManager {
     /**
      * Send a packet to the specified recipient. Please note that this sends packets only
      * to outgoing jids and does to the incoming server reader.
+     *
      * @param packet the packet to send.
      */
     public void sendPacket(XMPPPacket packet) {
+        PacketRouter router;
         try {
-            PacketDelivererImpl deliverer = (PacketDelivererImpl) ServiceLookupFactory.getLookup().lookup(PacketDelivererImpl.class);
-            if (deliverer != null) {
-                // Hand off to the delegated deliverer
-                deliverer.deliver(packet);
+            router = (PacketRouterImpl) ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
+            if (router != null) {
+                router.route(packet);
             }
         }
-        catch (Exception e) {
-            Log.error("Unable to deliver packet", e);
+        catch (UnauthorizedException e) {
+            Log.error(e);
         }
     }
-
 
     private String validateJID(String jid) {
         jid = jid.trim().toLowerCase();

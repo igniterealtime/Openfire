@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# Script used to start jive messenger as daemon
+# The script has currently been tested on Redhat Fedora Core 3,
+# but should theoretically work on most *NIX like systems (with tweaking)
+#
+# before running this script make sure $MESSENGER_HOME/bin/startup.sh is
+# executable by the user you want to run messenger as
+# (chmod +x $MESSENGER_HOME/bin/startup.sh)
+#
+# This script should be copied into /etc/init.d and linked into
+# your default runlevel directory.
+# You can find your default runlevel directory by typing: 
+# grep default /etc/inittab
+#
+# Link to the directory like follows
+# cd /etc/rc<num>.d
+# ln -s ../init.d/jive-messengerd $90jive-messengerd
+#
+# Before using this script you need to specify two variables below:
+
+#set this to tell this script where messenger lives
+#export MESSENGER_HOME=
+
+#set this to tell which user to run messenger daemon as
+#export MESSENGER_USER=
+
+# -----------------------------------------------------------------
+export PID_FILE=/var/run/jive-messengerd.pid
+
+#determine which ps command to use to find the pid
+case `uname` in
+	SunOS)
+		#todo mention other sys 5 os here
+		PS="ps -ef"
+		;;
+	*)
+		PS="ps aux"
+		;;
+esac
+
+start() {
+	CMD="nohup $MESSENGER_HOME/bin/startup.sh >> $MESSENGER_HOME/logs/nohup.out 2>&1 &"
+	su -c"$CMD" $MESSENGER_USER
+	sleep 1
+
+	pid=`$PS | grep java | grep startup.jar | awk '{print$2}'`
+	if [ $pid ]; then
+		echo "$pid" > $PID_FILE
+		echo "Starting Jive Messenger daemon"
+		echo
+	else 
+		echo "$START_MSG"
+		echo "Jive Messenger daemon Failed to start"
+		echo
+	fi
+}
+
+stop() {
+	kill `cat $PID_FILE`
+	rm $PID_FILE
+}
+
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	*)
+		echo "Usage $0 {start|stop}"
+		exit 1
+esac
+
+exit 0

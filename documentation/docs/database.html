@@ -1,0 +1,420 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>Jive Messenger Database Documentation</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h1><a name="introduction">Jive Messenger Database Setup</a></h1>
+
+<p>Jive Messenger stores all data in a back-end database that you must setup and manage.
+This document provides setup instructions for all of the currently supported databases.
+</p>
+<p>
+JDBC 2.0 drivers are required for Jive Messenger to communicate with your database. Suggested
+drivers for particular databases are noted below where applicable. However, 
+<em>the JDBC-ODBC bridge will not work with Jive under any circumstances</em>.
+</p>
+<p>
+For a full list of available JDBC drivers, please see:
+<a href="http://industry.java.sun.com/products/jdbc/drivers">
+http://industry.java.sun.com/products/jdbc/drivers</a>.</p>
+
+<p>
+All database schemas can be found in the <tt>database</tt> directory of the
+Jive Messenger installation.
+</p>
+
+<p>Note that additional databases besides the ones in this list may be supported.
+Please check the distribution for a database schema for your database or
+consider creating a schema yourself if one isn't provided.
+</p>
+<p>
+Choose your database from the list below for setup details:
+</p>
+<ul>
+	<li> <a href="#mysql">MySQL</a>
+	<li> <a href="#oracle">Oracle</a>
+	<li> <a href="#sqlserver2000">Microsoft SQLServer</a>
+	<li> <a href="#postgres">PostgreSQL</a>
+	<li> <a href="#db2">IBM DB2</a>
+      <li> <a href="#hsql">HSQL db (Hypersonic)</a>
+<!--	
+	<li> <a href="#interbase">Interbase 6</a>
+	<li> <a href="#cloudscape">Cloudscape</a>
+-->
+</ul>
+
+<h2><a name="mysql">MySQL</a></h2>
+<ul>
+	<b>JDBC Drivers</b><p>
+
+	The JDBC driver for MySQL can be found at:
+	<p>
+	<a href="http://www.mysql.com/downloads/api-jdbc.html">
+    http://www.mysql.com/downloads/api-jdbc.html</a>
+	<p>
+    If you still have the older mm.mysql JDBC drivers, you are encouraged to
+    upgrade to the newest Connector/J drivers (3.0.2 or later).
+	<p>
+	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
+		<li>driver: <tt>org.gjt.mm.mysql.Driver</tt>
+		<li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
+	</ul><p>
+		
+	where [YOUR_HOST] and [DATABASE_NAME] are the actual values for you server.
+	In many cases <tt>localhost</tt> is a suitable value for [YOUR_HOST] when
+	your database is running on the same server as your webserver.
+
+	<p><b>Setup Instructions</b><p>
+	<ol>
+		<li>Make sure that you are using MySQL 3.23.2 or later and the 
+		MyISAM table type (default).
+		<li>Create a database for the Jive tables:<br>
+	    <code>mysqladmin create [databaseName]</code><br>
+	    (note: "databaseName" can be something like 'jivexmpp')
+
+	    <li>Import the schema file from the <tt>database</tt> directory of the installation folder:<br>
+	    Unix/Linux: <code>cat jive_xmpp_mysql.sql | mysql [databaseName];</code>
+		<br>   
+        Windows: <code>type jive_xmpp_mysql.sql | mysql [databaseName];</code>
+		
+		<li>Start the Jive Messenger setup tool, and use the appropriate JDBC connection
+			settings.
+	</ol>
+	
+    <p><b>Character Encoding Issues</b><p>
+    
+    MySQL does not have proper Unicode support, which makes supporting data
+    in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
+    which can be enabled by adding 
+    <tt>&lt;mysql&gt;&lt;useUnicode&gt;true&lt;/useUnicode&gt;&lt;/mysql&gt;</tt>
+    to the <tt>&lt;database&gt;</tt> section of your <tt>jive_messenger.xml</tt> file.
+    When using this setting, you should also set the Jive character encoding
+    to utf-8 in the admin tool.
+	
+	<p><b>Further Help</b><p>
+
+	If you need help setting up MySQL, refer to the 
+	following sites:<p>
+	
+	<a href="http://www.mysql.com/doc.html">http://www.mysql.com/doc.html</a><br>
+	<a href="http://www.devshed.com/Server_Side/MySQL">http://www.devshed.com/Server_Side/MySQL</a>           
+</ul>
+
+<p><h2><a name="oracle">Oracle</a></h2><p><ul>
+
+	<b>JDBC Drivers</b><p>
+
+	For most users, the best drivers for Oracle are the ones written by Oracle (which
+	come with the database or can be downloaded from Oracle's website). You
+	should use the Oracle 9i "thin" drivers (users have reported bugs with the 8i drivers) 
+	that are in the the <tt>classes12.zip</tt> file. 
+	<b>Do not use the <tt>classes11.zip</tt> JDBC driver.</b> Note: you may wish to rename the
+    <tt>classes12.zip</tt> file to <tt>classes12.jar</tt> or <tt>oracle.jar</tt> 
+    since some application servers will not work correctly with zip files.
+	<p>
+	In the Jive Messenger web-based setup tool, use the following values:<p>
+    
+    <ul>
+		<li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
+		<li>server: <tt>jdbc:oracle:thin:@[YOUR_HOST]:1521:[DATABASE_NAME]</tt>
+	</ul><p>
+		
+	where [YOUR_HOST] and [DATABASE_NAME] are the actual values for you server.
+	In many cases <code>localhost</code> is a suitable value for [YOUR_HOST] when
+	your database is running on the same server as your webserver.
+
+	<p><b>Setup Instructions</b><p>
+	
+	First, create a "Jive" user or some other user
+	that will "own" the Jive tables. This isn't necessary, but doing so
+	will allow your tables to exist in a seperate tablespace.
+	<p>
+	Next import the schema from the <tt>database</tt> directory of the installation
+    using sqlplus (or your favorite Oracle tool such
+	as Toad). For sqlplus: copy the "jive_xmpp_oracle.sql" file to the same 
+	directory where sqlplus is installed (should be something like 
+	/Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
+		<code>@ jive_xmpp_oracle</code><br>
+	That will import the schema file. Your database is now setup.
+</ul>
+
+<p><h2><a name="sqlserver2000">SQL Server 2000</a></h2><p>
+
+<ul>	
+	<b>JDBC Drivers</b><p>
+
+    Microsoft provides a <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=4f8f2f01-1ed7-4c4d-8f7b-3d47969e66ae&DisplayLang=en">free JDBC driver</a> that works with Jive Messenger.
+    After downloading and extracting the drivers, place <tt>msbase.jar</tt>,
+    <tt>mssqlserver.jar</tt>, and <tt>msutil.jar</tt> in the classpath of your
+    application server or the <tt>WEB-INF/lib</tt> directory of your Jive Messenger
+    web application. Use the following values in the Jive Messenger web-based setup tool:<p>
+
+    	<ul>
+		<li>driver -- <tt>com.microsoft.jdbc.sqlserver.SQLServerDriver</tt>
+		<li>server -- <tt>jdbc:microsoft:sqlserver://[HOST_NAME]:[PORT_NUMBER];databasename=[DB_NAME]</tt>
+	</ul>
+	<p>
+	where [HOST_NAME] is the host name or IP address of your database server,
+    and [PORT_NUMBER] is the port that SQLServer is listening on (normally 1433)
+    and [DB_NAME] is the name of the database (this parameter is optional).
+
+	<p><b>Setup Instructions</b><p>
+
+	<ol>
+		<li>Create a new database using Enterprise Manager if you do not already have
+	   		a database you want to use. You may wish to name the database "jivexmpp".
+		<li>Create a user to access the database if you do not already have one you'd
+			like to use. Consider making the default database for the user be the
+			one you created in step 1.
+		<li>Open the Query Analyser and connect to the server.
+		<li>Select the database you want to use for Jive Messenger
+		    from the DB drop down (the one you created in step 1 if you're using a new database).
+		<li>Open the jive_xmpp_sqlserver_2000.sql file.
+		<li>Press F5 to run the script. The script will run and create the
+			necessary tables.
+		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
+			when prompted.
+     </ol>   
+</ul>     
+
+<p><h2><a name="postgres">PostgreSQL</a></h2><p>
+
+<ul>
+	<b>JDBC Drivers</b>
+	<p>
+	JDBC Drivers for PostgreSQL can be found in various distribution packages
+	at <a href="http://jdbc.postgresql.org" target="_blank">PostgreSQL's JDBC Home Page</a>. 
+	This installation in particular refers to <code>&quot;pgjdbc2.jar&quot;</code> driver for
+	accessing PostgreSQL 7.3. Refer to the JDBC documentation at that site
+	for more information. 
+    <p>
+	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
+		<li>driver -- <tt>org.postgresql.Driver</tt>
+		<li>server -- <tt>jdbc:postgresql://[HOST_NAME]:[PORT_NUMBER]/dbname</tt>
+	</ul><p>
+		
+	If left out, host defaults to localhost (not 127.0.0.1) and port to 5432.
+	
+	<p>
+	<b>Setup Instructions</b>
+	<p>
+	<ol>
+	  <li>Create the database. For example, using the 
+	  	PostgreSQL <code>&quot;createdb&quot;</code> utility:
+	  	<br>
+	  	<code>createdb -E UNICODE jivexmpp</code>
+	  <li>Import the schema from the <tt>database</tt> directory of the installation. 
+        Use psql (or your favorite Postgres sql 
+	  	utility) to import the Jive Messenger database schema:
+	  	<br>
+	  	<code>psql -d jivexmpp -f jive_xmpp_postgresql.sql</code>
+	  <li>Proceed to Jive Messenger setup and use the appropriate JDBC settings when
+	  	prompted.	  
+	</ol>
+</ul>
+
+<p><h2><a name="db2">IBM DB2 7</a></h2><p><ul>
+
+	<b>JDBC Drivers</b>
+	<p>
+	Use the JDBC 1.2 compliant driver, db2java.zip (1293KB),
+	located in the <nobr>"%DB2PATH%\java2"</nobr> directory.
+	<p>
+	Values for the config file are:
+	<ul>
+		<li>driver: <code>COM.ibm.db2.jdbc.app.DB2Driver</code>
+		<li>server: <code>jdbc:db2:[DB NAME, e.g. JIVE]</code>
+	</ul>
+	If you are using a remote database you need to use the following values for the config file are:
+	<ul>
+		<li>driver: <code>COM.ibm.db2.jdbc.net.DB2Driver</code>
+		<li>server: <code>jdbc:db2:[DB NAME, e.g. JIVE]</code>
+	</ul>
+	<p>
+	<b>Setup Instructions</b>
+	<p>
+	You have to create a new database (e.g. JIVE) or use an existing 
+	one. Connect to the database using any valid username allowed to create
+	tables and indexes. Keep in mind that DB2 UDB applies the user name 
+	as the table schema. Use the same user when you configure Jive with
+	the administration interface. Commands are as follows:
+	<p>
+	<code>DB2 CREATE DB JIVE ALIAS JIVE<br>
+	DB2 CONNECT TO JIVE USER [DBUSER] USING [DBPASSWORD]</code><br>
+	(or you can use the Command Center GUI)
+	<p>
+	Start the DB2 command window (in Windows), or the user's shell in 
+	Unix and import the schema in the <tt>database</tt> directory of the
+    installation with:<p>
+		<code>db2 -tvf jive_xmpp_db2.sql</code>
+	<p>
+	Or, use the DB2 Command Center and run the script
+	through the "Replication Sources" folder in the Database tree.
+	
+	<p>
+	The database is now setup.
+
+</ul>
+
+<p><h2><a name="hsql">HSQL 1.7.1 (Hypersonic)</a></h2><p><ul>
+
+    <b>Special Note</b>
+    <p>
+    Jive Messenger bundles HSQL as its embedded database. If you choose to use the embedded database,
+    it can be configured via the Jive Messenger installer. If you have a stand-alone installation
+    of HSQL, follow the instructions below to connect to it.
+    </p>
+
+	<b>JDBC Drivers</b>
+	<p>
+	Because HSQL db is embedded in Jive Messenger, there is no need to download the
+    JDBC driver separately. Values for the config file are:
+	<ul>
+		<li>driver: <code>org.hsqldb.jdbcDriver</code>
+		<li>server: <code>jdbc:hsqldb:[PATH_TO_DB_FILES/DB_NAME]</code>
+	</ul>
+	<p>
+	For example, the server URL might be <tt>jdbc:hsqldb:../database/defaultdb</tt>
+	<p>
+	<b>Setup Instructions</b>
+	<p>
+	Create a database for the Jive Messenger
+	tables. This assumes you have HSQL installed in its own
+	directory and working correctly.
+	<ol>
+		<li>
+		Run the HSQL Database Manager by navigating to the folder where
+	    hsqldb.jar is located and type the following
+		<ul>
+		    <p>
+		    <code>
+	        java -cp hsqldb.jar org.hsqldb.util.DatabaseManager
+	        </code>
+	        <p>
+		</ul>
+	    then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
+	    in the Jive Messenger distribution - this is referring to the hsqldb.jar from the HSQL
+	    distribution.
+	
+		<li>
+	    When prompted with the connect window, enter <tt>org.hsqldb.jdbcDriver</tt>
+	    as the Driver, and specify the URL of your database in
+	    the URL field. The default password is already entered.
+	
+	    <li>Now copy and paste the contents of <tt>jive_xmpp_hsql.sql</tt> from
+        the <tt>database</tt> directory of the installation into the
+	    command window, and hit execute.  If no errors are
+	    reported, then your database is setup properly.
+	
+	    <li>Finally, you should change the username and password login for your
+		database: just open the .script file in your
+	    database folder and change the appropriate values. Make sure that you
+		don't use a blank password, as Jive Messenger will not accept
+		one.
+	</ol>
+</ul>
+<!--
+
+<p><h2><a name="interbase">Interbase 6.0</a></h2><p><ul>	
+ 
+    <font color="red"><b>Warning:</b></font> some users have 
+    experienced problems trying to make Interbase work with Jive. You may
+    wish to try a different database such as MySQL or Postgres if possible.<p>
+ 
+	<b>JDBC Drivers</b>
+	<p>
+    
+	JDBC drivers and other files for Interbase can be downloaded at
+	<a href="http://www.borland.com/devsupport/interbase/opensource/" target="_blank">
+	http://www.borland.com/devsupport/interbase/opensource/</a>. The JDBC
+	JAR file is called interclient.jar, and should be put in the classpath of
+	your application server.
+	<p>
+	Values for the config file are:
+	<ul>
+		<li>driver: <code>interbase.interclient.Driver</code>
+		<li>server: <code>jdbc:interbase://host/fullpath</code>
+	</ul>
+	
+	<p>
+	<b>Setup Instructions</b>
+	<p>
+	<ol>
+	  	<li>Create a new database by connecting to your Interbase server with 
+		IBConsole then use the Database/Create Database menu option.
+		<li>Execute the Jive SQL script using Interactive SQL. This can be 
+			started from the Tools/Interactive SQL menu. Within Interactive SQL 
+			load the jive_xmpp_interbase.sql script (Query/Load Script) and execute 
+			it (Query/Execute). The database will now have been constructed.  
+	</ol>
+	<p>
+	Notes: It would probably be a good idea to create a new user for Jive or 
+	at least to change the password. 
+	<p>
+	To use JDBC with interbase you have to have install the Interbase
+	InterServer which enables the InterClient JDBC driver to access the
+	database.	
+</ul>
+
+<p><h2><a name="cloudscape">Cloudscape 3.6.4</a></h2><p><ul>
+
+	Note: The following procedure will use the embedded version of Cloudscape, 
+	but a similar process can be used to setup the client/server version. The 
+	downloaded zip file supports both embedded and client/server modes.
+	<p>
+	
+	<p>
+	<b>Setup Instructions</b>
+	<p>
+
+	Cloudscape and the JDBC drivers can be downloaded at 
+	<a href="http://www.informix.com/cloudscape/" target="_blank">
+	http://www.informix.com/cloudscape/</a>, the zip file is cloudscape364.zip.
+	After downloading, unzip the file into \cloudscape directory and add the 
+	following JARs to the CLASSPATH of your system, the lib directory of Jive Messenger,
+      your application server,
+	or put them in the WEB-INF/lib directory created for the Jive web application.
+	<p>
+
+	For Windows:
+<pre>
+	md \cloudscape
+	cd \cloudscape
+	jar xvf cloudscape364.zip
+	set CLASSPATH=%CLASSPATH%;\cloudscape\lib\cloudscape.jar;\cloudscape\lib\tools.jar
+</pre>
+	
+	
+<ol>
+	<li> Change into your Cloudscape directory, i.e. cd \cloudscape
+	<li> Copy in the file jive_cloudscape_364.sql.
+	<li> Using the Cloudscape Interactive JDBC scripting tool (ij), create the 
+		database:
+<pre>
+	java COM.cloudscape.tools.ij
+	ij version 3.6 (c) 1997-2001 Informix Software, Inc.
+	ij> connect 'jdbc:cloudscape:jiveDB;create=true';
+	ij> run 'jive_cloudscape_364.sql';
+	ij> select * from jiveuser;
+	ij> exit;
+</pre>
+</ol>
+
+<p>
+<b>JDBC Drivers</b>
+<p>
+
+Values for the admin tool are:<ul>
+	<li>driver: <code>COM.cloudscape.JDBCDriver</code>
+	<li>server: <code>jdbc:cloudscape:/cloudscape/jiveDB</code>
+	<li>username: <code>APP</code>
+	<li>password: <code>APP</code>
+</ul>
+
+</ul>
+-->
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>Jive Messenger LDAP Guide</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<a name="top"></a>
+
+<h1>Jive Messenger LDAP Guide</h1>
+
+<h2>Introduction</h2>
+
+<p>
+This document details how to configure your Jive Messenger installation to use an external LDAP store when
+authenticating users.
+</p>
+<h2>Background</h2>
+<p>
+LDAP (Lightweight Directory Access Protocol) has emerged as a dominant standard 
+for user authentication and for storage of user profile data. It serves as a 
+powerful tool for large organizations (or those organizations integrating many 
+applications) to simplify user management issues.
+</p>
+<p>
+By default, Jive Messenger stores all user data in a database and performs 
+authentication using database lookups. The LDAP module replaces that 
+functionality and allows Jive Messenger to:
+<ul>
+<li>
+Use a LDAP server to authenticate a user's identity.
+</li>
+<li>
+Load and store user profile information in a LDAP directory.
+</li>
+</ul>
+</p>
+<p>
+This document will guide you through preparing your LDAP server and provide 
+details about how to install the LDAP module on Jive Messenger. These 
+instructions assume that you're a competent LDAP user, and that you're familiar 
+with Jive Messenger setup issues. The iPlanet Directory Server 5.0 LDAP server 
+was used for development and testing, but any LDAP compliant server should also 
+work.
+</p>
+<h2>Choosing an LDAP storage mode</h2>
+<p>Two modes for storing user data in an LDAP directory are supported:
+<ol>
+<li>
+Mixed Mode (LDAP and User Database) -- Username, name and email are stored in 
+LDAP. All Jive-specific data is stored in the Jive Messenger user database. 
+This mode requires no changes to your LDAP directory.
+</li>
+<li>
+Pure LDAP Mode -- All user data is stored in LDAP, including Messenger-specific 
+data. This mode requires you to make changes to your LDAP schema.
+</li>
+</ol>
+The first option is easier to setup and is generally the better solution. 
+However, the second option is also appropriate in some cases.
+</p>
+
+<h2>Configuration</h2>
+<p>
+In order to configure your server to use LDAP you need complete the following 
+tasks:
+<ol>
+<li>
+Stop Messenger.
+</li>
+<li>Edit <tt>MESSENGER_HOME/config/jive-messenger.xml</tt> as described below.
+</li>
+<li>
+Restart Messenger.
+</li>
+</ol>
+</p>
+<h3>Configure Messenger</h3>
+<p>
+Open the Messenger configuration file <tt>MESSENGER_HOME/config/jive-messenger.xml</tt> in your favorite
+editor and add or change the following settings:
+</p>
+<ul>
+<li>UserProvider.id.className - com.jivesoftware.xmpp.ldap.LdapUserIDProvider</li>
+<li>UserProvider.properties.className</li>
+<li>UserProvider.info.className</li>
+<li>UserProvider.account.className</li>
+<li>UserProvider.roster.className</li>
+<li>ldap.host - LDAP server host; e.g. localhost or machine.example.com, etc.</li>
+<li>ldap.port - LDAP server port number</li>
+<li>ldap.usernameField - The field name that the username lookups will be performed on.</li>
+<li>ldap.baseDN - The starting DN that searches for users will performed with. The entire subtree under the base
+    DN will be searched for user accounts.
+</li>
+<li>ldap.nameField - The field name that holds the user's name.</li>
+<li>ldap.emailField - The field name that holds the user's email address.</li>
+<li>ldap.adminDN - A directory administrator's DN. All directory operations will be performed with this account.
+    For normal usage of the module, the admin should have full administrative controls over the directory.
+</li>
+<li>ldap.adminPassword - The password for the directory administrator.</li>
+<li>ldap.debugEnabled - A value of "true" if debugging should be turned on. When on, trace information about
+    buffers sent and received by the LDAP provider is written to System.out</li>
+<li>ldap.sslEnabled - Enable SSL connections to your LDAP server. If you enable SSL connections, the LDAP server port
+    number most likely should be changed to 636.
+</li>
+<li>ldap.mode - "0" for all LDAP mode, "1" for mixed LDAP/Jive DB mode</li>
+</ul>
+<p>
+Below is a sample set up.
+</p>
+<pre><code>
+&lt;jive&gt;
+...
+  &lt;UserProvider&gt;
+    &lt;id&gt;
+      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserIDProvider&lt;/className&gt;
+    &lt;/id&gt;
+    &lt;properties&gt;
+      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserPropertiesProvider&lt;/className&gt;
+    &lt;/properties&gt;
+    &lt;info&gt;
+      &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserInfoProvider&lt;/className&gt;
+    &lt;/info&gt;
+    &lt;account&gt;
+       &lt;className&gt;org.jivesoftware.messenger.ldap.LdapUserAccountProvider&lt;/className&gt;
+    &lt;/account&gt;
+  &lt;UserProvider&gt;
+  &lt;ldap&gt;
+    &lt;host&gt;myhost.com&lt;/host&gt;
+    &lt;port&gt;389&lt;/port&gt;
+    &lt;usernameField&gt;uid&lt;/usernameField&gt;
+    &lt;emailField&gt;mail&lt;/emailField&gt;
+    &lt;baseDN&gt;o=mycompany, c=mycountry&lt;/baseDN&gt;
+    &lt;nameField&gt;cn&lt;/nameField&gt;
+    &lt;adminDN&gt;cn=ldap-administrator&lt;/adminDN&gt;
+    &lt;adminPassword&gt;adm1npwd&lt;/adminPassword&gt;
+    &lt;debugEnabled&gt;false&lt;/debugEnabled&gt;
+    &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
+    &lt;mode&gt;1&lt;/mode&gt;
+  &lt;/ldap&gt;
+...
+&lt;/jive&gt;
+</code></pre>
+<h2>Configure the LDAP Server (optional)</h2>
+<p>
+<b>Note:</b> If you use the "mixed mode" of the Jive Messenger LDAP module, no changes to your LDAP directory are
+necessary. However, if you use the "pure mode", you'll need to make changes to your directory as detailed below.
+
+Several custom LDAP attributes are used to store things such as the numeric Jive Messenger user ID,
+the date the account was created, privacy flags, etc. The first step is to define these attributes in your LDAP
+directory.
+</p>
+<table>
+<tr>
+  <th>Name</th>
+  <th>Type</th>
+  <th>OID</th>
+  <th>Multi-valued</th>
+  <th>Description</th>
+</tr>
+<tr>
+  <td>jiveUserID</td>
+  <td>Integer </td>
+  <td>1.3.6.1.4.1.10985.389.2 </td>
+  <td>No </td>
+  <td>A numeric ID that Jive Messenger uses to identify a user.</td>
+</tr>
+<tr>
+  <td>jiveNameVisible </td>
+  <td>String </td>
+  <td>1.3.6.1.4.1.10985.389.3 </td>
+  <td>No </td>
+  <td>The value is "true" if a user wishes to show their name publicly; "false" otherwise.</td>
+</tr>
+<tr>
+  <td>jiveEmailVisible </td>
+  <td>String </td>
+  <td>1.3.6.1.4.1.2.10985.389.4 </td>
+  <td>No </td>
+  <td>The value is "true" if a user wishes to show their email address publicly; "false" otherwise.</td>
+</tr>
+<tr>
+  <td>jiveCDate </td>
+  <td>String </td>
+  <td>1.3.6.1.4.1.10985.389.6 </td>
+  <td>No </td>
+  <td>The date the user became a Jive Messenger user.</td>
+</tr>
+<tr>
+  <td>jiveMDate </td>
+  <td>String </td>
+  <td>1.3.6.1.4.1.10985.389.7 </td>
+  <td>No </td>
+  <td>The date the user information was last updated.</td>
+</tr>
+<tr>
+  <td>jiveProps </td>
+  <td>String </td>
+  <td>1.3.6.1.4.1.10985.389.8 </td>
+  <td>Yes </td>
+  <td>A collection of extended properties for the user.</td>
+</tr>
+</table>
+<p>Next, you can optionally create a new object class that uses the specified attributes
+(or modify an existing object to add the attributes). The Jive Messenger LDAP module does not actually pay attention to
+object types, but only looks for the correct attributes. If you do create a new object, the object name should be
+"jivePerson" with an OID of 1.3.6.1.4.1.2.10985.389.1.
+</p>
+<p>
+Each of the attributes listed above must be added as an optional attribute since the attributes will not be
+created until the user logs into Jive Messenger for the first time.
+</p>
+<p>
+Also, you may wish to create an index on the "jiveUserID" attribute so that lookups on that field are fast.
+</p>
+</body>

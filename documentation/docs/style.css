@@ -1,0 +1,105 @@
+BODY {
+    font-size : 100%;
+    background-color : #fff;
+}
+BODY, TD, TH {
+    font-family : tahoma, arial, helvetica;
+    font-size : 0.8em;
+}
+PRE, TT, CODE {
+    font-family : courier new, monospaced;
+    font-size : 1.0em;
+}
+A:hover {
+    text-decoration : none;
+}
+LI {
+    padding-bottom : 4px;
+}
+H1 {
+    font-size : 1.4em;
+    font-weight : bold;
+    width : 100%;
+    border-bottom : 1px #ccc solid;
+    padding-bottom : 2px;
+}
+H2 {
+    font-size : 12px;
+    font-weight : bold;
+}
+H3 {
+    font-size : 12px;
+    font-weight : bold;
+}
+
+
+TT {
+    font-family : courier new;
+    font-weight : bold;
+    color : #060;
+}
+
+.subheader {
+    font-weight : bold;
+}
+.footer {
+    font-size : 0.8em;
+    color : #999;
+    text-align : center;
+    width : 100%;
+    border-top : 1px #ccc solid;
+    padding-top : 2px;
+}
+.code {
+    border : 1px #ccc solid;
+    padding : 0em 1.0em 0em 1.0em;
+    margin : 4px 0px 4px 0px;
+}
+.nav, .nav A {
+    font-family : verdana;
+    font-size : 0.85em;
+    color : #600;
+    text-decoration : none;
+    font-weight : bold;
+}
+.note {
+    font-family : verdana;
+    font-size : 0.85em;
+    color : #600;
+    text-decoration : none;
+    font-weight : bold;
+}
+.nav {
+    width : 100%;
+    border-bottom : 1px #ccc solid;
+    padding : 3px 3px 5px 1px;
+}
+.nav A:hover {
+    text-decoration : underline;
+}.question {
+	font-weight: 600;
+}
+.answer {
+	font-weight: 300;
+}
+.toc {
+	right: 5px;
+}
+TABLE.dbtable {
+     border : 1px #ccc solid;
+     width : 600px;
+}
+TR, TH {
+     border-bottom : 1px #ccc solid;
+}
+TH, TD {
+     padding-right : 15px;
+}
+TH {
+     text-align : left;
+     white-space : nowrap;
+     background-color : #eee;
+}
+.primary-key {
+    background-color : #ffc;
+}

@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Jive Software Messenger Readme</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h1>Jive Messenger Installation Guide</h1>
+
+<p>Jive Messenger is a powerful instant messaging (IM) and chat
+server that implements the XMPP protocol. This document will guide 
+you through installing Jive Messenger as a standalone
+application. For a full list of features and more information, please
+visit the Jive Messenger website: <a href="http://www.jivesoftware.org/messenger"
+ target="_top">http://www.jivesoftware.org/messenger</a></p>
+
+<p>In order to install Jive Messenger, you'll need a server environment
+that meets the following requirements: </p>
+<ul>
+  <li>JDK 1.5 or later. You can check your java version by typing "java
+-version" at the command line. See <a href="http://java.sun.com">http://java.sun.com</a>
+for Java on your platform or download a Jive Messenger installer with
+bundled JVM for your operating system.</li>
+  <li>A supported database with a robust JDBC 2.0 compliant driver.
+Supported databases and recommended JDBC drivers are detailed in the
+database documentation below. Alternatively, you can use the embedded database.</li>
+</ul>
+
+<h2>Installation Overview</h2>
+<p>To complete the installation of Jive Messenger, you'll need to
+perform each of the following steps: </p>
+<ol>
+  <li><a href="#database">Database</a> - prepare your database for Jive
+Messenger. </li>
+  <li><a href="#config">Setup</a> - Use the built in web based setup
+tool to setup and verify the server configuration.</li>
+  <li><a href="#tools">Admin Tool</a> - use the web-based admin tool to
+manage the server.</li>
+</ol>
+<h2><a name="distribution">Files in the Distribution</a></h2>
+<p> The files in your distribution should be as follows (some
+sub-directories omitted for brevity): </p>
+<pre>jive_messenger/  
+ |- readme.html
+ |- license.html
+ |- conf/
+ |- bin/
+ |- lib/
+ |- plugins/
+     |- admin/
+ |- resources/
+     |-database/
+     |-security/
+ |- documentation/</pre>
+
+<ul> 
+	 <li>The <tt>conf</tt> directory is where Jive Messenger stores
+configuration files.</li>
+  <li>The <tt>bin</tt> directory contains the server executable scripts.
+Run startup.bat or startup.ssh. If you used the Jive Messenger installer, 
+native executables are also provided for your convenience. Below the base 
+directory are platform specific deployment tools for running Messenger as service, etc.</li>
+  <li>The <tt>lib</tt> directory contains libraries necessary for
+running Jive Messenger.</li>
+  <li>The <tt>plugins</tt> directory contains server plugins. By
+default, Jive Messenger ships with a web-based admin console plugin.</li>
+  <li>The <tt>resources/database</tt> directory contains SQL schema files to
+create new Jive Messenger databases, as well as upgrade scripts for
+existing installations. </li>
+  <li>The <tt>resources/security</tt> directory is where Jive Messenger
+maintains keystores to support SSL connection security.</li>
+  <li>The <tt>documentation</tt> directory contains server
+documentation.</li>
+</ul><p>
+
+<h2><a name="database">Setting Up the Database</a></h2>
+<p> <a>Jive Messenger uses a database to store it's data. To setup
+your
+database you must load the appropriate database schema. You can find
+schemas in the <tt>resources/database</tt> directory of this distribution. View
+the </a><a href="database.html">database
+setup</a> documentation to learn how to install the schemas and JDBC
+drivers.</p>
+<p> Complete the database steps outlined in the database setup
+documentation before proceeding further.<br>
+</p>
+<h2><a name="config"></a>Setup the Server</h2>
+<p>A web based, "wizard" driven setup and configuration tool is built
+into
+Jive Messenger. Simply launch Jive Messenger and use a web browser to
+connect to the admin console. The default port for the
+web-based admin console is 9090. If you are on the same machine as Messenger the
+following URL will
+usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>.</p>
+<p>If you used the Jive Messenger installer, a shortcut for starting the
+application is provided. Starting the server using this icon starts a
+graphical launcher application. A button
+on the launcher allows you to automatically open your web browser to
+the correct URL
+to finish setting up the server. Large deployments should use the
+command line or Windows Service or *nix deployment options described
+below to properly configure JVM settings before using. If you didn't
+use the installer, you can start Jive Messenger using the startup script
+in the <tt>bin</tt> directory.
+
+<p>If you want to manually set up the server, edit the <tt>conf/jive-messenger.xml</tt>
+file. To bypass the server's normal setup mode after manually
+configuring the server, add
+a &lt;setup&gt;true&lt;/setup&gt; element to the XML file to indicate
+that the server
+has been setup.</p>
+<p>
+If you wish to use SSL, run the keytool application that ships with the
+Sun JDK to add the appropriate server certificates to the keystore
+located in the <tt>security</tt> directory. Self-signed certificates
+will work fine for testing. We've provided a dummy self-signed
+certificate for your server if it is 127.0.0.1 (the localhost).</p>
+
+<!--
+
+<h3>Windows Service</h3>
+<p>If you're running Messenger on Windows, you will eventually want to
+run Messenger as a standard Windows service.
+In order to do this, make sure the <tt>JAVA_HOME</tt> environmental
+variable is set to the base directory of your JRE/JDK directory or the <tt>jre</tt>
+sub directory of your installation if you
+installed a built-in JRE (Control Panel, System, Advanced, click on the
+"Enviromental Variables" button). Next, copy all the files
+from the <tt>bin/windows</tt> to the <tt>bin</tt> directory. Edit the
+<tt>config/wrapper.conf</tt> file to allocate the proper amount of heap
+memory
+for your deployment. On most systems, Messenger will need about 256MB
+of heap memory for each 1000 simultaneous connections (<a href="note1">1</a>).<br>
+</p>
+
+<p>Run <tt>install-messengerd.bat</tt> to install Messenger as a
+windows service.
+Now you can use the Control Panel, Administration Tools, Services
+applet to start, stop, and restart Messenger as well as determine if it
+starts with the server, what happens on failures, etc. Uninstall the
+Messenger windows service by running
+<tt>uninstall-messenger.bat</tt>.</p>
+<p>You can also run Messenger directly using the included <tt>messengerd.bat</tt>
+script using the same
+service wrapper code that the Windows service uses. The service wrapper
+provides quality of service tools that
+ensure high reliability operation of Messenger including detecting hung
+or failed processes and automatically
+restarting Messenger.</p>
+<h3>Solaris/Linux/MacOS X Deployment</h3>
+<p>If you are deploying Messenger on these three supported Unix
+systems, platform specific startup scripts and helper
+applications are provided in the <tt>bin</tt> directory. Copy the
+files from the appropriate directory into the <tt>bin</tt>
+directory and set the <tt>JIVE_HOME</tt> environmental variable.&nbsp;
+Edit the
+<tt>config/wrapper.conf</tt> file to allocate the proper amount of heap
+memory
+for your deployment. On most systems, Messenger will need about 256MB
+of heap memory for each 1000 simultaneous connections (<a href="#note1">1</a>).
+<br>
+</p>
+<p>Run
+the messengerd.sh shell script to start Messenger (you
+may have to set it's executable permission using chmod). The wrapper
+scripts and helper applications are fairly standard
+daemon scripts supporting the following commands:</p>
+<ul>
+  <li><tt>start</tt> - starts the Messenger daemon process. </li>
+  <li><tt>stop</tt> - stops the Messenger daemon process. </li>
+  <li><tt>restart</tt> - restarsts the Messenger daemon process. </li>
+  <li><tt>console</tt> - starts Messenger in the current shell allowing
+the user to watch the Wrapper and Messenger's action on the terminal
+and kill the application with CTRL-C. </li>
+  <li><tt>dump</tt> - sends a <tt>kill -3</tt> signal to the daemon
+process causing the JVM to do a full thread dump. </li>
+</ul>
+<p>The deployment service wrapper increases Messenger's reliability by
+running a monitor in a separate process that watches the Messenger JVM.
+If the Messenger JVM runs into trouble, the wrapper will detect and
+restart Messenger automatically
+ensuring that Messenger continues to be available to users.</p>
+-->
+
+<h2><a name="tools">Admin Console</a></h2>
+<p>After completing the above steps, Messenger will be configured
+and you can use the web-based admin console to administer
+the server. The URL should be the same as you used to setup the server
+unless you changed the port during the setup.<br>
+</p>
+
+</body>
+</html>

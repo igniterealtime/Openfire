@@ -1,0 +1,724 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Jive Messenger Database Schema Guide</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<a name="top"></a>
+<h1>Jive Messenger Database Schema Guide</h1>
+<h2>Introduction</h2>
+<p>
+This document outlines the data type conventions and tables in the Jive
+Messenger 1.1 database
+schema. Some information, like column indexes and foreign keys, is
+omitted. For this, please
+read the individual schema of the database you're interested in.
+The <a href="database10-guide.html">Messenger 1.0 schema</a> is
+documented separately as well a <a
+ href="database10_11-upgrade-guide.html">1.0 to 1.1 database upgrade
+guide</a> for those that need to know the changes to database schema.
+An upgrade script is provided for each database in the <tt>database/upgrade</tt>
+directory of the distribution that automatically upgrade Messenger 1.0
+databases to 1.1.<br>
+</p>
+<h2>Data Type Conventions</h2>
+<p>
+Date column type support varies widely across databases. Therefore,
+Jive Messenger
+specially encodes dates as VARCHAR values. Each date is a Java long
+value which
+is 0-padded to 15 characters. The long value is the internal
+representation of
+Java Date objects, which can be obtained with code such as the
+following:
+</p>
+<pre>long currentDate = new Date().getTime();</pre>
+<p>
+Boolean values are always represented a numeric values: 0 for false and
+1 for
+true.
+</p>
+<h2>Database Tables</h2>
+<p>
+Below is a description of each of the tables in the Jive Messenger
+database schema.
+A <span class="primary-key">yellow row</span> denotes a primary key.
+</p>
+<ul>
+  <li><a href="#jiveChatbot">jiveChatbot</a></li>
+  <li><a href="#jiveDomain">jiveDomain</a><br>
+  </li>
+  <li><a href="#jiveGroup">jiveGroup</a> </li>
+  <li><a href="#jiveGroupProp">jiveGroupProp</a> </li>
+  <li><a href="#jiveGroupUser">jiveGroupUser</a> </li>
+  <li><a href="#jiveID">jiveID</a></li>
+  <li><a href="#jiveOffline">jiveOffline</a><br>
+  </li>
+  <li><a href="#jivePrivate">jivePrivate</a> </li>
+  <li><a href="#jiveUser">jiveUser</a></li>
+  <li><a href="#jiveUserID">jiveUserID</a><br>
+  </li>
+  <li><a href="#jiveUserProp">jiveUserProp</a> </li>
+  <li><a href="#jiveRoster">jiveRoster</a> </li>
+  <li><a href="#jiveRosterGroups">jiveRosterGroups</a> </li>
+  <li><a href="#jiveVCard">jiveVCard</a> </li>
+</ul>
+<br>
+<a name="jiveChatbot"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveChatbot (Chatbot addresses)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>chatbotID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Chatbot ID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Chatbot Description</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveDomain"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveDomain (Messenger account domains)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>domainID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Domain ID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Domain Name</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Domain Description</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveGroup"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveGroup (user Group data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>groupID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Group ID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Group Name</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Group Description</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveGroupProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveGroupProp (name-value associations for a
+Group)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>groupID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Group ID</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Group Property Name</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Group Property Value</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveGroupUser"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveGroupUser (associates Users with Groups)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>groupID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Group ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>administrator</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Adminstrator (Boolean) (Primary Key)</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveID"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveID (used for unique ID sequence generation)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>idType</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID type (e.g., Group, User, Roster) (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Next available block of ID&#8217;s (Used for Database-Independent
+ID Sequence Generator)</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveOffline"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveOffline (offline message storage)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Change</th>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)<br>
+      </td>
+    </tr>
+    <tr class="primary-key">
+      <td style="vertical-align: top;">messageID<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">ID of stored message (Primary
+Key)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">creationDate<br>
+      </td>
+      <td style="vertical-align: top;">VARCHAR<br>
+      </td>
+      <td style="vertical-align: top;">15<br>
+      </td>
+      <td style="vertical-align: top;">Date message stored<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">size<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">Size of message in bytes<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">message<br>
+      </td>
+      <td style="vertical-align: top;">TEXT<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The message text<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jivePrivate"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jivePrivate (Private data storage)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name of the private entry (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>namespace</td>
+      <td>VARCHAR</td>
+      <td>200</td>
+      <td>Namespace of the private entry (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>value</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Value of the private data</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<br>
+<a name="jiveUser"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveUser (User data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>password</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>Password Data (plain-text or MD5 hash depending on settings)</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name</td>
+    </tr>
+    <tr>
+      <td>nameVisible</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Is Name Visible (Boolean)</td>
+    </tr>
+    <tr>
+      <td>email</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Email Address</td>
+    </tr>
+    <tr>
+      <td>emailVisible</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Is Email Visible (Boolean)</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveUserID"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveUserID (User account IDs - address
+reservations)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>30<br>
+      </td>
+      <td>User name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>domainID</td>
+      <td>NUMBER</td>
+      <td>n/a<br>
+      </td>
+      <td>The domain this account belongs to (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>objectType</td>
+      <td>NUMBER</td>
+      <td>n/a<br>
+      </td>
+      <td>Address type (0 - user, 1 - chatbot)<br>
+      </td>
+    </tr>
+    <tr>
+      <td>objectID</td>
+      <td>NUMBER</td>
+      <td>n/a<br>
+      </td>
+      <td>ID of the corresponding account</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br ="">
+<a name="jiveUserProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveUserProp (name-value associations for a User)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>User Property Name</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>NUMBER</td>
+      <td>4000</td>
+      <td>User Property Value</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveRoster"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveRoster (buddy rosters or lists)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>rosterID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of roster (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">jid<br>
+      </td>
+      <td style="vertical-align: top;">TEXT<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The address of the roster entry<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">sub<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The subscription status of the
+entry<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ask<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The ask status of the entry<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">recv<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">Flag indicating the entry is a
+roster request that was received<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">nick<br>
+      </td>
+      <td style="vertical-align: top;">VARCHAR<br>
+      </td>
+      <td style="vertical-align: top;">255<br>
+      </td>
+      <td style="vertical-align: top;">The nickname assigned to this
+roster entry<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveRosterGroups"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveRosterGroups (Groups of buddy entries in a
+roster)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>rosterID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Roster ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>rank</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Position of the entry (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>The user defined name for this roster group</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveVCard"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveVCard (vCard contact information)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>userID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>User ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name of the vCard entry (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Value of the vCard entry</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+
+</body>
+</html>

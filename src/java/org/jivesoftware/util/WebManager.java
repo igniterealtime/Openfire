@@ -132,9 +132,7 @@ public class WebManager extends WebBean {
         try {
             pageUser = getUserManager().getUser(getAuthToken().getUsername());
         }
-        catch (UserNotFoundException ex) {
-            Log.error(ex);
-        }
+        catch (UserNotFoundException ignored) {}
         return pageUser;
     }
 

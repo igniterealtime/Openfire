@@ -23,10 +23,8 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.spi.PresenceImpl;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,6 +68,11 @@ import org.dom4j.QName;
 public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvider {
 
     private static MetaDataFragment probeResult;
+
+    public UserManager userManager;
+    public RosterManager rosterManager;
+    public PresenceUpdateHandler presenceHandler;
+
     private IQHandlerInfo info;
     // TODO: this value needs to be shared across all instances but not across the entire jvm...
     private static boolean enabled;
@@ -206,6 +209,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         presenceHandler.process(presence);
                         // Delete the user
                         userManager.deleteUser(userManager.getUser(session.getUsername()));
+                        // Delete the roster of the user
+                        rosterManager.deleteRoster(session.getAddress());
+
                         reply = packet.createResult();
                         session.getConnection().deliver(reply);
                         // Close the user's connection
@@ -355,12 +361,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         delegates.remove(serviceName);
     }
 
-    public UserManager userManager;
-    public PresenceUpdateHandler presenceHandler;
-
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = super.getTrackInfo();
         trackInfo.getTrackerClasses().put(UserManager.class, "userManager");
+        trackInfo.getTrackerClasses().put(RosterManager.class, "rosterManager");
         trackInfo.getTrackerClasses().put(PresenceUpdateHandler.class, "presenceHandler");
         return trackInfo;
     }

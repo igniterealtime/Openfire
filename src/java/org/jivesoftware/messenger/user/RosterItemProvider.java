@@ -67,17 +67,12 @@ public interface RosterItemProvider {
     void deleteItem(String username, long rosterItemID) throws UnsupportedOperationException;
 
     /**
-     * <p>Delete all roster items associated with the given user (optional operation).</p>
-     * <p/>
-     * <p>This method is used by Messenger during user account removal. It will NOT be called
-     * if UserAccountProvider.deleteUser() throws UnsupportedOperationException.</p>
-     * <p/>
-     * <p>If you don't want roster items deleted through messenger, throw UnsupportedOperationException.</p>
+     * Returns an iterator on the usernames whose roster includes the specified JID.
      *
-     * @param username the username of the user/chatbot that owns the roster items
-     * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
+     * @param jid the jid that the rosters should include.
+     * @return an iterator on the usernames whose roster includes the specified JID.
      */
-    void deleteItems(String username) throws UnsupportedOperationException;
+    Iterator<String> getUsernames(String jid);
 
     /**
      * <p>Obtain a count of the number of roster items available for the given user.</p>

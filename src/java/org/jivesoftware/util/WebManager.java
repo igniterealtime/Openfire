@@ -20,6 +20,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.PrivateStore;
 import org.jivesoftware.messenger.PresenceManager;
@@ -96,14 +97,15 @@ public class WebManager extends WebBean {
     }
 
     public UserManager getUserManager() {
-        // The user object of the logged-in user
-        UserManager userManager = (UserManager)getServiceLookup().lookup(UserManager.class);
-        return userManager;
+        return (UserManager)getServiceLookup().lookup(UserManager.class);
+    }
+
+    public RosterManager getRosterManager() {
+        return (RosterManager)getServiceLookup().lookup(RosterManager.class);
     }
 
     public PrivateStore getPrivateStore() {
-        final PrivateStore privateStore = (PrivateStore)getServiceLookup().lookup(PrivateStore.class);
-        return privateStore;
+        return (PrivateStore)getServiceLookup().lookup(PrivateStore.class);
     }
 
     public PresenceManager getPresenceManager() {

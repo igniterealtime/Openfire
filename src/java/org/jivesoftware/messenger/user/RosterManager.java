@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger.user;
 
+import org.jivesoftware.messenger.XMPPAddress;
+
 /**
  * <p>A simple service that allows components to retrieve a roster based solely on the ID of the owner.</p>
  * <p/>
@@ -31,4 +33,12 @@ public interface RosterManager {
      * @throws UserNotFoundException If the ID does not correspond to a known entity on the server
      */
     CachedRoster getRoster(String username) throws UserNotFoundException;
+
+    /**
+     * Removes the entire roster of a given user. This is necessary when a user account is being
+     * deleted from the server.
+     *
+     * @param user the user to remove his roster.
+     */
+    void deleteRoster(XMPPAddress user);
 }

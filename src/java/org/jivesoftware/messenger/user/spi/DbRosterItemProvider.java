@@ -16,7 +16,6 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LongList;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.user.*;
 
@@ -26,6 +25,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>Implements the roster item provider against the jiveRoster table
@@ -189,34 +190,21 @@ public class DbRosterItemProvider implements RosterItemProvider {
         }
     }
 
-    private static final String LOAD_ROSTER_IDS =
-        "DELETE from jiveRosterGroups WHERE username=?";
+    private static final String LOAD_USERNAMES =
+        "SELECT DISTINCT username from jiveRoster WHERE jid=?";
 
-    private static final String DELETE_ROSTER =
-        "DELETE FROM jiveRoster WHERE username=?";
-
-    public void deleteItems(String username) throws UnsupportedOperationException {
+    public Iterator<String> getUsernames(String jid) {
+        List<String> answer = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
-            LongList list = new LongList();
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_ROSTER_IDS);
-            pstmt.setString(1, username);
+            pstmt = con.prepareStatement(LOAD_USERNAMES);
+            pstmt.setString(1, jid);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                list.add(rs.getLong(1));
+                answer.add(rs.getString(1));
             }
-            for (int i = 0; i < list.size(); i++) {
-                pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
-                pstmt.setLong(1, list.get(i));
-                pstmt.executeUpdate();
-            }
-            pstmt = con.prepareStatement(DELETE_ROSTER);
-            pstmt.setString(1, username);
-            pstmt.executeUpdate();
-
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -227,6 +215,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
+        return answer.iterator();
     }
 
     private static final String COUNT_ROSTER_ITEMS =

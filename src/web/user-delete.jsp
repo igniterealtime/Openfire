@@ -8,7 +8,8 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.admin.*"
+                 org.jivesoftware.admin.*,
+                 org.jivesoftware.messenger.XMPPAddress"
 %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -30,7 +31,11 @@
 
     // Handle a user delete:
     if (delete) {
+        // Delete the user
         webManager.getUserManager().deleteUser(user);
+        // Delete the user's roster
+        XMPPAddress userAddress = new XMPPAddress(username, webManager.getServerInfo().getName(), null);
+        webManager.getRosterManager().deleteRoster(userAddress);
         // Deleted your own user account, force login
         if (username.equals(webManager.getAuthToken().getUsername())){
             session.removeAttribute("jive.admin.authToken");

@@ -512,7 +512,7 @@ public class MetaDataFragment extends PayloadFragment {
      * @return The converted fragment
      */
     public XMPPDOMFragment convertToDOMFragment() {
-        XMPPDOMFragment dom = new XMPPDOMFragment(root.createCopy());
+        XMPPDOMFragment dom = new XMPPDOMFragment(((Element)root.elements().get(0)).createCopy());
         return dom;
     }
 }

@@ -147,10 +147,8 @@ public class IQOwnerHandler {
                 if ("owner".equals(affiliation)) {
                     // The client is requesting the list of owners
                     MetaDataFragment ownerMetaData;
-                    String jid;
                     MUCRole role;
-                    for (Iterator<String> owners = room.getOwners(); owners.hasNext();) {
-                        jid = owners.next();
+                    for (String jid : room.getOwners()) {
                         ownerMetaData =
                                 new MetaDataFragment("http://jabber.org/protocol/muc#owner",
                                         "item");
@@ -175,10 +173,8 @@ public class IQOwnerHandler {
                 else if ("admin".equals(affiliation)) {
                     // The client is requesting the list of admins
                     MetaDataFragment adminMetaData;
-                    String jid;
                     MUCRole role;
-                    for (Iterator<String> admins = room.getAdmins(); admins.hasNext();) {
-                        jid = admins.next();
+                    for (String jid : room.getAdmins()) {
                         adminMetaData =
                                 new MetaDataFragment("http://jabber.org/protocol/muc#owner",
                                         "item");
@@ -343,7 +339,7 @@ public class IQOwnerHandler {
             throws ForbiddenException, ConflictException {
         Iterator<String> values;
         String booleanValue;
-        List list;
+        List<String> list;
         FormField field;
 
         // Get the new list of admins
@@ -404,7 +400,7 @@ public class IQOwnerHandler {
             field = completedForm.getField("muc#roomconfig_presencebroadcast");
             if (field != null) {
                 values = field.getValues();
-                list = new ArrayList();
+                list = new ArrayList<String>();
                 while (values.hasNext()) {
                     list.add(values.next());
                 }
@@ -556,8 +552,8 @@ public class IQOwnerHandler {
 
             field = configurationForm.getField("muc#roomconfig_presencebroadcast");
             field.clearValues();
-            for (Iterator it = room.getRolesToBroadcastPresence(); it.hasNext();) {
-                field.addValue((String)it.next());
+            for (String roleToBroadcast : room.getRolesToBroadcastPresence()) {
+                field.addValue(roleToBroadcast);
             }
 
             field = configurationForm.getField("muc#roomconfig_publicroom");
@@ -598,14 +594,14 @@ public class IQOwnerHandler {
 
             field = configurationForm.getField("muc#roomconfig_roomadmins");
             field.clearValues();
-            for (Iterator<String> it = room.getAdmins(); it.hasNext();) {
-                field.addValue(it.next());
+            for (String jid : room.getAdmins()) {
+                field.addValue(jid);
             }
 
             field = configurationForm.getField("muc#roomconfig_roomowners");
             field.clearValues();
-            for (Iterator<String> it = room.getOwners(); it.hasNext();) {
-                field.addValue(it.next());
+            for (String jid : room.getOwners()) {
+                field.addValue(jid);
             }
         }
         finally {

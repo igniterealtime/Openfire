@@ -106,10 +106,10 @@
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);
             if (testConnection(errors)) {
-                // update the sidebar status
+                // Update the sidebar status
                 session.setAttribute("jive.setup.sidebar.3","done");
                 session.setAttribute("jive.setup.sidebar.4","in_progress");
-                // success, move on
+                // Success, move on
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
             }

@@ -11,22 +11,23 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:auth protocol (plain only). Clients
@@ -79,7 +80,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
-            Session session = sessionManager.getSession(packet.getFrom());
+            ClientSession session = sessionManager.getSession(packet.getFrom());
             IQ response = null;
             try {
                 Element iq = packet.getElement();
@@ -146,14 +147,15 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     }
 
     private IQ login(String username, Element iq, IQ packet, IQ response, String password,
-            Session session, String digest) throws UnauthorizedException, UserNotFoundException
+            ClientSession session, String digest) throws UnauthorizedException,
+            UserNotFoundException
     {
         JID jid = localServer.createJID(username, iq.elementTextTrim("resource"));
 
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection
         if (sessionManager.isActiveRoute(jid)) {
-            Session oldSession = null;
+            ClientSession oldSession = null;
             try {
                 oldSession = sessionManager.getSession(jid);
                 oldSession.incrementConflictCount();
@@ -218,7 +220,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         return response;
     }
 
-    private IQ anonymousLogin(Session session, IQ packet) throws UnauthorizedException {
+    private IQ anonymousLogin(ClientSession session, IQ packet) {
         IQ response = IQ.createResultIQ(packet);;
         if (anonymousAllowed) {
             session.setAnonymousAuth();

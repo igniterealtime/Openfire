@@ -11,16 +11,16 @@
 
 package org.jivesoftware.messenger.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.audit.AuditManager;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.net.SSLSocketAcceptThread;
 import org.jivesoftware.messenger.net.SocketAcceptThread;
 import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.net.SocketReadThread;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -113,15 +113,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     auditManager.getAuditor(),
                     sock,
                     isSecure);
-            Session session = sessionManager.createSession(conn);
-            SocketReadThread reader = new SocketReadThread(router,
-                    serverName, auditManager.getAuditor(),
-                    sock, session);
+            SocketReadThread reader = new SocketReadThread(router, serverName,
+                    auditManager.getAuditor(), sock, conn);
             reader.setDaemon(true);
             reader.start();
-        }
-        catch (UnauthorizedException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         catch (IOException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

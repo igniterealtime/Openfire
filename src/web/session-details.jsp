@@ -38,7 +38,7 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
-    Session currentSess = sessionManager.getSession(address);
+    ClientSession currentSess = sessionManager.getSession(address);
     boolean isAnonymous = address.getNode() == null || "".equals(address.getNode());
 
     // Get a presence manager
@@ -57,7 +57,7 @@
     }
 
     // See if there are multiple sessions for this user:
-    Collection<Session> sessions = null;
+    Collection<ClientSession> sessions = null;
     int sessionCount = sessionManager.getSessionCount(address.getNode());
     if (!isAnonymous && sessionCount > 1) {
         sessions = sessionManager.getSessions(address.getNode());
@@ -279,7 +279,7 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
 
     <%  int count = 0;
         String linkURL = "session-details.jsp";
-        for (Session sess : sessions) {
+        for (ClientSession sess : sessions) {
             count++;
             boolean current = sess.getAddress().equals(address);
     %>

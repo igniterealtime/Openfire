@@ -11,18 +11,9 @@
 
 package org.jivesoftware.messenger.net;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Writer;
-import java.net.Socket;
-import java.net.SocketException;
-
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
-import org.jivesoftware.messenger.Connection;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.audit.Auditor;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
@@ -35,6 +26,13 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Roster;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.net.Socket;
+import java.net.SocketException;
+
 /**
  * Reads XMPP XML from a socket.
  *
@@ -46,9 +44,6 @@ public class SocketReadThread extends Thread {
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     private static String CHARSET = "UTF-8";
-
-    private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
-    private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
 
     private Socket sock;
     private Session session;
@@ -73,16 +68,15 @@ public class SocketReadThread extends Thread {
      * @param serverName The name of the server this socket is working for
      * @param auditor    The audit manager that will audit incoming packets
      * @param sock       The socket to read from
-     * @param session    The session being read
+     * @param conn       The connection being read
      */
     public SocketReadThread(PacketRouter router, String serverName, Auditor auditor, Socket sock,
-                            Session session) {
+                            Connection conn) {
         super("SRT reader");
         this.serverName = serverName;
         this.router = router;
         this.auditor = auditor;
-        this.session = session;
-        connection = session.getConnection();
+        this.connection = conn;
         this.sock = sock;
     }
 
@@ -122,14 +116,16 @@ public class SocketReadThread extends Thread {
             // unavailable presence
             if (clearSignout == false) {
                 if (session != null && session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                    Presence presence = session.getPresence();
-                    if (presence != null) {
-                        // Simulate an unavailable presence sent by the user.
-                        Presence packet = presence.createCopy();
-                        packet.setType(Presence.Type.unavailable);
-                        packet.setFrom(session.getAddress());
-                        router.route(packet);
-                        clearSignout = true;
+                    if (session instanceof ClientSession) {
+                        Presence presence = ((ClientSession) session).getPresence();
+                        if (presence != null) {
+                            // Simulate an unavailable presence sent by the user.
+                            Presence packet = presence.createCopy();
+                            packet.setType(Presence.Type.unavailable);
+                            packet.setFrom(session.getAddress());
+                            router.route(packet);
+                            clearSignout = true;
+                        }
                     }
                 }
             }
@@ -224,88 +220,44 @@ public class SocketReadThread extends Thread {
     }
 
     /**
-     * Uses the XPP to grab the opening stream tag and create
-     * an active session object. In all cases, the method obtains the
-     * opening stream tag, checks for errors, and either creates a session
-     * or returns an error and kills the connection. If the connection
-     * remains open, the XPP will be set to be ready for the first packet.
-     * A call to next() should result in an START_TAG state with the first
-     * packet in the stream.
-     *
-     * @throws UnauthorizedException If the caller did not have permission
-     *                               to use this method.
+     * Uses the XPP to grab the opening stream tag and create an active session
+     * object. The session to create will depend on the sent namespace. In all
+     * cases, the method obtains the opening stream tag, checks for errors, and
+     * either creates a session or returns an error and kills the connection.
+     * If the connection remains open, the XPP will be set to be ready for the
+     * first packet. A call to next() should result in an START_TAG state with
+     * the first packet in the stream.
      */
-    private void createSession() throws UnauthorizedException, XmlPullParserException, IOException, Exception {
+    private void createSession() throws UnauthorizedException, XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
 
-        boolean isFlashClient = xpp.getPrefix().equals("flash");
-        // Conduct error checking, the opening tag should be 'stream'
-        // in the 'etherx' namespace
-        if (!xpp.getName().equals("stream") && !isFlashClient) {
-            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
+        // Create the correct session based on the sent namespace
+        if ("jabber:client".equals(xpp.getNamespaceUri(xpp.getDepth()-1))) {
+            // The connected client is a regular client so create a ClientSession
+            session = ClientSession.createSession(serverName, reader, connection);
         }
-
-        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE) &&
-                !(isFlashClient && xpp.getNamespace(xpp.getPrefix()).equals(FLASH_NAMESPACE))) {
-            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
-        }
-
-        // TODO Should we keep the language requested by the client in the session so that future
-        // messages to the client may use the correct resource bundle? So far we are only answering
-        // the same language specified by the client (if any) or if none then answer a default
-        // language
-        String language = "en";
-        for (int i = 0; i < xpp.getAttributeCount(); i++) {
-            if ("lang".equals(xpp.getAttributeName(i))) {
-                language = xpp.getAttributeValue(i);
-            }
-        }
-
-        Writer writer = connection.getWriter();
-        // Build the start packet response
-        StringBuffer sb = new StringBuffer();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        if (isFlashClient) {
-            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
+        else if ("jabber:component:accept".equals(xpp.getNamespaceUri(xpp.getDepth()-1))) {
+            // The connected client is a component so create a ComponentSession
+            session = ComponentSession.createSession(serverName, reader, connection);
         }
         else {
-            sb.append("<stream:stream ");
+            Writer writer = connection.getWriter();
+            StringBuffer sb = new StringBuffer();
+            sb.append("<?xml version='1.0' encoding='");
+            sb.append(CHARSET);
+            sb.append("'?>");
+            // Include the bad-namespace-prefix in the response
+            sb.append("<stream:error>");
+            sb.append("<bad-namespace-prefix xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\"/>");
+            sb.append("</stream:error>");
+            sb.append("</stream:stream>");
+            writer.write(sb.toString());
+            writer.flush();
+            // Close the underlying connection
+            connection.close();
         }
-        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\"");
-        sb.append(serverName);
-        sb.append("\" id=\"");
-        sb.append(session.getStreamID().toString());
-        sb.append("\" xml:lang=\"");
-        sb.append(language);
-        sb.append("\">");
-        writer.write(sb.toString());
-
-        // If this is a flash client then flag the connection and append a special caracter to the
-        // response
-        if (isFlashClient) {
-            session.getConnection().setFlashClient(true);
-            writer.write('\0');
-
-            // Skip possible end of tags and \0 characters
-            /*final int[] holderForStartAndLength = new int[2];
-            final char[] chars = xpp.getTextCharacters(holderForStartAndLength);
-            if (chars[xpp.getColumnNumber()-2] == '/') {
-                xpp.next();
-                try {
-                    xpp.next();
-                }
-                catch (XmlPullParserException ie) {
-                    // We expect this exception since the parser is reading a \0 character
-                }
-            }*/
-        }
-
-        writer.flush();
-        // TODO: check for SASL support in opening stream tag
     }
 }

@@ -11,15 +11,21 @@
 
 package org.jivesoftware.messenger.handler;
 
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
+import org.jivesoftware.messenger.roster.Roster;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.roster.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.messenger.roster.Roster;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -157,7 +163,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             UserAlreadyExistsException, SharedGroupException {
 
         IQ returnPacket = null;
-        Session session = sessionManager.getSession(packet.getFrom());
+        ClientSession session = sessionManager.getSession(packet.getFrom());
 
         IQ.Type type = packet.getType();
 

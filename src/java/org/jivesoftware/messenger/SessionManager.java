@@ -22,11 +22,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
-import org.jivesoftware.messenger.spi.SessionImpl;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
@@ -44,7 +45,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Derek DeMoro
  */
-public class SessionManager extends BasicModule implements ConnectionCloseListener {
+public class SessionManager extends BasicModule {
 
     private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
@@ -56,7 +57,42 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private UserManager userManager;
     private int conflictLimit;
 
-    private Map<String, Session> preAuthenticatedSessions = new ConcurrentHashMap<String, Session>();
+    private ClientSessionListener clientSessionListener = new ClientSessionListener();
+    private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
+
+    /**
+     * Map that holds sessions that has been created but haven't been authenticated yet. The Map
+     * will hold client sessions.
+     */
+    private Map<String, ClientSession> preAuthenticatedSessions = new ConcurrentHashMap<String, ClientSession>();
+
+    /**
+     * Map of priority ordered SessionMap objects with username (toLowerCase) as key. The sessions
+     * contained in this Map are client sessions. For each username a SessionMap is kept which
+     * tracks the session for each user resource.
+     */
+    private Map<String, SessionMap> sessions = new ConcurrentHashMap<String, SessionMap>();
+
+    /**
+     * Map of anonymous server sessions. They need to be treated separately as they
+     * have no associated user, and don't follow the normal routing rules for
+     * priority based fall over. The sessions contained in this Map are client sessions.
+     */
+    private Map<String, ClientSession> anonymousSessions = new ConcurrentHashMap<String, ClientSession>();
+
+    /**
+     * The sessions contained in this List are component sessions. For each connected component
+     * this Map will keep the component's session.
+     */
+    private List<ComponentSession> componentsSessions = new CopyOnWriteArrayList<ComponentSession>();
+
+    /**
+     * <p>Session manager must maintain the routing table as sessions are added and
+     * removed.</p>
+     */
+    private RoutingTable routingTable;
+
+    private StreamIDFactory streamIDFactory;
 
     /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
@@ -93,30 +129,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     }
 
     /**
-     * Map of priority ordered SessionMap objects with username (toLowerCase) as key.
-     * The map and its contents should NOT be persisted to disk.
-     */
-    private Map<String, SessionMap> sessions = new ConcurrentHashMap<String, SessionMap>();
-
-    /**
-     * <p>Session manager must maintain the routing table as sessions are added and
-     * removed.</p>
-     */
-    private RoutingTable routingTable;
-
-    /**
-     * Map of anonymous server sessions. They need to be treated separately as they
-     * have no associated user, and don't follow the normal routing rules for
-     * priority based fall over.
-     */
-    private Map<String, Session> anonymousSessions = new ConcurrentHashMap<String, Session>();
-
-    /**
      * Simple data structure to track sessions for a single user (tracked by resource
      * and priority).
      */
     private class SessionMap {
-        private Map<String,Session> resources = new HashMap<String,Session>();
+        private Map<String,ClientSession> resources = new HashMap<String,ClientSession>();
         private LinkedList priorityList = new LinkedList();
 
         /**
@@ -124,7 +141,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          *
          * @param session
          */
-        void addSession(Session session) {
+        void addSession(ClientSession session) {
             String resource = session.getAddress().getResource();
             resources.put(resource, session);
             Presence presence = session.getPresence();
@@ -143,7 +160,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             if (priorityList.size() > 0) {
                 Iterator iter = priorityList.iterator();
                 for (int i = 0; iter.hasNext(); i++) {
-                    Session sess = resources.get(iter.next());
+                    ClientSession sess = resources.get(iter.next());
                     if (sess.getPresence().getPriority() <= priority) {
                         priorityList.add(i, resource);
                         break;
@@ -186,7 +203,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @param resource The resource describing the particular session
          * @return The session for that resource or null if none found (use getDefaultSession() to obtain default)
          */
-        Session getSession(String resource) {
+        ClientSession getSession(String resource) {
             return resources.get(resource);
         }
 
@@ -209,7 +226,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          *        considered.
          * @return The default session for the user.
          */
-        Session getDefaultSession(boolean filterAvailable) {
+        ClientSession getDefaultSession(boolean filterAvailable) {
             if (priorityList.isEmpty()) {
                 return null;
             }
@@ -219,7 +236,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             }
             else {
                 for (int i=0; i < priorityList.size(); i++) {
-                    Session s = resources.get(priorityList.get(i));
+                    ClientSession s = resources.get(priorityList.get(i));
                     if (s.getPresence().isAvailable()) {
                         return s;
                     }
@@ -269,9 +286,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          *
          * @return a collection of all the sessions whose presence is available.
          */
-        public Collection<Session> getAvailableSessions() {
-            LinkedList<Session> list = new LinkedList<Session>();
-            for (Session session : resources.values()) {
+        public Collection<ClientSession> getAvailableSessions() {
+            LinkedList<ClientSession> list = new LinkedList<ClientSession>();
+            for (ClientSession session : resources.values()) {
                 if (session.getPresence().isAvailable()) {
                     list.add(session);
                 }
@@ -280,57 +297,65 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
     }
 
-    private StreamIDFactory streamIDFactory;
-
     /**
-     * Creates a new <tt>Session</tt>.
+     * Creates a new <tt>ClientSession</tt>.
      *
      * @param conn the connection to create the session from.
      * @return a newly created session.
      * @throws UnauthorizedException
      */
-    public Session createSession(Connection conn) throws UnauthorizedException {
+    public Session createClientSession(Connection conn) throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
         StreamID id = streamIDFactory.createStreamID();
-        Session session = new SessionImpl(serverName, conn, id);
+        ClientSession session = new ClientSession(serverName, conn, id);
         conn.init(session);
-        conn.registerCloseListener(this, session);
+        // Register to receive close notification on this session so we can
+        // remove its route from the sessions set and also send an unavailable presence if it wasn't
+        // sent before
+        conn.registerCloseListener(clientSessionListener, session);
 
         // Add to pre-authenticated sessions.
         preAuthenticatedSessions.put(session.getAddress().toString(), session);
         return session;
     }
 
+    public Session createComponentSession(Connection conn) throws UnauthorizedException {
+        if (serverName == null) {
+            throw new UnauthorizedException("Server not initialized");
+        }
+        StreamID id = streamIDFactory.createStreamID();
+        ComponentSession session = new ComponentSession(serverName, conn, id);
+        conn.init(session);
+        // Register to receive close notification on this session so we can
+        // remove the external component from the list of components
+        conn.registerCloseListener(componentSessionListener, session);
+
+        // Add to component session.
+        componentsSessions.add(session);
+        return session;
+    }
+
     /**
      * Add a new session to be managed.
      */
-    public boolean addSession(Session session) {
+    public boolean addSession(ClientSession session) {
         boolean success = false;
         String username = session.getAddress().getNode().toLowerCase();
         SessionMap resources = null;
 
         synchronized(username.intern()) {
-            try {
-                resources = sessions.get(username);
-                if (resources == null) {
-                    resources = new SessionMap();
-                    sessions.put(username, resources);
-                }
-                resources.addSession(session);
-                // Register to recieve close notification on this session so we can
-                // remove its route from the sessions set. We hand the session back
-                // to ourselves in the message.
-                session.getConnection().registerCloseListener(this, session);
-                // Remove the pre-Authenticated session but remember to use the temporary JID as the key
-                preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
-                        session.getStreamID().toString()).toString());
-                success = true;
+            resources = sessions.get(username);
+            if (resources == null) {
+                resources = new SessionMap();
+                sessions.put(username, resources);
             }
-            catch (UnauthorizedException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+            resources.addSession(session);
+            // Remove the pre-Authenticated session but remember to use the temporary JID as the key
+            preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
+                    session.getStreamID().toString()).toString());
+            success = true;
         }
         return success;
     }
@@ -343,7 +368,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      *
      * @param session the session that receieved an available presence.
      */
-    public void sessionAvailable(Session session) {
+    public void sessionAvailable(ClientSession session) {
         if (anonymousSessions.containsValue(session)) {
             // Anonymous session always have resources so we only need to add one route. That is
             // the route to the anonymous session
@@ -379,12 +404,12 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param session the session that received the new presence and therefore will not receive 
      *        the notification.
      */
-    private void broadcastPresenceToOtherResource(Session session) throws UserNotFoundException,
-            UnauthorizedException {
+    private void broadcastPresenceToOtherResource(ClientSession session)
+            throws UserNotFoundException, UnauthorizedException {
         Presence presence = null;
         SessionMap sessionMap = sessions.get(session.getUsername());
         if (sessionMap != null) {
-            for (Session userSession : sessionMap.getAvailableSessions()) {
+            for (ClientSession userSession : sessionMap.getAvailableSessions()) {
                 if (userSession != session) {
                     // Send the presence of an existing session to the session that has just changed
                     // the presence
@@ -410,7 +435,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      *
      * @param session the session that receieved an unavailable presence.
      */
-    public void sessionUnavailable(Session session) {
+    public void sessionUnavailable(ClientSession session) {
         if (session.getAddress() != null && routingTable != null &&
                 session.getAddress().toBareJID().trim().length() != 0) {
             // Remove route to the removed session (anonymous or not)
@@ -497,7 +522,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
     public Session getBestRoute(JID recipient) {
-        Session session = null;
+        ClientSession session = null;
         String resource = recipient.getResource();
         String username = recipient.getNode();
         if (username == null || "".equals(username)) {
@@ -576,16 +601,16 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param from the sender of the packet.
      * @return the <code>Session</code> associated with the JID.
      */
-    public Session getSession(JID from) {
+    public ClientSession getSession(JID from) {
         if (from == null) {
             return null;
         }
 
-        Session session = null;
+        ClientSession session = null;
         // Initially Check preAuthenticated Sessions
         session = preAuthenticatedSessions.get(from.toString());
         if(session != null){
-            return session;
+            return (ClientSession)session;
         }
 
         String resource = from.getResource();
@@ -620,8 +645,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     }
 
 
-    public Collection<Session> getSessions(SessionResultFilter filter) {
-        List<Session> results = new ArrayList<Session>();
+    public Collection<ClientSession> getSessions(SessionResultFilter filter) {
+        List<ClientSession> results = new ArrayList<ClientSession>();
         if (filter != null) {
             // Grab all the possible matching sessions by user
             if (filter.getUsername() == null) {
@@ -646,8 +671,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // Now we have a copy of the references so we can spend some time
             // doing the rest of the filtering without locking out session access
             // so let's iterate and filter each session one by one
-            List<Session> filteredResults = new ArrayList<Session>();
-            for (Session session : results) {
+            List<ClientSession> filteredResults = new ArrayList<ClientSession>();
+            for (ClientSession session : results) {
                 // Now filter on creation date if needed
                 if (createMin != null || createMax != null) {
                     if (!isBetweenDates(session.getCreationDate(), createMin, createMax)) {
@@ -689,11 +714,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
             // Now generate the final list. I believe it's faster to to build up a new
             // list than it is to remove items from head and tail of the sorted tree
-            List<Session> finalResults = new ArrayList<Session>();
+            List<ClientSession> finalResults = new ArrayList<ClientSession>();
             int startIndex = filter.getStartIndex();
-            Iterator<Session> sortedIter = filteredResults.iterator();
+            Iterator<ClientSession> sortedIter = filteredResults.iterator();
             for (int i = 0; sortedIter.hasNext() && finalResults.size() < maxResults; i++) {
-                Session result = sortedIter.next();
+                ClientSession result = sortedIter.next();
                 if (i >= startIndex) {
                     finalResults.add(result);
                 }
@@ -763,7 +788,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private void copyUserSessions(List sessions) {
         // Get a copy of the sessions from all users
         for (String username : getSessionUsers()) {
-            Collection<Session> usrSessions = getSessions(username);
+            Collection<ClientSession> usrSessions = getSessions(username);
             for (Session session : usrSessions) {
                 sessions.add(session);
             }
@@ -785,8 +810,8 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         return Arrays.asList(anonymousSessions.values().toArray()).iterator();
     }
 
-    public Collection<Session> getSessions(String username) {
-        List<Session> sessionList = new ArrayList<Session>();
+    public Collection<ClientSession> getSessions(String username) {
+        List<ClientSession> sessionList = new ArrayList<ClientSession>();
         if (username != null) {
             copyUserSessions(username, sessionList);
         }
@@ -859,7 +884,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      *
      * @param session the session.
      */
-    public void removeSession(Session session) {
+    public void removeSession(ClientSession session) {
         // TODO: Requires better error checking to ensure the session count is maintained
         // TODO: properly (removal actually does remove).
         if (session == null) {
@@ -901,16 +926,10 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         }
     }
 
-    public void addAnonymousSession(Session session) {
-        try {
-            anonymousSessions.put(session.getAddress().getResource(), session);
-            session.getConnection().registerCloseListener(this, session);
-            // Remove the session from the pre-Authenticated sessions list
-            preAuthenticatedSessions.remove(session.getAddress().toString());
-        }
-        catch (UnauthorizedException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
+    public void addAnonymousSession(ClientSession session) {
+        anonymousSessions.put(session.getAddress().getResource(), session);
+        // Remove the session from the pre-Authenticated sessions list
+        preAuthenticatedSessions.remove(session.getAddress().toString());
     }
 
     public int getConflictKickLimit() {
@@ -922,29 +941,52 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
     }
 
-    /**
-     * Handle a session that just closed.
-     *
-     * @param handback The session that just closed
-     */
-    public void onConnectionClose(Object handback) {
-        try {
-            Session session = (Session)handback;
-            if (session.getPresence().isAvailable()) {
-                // Send an unavailable presence to the user's subscribers
-                // Note: This gives us a chance to send an unavailable presence to the
-                // entities that the user sent directed presences
-                Presence presence = new Presence();
-                presence.setType(Presence.Type.unavailable);
-                presence.setFrom(session.getAddress());
-                presenceHandler.process(presence);
+    private class ClientSessionListener implements ConnectionCloseListener {
+        /**
+         * Handle a session that just closed.
+         *
+         * @param handback The session that just closed
+         */
+        public void onConnectionClose(Object handback) {
+            try {
+                ClientSession session = (ClientSession)handback;
+                if (session.getPresence().isAvailable()) {
+                    // Send an unavailable presence to the user's subscribers
+                    // Note: This gives us a chance to send an unavailable presence to the
+                    // entities that the user sent directed presences
+                    Presence presence = new Presence();
+                    presence.setType(Presence.Type.unavailable);
+                    presence.setFrom(session.getAddress());
+                    presenceHandler.process(presence);
+                }
+                // Remove the session
+                removeSession(session);
             }
-            // Remove the session
-            removeSession(session);
+            catch (Exception e) {
+                // Can't do anything about this problem...
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
+            }
         }
-        catch (Exception e) {
-            // Can't do anything about this problem...
-            Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
+    }
+
+    private class ComponentSessionListener implements ConnectionCloseListener {
+        /**
+         * Handle a session that just closed.
+         *
+         * @param handback The session that just closed
+         */
+        public void onConnectionClose(Object handback) {
+            try {
+                ComponentSession session = (ComponentSession)handback;
+                // Unbind the domain for this external component
+                ComponentManager.getInstance().removeComponent(session.getAddress().getDomain());
+                // Remove the session
+                componentsSessions.remove(session);
+            }
+            catch (Exception e) {
+                // Can't do anything about this problem...
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
+            }
         }
     }
 

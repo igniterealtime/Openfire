@@ -11,21 +11,7 @@
 
 package org.jivesoftware.messenger.spi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.jivesoftware.messenger.Component;
-import org.jivesoftware.messenger.ComponentManager;
-import org.jivesoftware.messenger.PacketDeliverer;
-import org.jivesoftware.messenger.PresenceManager;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.SessionManager;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
@@ -36,6 +22,9 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -238,7 +227,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         Presence presence = null;
 
-        for (Session session : sessionManager.getSessions(user.getUsername())) {
+        for (ClientSession session : sessionManager.getSessions(user.getUsername())) {
             if (presence == null) {
                 presence = session.getPresence();
             }
@@ -263,7 +252,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         List<Presence> presences = new ArrayList<Presence>();
 
-        for (Session session : sessionManager.getSessions(user.getUsername())) {
+        for (ClientSession session : sessionManager.getSessions(user.getUsername())) {
             presences.add(session.getPresence());
         }
         return Collections.unmodifiableCollection(presences);
@@ -298,9 +287,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
                 if (probee.getNode() != null && !"".equals(probee.getNode())) {
-                    Collection<Session> sessions =
+                    Collection<ClientSession> sessions =
                             sessionManager.getSessions(probee.getNode());
-                    for (Session session : sessions) {
+                    for (ClientSession session : sessions) {
                         Presence presencePacket = session.getPresence().createCopy();
                         presencePacket.setFrom(session.getAddress());
                         try {
@@ -317,7 +306,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 presence.setType(Presence.Type.probe);
                 presence.setFrom(server.createJID(prober, ""));
                 presence.setTo(probee);
-                component.processPacket(presence);
+                component.process(presence);
             }
             else {
                 Presence presence = (Presence) foreignUserCache.get(probee.toBareJID());
@@ -345,9 +334,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void probePresence(JID prober, JID probee) {
         try {
             if (server.isLocal(probee)) {
-                Collection<Session> sessions =
+                Collection<ClientSession> sessions =
                         sessionManager.getSessions(probee.getNode());
-                for (Session session : sessions) {
+                for (ClientSession session : sessions) {
                     Presence presencePacket = session.getPresence().createCopy();
                     presencePacket.setFrom(session.getAddress());
                     try {

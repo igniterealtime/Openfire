@@ -12,34 +12,80 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 
 import java.util.Date;
 
 /**
- * The session is the primary interface to the entire chat server.
- * Use the session to obtain references to all system managers, permissions,
- * authentication, and other resources.<p>
- *
  * The session represents a connection between the server and a client (c2s) or
- * another server (s2s). Authentication and user accounts are associated with
- * c2s connections while s2s has an optional authentication association but no
- * single user user.<p>
+ * another server (s2s) as well as a connection with a component. Authentication and
+ * user accounts are associated with c2s connections while s2s has an optional authentication
+ * association but no single user user.<p>
  *
  * Obtain object managers from the session in order to access server resources.
  *
- * @author Iain Shigeoka
+ * @author Gaston Dombiak
  */
-public interface Session extends RoutableChannelHandler {
+public abstract class Session implements RoutableChannelHandler {
+
+    /**
+     * The utf-8 charset for decoding and encoding Jabber packet streams.
+     */
+    protected static String CHARSET = "UTF-8";
 
     public static final int STATUS_CLOSED = -1;
     public static final int STATUS_CONNECTED = 1;
     public static final int STATUS_STREAMING = 2;
     public static final int STATUS_AUTHENTICATED = 3;
+
+    /**
+     * The Address this session is authenticated as.
+     */
+    private JID address;
+
+    /**
+     * The stream id for this session (random and unique).
+     */
+    private StreamID streamID;
+
+    /**
+     * The current session status.
+     */
+    protected int status = STATUS_CONNECTED;
+
+    /**
+     * The connection that this session represents.
+     */
+    protected Connection conn;
+
+    /**
+     * The authentication token for this session.
+     */
+    protected AuthToken authToken;
+
+    protected SessionManager sessionManager;
+
+    private String serverName;
+
+    private Date startDate = new Date();
+
+    private long lastActiveDate;
+    private long clientPacketCount = 0;
+    private long serverPacketCount = 0;
+
+    /**
+     * Creates a session with an underlying connection and permission protection.
+     *
+     * @param connection The connection we are proxying
+     */
+    public Session(String serverName, Connection connection, StreamID streamID) {
+        conn = connection;
+        this.streamID = streamID;
+        this.serverName = serverName;
+        String id = streamID.getID();
+        this.address = new JID(null, serverName, id);
+        this.sessionManager = SessionManager.getInstance();
+    }
 
     /**
       * Obtain the address of the user. The address is used by services like the core
@@ -49,7 +95,9 @@ public interface Session extends RoutableChannelHandler {
       *
       * @return the address of the packet handler.
       */
-     public JID getAddress();
+    public JID getAddress() {
+        return address;
+    }
 
     /**
      * Sets the new address of this session. The address is used by services like the core
@@ -57,21 +105,27 @@ public interface Session extends RoutableChannelHandler {
      * Handlers that are working on behalf of the server should use the generic server
      * hostname address (e.g. server.com).
      */
-    public void setAddress(JID address);
+    public void setAddress(JID address){
+        this.address = address;
+    }
 
     /**
      * Returns the connection associated with this Session.
      *
      * @return The connection for this session
      */
-    public Connection getConnection();
+    public Connection getConnection() {
+        return conn;
+    }
 
     /**
      * Obtain the current status of this session.
      *
      * @return The status code for this session
      */
-    public int getStatus();
+    public int getStatus() {
+        return status;
+    }
 
     /**
      * Set the new status of this session. Setting a status may trigger
@@ -80,71 +134,9 @@ public interface Session extends RoutableChannelHandler {
      *
      * @param status The new status code for this session
      */
-    public void setStatus(int status) throws UnauthorizedException;
-
-    /**
-     * Flag indicating if this session has been initialized once coming
-     * online. Session initialization occurs after the session receives
-     * the first "available" presence update from the client. Initialization
-     * actions include pushing offline messages, presence subscription requests,
-     * and presence statuses to the client. Initialization occurs only once
-     * following the first available presence transition.
-     *
-     * @return True if the session has already been initializsed
-     */
-    public boolean isInitialized();
-
-    /**
-     * Sets the initialization state of the session.
-     *
-     * @param isInit True if the session has been initialized
-     * @throws UnauthorizedException If the caller does not have permission to make this change
-     * @see #isInitialized
-     */
-    public void setInitialized(boolean isInit) throws UnauthorizedException;
-
-    /**
-     * Obtain the presence of this session.
-     *
-     * @return The presence of this session or null if not authenticated
-     */
-    public Presence getPresence();
-
-    /**
-     * Set the presence of this session
-     *
-     * @param presence The presence for the session
-     * @return The old priority of the session or null if not authenticated
-     */
-    public Presence setPresence(Presence presence) throws UnauthorizedException;
-
-    /**
-     * Initialize the session with a valid authentication token and
-     * resource name. This automatically upgrades the session's
-     * status to authenticated and enables many features that are not
-     * available until authenticated (obtaining managers for example).
-     *
-     * @param auth        The authentication token obtained from the AuthFactory
-     * @param resource    The resource this session authenticated under
-     * @param userManager The user manager this authentication occured under
-     */
-    public void setAuthToken(AuthToken auth, UserManager userManager, String resource)
-            throws UserNotFoundException, UnauthorizedException;
-
-    /**
-     * <p>Initialize the session as an anonymous login.</p>
-     * <p>This automatically upgrades the session's
-     * status to authenticated and enables many features that are not
-     * available until authenticated (obtaining managers for example).</p>
-     */
-    public void setAnonymousAuth() throws UnauthorizedException;
-
-    /**
-     * <p>Obtain the authentication token associated with this session.</p>
-     *
-     * @return The authentication token associated with this session (can be null)
-     */
-    public AuthToken getAuthToken();
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
     /**
      * Obtain the stream ID associated with this sesison. Stream ID's are generated by the server
@@ -152,85 +144,68 @@ public interface Session extends RoutableChannelHandler {
      *
      * @return This session's assigned stream ID
      */
-    public StreamID getStreamID();
-
-    /**
-     * Returns the username associated with this session. Use this information
-     * with the user manager to obtain the user based on username.
-     *
-     * @return the username associated with this session
-     * @throws UserNotFoundException if a user is not associated with a session
-     *      (the session has not authenticated yet)
-     * @throws UnauthorizedException If caller doesn't have permission to access this information.
-     */
-    public String getUsername() throws UserNotFoundException, UnauthorizedException;
+    public StreamID getStreamID() {
+        return streamID;
+    }
 
     /**
      * Obtain the name of the server this session belongs to.
      *
      * @return the server name.
      */
-    public String getServerName();
+    public String getServerName() {
+        return serverName;
+    }
 
     /**
      * Obtain the date the session was created.
      *
      * @return the session's creation date.
      */
-    public Date getCreationDate();
+    public Date getCreationDate() {
+        return startDate;
+    }
 
     /**
      * Obtain the time the session last had activity.
      *
      * @return The last time the session received activity.
      */
-    public Date getLastActiveDate();
+    public Date getLastActiveDate() {
+        return new Date(lastActiveDate);
+    }
 
     /**
      * Obtain the number of packets sent from the client to the server.
-     *
-     * @throws UnauthorizedException If caller doesn't have permission to access this information
      */
-    public void incrementClientPacketCount() throws UnauthorizedException;
+    public void incrementClientPacketCount() {
+        clientPacketCount++;
+        lastActiveDate = System.currentTimeMillis();
+    }
 
     /**
      * Obtain the number of packets sent from the server to the client.
-     *
-     * @throws UnauthorizedException If caller doesn't have permission to access this information
      */
-    public void incrementServerPacketCount() throws UnauthorizedException;
+    public void incrementServerPacketCount() {
+        serverPacketCount++;
+        lastActiveDate = System.currentTimeMillis();
+    }
 
     /**
      * Obtain the number of packets sent from the client to the server.
      *
      * @return The number of packets sent from the client to the server.
      */
-    public long getNumClientPackets();
+    public long getNumClientPackets() {
+        return clientPacketCount;
+    }
 
     /**
      * Obtain the number of packets sent from the server to the client.
      *
      * @return The number of packets sent from the server to the client.
      */
-    public long getNumServerPackets();
-
-    /**
-     * Returns the number of conflicts detected on this session.
-     * Conflicts typically occur when another session authenticates properly
-     * to the user account and requests to use a resource matching the one
-     * in use by this session. Administrators may configure the server to automatically
-     * kick off existing sessions when their conflict count exceeds some limit including
-     * 0 (old sessions are kicked off immediately to accommodate new sessions). Conflicts
-     * typically signify the existing (old) session is broken/hung.
-     *
-     * @return The number of conflicts detected for this session
-     */
-    public int getConflictCount();
-
-    /**
-     * Increments the conflict by one.
-     *
-     * @throws UnauthorizedException If caller doesn't have permission to access this information
-     */
-    public void incrementConflictCount() throws UnauthorizedException;
+    public long getNumServerPackets() {
+        return serverPacketCount;
+    }
 }

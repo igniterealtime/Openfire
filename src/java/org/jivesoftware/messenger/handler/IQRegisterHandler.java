@@ -11,29 +11,31 @@
 
 package org.jivesoftware.messenger.handler;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.forms.DataForm;
 import org.jivesoftware.messenger.forms.FormField;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.group.GroupManager;
 import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.*;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -146,7 +148,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             return delegate.handleIQ(packet); 
         }
 
-        Session session = sessionManager.getSession(packet.getFrom());
+        ClientSession session = sessionManager.getSession(packet.getFrom());
         IQ reply = null;
         // If inband registration is not allowed, return an error.
         if (!enabled) {
@@ -183,9 +185,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     reply.setChildElement(currentRegistration);
                 }
                 catch (UserNotFoundException e) {
-                    reply.setChildElement(probeResult.createCopy());
-                }
-                catch (UnauthorizedException e) {
                     reply.setChildElement(probeResult.createCopy());
                 }
             }

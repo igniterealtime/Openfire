@@ -130,7 +130,7 @@ Below is a list of sessions on this server.
         SessionResultFilter filter = new SessionResultFilter();
         filter.setStartIndex(start);
         filter.setNumResults(range);
-        Collection<Session> sessions = sessionManager.getSessions(filter);
+        Collection<ClientSession> sessions = sessionManager.getSessions(filter);
         if (sessions.isEmpty()) {
     %>
         <tr>
@@ -146,7 +146,7 @@ Below is a list of sessions on this server.
     <%  int count = start;
         boolean current = false; // needed in session-row.jspf
         String linkURL = "session-details.jsp";
-        for (Session sess : sessions) {
+        for (ClientSession sess : sessions) {
             count++;
     %>
         <%@ include file="session-row.jspf" %>

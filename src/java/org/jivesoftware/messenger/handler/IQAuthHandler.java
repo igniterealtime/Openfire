@@ -102,7 +102,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 Element queryResponse = probeResponse.createCopy();
                 if (IQ.Type.get == packet.getType()) {
                     String username = query.elementTextTrim("username");
-                    queryResponse.element("username").setText(username);
+                    if (username != null) {
+                        queryResponse.element("username").setText(username);
+                    }
                     response = IQ.createResultIQ(packet);
                     response.setChildElement(queryResponse);
                     // This is a workaround. Since we don't want to have an incorrect TO attribute

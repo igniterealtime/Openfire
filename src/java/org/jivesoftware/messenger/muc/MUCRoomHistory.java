@@ -14,9 +14,7 @@ package org.jivesoftware.messenger.muc;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.jivesoftware.messenger.Message;
@@ -38,58 +36,14 @@ public final class MUCRoomHistory {
 
     private MUCRoom room;
 
-    private HistoryStrategy history;
-
-    private Map userJoinMap = new LinkedHashMap();
-
-    private Map userLeftMap = new LinkedHashMap();
-
-    private long startTime;
-
-    private long endTime;
-
-    private long waitTime;
-
-    private int state;
+    private HistoryStrategy historyStrategy;
 
     private boolean isNonAnonymousRoom;
-
-    public long getWaitTime() {
-        return waitTime;
-    }
-
-    public void setWaitTime(long waitTime) {
-        this.waitTime = waitTime;
-    }
-
-    private long sessionID;
-
-    public String getUserID() {
-        return userID;
-    }
-
-    public void setUserID(String userID) {
-        this.userID = userID;
-    }
-
-    private String userID;
 
     public MUCRoomHistory(MUCRoom mucRoom, HistoryStrategy historyStrategy) {
         this.room = mucRoom;
         this.isNonAnonymousRoom = mucRoom.canAnyoneDiscoverJID();
-        setHistory(historyStrategy);
-    }
-
-    public String getRoomname() {
-        return room.getName();
-    }
-
-    public void setHistory(HistoryStrategy history) {
-        this.history = history;
-    }
-
-    public HistoryStrategy getHistory() {
-        return history;
+        this.historyStrategy = historyStrategy;
     }
 
     public void addMessage(Message packet) {
@@ -148,11 +102,11 @@ public final class MUCRoomHistory {
             delayInformation.setProperty("x:from", packet.getSender().toStringPrep());
         }
         packetToAdd.addFragment(delayInformation);
-        history.addMessage(packetToAdd);
+        historyStrategy.addMessage(packetToAdd);
     }
 
     public Iterator getMessageHistory() {
-        return history.getMessageHistory();
+        return historyStrategy.getMessageHistory();
     }
 
     /**
@@ -163,54 +117,6 @@ public final class MUCRoomHistory {
      * @return A list iterator of Message objects positioned at the end of the list.
      */
     public ListIterator getReverseMessageHistory() {
-        return history.getReverseMessageHistory();
-    }
-
-    public void userJoined(MUCUser user, Date timeJoined) {
-        userJoinMap.put(user, timeJoined);
-    }
-
-    public void userLeft(MUCUser user, Date timeLeft) {
-        userLeftMap.put(user, timeLeft);
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public void setEndTime(long endTime) {
-        this.endTime = endTime;
-    }
-
-    public long getEndTime() {
-        return endTime;
-    }
-
-    public long getSessionID() {
-        return sessionID;
-    }
-
-    public void setSessionID(long sessionID) {
-        this.sessionID = sessionID;
-    }
-
-    public Map getJoinedMap() {
-        return userJoinMap;
-    }
-
-    public Map getLeftMap() {
-        return userLeftMap;
-    }
-
-    public int getState() {
-        return state;
-    }
-
-    public void setState(int state) {
-        this.state = state;
+        return historyStrategy.getReverseMessageHistory();
     }
 }

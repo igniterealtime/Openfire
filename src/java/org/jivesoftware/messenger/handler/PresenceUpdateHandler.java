@@ -333,6 +333,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                             // Add the handler to the list of handler that processed the directed
                             // presence sent by the user. This handler will be used to send
                             // the unavailable presence when the user goes offline
+                            if (map.get(handler) == null) {
+                                map.put(handler, new HashSet<String>());
+                            }
                             map.get(handler).add(jid);
                         }
                     }

@@ -239,7 +239,7 @@ public class UserImpl implements User, Cacheable {
         else {
             // Not in cache so load a new one:
             roster = new CachedRosterImpl(username);
-            CacheManager.getCache("userame2roster").put(username, roster);
+            CacheManager.getCache("username2roster").put(username, roster);
         }
         return roster;
     }

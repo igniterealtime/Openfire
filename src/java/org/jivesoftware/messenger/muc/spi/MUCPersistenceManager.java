@@ -203,7 +203,7 @@ public class MUCPersistenceManager {
             // possible
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                     room.getSubject().length() > 0) {
-                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toStringPrep(),
+                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
                         null, room.getModificationDate(), room.getSubject(), null);
             }
 
@@ -449,7 +449,7 @@ public class MUCPersistenceManager {
                         loadedRoom.getSubject() != null &&
                         loadedRoom.getSubject().length() > 0) {
                     loadedRoom.getRoomHistory().addOldMessage(loadedRoom.getRole().getRoleAddress()
-                            .toStringPrep(), null,
+                            .toString(), null,
                             loadedRoom.getModificationDate(), loadedRoom.getSubject(), null);
                 }
             }
@@ -781,7 +781,7 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_CONVERSATION_LOG);
             pstmt.setLong(1, entry.getRoomID());
-            pstmt.setString(2, entry.getSender().toStringPrep());
+            pstmt.setString(2, entry.getSender().toString());
             pstmt.setString(3, entry.getNickname());
             pstmt.setString(4, StringUtils.dateToMillis(entry.getDate()));
             pstmt.setString(5, entry.getSubject());

@@ -34,6 +34,8 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQHandler;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Presence;
 
 /**
  * This class is not an actual IQHandler since all the packets with namespace
@@ -130,7 +132,7 @@ public class IQMUCRegisterHandler extends IQHandler {
             return reply;
         }
 
-        if (IQ.GET.equals(packet.getType())) {
+        if (IQ.Type.get == packet.getType()) {
             reply = packet.createResult();
             String nickname = room.getReservedNickname(packet.getSender().toBareStringPrep());
             if (nickname != null) {
@@ -148,7 +150,7 @@ public class IQMUCRegisterHandler extends IQHandler {
                 reply.setChildFragment(probeResult);
             }
         }
-        else if (IQ.SET.equals(packet.getType())) {
+        else if (IQ.Type.set ==  packet.getType()) {
             try {
                 // Keep a registry of the updated presences
                 List<Presence> presences = new ArrayList<Presence>();

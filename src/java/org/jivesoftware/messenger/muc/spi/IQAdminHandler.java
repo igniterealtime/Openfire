@@ -24,6 +24,10 @@ import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
@@ -68,7 +72,7 @@ public class IQAdminHandler {
      */
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException,
             NotAllowedException {
-        IQ reply = packet.createResult();
+        IQ reply = IQ.createResultIQ(packet);
         Element element = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
 
         // Analyze the action to perform based on the included element
@@ -79,9 +83,9 @@ public class IQAdminHandler {
         else {
             // An unknown and possibly incorrect element was included in the query
             // element so answer a BAD_REQUEST error
-            reply.setError(XMPPError.Code.BAD_REQUEST);
+            reply.setError(PacketError.Condition.bad_request);
         }
-        if (reply.getRecipient() != null) {
+        if (reply.getTo() != null) {
             // Send a reply only if the sender of the original packet was from a real JID. (i.e. not
             // a packet generated locally)
             router.route(reply);
@@ -214,7 +218,7 @@ public class IQAdminHandler {
         }
         else {
             // The client is modifying the list of moderators/members/participants/outcasts
-            String jid = null;
+            JID jid = null;
             String nick;
             String target = null;
             boolean hasAffiliation = ((Element) itemsList.get(0)).attributeValue("affiliation") !=
@@ -232,12 +236,12 @@ public class IQAdminHandler {
                     // jid could be of the form "full JID" or "bare JID" depending if we are
                     // going to change a role or an affiliation
                     if (hasJID) {
-                        jid = item.attributeValue("jid");
+                        jid = new JID(item.attributeValue("jid"));
                     }
                     else {
                         // Get the JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        jid = room.getOccupant(nick).getChatUser().getAddress().toStringPrep();
+                        jid = room.getOccupant(nick).getChatUser().getAddress();
                     }
 
                     room.lock.writeLock().lock();
@@ -288,13 +292,13 @@ public class IQAdminHandler {
                                 if (MUCRole.MODERATOR != senderRole.getRole()) {
                                     throw new ForbiddenException();
                                 }
-                                presences.add(room.kickOccupant(jid, senderRole.getChatUser()
-                                        .getAddress().toBareStringPrep(), item
-                                        .elementTextTrim("reason")));
+                                presences.add(room.kickOccupant(jid,
+                                        senderRole.getChatUser().getAddress(),
+                                        item.elementTextTrim("reason")));
                             }
                         }
                         else {
-                            reply.setError(XMPPError.Code.BAD_REQUEST);
+                            reply.setError(PacketError.Condition.bad_request);
                         }
                     }
                     finally {

@@ -11,20 +11,19 @@
 
 package org.jivesoftware.messenger.user.spi;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserInfo;
 import org.jivesoftware.messenger.user.UserInfoProvider;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 
 /**
  * Catabase implementation of the UserInfoProvider interface.
@@ -41,7 +40,7 @@ public class DbUserInfoProvider implements UserInfoProvider {
         "SELECT name, email, creationDate, modificationDate FROM jiveUser WHERE username=?";
 
     public UserInfo getInfo(String username) throws UserNotFoundException {
-        BasicUserInfo userInfo = null;
+        UserInfo userInfo = null;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -55,7 +54,7 @@ public class DbUserInfoProvider implements UserInfoProvider {
             }
             // We trim() the dates before trying to parse them because some
             // databases pad with extra characters when returning the data.
-            userInfo = new BasicUserInfo(username,
+            userInfo = new UserInfo(username,
                     rs.getString(1), // name
                     rs.getString(2), // email
                     new java.util.Date(Long.parseLong(rs.getString(3).trim())), // creation date

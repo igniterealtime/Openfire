@@ -12,91 +12,156 @@
 package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
-
-import java.util.Date;
+import org.jivesoftware.util.StringUtils;
 
 /**
- * <p>The UserInfo interface provides information about and services for users of the system.</p>
- * <p/>
- * <p>The name and email field will normally be required fields when creating user accounts for most
- * implementations. However, some users may wish to keep that information private. Therefore, there
- * are two flags to set if the name and email fields should be made visible to other users. If
- * the flags are set to deny access, getName() and getEmail() will throw UnauthorizedExceptions to
- * users that don't have administrator permissions.</p>
- * <p/>
- * <p>Security for UserInfo objects is provide by UserInfoProxy protection proxy objects.</p>
+ * <p>The simplest implementation of UserInfo.</p>
+ * <p>Useful if you are retrieving user info from a database and just need
+ * to stuff it into a data structure.</p>
  *
  * @author Iain Shigeoka
+ * @author Derek DeMoro
+ * @see User
  */
-public interface UserInfo extends Cacheable {
+public class UserInfo implements Cacheable {
+
+    private String username = null;
+    private String name = " ";
+    private String email;
+    private java.util.Date creationDate;
+    private java.util.Date modificationDate;
 
     /**
-     * Returns the user's name. The user's name does not have to be to be unique in the system. Some
-     * users may opt to not let others see their name for privacy reasons. In that case, the user
-     * can set nameVisible to false. In that case, a call to this method will return null.
+     * Create a new UserInfo with default fields.
      *
-     * @return the name of the user.
+     * @param username the username.
      */
-    String getName();
+    public UserInfo(String username) {
+        this.username = username;
+        creationDate = new java.util.Date();
+        modificationDate = new java.util.Date();
+    }
 
     /**
-     * Sets the user's name. The user's name does not have to be to be unique in the system.
+     * <p>Create a new UserInfo given field values.</p>
      *
-     * @param name new name for the user.
-     * @throws UnauthorizedException if does not have administrator permissions.
+     * @param username     The username
+     * @param name         The user's full name
+     * @param email        The user's email address
      */
-    void setName(String name) throws UnauthorizedException;
+    public UserInfo(String username, String name, String email,
+                         java.util.Date creationDate, java.util.Date modificationDate)
+    {
+        this.username = username;
+        this.creationDate = creationDate;
+        this.modificationDate = modificationDate;
+        if (email == null || "".equals(email)) {
+            this.email = " ";
+        }
+        else {
+            this.email = email;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) throws UnauthorizedException {
+        if (name == null) {
+            throw new IllegalArgumentException("Name cannot be null");
+        }
+
+        this.name = name;
+        // Update modification date
+        modificationDate.setTime(System.currentTimeMillis());
+    }
+
+    public String getEmail() {
+        return StringUtils.escapeHTMLTags(email);
+    }
+
+    public void setEmail(String email) throws UnauthorizedException {
+        if (email == null || "".equals(email)) {
+            email = " ";
+        }
+
+        this.email = email;
+        // Update modification date
+        modificationDate.setTime(System.currentTimeMillis());
+    }
+
+    public java.util.Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(java.util.Date creationDate) throws UnauthorizedException {
+        if (creationDate == null) {
+            throw new IllegalArgumentException("Creation date cannot be null");
+        }
+
+        this.creationDate.setTime(creationDate.getTime());
+    }
+
+    public java.util.Date getModificationDate() {
+        return modificationDate;
+    }
+
+    public void setModificationDate(java.util.Date modificationDate) throws UnauthorizedException {
+        if (modificationDate == null) {
+            throw new IllegalArgumentException("Modification date cannot be null");
+        }
+
+        this.modificationDate.setTime(modificationDate.getTime());
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();              // overhead of object
+        size += CacheSizes.sizeOfLong();                // id
+        size += CacheSizes.sizeOfString(name);          // name
+        size += CacheSizes.sizeOfString(email);         // email
+        size += CacheSizes.sizeOfBoolean();             // nameVisible
+        size += CacheSizes.sizeOfBoolean();             // emailVisible
+        size += CacheSizes.sizeOfDate();                // creationDate
+        size += CacheSizes.sizeOfDate();                // modificationDate
+
+        return size;
+    }
 
     /**
-     * Returns the user's email address. Email should be considered to be a required field of a user
-     * account since it is critical to many user operations performing. If the user sets
-     * emailVisible to false, this method will always return null.
+     * Returns a String representation of the User object using the username.
      *
-     * @return the email address of the user.
+     * @return a String representation of the User object.
      */
-    String getEmail();
+    public String toString() {
+        return name;
+    }
 
-    /**
-     * Sets the user's email address. Email should be considered to be a required field of a user
-     * account since it is critical to many user operations performing.
-     *
-     * @param email new email address for the user.
-     * @throws UnauthorizedException if does not have administrator permissions.
-     */
-    void setEmail(String email) throws UnauthorizedException;
+    public int hashCode() {
+        return username.hashCode();
+    }
 
-    /**
-     * Returns the date that the user was created.
-     *
-     * @return the date the user was created.
-     */
-    Date getCreationDate();
-
-    /**
-     * Sets the creation date of the user. In most cases, the creation date will default to when the
-     * user was entered into the system. However, the date needs to be set manually when importing
-     * data. In other words, skin authors should ignore this method since it only intended for
-     * system maintenance.
-     *
-     * @param creationDate the date the user was created.
-     * @throws UnauthorizedException if does not have administrator permissions.
-     */
-    void setCreationDate(Date creationDate) throws UnauthorizedException;
-
-    /**
-     * Returns the date that the user was last modified.
-     *
-     * @return the date the user record was last modified.
-     */
-    Date getModificationDate();
-
-    /**
-     * Sets the date the user was last modified. Skin authors should ignore this method since it
-     * only intended for system maintenance.
-     *
-     * @param modificationDate the date the user was modified.
-     * @throws UnauthorizedException if does not have administrator permissions.
-     */
-    void setModificationDate(Date modificationDate) throws UnauthorizedException;
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object != null && object instanceof User) {
+            return username.equals(((User)object).getUsername());
+        }
+        else {
+            return false;
+        }
+    }
 }

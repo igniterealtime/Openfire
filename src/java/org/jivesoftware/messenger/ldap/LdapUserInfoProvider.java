@@ -15,7 +15,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserInfo;
 import org.jivesoftware.messenger.user.UserInfoProvider;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.spi.BasicUserInfo;
+import org.jivesoftware.messenger.user.UserInfo;
 import org.jivesoftware.util.Log;
 
 import java.util.Date;
@@ -75,7 +75,7 @@ public class LdapUserInfoProvider implements UserInfoProvider {
      * @throws UserNotFoundException
      */
     private UserInfo getInfoFromLdap(String username) throws UserNotFoundException {
-        BasicUserInfo userInfo = null;
+        UserInfo userInfo = null;
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);
@@ -96,7 +96,7 @@ public class LdapUserInfoProvider implements UserInfoProvider {
             if (emailField != null) {
                 email = (String)emailField.get();
             }
-            userInfo = new BasicUserInfo(username, name, email, new Date(), new Date());
+            userInfo = new UserInfo(username, name, email, new Date(), new Date());
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);

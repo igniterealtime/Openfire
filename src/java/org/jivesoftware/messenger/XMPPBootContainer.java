@@ -11,16 +11,34 @@
 
 package org.jivesoftware.messenger;
 
+import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
 import org.jivesoftware.messenger.container.spi.BootstrapContainer;
 import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
 import org.jivesoftware.messenger.disco.IQDiscoItemsHandler;
+import org.jivesoftware.messenger.handler.IQAuthHandler;
+import org.jivesoftware.messenger.handler.IQPrivateHandler;
+import org.jivesoftware.messenger.handler.IQRegisterHandler;
+import org.jivesoftware.messenger.handler.IQRosterHandler;
+import org.jivesoftware.messenger.handler.IQTimeHandler;
+import org.jivesoftware.messenger.handler.IQVersionHandler;
+import org.jivesoftware.messenger.handler.IQvCardHandler;
+import org.jivesoftware.messenger.handler.PresenceSubscribeHandler;
+import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
-import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
-import org.jivesoftware.messenger.handler.*;
-import org.jivesoftware.messenger.spi.*;
+import org.jivesoftware.messenger.spi.BasicServer;
+import org.jivesoftware.messenger.spi.ConnectionManagerImpl;
+import org.jivesoftware.messenger.spi.IQRouterImpl;
+import org.jivesoftware.messenger.spi.MessageRouterImpl;
+import org.jivesoftware.messenger.spi.PacketDelivererImpl;
+import org.jivesoftware.messenger.spi.PacketFactoryImpl;
+import org.jivesoftware.messenger.spi.PacketRouterImpl;
+import org.jivesoftware.messenger.spi.PacketTransporterImpl;
+import org.jivesoftware.messenger.spi.PresenceManagerImpl;
+import org.jivesoftware.messenger.spi.PresenceRouterImpl;
+import org.jivesoftware.messenger.spi.RoutingTableImpl;
 import org.jivesoftware.messenger.transport.TransportHandler;
-import org.jivesoftware.messenger.user.spi.*;
-import org.jivesoftware.messenger.user.OfflineMessageStrategy;
+import org.jivesoftware.messenger.user.spi.RosterManagerImpl;
+import org.jivesoftware.messenger.user.spi.UserManagerImpl;
 
 /**
  * A bootstrap container to launch the Messenger XMPP server. This

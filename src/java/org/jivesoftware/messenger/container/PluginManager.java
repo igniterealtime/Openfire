@@ -52,7 +52,7 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
-        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 30, TimeUnit.SECONDS);
     }
 
     /**

@@ -19,7 +19,6 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.PrivateStore;
@@ -29,7 +28,6 @@ import org.jivesoftware.messenger.XMPPServerInfo;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.net.URLEncoder;
 
 /**
  * A utility bean for Messenger admin console pages.
@@ -50,11 +48,7 @@ public class WebManager extends WebBean {
      * Returns the auth token redirects to the login page if an auth token is not found.
      */
     public AuthToken getAuthToken() {
-        AuthToken authToken = (AuthToken)session.getAttribute("jive.admin.authToken");
-        if (authToken == null) {
-            showLogin();
-        }
-        return authToken;
+        return (AuthToken)session.getAttribute("jive.admin.authToken");
     }
 
     /**
@@ -255,48 +249,12 @@ public class WebManager extends WebBean {
         }
     }
 
-    private void showLogin() {
-        try {
-            response.sendRedirect(getRedirectURL(null));
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     protected void showServerDown() {
         try {
             response.sendRedirect("error-serverdown.jsp");
         }
         catch (Exception ex) {
             ex.printStackTrace();
-        }
-    }
-
-    private String getRedirectURL(String optionalParams) {
-        StringBuffer buf = new StringBuffer();
-        try {
-            StringBuffer rURL = request.getRequestURL();
-            int pos = rURL.lastIndexOf("/");
-            if ((pos+1) <= rURL.length()) {
-                buf.append(rURL.substring(pos+1, rURL.length()));
-            }
-            String qs = request.getQueryString();
-            if (qs != null) {
-                buf.append("?").append(qs);
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        try {
-            String url= "login.jsp?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
-                    + (optionalParams != null ? "&"+optionalParams : "");
-            return url;
-        }
-        catch (Exception e) {
-            Log.error(e);
-            return null;
         }
     }
 }

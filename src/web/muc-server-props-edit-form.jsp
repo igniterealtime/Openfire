@@ -41,13 +41,11 @@
     String name = ParamUtils.getParameter(request,"servername");
     String muc = ParamUtils.getParameter(request,"mucname");
 
-    
-
     // Handle a save
     Map errors = new HashMap();
     if (save) {
         // do validation
-        if (muc == null) {
+        if (muc == null  || muc.indexOf('.') >= 0) {
             errors.put("mucname","mucname");
         }
         if (errors.size() == 0) {

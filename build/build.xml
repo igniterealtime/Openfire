@@ -340,7 +340,7 @@
         </target><target name="-jspc-impl" unless="no.jspc">
 
         <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
-        <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasper">
             <classpath id="jspc.classpath">
                 <pathelement location="${java.home}/../lib/tools.jar" />
                 <pathelement path="${compile.dir}" />
@@ -809,7 +809,7 @@
                     </copy>
 
                     <!-- Declare the jspc task with our plugin's classpath -->
-                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasper">
                         <classpath>
                             <pathelement location="${java.home}/../lib/tools.jar" />
                             <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />

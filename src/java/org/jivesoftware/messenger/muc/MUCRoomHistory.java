@@ -48,11 +48,17 @@ public final class MUCRoomHistory {
 
     public void addMessage(Message packet) {
         // Don't keep messages whose sender is the room itself (thus address without resource)
-        if (packet.getSender().getResourcePrep() == null
-                || packet.getSender().getResourcePrep().length() == 0) {
+        // unless the message is changing the room's subject
+        if ((packet.getSender().getResourcePrep() == null
+                || packet.getSender().getResourcePrep().length() == 0) &&
+                packet.getSubject() == null) {
             return;
         }
         Message packetToAdd = (Message) packet.createDeepCopy();
+        // Clean the originating session of this message. We will need to deliver this message even
+        // after the user that sent it has logged off. Otherwise, it won't be delivered since
+        // messenger expects senders of messages to be authenticated when delivering their messages.
+        packetToAdd.setOriginatingSession(null);
 
         // TODO Analyze concurrency (on the LinkList) when adding many messages simultaneously
 

@@ -131,10 +131,6 @@
             <format property="dailybuild.tstamp" pattern="yyyy-MM-dd" locale="en"/>
         </tstamp>
 
-        <echo>
-            ${dailybuild.tstamp}
-        </echo>
-
         <mkdir dir="${target.dir}" />
     </target>
 
@@ -428,22 +424,24 @@
     <!-- release =============================================================================== -->
     <target name="release-package" unless="no.package" description="Packages a release">
 
+        <property name="package.dest.dir" value="${release.dest.dir}" />
+
         <!-- ZIP -->
-        <zip zipfile="${release.dest.dir}/${release.out.name}.zip"
+        <zip zipfile="${package.dest.dir}/${release.out.name}.zip"
             basedir="${release.out.dir}/.."
             includes="${release.out.name}/**/*.*"
         />
-        <zip zipfile="${release.dest.dir}/${release.src.out.name}.zip"
+        <zip zipfile="${package.dest.dir}/${release.src.out.name}.zip"
             basedir="${release.src.out.dir}/.."
             includes="${release.src.out.name}/**/*.*"
         />
         <!-- TAR.GZ -->
-        <tar tarfile="${release.dest.dir}/${release.out.name}.tar.gz"
+        <tar tarfile="${package.dest.dir}/${release.out.name}.tar.gz"
             basedir="${release.out.dir}/.."
             includes="${release.out.name}/**/*.*"
             compression="gzip"
         />
-        <tar tarfile="${release.dest.dir}/${release.src.out.name}.tar.gz"
+        <tar tarfile="${package.dest.dir}/${release.src.out.name}.tar.gz"
             basedir="${release.src.out.dir}/.."
             includes="${release.src.out.name}/**/*.*"
             compression="gzip"
@@ -453,9 +451,16 @@
 
     <!-- dailybuild ============================================================================ -->
     <target name="dailybuild" depends="init" description="Creates a daily build release">
+        <property name="release.out.name" value="${dist.prefix}_${dailybuild.tstamp}" />
+        <property name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}" />
+        <property name="release.out.dir" value="${release.dest.dir}/dailybuild/${release.out.name}" />
+        <property name="release.src.out.dir" value="${release.dest.dir}/dailybuild/${release.src.out.name}" />
         <antcall target="release">
-            <param name="release.out.name" value="${dist.prefix}_${dailybuild.tstamp}" />
-            <param name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}" />
+            <param name="release.out.name" value="${release.out.name}" />
+            <param name="release.src.out.name" value="${release.src.out.name}" />
+            <param name="release.out.dir" value="${release.out.dir}" />
+            <param name="release.src.out.dir" value="${release.src.out.dir}" />
+            <param name="package.dest.dir" value="${release.dest.dir}/dailybuild" />
         </antcall>
     </target>
 

@@ -29,7 +29,7 @@ import org.xmpp.packet.JID;
  *
  * @author Iain Shigeoka
  */
-public interface XMPPServer extends XMPPServerMBean, Module {
+public interface XMPPServer extends Module {
 
     /**
      * Obtain a snapshot of the server's status.

@@ -16,7 +16,7 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.XPPReader;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.spi.IQRosterImpl;
+import org.jivesoftware.messenger.user.IQRoster;
 import java.io.StringReader;
 //import java.util.HashMap;
 //import java.util.Iterator;
@@ -72,7 +72,7 @@ public class PacketFactoryImpl extends BasicModule implements PacketFactory {
             Document doc = XPPReader.parseDocument(xpp);
             Element query = doc.getRootElement().element("query");
             if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
-                iq = new IQRosterImpl();
+                iq = new IQRoster();
                 ((IQImpl)iq).parse(doc);
             }
             else {

@@ -58,7 +58,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
     }
 
     public IQRoster getReset() throws UnauthorizedException {
-        IQRoster roster = new IQRosterImpl();
+        IQRoster roster = new IQRoster();
         Iterator items = getRosterItems();
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
@@ -122,7 +122,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         item = rosterItemProvider.createItem(username, new BasicRosterItem(item));
 
         // Broadcast the roster push to the user
-        IQRoster roster = new IQRosterImpl();
+        IQRoster roster = new IQRoster();
         roster.setType(IQ.SET);
         roster.createRosterItem(item);
         broadcast(roster);
@@ -155,7 +155,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
                 && cachedItem.getAskStatus() == RosterItem.ASK_NONE)) {
 
             try {
-                IQRoster roster = new IQRosterImpl();
+                IQRoster roster = new IQRoster();
                 roster.setType(IQ.SET);
                 roster.createRosterItem(cachedItem);
                 broadcast(roster);
@@ -184,7 +184,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
             try {
                 // broadcast the update to the user
-                IQRoster roster = new IQRosterImpl();
+                IQRoster roster = new IQRoster();
                 roster.setType(IQ.SET);
                 IQRosterItem iqItem = (IQRosterItem)roster.createRosterItem(user);
                 iqItem.setSubStatus(RosterItem.SUB_REMOVE);

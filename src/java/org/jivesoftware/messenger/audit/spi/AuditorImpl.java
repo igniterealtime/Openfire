@@ -17,6 +17,10 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.audit.AuditEvent;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.IQ;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -57,7 +61,7 @@ public class AuditorImpl implements Auditor {
         auditManager = manager;
     }
 
-    public void audit(XMPPPacket packet) {
+    public void audit(Packet packet) {
         if (auditManager.isEnabled()) {
             if (packet instanceof Message) {
                 if (auditManager.isAuditMessage()) {
@@ -108,10 +112,10 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void writePacket(XMPPPacket packet, boolean dropped) {
+    private void writePacket(Packet packet, boolean dropped) {
         if (!closed) {
             // Add to the logging queue this new entry that will be saved later
-            logQueue.add(new AuditPacket((XMPPPacket) packet.createDeepCopy(), dropped));
+            logQueue.add(new AuditPacket((Packet) packet.createDeepCopy(), dropped));
         }
     }
 
@@ -229,14 +233,14 @@ public class AuditorImpl implements Auditor {
      * queue that will be later processed (i.e. saved to the XML file).
      */
     private class AuditPacket {
-        private XMPPPacket packet;
+        private Packet packet;
         private String streamID;
         private String sessionStatus;
         private Date timestamp;
         private boolean sending;
         private boolean dropped;
 
-        public AuditPacket(XMPPPacket packet, boolean dropped) {
+        public AuditPacket(Packet packet, boolean dropped) {
             this.packet = packet;
             this.dropped = dropped;
             this.timestamp = new Date();

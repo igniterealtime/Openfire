@@ -12,8 +12,6 @@
 package org.jivesoftware.messenger.user.spi;
 
 import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.messenger.XMPPAddress;
-import org.jivesoftware.messenger.XMPPFragment;
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.IQRosterItem;
 import org.jivesoftware.messenger.user.RosterItem;
@@ -25,14 +23,15 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.xmpp.packet.JID;
 
 public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
 
-    public IQRosterItemImpl(XMPPAddress jid) {
+    public IQRosterItemImpl(JID jid) {
         super(jid);
     }
 
-    public IQRosterItemImpl(XMPPAddress jid, String nickname, List groups) {
+    public IQRosterItemImpl(JID jid, String nickname, List groups) {
         super(jid, nickname, groups);
     }
 
@@ -50,7 +49,7 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
 
     public Element asXMLElement() {
         Element item = DocumentHelper.createElement("item");
-        item.addAttribute("jid", jid.toBareString());
+        item.addAttribute("jid", jid.toBareJID());
         item.addAttribute("subscription", subStatus.getName());
         if (askStatus != ASK_NONE) {
             item.addAttribute("ask", askStatus.getName());
@@ -87,7 +86,7 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
 
     public void send(XMLStreamWriter xmlSerializer, int version) throws XMLStreamException {
         xmlSerializer.writeStartElement("jabber:iq:roster", "item");
-        xmlSerializer.writeAttribute("jid", jid.toBareString());
+        xmlSerializer.writeAttribute("jid", jid.toBareJID());
         xmlSerializer.writeAttribute("subscription", subStatus.getName());
         if (askStatus != ASK_NONE) {
             xmlSerializer.writeAttribute("ask", askStatus.getName());
@@ -107,15 +106,14 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
         }
         Iterator frags = fragments.iterator();
         while (frags.hasNext()) {
-            XMPPFragment frag = (XMPPFragment)frags.next();
+            Element frag = (Element)frags.next();
             frag.send(xmlSerializer, version);
         }
         xmlSerializer.writeEndElement();
     }
 
-    public XMPPFragment createDeepCopy() {
-        IQRosterItemImpl item = new IQRosterItemImpl(new XMPPAddress(jid.getName(), jid.getHost(),
-                jid.getResource()));
+    public IQRosterItem createDeepCopy() {
+        IQRosterItemImpl item = new IQRosterItemImpl(new JID(jid.getNode(), jid.getDomain(), jid.getResource()));
         item.subStatus = subStatus;
         item.askStatus = askStatus;
         item.recvStatus = recvStatus;
@@ -130,7 +128,7 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
 
     private ConcurrentHashSet fragments = new ConcurrentHashSet();
 
-    public void addFragment(XMPPFragment fragment) {
+    public void addFragment(Element fragment) {
         fragments.add(fragment);
     }
 
@@ -138,13 +136,13 @@ public class IQRosterItemImpl extends BasicRosterItem implements IQRosterItem {
         return fragments.iterator();
     }
 
-    public XMPPFragment getFragment(String name, String namespace) {
+    public Element getFragment(String name, String namespace) {
         if (fragments == null) {
             return null;
         }
-        XMPPFragment frag;
+        Element frag;
         for (Iterator frags = fragments.iterator(); frags.hasNext();) {
-            frag = (XMPPFragment)frags.next();
+            frag = (Element)frags.next();
             if (name.equals(frag.getName()) && namespace.equals(frag.getNamespace())) {
                 return frag;
             }

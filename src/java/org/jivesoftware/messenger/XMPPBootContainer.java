@@ -20,6 +20,7 @@ import org.jivesoftware.messenger.handler.*;
 import org.jivesoftware.messenger.spi.*;
 import org.jivesoftware.messenger.transport.TransportHandler;
 import org.jivesoftware.messenger.user.spi.*;
+import org.jivesoftware.messenger.user.OfflineMessageStrategy;
 
 /**
  * A bootstrap container to launch the Messenger XMPP server. This
@@ -58,8 +59,7 @@ public class XMPPBootContainer extends BootstrapContainer {
             PacketTransporterImpl.class.getName(),
             PacketDelivererImpl.class.getName(),
             TransportHandler.class.getName(),
-            OfflineMessageStrategyImpl.class.getName(),
-            DbOfflineMessageStore.class.getName()};
+            OfflineMessageStrategy.class.getName()};
     }
 
     protected String[] getStandardModuleNames() {

@@ -11,7 +11,7 @@
 
 package org.jivesoftware.messenger.disco;
 
-import org.jivesoftware.messenger.forms.XDataForm;
+import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.JID;
 
@@ -62,7 +62,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an XDataForm with the extended information about the entity or null if none.
      */
-    public abstract XDataForm getExtendedInfo(String name, String node, JID senderJID);
+    public abstract XDataFormImpl getExtendedInfo(String name, String node, JID senderJID);
 
     /**
      * Returns true if we can provide information related to the requested name and node. For

@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Iain Shigeoka
  */
-public class BasicServer extends BasicModule implements XMPPServer, BasicServerMBean {
+public class BasicServer extends BasicModule implements XMPPServer {
 
     private String name;
     private Version version;

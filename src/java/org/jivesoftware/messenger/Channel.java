@@ -84,8 +84,13 @@ public class Channel<T extends Packet> {
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     try {
-                       
-                        packet.getOriginatingSession().getConnection().close();
+                        try {
+                            Session session = SessionManager.getInstance().getSession(packet.getFrom());
+                            session.getConnection().close();
+                        }
+                        catch (SessionNotFoundException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                     catch (UnauthorizedException e1) {
                         // do nothing

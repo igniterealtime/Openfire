@@ -12,80 +12,147 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.container.Container;
+import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
 
 /**
- * <p>Configures and controls the server's offline message storage strategy.</p>
- * <p>There are several ways to handle messages sent to offline users. The offline strategy
- * centralizes these options and their configuration. In addition, internal components can
- * use the strategy without knowing or caring about the actual behavior specified.</p>
- * <p>The valid strategies currently supported include:</p>
- * <ul>
- * <li>Type.bounce - bounce all messages back to the sender. This is one of two ways
- *      to support offline messages without actually storing them. This is the tactic
- *      used by AOL.
- * </li>
- * <li>Type.drop - drop all messages sent to offline users. This is the second of two
- *      ways to support offline messages without actually storing them. It's much less
- *      user friendly, but provides better privacy (bounced messages can be used to probe
- *      the offline/online presence of another user without subscribing to their presence).
- * </li>
- * <li>Type.store - unconditionally store all messages for later delivery. Ideal for small
- *      deployments or where you are sure people won't abuse offline message storage.
- * </li>
- * <li>Type.store_and_bounce - Stores offline messages for later delivery until the quota
- *      is reached. When the quota is exceeded, all subsequent messages are bounced (see BOUNCE).
- * </li>
- * <li>Type.store_and_drop - Stores offline messages for later delivery until the quota
- *      is reached. When the quota is exceeded, all subsequent messages are silently dropped
- *      (see DROP).
- * </li>
- * </ul>
+ * <p>Implements the strategy as a basic server module.</p>
  *
  * @author Iain Shigeoka
  */
-public interface OfflineMessageStrategy {
+public class OfflineMessageStrategy extends BasicModule {
 
-    /**
-     * Returns the storage quota for offline messages in bytes per user. The quota
-     * limit only has significance if the strategy type is {@link Type#store_and_bounce}
-     * or {@link Type#store_and_drop}.
-     *
-     * @return the quota in bytes per user for offline message storage.
-     */
-    int getQuota();
+    private static int quota = -1;
+    private static Type type = Type.store;
+    private SessionManager sessionManager;
 
-    /**
-     * Sets the storage quota for offline messages in bytes per user. The quota
-     * limit only has significance if the strategy type is {@link Type#store_and_bounce}
-     * or {@link Type#store_and_drop}.
-     *
-     * @param quota the quota in bytes per user for offline message storage.
-     */
-    void setQuota(int quota);
 
-    /**
-     * Returns the storage strategy type.
-     *
-     * @return the strategy type in use.
-     */
-    Type getType();
+    public PacketFactory packetFactory;
+    public XMPPServer xmppServer;
+    public PacketDeliverer deliverer;
+    public OfflineMessageStore messageStore;
 
-    /**
-     * Sets the storage strategy type.
-     *
-     * @param type the strategy type to use.
-     */
-    void setType(Type type);
+    public OfflineMessageStrategy() {
+        super("Offline Message Strategy");
 
-    /**
-     * Store the given message for an offline user. The strategy will
-     * take the appropriate action based on it's type.
-     *
-     * @param message the message to handle.
-     */
-    void storeOffline(Message message) throws UnauthorizedException, UserNotFoundException;
+        sessionManager = SessionManager.getInstance();
+    }
+
+    public int getQuota() {
+        return quota;
+    }
+
+    public void setQuota(int quota) {
+        OfflineMessageStrategy.quota = quota;
+        JiveGlobals.setProperty("xmpp.offline.quota", Integer.toString(quota));
+    }
+
+    public OfflineMessageStrategy.Type getType() {
+        return type;
+    }
+
+    public void setType(OfflineMessageStrategy.Type type) {
+        if (type == null) {
+            throw new IllegalArgumentException();
+        }
+        OfflineMessageStrategy.type = type;
+        JiveGlobals.setProperty("xmpp.offline.type", type.toString());
+    }
+
+    public void storeOffline(Message message) throws UnauthorizedException, UserNotFoundException {
+        if (message != null) {
+            Session senderSession = null;
+            try {
+                senderSession = sessionManager.getSession(message.getFrom());
+            }
+            catch (SessionNotFoundException e) {
+                Log.error(e);
+            }
+            JID sender = senderSession.getAddress();
+
+            // server messages and anonymous messages can be silently dropped
+            if (sender == null || sender.getNode() == null || senderSession == null) {
+                // silently drop the server message
+            }
+            else {
+                if (type == Type.bounce) {
+                    bounce(message);
+                }
+                else if (type == Type.store) {
+                    store(message);
+                }
+                else if (type == Type.store_and_bounce) {
+                    if (underQuota(message)) {
+                        store(message);
+                    }
+                    else {
+                        bounce(message);
+                    }
+                }
+                else if (type == Type.store_and_drop) {
+                    if (underQuota(message)) {
+                        store(message);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean underQuota(Message message) {
+        return quota > messageStore.getSize(message.getTo().getNode()) + message.toXML().length();
+    }
+
+    private void store(Message message) {
+        messageStore.addMessage(message);
+    }
+
+    public void initialize(Container container) {
+        super.initialize(container);
+        String quota = JiveGlobals.getProperty("xmpp.offline.quota");
+        if (quota != null && quota.length() > 0) {
+            OfflineMessageStrategy.quota = Integer.parseInt(quota);
+        }
+        String type = JiveGlobals.getProperty("xmpp.offline.type");
+        if (type != null && type.length() > 0) {
+            OfflineMessageStrategy.type = Type.valueOf(type);
+        }
+    }
+
+    private void bounce(Message message) {
+        // Generate a rejection response to the sender
+        try {
+            Message response = packetFactory.getMessage();
+            response.setTo(message.getFrom());
+            response.setFrom(xmppServer.createJID(null, null));
+            response.setBody("Message could not be delivered to " + message.getTo() + ". User is offline or unreachable.");
+
+            Session session = sessionManager.getSession(message.getFrom());
+            session.getConnection().deliver(response);
+
+            Message errorResponse = message.createCopy();
+            errorResponse.setError(new PacketError(PacketError.Type.continue_processing, PacketError.Condition.item_not_found));
+            session.getConnection().deliver(errorResponse);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+
+    public TrackInfo getTrackInfo() {
+        TrackInfo trackInfo = new TrackInfo();
+        trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
+        trackInfo.getTrackerClasses().put(XMPPServer.class, "xmppServer");
+        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
+        trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
+        return trackInfo;
+    }
 
     /**
      * Strategy types.

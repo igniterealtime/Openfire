@@ -65,6 +65,8 @@ public class SessionManager implements ConnectionCloseListener {
     private static SessionManager singleton;
     private static final Object LOCK = new Object();
 
+    private Map packetSessionMap = new HashMap();
+
     /**
      * Returns the singleton instance of <CODE>SessionManagerImpl</CODE>,
      * <p/>
@@ -147,7 +149,7 @@ public class SessionManager implements ConnectionCloseListener {
      * and priority).
      */
     private class SessionMap {
-        private HashMap resources = new HashMap();
+        private Map resources = new HashMap();
         private LinkedList priorityList = new LinkedList();
 
         /**
@@ -461,13 +463,20 @@ public class SessionManager implements ConnectionCloseListener {
         return hasRoute;
     }
 
-    public Session getSession(JID address) throws UnauthorizedException, SessionNotFoundException {
+    /**
+     * Returns the session responsible for this JID.
+     * @param from the sender of the packet.
+     * @return the <code>Session</code> associated with the JID.
+     * @throws UnauthorizedException
+     * @throws SessionNotFoundException
+     */
+    public Session getSession(JID from) throws UnauthorizedException, SessionNotFoundException {
         Session session = null;
-        String resource = address.getResource();
+        String resource = from.getResource();
         if (resource == null) {
             throw new SessionNotFoundException();
         }
-        String username = address.getNode();
+        String username = from.getNode();
         if (username == null || "".equals(username)) {
             anonymousSessionLock.readLock().lock();
             try {
@@ -495,6 +504,7 @@ public class SessionManager implements ConnectionCloseListener {
         }
         return session;
     }
+
 
     public Collection<Session> getSessions() {
         List<Session> allSessions = new ArrayList<Session>();

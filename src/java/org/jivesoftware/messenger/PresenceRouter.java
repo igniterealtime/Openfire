@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.Presence;
+
 /**
  * <p>Route presence packets throughout the server.</p>
  * <p>Routing is based on the recipient and sender addresses. The typical

@@ -19,6 +19,10 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.IQ;
+import org.dom4j.Element;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.xml.stream.XMLStreamException;
@@ -83,10 +87,10 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             IQ returnPacket = null;
             IQRoster roster = (IQRoster)packet;
 
-            XMPPAddress recipientJID = packet.getRecipient();
+            JID recipientJID = packet.getTo();
 
             // The packet is bound for the server and must be roster management
-            if (recipientJID == null || recipientJID.getName() == null) {
+            if (recipientJID == null || recipientJID.getNode() == null) {
                 returnPacket = manageRoster(roster);
             }
             else { // The packet must be a roster removal from a foreign domain user
@@ -110,20 +114,20 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      */
     private void removeRosterItem(IQRoster packet) throws
             UnauthorizedException, XMLStreamException {
-        XMPPAddress recipientJID = packet.getRecipient();
-        XMPPAddress senderJID = packet.getSender();
+        JID recipientJID = packet.getTo();
+        JID senderJID = packet.getFrom();
         try {
             Iterator itemIter = packet.getRosterItems();
             while (itemIter.hasNext()) {
                 RosterItem packetItem = (RosterItem)itemIter.next();
                 if (packetItem.getSubStatus() == RosterItem.SUB_REMOVE) {
-                    Roster roster = userManager.getUser(recipientJID.getName()).getRoster();
+                    Roster roster = userManager.getUser(recipientJID.getNode()).getRoster();
                     RosterItem item = roster.getRosterItem(senderJID);
                     roster.deleteRosterItem(senderJID);
                     item.setSubStatus(RosterItem.SUB_REMOVE);
                     item.setSubStatus(RosterItem.SUB_NONE);
 
-                    XMPPPacket itemPacket = (XMPPPacket)packet.createDeepCopy();
+                    Packet itemPacket = (Packet)packet.createDeepCopy();
                     sessionManager.userBroadcast(recipientJID.getName().toLowerCase(), itemPacket);
                 }
             }
@@ -199,13 +203,13 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * Actual roster removal is done in the removeItem(Roster,RosterItem) method.
      *
      * @param roster The sender's roster.
-     * @param sender The XMPPAddress of the sender of the removal request
+     * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(Roster roster, XMPPAddress sender, RosterItem item)
+    private void removeItem(Roster roster, JID sender, RosterItem item)
             throws UnauthorizedException, XMLStreamException {
 
-        XMPPAddress recipient = item.getJid();
+        JID recipient = item.getJid();
         // Remove recipient from the sender's roster
         roster.deleteRosterItem(item.getJid());
         // Forward set packet to the subscriber
@@ -231,14 +235,15 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param to   The recipient address to use
      * @return The forwarded packet generated
      */
-    private XMPPPacket createRemoveForward(XMPPAddress from, XMPPAddress to) throws UnauthorizedException {
+    private Packet createRemoveForward(JID from, JID to) throws UnauthorizedException {
 
-        IQ response = packetFactory.getIQ();
-        response.setSender(from);
-        response.setRecipient(to);
-        response.setType(IQ.SET);
-        PayloadFragment query = new PayloadFragment("jabber:iq:roster", "query");
-        response.setChildFragment(query);
+        IQ response = new IQ();
+        response.setFrom(from);
+        response.setTo(to);
+        response.setType(IQ.Type.set);
+
+        Element query = response.setChildElement("query", "jabber:iq:roster");
+
         IQRosterItem responseItem = new IQRosterItemImpl(from);
         responseItem.setSubStatus(RosterItem.SUB_REMOVE);
         query.addFragment(responseItem);

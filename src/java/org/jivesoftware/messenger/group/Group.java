@@ -131,12 +131,10 @@ public class Group implements Cacheable {
      * @return the extended properties.
      */
     public Map<String,String> getProperties() {
-        if (properties == null) {
-            synchronized (this) {
-                if (properties == null) {
-                    properties = new ConcurrentHashMap<String, String>();
-                    loadProperties();
-                }
+        synchronized (this) {
+            if (properties == null) {
+                properties = new ConcurrentHashMap<String, String>();
+                loadProperties();
             }
         }
         // Return a wrapper that will intercept add and remove commands.

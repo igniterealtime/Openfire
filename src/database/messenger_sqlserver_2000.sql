@@ -174,7 +174,7 @@ CREATE TABLE mucRoom (
   creationDate        CHAR(15)      NOT NULL,
   modificationDate    CHAR(15)      NOT NULL,
   name                NVARCHAR(50)  NOT NULL,
-  naturalRoomName     NVARCHAR(255) NOT NULL,
+  naturalName         NVARCHAR(255) NOT NULL,
   description         NVARCHAR(255),
   canChangeSubject    INT           NOT NULL,
   maxUsers            INT           NOT NULL,

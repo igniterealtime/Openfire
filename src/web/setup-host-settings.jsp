@@ -51,18 +51,22 @@
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
-            JiveGlobals.setProperty("xmpp.domain",domain);
-            JiveGlobals.setProperty("xmpp.chat.domain",chatDomain);
-            JiveGlobals.setProperty("xmpp.socket.plain.port",Integer.toString(port));
-            JiveGlobals.setProperty("embedded-web.port",Integer.toString(embeddedPort));
-            JiveGlobals.setProperty("xmpp.socket.ssl.active",""+sslEnabled);
-            JiveGlobals.setProperty("xmpp.socket.ssl.port",Integer.toString(sslPort));
-            JiveGlobals.setProperty("xmpp.auth.anonymous", "true" );
-            // JiveGlobals.setProperty("xmpp.socket.ssl.storeType",storeType);
-            // JiveGlobals.setProperty("xmpp.socket.ssl.keystore",keystore);
-            // JiveGlobals.setProperty("xmpp.socket.ssl.keypass",keypass);
-            // JiveGlobals.setProperty("xmpp.socket.ssl.truststore",truststore);
-            // JiveGlobals.setProperty("xmpp.socket.ssl.trustpass",trustpass);
+            Map xmppSettings = new HashMap();
+
+            xmppSettings.put("xmpp.domain",domain);
+            xmppSettings.put("xmpp.chat.domain",chatDomain);
+            xmppSettings.put("xmpp.socket.plain.port",Integer.toString(port));
+            xmppSettings.put("embedded-web.port",Integer.toString(embeddedPort));
+            xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
+            xmppSettings.put("xmpp.socket.ssl.port",Integer.toString(sslPort));
+            xmppSettings.put("xmpp.auth.anonymous", "true" );
+            session.setAttribute("xmppSettings", xmppSettings);
+
+            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.storeType",storeType);
+            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.keystore",keystore);
+            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.keypass",keypass);
+            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.truststore",truststore);
+            // JiveGlobals.setXMLProperty("xmpp.socket.ssl.trustpass",trustpass);
 
             // update the sidebar status
             session.setAttribute("jive.setup.sidebar.2","done");

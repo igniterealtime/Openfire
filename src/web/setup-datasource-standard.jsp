@@ -113,6 +113,16 @@
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
             }
+            else{
+                Map xmppSettings = (Map)session.getAttribute("xmppSettings");
+                Iterator iter = xmppSettings.keySet().iterator();
+                while(iter.hasNext()){
+                    String name = (String)iter.next();
+                    String value = (String)xmppSettings.get(name);
+                    JiveGlobals.setProperty(name, value);
+                     
+                }
+            }
         }
     }
 

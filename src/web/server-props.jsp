@@ -191,14 +191,14 @@ Use the form below to edit server properties.
             <tbody>
                 <tr>
                     <td>
-                        <input type="radio" name="sslEnabed" value="true" <%= (sslEnabled ? "checked" : "") %>
+                        <input type="radio" name="sslEnabled" value="true" <%= (sslEnabled ? "checked" : "") %>
                          id="SSL01">
                     </td>
                     <td><label for="SSL01">Enabled</label></td>
                 </tr>
                 <tr>
                     <td>
-                        <input type="radio" name="sslEnabed" value="false" <%= (!sslEnabled ? "checked" : "") %>
+                        <input type="radio" name="sslEnabled" value="false" <%= (!sslEnabled ? "checked" : "") %>
                          id="SSL02">
                     </td>
                     <td><label for="SSL02">Disabled</label></td>

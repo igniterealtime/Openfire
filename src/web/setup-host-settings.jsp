@@ -36,7 +36,7 @@
             Map xmppSettings = new HashMap();
 
             xmppSettings.put("xmpp.domain",domain);
-            xmppSettings.put("embedded-web.port",Integer.toString(embeddedPort));
+            xmppSettings.put("adminConsole.port",Integer.toString(embeddedPort));
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "true" );
             session.setAttribute("xmppSettings", xmppSettings);
@@ -54,7 +54,7 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
-        embeddedPort = JiveGlobals.getIntProperty("embedded-web.port", 9090);
+        embeddedPort = JiveGlobals.getIntProperty("adminConsole.port", 9090);
         sslEnabled = JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
 
         // If the domain is still blank, guess at the value:

@@ -23,17 +23,17 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%! // List of allowed usernames:
-    static Map allowedUsernames = null;
-    static String allowedUsernameProp = JiveGlobals.getProperty("admin.login.allowedUsernames");
+    static Map authorizedUsernames = null;
+    static String authorizedUsernameProp = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
     static {
-        if (allowedUsernameProp != null) {
-            StringTokenizer tokenizer = new StringTokenizer(allowedUsernameProp, ",");
+        if (authorizedUsernameProp != null) {
+            StringTokenizer tokenizer = new StringTokenizer(authorizedUsernameProp, ",");
             while (tokenizer.hasMoreTokens()) {
-                if (allowedUsernames == null) {
-                    allowedUsernames = new HashMap();
+                if (authorizedUsernames == null) {
+                    authorizedUsernames = new HashMap();
                 }
                 String tok = tokenizer.nextToken().trim();
-                allowedUsernames.put(tok, tok);
+                authorizedUsernames.put(tok, tok);
             }
         }
     }
@@ -66,8 +66,8 @@
 
 	if (ParamUtils.getBooleanParameter(request,"login")) {
 		try {
-            if (allowedUsernames != null) {
-                if (!allowedUsernames.containsKey(username)) {
+            if (authorizedUsernames != null && !authorizedUsernames.isEmpty()) {
+                if (!authorizedUsernames.containsKey(username)) {
                     throw new UnauthorizedException("User '" + username + "' no allowed to login.");
                 }
             }

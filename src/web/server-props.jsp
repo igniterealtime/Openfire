@@ -76,7 +76,7 @@
         if (errors.size() == 0) {
             server.getServerInfo().setName(serverName);
             JiveGlobals.setProperty("xmpp.socket.plain.port", String.valueOf(port));
-            JiveGlobals.setProperty("embedded-web.port", String.valueOf(embeddedPort));
+            JiveGlobals.setProperty("adminConsole.port", String.valueOf(embeddedPort));
             JiveGlobals.setProperty("xmpp.socket.ssl.active", String.valueOf(sslEnabled));
             JiveGlobals.setProperty("xmpp.socket.ssl.port", String.valueOf(sslPort));
             response.sendRedirect("server-props.jsp?success=true");
@@ -88,7 +88,7 @@
         serverName = server.getServerInfo().getName();
         sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
         try { port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port")); } catch (Exception ignored) {}
-        try { embeddedPort = Integer.parseInt(JiveGlobals.getProperty("embedded-web.port")); } catch (Exception ignored) {}
+        try { embeddedPort = Integer.parseInt(JiveGlobals.getProperty("adminConsole.port")); } catch (Exception ignored) {}
         try { sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port")); } catch (Exception ignored) {}
     }
 %>

@@ -322,7 +322,7 @@ public class Launcher {
     private synchronized void launchBrowser() {
         try {
             XMLProperties props = new XMLProperties(configFile);
-            String port = props.getProperty("embedded-web.port");
+            String port = props.getProperty("adminConsole.port");
             BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
         }
         catch (Exception e) {

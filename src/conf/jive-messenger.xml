@@ -11,16 +11,21 @@
             </name>
         </prop>
 		
-       Most properties are stored in the Jive Messenger database. A
+      Most properties are stored in the Jive Messenger database. A
 	property viewer and editor is included in the admin console.
 -->
 <!-- root element, all properties must be under this element -->
 <jive>
-    <embedded-web>
+    <adminConsole>
         <port>9090</port>
-    </embedded-web>
+        <!-- By default, only the user with the username "admin" can login 
+         to the admin console. Alternatively, you can specify a comma-delimitted 
+         list usernames that should be authorized to login by setting the  
+         <authorizedUsernames> field below. --> 
+        <!-- <authorizedUsernames></authorizedUsernames> -->
+    </adminConsole>
     
-    <!-- Example LDAP Settings -->
+    <!-- Example LDAP settings -->
     <!--
     <ldap>
         <host></host>
@@ -41,5 +46,5 @@
         </auth>
     </provider>
     -->
-    <!-- End Example LDAP Settings -->
+    <!-- End example LDAP settings -->
 </jive>

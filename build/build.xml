@@ -71,6 +71,9 @@
     <property name="test.dest.dir" value="${target.dir}/test" />
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes" />
     <property name="test.results.dest.dir" value="${test.dest.dir}/results" />
+    <property name="plugin.src.dir" value="${src.dir}/plugins" />
+    <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev" />
+    <property name="plugin.dest.dir" value="${target.dir}/plugins" />
     <property name="webapp.dest.dir" value="${target.dir}/webapp" />
     <property name="war.name" value="messenger.war" />
     <property name="war.dest.dir" value="${target.dir}/war" />
@@ -106,6 +109,11 @@
         <path refid="compile.dependencies" />
         <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
         <fileset dir="${lib.build.dir}" includes="junit.jar" />
+    </path>
+
+    <path id="plugin.dependencies">
+        <path refid="javadoc.dependencies" />
+        <fileset dir="${jar.dest.dir}" includes="messenger.jar" />
     </path>
 
     <patternset id="compile.sources">
@@ -285,6 +293,10 @@
         <mkdir dir="${jspc.java.dest.dir}" />
         <mkdir dir="${jspc.classes.dest.dir}" />
         <mkdir dir="${webapp.dest.dir}" />
+
+        <antcall target="-jspc-impl" />
+
+        </target><target name="-jspc-impl" unless="no.jspc">
 
         <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
         <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
@@ -569,18 +581,136 @@
 
     <!-- plugins =============================================================================== -->
     <target name="plugins">
-        <mkdir dir="${target.dir}/plugin-dev" />
+        <ant antfile="${basedir}/build/build.xml" dir="${basedir}"
+            target="jar" inheritAll="false" inheritRefs="false"
+        >
+            <property name="no.jspc" value="true" />
+        </ant>
 
-        <subdirinfo dir="${src.dir}/plugins" property="dirlist" ifexists="plugin.xml" />
+        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin" />
 
-        <for list="${dirlist}" param="dir" trim="true">
+        <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
-                <copy todir="${target.dir}/plugin-dev/@{dir}">
-                    <fileset dir="${src.dir}/plugins/@{dir}" />
-                </copy>
+                <buildplugin plugin="@{plugin}" />
             </sequential>
         </for>
+
     </target>
+
+    <!-- buildplugin (MACRO) =================================================================== -->
+    <macrodef name="buildplugin">
+        <attribute name="plugin" />
+        <sequential>
+            <!-- For each plugin, copile code, make a jar and copy resources. -->
+            <mkdir dir="${plugin.dev.dest.dir}" />
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}" />
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target" />
+
+            <!-- Compile plugin source code -->
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
+            <javac
+                destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+            >
+                <src path="${plugin.src.dir}/@{plugin}/src/java" />
+                <classpath>
+                    <path refid="plugin.dependencies" />
+                    <!-- Jars used by the plugin to compile with -->
+                    <pathelement location="${plugin.src.dir}/@{plugin}/lib/*.jar" />
+                </classpath>
+            </javac>
+
+            <!-- Make the jar -->
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
+            <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
+            </jar>
+
+            <!-- JSPC any JSP pages -->
+
+            <!-- Create output dir -->
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" />
+
+            <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
+                <fileset dir="${plugin.src.dir}/@{plugin}/src/web" />
+                <fileset dir="${web.dir}">
+                    <include name="WEB-INF/**/*.*" />
+                    <exclude name="WEB-INF/web.xml.startup.servlet" />
+                    <exclude name="WEB-INF/classes/messenger_init.xml" />
+                    <exclude name="WEB-INF/tmp/**/*.*" />
+                    <exclude name="WEB-INF/work/**/*.*" />
+                </fileset>
+            </copy>
+
+            <!-- Declare the jspc task with our plugin's classpath -->
+            <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+                <classpath>
+                    <pathelement location="${java.home}/../lib/tools.jar" />
+                    <path refid="jspc.dependencies" />
+                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
+<!--                    <pathelement location="${jar.dest.dir}/messenger.jar" />-->
+                    <pathelement path="${compile.dir}" />
+                </classpath>
+            </taskdef>
+
+            <!-- JSP to Java -->
+            <jasper2
+                validateXml="false"
+                uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
+                package="org.jivesoftware.messenger.plugin.@{plugin}"
+                webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+            />
+
+            <!-- Compile java classes -->
+            <javac
+                destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                includes="org/jivesoftware/messenger/plugin/**/*.java"
+            >
+                <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java" />
+                <classpath>
+                    <path refid="jspc.dependencies" />
+<!--                    <pathelement location="${jar.dest.dir}/messenger.jar" />-->
+                    <pathelement path="${compile.dir}" />
+                </classpath>
+            </javac>
+
+            <!-- Make a jar of compiled jsp classes -->
+            <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" includes="**/*.class" />
+            </jar>
+
+            <!-- Copy everything to Messenger's plugin dir -->
+            <copy todir="${plugin.dest.dir}/@{plugin}">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
+                    <include name="lib/*.jar" />
+                </fileset>
+                <fileset dir="${plugin.src.dir}/@{plugin}">
+                    <include name="plugin.xml" />
+                </fileset>
+                <fileset dir="${plugin.src.dir}/@{plugin}/src">
+                    <include name="web/**/*.*" />
+                    <exclude name="web/**/*.jsp" />
+                    <exclude name="web/**/*.jspf" />
+                    <exclude name="web/**/*.html" />
+                    <exclude name="java/**/*.java" />
+                </fileset>
+            </copy>
+            <copy todir="${plugin.dest.dir}/@{plugin}/web">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">
+                    <include name="web.xml" />
+                </fileset>
+            </copy>
+
+        </sequential>
+    </macrodef>
 
     <!-- anttasks ============================================================================== -->
     <target name="anttasks" depends="compile">
@@ -588,7 +718,7 @@
         <property name="anttask.dest" value="${target.dir}/anttask" />
         <mkdir dir="${anttask.dest}" />
         <jar jarfile="${anttask.dest}/ant-subdirtask.jar">
-            <fileset dir="${compile.dir}" includes="**/SubDirInfoTask.class" />
+            <fileset dir="${compile.dir}" includes="org/jivesoftware/ant/*Task.class" />
         </jar>
     </target>
 

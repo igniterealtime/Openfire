@@ -78,14 +78,12 @@ public interface RoutingTable {
      * <p>A single access method allows you to add any of the acceptable
      * route to the table. It is expected that routes are added and removed
      * on a relatively rare occassion so routing tables should be optimized
-     * for lookup speed. If an existing route corresponds to the
-     * given address, the previously registered destination object is returned.</p>
+     * for lookup speed.</p>
      *
      * @param node        The route's destination node
      * @param destination The destination object for this route
-     * @return The destination object previously registered under the given address, or null if none existed
      */
-    ChannelHandler addRoute(JID node, RoutableChannelHandler destination);
+    void addRoute(JID node, RoutableChannelHandler destination);
 
     /**
      * <p>Obtain a route to a packet handler for the given node.</p>

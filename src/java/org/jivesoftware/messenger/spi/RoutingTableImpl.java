@@ -11,12 +11,15 @@
 
 package org.jivesoftware.messenger.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -44,57 +47,33 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         super("Routing table");
     }
 
-    public ChannelHandler addRoute(JID node, RoutableChannelHandler destination) {
+    public void addRoute(JID node, RoutableChannelHandler destination) {
 
-        ChannelHandler route = null;
         String nodeJID = node.getNode() == null ? "" : node.getNode();
         String resourceJID = node.getResource() == null ? "" : node.getResource();
 
         routeLock.writeLock().lock();
         try {
-            if (destination instanceof InternalComponentManager.RoutableComponent) {
-                routes.put(node.getDomain(), destination);
-            }
-            else {
+            if (destination instanceof ClientSession) {
                 Object nameRoutes = routes.get(node.getDomain());
                 if (nameRoutes == null) {
-                    routes.put(node.getDomain(), destination);
+                    nameRoutes = new Hashtable();
+                    routes.put(node.getDomain(), nameRoutes);
                 }
-                else if (nameRoutes instanceof Hashtable && ((Hashtable)nameRoutes).isEmpty()) {
-                    ((Hashtable)nameRoutes).put(nodeJID, destination);
+                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
+                if (resourceRoutes == null) {
+                    resourceRoutes = new Hashtable();
+                    ((Hashtable)nameRoutes).put(nodeJID, resourceRoutes);
                 }
-                else {
-                    if (nameRoutes instanceof ChannelHandler) {
-                        nameRoutes = new Hashtable();
-                        Object item = routes.put(node.getDomain(), nameRoutes);
-                        // Associate the previous Route withno  the bare JID
-                        ((Hashtable)nameRoutes).put("", item);
-                    }
-
-                    Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
-                    if (resourceRoutes == null || resourceRoutes instanceof ChannelHandler) {
-                        resourceRoutes = new Hashtable();
-                        Object item = ((Hashtable)nameRoutes).put(nodeJID, resourceRoutes);
-                        if (item instanceof ChannelHandler) {
-                            // Associate the previous Route with the bare JID
-                            ((Hashtable)resourceRoutes).put("", item);
-                        }
-                    }
-                    Object resourceRoute =
-                            ((Hashtable)resourceRoutes).put(resourceJID, destination);
-                    if (resourceRoute != null) {
-                        if (resourceRoute instanceof ChannelHandler) {
-                            route = (ChannelHandler)resourceRoute;
-                        }
-                    }
-                }
+                ((Hashtable)resourceRoutes).put(resourceJID, destination);
+            }
+            else {
+                routes.put(node.getDomain(), destination);
             }
         }
         finally {
             routeLock.writeLock().unlock();
         }
-
-        return route;
     }
 
     public RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException {

@@ -244,7 +244,14 @@ public class IQOwnerHandler {
                         }
                         else if ("member".equals(targetAffiliation)) {
                             // Add the new user as a member of the room
+                            boolean hadAffiliation = room.getAffiliation(bareJID) != MUCRole.NONE;
                             presences.addAll(room.addMember(bareJID, null, senderRole));
+                            // If the user had an affiliation don't send an invitation. Otherwise
+                            // send an invitation if the room is members-only
+                            if (!hadAffiliation && room.isInvitationRequiredToEnter()) {
+                                room.sendInvitation(bareJID, null, senderRole, reply
+                                        .getOriginatingSession());
+                            }
                         }
                         else if ("none".equals(targetAffiliation)) {
                             // Set that this jid has a NONE affiliation

@@ -155,6 +155,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private void initializeCaches() {
         // create cache - no size limit and expires after one hour of being idle
         persistentRoomSurrogateCache = new Cache("Room Surrogates", -1, JiveConstants.HOUR);
+        // warm-up cache now to avoid a delay responding the first disco request
+        populateRoomSurrogateCache();
     }
 
     /**

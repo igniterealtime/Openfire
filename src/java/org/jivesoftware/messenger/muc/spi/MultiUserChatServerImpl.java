@@ -31,7 +31,6 @@ import org.jivesoftware.messenger.forms.DataForm;
 import org.jivesoftware.messenger.forms.FormField;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.handler.IQRegisterHandler;
 import org.jivesoftware.messenger.muc.HistoryStrategy;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.MUCRoom;
@@ -41,10 +40,7 @@ import org.jivesoftware.messenger.muc.NotAllowedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 import org.xmpp.component.ComponentManager;
 
 /**
@@ -118,7 +114,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * The handler of packets with namespace jabber:iq:register for the server.
      */
-    private IQRegisterHandler registerHandler = null;
+    private IQMUCRegisterHandler registerHandler = null;
     /**
      * The total time all agents took to chat *
      */
@@ -196,13 +192,68 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void processPacket(Packet packet) {
+        // The MUC service will receive all the packets whose domain matches the domain of the MUC
+        // service. This means that, for instance, a disco request should be responded by the
+        // service itself instead of relying on the server to handle the request.
         try {
+            // Check if the packet is a disco request or a packet with namespace iq:register
+            if (packet instanceof IQ) {
+                if (process((IQ)packet)) {
+                    return;
+                }
+            }
+            // The packet is a normal packet that should possibly be sent to the room
             MUCUser user = getChatUser(packet.getFrom());
             user.process(packet);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+    }
+
+    /**
+     * Returns true if the IQ packet was processed. This method should only process disco packets
+     * as well as jabber:iq:register packets sent to the MUC service.
+     *
+     * @param iq the IQ packet to process.
+     * @return true if the IQ packet was processed.
+     */
+    private boolean process(IQ iq) {
+        Element childElement = iq.getChildElement();
+        String namespace = null;
+        if (childElement != null) {
+            namespace = childElement.getNamespaceURI();
+        }
+        if ("jabber:iq:register".equals(namespace)) {
+            IQ reply = registerHandler.handleIQ(iq);
+            router.route(reply);
+        }
+        else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+            try {
+                // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
+                // a component
+                IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
+                router.route(reply);
+            }
+            catch (UnauthorizedException e) {
+                // Do nothing. This error should never happen
+            }
+        }
+        else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
+            try {
+                // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
+                // a component
+                IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
+                router.route(reply);
+            }
+            catch (UnauthorizedException e) {
+                // Do nothing. This error should never happen
+            }
+        }
+        else {
+            return false;
+        }
+        return true;
     }
 
     public void initialize(JID jid, ComponentManager componentManager) {
@@ -690,9 +741,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
-        // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
-        registerHandler = server.getIQRegisterHandler();
-        registerHandler.addDelegate(getServiceDomain(), new IQMUCRegisterHandler(this));
+        // Configure the handler of iq:register packets
+        registerHandler = new IQMUCRegisterHandler(this);
     }
 
     public void start() {
@@ -716,9 +766,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         routingTable.removeRoute(getAddress());
         timer.cancel();
         logAllConversation();
-        if (registerHandler != null) {
-            registerHandler.removeDelegate(getServiceDomain());
-        }
     }
 
     public long getTotalChatTime() {

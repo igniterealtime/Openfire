@@ -407,9 +407,11 @@ public class SessionManager extends BasicModule {
     private void broadcastPresenceToOtherResource(ClientSession session)
             throws UserNotFoundException, UnauthorizedException {
         Presence presence = null;
+        Collection<ClientSession> availableSession;
         SessionMap sessionMap = sessions.get(session.getUsername());
         if (sessionMap != null) {
-            for (ClientSession userSession : sessionMap.getAvailableSessions()) {
+            availableSession = new ArrayList<ClientSession>(sessionMap.getAvailableSessions());
+            for (ClientSession userSession : availableSession) {
                 if (userSession != session) {
                     // Send the presence of an existing session to the session that has just changed
                     // the presence
@@ -563,10 +565,8 @@ public class SessionManager extends BasicModule {
         return session;
     }
 
-    public boolean isActiveRoute(JID route) {
+    public boolean isActiveRoute(String username, String resource) {
         boolean hasRoute = false;
-        String resource = route.getResource();
-        String username = route.getNode();
 
         if (username == null || "".equals(username)) {
             if (resource != null) {
@@ -607,24 +607,47 @@ public class SessionManager extends BasicModule {
      * @return the <code>Session</code> associated with the JID.
      */
     public ClientSession getSession(JID from) {
-        // Return null if the JID is null or belongs to a foreign server. If the server is
+        // Return null if the JID is null
+        if (from == null) {
+            return null;
+        }
+        return getSession(from.getNode(), from.getDomain(), from.getResource());
+    }
+
+    /**
+     * Returns the session responsible for this JID data.
+     *
+     * @param username the username of the JID.
+     * @param domain the username of the JID.
+     * @param resource the username of the JID.
+     * @return the <code>Session</code> associated with the JID data.
+     */
+    public ClientSession getSession(String username, String domain, String resource) {
+        // Return null if the JID's data belongs to a foreign server. If the server is
         // shutting down then serverName will be null so answer null too in this case.
-        if (from == null || serverName == null || !serverName.equals(from.getDomain())) {
+        if (serverName == null || !serverName.equals(domain)) {
             return null;
         }
 
         ClientSession session = null;
+        // Build a JID represention based on the given JID data
+        StringBuilder buf = new StringBuilder();
+        if (username != null) {
+            buf.append(username).append("@");
+        }
+        buf.append(domain);
+        if (resource != null) {
+            buf.append("/").append(resource);
+        }
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(from.toString());
+        session = preAuthenticatedSessions.get(buf.toString());
         if(session != null){
             return (ClientSession)session;
         }
 
-        String resource = from.getResource();
         if (resource == null) {
             return null;
         }
-        String username = from.getNode();
         if (username == null || "".equals(username)) {
             session = anonymousSessions.get(resource);
         }

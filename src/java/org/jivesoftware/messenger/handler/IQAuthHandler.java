@@ -22,6 +22,8 @@ import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -150,14 +152,16 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             ClientSession session, String digest) throws UnauthorizedException,
             UserNotFoundException
     {
-        JID jid = localServer.createJID(username, iq.elementTextTrim("resource"));
+        String resource = iq.elementTextTrim("resource");
+        resource = resource != null ? resource.toLowerCase() : null;
 
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection
-        if (sessionManager.isActiveRoute(jid)) {
+        if (sessionManager.isActiveRoute(username, resource)) {
             ClientSession oldSession = null;
             try {
-                oldSession = sessionManager.getSession(jid);
+                String domain = localServer.getServerInfo().getName();
+                oldSession = sessionManager.getSession(username, domain, resource);
                 oldSession.incrementConflictCount();
                 int conflictLimit = sessionManager.getConflictKickLimit();
                 if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
@@ -189,7 +193,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 throw new UnauthorizedException();
             }
             else {
-                session.setAuthToken(token, userManager, jid.getResource());
+                session.setAuthToken(token, userManager, resource);
                 packet.setFrom(session.getAddress());
                 response = IQ.createResultIQ(packet);
             }

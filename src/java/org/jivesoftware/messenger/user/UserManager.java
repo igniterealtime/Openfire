@@ -132,12 +132,7 @@ public class UserManager {
      */
     public User getUser(String username) throws UserNotFoundException {
         // Make sure that the username is valid.
-        try {
-            username = Stringprep.nodeprep(username);
-        }
-        catch (StringprepException se) {
-            throw new UserNotFoundException("Invalid username: " + username,  se);
-        }
+        username = username.trim().toLowerCase();
         User user = (User) userCache.get(username);
         if (user == null) {
             synchronized(username.intern()) {

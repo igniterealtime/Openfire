@@ -13,3 +13,4 @@ servlets.jar         | Jetty 5.0.0
 wls_stax.jar         | Downloaded 10/19/2004
 dom4j.jar            | 1.5
 junit.jar            | 3.8.1
+ant-contrib          | 0.6

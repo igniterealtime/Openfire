@@ -23,6 +23,16 @@
     </description>
 
     <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFs                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/ant-contrib.jar"/>
+        </classpath>
+    </taskdef>
+
+    <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
@@ -58,9 +68,7 @@
     <property name="version.major" value="2" />
     <property name="version.minor" value="0" />
     <property name="version.revision" value="0" />
-    <property name="version.extra" value="beta" />
-    <property name="version" value="${version.major}.${version.minor}.${version.revision}" />
-    <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}" />
+    <property name="version.extra" value="beta1" />
     <property name="dist.prefix" value="jive_messenger" />
 
     <!-- ======================================================================================= -->
@@ -132,6 +140,19 @@
         </tstamp>
 
         <mkdir dir="${target.dir}" />
+
+        <!-- Setup the versions correctly -->
+        <if>
+            <equals arg1="${version.extra}" arg2="" />
+            <then>
+                <property name="version" value="${version.major}.${version.minor}.${version.revision}" />
+                <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}" />
+            </then>
+            <else>
+                <property name="version" value="${version.major}.${version.minor}.${version.revision}.${version.extra}" />
+                <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}_${version.extra}" />
+            </else>
+        </if>
     </target>
 
     <!-- compile =============================================================================== -->
@@ -199,12 +220,12 @@
             sourcepath="${src.java.dir}"
             packagenames="org.jivesoftware.*"
             destdir="${javadoc.dest.dir}"
-            windowtitle="Jive Messenger ${version} ${version.extra} Javadoc"
+            windowtitle="Jive Messenger ${version} Javadoc"
             overview="${src.java.dir}/overview.html"
             failonerror="yes"
         >
-            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Jive Messenger ${version} ${version.extra} Javadoc</font>]]></doctitle>
-            <header><![CDATA[<b>Jive Messenger ${version} ${version.extra} Javadoc</b>]]></header>
+            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Jive Messenger ${version} Javadoc</font>]]></doctitle>
+            <header><![CDATA[<b>Jive Messenger ${version} Javadoc</b>]]></header>
             <bottom><![CDATA[<i>Copyright &copy; 1999-2004 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies" />
@@ -370,10 +391,13 @@
         <mkdir dir="${release.dest.dir}" />
 
         <!-- Create a new prop for the final release dirs then create the dirs -->
+
         <property name="release.out.name" value="${dist.prefix}_${version.filename}" />
         <property name="release.src.out.name" value="${dist.prefix}_src_${version.filename}" />
+
         <property name="release.out.dir" value="${release.dest.dir}/${release.out.name}" />
         <property name="release.src.out.dir" value="${release.dest.dir}/${release.src.out.name}" />
+
         <mkdir dir="${release.out.dir}" />
         <mkdir dir="${release.src.out.dir}" />
 

@@ -10,19 +10,24 @@
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.JiveGlobals,
                  java.util.Map,
-                 java.util.Iterator"
+                 java.util.Iterator,
+                 org.jivesoftware.messenger.ConnectionManager,
+                 org.jivesoftware.database.DbConnectionManager"
 %>
 
-<%  boolean showSidebar = false;
-        // First, update with XMPPSettings
-        Map xmppSettings = (Map)session.getAttribute("xmppSettings");
-        Iterator iter = xmppSettings.keySet().iterator();
-        while(iter.hasNext()){
-            String name = (String)iter.next();
-            String value = (String)xmppSettings.get(name);
-            JiveGlobals.setProperty(name, value);
-        }
-
+<%
+    boolean showSidebar = false;
+    // First, update with XMPPSettings
+    Map xmppSettings = (Map)session.getAttribute("xmppSettings");
+    Iterator iter = xmppSettings.keySet().iterator();
+    while(iter.hasNext()){
+        String name = (String)iter.next();
+        String value = (String)xmppSettings.get(name);
+        JiveGlobals.setProperty(name, value);
+    }
+    // Shut down connection provider. Some connection providers (such as the
+    // embedded provider) require a clean shut-down.
+    DbConnectionManager.getConnectionProvider().destroy();    
 %>
 
 <%@ include file="setup-header.jspf" %>

@@ -399,6 +399,10 @@ public interface MUCRoom extends ChatDeliverer {
 
     public void setCanOccupantsInvite(boolean canOccupantsInvite);
 
+    public String getNaturalLanguageName();
+
+    public void setNaturalLanguageName(String naturalLanguageName);
+
     public String getDescription();
 
     public void setDescription(String description);
@@ -488,8 +492,6 @@ public interface MUCRoom extends ChatDeliverer {
      * @return true if the presences of the requested role will be broadcasted.
      */
     public boolean canBroadcastPresence(String roleToBroadcast);
-
-    public void setName(String name);
 
     /**
      * Unlocks the room so that users can join the room. The room is locked when created and only

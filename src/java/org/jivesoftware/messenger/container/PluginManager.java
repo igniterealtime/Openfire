@@ -21,7 +21,8 @@ import org.dom4j.io.SAXReader;
 
 import java.io.*;
 import java.util.*;
-import java.util.zip.ZipEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
 import java.util.zip.ZipFile;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -58,7 +59,7 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
-        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 30, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -174,7 +175,7 @@ public class PluginManager {
                     // If the JAR hasn't been exploded, do so.
                     if (!dir.exists()) {
                         try {
-                            ZipFile zipFile = new ZipFile(jarFile);
+                            ZipFile zipFile = new JarFile(jarFile);
                             // Ensure that this JAR is a plugin.
                             if (zipFile.getEntry("plugin.xml") == null) {
                                 continue;
@@ -182,9 +183,13 @@ public class PluginManager {
                             dir.mkdir();
                             Log.debug("Extracting plugin: " + jarName);
                             for (Enumeration e=zipFile.entries(); e.hasMoreElements(); ) {
-                                ZipEntry entry = (ZipEntry)e.nextElement();
+                                JarEntry entry = (JarEntry)e.nextElement();
                                 File entryFile = new File(dir, entry.getName());
-                                if (!entryFile.isDirectory()) {
+                                // Ignore any manifest.mf entries.
+                                if (entry.getName().toLowerCase().endsWith("manifest.mf")) {
+                                    continue;
+                                }
+                                if (!entry.isDirectory()) {
                                     entryFile.getParentFile().mkdirs();
                                     FileOutputStream out = new FileOutputStream(entryFile);
                                     InputStream zin = zipFile.getInputStream(entry);

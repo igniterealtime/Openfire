@@ -173,7 +173,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     private void initSession(Session session)  throws UnauthorizedException, UserNotFoundException {
 
         // Only user sessions need to be authenticated
-        if (!"".equals(session.getAddress().getNode())) {
+        if (session.getAddress().getNode() != null && !"".equals(session.getAddress().getNode())) {
             String username = session.getAddress().getNode();
             Roster roster = rosterManager.getRoster(username);
             for (RosterItem item : roster.getRosterItems()) {

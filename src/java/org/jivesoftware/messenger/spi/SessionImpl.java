@@ -61,7 +61,7 @@ public class SessionImpl implements Session {
     private boolean initialized;
 
     private Presence presence = null;
-    private SessionManagerImpl sessionManager;
+    private SessionManager sessionManager;
 
     private String serverName;
 
@@ -74,10 +74,7 @@ public class SessionImpl implements Session {
      *
      * @param connection The connection we are proxying
      */
-    public SessionImpl(SessionManagerImpl sessionManager,
-                       String serverName,
-                       Connection connection,
-                       StreamID streamID)
+    public SessionImpl(String serverName, Connection connection, StreamID streamID)
             throws UnauthorizedException {
         conn = connection;
         this.streamID = streamID;
@@ -85,7 +82,7 @@ public class SessionImpl implements Session {
         this.jid = new XMPPAddress(null, null, null);
         presence = new PresenceImpl();
 
-        this.sessionManager = sessionManager;
+        this.sessionManager = SessionManager.getInstance();
 
         if (sessionManager == null) {
             throw new UnauthorizedException("Required services not available");

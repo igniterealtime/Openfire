@@ -48,7 +48,6 @@ public class XMPPBootContainer extends BootstrapContainer {
         return new String[]{
             ConnectionManagerImpl.class.getName(),
             PresenceManagerImpl.class.getName(),
-            SessionManagerImpl.class.getName(),
             PacketRouterImpl.class.getName(),
 
             IQRouterImpl.class.getName(),

@@ -14,7 +14,36 @@ package org.jivesoftware.messenger.container;
 import java.io.File;
 
 /**
- * Plugin interface.
+ * Plugin interface. Plugins enhance the functionality of Jive Messenger. They can:<ul>
+ *
+ *      <li>Act as {@link org.jivesoftware.messenger.Component Components} to implement
+ *      additional features in the XMPP protocol.
+ *      <li>Dynamically modify the admin console.
+ *      <li>Use the Jive Messenger API to add new functionality to server.
+ * </ul>
+ *
+ * Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. Plugins
+ * that are packaged as JAR files will be automatically expanded into directories. A
+ * plugin directory should have the following structure:
+ *
+ * <pre>[pluginDir]
+ *    |-- plugin.xml
+ *    |-- classes/
+ *    |-- lib/</pre>
+ *
+ * The <tt>classes</tt> and <tt>lib</tt> directory are optional. Any files in the
+ * <tt>classes</tt> directory will be added to the classpath of the plugin, as well
+ * as any JAR files in the <tt>lib</tt> directory. The <tt>plugin.xml</tt> file is
+ * required, and specifies the className of the Plugin implementation. The XML file
+ * should resemble the following XML:
+ *
+ * <pre>
+ * &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+ * &lt;plugin&gt;
+ *     &lt;class&gt;org.example.YourPlugin&lt;/class&gt;
+ * &lt;/plugin&gt;</pre>
+ *
+ * Each plugin will be loaded in its own class loader.
  *
  * @author Matt Tucker
  */

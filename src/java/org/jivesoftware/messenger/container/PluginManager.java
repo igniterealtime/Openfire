@@ -24,8 +24,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Manages plugins.
+ * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
+ * new plugins, and they are dynamically loaded.
  *
+ * @see Plugin
  * @author Matt Tucker
  */
 public class PluginManager {
@@ -35,6 +37,11 @@ public class PluginManager {
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
 
+    /**
+     * Constructs a new plugin manager.
+     *
+     * @param pluginDir the plugin directory.
+     */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
         plugins = new HashMap<String,Plugin>();
@@ -44,7 +51,7 @@ public class PluginManager {
      * Starts plugins and the plugin monitoring service.
      */
     public void start() {
-        executor = new ScheduledThreadPoolExecutor(2);
+        executor = new ScheduledThreadPoolExecutor(1);
         executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
     }
 
@@ -60,6 +67,16 @@ public class PluginManager {
         for (Plugin plugin : plugins.values()) {
             plugin.destroy();
         }
+        plugins.clear();
+    }
+
+    /**
+     * Returns a Collection of all installed plugins.
+     *
+     * @return a Collection of all installed plugins.
+     */
+    public Collection<Plugin> getPlugins() {
+        return Collections.unmodifiableCollection(plugins.values());
     }
 
     /**

@@ -66,6 +66,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         info = new IQHandlerInfo("query", "jabber:iq:auth");
 
         probeResponse = DocumentHelper.createElement(QName.get("query", "jabber:iq:auth"));
+        probeResponse.addAttribute("type", "get");
         probeResponse.add(DocumentHelper.createElement("username"));
         if (AuthFactory.isPlainSupported()) {
             probeResponse.add(DocumentHelper.createElement("password"));
@@ -83,9 +84,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             IQ response = null;
             try {
                 Element iq = packet.getElement();
+                Element query = iq.element("query");
 
                 if (IQ.Type.get == packet.getType()) {
-                    String username = iq.element("username").getTextTrim();
+                    String username = query.elementTextTrim("username");
                     probeResponse.element("username").setText(username);
                     response = IQ.createResultIQ(new IQ(probeResponse));
                 }
@@ -96,15 +98,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                         response = anonymousLogin(session, packet);
                     }
                     else {
-                        String username = iq.element("username").getTextTrim();
+                        String username = query.elementTextTrim("username");
                         // Login authentication
-                        String password = null;
-                        if (iq.element("password") != null) {
-                            password = iq.element("password").getTextTrim();
-                        }
+                        String password = query.elementTextTrim("password");
                         String digest = null;
-                        if (iq.element("digest") != null) {
-                            digest = iq.element("digest").getTextTrim().toLowerCase();
+                        if (query.element("digest") != null) {
+                            digest = query.elementTextTrim("digest").toLowerCase();
                         }
 
                         // If we're already logged in, this is a password reset

@@ -20,6 +20,8 @@ import org.jivesoftware.messenger.user.User;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Simple wrapper to the incorporated LogKit to log under a single logging name.
@@ -218,10 +220,7 @@ public class Log {
 
     public static void markDebugLogFile(User user) {
         RotatingFileTarget target = (RotatingFileTarget) debugLog.getLogTargets()[0];
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a yyyy.MM.dd");
-        String date = sdf.format(new java.util.Date());
-        String logline = " --- Marker inserted by " + user.getUsername() + " at " + date + " --- \n";
-        target.write(logline);
+        markLogFile(user, target);
     }
 
     public static void rotateDebugLogFile() {
@@ -255,10 +254,7 @@ public class Log {
 
     public static void markInfoLogFile(User user) {
         RotatingFileTarget target = (RotatingFileTarget) infoLog.getLogTargets()[0];
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a yyyy.MM.dd");
-        String date = sdf.format(new java.util.Date());
-        String logline = " --- Marker inserted by " + user.getUsername() + " at " + date + " --- \n";
-        target.write(logline);
+        markLogFile(user, target);
     }
 
     public static void rotateInfoLogFile() {
@@ -292,10 +288,7 @@ public class Log {
 
     public static void markWarnLogFile(User user) {
         RotatingFileTarget target = (RotatingFileTarget) warnLog.getLogTargets()[0];
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a yyyy.MM.dd");
-        String date = sdf.format(new java.util.Date());
-        String logline = " --- Marker inserted by " + user.getUsername() + " at " + date + " --- \n";
-        target.write(logline);
+        markLogFile(user, target);
     }
 
     public static void rotateWarnLogFile() {
@@ -338,10 +331,7 @@ public class Log {
 
     public static void markErrorLogFile(User user) {
         RotatingFileTarget target = (RotatingFileTarget) errorLog.getLogTargets()[0];
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a yyyy.MM.dd");
-        String date = sdf.format(new java.util.Date());
-        String logline = " --- Marker inserted by " + user.getUsername() + " at " + date + " --- \n";
-        target.write(logline);
+        markLogFile(user, target);
     }
 
     public static void rotateErrorLogFile() {
@@ -390,6 +380,13 @@ public class Log {
      */
     public static String getLogDirectory() {
         return logDirectory;
+    }
+
+    private static void markLogFile(User user, RotatingFileTarget target) {
+        List args = new ArrayList();
+        args.add(user.getUsername());
+        args.add(JiveGlobals.formatDateTime(new java.util.Date()));
+        target.write(LocaleUtils.getLocalizedString("log.marker_inserted_by", args) + "\n");
     }
 
     private static void printToStdErr(String s, Throwable throwable) {

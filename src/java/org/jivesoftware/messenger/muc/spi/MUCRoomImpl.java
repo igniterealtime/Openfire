@@ -1303,15 +1303,6 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void setSubject(String subject) {
         this.subject = subject;
-        // TODO Remove this when persistent room's history gets implemented
-        // Add the room's subject to the history
-        if (subject != null && subject.length() > 0) {
-            Message message = new MessageImpl();
-            message.setType(Message.GROUP_CHAT);
-            message.setSubject(subject);
-            message.setSender(getRole().getRoleAddress());
-            roomHistory.addMessage(message);
-        }
     }
 
     public void sendInvitation(String to, String reason, MUCRole senderRole, Session session)
@@ -1375,6 +1366,10 @@ public class MUCRoomImpl implements MUCRoom {
 
     public IQAdminHandler getIQAdminHandler() {
         return iqAdminHandler;
+    }
+
+    public MUCRoomHistory getRoomHistory() {
+        return roomHistory;
     }
 
     public Collection<String> getOwners() {

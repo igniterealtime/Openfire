@@ -457,6 +457,13 @@ public interface MUCRoom extends ChatDeliverer {
     public IQAdminHandler getIQAdminHandler();
 
     /**
+     * Returns the history of the room which includes chat transcripts.
+     *
+     * @return the history of the room which includes chat transcripts.
+     */
+    public MUCRoomHistory getRoomHistory();
+
+    /**
      * Returns a collection with the current list of owners. The collection contains the bareJID of
      * the users with owner affiliation.
      *

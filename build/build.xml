@@ -712,6 +712,7 @@
             <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
                 <classpath>
                     <pathelement location="${java.home}/../lib/tools.jar" />
+                    <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar" />
                     <path refid="jspc.dependencies" />
                     <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
                     <pathelement path="${compile.dir}" />

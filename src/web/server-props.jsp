@@ -9,8 +9,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.XMPPServerInfo,
                  java.util.Iterator,
-                 org.jivesoftware.messenger.ServerPort,
-                 org.jivesoftware.messenger.chat.ChatServer"
+                 org.jivesoftware.messenger.ServerPort"
 %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -69,16 +68,6 @@ Below is a list of information for this <fmt:message key="short.title" bundle="$
          >Edit <img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
      </td>
 </tr>
-<c:if test="${!empty admin.chatServer}">
-  <tr>
-      <td class="jive-label">
-          Chat Server Name:
-      </td>
-      <td colspan=2>
-        <c:out value="${admin.chatServer.chatServerName}" />
-      </td>
-  </tr>
-</c:if>
 <c:if test="${!empty admin.multiUserChatServer}">
   <tr>
       <td class="jive-label">

@@ -9,8 +9,7 @@
                  java.text.DateFormat,
                  java.util.HashMap,
                  java.util.Map,
-                 org.jivesoftware.messenger.XMPPServerInfo,
-                 org.jivesoftware.messenger.chat.ChatServer"
+                 org.jivesoftware.messenger.XMPPServerInfo"
 %>
 <%
    // Handle a cancel
@@ -39,7 +38,6 @@
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = false;
     String name = ParamUtils.getParameter(request,"servername");
-    String chat = ParamUtils.getParameter(request,"chatname");
     String muc = ParamUtils.getParameter(request,"mucname");
 
     
@@ -51,14 +49,10 @@
         if (name == null) {
             errors.put("servername","servername");
         }
-        if (chat == null) {
-            errors.put("chatname","chatname");
-        }
-        if (muc == null) {
+        if (muc == null || muc.indexOf('.') >= 0) {
             errors.put("mucname","mucname");
         }
         if (errors.size() == 0) {
-            admin.getChatServer().setChatServerName(chat);
             admin.getMultiUserChatServer().setServiceName(muc);
             admin.getXMPPServer().getServerInfo().setName(name);
             success = true;
@@ -67,8 +61,6 @@
     else {
         name = admin.getServerInfo().getName() == null
                 ? "" : admin.getServerInfo().getName();
-        chat = admin.getChatServer().getChatServerName() == null
-                ? "" : admin.getChatServer().getChatServerName();
         muc = admin.getMultiUserChatServer().getServiceName() == null
                 ? "" : admin.getMultiUserChatServer().getServiceName();
     }
@@ -104,23 +96,6 @@ Use the form below to edit server properties.
      value="<%= name %>">
 
     <%  if (errors.get("servername") != null) { %>
-
-        <span class="jive-error-text">
-        Please enter a valid name.
-        </span>
-
-    <%  } %>
-    </td>
-</tr>
-<tr>
-    <td class="jive-label">
-        Chat server name:
-    </td>
-    <td>
-    <input type="text" size="30" maxlength="150" name="chatname"
-     value="<%= chat %>">
-
-    <%  if (errors.get("chatname") != null) { %>
 
         <span class="jive-error-text">
         Please enter a valid name.

@@ -56,7 +56,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         if (bodyElement == null) {
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
             bodyElement.addElement("name").setText("Jive Messenger");
-            bodyElement.addElement("os").setText("JDK 1.4.x");
+            bodyElement.addElement("os").setText("Java 5");
             versionElement = bodyElement.addElement("version");
         }
     }

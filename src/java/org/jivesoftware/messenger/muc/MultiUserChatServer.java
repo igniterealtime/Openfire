@@ -16,7 +16,8 @@ import java.util.Collection;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.*;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -192,7 +193,7 @@ public interface MultiUserChatServer {
      * @return The chatroom for the given name.
      * @throws UnauthorizedException If the caller doesn't have permission to create a new room.
      */
-    MUCRoom getChatRoom(String roomName, XMPPAddress userjid) throws UnauthorizedException;
+    MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException;
 
     /**
      * Obtains a chatroom by name. If the chatroom does not exists then null will be returned.
@@ -230,7 +231,7 @@ public interface MultiUserChatServer {
      * 
      * @param jabberID The user's normal jid, not the chat nickname jid.
      */
-    void removeUser(XMPPAddress jabberID);
+    void removeUser(JID jabberID);
 
     /**
      * Obtain a chat user by XMPPAddress.
@@ -239,7 +240,7 @@ public interface MultiUserChatServer {
      * @return The chatuser corresponding to that XMPPAddress.
      * @throws UserNotFoundException If the user is not found and can't be auto-created.
      */
-    MUCUser getChatUser(XMPPAddress userjid) throws UserNotFoundException;
+    MUCUser getChatUser(JID userjid) throws UserNotFoundException;
 
     /**
      * Broadcast a given message to all members of this chat room. The sender is always set to be
@@ -271,5 +272,5 @@ public interface MultiUserChatServer {
      * @param message the message to log as part of the conversation in the room.
      * @param sender the real XMPPAddress of the sender (e.g. john@example.org). 
      */
-    void logConversation(MUCRoom room, Message message, XMPPAddress sender);
+    void logConversation(MUCRoom room, Message message, JID sender);
 }

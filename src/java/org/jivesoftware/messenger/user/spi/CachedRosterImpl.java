@@ -206,7 +206,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             if (server == null) {
                 server = (XMPPServer)ServiceLookupFactory.getLookup().lookup(XMPPServer.class);
             }
-            XMPPAddress recipient = server.createAddress(username, null);
+            XMPPAddress recipient = server.createJID(username, null);
             roster.setRecipient(recipient);
             roster.setOriginatingSession(server.getSession());
             if (sessionManager == null) {

@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.Module;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
 
 /**
  * The XMPP server definition. An interface allows us to implement the
@@ -42,7 +43,7 @@ public interface XMPPServer extends XMPPServerMBean, Module {
      *
      * @return true if the address is a local address to this server.
      */
-    public boolean isLocal(XMPPAddress jid);
+    public boolean isLocal(JID jid);
 
     /**
      * Creates an XMPPAddress local to this server.
@@ -51,7 +52,7 @@ public interface XMPPServer extends XMPPServerMBean, Module {
      * @param resource the resource portion of the id or null to indicate none is needed.
      * @return an XMPPAddress for the server.
      */
-    public XMPPAddress createAddress(String username, String resource);
+    public JID createJID(String username, String resource);
 
     /**
      * Obtain the session representing a packet stream originating from the server.

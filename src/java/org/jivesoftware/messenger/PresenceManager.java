@@ -13,6 +13,9 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+
 import java.util.Collection;
 
 /**
@@ -106,11 +109,10 @@ public interface PresenceManager {
      * servlet session id.
      *
      * @param user the user to create a presence for.
-     * @param uid  a unique string.
      * @return the presence for the user.
      * @throws UnauthorizedException if not the user.
      */
-    public Presence createPresence(User user, String uid) throws UnauthorizedException;
+    public Presence createPresence(User user) throws UnauthorizedException;
 
     /**
      * Sets a presence to be offline which causes the presence to be removed from the system.
@@ -126,7 +128,7 @@ public interface PresenceManager {
      * @param jid the user to set to be offline.
      * @throws UnauthorizedException if not the user.
      */
-    public void setOffline(XMPPAddress jid) throws UnauthorizedException;
+    public void setOffline(JID jid) throws UnauthorizedException;
 
     /**
      * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
@@ -134,7 +136,7 @@ public interface PresenceManager {
      * @param prober The user requesting the probe
      * @param probee The XMPPAddress whos presence we would like sent have have probed
      */
-    public void probePresence(String prober, XMPPAddress probee) throws UnauthorizedException;
+    public void probePresence(String prober, JID probee) throws UnauthorizedException;
 
     /**
      * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
@@ -142,5 +144,5 @@ public interface PresenceManager {
      * @param prober The user requesting the probe
      * @param probee The XMPPAddress whos presence we would like sent have have probed
      */
-    public void probePresence(XMPPAddress prober, XMPPAddress probee) throws UnauthorizedException;
+    public void probePresence(JID prober, JID probee) throws UnauthorizedException;
 }

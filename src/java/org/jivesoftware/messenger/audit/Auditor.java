@@ -11,7 +11,7 @@
 
 package org.jivesoftware.messenger.audit;
 
-import org.jivesoftware.messenger.XMPPPacket;
+import org.xmpp.packet.Packet;
 
 /**
  * <p>Use auditors to audit events and messages on the server.</p>
@@ -29,7 +29,7 @@ public interface Auditor {
      *
      * @param packet the packet being audited
      */
-    void audit(XMPPPacket packet);
+    void audit(Packet packet);
 
     /**
      * Audit any packet that was dropped (undeliverables, etc).

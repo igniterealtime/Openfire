@@ -12,15 +12,15 @@
 package org.jivesoftware.messenger.muc.spi;
 
 import org.jivesoftware.messenger.muc.*;
-import org.jivesoftware.messenger.IQ;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.MetaDataFragment;
 import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.Presence;
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.IQ;
+import org.dom4j.Element;
 
 /**
  * Simple in-memory implementation of a role in a chatroom
@@ -73,12 +73,12 @@ public class MUCRoleImpl implements MUCRole {
     /**
      * The address of the person masquerading in this role.
      */
-    private XMPPAddress rJID;
+    private JID rJID;
 
     /**
      * A fragment containing the x-extension for non-anonymous rooms.
      */
-    private MetaDataFragment extendedInformation;
+    private Element extendedInformation;
 
     /**
      * Create a new role.
@@ -93,13 +93,10 @@ public class MUCRoleImpl implements MUCRole {
      * @throws UnauthorizedException if the role could not be created due to security or permission
      *             violations
      */
-    public MUCRoleImpl(MultiUserChatServer chatserver,
-                       MUCRoomImpl chatroom,
-                       String nickname,
-                       int role,
-                       int affiliation,
-                       MUCUserImpl chatuser,
-                       PacketRouter packetRouter) throws UnauthorizedException {
+    public MUCRoleImpl(MultiUserChatServer chatserver, MUCRoomImpl chatroom,
+            String nickname, int role, int affiliation, MUCUserImpl chatuser,
+            PacketRouter packetRouter) throws UnauthorizedException
+    {
         this.room = chatroom;
         this.nick = nickname;
         this.user = chatuser;
@@ -109,22 +106,22 @@ public class MUCRoleImpl implements MUCRole {
         this.affiliation = affiliation;
         extendedInformation = new MetaDataFragment("http://jabber.org/protocol/muc#user", "x");
         calculateExtendedInformation();
-        rJID = new XMPPAddress(room.getName(), server.getServiceName(), nick);
-        setPresence(room.createPresence(Presence.STATUS_ONLINE));
+        rJID = new JID(room.getName(), server.getServiceName(), nick);
+        setPresence(room.createPresence(null));
     }
 
     public Presence getPresence() {
         return presence;
     }
 
-    public MetaDataFragment getExtendedPresenceInformation() {
+    public Element getExtendedPresenceInformation() {
         return extendedInformation;
     }
 
     public void setPresence(Presence newPresence) {
         this.presence = newPresence;
         if (extendedInformation != null) {
-            presence.addFragment(extendedInformation);
+            presence.getElement().add(extendedInformation.createCopy());
         }
     }
 
@@ -144,13 +141,7 @@ public class MUCRoleImpl implements MUCRole {
 
         role = newRole;
         if (MUCRole.NONE_ROLE == role) {
-            try {
-                presence.setAvailable(false);
-                presence.setVisible(false);
-            }
-            catch (UnauthorizedException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+            presence.setType(Presence.Type.unavailable);
         }
         calculateExtendedInformation();
     }
@@ -214,7 +205,7 @@ public class MUCRoleImpl implements MUCRole {
 
     public void changeNickname(String nickname) {
         this.nick = nickname;
-        rJID = new XMPPAddress(room.getName(), server.getServiceName(), nick);
+        rJID = new JID(room.getName(), server.getServiceName(), nick);
     }
 
     public MUCUser getChatUser() {
@@ -225,30 +216,31 @@ public class MUCRoleImpl implements MUCRole {
         return room;
     }
 
-    public XMPPAddress getRoleAddress() {
+    public JID getRoleAddress() {
         return rJID;
     }
 
     public void send(Presence packet) {
-        packet.setRecipient(user.getAddress());
+        packet.setTo(user.getAddress());
         router.route(packet);
     }
 
     public void send(Message packet) {
-        packet.setRecipient(user.getAddress());
+        packet.setTo(user.getAddress());
         router.route(packet);
     }
 
     public void send(IQ packet) {
-        packet.setRecipient(user.getAddress());
+        packet.setTo(user.getAddress());
         router.route(packet);
     }
 
     /**
-     * Calculates and sets the extended presence information to add to the presence. The information
-     * to add contains the user's jid, affiliation and role.
+     * Calculates and sets the extended presence information to add to the presence.
+     * The information to add contains the user's jid, affiliation and role.
      */
     private void calculateExtendedInformation() {
+
         extendedInformation.setProperty("x.item:jid", user.getAddress().toString());
         extendedInformation.setProperty("x.item:affiliation", getAffiliationAsString());
         extendedInformation.setProperty("x.item:role", getRoleAsString());

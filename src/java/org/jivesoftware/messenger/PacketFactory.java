@@ -11,6 +11,10 @@
 
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.Message;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Presence;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 

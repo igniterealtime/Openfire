@@ -14,6 +14,7 @@ package org.jivesoftware.messenger;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.xmpp.packet.Packet;
 
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Matt Tucker
  */
-public class Channel<T extends XMPPPacket> {
+public class Channel<T extends Packet> {
 
     private String name;
     private ChannelHandler channelHandler;
@@ -83,6 +84,7 @@ public class Channel<T extends XMPPPacket> {
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     try {
+                       
                         packet.getOriginatingSession().getConnection().close();
                     }
                     catch (UnauthorizedException e1) {

@@ -17,11 +17,10 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.MetaDataFragment;
-import org.jivesoftware.messenger.XMPPAddress;
-import org.jivesoftware.messenger.spi.MessageImpl;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
+import org.dom4j.Element;
 
 /**
  * Represent the data model for one <code>MUCRoom</code> history. Including chat transcript,
@@ -51,16 +50,12 @@ public final class MUCRoomHistory {
     public void addMessage(Message packet) {
         // Don't keep messages whose sender is the room itself (thus address without resource)
         // unless the message is changing the room's subject
-        if ((packet.getSender().getResourcePrep() == null
-                || packet.getSender().getResourcePrep().length() == 0) &&
+        if ((packet.getFrom() == null
+                || packet.getFrom().toString().length() == 0) &&
                 packet.getSubject() == null) {
             return;
         }
-        Message packetToAdd = (Message) packet.createDeepCopy();
-        // Clean the originating session of this message. We will need to deliver this message even
-        // after the user that sent it has logged off. Otherwise, it won't be delivered since
-        // messenger expects senders of messages to be authenticated when delivering their messages.
-        packetToAdd.setOriginatingSession(null);
+        Message packetToAdd = (Message) packet.createCopy();
 
         // TODO Analyze concurrency (on the LinkList) when adding many messages simultaneously
 
@@ -69,47 +64,46 @@ public final class MUCRoomHistory {
             isNonAnonymousRoom = room.canAnyoneDiscoverJID();
             // Update the "from" attribute of the delay information in the history
             Message message;
-            MetaDataFragment frag;
+            Element delayElement;
             // TODO Make this update in a separate thread
             for (Iterator it = getMessageHistory(); it.hasNext();) {
                 message = (Message) it.next();
-                frag = (MetaDataFragment) message.getFragment("x", "jabber:x:delay");
+                delayElement = message.getChildElement("x", "jabber:x:delay");
                 if (room.canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute
                     try {
-                        MUCRole role = room.getOccupant(message.getSender().getResourcePrep());
-                        frag.setProperty("x:from", role.getChatUser().getAddress().toStringPrep());
+                        MUCRole role = room.getOccupant(message.getFrom().getResource());
+                        delayElement.addAttribute("from", role.getChatUser().getAddress().toString());
                     }
                     catch (UserNotFoundException e) {
                     }
                 }
                 else {
                     // Set the Room JID as the "from" attribute
-                    frag.setProperty("x:from", message.getSender().toStringPrep());
+                    delayElement.addAttribute("from", message.getFrom().toString());
                 }
             }
 
         }
 
         // Add the delay information to the message
-        MetaDataFragment delayInformation = new MetaDataFragment("jabber:x:delay", "x");
+        Element delayInformation = packetToAdd.addChildElement("x", "jabber:x:delay");
         Date current = new Date();
-        delayInformation.setProperty("x:stamp", UTC_FORMAT.format(current));
+        delayInformation.addAttribute("stamp", UTC_FORMAT.format(current));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             try {
-                MUCRole role = room.getOccupant(packet.getSender().getResourcePrep());
-                delayInformation.setProperty("x:from", role.getChatUser().getAddress()
-                        .toStringPrep());
+                MUCRole role = room.getOccupant(packet.getFrom().getResource());
+                delayInformation.addAttribute("from", role.getChatUser().getAddress()
+                        .toString());
             }
             catch (UserNotFoundException e) {
             }
         }
         else {
             // Set the Room JID as the "from" attribute
-            delayInformation.setProperty("x:from", packet.getSender().toStringPrep());
+            delayInformation.addAttribute("from", packet.getFrom().toString());
         }
-        packetToAdd.addFragment(delayInformation);
         historyStrategy.addMessage(packetToAdd);
     }
 
@@ -140,36 +134,36 @@ public final class MUCRoomHistory {
      * @param body the body of the message.
      */
     public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
-            String body) {
-        Message packetToAdd = new MessageImpl();
-        packetToAdd.setType(Message.GROUP_CHAT);
-        packetToAdd.setSubject(subject);
-        packetToAdd.setBody(body);
+            String body)
+    {
+        Message message = new Message();
+        message.setType(Message.Type.groupchat);
+        message.setSubject(subject);
+        message.setBody(body);
         // Set the sender of the message
         if (nickname != null && nickname.trim().length() > 0) {
-            XMPPAddress roomJID = room.getRole().getRoleAddress();
+            JID roomJID = room.getRole().getRoleAddress();
             // Recreate the sender address based on the nickname and room's JID
-            packetToAdd.setSender(new XMPPAddress(roomJID.getNamePrep(), roomJID.getHostPrep(),
+            message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(),
                     nickname));
         }
         else {
             // Set the room as the sender of the message
-            packetToAdd.setSender(room.getRole().getRoleAddress());
+            message.setFrom(room.getRole().getRoleAddress());
         }
 
         // Add the delay information to the message
-        MetaDataFragment delayInformation = new MetaDataFragment("jabber:x:delay", "x");
-        delayInformation.setProperty("x:stamp", UTC_FORMAT.format(sentDate));
+        Element delayInformation = message.addChildElement("x", "jabber:x:deley");
+        delayInformation.addAttribute("stamp", UTC_FORMAT.format(sentDate));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
-            delayInformation.setProperty("x:from", senderJID);
+            delayInformation.addAttribute("from", senderJID);
         }
         else {
             // Set the Room JID as the "from" attribute
-            delayInformation.setProperty("x:from", room.getRole().getRoleAddress().toStringPrep());
+            delayInformation.addAttribute("from", room.getRole().getRoleAddress().toString());
         }
-        packetToAdd.addFragment(delayInformation);
-        historyStrategy.addMessage(packetToAdd);
+        historyStrategy.addMessage(message);
     }
 
     /**

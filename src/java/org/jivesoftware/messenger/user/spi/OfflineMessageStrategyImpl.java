@@ -111,7 +111,7 @@ public class OfflineMessageStrategyImpl extends BasicModule implements OfflineMe
             Message response = packetFactory.getMessage();
             response.setOriginatingSession(xmppServer.getSession());
             response.setRecipient(message.getSender());
-            response.setSender(xmppServer.createAddress(null, null));
+            response.setSender(xmppServer.createJID(null, null));
             response.setBody("Message could not be delivered to " + message.getRecipient() + ". User is offline or unreachable.");
             message.getOriginatingSession().getConnection().deliver(response);
 

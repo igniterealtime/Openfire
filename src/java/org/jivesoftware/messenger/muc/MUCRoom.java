@@ -18,13 +18,12 @@ import java.util.Collection;
 import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
 import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.Presence;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
 
 
 /**
@@ -212,7 +211,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @return The new presence
      * @throws UnauthorizedException If the user doesn't have permission to leave the room
      */
-    Presence createPresence(int presenceStatus) throws UnauthorizedException;
+    Presence createPresence(Presence.Type type) throws UnauthorizedException;
 
     /**
      * Broadcast a given message to all members of this chat room. The sender is always set to 
@@ -340,7 +339,7 @@ public interface MUCRoom extends ChatDeliverer {
      *         an existing occupant.
      * @throws ForbiddenException If the user is not allowed to grant moderator privileges.
      */
-    public Presence addModerator(String fullJID, MUCRole senderRole) throws ForbiddenException;
+    public Presence addModerator(JID fullJID, MUCRole senderRole) throws ForbiddenException;
 
     /**
      * Changes the role of the user within the room to participant. A participant is allowed to send
@@ -355,7 +354,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
      */
-    public Presence addParticipant(String fullJID, String reason, MUCRole senderRole)
+    public Presence addParticipant(JID fullJID, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException;
 
     /**
@@ -363,14 +362,14 @@ public interface MUCRoom extends ChatDeliverer {
      * is not allowed to send messages to the room (i.e. does not has voice) and may invite others
      * to the room.
      *
-     * @param fullJID The full JID of the occupant to change to visitor.
-     * @param senderRole The role of the user that is changing the role to visitor.
+     * @param jid the full JID of the occupant to change to visitor.
+     * @param senderRole the role of the user that is changing the role to visitor.
      * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
      *         an existing occupant.
-     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
-     * @throws ForbiddenException If the user is not a moderator.
+     * @throws NotAllowedException if trying to change the moderator role to an owner or an admin.
+     * @throws ForbiddenException if the user is not a moderator.
      */
-    public Presence addVisitor(String fullJID, MUCRole senderRole) throws NotAllowedException,
+    public Presence addVisitor(JID jid, MUCRole senderRole) throws NotAllowedException,
             ForbiddenException;
 
     /**
@@ -449,7 +448,7 @@ public interface MUCRoom extends ChatDeliverer {
      * @return the updated presence of the kicked user or null if the user was not in the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */
-    public Presence kickOccupant(String fullJID, String actorJID, String reason)
+    public Presence kickOccupant(JID fullJID, JID actorJID, String reason)
             throws NotAllowedException;
 
     public IQOwnerHandler getIQOwnerHandler();
@@ -785,13 +784,12 @@ public interface MUCRoom extends ChatDeliverer {
      * need the originating session so that the offline strategy could potentially bounce the 
      * message with the invitation.
      * 
-     * @param to the bare JID of the user that is being invited. 
+     * @param to the JID of the user that is being invited.
      * @param reason the reason of the invitation or null if none.
      * @param role the role of the occupant that sent the invitation.
-     * @param session the originating session that the occupant used for sending the invitation.
      * @throws ForbiddenException If the user is not allowed to send the invitation.
      */
-    public void sendInvitation(String to, String reason, MUCRole role, Session session)
+    public void sendInvitation(JID to, String reason, MUCRole role)
             throws ForbiddenException;
 
     /**
@@ -801,11 +799,9 @@ public interface MUCRoom extends ChatDeliverer {
      * moment we need the originating session so that the offline strategy could potentially bounce 
      * the message with the rejection.
      * 
-     * @param to the bare JID of the user that is originated the invitation.
+     * @param to the JID of the user that is originated the invitation.
      * @param reason the reason for the rejection or null if none.
-     * @param sender the address of the invitee that is rejecting the invitation.
-     * @param session the originating session that the invitee used for rejecting the invitation.
+     * @param from the JID of the invitee that is rejecting the invitation.
      */
-    public void sendInvitationRejection(String to, String reason, XMPPAddress sender,
-            Session session);
+    public void sendInvitationRejection(JID to, String reason, JID from);
 }

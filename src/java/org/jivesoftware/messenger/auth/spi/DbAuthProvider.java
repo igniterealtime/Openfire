@@ -13,11 +13,12 @@ package org.jivesoftware.messenger.auth.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.NodePrep;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.AuthProvider;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -72,7 +73,12 @@ public class DbAuthProvider implements AuthProvider {
         if (username == null || password == null) {
             throw new UnauthorizedException();
         }
-        username = NodePrep.prep(username);
+        try {
+            username = Stringprep.nodeprep(username);
+        }
+        catch (StringprepException se) {
+            throw new UnauthorizedException("Illegal username: " + se.getMessage());
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -119,7 +125,12 @@ public class DbAuthProvider implements AuthProvider {
         if (username == null || token == null || digest == null) {
             throw new UnauthorizedException();
         }
-        username = NodePrep.prep(username);
+        try {
+            username = Stringprep.nodeprep(username);
+        }
+        catch (StringprepException se) {
+            throw new UnauthorizedException("Illegal username: " + se.getMessage());
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -167,7 +178,12 @@ public class DbAuthProvider implements AuthProvider {
         if (username == null || password == null) {
             throw new UnauthorizedException();
         }
-        username = NodePrep.prep(username);
+        try {
+            username = Stringprep.nodeprep(username);
+        }
+        catch (StringprepException se) {
+            throw new UnauthorizedException("Illegal username: " + se.getMessage());
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

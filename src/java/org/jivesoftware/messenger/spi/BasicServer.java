@@ -19,6 +19,8 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
+
 import java.text.DateFormat;
 import java.util.*;
 
@@ -63,19 +65,19 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
         return new XMPPServerInfoImpl(name, version, startDate, stopDate, ports);
     }
 
-    public boolean isLocal(XMPPAddress jid) {
+    public boolean isLocal(JID jid) {
         boolean local = false;
-        if (jid != null && name != null && name.equalsIgnoreCase(jid.getHost())) {
+        if (jid != null && name != null && name.equalsIgnoreCase(jid.getDomain())) {
             local = true;
         }
         return local;
     }
 
-    public XMPPAddress createAddress(String username, String resource) {
-        return new XMPPAddress(username, name, resource);
+    public JID createJID(String username, String resource) {
+        return new JID(username, name, resource);
     }
 
-    private Session serverSession = new ServerSession(new XMPPAddress(null, name, null),
+    private Session serverSession = new ServerSession(new JID(null, name, null),
             new BasicStreamIDFactory().createStreamID(name));
 
     public Session getSession() {
@@ -95,7 +97,7 @@ public class BasicServer extends BasicModule implements XMPPServer, BasicServerM
                 name = "127.0.0.1";
             }
 
-            version = new Version(2, 0, 1, Version.ReleaseStatus.Release, -1);
+            version = new Version(2, 1, 0, Version.ReleaseStatus.Beta, -1);
             initialized = true;
         }
         catch (UnauthorizedException e) {

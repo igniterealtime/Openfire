@@ -15,6 +15,10 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Packet;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
@@ -24,11 +28,11 @@ import javax.xml.stream.XMLStreamWriter;
 public class ServerSession implements Session {
 
     private StreamID streamID;
-    private XMPPAddress address;
+    private JID address;
     private Date creationDate;
     private Connection connection = new ServerConnection();
 
-    public ServerSession(XMPPAddress address, StreamID streamID) {
+    public ServerSession(JID address, StreamID streamID) {
         this.address = address;
         this.streamID = streamID;
         creationDate = new Date();
@@ -112,11 +116,11 @@ public class ServerSession implements Session {
     public void incrementConflictCount() {
     }
 
-    public XMPPAddress getAddress() {
+    public JID getAddress() {
         return address;
     }
 
-    public void process(XMPPPacket packet) {
+    public void process(Packet packet) {
     }
 
     private class ServerConnection implements Connection {
@@ -159,7 +163,7 @@ public class ServerSession implements Session {
             return null;
         }
 
-        public void deliver(XMPPPacket packet)
+        public void deliver(Packet packet)
                 throws UnauthorizedException {
 
         }

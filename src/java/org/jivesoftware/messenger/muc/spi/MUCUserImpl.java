@@ -22,6 +22,7 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.*;
 
 /**
  * Implementation of MUCUser. There will be a MUCUser per user that is connected to one or more 
@@ -35,7 +36,7 @@ public class MUCUserImpl implements MUCUser {
     private MultiUserChatServer server;
 
     /** Real system XMPPAddress for the user. */
-    private XMPPAddress realjid;
+    private JID realjid;
 
     /** Table: key roomName.toLowerCase(); value MUCRole. */
     private Map<String, MUCRole> roles = new ConcurrentHashMap<String, MUCRole>();
@@ -55,7 +56,7 @@ public class MUCUserImpl implements MUCUser {
      * @param packetRouter the router for sending packets from this user.
      * @param jid the real address of the user
      */
-    MUCUserImpl(MultiUserChatServerImpl chatserver, PacketRouter packetRouter, XMPPAddress jid) {
+    MUCUserImpl(MultiUserChatServerImpl chatserver, PacketRouter packetRouter, JID jid) {
         this.realjid = jid;
         this.router = packetRouter;
         this.server = chatserver;
@@ -89,22 +90,21 @@ public class MUCUserImpl implements MUCUser {
      * Generate a conflict packet to indicate that the nickname being requested/used is already in
      * use by another user.
      * 
-     * @param packet The packet to be bounced.
+     * @param packet the packet to be bounced.
      */
-    private void sendErrorPacket(XMPPPacket packet, XMPPError.Code errorCode) {
-        packet = (XMPPPacket) packet.createDeepCopy();
-        packet.setError(errorCode);
-        XMPPAddress sender = packet.getSender();
-        packet.setSender(packet.getRecipient());
-        packet.setRecipient(sender);
+    private void sendErrorPacket(Packet packet, PacketError error) {
+        packet = packet.createCopy();
+        packet.setError(error);
+        packet.setFrom(packet.getTo());
+        packet.setTo(packet.getFrom());
         router.route(packet);
     }
 
-    public XMPPAddress getAddress() {
+    public JID getAddress() {
         return realjid;
     }
 
-    public void process(XMPPPacket packet) throws UnauthorizedException, PacketException {
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (packet instanceof IQ) {
             process((IQ)packet);
         }
@@ -132,8 +132,8 @@ public class MUCUserImpl implements MUCUser {
      */
     public void process(Message packet) {
         lastPacketTime = System.currentTimeMillis();
-        XMPPAddress recipient = packet.getRecipient();
-        String group = recipient.getName();
+        JID recipient = packet.getTo();
+        String group = recipient.getNode();
         if (group == null) {
             // Ignore packets to the groupchat server
             // In the future, we'll need to support TYPE_IQ queries to the server for MUC
@@ -145,14 +145,13 @@ public class MUCUserImpl implements MUCUser {
             if (role == null) {
                 if (server.hasChatRoom(group)) {
                     boolean declinedInvitation = false;
-                    XMPPDOMFragment userInfo = null;
-                    if (Message.NORMAL == packet.getType()) {
+                    Element userInfo = null;
+                    if (Message.Type.normal == packet.getType()) {
                         // An user that is not an occupant could be declining an invitation
-                        userInfo = (XMPPDOMFragment) packet.getFragment(
-                            "x",
-                            "http://jabber.org/protocol/muc#user");
+                        userInfo = packet.getChildElement(
+                                "x", "http://jabber.org/protocol/muc#user");
                         if (userInfo != null
-                                && userInfo.getRootElement().element("decline") != null) {
+                                && userInfo.element("decline") != null) {
                             // A user has declined an invitation to a room
                             // WARNING: Potential fraud if someone fakes the "from" of the
                             // message with the JID of a member and sends a "decline"
@@ -160,12 +159,11 @@ public class MUCUserImpl implements MUCUser {
                         }
                     }
                     if (declinedInvitation) {
-                        Element info = userInfo.getRootElement().element("decline");
+                        Element info = userInfo.element("decline");
                         server.getChatRoom(group).sendInvitationRejection(
                             info.attributeValue("to"),
                             info.elementTextTrim("reason"),
-                            packet.getSender(),
-                            packet.getOriginatingSession());
+                            packet.getFrom());
                     }
                     else {
                         // The sender is not an occupant of the room

@@ -12,8 +12,6 @@
 package org.jivesoftware.messenger.forms.spi;
 
 import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.XDataForm;
-import org.jivesoftware.messenger.XMPPFragment;
 import org.jivesoftware.util.ConcurrentHashSet;
 
 import java.util.*;
@@ -48,7 +46,7 @@ import org.dom4j.QName;
  *
  * @author gdombiak
  */
-public class XDataFormImpl implements XDataForm {
+public class XDataFormImpl {
 
     private String type;
     private String title;

@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.Message;
 
 /**
  * <p>Configures and controls the server's offline message storage strategy.</p>

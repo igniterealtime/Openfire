@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.spi;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -43,26 +44,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         super("Routing table");
     }
 
-    public ChannelHandler addRoute(XMPPAddress node, RoutableChannelHandler destination) {
+    public ChannelHandler addRoute(JID node, RoutableChannelHandler destination) {
 
         ChannelHandler route = null;
 
         routeLock.writeLock().lock();
         try {
-            if (node.getName() == null) {
-                Object item = routes.put(node.getHostPrep(), destination);
+            if (node.getNode() == null) {
+                Object item = routes.put(node.getDomain(), destination);
                 if (item instanceof ChannelHandler) {
                     route = (ChannelHandler)item;
                 }
             }
             else {
-                Object nameRoutes = routes.get(node.getHostPrep());
+                Object nameRoutes = routes.get(node.getDomain());
                 if (nameRoutes == null || nameRoutes instanceof ChannelHandler) {
                     nameRoutes = new Hashtable();
-                    routes.put(node.getHostPrep(), nameRoutes);
+                    routes.put(node.getDomain(), nameRoutes);
                 }
                 if (node.getResource() == null) {
-                    Object item = ((Hashtable)nameRoutes).put(node.getNamePrep(),
+                    Object item = ((Hashtable)nameRoutes).put(node.getNode(),
                             destination);
                     if (item instanceof ChannelHandler) {
                         route = (ChannelHandler)item;
@@ -70,18 +71,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                 }
                 else {
                     Object resourceRoutes =
-                            ((Hashtable)nameRoutes).get(node.getNamePrep());
+                            ((Hashtable)nameRoutes).get(node.getNode());
                     if (resourceRoutes == null
                             || resourceRoutes instanceof ChannelHandler) {
                         resourceRoutes = new Hashtable();
-                        Object item = ((Hashtable)nameRoutes).put(node.getNamePrep(),
+                        Object item = ((Hashtable)nameRoutes).put(node.getNode(),
                                 resourceRoutes);
                         if (item instanceof ChannelHandler) {
                             route = (ChannelHandler)item;
                         }
                     }
                     Object resourceRoute =
-                            ((Hashtable)resourceRoutes).put(node.getResourcePrep(),
+                            ((Hashtable)resourceRoutes).put(node.getResource(),
                                     destination);
                     if (resourceRoute != null) {
                         if (resourceRoute instanceof ChannelHandler) {
@@ -99,22 +100,22 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         return route;
     }
 
-    public RoutableChannelHandler getRoute(XMPPAddress node) throws NoSuchRouteException {
+    public RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException {
         RoutableChannelHandler route = null;
         routeLock.readLock().lock();
         try {
-            Object nameRoutes = routes.get(node.getHostPrep());
+            Object nameRoutes = routes.get(node.getDomain());
             if (nameRoutes instanceof ChannelHandler) {
                 route = (RoutableChannelHandler)nameRoutes;
             }
             else {
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(node.getNamePrep());
+                Object resourceRoutes = ((Hashtable)nameRoutes).get(node.getNode());
                 if (resourceRoutes instanceof ChannelHandler) {
                     route = (RoutableChannelHandler)resourceRoutes;
                 }
                 else if (resourceRoutes != null) {
                     route = (RoutableChannelHandler)
-                            ((Hashtable)resourceRoutes).get(node.getResourcePrep());
+                            ((Hashtable)resourceRoutes).get(node.getResource());
                 }
                 else {
                     //System.err.println(nameRoutes);
@@ -135,28 +136,28 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         return route;
     }
 
-    public Iterator getRoutes(XMPPAddress node) {
+    public Iterator getRoutes(JID node) {
         LinkedList list = null;
         routeLock.readLock().lock();
         try {
-            if (node == null || node.getHost() == null) {
+            if (node == null || node.getDomain() == null) {
                 list = new LinkedList();
                 getRoutes(list, routes);
             }
             else {
-                Object nameRoutes = routes.get(node.getHostPrep());
+                Object nameRoutes = routes.get(node.getDomain());
                 if (nameRoutes != null) {
                     if (nameRoutes instanceof ChannelHandler) {
                         list = new LinkedList();
                         list.add(nameRoutes);
                     }
-                    else if (node.getName() == null) {
+                    else if (node.getNode() == null) {
                         list = new LinkedList();
                         getRoutes(list, (Hashtable)nameRoutes);
                     }
                     else {
                         Object resourceRoutes =
-                                ((Hashtable)nameRoutes).get(node.getNamePrep());
+                                ((Hashtable)nameRoutes).get(node.getNode());
                         if (resourceRoutes != null) {
                             if (resourceRoutes instanceof ChannelHandler) {
                                 list = new LinkedList();
@@ -168,7 +169,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                             }
                             else {
                                 Object entry =
-                                        ((Hashtable)resourceRoutes).get(node.getResourcePrep());
+                                        ((Hashtable)resourceRoutes).get(node.getResource());
                                 if (entry != null) {
                                     list = new LinkedList();
                                     list.add(entry);
@@ -216,14 +217,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
     }
 
-    public ChannelHandler getBestRoute(XMPPAddress node) throws NoSuchRouteException {
+    public ChannelHandler getBestRoute(JID node) throws NoSuchRouteException {
 
         ChannelHandler route = null;
         try {
             route = getRoute(node);
         }
         catch (NoSuchRouteException e) {
-            XMPPAddress defaultNode = new XMPPAddress(node.getName(), node.getHost(), "");
+            JID defaultNode = new JID(node.getNode(), node.getDomain(), "");
             route = getRoute(defaultNode);
         }
         if (route == null) {
@@ -232,40 +233,40 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         return route;
     }
 
-    public ChannelHandler removeRoute(XMPPAddress node) {
+    public ChannelHandler removeRoute(JID node) {
 
         ChannelHandler route = null;
 
         routeLock.writeLock().lock();
         //System.err.println("Remove route " + node.toString());
         try {
-            if (node.getName() == null) {
+            if (node.getNode() == null) {
                 // Chop off all hosted names for this domain
-                Object item = routes.remove(node.getHostPrep());
+                Object item = routes.remove(node.getDomain());
                 if (item instanceof ChannelHandler) {
                     route = (ChannelHandler)item;
                 }
             }
             else {
-                Object nameRoutes = routes.get(node.getHostPrep());
+                Object nameRoutes = routes.get(node.getDomain());
                 if (nameRoutes instanceof Hashtable) {
                     if (node.getResource() == null || node.getResource().trim().length() == 0) {
                         // Chop off all hosted resources for the given name
-                        Object item = ((Hashtable)nameRoutes).remove(node.getNamePrep());
+                        Object item = ((Hashtable)nameRoutes).remove(node.getNode());
                         if (item instanceof ChannelHandler) {
                             route = (ChannelHandler)item;
                         }
                     }
                     else {
                         Object resourceRoutes =
-                                ((Hashtable)nameRoutes).get(node.getNamePrep());
+                                ((Hashtable)nameRoutes).get(node.getNode());
                         if (resourceRoutes instanceof Hashtable) {
                             route = (ChannelHandler)
-                                    ((Hashtable)resourceRoutes).remove(node.getResourcePrep());
+                                    ((Hashtable)resourceRoutes).remove(node.getResource());
                             if (((Hashtable)resourceRoutes).isEmpty()) {
-                                ((Hashtable)nameRoutes).remove(node.getNamePrep());
+                                ((Hashtable)nameRoutes).remove(node.getNode());
                                 if (((Hashtable)nameRoutes).isEmpty()) {
-                                    routes.remove(node.getHostPrep());
+                                    routes.remove(node.getDomain());
 
                                 }
                             }

@@ -56,8 +56,8 @@ public class XMPPServerProxy implements XMPPServer {
         return server.isLocal(jid);
     }
 
-    public XMPPAddress createAddress(String username, String resource) {
-        return server.createAddress(username, resource);
+    public XMPPAddress createJID(String username, String resource) {
+        return server.createJID(username, resource);
     }
 
     public Session getSession() throws UnauthorizedException {

@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.Packet;
+
 /**
  * <p>An uber router that can handle any packet type.</p>
  * <p>The interface is provided primarily as a convenience for services
@@ -30,5 +32,5 @@ public interface PacketRouter extends IQRouter, MessageRouter, PresenceRouter {
      * @throws NullPointerException     If the packet is null
      * @throws IllegalArgumentException If the packet is not one of the three XMPP packet types
      */
-    public void route(XMPPPacket packet) throws IllegalArgumentException, NullPointerException;
+    public void route(Packet packet) throws IllegalArgumentException, NullPointerException;
 }

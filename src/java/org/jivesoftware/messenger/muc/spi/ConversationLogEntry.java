@@ -14,8 +14,8 @@ package org.jivesoftware.messenger.muc.spi;
 import java.util.Date;
 
 import org.jivesoftware.messenger.muc.MUCRoom;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.XMPPAddress;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
 
 /**
  * Represents an entry in the conversation log of a room. An entry basically obtains the necessary
@@ -31,7 +31,7 @@ class ConversationLogEntry {
 
     private String body;
 
-    private XMPPAddress sender;
+    private JID sender;
     
     private String nickname;
     
@@ -46,13 +46,13 @@ class ConversationLogEntry {
      * @param message the message to log as part of the conversation in the room.
      * @param sender the real XMPPAddress of the sender (e.g. john@example.org). 
      */
-    public ConversationLogEntry(Date date, MUCRoom room, Message message, XMPPAddress sender) {
+    public ConversationLogEntry(Date date, MUCRoom room, Message message, JID sender) {
         this.date = date;
         this.subject = message.getSubject();
         this.body = message.getBody();
         this.sender = sender;
         this.roomID = room.getID();
-        this.nickname = message.getSender().getResourcePrep();
+        this.nickname = message.getFrom().getResource();
     }
 
     /**
@@ -69,7 +69,7 @@ class ConversationLogEntry {
      * 
      * @return the XMPP address of the logged message's sender.
      */
-    public XMPPAddress getSender() {
+    public JID getSender() {
         return sender;
     }
 

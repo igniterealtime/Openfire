@@ -11,9 +11,9 @@
 
 package org.jivesoftware.messenger.muc;
 
-import org.jivesoftware.messenger.MetaDataFragment;
-import org.jivesoftware.messenger.Presence;
-import org.jivesoftware.messenger.XMPPAddress;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
+import org.dom4j.Element;
 
 /**
  * Defines the permissions and actions that a MUCUser may use in
@@ -82,7 +82,7 @@ public interface MUCRole extends ChatDeliverer {
      * @return the extended presence information that includes information about roles,
      *         affiliations.
      */
-    MetaDataFragment getExtendedPresenceInformation();
+    Element getExtendedPresenceInformation();
 
     /**
      * Set the current presence status of a user in a chatroom.
@@ -183,5 +183,5 @@ public interface MUCRole extends ChatDeliverer {
      *
      * @return The Jabber ID that represents this role in the room.
      */
-    XMPPAddress getRoleAddress();
+    JID getRoleAddress();
 }

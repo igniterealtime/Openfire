@@ -1,6 +1,8 @@
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.Packet;
+
 public interface Component {
 
-    void processPacket(XMPPPacket packet);
+    void processPacket(Packet packet);
 }

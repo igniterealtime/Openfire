@@ -11,9 +11,9 @@
 
 package org.jivesoftware.messenger.muc;
 
-import org.jivesoftware.messenger.IQ;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.Presence;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.IQ;
 
 /**
  * Interface for any object that can accept chat messages and presence
@@ -22,6 +22,7 @@ import org.jivesoftware.messenger.Presence;
  * @author Gaston Dombiak
  */
 public interface ChatDeliverer {
+
     /**
      * Sends a packet to the user.
      *

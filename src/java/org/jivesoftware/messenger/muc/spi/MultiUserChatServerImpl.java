@@ -34,6 +34,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Message;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -92,7 +96,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * the chat service's hostname
      */
     private String chatServiceName = null;
-    private XMPPAddress chatServiceAddress = null;
+    private JID chatServiceAddress = null;
 
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
@@ -102,7 +106,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * chat users managed by this manager, table: key user jid (XMPPAddress); value ChatUser
      */
-    private Map<XMPPAddress, MUCUser> users = new ConcurrentHashMap<XMPPAddress, MUCUser>();
+    private Map<JID, MUCUser> users = new ConcurrentHashMap<JID, MUCUser>();
     private HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
@@ -196,7 +200,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         room = role.getChatRoom();
                         try {
                             kickedPresence =
-                                    room.kickOccupant(user.getAddress().toStringPrep(), null, null);
+                                    room.kickOccupant(user.getAddress(), null, null);
                             // Send the updated presence to the room occupants
                             room.send(kickedPresence);
                         }
@@ -254,7 +258,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCRoom getChatRoom(String roomName, XMPPAddress userjid) throws UnauthorizedException {
+    public MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException {
         MUCRoom room = null;
         synchronized (rooms) {
             room = rooms.get(roomName.toLowerCase());
@@ -270,15 +274,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     // The room does not exist so check for creation permissions
                     // Room creation is always allowed for sysadmin
                     if (isRoomCreationRestricted() &&
-                            !sysadmins.contains(userjid.toBareStringPrep())) {
+                            !sysadmins.contains(userjid.toBareJID())) {
                         // The room creation is only allowed for certain JIDs
-                        if (!allowedToCreate.contains(userjid.toBareStringPrep())) {
+                        if (!allowedToCreate.contains(userjid.toBareJID())) {
                             // The user is not in the list of allowed JIDs to create a room so raise
                             // an exception
                             throw new UnauthorizedException();
                         }
                     }
-                    room.addFirstOwner(userjid.toBareStringPrep());
+                    room.addFirstOwner(userjid.toBareJID());
                 }
                 rooms.put(roomName.toLowerCase(), room);
             }
@@ -314,7 +318,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return historyStrategy;
     }
 
-    public void removeUser(XMPPAddress jabberID) {
+    public void removeUser(JID jabberID) {
         MUCUser user = users.remove(jabberID);
         if (user != null) {
             Iterator<MUCRole> roles = user.getRoles();
@@ -330,7 +334,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCUser getChatUser(XMPPAddress userjid) throws UserNotFoundException {
+    public MUCUser getChatUser(JID userjid) throws UserNotFoundException {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }
@@ -585,7 +589,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (serverName != null) {
             chatServiceName += "." + serverName;
         }
-        chatServiceAddress = new XMPPAddress(null, chatServiceName, null);
+        chatServiceAddress = new JID(null, chatServiceName, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         userTimeoutTask = new UserTimeoutTask();
@@ -619,16 +623,16 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public XMPPAddress getAddress() {
+    public JID getAddress() {
         if (chatServiceAddress == null) {
             throw new IllegalStateException("Not initialized");
         }
         return chatServiceAddress;
     }
 
-    public void process(XMPPPacket packet) {
+    public void process(Packet packet) {
         try {
-            MUCUser user = getChatUser(packet.getSender());
+            MUCUser user = getChatUser(packet.getFrom());
             user.process(packet);
         }
         catch (Exception e) {
@@ -640,7 +644,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return totalChatTime;
     }
 
-    public void logConversation(MUCRoom room, Message message, XMPPAddress sender) {
+    public void logConversation(MUCRoom room, Message message, JID sender) {
         logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
     }
 
@@ -675,7 +679,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return items.iterator();
     }
 
-    public Iterator getIdentities(String name, String node, XMPPAddress senderJID) {
+    public Iterator getIdentities(String name, String node, JID senderJID) {
         // TODO Improve performance by not creating objects each time
         ArrayList identities = new ArrayList();
         if (name == null && node == null) {
@@ -703,7 +707,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Answer reserved nickname for the sender of the disco request in the requested room
             MUCRoom room = getChatRoom(name);
             if (room != null) {
-                String reservedNick = room.getReservedNickname(senderJID.toBareStringPrep());
+                String reservedNick = room.getReservedNickname(senderJID.toBareJID());
                 if (reservedNick != null) {
                     Element identity = DocumentHelper.createElement("identity");
                     identity.addAttribute("category", "conference");
@@ -717,7 +721,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return identities.iterator();
     }
 
-    public Iterator getFeatures(String name, String node, XMPPAddress senderJID) {
+    public Iterator getFeatures(String name, String node, JID senderJID) {
         ArrayList features = new ArrayList();
         if (name == null && node == null) {
             // Answer the features of the MUC service
@@ -768,7 +772,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return features.iterator();
     }
 
-    public XDataForm getExtendedInfo(String name, String node, XMPPAddress senderJID) {
+    public XDataForm getExtendedInfo(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
             // TODO lock the room while gathering this info???
@@ -808,7 +812,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return null;
     }
 
-    public boolean hasInfo(String name, String node, XMPPAddress senderJID)
+    public boolean hasInfo(String name, String node, JID senderJID)
             throws UnauthorizedException {
         if (name == null && node == node) {
             // We always have info about the MUC service
@@ -825,7 +829,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return false;
     }
 
-    public Iterator getItems(String name, String node, XMPPAddress senderJID)
+    public Iterator getItems(String name, String node, JID senderJID)
             throws UnauthorizedException {
         List answer = new ArrayList();
         if (name == null && node == null) {
@@ -834,7 +838,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             for (MUCRoom room : rooms.values()) {
                 if (room.isPublicRoom()) {
                     item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
+                    item.addAttribute("jid", room.getRole().getRoleAddress().toString());
                     item.addAttribute("name", room.getNaturalLanguageName());
 
                     answer.add(item);
@@ -849,7 +853,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
                     item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", role.getRoleAddress().toStringPrep());
+                    item.addAttribute("jid", role.getRoleAddress().toString());
 
                     answer.add(item);
                 }

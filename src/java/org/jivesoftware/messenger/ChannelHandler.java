@@ -12,13 +12,14 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.Packet;
 
 /**
  * Interface to handle packets delivered by Channels.
  *
  * @author Matt Tucker
  */
-public interface ChannelHandler<T extends XMPPPacket> {
+public interface ChannelHandler<T extends Packet> {
 
     /**
      * Process an XMPP packet.

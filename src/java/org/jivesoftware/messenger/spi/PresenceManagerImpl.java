@@ -25,6 +25,8 @@ import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -81,7 +83,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         for (Presence presence : onlineUsers.values()) {
             if (presence.isAvailable()) {
                 try {
-                    users.add(userManager.getUser(presence.getUsername()));
+                    users.add(userManager.getUser(presence.getFrom().getNode()));
                 }
                 catch (UserNotFoundException e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -134,9 +136,11 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                             String presenceUser2 = "";
                             try {
                                 presenceUser1 =
-                                        userManager.getUser(presence1.getUsername()).getUsername();
+                                        userManager.getUser(presence1.getFrom().getNode()
+                                                ).getUsername();
                                 presenceUser2 =
-                                        userManager.getUser(presence2.getUsername()).getUsername();
+                                        userManager.getUser(presence2.getFrom().getNode()
+                                                ).getUsername();
                             }
                             catch (UserNotFoundException e) {
                                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -162,7 +166,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         for (int i = 0; i < presences.size(); i++) {
             Presence presence = (Presence)presences.get(i);
             try {
-                users.add(userManager.getUser(presence.getUsername()));
+                users.add(userManager.getUser(presence.getFrom().getNode()));
             }
             catch (UserNotFoundException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -177,9 +181,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
-    public Presence createPresence(User user, String uid) {
+    public Presence createPresence(User user) {
         Presence presence = null;
-        presence = new PresenceImpl(user, uid);
+        presence = new Presence();
+        presence.setFrom(server.createJID(user.getUsername(), null));
         setOnline(presence);
         return presence;
     }
@@ -187,7 +192,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void setOnline(Presence presence) {
         User user = null;
         try {
-            user = userManager.getUser(presence.getUsername());
+            user = userManager.getUser(presence.getFrom().getNode());
         }
         catch (UserNotFoundException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -206,9 +211,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public void setOffline(Presence presence) {
-        if (presence.getUsername() != null) {
+        if (presence.getFrom().getNode() != null) {
             synchronized (onlineUsers) {
-                onlineUsers.remove(presence.getUsername());
+                onlineUsers.remove(presence.getFrom().getNode());
             }
         }
         else {
@@ -218,7 +223,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
-    public void setOffline(XMPPAddress jid) throws UnauthorizedException {
+    public void setOffline(JID jid) throws UnauthorizedException {
     }
 
     public boolean isAvailable(User user) {
@@ -239,7 +244,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 if (presence == null) {
                     presence = session.getPresence();
                 }
-                else if (presence.getShow() > session.getPresence().getShow()) {
+                else if (presence.getShow().ordinal() > session.getPresence().getShow().ordinal()) {
                     presence = session.getPresence();
                 }
             }
@@ -286,17 +291,16 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         return null;
     }
 
-    public void probePresence(String prober, XMPPAddress probee) {
+    public void probePresence(String prober, JID probee) {
         try {
             Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
-                if (probee.getNamePrep() != null && !"".equals(probee.getNamePrep())) {
+                if (probee.getNode() != null && !"".equals(probee.getNode())) {
                     Collection<Session> sessions =
-                            sessionManager.getSessions(probee.getNamePrep());
+                            sessionManager.getSessions(probee.getNode());
                     for (Session session : sessions) {
-                        Presence presencePacket =
-                                (Presence)session.getPresence().createDeepCopy();
-                        presencePacket.setSender(session.getAddress());
+                        Presence presencePacket = session.getPresence().createCopy();
+                        presencePacket.setFrom(session.getAddress());
                         try {
                             sessionManager.userBroadcast(prober, presencePacket);
                         }
@@ -307,17 +311,17 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 }
             }
             else if (component != null) {
-                Presence presence = new PresenceImpl();
-                presence.setType(Presence.PROBE);
-                presence.setSender(server.createAddress(prober, ""));
-                presence.setRecipient(probee);
+                Presence presence = new Presence();
+                presence.setType(Presence.Type.probe);
+                presence.setFrom(server.createJID(prober, ""));
+                presence.setTo(probee);
                 component.processPacket(presence);
             }
             else {
-                Presence presence = (Presence)foreignUserCache.get(probee.toBareStringPrep());
+                Presence presence = (Presence)foreignUserCache.get(probee.toBareJID());
                 if (presence != null) {
-                    Presence presencePacket = (Presence)presence.createDeepCopy();
-                    presencePacket.setSender(probee);
+                    Presence presencePacket = presence.createCopy();
+                    presencePacket.setFrom(probee);
                     try {
                         sessionManager.userBroadcast(prober, presencePacket);
                     }
@@ -326,7 +330,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     }
                 }
                 else {
-                    XMPPAddress proberAddress = server.createAddress(prober, "");
+                    JID proberAddress = server.createJID(prober, "");
                     componentManager.addPresenceRequest(proberAddress, probee);
                 }
             }
@@ -336,15 +340,14 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
-    public void probePresence(XMPPAddress prober, XMPPAddress probee) {
+    public void probePresence(JID prober, JID probee) {
         try {
             if (server.isLocal(probee)) {
                 Collection<Session> sessions =
-                        sessionManager.getSessions(probee.getName().toLowerCase());
+                        sessionManager.getSessions(probee.getNode());
                 for (Session session : sessions) {
-                    Presence presencePacket =
-                            (Presence)session.getPresence().createDeepCopy();
-                    presencePacket.setSender(session.getAddress());
+                    Presence presencePacket = session.getPresence().createCopy();
+                    presencePacket.setFrom(session.getAddress());
                     try {
                         deliverer.deliver(presencePacket);
                     }
@@ -355,10 +358,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             }
             else {
                 Presence presence =
-                        (Presence)foreignUserCache.get(probee.toBareStringPrep());
+                        (Presence)foreignUserCache.get(probee.toBareJID());
                 if (presence != null) {
-                    Presence presencePacket = (Presence)presence.createDeepCopy();
-                    presencePacket.setSender(probee);
+                    Presence presencePacket = presence.createCopy();
+                    presencePacket.setFrom(probee);
                     try {
                         deliverer.deliver(presencePacket);
                     }
@@ -392,9 +395,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         return trackInfo;
     }
 
-    public Component getPresenceComponent(XMPPAddress probee) {
+    public Component getPresenceComponent(JID probee) {
         // Check for registered components
-        Component component = componentManager.getComponent(probee.toBareStringPrep());
+        Component component = componentManager.getComponent(probee.toBareJID());
         if (component != null) {
             return component;
         }

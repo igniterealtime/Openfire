@@ -12,8 +12,8 @@
 package org.jivesoftware.messenger.muc;
 
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.ChannelHandler;
+import org.xmpp.packet.JID;
 
 import java.util.Iterator;
 
@@ -47,7 +47,7 @@ public interface MUCUser extends ChannelHandler {
       *
       * @return the address of the packet handler.
       */
-     public XMPPAddress getAddress();
+     public JID getAddress();
 
     /**
      * Obtain the role of the user in a particular room.

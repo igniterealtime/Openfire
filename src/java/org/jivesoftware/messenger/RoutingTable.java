@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.JID;
+
 import java.util.Iterator;
 
 /**
@@ -83,7 +85,7 @@ public interface RoutingTable {
      * @param destination The destination object for this route
      * @return The destination object previously registered under the given address, or null if none existed
      */
-    ChannelHandler addRoute(XMPPAddress node, RoutableChannelHandler destination);
+    ChannelHandler addRoute(JID node, RoutableChannelHandler destination);
 
     /**
      * <p>Obtain a route to a packet handler for the given node.</p>
@@ -93,7 +95,7 @@ public interface RoutingTable {
      * @return The handler corresponding to the route, or null indicating no route exists
      * @throws NoSuchRouteException If the requested route does not exist
      */
-    RoutableChannelHandler getRoute(XMPPAddress node) throws NoSuchRouteException;
+    RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException;
 
     /**
      * <p>Obtain all child routes for the given node.</p>
@@ -103,7 +105,7 @@ public interface RoutingTable {
      * @param node The address we want a route to
      * @return An iterator over all applicable routes
      */
-    Iterator getRoutes(XMPPAddress node);
+    Iterator getRoutes(JID node);
 
     /**
      * <p>Obtain a route to a handler at the given node falling back to a user branch if no resource leaf exists.</p>
@@ -136,7 +138,7 @@ public interface RoutingTable {
      * @return The Session corresponding to the route, or null indicating no route exists
      * @throws NoSuchRouteException If the requested route does not exist
      */
-    ChannelHandler getBestRoute(XMPPAddress node) throws NoSuchRouteException;
+    ChannelHandler getBestRoute(JID node) throws NoSuchRouteException;
 
     /**
      * <p>Remove a route from the routing table.</p>
@@ -145,5 +147,5 @@ public interface RoutingTable {
      * @param node The address we want a route to
      * @return The destination object previously registered under the given address, or null if none existed
      */
-    ChannelHandler removeRoute(XMPPAddress node);
+    ChannelHandler removeRoute(JID node);
 }

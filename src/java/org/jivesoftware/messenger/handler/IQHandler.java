@@ -17,6 +17,10 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -47,8 +51,8 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         this.router = router;
     }
 
-    public void process(XMPPPacket xmppPacket) throws UnauthorizedException, PacketException {
-        IQ iq = (IQ)xmppPacket;
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
+        IQ iq = (IQ)packet;
         try {
             iq = handleIQ(iq);
             if (iq != null) {
@@ -58,8 +62,8 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         catch (org.jivesoftware.messenger.auth.UnauthorizedException e) {
             if (iq != null) {
                 try {
-                    XMPPPacket response = iq.createResult();
-                    response.setError(XMPPError.Code.UNAUTHORIZED);
+                    IQ response = IQ.createResultIQ(iq);
+                    response.setError(PacketError.Condition.not_authorized);
                     Session session = iq.getOriginatingSession();
                     if (!session.getConnection().isClosed()) {
                         session.getConnection().deliver(response);

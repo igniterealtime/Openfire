@@ -16,6 +16,10 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.audit.Auditor;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.IQ;
+
 import java.io.EOFException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -113,16 +117,10 @@ public class SocketReadThread extends Thread {
                     Presence presence = session.getPresence();
                     if (presence != null) {
                         // Simulate an unavailable presence sent by the user.
-                        Presence packet = (Presence) presence.createDeepCopy();
-                        packet.setType(Presence.UNAVAILABLE);
-                        try {
-                            packet.setAvailable(false);
-                            packet.setVisible(false);
-                        }
-                        catch (UnauthorizedException e) {}
-                        packet.setOriginatingSession(session);
-                        packet.setSender(session.getAddress());
-                        packet.setSending(false);
+                        Presence packet = presence.createCopy();
+                        packet.setType(Presence.Type.unavailable);
+                        packet.setType(null);
+                        packet.setFrom(session.getAddress());
                         router.route(packet);
                         clearSignout = true;
                     }
@@ -190,29 +188,23 @@ public class SocketReadThread extends Thread {
 
             if ("message".equals(tag)) {
                 Message packet = packetFactory.getMessage(xpp);
-                packet.setOriginatingSession(session);
-                packet.setSender(session.getAddress());
-                packet.setSending(false);
+                packet.setFrom(session.getAddress());
                 auditor.audit(packet);
                 router.route(packet);
                 session.incrementClientPacketCount();
             }
             else if ("presence".equals(tag)) {
                 Presence packet = packetFactory.getPresence(xpp);
-                packet.setOriginatingSession(session);
-                packet.setSender(session.getAddress());
-                packet.setSending(false);
+                packet.setFrom(session.getAddress());
                 auditor.audit(packet);
                 router.route(packet);
                 session.incrementClientPacketCount();
                 // Update the flag that indicates if the user made a clean sign out
-                clearSignout = (Presence.UNAVAILABLE == packet.getType() ? true : false);
+                clearSignout = (Presence.Type.unavailable == packet.getType() ? true : false);
             }
             else if ("iq".equals(tag)) {
                 IQ packet = packetFactory.getIQ(xpp);
-                packet.setOriginatingSession(session);
-                packet.setSender(session.getAddress());
-                packet.setSending(false);
+                packet.setFrom(session.getAddress());
                 auditor.audit(packet);
                 router.route(packet);
                 session.incrementClientPacketCount();

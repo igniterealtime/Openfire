@@ -22,8 +22,6 @@ import java.util.TimeZone;
 
 import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.Message;
-import org.jivesoftware.messenger.MetaDataFragment;
 
 /**
  * Represents the amount of history requested by an occupant while joining a room. There are 

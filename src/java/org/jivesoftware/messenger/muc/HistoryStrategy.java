@@ -12,8 +12,8 @@
 package org.jivesoftware.messenger.muc;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.Message;
 import org.jivesoftware.messenger.JiveGlobals;
+import org.xmpp.packet.Message;
 
 import java.util.Iterator;
 import java.util.LinkedList;

@@ -12,8 +12,9 @@
 package org.jivesoftware.messenger.disco;
 
 import org.jivesoftware.messenger.forms.XDataForm;
-import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
+
 import java.util.Iterator;
 
 /**
@@ -38,7 +39,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an Iterator (of Element) with the target entity's identities.
      */
-    public abstract Iterator getIdentities(String name, String node, XMPPAddress senderJID);
+    public abstract Iterator getIdentities(String name, String node, JID senderJID);
 
     /**
      * Returns an Iterator (of String) with the supported features. The features to include are the
@@ -50,7 +51,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an Iterator (of String) with the supported features.
      */
-    public abstract Iterator getFeatures(String name, String node, XMPPAddress senderJID);
+    public abstract Iterator getFeatures(String name, String node, JID senderJID);
 
     /**
      * Returns an XDataForm with the extended information about the entity or null if none. Each bit
@@ -61,7 +62,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an XDataForm with the extended information about the entity or null if none.
      */
-    public abstract XDataForm getExtendedInfo(String name, String node, XMPPAddress senderJID);
+    public abstract XDataForm getExtendedInfo(String name, String node, JID senderJID);
 
     /**
      * Returns true if we can provide information related to the requested name and node. For
@@ -75,6 +76,6 @@ public interface DiscoInfoProvider {
      * @return true if we can provide information related to the requested name and node.
      * @throws UnauthorizedException if the senderJID is not authorized to discover information.
      */
-    public abstract boolean hasInfo(String name, String node, XMPPAddress senderJID)
+    public abstract boolean hasInfo(String name, String node, JID senderJID)
             throws UnauthorizedException;
 }

@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger;
 
+import org.xmpp.packet.JID;
+
 /**
  *
  *
@@ -26,5 +28,5 @@ public interface RoutableChannelHandler extends ChannelHandler {
       *
       * @return the XMPP address.
       */
-     public XMPPAddress getAddress();
+     public JID getAddress();
 }

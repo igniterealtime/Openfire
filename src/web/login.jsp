@@ -13,7 +13,6 @@
                  org.jivesoftware.messenger.container.ServiceLookupFactory,
                  org.jivesoftware.messenger.container.ServiceLookup,
                  org.jivesoftware.messenger.JiveGlobals,
-                 org.jivesoftware.util.Version,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"

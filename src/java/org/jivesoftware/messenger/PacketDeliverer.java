@@ -12,6 +12,8 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.Packet;
+
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -32,6 +34,6 @@ public interface PacketDeliverer {
      * @param packet The packet to route
      * @throws java.lang.NullPointerException If the packet is null or the packet could not be routed
      */
-    public void deliver(XMPPPacket packet) throws
+    public void deliver(Packet packet) throws
             UnauthorizedException, PacketException, XMLStreamException;
 }

@@ -15,6 +15,9 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+
 import java.util.Date;
 
 /**
@@ -46,7 +49,7 @@ public interface Session extends RoutableChannelHandler {
       *
       * @return the address of the packet handler.
       */
-     public XMPPAddress getAddress();
+     public JID getAddress();
 
     /**
      * Returns the connection associated with this Session.

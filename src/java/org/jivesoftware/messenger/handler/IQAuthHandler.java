@@ -143,7 +143,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                      Session session,
                      String digest)
             throws UnauthorizedException, UserNotFoundException {
-        XMPPAddress jid = localServer.createAddress(username, iq.element("resource").getTextTrim());
+        XMPPAddress jid = localServer.createJID(username, iq.element("resource").getTextTrim());
 
 
         // If a session already exists with the requested JID, then check to see

@@ -89,7 +89,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 manageSub(senderJID, false, type, roster);
             }
             if (chatbotManager.isChatbot(recipientJID)) {
-                routingTable.getRoute(recipientJID).process((IQ)presence.createDeepCopy());
+                RoutableChannelHandler route = routingTable.getRoute(recipientJID);
+                route.process((XMPPPacket)presence.createDeepCopy());
             }
             else {
                 try {

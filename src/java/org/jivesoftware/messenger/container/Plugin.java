@@ -16,7 +16,7 @@ import java.io.File;
 /**
  * Plugin interface. Plugins enhance the functionality of Jive Messenger. They can:<ul>
  *
- *      <li>Act as {@link org.jivesoftware.messenger.Component Components} to implement
+ *      <li>Act as {@link org.xmpp.component.Component Components} to implement
  *      additional features in the XMPP protocol.
  *      <li>Dynamically modify the admin console.
  *      <li>Use the Jive Messenger API to add new functionality to server.

@@ -15,7 +15,8 @@
                  java.util.*,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.*,
-                 org.xmpp.packet.Presence"
+                 org.xmpp.packet.Presence,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -38,19 +39,13 @@
 
     // Handle a delete
     if (delete) {
-        response.sendRedirect("user-delete.jsp?username=" + username);
+        response.sendRedirect("user-delete.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
 
-    // Handle an email
-    if (email) {
-        response.sendRedirect("user-email.jsp?username=" + username);
-        return;
-    }
-
-    // Handle an email
+    // Handle password change
     if (password) {
-        response.sendRedirect("user-password.jsp?username=" + username);
+        response.sendRedirect("user-password.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
 
@@ -74,9 +69,10 @@
     String title = "User Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-properties.jsp?username="+username));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
+            "user-properties.jsp?username="+URLEncoder.encode(username, "UTF-8")));
     pageinfo.setSubPageID("user-properties");
-    pageinfo.setExtraParams("username="+username);
+    pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />

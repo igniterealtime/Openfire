@@ -8,7 +8,8 @@
                  org.jivesoftware.messenger.user.*,
                  java.util.HashMap,
                  org.jivesoftware.admin.*,
-                 java.util.Map" 
+                 java.util.Map,
+                 java.net.URLEncoder"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -39,7 +40,8 @@
         }
         if (user != null) {
             // found the user, so redirect to the user properties page:
-            response.sendRedirect("user-properties.jsp?username=" + user.getUsername());
+            response.sendRedirect("user-properties.jsp?username=" +
+                    URLEncoder.encode(user.getUsername(), "UTF-8"));
             return;
         }
     }

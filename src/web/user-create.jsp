@@ -23,7 +23,8 @@
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  java.io.PrintStream,
                  org.dom4j.xpath.DefaultXPath,
-                 org.dom4j.*"
+                 org.dom4j.*,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -75,7 +76,8 @@
                     response.sendRedirect("user-create.jsp?success=true");
                 }
                 else {
-                    response.sendRedirect("user-properties.jsp?success=true&username=" + newUser.getUsername());
+                    response.sendRedirect("user-properties.jsp?success=true&username=" +
+                            URLEncoder.encode(newUser.getUsername(), "UTF-8"));
                 }
                 return;
             }
@@ -83,7 +85,6 @@
                 errors.put("usernameAlreadyExists","");
             }
             catch (Exception e) {
-                e.printStackTrace();
                 errors.put("general","");
                 Log.error(e);
             }
@@ -155,7 +156,7 @@
 
 <%  } %>
 
-<form name="f" action="user-create.jsp" method="post">
+<form name="f" action="user-create.jsp" method="get">
 
 <fieldset>
     <legend>Create New User</legend>

@@ -15,7 +15,8 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  java.util.HashMap,
-                 java.util.Map"
+                 java.util.Map,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -32,7 +33,7 @@
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        response.sendRedirect("user-properties.jsp?username=" + username);
+        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
 
@@ -54,7 +55,7 @@
             user.setName(name);
 
             // Changes good, so redirect
-            response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + username);
+            response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
             return;
         }
     }
@@ -65,9 +66,10 @@
     String title = "Edit User";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-edit-form.jsp?username="+username));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
+            "user-edit-form.jsp?username="+URLEncoder.encode(username, "UTF-8")));
     pageinfo.setSubPageID("user-properties");
-    pageinfo.setExtraParams("username="+username);
+    pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />

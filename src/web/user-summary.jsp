@@ -16,7 +16,8 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.PresenceManager,
-                 org.xmpp.packet.Presence"
+                 org.xmpp.packet.Presence,
+                 java.net.URLEncoder"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -163,7 +164,7 @@ Sorted by Username
             <%  } %>
         </td>
         <td width="30%">
-            <a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a>
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a>
         </td>
         <td width="40%">
             <%= user.getName() %> &nbsp;
@@ -172,12 +173,12 @@ Sorted by Username
             <%= dateFormatter.format(user.getCreationDate()) %>
         </td>
         <td width="1%" align="center">
-            <a href="user-edit-form.jsp?username=<%= user.getUsername() %>"
+            <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="Click to edit..."
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="user-delete.jsp?username=<%= user.getUsername() %>"
+            <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="Click to delete..."
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>

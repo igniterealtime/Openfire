@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.messenger.Session,
-                 org.xmpp.packet.Presence"%>
+                 org.xmpp.packet.Presence,
+                 java.net.URLEncoder"%>
  <%--
   -	$RCSfile$
   -	$Revision$
@@ -28,7 +29,7 @@
     <td width="1%" nowrap><%= count %></td>
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
-        <a href="session-details.jsp?jid=<%= sess.getAddress() %>" title="Click for more info..."
+        <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress(), "UTF-8") %>" title="Click for more info..."
          ><%= ((name != null && !"".equals(name)) ? name : "<i>Anonymous</i>") %></a>
 
         <%  if (sess.getConnection().isSecure()) { %>
@@ -151,7 +152,7 @@
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
-        <a href="session-summary.jsp?jid=<%= sess.getAddress() %>&close=true"
+        <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress(), "UTF-8") %>&close=true"
          title="Click to kill session..."
          onclick="return confirm('Are you sure you want to close this connection?');"
          ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>

@@ -17,7 +17,8 @@
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.user.User,
                  org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence"
+                 org.xmpp.packet.Presence,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -51,7 +52,7 @@
 
     // Handle a "message" click:
     if (request.getParameter("message") != null) {
-        response.sendRedirect("user-message.jsp?username=" + user.getUsername());
+        response.sendRedirect("user-message.jsp?username=" + URLEncoder.encode(user.getUsername(), "UTF-8"));
         return;
     }
 

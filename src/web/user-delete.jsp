@@ -12,7 +12,8 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.admin.*,
-                 org.xmpp.packet.JID"
+                 org.xmpp.packet.JID,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -28,7 +29,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?username=" + username);
+        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
 
@@ -60,16 +61,17 @@
     String title = "Delete User";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-delete.jsp?username="+username));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
+            "user-delete.jsp?username="+URLEncoder.encode(username, "UTF-8")));
     pageinfo.setSubPageID("user-delete");
-    pageinfo.setExtraParams("username="+username);
+    pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
 Are you sure you want to delete the user
-<b><a href="user-properties.jsp?username=<%= user.getUsername() %>"><%= user.getUsername() %></a></b>
+<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a></b>
 from the system?
 </p>
 

@@ -86,10 +86,10 @@ public class UserManager {
     {
         // Make sure that the username is valid.
         try {
-            username = Stringprep.nameprep(username, true);
+            username = Stringprep.nodeprep(username);
         }
         catch (StringprepException se) {
-            throw new IllegalArgumentException(se);
+            throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
         User user = provider.createUser(username, password, name, email);
         userCache.put(username, user);
@@ -105,10 +105,10 @@ public class UserManager {
         String username = user.getUsername();
         // Make sure that the username is valid.
         try {
-            username = Stringprep.nameprep(username, true);
+            username = Stringprep.nodeprep(username);
         }
         catch (StringprepException se) {
-            throw new IllegalArgumentException(se);
+            throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
         provider.deleteUser(user.getUsername());
         // Remove the user from cache.
@@ -125,10 +125,10 @@ public class UserManager {
     public User getUser(String username) throws UserNotFoundException {
         // Make sure that the username is valid.
         try {
-            username = Stringprep.nameprep(username, true);
+            username = Stringprep.nodeprep(username);
         }
         catch (StringprepException se) {
-            throw new IllegalArgumentException(se);
+            throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
         User user = (User) userCache.get(username);
         if (user == null) {

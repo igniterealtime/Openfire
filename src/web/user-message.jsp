@@ -18,7 +18,8 @@
                  java.util.HashMap,
                  org.jivesoftware.messenger.user.*,
                  java.util.Map,
-                 org.xmpp.packet.JID"
+                 org.xmpp.packet.JID,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -47,7 +48,7 @@
             return;
         }
         else {
-            response.sendRedirect("user-properties.jsp?username=" + username);
+            response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
             return;
         }
     }
@@ -92,7 +93,8 @@
                 }
             }
             if (username != null){
-                response.sendRedirect("user-message.jsp?success=true&username=" + username + "&tabs=" + tabs);
+                response.sendRedirect("user-message.jsp?success=true&username=" +
+                        URLEncoder.encode(username, "UTF-8") + "&tabs=" + tabs);
             }
             else {
                 response.sendRedirect("user-message.jsp?success=true");

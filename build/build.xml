@@ -54,6 +54,7 @@
     <property name="jar.name" value="messenger.jar" />
     <property name="jar.starter.name" value="startup.jar" />
     <property name="jar.dest.dir" value="${target.dir}/lib" />
+    <property name="resources.dir" value="${src.dir}/resources" />
     <property name="javadoc.src.dir" value="${src.dir}/javadoc" />
     <property name="javadoc.dest.dir" value="${target.dir}/javadoc" />
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
@@ -181,6 +182,7 @@
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
             <fileset dir="${src.dir}" includes="database/*.sql" />
+            <fileset dir="${resources.dir}/jar" includes="admin-sidebar.xml" />
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>

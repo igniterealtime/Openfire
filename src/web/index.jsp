@@ -45,7 +45,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Server Properties";
     pageinfo.setTitle(title);
-    pageinfo.setPageID("server-props");
+    pageinfo.setPageID("server-settings");
 %>
 
 <%@ include file="top.jsp" %>

@@ -96,7 +96,7 @@ public class SessionImpl implements Session {
         if (authToken == null) {
             throw new UserNotFoundException();
         }
-        return authToken.getUsername();
+        return address.getNode();
     }
 
     public String getServerName() {

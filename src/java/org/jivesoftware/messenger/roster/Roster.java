@@ -409,8 +409,9 @@ public class Roster implements Cacheable {
         // will have one entry in the map associated with all the groups
         Map<JID,List<Group>> sharedGroupUsers = new HashMap<JID,List<Group>>();
         for (Group group : sharedGroups) {
-            // Get all the users that can have this group in their rosters
-            Collection<String> users = XMPPServer.getInstance().getRosterManager().getRelatedUsers(group, false);
+            // Get all the users that should be in this roster
+            Collection<String> users = XMPPServer.getInstance().getRosterManager()
+                    .getSharedUsersForRoster(group, this);
             // Add the users of the group to the general list of users to process
             for (String user : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
@@ -553,6 +554,10 @@ public class Roster implements Cacheable {
             // Get the RosterItem for the *local* user to remove
             RosterItem item = getRosterItem(jid);
             if (item.isOnlyShared() && item.getSharedGroups().size() == 1) {
+                // Do nothing if the existing shared group is not the sharedGroup to remove
+                if (!item.getSharedGroups().contains(sharedGroup)) {
+                    return;
+                }
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(jid, false);

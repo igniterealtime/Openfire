@@ -201,7 +201,7 @@
     <target name="jar" depends="compile, jspc" description="Produces Messengers jars and sets up dependencies">
         <mkdir dir="${jar.dest.dir}" />
         <!-- Make main Messenger jar -->
-        <jar jarfile="${jar.dest.dir}/${jar.name}">
+        <jar jarfile="${jar.dest.dir}/${jar.name}" index="true">
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class" />
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
@@ -213,6 +213,7 @@
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>
+
         <!-- Make startup jar -->
         <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
             <fileset dir="${compile.dir}">
@@ -445,9 +446,9 @@
         <!-- Create a logs dir in the binary release -->
         <mkdir dir="${prepare.out.dir}/logs" />
 
-        <!-- Copy plugins -->
+        <!-- Copy admin plugin source (if any) -->
         <copy todir="${prepare.out.dir}">
-            <fileset dir="${src.dir}" includes="plugins/**/*.*" />
+            <fileset dir="${src.dir}" includes="plugins/admin/*.*" />
         </copy>
 
         <!-- Copy admin plugin resources -->
@@ -459,7 +460,7 @@
                 <exclude name="**/*.jspf" />
             </fileset>
         </copy>
-        <!-- Copy other WEB-INF stuff -->
+        <!-- Copy other admin WEB-INF stuff -->
         <copy todir="${prepare.out.dir}/plugins/admin/webapp">
             <fileset dir="${webapp.dest.dir}" />
         </copy>
@@ -527,6 +528,12 @@
             <filterset>
                 <filter token="version" value="${version}" />
             </filterset>
+        </copy>
+        <copy todir="${release.out.dir}/documentation">
+            <fileset dir="${docs.dir}/docs/licenses" />
+        </copy>
+        <copy todir="${release.src.out.dir}/documentation">
+            <fileset dir="${docs.dir}/licenses" />
         </copy>
 
         <!-- Copy Javadocs -->

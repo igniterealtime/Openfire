@@ -18,12 +18,12 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Packet;
+import org.dom4j.io.XMLWriter;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.io.IOException;
-import javax.xml.stream.XMLStreamWriter;
 
 public class ServerSession implements Session {
 
@@ -140,7 +140,7 @@ public class ServerSession implements Session {
             return InetAddress.getLocalHost();
         }
 
-        public XMLStreamWriter getSerializer() throws UnauthorizedException {
+        public XMLWriter getSerializer() throws UnauthorizedException {
             // todo: implement so this loops back
             return null;
         }

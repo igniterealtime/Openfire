@@ -22,9 +22,9 @@ import org.jivesoftware.messenger.user.Roster;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import org.xmpp.packet.*;
 import org.dom4j.Element;
+import org.xmlpull.v1.XmlPullParserException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Implements the TYPE_IQ jabber:iq:roster protocol. Clients
@@ -111,8 +111,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      *
      * @param packet The packet suspected of containing a roster removal
      */
-    private void removeRosterItem(IQRoster packet) throws
-            UnauthorizedException, XMLStreamException {
+    private void removeRosterItem(IQRoster packet) throws UnauthorizedException, XmlPullParserException {
         JID recipientJID = packet.getTo();
         JID senderJID = packet.getFrom();
         try {
@@ -145,7 +144,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param packet The packet that triggered this update
      * @return Either a response to the roster update or null if the packet is corrupt and the session was closed down
      */
-    private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException, XMLStreamException {
+    private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException, XmlPullParserException {
 
         IQ returnPacket = null;
         Session session = null;
@@ -264,7 +263,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     public SessionManager sessionManager;
     public PresenceManager presenceManager;
     public PacketRouter router;
-    public PacketFactory packetFactory;
     public RoutingTable routingTable;
 
     protected TrackInfo getTrackInfo() {
@@ -275,7 +273,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         return trackInfo;
     }
 

@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.xml.stream.XMLStreamException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -37,6 +36,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -142,8 +142,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
     }
 
-    public synchronized IQ handleIQ(IQ packet) throws
-            PacketException, UnauthorizedException, XMLStreamException {
+    public synchronized IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException, XmlPullParserException {
         // Look for a delegate for this packet
         IQHandler delegate = getDelegate(packet.getTo());
         // We assume that the registration packet was meant to the server if delegate is

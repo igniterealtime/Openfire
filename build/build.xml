@@ -95,6 +95,8 @@
 
     <patternset id="web.sources">
         <include name="**/*.jsp" />
+        <include name="**/*.jar" />
+        <include name="**/*.tld" />
         <include name="**/*.jspf" />
         <include name="**/*.html" />
         <include name="**/*.css" />
@@ -339,6 +341,10 @@
         <copy todir="${release.out.dir}/plugins/admin/webapp">
             <fileset dir="${webapp.dest.dir}" />
         </copy>
+        <!-- Copy in tag library support -->
+         <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+             <fileset dir="${lib.build.dir}" includes="commons-el.jar" />
+         </copy>
         <!-- Copy in pre-compiled JSP jar -->
         <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
             <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}" />
@@ -346,8 +352,9 @@
         <!-- Copy in jasper runtime jar -->
         <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
             <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar" />
+            <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar" />
         </copy>
-
+        
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" />

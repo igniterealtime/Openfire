@@ -11,14 +11,12 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.messenger.XMPPAddress;
+import java.util.List;
 import org.jivesoftware.messenger.user.BasicRosterItem;
 import org.jivesoftware.messenger.user.CachedRosterItem;
 import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.util.CacheSizes;
-
-import java.util.List;
+import org.xmpp.packet.JID;
 
 /**
  * In-memory implementation of a roster item. The ID of the roster item is it's roster ID.
@@ -28,7 +26,7 @@ import java.util.List;
 public class CachedRosterItemImpl extends BasicRosterItem implements CachedRosterItem {
 
     public CachedRosterItemImpl(long id,
-                                XMPPAddress jid,
+                                JID jid,
                                 SubType subStatus,
                                 AskType askStatus,
                                 RecvType recvStatus,
@@ -38,7 +36,7 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
         this.rosterID = id;
     }
 
-    public CachedRosterItemImpl(long id, XMPPAddress jid) {
+    public CachedRosterItemImpl(long id, JID jid) {
         this(id,
                 jid,
                 RosterItem.SUB_NONE,
@@ -48,7 +46,7 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
                 null);
     }
 
-    public CachedRosterItemImpl(long id, XMPPAddress jid, String nickname, List groups) {
+    public CachedRosterItemImpl(long id, JID jid, String nickname, List groups) {
         this(id,
                 jid,
                 RosterItem.SUB_NONE,
@@ -90,7 +88,7 @@ public class CachedRosterItemImpl extends BasicRosterItem implements CachedRoste
     }
 
     public int getCachedSize() {
-        int size = jid.getCachedSize();
+        int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
         size += CacheSizes.sizeOfList(groups);
         size += CacheSizes.sizeOfInt(); // subStatus

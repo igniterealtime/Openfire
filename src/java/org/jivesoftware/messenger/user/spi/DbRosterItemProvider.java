@@ -11,22 +11,25 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.XMPPAddress;
-import org.jivesoftware.messenger.user.*;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ArrayList;
 import java.util.List;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.messenger.user.CachedRosterItem;
+import org.jivesoftware.messenger.user.RosterItem;
+import org.jivesoftware.messenger.user.RosterItemProvider;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 /**
  * <p>Implements the roster item provider against the jiveRoster table
@@ -52,7 +55,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM);
             pstmt.setString(1, username);
             pstmt.setLong(2, rosterID);
-            pstmt.setString(3, item.getJid().toBareString());
+            pstmt.setString(3, item.getJid().toBareJID());
             pstmt.setInt(4, item.getSubStatus().getValue());
             pstmt.setInt(5, item.getAskStatus().getValue());
             pstmt.setInt(6, item.getRecvStatus().getValue());
@@ -71,13 +74,10 @@ public class DbRosterItemProvider implements RosterItemProvider {
             insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
         }
         catch (SQLException e) {
-            throw new UserAlreadyExistsException(item.getJid().toStringPrep());
+            throw new UserAlreadyExistsException(item.getJid().toBareJID());
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.close(pstmt, con);
         }
         return cachedItem;
     }
@@ -115,10 +115,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.close(pstmt, con);
         }
     }
 
@@ -183,15 +180,27 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
     private static final String LOAD_USERNAMES =
-        "SELECT DISTINCT username from jiveRoster WHERE jid=?";
+            "SELECT DISTINCT username from jiveRoster WHERE jid=?";
 
     public Iterator<String> getUsernames(String jid) {
         List<String> answer = new ArrayList<String>();
@@ -210,16 +219,28 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         return answer.iterator();
     }
 
     private static final String COUNT_ROSTER_ITEMS =
-        "SELECT COUNT(rosterID) FROM jiveRoster WHERE username=?";
+            "SELECT COUNT(rosterID) FROM jiveRoster WHERE username=?";
 
     public int getItemCount(String username) {
         int count = 0;
@@ -238,18 +259,30 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         return count;
     }
 
     private static final String LOAD_ROSTER =
-        "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
+            "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-        "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
+            "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
 
     public Iterator getItems(String username) {
         LinkedList itemList = new LinkedList();
@@ -262,7 +295,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 CachedRosterItem item = new CachedRosterItemImpl(rs.getLong(2),
-                        XMPPAddress.parseJID(rs.getString(1)),
+                        new JID(rs.getString(1)),
                         RosterItem.SubType.getTypeFromInt(rs.getInt(3)),
                         RosterItem.AskType.getTypeFromInt(rs.getInt(4)),
                         RosterItem.RecvType.getTypeFromInt(rs.getInt(5)),
@@ -280,10 +313,22 @@ public class DbRosterItemProvider implements RosterItemProvider {
                     itemList.add(item);
                 }
                 finally {
-                    try {if (gs != null) { gs.close(); } }
-                    catch (Exception e) { Log.error(e); }
-                    try {if (gstmt != null) { gstmt.close(); } }
-                    catch (Exception e) { Log.error(e); }
+                    try {
+                        if (gs != null) {
+                            gs.close();
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.error(e);
+                    }
+                    try {
+                        if (gstmt != null) {
+                            gstmt.close();
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.error(e);
+                    }
                 }
             }
         }
@@ -291,10 +336,22 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         return itemList.iterator();
     }

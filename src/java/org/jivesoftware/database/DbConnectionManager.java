@@ -161,6 +161,26 @@ public class DbConnectionManager {
     }
 
     /**
+     * Close the prepared statement and connection
+     * @param pstmt the <code>PreparedStatement</code> to close.
+     * @param con the <code>Connection</code> to close.
+     */
+    public static void close(PreparedStatement pstmt, Connection con) {
+        try {
+            if (pstmt != null) pstmt.close();
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        try {
+            if (con != null) con.close();
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+    /**
      * Creates a scroll insensitive Statement if the JDBC driver supports it, or a normal
      * Statement otherwise.
      *

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Cacheable;
 import org.xmpp.packet.Presence;

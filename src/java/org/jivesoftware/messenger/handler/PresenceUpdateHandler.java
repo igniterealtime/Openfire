@@ -80,12 +80,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         super("Presence update handler");
     }
 
-    private PresenceRouter router;
-
-    public void setRouter(PresenceRouter router) {
-        this.router = router;
-    }
-
     public void process(XMPPPacket xmppPacket) throws UnauthorizedException, PacketException {
         Presence presence = (Presence)xmppPacket;
         Session session = presence.getOriginatingSession();
@@ -255,7 +249,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }
             }
             catch (UserNotFoundException e) {
-                Log.warn("Presence being sent from unknown user " + name);
+                Log.warn("Presence being sent from unknown user " + name, e);
             }
             catch (PacketException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -349,7 +343,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }
             }
             catch (UserNotFoundException e) {
-                Log.warn("Presence being sent from unknown user " + name);
+                Log.warn("Presence being sent from unknown user " + name, e);
             }
             catch (PacketException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

@@ -9,13 +9,24 @@
 
 package org.dom4j.io;
 
-import org.dom4j.*;
+import java.io.BufferedReader;
+import java.io.CharArrayReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
+import org.dom4j.ElementHandler;
+import org.dom4j.QName;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.*;
-import java.net.URL;
 
 /**
  * <p><code>XPPPacketReader</code> is a Reader of DOM4J documents that
@@ -103,7 +114,8 @@ public class XPPPacketReader {
         if (systemID.indexOf(':') >= 0) {
             // lets assume its a URL
             return read(new URL(systemID));
-        } else {
+        }
+        else {
             // lets assume that we are given a file name
             return read(new File(systemID));
         }
@@ -252,18 +264,20 @@ public class XPPPacketReader {
 
     // Implementation methods
     //-------------------------------------------------------------------------
-    protected Document parseDocument() throws DocumentException, IOException, XmlPullParserException {
+    public Document parseDocument() throws DocumentException, IOException, XmlPullParserException {
         DocumentFactory df = getDocumentFactory();
         Document document = df.createDocument();
         Element parent = null;
         XmlPullParser pp = getXPPParser();
-        pp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-//        pp.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, true);
-//        pp.setFeature(XmlPullParser.FEATURE_VALIDATION, true);
-//        pp.setFeature("http://xmlpull.org/v1/doc/features.html#xml-roundtrip", true);
+        int count = 0;
         while (true) {
-//            int type = pp.next();
-            int type = pp.nextToken();
+            int type = -1;
+            try {
+              type = pp.nextToken();
+            }
+            catch(Exception ex){
+                return null;
+            }
             switch (type) {
                 case XmlPullParser.PROCESSING_INSTRUCTION:
                     {
@@ -271,7 +285,8 @@ public class XPPPacketReader {
                         int loc = text.indexOf(" ");
                         if (loc >= 0) {
                             document.addProcessingInstruction(text.substring(0, loc), text.substring(loc + 1));
-                        } else
+                        }
+                        else
                             document.addProcessingInstruction(text, "");
                         break;
                     }
@@ -287,7 +302,8 @@ public class XPPPacketReader {
                     {
                         if (parent != null) {
                             parent.addCDATA(pp.getText());
-                        } else {
+                        }
+                        else {
                             throw new DocumentException("Cannot have text content outside of the root document");
                         }
                         break;
@@ -318,16 +334,22 @@ public class XPPPacketReader {
                         }
                         if (parent != null) {
                             parent.add(newElement);
-                        } else {
+                        }
+                        else {
                             document.add(newElement);
                         }
                         parent = newElement;
+                        count++;
                         break;
                     }
                 case XmlPullParser.END_TAG:
                     {
                         if (parent != null) {
                             parent = parent.getParent();
+                        }
+                        count--;
+                        if (count == 0) {
+                            return document;
                         }
                         break;
                     }
@@ -336,7 +358,8 @@ public class XPPPacketReader {
                         String text = pp.getText();
                         if (parent != null) {
                             parent.addText(text);
-                        } else {
+                        }
+                        else {
                             throw new DocumentException("Cannot have text content outside of the root document");
                         }
                         break;

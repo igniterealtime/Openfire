@@ -52,10 +52,7 @@
             pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".war");
         }
         pluginJar.delete();
-        try {
-            Thread.sleep(1500L);
-        }
-        catch (Exception ignored) {}
+        pluginManager.unloadPlugin(pluginDir.getName());
         response.sendRedirect("plugin-admin.jsp?deletesuccess=true");
         return;
 	}
@@ -148,8 +145,9 @@
 </thead>
 <tbody>
 
-<%  
-	if (plugins.size() == 0) {
+<%
+	// If only the admin plugin is installed, show "none".
+    if (plugins.size() == 1) {
 %>
     <tr>
         <td align="center" colspan="7"><fmt:message key="plugin.admin.no_plugin" /></td>
@@ -160,6 +158,7 @@
     for (int i=0; i<plugins.size(); i++) {
         Plugin plugin = plugins.get(i);
         String dirName = pluginManager.getPluginDirectory(plugin).getName();
+        // Skip the admin plugin.
         if (!"admin".equals(dirName)) {
             String pluginName = pluginManager.getName(plugin);
             String pluginDescription = pluginManager.getDescription(plugin);
@@ -171,7 +170,7 @@
 	        <td width="1%">
 	            <%= i+1 %>
 	        </td>
-	        <td width="20%">
+	        <td width="20%" nowrap>
 	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
 	        </td>
 	        <td width="60%">
@@ -180,7 +179,7 @@
 	        <td width="5%" align="center">
 	             <%= pluginVersion != null ? pluginVersion : "" %>  &nbsp;
 	        </td>
-	        <td width="15%">
+	        <td width="15%" nowrap>
 	             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
 	        </td>
 	        <td width="1%" align="center">

@@ -44,14 +44,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void createSocket() {
 
-        if (!isStarted ||
-                isSocketStarted ||
-                auditManager == null ||
-                sessionManager == null ||
-                deliverer == null ||
-                router == null ||
-                serverName == null ||
-                packetFactory == null) {
+        if (!isStarted ||  isSocketStarted || auditManager == null ||
+                sessionManager == null || deliverer == null ||
+                router == null || serverName == null || packetFactory == null)
+        {
             return;
         }
         isSocketStarted = true;
@@ -67,20 +63,16 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
 
-        // Now start up the acceptor (and associated read selector)
-          if ("true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"))) {
+        // Start SSL if it's been enabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active")) {
             try {
                 sslSocketThread = new SSLSocketAcceptThread(this);
-                String algorithm =
-                        JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
+                String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
                 if ("".equals(algorithm) || algorithm == null) {
                     algorithm = "TLS";
                 }
-                ports.add(new ServerPortImpl(sslSocketThread.getPort(),
-                        serverName,
-                        localIPAddress,
-                        true,
-                        algorithm));
+                ports.add(new ServerPortImpl(sslSocketThread.getPort(), serverName,
+                        localIPAddress, true, algorithm));
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
 
@@ -92,7 +84,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
             }
         }
-        else {
+        // Start plain socket unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
             socketThread = new SocketAcceptThread(this);
             ports.add(new ServerPortImpl(socketThread.getPort(),
                     serverName, localIPAddress, false, null));

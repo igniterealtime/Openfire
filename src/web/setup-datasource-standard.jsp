@@ -157,6 +157,11 @@ Specify a JDBC driver and connection properties to connect to your database. If 
 information about this process please see the database documentation distributed with <fmt:message key="title" bundle="${lang}" />.
 </p>
 
+<p>
+<b>Note: </b> Database scripts for most popular databases are included in the Jive Messenger
+distribution at <tt>[MESSENGER_HOME]/resources/database</tt>.
+</p>
+
 <%  if (errors.size() > 0) { %>
 
     <span class="jive-error-text">

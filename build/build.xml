@@ -33,6 +33,7 @@
     <property name="src.i18n.dir" value="${src.dir}/i18n" />
     <property name="src.test.dir" value="${src.dir}/test" />
     <property name="src.test.java.dir" value="${src.test.dir}/java" />
+    <property name="docs.dir" value="${basedir}/documentation" />
     <property name="web.dir" value="${src.dir}/web" />
     <property name="lib.build.dir" value="${basedir}/build/lib" />
     <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
@@ -41,7 +42,7 @@
     <property name="target.dir" value="${basedir}/target" />
     <property name="compile.dir" value="${basedir}/target/classes" />
     <property name="jar.name" value="messengerd.jar" />
-    <property name="jar.dest.dir" value="${target.dir}/bin" />
+    <property name="jar.dest.dir" value="${target.dir}/lib" />
     <property name="javadoc.src.dir" value="${src.dir}/javadoc" />
     <property name="javadoc.dest.dir" value="${basedir}/target/javadoc" />
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
@@ -61,7 +62,7 @@
     <property name="dist.prefix" value="jive_messenger" />
 
     <!-- ======================================================================================= -->
-    <!-- PATHs / PATTERNSETs                                                                     -->
+    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
     <!-- ======================================================================================= -->
 
     <path id="javadoc.dependencies">
@@ -91,6 +92,10 @@
         <include name="**/*Test.java" />
     </patternset>
 
+    <filterset id="docs.filters">
+        <filter token="version" value="${version}" />
+    </filterset>
+
     <!-- ======================================================================================= -->
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
@@ -107,6 +112,9 @@
         <fail if="java.not.ok" message="Must use JDK 1.5.x to build Jive Messenger" />
 
         <tstamp />
+        <tstamp>
+            <format property="builddate" pattern="MM/dd/yyyy" />
+        </tstamp>
         <mkdir dir="${target.dir}" />
     </target>
 
@@ -142,7 +150,7 @@
             </manifest>
         </jar>
         <!-- Copy application dependent jars -->
-        <copy todir="${jar.dest.dir}/lib">
+        <copy todir="${jar.dest.dir}">
             <fileset dir="${lib.dist.dir}" includes="*.jar" />
         </copy>
     </target>
@@ -154,6 +162,8 @@
     <!-- javadoc =============================================================================== -->
     <target name="javadoc" depends="compile" description="Produces Messenger Javadocs">
         <mkdir dir="${javadoc.dest.dir}" />
+        <antcall target="-javadoc-impl" />
+    </target><target name="-javadoc-impl" unless="no.javadoc">
         <!-- Run javadoc over all source code -->
         <javadoc
             sourcepath="${src.java.dir}"
@@ -265,28 +275,66 @@
     <target name="release" depends="jar,javadoc" description="Creates a distribution">
         <mkdir dir="${release.dest.dir}" />
 
-        <!-- Create a new prop for the final release dir then create the dir -->
+        <!-- Create a new prop for the final release dirs then create the dirs -->
         <property name="release.out.name" value="${dist.prefix}_${version.filename}" />
+        <property name="release.src.out.name" value="${dist.prefix}_src_${version.filename}" />
         <property name="release.out.dir" value="${release.dest.dir}/${release.out.name}" />
+        <property name="release.src.out.dir" value="${release.dest.dir}/${release.src.out.name}" />
         <mkdir dir="${release.out.dir}" />
+        <mkdir dir="${release.src.out.dir}" />
 
-        <!-- Copy bin dir -->
+        <!-- Copy lib dir -->
+        <copy todir="${release.out.dir}/lib">
+            <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
+        </copy>
+
+        <!-- Copy conf dir -->
         <copy todir="${release.out.dir}">
-            <fileset dir="${jar.dest.dir}" includes="bin/**/*.*"></fileset>
+            <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+        </copy>
+
+        <!-- Create a bin dir (TODO) -->
+        <mkdir dir="${release.out.dir}/bin" />
+
+        <!-- Create a logs dir in the binary release -->
+        <mkdir dir="${release.out.dir}/logs" />
+
+        <!-- Copy plugins -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${src.dir}" includes="plugins/**/*.*" />
+        </copy>
+
+        <!-- Copy dist docs, use filtering  -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${docs.dir}/dist" includes="*.*" />
+            <filterset refid="docs.filters" />
+            <filterset>
+                <filter token="builddate" value="${builddate}" />
+            </filterset>
+        </copy>
+        <copy todir="${release.src.out.dir}">
+            <fileset dir="${docs.dir}/dist" includes="*.*" />
+            <filterset refid="docs.filters" />
+            <filterset>
+                <filter token="builddate" value="${builddate}" />
+            </filterset>
         </copy>
 
         <!-- Copy Javadocs -->
-        <copy todir="${release.out.dir}/docs/javadoc">
+        <copy todir="${release.out.dir}/documentation/javadoc">
+            <fileset dir="${javadoc.dest.dir}" />
+        </copy>
+        <copy todir="${release.src.out.dir}/documentation/javadoc">
             <fileset dir="${javadoc.dest.dir}" />
         </copy>
 
         <!-- Copy source -->
-        <copy todir="${release.out.dir}/src">
+        <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}" />
         </copy>
 
         <!-- Copy build -->
-        <copy todir="${release.out.dir}/build">
+        <copy todir="${release.src.out.dir}/build">
             <fileset dir="${basedir}/build" />
         </copy>
 
@@ -303,10 +351,19 @@
             basedir="${release.out.dir}/.."
             includes="${release.out.name}/**/*.*"
         />
+        <zip zipfile="${release.dest.dir}/${release.src.out.name}.zip"
+            basedir="${release.src.out.dir}/.."
+            includes="${release.src.out.name}/**/*.*"
+        />
         <!-- TAR.GZ -->
         <tar tarfile="${release.dest.dir}/${release.out.name}.tar.gz"
             basedir="${release.out.dir}/.."
             includes="${release.out.name}/**/*.*"
+            compression="gzip"
+        />
+        <tar tarfile="${release.dest.dir}/${release.src.out.name}.tar.gz"
+            basedir="${release.src.out.dir}/.."
+            includes="${release.src.out.name}/**/*.*"
             compression="gzip"
         />
 

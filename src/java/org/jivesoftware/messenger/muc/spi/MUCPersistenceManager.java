@@ -15,9 +15,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
+import java.util.*;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.muc.MUCRole;
@@ -40,11 +38,6 @@ import org.jivesoftware.util.StringUtils;
  */
 public class MUCPersistenceManager {
 
-    private static final String LOAD_ROOM_SURROGATES =
-        "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
-        "canChangeSubject, maxUsers, moderated, invitationRequired, canInvite, " +
-        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
-        "FROM mucRoom WHERE inMemory=0 and publicRoom=1";
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
@@ -56,7 +49,16 @@ public class MUCPersistenceManager {
         "SELECT jid,affiliation FROM mucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
-    private static final String UPDATE_ROOM = 
+    private static final String LOAD_ALL_ROOMS =
+        "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
+        "canChangeSubject, maxUsers, publicRoom, moderated, invitationRequired, canInvite, " +
+        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
+        "FROM mucRoom";
+    private static final String LOAD_ALL_AFFILIATIONS =
+        "SELECT roomID,jid,affiliation FROM mucAffiliation";
+    private static final String LOAD_ALL_MEMBERS =
+        "SELECT roomID,jid, nickname FROM mucMember";
+    private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, invitationRequired=?, " +
         "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
@@ -68,10 +70,6 @@ public class MUCPersistenceManager {
         "lastActiveDate, inMemory) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
-    private static final String UPDATE_IN_MEMORY =
-        "UPDATE mucRoom SET lastActiveDate=?, inMemory=? WHERE roomID=?";
-    private static final String RESET_IN_MEMORY =
-        "UPDATE mucRoom SET lastActiveDate=?, inMemory=0 WHERE inMemory=1";
     private static final String DELETE_ROOM =
         "DELETE FROM mucRoom WHERE roomID=?";
     private static final String DELETE_AFFILIATIONS =
@@ -94,61 +92,6 @@ public class MUCPersistenceManager {
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO mucConversationLog (roomID,sender,nickname,time,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
-
-    public static List<MUCPersistentRoomSurrogate> getRoomSurrogates(MultiUserChatServer chatserver,
-                                                                     PacketRouter packetRouter) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        List<MUCPersistentRoomSurrogate> answer = new ArrayList<MUCPersistentRoomSurrogate>();
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_ROOM_SURROGATES);
-            ResultSet rs = pstmt.executeQuery();
-            MUCPersistentRoomSurrogate room = null;
-            while (rs.next()) {
-                room = new MUCPersistentRoomSurrogate(chatserver, rs.getString(4), packetRouter);
-                room.setID(rs.getLong(1));
-                room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
-                room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
-                room.setNaturalLanguageName(rs.getString(5));
-                room.setDescription(rs.getString(6));
-                room.setCanOccupantsChangeSubject(rs.getInt(7) == 1 ? true : false);
-                room.setMaxUsers(rs.getInt(8));
-                room.setModerated(rs.getInt(9) == 1 ? true : false);
-                room.setInvitationRequiredToEnter(rs.getInt(10) == 1 ? true : false);
-                room.setCanOccupantsInvite(rs.getInt(11) == 1 ? true : false);
-                room.setPassword(rs.getString(12));
-                room.setCanAnyoneDiscoverJID(rs.getInt(13) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(14) == 1 ? true : false);
-                room.setSubject(rs.getString(15));
-                List rolesToBroadcast = new ArrayList();
-                String roles = Integer.toBinaryString(rs.getInt(16));
-                if (roles.charAt(0) == '1') {
-                    rolesToBroadcast.add("moderator");
-                }
-                if (roles.length() > 1 && roles.charAt(1) == '1') {
-                    rolesToBroadcast.add("participant");
-                }
-                if (roles.length() > 2 && roles.charAt(2) == '1') {
-                    rolesToBroadcast.add("visitor");
-                }
-                room.setRolesToBroadcastPresence(rolesToBroadcast);
-                answer.add(room);
-            }
-            rs.close();
-            pstmt.close();
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
-        return answer;
-    }
 
     /**
      * Returns the reserved room nickname for the bare JID in a given room or null if none.
@@ -273,6 +216,10 @@ public class MUCPersistenceManager {
                 }
             }
             rs.close();
+            // Set now that the room's configuration is updated in the database. Note: We need to
+            // set this now since otherwise the room's affiliations will be saved to the database
+            // "again" while adding them to the room!
+            room.setSavedToDB(true);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -392,25 +339,97 @@ public class MUCPersistenceManager {
     }
 
     /**
-     * Updates the in-memmory status of the room in the database.
-     * 
-     * @param room the room to update its in-memory status.
-     * @param inMemory boolean that indicates whether the room is available in memory or not. 
+     * Loads all the rooms from the database. This query will be executed only when
+     * the service is started up.
+     *
+     * @return a collection with all the persistent rooms.
      */
-    public static void updateRoomInMemory(MUCRoom room, boolean inMemory) {
-        if (!room.isPersistent() || !room.wasSavedToDB()) {
-            return;
-        }
-
+    public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatServer chatserver,
+            PacketRouter packetRouter) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        Map<Long,MUCRoom> rooms = new HashMap<Long,MUCRoom>();
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_IN_MEMORY);
-            pstmt.setString(1, StringUtils.dateToMillis(new Date()));
-            pstmt.setBoolean(2, inMemory);
-            pstmt.setLong(3, room.getID());
-            pstmt.executeUpdate();
+            pstmt = con.prepareStatement(LOAD_ALL_ROOMS);
+            ResultSet rs = pstmt.executeQuery();
+            MUCRoom room = null;
+            while (rs.next()) {
+                room = new MUCRoomImpl(chatserver, rs.getString(4), packetRouter);
+                room.setID(rs.getLong(1));
+                room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
+                room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
+                room.setNaturalLanguageName(rs.getString(5));
+                room.setDescription(rs.getString(6));
+                room.setCanOccupantsChangeSubject(rs.getInt(7) == 1 ? true : false);
+                room.setMaxUsers(rs.getInt(8));
+                room.setPublicRoom(rs.getInt(9) == 1 ? true : false);
+                room.setModerated(rs.getInt(10) == 1 ? true : false);
+                room.setInvitationRequiredToEnter(rs.getInt(11) == 1 ? true : false);
+                room.setCanOccupantsInvite(rs.getInt(12) == 1 ? true : false);
+                room.setPassword(rs.getString(13));
+                room.setCanAnyoneDiscoverJID(rs.getInt(14) == 1 ? true : false);
+                room.setLogEnabled(rs.getInt(15) == 1 ? true : false);
+                room.setSubject(rs.getString(16));
+                List rolesToBroadcast = new ArrayList();
+                String roles = Integer.toBinaryString(rs.getInt(17));
+                if (roles.charAt(0) == '1') {
+                    rolesToBroadcast.add("moderator");
+                }
+                if (roles.length() > 1 && roles.charAt(1) == '1') {
+                    rolesToBroadcast.add("participant");
+                }
+                if (roles.length() > 2 && roles.charAt(2) == '1') {
+                    rolesToBroadcast.add("visitor");
+                }
+                room.setRolesToBroadcastPresence(rolesToBroadcast);
+                room.setPersistent(true);
+                rooms.put(room.getID(), room);
+            }
+            rs.close();
+            pstmt.close();
+
+            pstmt = con.prepareStatement(LOAD_ALL_AFFILIATIONS);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String jid = rs.getString(2);
+                int affiliation = rs.getInt(3);
+                room = rooms.get(rs.getLong(1));
+                try {
+                    switch (affiliation) {
+                        case MUCRole.OWNER:
+                            room.addOwner(jid, room.getRole());
+                            break;
+                        case MUCRole.ADMINISTRATOR:
+                            room.addAdmin(jid, room.getRole());
+                            break;
+                        case MUCRole.OUTCAST:
+                            room.addOutcast(jid, null, room.getRole());
+                            break;
+                        default:
+                            Log.error("Unkown affiliation value " + affiliation + " for user "
+                                    + jid + " in persistent room " + room.getID());
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+            rs.close();
+            pstmt.close();
+
+            pstmt = con.prepareStatement(LOAD_ALL_MEMBERS);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                room = rooms.get(rs.getLong(1));
+                try {
+                    room.addMember(rs.getString(2), rs.getString(3), room.getRole());
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -421,31 +440,14 @@ public class MUCPersistenceManager {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-    }
+        // Set now that the room's configuration is updated in the database. Note: We need to
+        // set this now since otherwise the room's affiliations will be saved to the database
+        // "again" while adding them to the room!
+        for (MUCRoom room : rooms.values()) {
+            room.setSavedToDB(true);
+        }
 
-    /**
-     * Updates the in-memmory status of ALL the rooms in the database to false. This is necessary
-     * in case the Multi-User Chat service went down unexpectedly. This query will be executed when
-     * the service is starting up (again).
-     */
-    public static void resetRoomInMemory() {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(RESET_IN_MEMORY);
-            pstmt.setString(1, StringUtils.dateToMillis(new Date()));
-            pstmt.executeUpdate();
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
+        return rooms.values();
     }
 
     /**

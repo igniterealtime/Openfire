@@ -92,13 +92,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Map<String,MUCRoom> rooms = new ConcurrentHashMap<String,MUCRoom>();
 
     /**
-     * Cache for the persistent room surrogates. There will be a persistent room surrogate for each
-     * persistent room that has not been loaded into memory. Whenever a persistent room is loaded or
-     * unloaded from memory the cache is updated.
-     */
-    private Cache persistentRoomSurrogateCache;
-
-    /**
      * chat users managed by this manager, table: key user jid (XMPPAddress); value ChatUser
      */
     private Map<XMPPAddress, MUCUser> users = new ConcurrentHashMap<XMPPAddress, MUCUser>();
@@ -162,13 +155,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public MultiUserChatServerImpl() {
         super("Basic multi user chat server");
         historyStrategy = new HistoryStrategy(null);
-    }
-
-    private void initializeCaches() {
-        // create cache - no size limit and expires after one hour of being idle
-        persistentRoomSurrogateCache = new Cache("Room Surrogates", -1, JiveConstants.HOUR);
-        // warm-up cache now to avoid a delay responding the first disco request
-        populateRoomSurrogateCache();
     }
 
     /**
@@ -269,8 +255,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             room = rooms.get(roomName.toLowerCase());
             if (room == null) {
                 room = new MUCRoomImpl(this, roomName, router);
-                // Check whether the room was just created or loaded from the database 
-                if (!room.isPersistent()) {
+                // If the room is persistent load the configuration values from the DB
+                try {
+                    // Try to load the room's configuration from the database (if the room is
+                    // persistent but was added to the DB after the server was started up)
+                    MUCPersistenceManager.loadFromDB(room);
+                }
+                catch (IllegalArgumentException e) {
+                    // The room does not exist so check for creation permissions
                     // Room creation is always allowed for sysadmin
                     if (isRoomCreationRestricted() &&
                             !sysadmins.contains(userjid.toBareStringPrep())) {
@@ -283,13 +275,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     }
                     room.addFirstOwner(userjid.toBareStringPrep());
                 }
-                else {
-                    // The room was loaded from the database and is now available in memory.
-                    // Update in the database that the room is now available in memory
-                    MUCPersistenceManager.updateRoomInMemory(room, true);
-                    // Remove the surrogate of the room (if any) from the surrogates cache
-                    persistentRoomSurrogateCache.remove(room.getName());
-                }
                 rooms.put(roomName.toLowerCase(), room);
             }
         }
@@ -297,39 +282,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public MUCRoom getChatRoom(String roomName) {
-        MUCRoom answer = rooms.get(roomName.toLowerCase());
-        // If the room is not in memory check if there exists a surrogate of the room. There
-        // will be a surrogate if and only if exists an room in the database for the requested
-        // room name
-        if (answer == null) {
-            synchronized (persistentRoomSurrogateCache) {
-                if (persistentRoomSurrogateCache.size() == 0) {
-                    populateRoomSurrogateCache();
-                }
-            }
-            answer = (MUCRoom) persistentRoomSurrogateCache.get(roomName);
-        }
-        return answer;
+        return rooms.get(roomName.toLowerCase());
     }
 
     public List<MUCRoom> getChatRooms() {
-        List<MUCRoom> answer = new ArrayList<MUCRoom>(rooms.size() * 2);
-        synchronized (rooms) {
-            answer.addAll(rooms.values());
-            synchronized (persistentRoomSurrogateCache) {
-                if (persistentRoomSurrogateCache.size() == 0) {
-                    populateRoomSurrogateCache();
-                }
-            }
-            answer.addAll(persistentRoomSurrogateCache.values());
-        }
-        return answer;
-    }
-
-    private void populateRoomSurrogateCache() {
-        for (MUCRoom room : MUCPersistenceManager.getRoomSurrogates(this, router)) {
-            persistentRoomSurrogateCache.put(room.getName(), room);
-        }
+        return new ArrayList<MUCRoom>(rooms.values());
     }
 
     public boolean hasChatRoom(String roomName) {
@@ -341,18 +298,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (room != null) {
             final long chatLength = room.getChatLength();
             totalChatTime += chatLength;
-            // Update the database to indicate that the room is no longer in memory (only if the
-            // room is persistent
-            MUCPersistenceManager.updateRoomInMemory(room, false);
-            // Clear the surrogates cache if the room thas is being removed from memory is
-            // persistent
-            if (room.isPersistent()) {
-                persistentRoomSurrogateCache.clear();
-            }
-            else {
-                // Just force to expire old entries since the cache doesn't have a clean-up thread
-                persistentRoomSurrogateCache.size();
-            }
         }
     }
 
@@ -577,10 +522,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Log the room conversations every 5 minutes after a 5 minutes server startup delay
         // (default values)
         timer.schedule(new LogConversationTask(), LOG_TIMEOUT, LOG_TIMEOUT);
-        // Update the DB to indicate that no room is in-memory. This may be necessary when the 
-        // server went down unexpectedly
-        MUCPersistenceManager.resetRoomInMemory();
-        initializeCaches();
     }
 
     public void start() {
@@ -591,6 +532,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         params.clear();
         params.add(chatServiceName);
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
+        // Load all the persistent rooms to memory
+        for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, router)) {
+            rooms.put(room.getName().toLowerCase(), room);
+        }
     }
 
     public void stop() {
@@ -822,24 +767,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
                     answer.add(item);
                 }
-            }
-            // Load the room surrogates for persistent rooms that aren't in memory (if the cache
-            // is still empty)
-            synchronized(persistentRoomSurrogateCache) {
-                if (persistentRoomSurrogateCache.size() == 0) {
-                    populateRoomSurrogateCache();
-                }
-            }
-            // Add items for each room surrogate (persistent room that is not in memory at
-            // the moment)
-            MUCRoom room;
-            for (Iterator it=persistentRoomSurrogateCache.values().iterator(); it.hasNext();) {
-                room = (MUCRoom)it.next();
-                item = DocumentHelper.createElement("item");
-                item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
-                item.addAttribute("name", room.getNaturalLanguageName());
-
-                answer.add(item);
             }
         }
         else if (name != null && node == null) {

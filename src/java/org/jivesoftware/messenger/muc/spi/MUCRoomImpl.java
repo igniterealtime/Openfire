@@ -172,8 +172,8 @@ public class MUCRoomImpl implements MUCRoom {
     private boolean publicRoom = true;
 
     /**
-     * Persistent rooms are saved to the database so that when the last occupant leaves the room,
-     * the room is removed from memory but it's configuration is saved in the database.
+     * Persistent rooms are saved to the database to make sure that rooms configurations can be
+     * restored in case the server goes down.
      */
     private boolean persistent = false;
 
@@ -279,17 +279,6 @@ public class MUCRoomImpl implements MUCRoom {
         rolesToBroadcastPresence.add("moderator");
         rolesToBroadcastPresence.add("participant");
         rolesToBroadcastPresence.add("visitor");
-        // If the room is persistent load the configuration values from the DB
-        try {
-            MUCPersistenceManager.loadFromDB(this);
-            if (this.isPersistent()) {
-                this.savedToDB = true;
-                this.roomLocked = false;
-            }
-        }
-        catch (IllegalArgumentException e) {
-            // Do nothing. The room does not exist.
-        }
     }
 
     public String getName() {
@@ -578,7 +567,9 @@ public class MUCRoomImpl implements MUCRoom {
             // "unavailable" from the room to the owner including a <destroy/> element and reason
             // (if provided) as defined under the "Destroying a Room" use case.
 
-            if (occupants.isEmpty()) {
+            // Remove the room from the server only if there are no more occupants and the room is
+            // not persistent
+            if (occupants.isEmpty() && !isPersistent()) {
                 endTime = System.currentTimeMillis();
 
                 server.removeChatRoom(name);
@@ -1631,6 +1622,11 @@ public class MUCRoomImpl implements MUCRoom {
     
     public void setSavedToDB(boolean saved) {
         this.savedToDB = saved;
+        if (saved) {
+            // Unlock the room now. This is necessary only when a persistent room has been
+            // retrieved from the database.
+            this.roomLocked = false;
+        }
     }
     
     public void setPersistent(boolean persistent) {

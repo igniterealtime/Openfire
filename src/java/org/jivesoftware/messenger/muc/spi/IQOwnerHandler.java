@@ -493,6 +493,17 @@ public class IQOwnerHandler {
                 presences.addAll(room.addMember(jid, null, senderRole));
             }
 
+            // Destroy the room if the room is no longer persistent and there are no occupants in
+            // the room
+            if (!room.isPersistent() && room.getOccupantsCount() == 0) {
+                try {
+                    room.destroyRoom(null, null);
+                }
+                catch (UnauthorizedException e) {
+                    // Do nothing.
+                }
+            }
+
         }
         finally {
             room.lock.writeLock().unlock();

@@ -206,7 +206,9 @@ public class AuditorImpl implements Auditor {
             }
         }
         try {
-            xmlWriter.flush();
+            if (xmlWriter != null) {
+                xmlWriter.flush();
+            }
         }
         catch (IOException ioe) {
 

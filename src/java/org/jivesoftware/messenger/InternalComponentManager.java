@@ -16,11 +16,11 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.component.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.jivesoftware.util.Log;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,8 +123,56 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public Log getLog() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public org.xmpp.component.Log getLog() {
+        return new  org.xmpp.component.Log() {
+            public void error(String msg) {
+                Log.error(msg);
+            }
+
+            public void error(String msg, Throwable throwable) {
+                Log.error(msg, throwable);
+            }
+
+            public void error(Throwable throwable) {
+                Log.error(throwable);
+            }
+
+            public void warn(String msg) {
+                Log.warn(msg);
+            }
+
+            public void warn(String msg, Throwable throwable) {
+                Log.warn(msg, throwable);
+            }
+
+            public void warn(Throwable throwable) {
+                Log.warn(throwable);
+            }
+
+            public void info(String msg) {
+                Log.info(msg);
+            }
+
+            public void info(String msg, Throwable throwable) {
+                Log.info(msg, throwable);
+            }
+
+            public void info(Throwable throwable) {
+                Log.info(throwable);
+            }
+
+            public void debug(String msg) {
+                Log.debug(msg);
+            }
+
+            public void debug(String msg, Throwable throwable) {
+                Log.debug(msg, throwable);
+            }
+
+            public void debug(Throwable throwable) {
+                Log.debug(throwable);
+            }
+        };
     }
 
     /**

@@ -6,116 +6,147 @@
         <login-image>images/logo-messenger.gif</login-image>
     </global>
 
-    <tab id="tab-server" name="Server" url="index.jsp" description="Click to manage server settings">
+    <!-- Server -->
+    <tab id="tab-server" name="${tab.server}" url="index.jsp" description="${tab.server.descr}">
 
-        <sidebar id="sidebar-server-manager" name="Server Manager">
+        <!-- Server Manager -->
+        <sidebar id="sidebar-server-manager" name="${sidebar.server-manager}">
 
-            <item id="server-settings" name="Server Settings"
+            <!-- Server Settings -->
+            <item id="server-settings" name="${sidebar.server-settings}"
                     url="index.jsp"
-                    description="Click to manage system settings" />
+                    description="${sidebar.server-settings.descr}" />
 
-            <item id="server-props" name="System Properties"
+            <!-- System Properties -->
+            <item id="server-props" name="${sidebar.system-props}"
                     url="server-properties.jsp"
-                    description="Click to manage server properties" />
+                    description="${sidebar.system-props.descr}" />
 
-            <item id="server-locale" name="System Locale"
+            <!-- System Locale -->
+            <item id="server-locale" name="${sidebar.server-locale}"
                     url="server-locale.jsp"
-                    description="Click to set the locale used by the system" />
+                    description="${sidebar.server-locale.descr}" />
 
-            <item id="server-db" name="Database"
+            <!-- Database -->
+            <item id="server-db" name="${sidebar.server-db}"
                     url="server-db.jsp"
-                    description="Click to see database connection information" />
+                    description="${sidebar.server-db.descr}" />
 
-            <item id="server-logs" name="Logs"
+            <!-- Logs -->
+            <item id="server-logs" name="${sidebar.server-logs}"
                     url="logviewer.jsp"
-                    description="Click to view server logs" />
+                    description="${sidebar.server-logs.descr}" />
         </sidebar>
 
-        <sidebar id="sidebar-server-settings" name="Server Settings">
+        <!-- Server Settings -->
+        <sidebar id="sidebar-server-settings" name="${sidebar.sidebar-server-settings}">
 
-            <item id="server-reg-and-login" name="Registration &amp; Login"
+            <!-- Registration &amp; Login -->
+            <item id="server-reg-and-login" name="${sidebar.server-reg-and-login}"
                     url="reg-settings.jsp"
-                    description="Click to edit registration &amp; login policies" />
+                    description="${sidebar.server-reg-and-login.descr}" />
 
-            <item id="server-session-conflict" name="Resource Policy"
+            <!-- Resource Policy -->
+            <item id="server-session-conflict" name="${sidebar.server-session-conflict}"
                     url="session-conflict.jsp"
-                    description="" />
+                    description="${sidebar.server-session-conflict.descr}" />
 
-            <item id="server-offline-messages" name="Offline Messages"
+            <!-- Offline Messages -->
+            <item id="server-offline-messages" name="${sidebar.server-offline-messages}"
                     url="offline-messages.jsp"
-                    description="" />
+                    description="${sidebar.server-offline-messages.descr}" />
 
-            <item id="server-audit-policy" name="Message Audit Policy"
+            <!-- Message Audit Policy -->
+            <item id="server-audit-policy" name="${sidebar.server-audit-policy}"
                     url="audit-policy.jsp"
-                    description="" />
+                    description="${sidebar.server-audit-policy.descr}" />
 
-            <item id="server-data-settings" name="Private Data Storage"
+            <!-- Private Data Storage -->
+            <item id="server-data-settings" name="${sidebar.server-data-settings}"
                     url="private-data-settings.jsp"
-                    description="" />
+                    description="${sidebar.server-data-settings.descr}" />
 
-            <item id="server-ssl" name="SSL Settings"
+            <!-- SSL Settings -->
+            <item id="server-ssl" name="${sidebar.server-ssl}"
                     url="ssl-settings.jsp"
-                    description="" />
+                    description="${sidebar.server-ssl.descr}" />
         </sidebar>
     </tab>
 
-    <tab id="tab-users" name="Users/Groups" url="user-summary.jsp" description="Click to manage users and groups">
+    <!-- Users/Groups -->
+    <tab id="tab-users" name="${tab.tab-users}" url="user-summary.jsp" description="${tab.tab-users.descr}">
 
-        <sidebar id="sidebar-users" name="Users">
+        <!-- Users -->
+        <sidebar id="sidebar-users" name="${sidebar.sidebar-users}">
 
-            <item id="user-summary" name="User Summary"
+            <!-- User Summary -->
+            <item id="user-summary" name="${sidebar.user-summary}"
                     url="user-summary.jsp"
-                    description="Click to see a list of users in the system">
+                    description="${sidebar.user-summary.descr}">
 
-                <sidebar id="sidebar-users-options" name="User Options">
+                <!-- User Options -->
+                <sidebar id="sidebar-users-options" name="${sidebar.sidebar-users-options}">
 
-                    <item id="user-properties" name="User Properties"
+                    <!-- User Properties -->
+                    <item id="user-properties" name="${sidebar.user-properties}"
                             url="user-properties.jsp"
-                            description="Click to edit the user's properties" />
+                            description="${sidebar.user-properties.descr}" />
 
-                    <item id="user-password" name="Password"
+                    <!-- Password -->
+                    <item id="user-password" name="${sidebar.user-password}"
                             url="user-password.jsp"
-                            description="Click to change the user's password" />
+                            description="${sidebar.user-password.descr}" />
 
-                    <item id="user-delete" name="Delete User"
+                    <!-- Delete User -->
+                    <item id="user-delete" name="${sidebar.user-delete}"
                             url="user-delete.jsp"
-                            description="Click to delete the user" />
+                            description="${sidebar.user-delete.descr}" />
                 </sidebar>
             </item>
 
-            <item id="user-create" name="Create New User"
+            <!-- Create New User -->
+            <item id="user-create" name="${sidebar.user-create}"
                     url="user-create.jsp"
-                    description="Click to add a new user to the system" />
+                    description="${sidebar.user-create.descr}" />
 
-            <item id="user-search" name="User Search"
+            <!-- User Search -->
+            <item id="user-search" name="${sidebar.user-search}"
                     url="user-search.jsp"
-                    description="Click to search for a particular user" />
+                    description="${sidebar.user-search.descr}" />
         </sidebar>
-        <sidebar id="sidebar-groups" name="Groups">
 
-            <item id="group-summary" name="Group Summary"
+        <!-- Groups -->
+        <sidebar id="sidebar-groups" name="${sidebar.sidebar-groups}">
+
+            <!-- Group Summary -->
+            <item id="group-summary" name="${sidebar.group-summary}"
                     url="group-summary.jsp"
-                    description="Click to see a list of groups in the system">
+                    description="${sidebar.group-summary.descr}">
 
-                <sidebar id="sidebar-group-options" name="Group Options">
+                <!-- Group Options -->
+                <sidebar id="sidebar-group-options" name="${sidebar.sidebar-group-options}">
 
-                    <item id="group-edit" name="Edit Group"
+                    <!-- Edit Group -->
+                    <item id="group-edit" name="${sidebar.group-edit}"
                             url="group-edit.jsp"
-                            description="Click to edit the group" />
+                            description="${sidebar.group-edit.descr}" />
 
-                    <item id="group-delete" name="Delete Group"
+                    <!-- Delete Group -->
+                    <item id="group-delete" name="${sidebar.group-delete}"
                             url="group-delete.jsp"
-                            description="Click to delete the group" />
+                            description="${sidebar.group-delete.descr}" />
                 </sidebar>
             </item>
 
-            <item id="group-create" name="Create New Group"
+            <!-- Create New Group -->
+            <item id="group-create" name="${sidebar.group-create}"
                     url="group-create.jsp"
-                    description="Click to add a new group to the system" />
+                    description="${sidebar.group-create.descr}" />
         </sidebar>
     </tab>
 
-    <tab id="tab-session" name="Sessions" url="session-summary.jsp" description="Click to manage connected sessions">
+    <!-- Sessions -->
+    <tab id="tab-session" name="${tab.tab-session}" url="session-summary.jsp" description="${tab.tab-session.descr}">
 
         <sidebar id="sidebar-session" name="Sessions">
 
@@ -129,7 +160,8 @@
         </sidebar>
     </tab>
 
-    <tab id="tab-groupchat" name="Group Chat" url="muc-server-props-edit-form.jsp" description="Click to manage group chat settings">
+    <!-- Group Chat -->
+    <tab id="tab-groupchat" name="${tab.tab-groupchat}" url="muc-server-props-edit-form.jsp" description="${tab.tab-groupchat.descr}">
 
         <sidebar id="sidebar-groupchat-settings" name="Group Chat Settings">
 

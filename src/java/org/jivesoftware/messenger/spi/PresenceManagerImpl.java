@@ -19,7 +19,6 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.chatbot.ChatbotManager;
-import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -31,13 +30,6 @@ import java.util.*;
  * @author Iain Shigeoka
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
-
-    /**
-     * Query for roster subscribers
-     */
-    private static final String GET_ROSTER_SUBS =
-            "SELECT userID FROM jiveRoster WHERE jid=? AND (sub=" +
-            RosterItem.SUB_BOTH + " OR sub=" + RosterItem.SUB_TO + ")";
 
     /**
      * table: key Presence ID (Long); value Presence
@@ -57,7 +49,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public SessionManager sessionManager;
     public RoutingTable routingTable;
     public XMPPServer server;
-    private String serverName;
     public PacketDeliverer deliverer;
 
     public PresenceManagerImpl() {
@@ -363,7 +354,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                             sessionManager.userBroadcast(prober, presencePacket);
                         }
                         catch (Exception e) {
-                            e.printStackTrace();
+                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                         }
                     }
                 }
@@ -378,7 +369,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         sessionManager.userBroadcast(prober, presencePacket);
                     }
                     catch (Exception e) {
-                        e.printStackTrace();
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     }
                 }
             }
@@ -415,7 +406,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         deliverer.deliver(presencePacket);
                     }
                     catch (Exception e) {
-                        e.printStackTrace();
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     }
                 }
             }
@@ -429,7 +420,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         deliverer.deliver(presencePacket);
                     }
                     catch (Exception e) {
-                        e.printStackTrace();
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     }
                 }
             }
@@ -457,17 +448,5 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         return trackInfo;
-    }
-
-    public void serviceAdded(Object service) {
-        if (service instanceof XMPPServer && server != null) {
-            serverName = server.getServerInfo().getName();
-        }
-    }
-
-    public void serviceRemoved(Object service) {
-        if (server == null) {
-            serverName = null;
-        }
     }
 }

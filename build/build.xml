@@ -835,7 +835,9 @@
                          not fail on an error since the web dir might not exist.
                     -->
                     <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
-                        <fileset dir="@{pluginsrc}/@{plugin}/src/web" />
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/web">
+                            <exclude name="WEB-INF/web.xml" />
+                        </fileset>
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*" />
                             <exclude name="WEB-INF/web.xml" />
@@ -869,6 +871,12 @@
                     <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
                     <available property="plugin.@{plugin}.webxml.available"
                             type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" />
+
+                    <echo>
+                        plugin: @{plugin}
+                        plugin.@{plugin}.webxml.available: ${plugin.@{plugin}.webxml.available}
+                    </echo>
+
                     <if>
                         <equals arg1="${plugin.@{plugin}.webxml.available}" arg2="true" />
                         <then>
@@ -889,6 +897,8 @@
 
                         </then>
                     </if>
+
+                    <input/>
 
                     <!-- Compile java classes -->
                     <javac

@@ -312,7 +312,10 @@ public class SidebarTag extends BodyTagSupport {
         return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
     }
 
-    private String i18n(String in) {
+    private static String i18n(String in) {
+        if (in == null) {
+            return null;
+        }
         // Look for the key symbol:
         if (in.indexOf("${") == 0 && in.indexOf("}") == in.length()-1) {
             return LocaleUtils.getLocalizedString(in.substring(2, in.length()-1));

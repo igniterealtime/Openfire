@@ -328,7 +328,7 @@ public class AdminConsole {
         // Override entries.
         for (Iterator i=overrideSidebar.elementIterator(); i.hasNext(); ) {
             Element entry = (Element)i.next();
-            String id = sidebar.attributeValue("id");
+            String id = entry.attributeValue("id");
             Element existingEntry = getElemnetByID(id);
             // Simple case, there is no existing sidebar with the same id.
             if (existingEntry == null) {

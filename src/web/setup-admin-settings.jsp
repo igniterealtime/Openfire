@@ -92,16 +92,16 @@
                     }
 
 
-                    User admin = userManager.getUser("admin");
+                    User adminUser = userManager.getUser("admin");
                    
-                    admin.setPassword(newPassword);
+                    adminUser.setPassword(newPassword);
                     if (email != null) {
-                        admin.getInfo().setEmail(email);
+                        adminUser.getInfo().setEmail(email);
                     }
                     Date now = new Date();
-                    admin.getInfo().setCreationDate(now);
-                    admin.getInfo().setModificationDate(now);
-                    admin.saveInfo();
+                    adminUser.getInfo().setCreationDate(now);
+                    adminUser.getInfo().setModificationDate(now);
+                    adminUser.saveInfo();
 
                     // TODO: Check for Plugin
 

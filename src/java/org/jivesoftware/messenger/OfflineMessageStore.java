@@ -147,9 +147,9 @@ public class OfflineMessageStore extends BasicModule {
                 Message message = new Message(saxReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addElement("from").setText(XMPPServer.getInstance().getServerInfo().getName());
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
                 synchronized (dateFormat) {
-                    delay.addElement("stamp").setText(dateFormat.format(creationDate));
+                    delay.addAttribute("stamp", dateFormat.format(creationDate));
                 }
                 messages.add(message);
             }

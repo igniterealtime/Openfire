@@ -246,7 +246,13 @@ public class PluginManager {
      * @return the plugin's name.
      */
     public String getName(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/name");
+        String name = getElementValue(plugin, "/plugin/name");
+        if (name != null) {
+            return name;
+        }
+        else {
+            return pluginDirs.get(plugin).getName();
+        }
     }
 
     /**

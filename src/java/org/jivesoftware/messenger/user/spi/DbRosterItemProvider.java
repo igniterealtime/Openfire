@@ -43,6 +43,22 @@ public class DbRosterItemProvider implements RosterItemProvider {
             "INSERT INTO jiveRoster (username, rosterID, jid, sub, ask, recv, nick) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
+    /**
+     * <p>Creates a new roster item for the given user (optional operation).</p>
+     * <p/>
+     * <p><b>Important!</b> The item passed as a parameter to this method is strictly a convenience for passing all
+     * of the data needed for a new roster item. The roster item returned from the method will be cached by Messenger.
+     * In some cases, the roster item passed in will be passed back out. However, if an implementation may
+     * return RosterItems as a separate class (for example, a RosterItem that directly accesses the backend
+     * storage, or one that is an object in an object database).
+     * <p/>
+     * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
+     *
+     * @param username the username of the user/chatbot that owns the roster item
+     * @param item     the settings for the roster item to create
+     * @return The created roster item
+     * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
+     */
     public CachedRosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException, UnsupportedOperationException {
         Connection con = null;
@@ -87,8 +103,17 @@ public class DbRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM jiveRosterGroups WHERE rosterID=?";
 
-    public void updateItem(String username, CachedRosterItem item)
-            throws UserNotFoundException, UnsupportedOperationException {
+    /**
+     * <p>Update the roster item in storage with the information contained in the given item (optional operation).</p>
+     * <p/>
+     * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
+     *
+     * @param username the username of the user/chatbot that owns the roster item
+     * @param item     The roster item to update
+     * @throws UserNotFoundException         If no entry could be found to update
+     * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
+     */
+    public void updateItem(String username, CachedRosterItem item) throws UserNotFoundException, UnsupportedOperationException {
         Connection con = null;
         PreparedStatement pstmt = null;
         long rosterID = item.getID();
@@ -157,6 +182,15 @@ public class DbRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM jiveRoster WHERE rosterID=?";
 
+    /**
+     * <p>Delete the roster item with the given itemJID for the user (optional operation).</p>
+     * <p/>
+     * <p>If you don't want roster items deleted through messenger, throw UnsupportedOperationException.</p>
+     *
+     * @param username     the long ID of the user/chatbot that owns the roster item
+     * @param rosterItemID The roster item to delete
+     * @throws UnsupportedOperationException If the provider does not support the operation (this is an optional operation)
+     */
     public void deleteItem(String username, long rosterItemID)
             throws UnsupportedOperationException {
         // Only try to remove the user if they exist in the roster already:
@@ -180,28 +214,18 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.close(pstmt, con);
         }
     }
 
-    private static final String LOAD_USERNAMES =
-            "SELECT DISTINCT username from jiveRoster WHERE jid=?";
+    private static final String LOAD_USERNAMES = "SELECT DISTINCT username from jiveRoster WHERE jid=?";
 
+    /**
+     * Returns an iterator on the usernames whose roster includes the specified JID.
+     *
+     * @param jid the jid that the rosters should include.
+     * @return an iterator on the usernames whose roster includes the specified JID.
+     */
     public Iterator<String> getUsernames(String jid) {
         List<String> answer = new ArrayList<String>();
         Connection con = null;
@@ -219,22 +243,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.close(pstmt, con);
         }
         return answer.iterator();
     }
@@ -242,6 +251,12 @@ public class DbRosterItemProvider implements RosterItemProvider {
     private static final String COUNT_ROSTER_ITEMS =
             "SELECT COUNT(rosterID) FROM jiveRoster WHERE username=?";
 
+    /**
+     * <p>Obtain a count of the number of roster items available for the given user.</p>
+     *
+     * @param username the username of the user/chatbot that owns the roster items
+     * @return The number of roster items available for the user
+     */
     public int getItemCount(String username) {
         int count = 0;
         Connection con = null;
@@ -259,31 +274,24 @@ public class DbRosterItemProvider implements RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.close(pstmt, con);
         }
         return count;
     }
 
-    private static final String LOAD_ROSTER =
-            "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
-    private static final String LOAD_ROSTER_ITEM_GROUPS =
-            "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
+    private static final String LOAD_ROSTER = "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
+    private static final String LOAD_ROSTER_ITEM_GROUPS = "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
 
+    /**
+     * <p>Retrieve an iterator of RosterItems for the given user.</p>
+     * <p/>
+     * <p>This method will commonly be called when a user logs in. The data will be cached
+     * in memory when possible. However, some rosters may be very large so items may need
+     * to be retrieved from the provider more frequently than usual for provider data.
+     *
+     * @param username the username of the user/chatbot that owns the roster items
+     * @return An iterator of all RosterItems owned by the user
+     */
     public Iterator getItems(String username) {
         LinkedList itemList = new LinkedList();
         Connection con = null;
@@ -313,22 +321,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
                     itemList.add(item);
                 }
                 finally {
-                    try {
-                        if (gs != null) {
-                            gs.close();
-                        }
-                    }
-                    catch (Exception e) {
-                        Log.error(e);
-                    }
-                    try {
-                        if (gstmt != null) {
-                            gstmt.close();
-                        }
-                    }
-                    catch (Exception e) {
-                        Log.error(e);
-                    }
+                    DbConnectionManager.close(pstmt, con);
                 }
             }
         }

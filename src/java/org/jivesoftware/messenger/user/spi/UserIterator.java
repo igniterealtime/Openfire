@@ -11,14 +11,13 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.messenger.container.ServiceLookupFactory;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * An class that defines the logic to iterate through an array of long unique ID's of Jive objects.

@@ -11,14 +11,26 @@
 
 package org.jivesoftware.messenger.user.spi;
 
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.auth.*;
-import org.jivesoftware.messenger.user.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import org.jivesoftware.messenger.auth.AuthProvider;
+import org.jivesoftware.messenger.auth.AuthProviderFactory;
+import org.jivesoftware.messenger.auth.AuthToken;
+import org.jivesoftware.messenger.auth.Permissions;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.user.CachedRoster;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserInfo;
+import org.jivesoftware.messenger.user.UserInfoProvider;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.UserPropertiesProvider;
+import org.jivesoftware.messenger.user.UserProviderFactory;
+import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
 /**
  * <p>Database implementation of the UserInfoProvider interface.</p>

@@ -430,7 +430,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                     Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
                     Method stopMethod = wrapperClass.getMethod("stop",
                             new Class[]{Integer.TYPE});
-                    stopMethod.invoke(null, new Object[]{new Integer(0)});
+                    stopMethod.invoke(null, new Object[]{0});
                 }
                 catch (Exception e) {
                     Log.error("Could not stop container", e);

@@ -87,7 +87,7 @@ public class UserManagerImpl extends BasicModule implements UserManager {
 
     public User getUser(long userID) throws UserNotFoundException {
 
-        User user = (User)id2userCache.get(new Long(userID));
+        User user = (User)id2userCache.get(userID);
         if (user == null) {
             String username = userIDProvider.getUsername(userID);
             user = loadUser(userID, username);
@@ -127,12 +127,12 @@ public class UserManagerImpl extends BasicModule implements UserManager {
             return user.getID();
         }
 
-        return userIDLong.longValue();
+        return userIDLong;
     }
 
     private User loadUser(long userID, String username) {
         User user = new UserImpl(userID, username);
-        Long userIDLong = new Long(userID);
+        Long userIDLong = userID;
         id2userCache.put(userIDLong, user);
         name2idCache.put(username, userIDLong);
         return user;
@@ -141,13 +141,13 @@ public class UserManagerImpl extends BasicModule implements UserManager {
     public void deleteUser(User user) throws UnauthorizedException {
         userAccountProvider.deleteUser(user.getID());
         // Expire user caches.
-        id2userCache.remove(new Long(user.getID()));
+        id2userCache.remove(user.getID());
         name2idCache.remove(user.getUsername());
     }
 
     public void deleteUser(long userID)
             throws UnauthorizedException, UserNotFoundException {
-        deleteUser((User)id2userCache.get(new Long(userID)));
+        deleteUser((User)id2userCache.get(userID));
     }
 
     public int getUserCount() {

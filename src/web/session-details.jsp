@@ -262,7 +262,7 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
             count++;
             boolean current = sess.getAddress().equals(address);
     %>
-        <%@ include file="session-row.jsp" %>
+        <%@ include file="session-row.jspf" %>
 
     <%  } %>
 

@@ -15,7 +15,7 @@
 
 <%  boolean showSidebar = false; %>
 
-<%@ include file="setup-header.jsp" %>
+<%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
 <fmt:message key="title" bundle="${lang}" /> Setup Complete!

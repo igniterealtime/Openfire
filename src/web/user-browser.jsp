@@ -133,7 +133,7 @@
             { title, "user-browser.jsp" }
         };
     %>
-    <%@ include file="title-browser.jsp" %>
+    <%@ include file="title-browser.jspf" %>
 
     <p>
     Total Users: <%= userManager.getUserCount() %>,

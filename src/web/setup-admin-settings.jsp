@@ -127,7 +127,7 @@
     }
 %>
 
-<%@ include file="setup-header.jsp" %>
+<%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
 Administrator Account

@@ -24,7 +24,7 @@
 
 <%@ include file="setup-global.jsp" %>
 
-<%@ include file="setup-env-check.jsp" %>
+<%@ include file="setup-env-check.jspf" %>
 
 <%  // Get parameters
     // Handle a continue:
@@ -99,7 +99,7 @@
     }
 %>
 
-<%@ include file="setup-header.jsp" %>
+<%@ include file="setup-header.jspf" %>
 
 <p class="jive-setup-page-header">
 Installation Checklist

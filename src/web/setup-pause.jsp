@@ -17,7 +17,7 @@
 
 <%  boolean showSidebar = false; %>
 
-<%@ include file="setup-header.jsp" %>
+<%@ include file="setup-header.jspf" %>
 <div align=center>
 
 <p>

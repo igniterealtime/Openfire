@@ -145,13 +145,13 @@ Below is a list of sessions on this server.
 <%  } %>
 
 <%  int count = start;
-    boolean current = false; // needed in session-row.jsp
+    boolean current = false; // needed in session-row.jspf
     String linkURL = "session-details.jsp";
     while (sessions.hasNext()) {
         Session sess = (Session)sessions.next();
         count++;
 %>
-    <%@ include file="session-row.jsp" %>
+    <%@ include file="session-row.jspf" %>
 
 <%  } %>
 

@@ -20,22 +20,22 @@
     //
     try {
         // ServiceLookup lookup = ServiceLookupFactory.getServiceLookup();
-        Class serviceLookupFactoryClass = loadClass("org.jivesoftware.messenger.container.ServiceLookupFactory");
-        Method getLookupMethod = serviceLookupFactoryClass.getMethod("getServiceLookup",null);
-        Object serviceLookupObj = getLookupMethod.invoke(serviceLookupFactoryClass,null);
-
-        // Container container = (Container)lookup.lookup(Container.class);
-        Method lookupMethod = serviceLookupObj.getClass().getMethod("lookup",new Class[]{java.lang.Class.class});
-        Object containerObj = lookupMethod.invoke(serviceLookupObj,new Class[]{org.jivesoftware.messenger.container.Container.class});
-
-        // boolean isSetup = container.isSetupMode()
-        Method isSetupModeMethod = containerObj.getClass().getMethod("isSetupMode",null);
-        Object isSetupObj = isSetupModeMethod.invoke(containerObj,null);
-        boolean setupMode = ((Boolean)isSetupObj).booleanValue();
-
-        if (setupMode) {
-            doSetup = true;
-        }
+//        Class serviceLookupFactoryClass = loadClass("org.jivesoftware.messenger.container.ServiceLookupFactory");
+//        Method getLookupMethod = serviceLookupFactoryClass.getMethod("getServiceLookup",null);
+//        Object serviceLookupObj = getLookupMethod.invoke(serviceLookupFactoryClass,null);
+//
+//        // Container container = (Container)lookup.lookup(Container.class);
+//        Method lookupMethod = serviceLookupObj.getClass().getMethod("lookup",new Class[]{java.lang.Class.class});
+//        Object containerObj = lookupMethod.invoke(serviceLookupObj,new Class[]{org.jivesoftware.messenger.container.Container.class});
+//
+//        // boolean isSetup = container.isSetupMode()
+//        Method isSetupModeMethod = containerObj.getClass().getMethod("isSetupMode",null);
+//        Object isSetupObj = isSetupModeMethod.invoke(containerObj,null);
+//        boolean setupMode = ((Boolean)isSetupObj).booleanValue();
+//
+//        if (setupMode) {
+//            doSetup = true;
+//        }
     }
     catch (Throwable t) {
         //t.printStackTrace();

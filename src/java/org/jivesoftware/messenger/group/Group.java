@@ -16,6 +16,8 @@ import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.event.GroupEvent;
+import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.stringprep.Stringprep;
 
@@ -89,10 +91,19 @@ public class Group implements Cacheable {
      */
     public void setName(String name) {
         try {
+            String originalName = this.name;
             provider.setName(this.name, name);
             groupManager.groupCache.remove(this.name);
             this.name = name;
             groupManager.groupCache.put(name, this);
+
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "nameModified");
+            params.put("originalValue", originalName);
+            GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
+                    this, params);
+            GroupEventDispatcher.dispatchEvent(event);
         }
         catch (Exception e) {
             Log.error(e);
@@ -119,8 +130,16 @@ public class Group implements Cacheable {
      */
     public void setDescription(String description) {
         try {
+            String originalDescription = this.description;
             provider.setDescription(name, description);
             this.description = description;
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "descriptionModified");
+            params.put("originalValue", originalDescription);
+            GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
+                    this, params);
+            GroupEventDispatcher.dispatchEvent(event);
         }
         catch (Exception e) {
             Log.error(e);
@@ -218,12 +237,27 @@ public class Group implements Cacheable {
                         throw new IllegalStateException();
                     }
                     String user = (String)current;
-                    // Update the group users' roster
+                    // Update the group users' roster -- TODO: remove and use event.
                     XMPPServer.getInstance().getRosterManager().groupUserDeleted(Group.this, user);
-                    // Remove the user from the collection in memory
+                    // Remove the user from the collection in memory.
                     iter.remove();
-                    // Remove the group user from the backend store
+                    // Remove the group user from the backend store.
                     provider.deleteMember(name, user);
+                    // Fire event.
+                    if (adminCollection) {
+                        Map params = new HashMap();
+                        params.put("admin", user);
+                        GroupEvent event = new GroupEvent(GroupEvent.EventType.admin_removed,
+                                Group.this, params);
+                        GroupEventDispatcher.dispatchEvent(event);
+                    }
+                    else {
+                        Map params = new HashMap();
+                        params.put("member", user);
+                        GroupEvent event = new GroupEvent(GroupEvent.EventType.member_removed,
+                                Group.this, params);
+                        GroupEventDispatcher.dispatchEvent(event);
+                    }
                 }
             };
         }
@@ -252,9 +286,26 @@ public class Group implements Cacheable {
                 }
             }
             if (users.add(username)) {
-                // Add the group user to the backend store
+                // Add the group user to the backend store.
                 provider.addMember(name, username, adminCollection);
-                // Update the group users' roster
+
+                // Fire event.
+                if (adminCollection) {
+                    Map params = new HashMap();
+                    params.put("admin", username);
+                    GroupEvent event = new GroupEvent(GroupEvent.EventType.admin_added,
+                            Group.this, params);
+                    GroupEventDispatcher.dispatchEvent(event);
+                }
+                else {
+                    Map params = new HashMap();
+                    params.put("member", username);
+                    GroupEvent event = new GroupEvent(GroupEvent.EventType.member_added,
+                            Group.this, params);
+                    GroupEventDispatcher.dispatchEvent(event);
+                }
+
+                // Update the group users' roster -- TODO: remove and use event.
                 XMPPServer.getInstance().getRosterManager().groupUserAdded(Group.this, username);
                 return true;
             }
@@ -269,10 +320,26 @@ public class Group implements Cacheable {
 
         public Object put(Object key, Object value) {
             if (properties.containsKey(key)) {
+                String originalValue = properties.get(key);
                 updateProperty((String)key, (String)value);
+                // Fire event.
+                Map params = new HashMap();
+                params.put("type", "propertyModified");
+                params.put("propertyKey", key);
+                params.put("originalValue", originalValue);
+                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
+                        Group.this, params);
+                GroupEventDispatcher.dispatchEvent(event);
             }
             else {
                 insertProperty((String)key, (String)value);
+                // Fire event.
+                Map params = new HashMap();
+                params.put("type", "propertyAdded");
+                params.put("propertyKey", key);
+                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
+                        Group.this, params);
+                GroupEventDispatcher.dispatchEvent(event);
             }
             return properties.put((String)key, (String)value);
         }
@@ -312,6 +379,13 @@ public class Group implements Cacheable {
                     }
                     deleteProperty((String)current.getKey());
                     iter.remove();
+                    // Fire event.
+                    Map params = new HashMap();
+                    params.put("type", "propertyDeleted");
+                    params.put("propertyKey", current.getKey());
+                    GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
+                            Group.this, params);
+                    GroupEventDispatcher.dispatchEvent(event);
                 }
             };
         }

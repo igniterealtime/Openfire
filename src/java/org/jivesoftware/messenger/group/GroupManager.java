@@ -18,9 +18,12 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.event.GroupEvent;
+import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.roster.RosterManager;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Manages groups.
@@ -81,6 +84,11 @@ public class GroupManager {
                 // The group doesn't already exist so we can create a new group
                 newGroup = provider.createGroup(name);
                 groupCache.put(name, newGroup);
+
+                // Fire event.
+                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_created,
+                        newGroup, Collections.EMPTY_MAP);
+                GroupEventDispatcher.dispatchEvent(event);
             }
             return newGroup;
         }
@@ -115,6 +123,11 @@ public class GroupManager {
      * @param group the group to delete.
      */
     public void deleteGroup(Group group) {
+        // Fire event.
+        GroupEvent event = new GroupEvent(GroupEvent.EventType.group_deleting,
+                group, Collections.EMPTY_MAP);
+        GroupEventDispatcher.dispatchEvent(event);
+
         // Delete the group.
         provider.deleteGroup(group.getName());
 
@@ -127,8 +140,10 @@ public class GroupManager {
     }
 
     /**
-     * Deletes a user from all the groups where he/she belongs. The most probable cause for this
-     * request is that the user has been deleted from the system.
+     * Deletes a user from all the groups where he/she belongs. The most probable cause
+     * for this request is that the user has been deleted from the system.
+     *
+     * TODO: remove this method and use events isntead.
      *
      * @param user the deleted user from the system.
      */

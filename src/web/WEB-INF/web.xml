@@ -11,6 +11,20 @@
         <param-value>messenger_i18n_en</param-value>
     </context-param>
 
+    <filter>
+        <filter-name>AuthCheck</filter-name>
+        <filter-class>org.jivesoftware.admin.AuthCheckFilter</filter-class>
+        <init-param>
+            <param-name>excludes</param-name>
+            <param-value>login.jsp,index.jsp?logout=true</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
     <!--@@STARTUP-SERVLET@@-->
 
     <!--@@JSPC-SERVLETS@@-->

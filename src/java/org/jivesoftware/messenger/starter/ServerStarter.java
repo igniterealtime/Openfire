@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger.starter;
 
+import org.jivesoftware.util.Log;
+
 import java.io.File;
 
 /**
@@ -27,9 +29,18 @@ import java.io.File;
  *      <li>Start the server</li>
  * </ul>
  *
+ * Note: if the enviroment property messenger.lib.directory is specified ServerStarter will attempt
+ * to use this value as the value for messenger's lib directory. If the property is not specified
+ * the default value of ../lib will be used.
+ *
  * @author Iain Shigeoka
  */
 public class ServerStarter {
+
+    /**
+     * Default to this location if one has not been specified
+     */
+    private static final String DEFAULT_LIB_DIR = "../lib";
 
     public static void main(String [] args) {
         new ServerStarter().start();
@@ -45,7 +56,25 @@ public class ServerStarter {
         try {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
-            File libDir = new File("../lib");
+
+            String libDirString = System.getProperty("messenger.lib.dir");
+
+            File libDir;
+            if(libDirString != null) {
+                // if the lib directory property has been specified and it actually
+                // exists use it, else use the default
+
+                libDir = new File(libDirString);
+                if(!libDir.exists()) {
+                    Log.warn("lib directory "+libDirString+
+                            " does not exist defaulting to "+DEFAULT_LIB_DIR);
+                    libDir = new File(DEFAULT_LIB_DIR);
+                }
+
+            } else {
+                libDir = new File(DEFAULT_LIB_DIR);
+            }
+
             ClassLoader loader = new JiveClassLoader(parent, libDir);
            
             Thread.currentThread().setContextClassLoader(loader);

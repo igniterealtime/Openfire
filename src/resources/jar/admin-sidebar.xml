@@ -4,200 +4,128 @@
         <appname>Jive Messenger</appname>
         <logo-image>images/header-title.gif</logo-image>
     </global>
-    <tabs>
-        <tab0>
-            <id>server</id>
-            <name>Server</name>
-            <description>Click to manage server settings</description>
-            <sidebars>
-                <sidebar0>
-                    <name>Server Manager</name>
-                    <items>
-                        <item0>
-                            <id>server-props</id>
-                            <url>index.jsp</url>
-                            <name>Server Properties</name>
-                            <description>Click to see server properties</description>
-                        </item0>
-                        <item1>
-                            <id>server-db</id>
-                            <url>server-db.jsp</url>
-                            <name>Database</name>
-                            <description>Click to see database connection information</description>
-                        </item1>
-                        <item2>
-                            <id>server-logs</id>
-                            <url>logviewer.jsp</url>
-                            <name>Logs</name>
-                            <description>Click to view server logs</description>
-                        </item2>
-                    </items>
-                </sidebar0>
-                <sidebar1>
-                    <name>Server Settings</name>
-                    <items>
-                        <item0>
-                            <id>server-reg-and-login</id>
-                            <url>reg-settings.jsp</url>
-                            <name>Registration &amp; Login</name>
-                            <description>Click to edit registration &amp; login policies</description>
-                        </item0>
-                        <item1>
-                            <id>server-session-conflict</id>
-                            <url>session-conflict.jsp</url>
-                            <name>Resource Conflict Policy</name>
-                            <description>
-                            </description>
-                        </item1>
-                        <item2>
-                            <id>server-offline-messages</id>
-                            <url>offline-messages.jsp</url>
-                            <name>Offline Message Policy</name>
-                            <description>
-                            </description>
-                        </item2>
-                        <item3>
-                            <id>server-audit-policy</id>
-                            <url>audit-policy.jsp</url>
-                            <name>Message Audit Policy</name>
-                            <description>
-                            </description>
-                        </item3>
-                        <item4>
-                            <id>server-data-settings</id>
-                            <url>private-data-settings.jsp</url>
-                            <name>Private Data Storage</name>
-                            <description>
-                            </description>
-                        </item4>
-                        <item5>
-                            <id>server-chatroom-history</id>
-                            <url>chatroom-history-settings.jsp</url>
-                            <name>Chatroom History Settings</name>
-                            <description>
-                            </description>
-                        </item5>
-                        <item6>
-                            <id>server-ssl</id>
-                            <url>ssl-settings.jsp</url>
-                            <name>SSL Settings</name>
-                            <description>
-                            </description>
-                        </item6>
-                    </items>
-                </sidebar1>
-                <sidebar2>
-                    <name>Group Chat Settings</name>
-                    <items>
-                        <item0>
-                            <id>muc-server-props</id>
-                            <url>muc-server-props-edit-form.jsp</url>
-                            <name>Group Chat Properties</name>
-                            <description>
-                            </description>
-                        </item0>
-                        <item1>
-                            <id>muc-history</id>
-                            <url>muc-history-settings.jsp</url>
-                            <name>Group Chat History Settings</name>
-                            <description>
-                            </description>
-                        </item1>
-                        <item2>
-                            <id>muc-sysadmins</id>
-                            <url>muc-sysadmins.jsp</url>
-                            <name>Group Chat System Administrators</name>
-                            <description>
-                            </description>
-                        </item2>
-                        <item3>
-                            <id>muc-perms</id>
-                            <url>muc-create-permission.jsp</url>
-                            <name>Group Chat Room Permissions</name>
-                            <description>
-                            </description>
-                        </item3>
-                    </items>
-                </sidebar2>
-            </sidebars>
-        </tab0>
-        <tab1>
-            <id>users</id>
-            <name>Users</name>
-            <description>Click to manage users</description>
-            <sidebars>
-                <sidebar0>
-                    <name>Users</name>
-                    <items>
-                        <item0>
-                            <id>user-summary</id>
-                            <url>user-summary.jsp</url>
-                            <name>User Summary</name>
-                            <description>Click to see a list of users in the system</description>
-                        </item0>
-                        <item1>
-                            <id>user-search</id>
-                            <url>user-search.jsp</url>
-                            <name>User Search</name>
-                            <description>Click to search for a particular user</description>
-                        </item1>
-                        <item2>
-                            <id>user-create</id>
-                            <url>user-create.jsp</url>
-                            <name>User Create</name>
-                            <description>Click to add a new user to the system</description>
-                        </item2>
-                    </items>
-                </sidebar0>
-            </sidebars>
-        </tab1>
-        <tab2>
-            <id>session</id>
-            <name>Sessions</name>
-            <description>Click to manage connected sessions</description>
-            <sidebars>
-                <sidebar0>
-                    <name>Sessions</name>
-                    <items>
-                        <item0>
-                            <id>session-summary</id>
-                            <url>session-summary.jsp</url>
-                            <name>View Current Sessions</name>
-                            <description>Click to manage XMPP sessions</description>
-                        </item0>
-                        <item1>
-                            <id>session-settings</id>
-                            <url>session-settings.jsp</url>
-                            <name>Session Settings</name>
-                            <description>Click to change session settings</description>
-                        </item1>
-                        <item2>
-                            <id>user-message</id>
-                            <url>user-message.jsp</url>
-                            <name>Send Message</name>
-                            <description>Click to send a message</description>
-                        </item2>
-                    </items>
-                </sidebar0>
-            </sidebars>
-        </tab2>
-        <tab3>
-            <id>groupchat</id>
-            <name>Group Chat</name>
-            <description>Click to manage group chat settings</description>
-            <sidebars>
-                <sidebar0>
-                    <name>MUC Manager</name>
-                    <items>
-                        <item0>
-                            <id>muc-properties</id>
-                            <url>muc-server-props-edit-form.jsp</url>
-                            <name>Server Properties</name>
-                            <description>Click to edit MUC settings</description>
-                        </item0>
-                    </items>
-                </sidebar0>
-            </sidebars>
-        </tab3>
-    </tabs>
+
+    <tab id="server" name="Server" description="Click to manage server settings">
+
+        <sidebar name="Server Manager">
+
+            <item id="server-props" name="Server Properties"
+                    url="index.jsp"
+                    description="Click to see server properties" />
+
+            <item id="server-db" name="Database"
+                    url="server-db.jsp"
+                    description="Click to see database connection information" />
+
+            <item id="server-logs" name="Logs"
+                    url="logviewer.jsp"
+                    description="Click to view server logs" />
+        </sidebar>
+
+        <sidebar name="Server Settings">
+
+            <item id="server-reg-and-login" name="Registration &amp; Login"
+                    url="reg-settings.jsp"
+                    description="Click to edit registration &amp; login policies" />
+
+            <item id="server-session-conflict" name="Resource Conflict Policy"
+                    url="session-conflict.jsp"
+                    description="" />
+
+            <item id="server-offline-messages" name="Offline Message Policy"
+                    url="offline-messages.jsp"
+                    description="" />
+
+            <item id="server-audit-policy" name="Message Audit Policy"
+                    url="audit-policy.jsp"
+                    description="" />
+
+            <item id="server-data-settings" name="Private Data Storage"
+                    url="private-data-settings.jsp"
+                    description="" />
+
+            <item id="server-chatroom-history" name="Chatroom History Settings"
+                    url="chatroom-history-settings.jsp"
+                    description="" />
+
+            <item id="server-ssl" name="SSL Settings"
+                    url="ssl-settings.jsp"
+                    description="" />
+        </sidebar>
+    </tab>
+
+    <tab id="users" name="Users" description="Click to manage users">
+
+        <sidebar name="Users">
+
+            <item id="user-summary" name="User Summary"
+                    url="user-summary.jsp"
+                    description="Click to see a list of users in the system">
+
+                <subsidebar name="User Options">
+
+                    <item id="user-properties" name="User Properties"
+                            url="user-properties.jsp"
+                            description="Click to edit the user's properties" />
+
+                    <item id="user-password" name="Password"
+                            url="user-password.jsp"
+                            description="Click to change the user's password" />
+
+                    <item id="user-delete" name="Delete User"
+                            url="user-delete.jsp"
+                            description="Click to delete the user" />
+                </subsidebar>
+            </item>
+
+            <item id="user-create" name="Create New User"
+                    url="user-create.jsp"
+                    description="Click to add a new user to the system" />
+
+            <item id="user-search" name="User Search"
+                    url="user-search.jsp"
+                    description="Click to search for a particular user" />
+        </sidebar>
+    </tab>
+
+    <tab id="session" name="Sessions" description="Click to manage connected sessions">
+
+        <sidebar name="Sessions">
+
+            <item id="session-summary" name="View Current Sessions"
+                    url="session-summary.jsp"
+                    description="Click to manage XMPP sessions" />
+
+            <item id="session-settings" name="Session Settings"
+                    url="session-settings.jsp"
+                    description="Click to change session settings" />
+
+            <item id="user-message" name="Send Message"
+                    url="user-message.jsp"
+                    description="Click to send a message" />
+        </sidebar>
+    </tab>
+
+    <tab id="groupchat" name="Group Chat" description="Click to manage group chat settings">
+
+        <sidebar name="Group Chat Settings">
+
+            <item id="muc-server-props" name="Group Chat Properties"
+                    url="muc-server-props-edit-form.jsp"
+                    description="" />
+
+            <item id="muc-history" name="Group Chat History Settings"
+                    url="muc-history-settings.jsp"
+                    description="" />
+
+            <item id="muc-sysadmin" name="Group Chat System Admins"
+                    url="muc-sysadmins.jsp"
+                    description="" />
+
+            <item id="muc-perms" name="Group Chat Room Permissions"
+                    url="muc-create-permission.jsp"
+                    description="" />
+        </sidebar>
+    </tab>
+
 </adminconsole>

@@ -197,14 +197,22 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     // Kick the user from all the rooms that he/she had previuosly joined
                     Iterator<MUCRole> roles = user.getRoles();
                     MUCRole role;
+                    MUCRoom room;
+                    Presence kickedPresence;
                     while (roles.hasNext()) {
                         role = roles.next();
+                        room = role.getChatRoom();
                         try {
-                            role.getChatRoom().kickOccupant(user.getAddress().toStringPrep(), null,
-                                    null);
+                            kickedPresence =
+                                    room.kickOccupant(user.getAddress().toStringPrep(), null, null);
+                            // Send the updated presence to the room occupants
+                            room.send(kickedPresence);
                         }
                         catch (NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins
+                        }
+                        catch (UnauthorizedException e) {
+                            // Do nothing
                         }
                     }
                 }

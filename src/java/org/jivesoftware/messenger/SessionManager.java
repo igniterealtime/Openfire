@@ -45,6 +45,7 @@ import org.xmpp.packet.Presence;
  * @author Derek DeMoro
  */
 public class SessionManager extends BasicModule implements ConnectionCloseListener {
+
     private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
 
@@ -242,7 +243,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
          * @param packet
          */
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
-            // TODO Should we filter existing sessions whose presence is not available?
             for (Session session : resources.values()) {
                 packet.setTo(session.getAddress());
                 session.getConnection().deliver(packet);
@@ -789,7 +789,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param packet The packet to be broadcast
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
-        // TODO Should we filter existing sessions whose presence is not available?
         Iterator values = sessions.values().iterator();
         while (values.hasNext()) {
             ((SessionMap)values.next()).broadcast(packet);
@@ -808,7 +807,6 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @param packet The packet to be broadcast
      */
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
-        // TODO Should we filter existing sessions whose presence is not available?
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
             sessionMap.broadcast(packet);
@@ -816,11 +814,13 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     }
 
     /**
-     * TODO Requires better error checking to ensure the session count is maintained properly (removal actually does remove)
+     * Removes a session.
      *
-     * @param session
+     * @param session the session.
      */
     public void removeSession(Session session) {
+        // TODO: Requires better error checking to ensure the session count is maintained
+        // TODO: properly (removal actually does remove).
         if (session == null) {
             return;
         }
@@ -977,7 +977,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
 
     public void stop() {
         serverName = null;
-        sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
+        if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
+            sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
+        }
         try {
             for (Session session : getSessions()) {
                 try {

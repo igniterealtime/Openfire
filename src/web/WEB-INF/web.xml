@@ -25,9 +25,19 @@
         <url-pattern>*.jsp</url-pattern>
     </filter-mapping>
 
+    <servlet>
+        <servlet-name>PluginServlet</servlet-name>
+        <servlet-class>org.jivesoftware.messenger.container.PluginServlet</servlet-class>
+    </servlet>
+
     <!--@@STARTUP-SERVLET@@-->
 
     <!--@@JSPC-SERVLETS@@-->
+
+    <servlet-mapping>
+        <servlet-name>PluginServlet</servlet-name>
+        <url-pattern>/plugins/*</url-pattern>
+    </servlet-mapping>
 
     <taglib>
         <taglib-uri>core</taglib-uri>

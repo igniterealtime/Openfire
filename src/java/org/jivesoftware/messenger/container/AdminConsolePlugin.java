@@ -53,7 +53,7 @@ public class AdminConsolePlugin implements Plugin {
         return "2.0";
     }
 
-    public void initialize(PluginManager manager, File pluginDir) {
+    public void initializePlugin(PluginManager manager, File pluginDir) {
         try {
             // Configure logging to a file, creating log dir if needed
             System.setProperty("org.apache.commons.logging.LogFactory","org.mortbay.log.Factory");
@@ -91,7 +91,7 @@ public class AdminConsolePlugin implements Plugin {
         }
     }
 
-    public void destroy() {
+    public void destroyPlugin() {
         try {
             if (jetty != null) {
                 jetty.stop();

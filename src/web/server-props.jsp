@@ -16,7 +16,9 @@
                  java.util.*,
                  org.jivesoftware.messenger.XMPPServer,
                  java.net.InetAddress,
-                 org.jivesoftware.messenger.JiveGlobals"
+                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.messenger.net.SSLSocketAcceptThread,
+                 org.jivesoftware.messenger.net.SocketAcceptThread"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -34,6 +36,7 @@
     int port = ParamUtils.getIntParameter(request,"port",-1);
     int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
     int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
+    int embeddedSecurePort = ParamUtils.getIntParameter(request,"embeddedSecurePort",-1);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled");
     boolean save = request.getParameter("save") != null;
     boolean defaults = request.getParameter("defaults") != null;
@@ -49,6 +52,7 @@
         port = 5222;
         sslPort = 5223;
         embeddedPort = 9090;
+        embeddedSecurePort = 9091;
         sslEnabled = true;
         save = true;
     }
@@ -68,28 +72,37 @@
         if (embeddedPort < 1) {
             errors.put("embeddedPort","");
         }
+        if (embeddedSecurePort < 1) {
+            errors.put("embeddedSecurePort","");
+        }
         if (port > 0 && sslPort > 0) {
             if (port == sslPort) {
                 errors.put("portsEqual","");
             }
         }
+        if (embeddedPort > 0 && embeddedSecurePort > 0) {
+            if (embeddedPort == embeddedSecurePort) {
+                errors.put("embeddedPortsEqual","");
+            }
+        }
         if (errors.size() == 0) {
             server.getServerInfo().setName(serverName);
             JiveGlobals.setProperty("xmpp.socket.plain.port", String.valueOf(port));
-            JiveGlobals.setProperty("adminConsole.port", String.valueOf(embeddedPort));
             JiveGlobals.setProperty("xmpp.socket.ssl.active", String.valueOf(sslEnabled));
             JiveGlobals.setProperty("xmpp.socket.ssl.port", String.valueOf(sslPort));
+            JiveGlobals.setXMLProperty("adminConsole.port", String.valueOf(embeddedPort));
+            JiveGlobals.setXMLProperty("adminConsole.securePort", String.valueOf(embeddedSecurePort));
             response.sendRedirect("server-props.jsp?success=true");
             return;
         }
     }
-
-    if (errors.size() == 0) {
+    else {
         serverName = server.getServerInfo().getName();
         sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
-        try { port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port")); } catch (Exception ignored) {}
-        try { embeddedPort = Integer.parseInt(JiveGlobals.getProperty("adminConsole.port")); } catch (Exception ignored) {}
-        try { sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port")); } catch (Exception ignored) {}
+        try { port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port", String.valueOf(SocketAcceptThread.DEFAULT_PORT))); } catch (Exception ignored) {}
+        try { sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port", String.valueOf(SSLSocketAcceptThread.DEFAULT_PORT))); } catch (Exception ignored) {}
+        try { embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port")); } catch (Exception ignored) {}
+        try { embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort")); } catch (Exception ignored) {}
     }
 %>
 
@@ -234,6 +247,28 @@
                 <span class="jive-error-text">
                 <fmt:message key="server.props.valid_port" />
                 <a href="#" onclick="document.editform.embeddedPort.value='9090';"
+                 ><fmt:message key="server.props.valid_port1" /></a>.
+                </span>
+            <%  } else if (errors.containsKey("embeddedPortsEqual")) { %>
+                <br>
+                <span class="jive-error-text">
+                <fmt:message key="server.props.error_port" />
+                </span>
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.props.admin_secure_port" />
+        </td>
+        <td class="c2">
+            <input type="text" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "") %>"
+             size="5" maxlength="5">
+            <%  if (errors.containsKey("embeddedSecurePort")) { %>
+                <br>
+                <span class="jive-error-text">
+                <fmt:message key="server.props.valid_port" />
+                <a href="#" onclick="document.editform.embeddedSecurePort.value='9091';"
                  ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } %>

@@ -12,8 +12,8 @@ This document provides setup instructions for all of the currently supported dat
 </p>
 <p>
 JDBC 2.0 drivers are required for Jive Messenger to communicate with your database. Suggested
-drivers for particular databases are noted below where applicable. However, 
-<em>the JDBC-ODBC bridge will not work with Jive Messenger under any circumstances</em>.
+drivers for particular databases are noted below where applicable. Jive Messenger bundles JDBC
+drivers for MySQL, Postgres, and HSQLDB.
 </p>
 <p>
 For a full list of available JDBC drivers, please see:
@@ -49,12 +49,11 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b><p>
 
-	The JDBC driver for MySQL can be found at:
+	The JDBC driver for MySQL is bundled with Jive Messenger, so you do not need
+    to download and install a separate driver.
+    
 	<p>
-	<a href="http://www.mysql.com/downloads/api-jdbc.html">
-    http://www.mysql.com/downloads/api-jdbc.html</a>
-	<p>
-	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
+	In the Jive Messenger setup tool, use the following values:<p><ul>
 		<li>driver: <tt>com.mysql.jdbc.Driver</tt>
 		<li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
 	</ul><p>
@@ -66,7 +65,7 @@ Choose your database from the list below for setup details:
 	<p><b>Setup Instructions</b><p>
 	<ol>
 		<li>Make sure that you are using MySQL 3.23.2 or later (4.x recommended).
-		<li>Create a database for the Jive tables:<br>
+		<li>Create a database for the Jive Messenger tables:<br>
 	    <code>mysqladmin create [databaseName]</code><br>
 	    (note: "databaseName" can be something like 'messenger')
 
@@ -102,13 +101,12 @@ Choose your database from the list below for setup details:
 
 	<b>JDBC Drivers</b><p>
 
-	For most users, the best drivers for Oracle are the ones written by Oracle (which
-	come with the database or can be downloaded from Oracle's website). You
-	should use the Oracle 9i "thin" drivers (users have reported bugs with the 8i drivers) 
-	that are in the the <tt>classes12.zip</tt> file. 
-	<b>Do not use the <tt>classes11.zip</tt> JDBC driver.</b> Note: you may wish to rename the
-    <tt>classes12.zip</tt> file to <tt>classes12.jar</tt> or <tt>oracle.jar</tt> 
-    since some application servers will not work correctly with zip files.
+	The Oracle 9i or 10g "thin" drivers are recommended and can be downloaded from 
+    <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html">Oracle's website</a>. 
+     
+    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Jive Messenger.
+    Copy the JDBC driver to the <tt>lib/</tt> directory of your Jive Messenger installation.
+    
 	<p>
 	In the Jive Messenger web-based setup tool, use the following values:<p>
     
@@ -141,11 +139,11 @@ Choose your database from the list below for setup details:
 <ul>	
 	<b>JDBC Drivers</b><p>
 
-    Microsoft provides a <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=4f8f2f01-1ed7-4c4d-8f7b-3d47969e66ae&DisplayLang=en">free JDBC driver</a> that works with Jive Messenger.
+    Microsoft provides a <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=07287b11-0502-461a-b138-2aa54bfdc03a&DisplayLang=en">free JDBC driver</a> that works with Jive Messenger.
     After downloading and extracting the drivers, place <tt>msbase.jar</tt>,
-    <tt>mssqlserver.jar</tt>, and <tt>msutil.jar</tt> in the classpath of your
-    application server or the <tt>WEB-INF/lib</tt> directory of your Jive Messenger
-    web application. Use the following values in the Jive Messenger web-based setup tool:<p>
+    <tt>mssqlserver.jar</tt>, and <tt>msutil.jar</tt> in the <tt>lib/</tt>
+    directory of your Jive Messenger installation. Use the following values in the Jive Messenger
+    web-based setup tool:<p>
 
     	<ul>
 		<li>driver -- <tt>com.microsoft.jdbc.sqlserver.SQLServerDriver</tt>
@@ -160,14 +158,14 @@ Choose your database from the list below for setup details:
 
 	<ol>
 		<li>Create a new database using Enterprise Manager if you do not already have
-	   		a database you want to use. You may wish to name the database "jivexmpp".
+	   		a database you want to use. You may wish to name the database "messenger".
 		<li>Create a user to access the database if you do not already have one you'd
 			like to use. Consider making the default database for the user be the
 			one you created in step 1.
 		<li>Open the Query Analyser and connect to the server.
 		<li>Select the database you want to use for Jive Messenger
 		    from the DB drop down (the one you created in step 1 if you're using a new database).
-		<li>Open the messenger_sqlserver_2000.sql file.
+		<li>Open the messenger_sqlserver.sql file.
 		<li>Press F5 to run the script. The script will run and create the
 			necessary tables.
 		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
@@ -180,11 +178,8 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b>
 	<p>
-	JDBC Drivers for PostgreSQL can be found in various distribution packages
-	at <a href="http://jdbc.postgresql.org" target="_blank">PostgreSQL's JDBC Home Page</a>. 
-	This installation in particular refers to <code>&quot;pgjdbc2.jar&quot;</code> driver for
-	accessing PostgreSQL 7.3. Refer to the JDBC documentation at that site
-	for more information. 
+	The JDBC driver for Postgres is bundled with Jive Messenger, so you do not need
+    to download and install a separate driver.
     <p>
 	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
 		<li>driver -- <tt>org.postgresql.Driver</tt>
@@ -200,12 +195,12 @@ Choose your database from the list below for setup details:
 	  <li>Create the database. For example, using the 
 	  	PostgreSQL <code>&quot;createdb&quot;</code> utility:
 	  	<br>
-	  	<code>createdb -E UNICODE jivexmpp</code>
+	  	<code>createdb -E UNICODE messenger</code>
 	  <li>Import the schema from the <tt>resources/database</tt> directory of the installation.
         Use psql (or your favorite Postgres sql 
 	  	utility) to import the Jive Messenger database schema:
 	  	<br>
-	  	<code>psql -d jivexmpp -f messenger_postgresql.sql</code>
+	  	<code>psql -d messenger -f messenger_postgresql.sql</code>
 	  <li>Proceed to Jive Messenger setup and use the appropriate JDBC settings when
 	  	prompted.	  
 	</ol>
@@ -216,7 +211,8 @@ Choose your database from the list below for setup details:
 	<b>JDBC Drivers</b>
 	<p>
 	Use the JDBC 1.2 compliant driver, db2java.zip (1293KB),
-	located in the <nobr>"%DB2PATH%\java2"</nobr> directory.
+	located in the <nobr>"%DB2PATH%\java2"</nobr> directory. Copy the JDBC driver to the <tt>lib/</tt>
+    directory of your Jive Messenger installation.
 	<p>
 	Values for the config file are:
 	<ul>

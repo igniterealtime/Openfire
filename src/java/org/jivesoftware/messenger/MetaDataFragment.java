@@ -118,7 +118,7 @@ public class MetaDataFragment extends PayloadFragment {
 
     /**
      * Returns the value of the specified property. A <tt>null</tt> answer does not necessarily mean
-     * that the property does not exist. Use {@link includesProperty(String)} to find out whether
+     * that the property does not exist. Use {@link #includesProperty(String)} to find out whether
      * the property exists or not.
      *
      * @param name the name of the property to get.
@@ -172,7 +172,7 @@ public class MetaDataFragment extends PayloadFragment {
     /**
      * Returns true if the specified property is included in the XML hierarchy. A property could
      * have a value associated or not. If the property has an associated value then
-     * {@link getProperty(String)} will return a String otherwise <tt>null</tt> will be answered.
+     * {@link #getProperty(String)} will return a String otherwise <tt>null</tt> will be answered.
      *
      * @param name the name of the property to find out.
      * @return true if the specified property is included in the XML hierarchy.

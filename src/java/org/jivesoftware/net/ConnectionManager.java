@@ -42,8 +42,6 @@ public interface ConnectionManager {
      * change connection configurations, it is expected that the primary events
      * recorded are in protocol-level connection state changes such as the
      * establishment of TLS over a previously insecure connection via SASL.
-     *
-     * @return
      */
     ConnectionMonitor getConfigMonitor();
 

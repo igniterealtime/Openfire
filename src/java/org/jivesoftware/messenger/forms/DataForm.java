@@ -29,8 +29,8 @@ import java.util.List;
  * </ul>
  * <p/>
  * In case the form represents a search, the report will be structured in columns and rows. Use
- * {@link addReportedField(FormField)} to set the columns of the report whilst the report's rows
- * can be configured using {@link addItemFields(ArrayList)}.
+ * {@link #addReportedField(FormField)} to set the columns of the report whilst the report's rows
+ * can be configured using {@link #addItemFields(ArrayList)}.
  *
  * @author gdombiak
  */

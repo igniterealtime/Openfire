@@ -39,8 +39,6 @@ public interface ChatServer {
      * Non-anonymous rooms is a JEP-0045 Multi-User Chat (MUC) feature
      * that causes the server to send the real JID of all participants in
      * room presence updates. 
-     *
-     * @return
      */
     boolean isUseAnonymousRooms();
 

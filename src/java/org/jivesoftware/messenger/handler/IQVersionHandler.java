@@ -40,8 +40,9 @@ import org.dom4j.QName;
  * idea to do authorization in each handler. It would be nice if
  * the framework could assert authorization policies across channels.
  *
+ * <p>TODO: Verify responding to an iq 'get'</p>
+ *
  * @author Iain Shigeoka
- * @todo Verify responding to an iq 'get'
  */
 public class IQVersionHandler extends IQHandler implements ServerFeaturesProvider {
 

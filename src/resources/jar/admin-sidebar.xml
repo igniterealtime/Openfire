@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <adminconsole>
+    
     <global>
         <appname>Jive Messenger</appname>
         <logo-image>images/header-title.gif</logo-image>
@@ -163,53 +164,67 @@
     <!-- Group Chat -->
     <tab id="tab-groupchat" name="${tab.tab-groupchat}" url="muc-server-props-edit-form.jsp" description="${tab.tab-groupchat.descr}">
 
-        <sidebar id="sidebar-groupchat-settings" name="Group Chat Settings">
+        <!-- Group Chat Settings -->
+        <sidebar id="sidebar-groupchat-settings" name="${sidebar.sidebar-groupchat-settings}">
 
-            <item id="muc-server-props" name="Service Properties"
+            <!-- Service Properties -->
+            <item id="muc-server-props" name="${sidebar.muc-server-props}"
                     url="muc-server-props-edit-form.jsp"
-                    description="" />
+                    description="${sidebar.muc-server-props.descr}" />
 
-            <item id="muc-history" name="History Settings"
+            <!-- History Settings -->
+            <item id="muc-history" name="${sidebar.muc-history}"
                     url="muc-history-settings.jsp"
-                    description="" />
+                    description="${sidebar.muc-history.descr}" />
 
-            <item id="muc-sysadmin" name="Administrators"
+            <!-- Administrators -->
+            <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
                     url="muc-sysadmins.jsp"
-                    description="" />
+                    description="${sidebar.muc-sysadmin.descr}" />
 
-            <item id="muc-perms" name="Room Creation Permissions"
+            <!-- Room Creation Permissions -->
+            <item id="muc-perms" name="${sidebar.muc-perms}"
                     url="muc-create-permission.jsp"
-                    description="" />
+                    description="${sidebar.muc-perms.descr}" />
 
-            <item id="muc-tasks" name="Other Settings"
+            <!-- Other Settings -->
+            <item id="muc-tasks" name="${sidebar.muc-tasks}"
                     url="muc-tasks.jsp"
-                    description="" />
+                    description="${sidebar.muc-tasks.descr}" />
         </sidebar>
 
-        <sidebar id="sidebar-groupchat-administration" name="Room Administration">
+        <!-- Room Administration -->
+        <sidebar id="sidebar-groupchat-administration" name="${sidebar.sidebar-groupchat-administration}">
 
-        <item id="muc-room-summary" name="Room Summary"
+        <!-- Room Summary -->
+        <item id="muc-room-summary" name="${sidebar.muc-room-summary}"
                 url="muc-room-summary.jsp"
-                description="Click to see a list of rooms in the service" >
-            <sidebar id="sidebar-groupchat-options" name="Room Options">
+                description="${sidebar.muc-room-summary.descr}" >
 
-                <item id="muc-room-edit-form" name="Room Settings"
+            <!-- Room Options -->
+            <sidebar id="sidebar-groupchat-options" name="${sidebar.sidebar-groupchat-options}">
+
+                <!-- Room Settings -->
+                <item id="muc-room-edit-form" name="${sidebar.muc-room-edit-form}"
                         url="muc-room-edit-form.jsp"
-                        description="Click to edit the room's configuration" />
+                        description="${sidebar.muc-room-edit-form.descr}" />
 
-                <item id="muc-room-affiliations" name="User Permissions"
+                <!-- User Permissions -->
+                <item id="muc-room-affiliations" name="${sidebar.muc-room-affiliations}"
                         url="muc-room-affiliations.jsp"
-                        description="Click to edit user permissions" />
+                        description="${sidebar.muc-room-affiliations.descr}" />
 
-                <item id="muc-room-delete" name="Delete Room"
+                <!-- Delete Room -->
+                <item id="muc-room-delete" name="${sidebar.muc-room-delete}"
                         url="muc-room-delete.jsp"
-                        description="Click to delete the room" />
+                        description="${sidebar.muc-room-delete.descr}" />
             </sidebar>
         </item>
 
-        <item id="muc-room-create" name="Create New Room"
+        <!-- Create New Room -->
+        <item id="muc-room-create" name="${sidebar.muc-room-create}"
                 url="muc-room-create.jsp"
-                description="Click to add a new room to the service" />
+                description="${sidebar.muc-room-create.descr}" />
 
         </sidebar>
     </tab>

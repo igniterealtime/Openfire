@@ -95,7 +95,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 pstmt.setString(2, data.getName());
                 pstmt.setLong(3, userID);
                 pstmt.setString(4, data.getNamespaceURI());
-                pstmt.execute();
+                pstmt.executeUpdate();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

@@ -229,6 +229,7 @@
         <root url="jar://$PROJECT_DIR$/build/lib/commons-el.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/dist/servlet.jar!/" />
         <root url="file://$PROJECT_DIR$/src/resources/jar" />
+        <root url="jar://$PROJECT_DIR$/build/lib/merge/jaxen.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

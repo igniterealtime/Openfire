@@ -769,11 +769,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Answer the room occupants as items if that info is publicly available
             MUCRoom room = getChatRoom(name);
             if (room != null && room.isPublicRoom()) {
-                MUCRole role;
                 Element item;
-                for (Iterator<MUCRole> members = room.getOccupants(); members.hasNext();) {
+                for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
-                    role = members.next();
                     item = DocumentHelper.createElement("item");
                     item.addAttribute("jid", role.getRoleAddress().toStringPrep());
 

@@ -123,7 +123,7 @@ public class PluginManager {
 
     /**
      * Returns a plugin by name or <tt>null</tt> if a plugin with that name does not
-     * exist.. The name is the name of the directory that the plugin is in such as
+     * exist. The name is the name of the directory that the plugin is in such as
      * "broadcast".
      *
      * @param name the name of the plugin.
@@ -131,6 +131,16 @@ public class PluginManager {
      */
     public Plugin getPlugin(String name) {
         return plugins.get(name);
+    }
+
+    /**
+     * Returns the plugin's directory.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's directory.
+     */
+    public File getPluginDirectory(Plugin plugin) {
+        return pluginDirs.get(plugin);
     }
 
     /**
@@ -222,7 +232,13 @@ public class PluginManager {
 
     /**
      * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then
-     * any resources will be released.
+     * any resources will be released. The name should be the name of the plugin directory
+     * and not the name as given by the plugin meta-data. This method only removes
+     * the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR
+     * still exists after this method is called, the plugin will be started again the next
+     * time the plugin monitor process runs. This is useful for "restarting" plugins.<p>
+     *
+     * This method is called automatically when a plugin's JAR file is deleted.
      *
      * @param pluginName the name of the plugin to unload.
      */
@@ -257,6 +273,7 @@ public class PluginManager {
     /**
      * Returns the name of a plugin. The value is retrieved from the plugin.xml file
      * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * Note that this value is distinct from the name of the plugin directory.
      *
      * @param plugin the plugin.
      * @return the plugin's name.

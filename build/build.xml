@@ -96,7 +96,7 @@
     <!-- ======================================================================================= -->
 
     <!-- all =================================================================================== -->
-    <target name="all" depends="war" description="Calls 'war' target" />
+    <target name="all" depends="jar, javadoc" description="Calls jar and javadoc targets" />
 
     <!-- init ================================================================================== -->
     <target name="init">
@@ -152,7 +152,7 @@
     </target>
 
     <!-- javadoc =============================================================================== -->
-    <target name="javadoc" description="Produces Messenger Javadocs">
+    <target name="javadoc" depends="compile" description="Produces Messenger Javadocs">
         <mkdir dir="${javadoc.dest.dir}" />
         <!-- Run javadoc over all source code -->
         <javadoc
@@ -239,13 +239,6 @@
                 <pathelement path="${compile.dir}" />
             </classpath>
         </javac>
-
-        <!-- Copy test resources -->
-<!--        <copy todir="${test.dest.dir}">-->
-<!--            <fileset dir="${src.test.dir}">-->
-<!--                <include name="resources/**/*.*" />-->
-<!--            </fileset>-->
-<!--        </copy>-->
 
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}" />

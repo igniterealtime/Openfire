@@ -11,33 +11,53 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import org.jivesoftware.messenger.container.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.PacketDeliverer;
+import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.PresenceManager;
+import org.jivesoftware.messenger.RoutableChannelHandler;
+import org.jivesoftware.messenger.RoutingTable;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.container.Container;
+import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.DiscoInfoProvider;
 import org.jivesoftware.messenger.disco.DiscoItemsProvider;
 import org.jivesoftware.messenger.disco.DiscoServerItem;
 import org.jivesoftware.messenger.disco.ServerItemsProvider;
 import org.jivesoftware.messenger.forms.DataForm;
 import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.XDataForm;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.muc.*;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQRegisterHandler;
+import org.jivesoftware.messenger.muc.HistoryStrategy;
+import org.jivesoftware.messenger.muc.MUCRole;
+import org.jivesoftware.messenger.muc.MUCRoom;
+import org.jivesoftware.messenger.muc.MUCUser;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.muc.NotAllowedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -772,7 +792,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return features.iterator();
     }
 
-    public XDataForm getExtendedInfo(String name, String node, JID senderJID) {
+    public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
             // TODO lock the room while gathering this info???

@@ -23,10 +23,10 @@ import org.jivesoftware.messenger.user.RosterItem;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -169,8 +169,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @throws UnauthorizedException If the caller doesn't have the right permissions
      * @throws UserNotFoundException If the user being updated does not exist
      */
-    private void initSession(Session session)
-            throws UnauthorizedException, UserNotFoundException, XMLStreamException {
+    private void initSession(Session session)  throws UnauthorizedException, UserNotFoundException, XmlPullParserException {
 
         // Only user sessions need to be authenticated
         if (!"".equals(session.getAddress().getNode())) {
@@ -199,7 +198,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     public Presence createSubscribePresence(JID senderAddress, boolean isSubscribe) {
-        Presence presence = packetFactory.getPresence();
+        Presence presence = new Presence();
         presence.setFrom(senderAddress);
         if (isSubscribe) {
             presence.setType(Presence.Type.subscribe);
@@ -382,7 +381,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public SessionManager sessionManager;
     public PresenceManager presenceManager;
     public PacketDeliverer deliverer;
-    public PacketFactory packetFactory;
     public OfflineMessageStore messageStore;
 
     protected TrackInfo getTrackInfo() {
@@ -392,7 +390,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         trackInfo.getTrackerClasses().put(OfflineMessageStore.class, "messageStore");
         return trackInfo;
     }

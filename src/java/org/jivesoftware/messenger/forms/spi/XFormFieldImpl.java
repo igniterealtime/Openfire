@@ -12,14 +12,16 @@
 package org.jivesoftware.messenger.forms.spi;
 
 import org.jivesoftware.messenger.forms.FormField;
+import org.jivesoftware.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
+import java.io.IOException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.io.XMLWriter;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * A concrete FormField capable of sending itself to a writer and recover its state from an XMPP
@@ -244,17 +246,21 @@ public class XFormFieldImpl implements FormField {
             return value;
         }
 
-        public void send(XMLStreamWriter xmlSerializer, int version) throws XMLStreamException {
-            xmlSerializer.writeStartElement("jabber:x:data", "option");
+        public void send(XMLWriter xmlSerializer, int version) throws XmlPullParserException {
+            Element jabber = DocumentHelper.createElement("option").addNamespace("", "jabber:x:data");
             if (getLabel() != null) {
-                xmlSerializer.writeAttribute("label", getLabel());
+                jabber.addAttribute("label", getLabel());
             }
             if (getValue() != null) {
-                xmlSerializer.writeStartElement("jabber:x:data", "value");
-                xmlSerializer.writeCharacters(getValue());
-                xmlSerializer.writeEndElement();
+                Element subElement = jabber.addElement("value", "jabber:x:data");
+                subElement.addText(getValue());
             }
-            xmlSerializer.writeEndElement();
+            try {
+                xmlSerializer.write(jabber);
+            }
+            catch (IOException e) {
+                Log.error(e);
+            }
         }
 
         public Element asXMLElement() {

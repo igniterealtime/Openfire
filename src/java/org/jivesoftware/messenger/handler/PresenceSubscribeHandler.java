@@ -362,7 +362,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     public UserManager userManager;
     public XMPPServer localServer;
     public PacketDeliverer deliverer;
-    public PacketFactory packetFactory;
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = new TrackInfo();
@@ -370,7 +369,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         return trackInfo;
     }
 

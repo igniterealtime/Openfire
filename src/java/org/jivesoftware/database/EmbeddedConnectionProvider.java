@@ -115,13 +115,30 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
     }
 
     public void destroy() {
-        if (connectionPool != null) {
-            try {
-                connectionPool.destroy();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+        if (connectionPool == null) {
+            return;
+        }
+        // Shutdown the database.
+        Connection con = null;
+        try {
+            con = getConnection();
+            Statement stmt = con.createStatement();
+            stmt.execute("SHUTDOWN");
+            stmt.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        // Close the connection pool.
+        try {
+            connectionPool.destroy();
+        }
+        catch (Exception e) {
+            Log.error(e);
         }
         // Release reference to connectionPool
         connectionPool = null;

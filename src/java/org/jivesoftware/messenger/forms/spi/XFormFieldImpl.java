@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.messenger.forms.FormField;
 
 /**
@@ -64,7 +65,7 @@ public class XFormFieldImpl implements FormField {
     }
 
     public Element asXMLElement() {
-        Element field = DocumentHelper.createElement("field");
+        Element field = DocumentHelper.createElement(QName.get("field", "jabber:x:data"));
         if (getLabel() != null) {
             field.addAttribute("label", getLabel());
         }

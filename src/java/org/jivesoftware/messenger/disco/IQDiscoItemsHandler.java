@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.spi.BasicServer;
@@ -52,7 +53,7 @@ import org.xmpp.packet.PacketError;
 public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider {
 
     private HashMap entities = new HashMap();
-    private List serverItems = new ArrayList();
+    private List<Element> serverItems = new ArrayList<Element>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 
@@ -100,15 +101,16 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             //String node = metaData.getProperty("query:node");
             
             // Check if we have items associated with the requested name and node
-            Iterator itemsItr = itemsProvider.getItems(name, node, packet.getFrom());
+            Iterator<Element> itemsItr = itemsProvider.getItems(name, node, packet.getFrom());
             if (itemsItr != null) {
                 Element queryElement = reply.getChildElement();
 
                 // Add to the reply all the items provided by the DiscoItemsProvider
                 Element item;
                 while (itemsItr.hasNext()) {
-                    item = (Element)itemsItr.next();
-                    queryElement.add((Element)item.clone());
+                    item = itemsItr.next();
+                    item.setQName(new QName(item.getName(), queryElement.getNamespace()));
+                    queryElement.add(item.createCopy());
                 }
                 ;
             }
@@ -211,7 +213,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private DiscoItemsProvider getServerItemsProvider() {
         DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
-            public Iterator getItems(String name, String node, JID senderJID)
+            public Iterator<Element> getItems(String name, String node, JID senderJID)
                     throws UnauthorizedException {
                 return serverItems.iterator();
             }

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.JID;
@@ -99,16 +100,14 @@ public class IQDiscoInfoHandler extends IQHandler {
                 Iterator identities = infoProvider.getIdentities(name, node, packet.getFrom());
                 while (identities.hasNext()) {
                     identity = (Element)identities.next();
+                    identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
                     queryElement.add((Element)identity.clone());
                 }
                 
                 // Add to the reply all the features provided by the DiscoInfoProvider
-                Element featureElement;
                 Iterator features = infoProvider.getFeatures(name, node, packet.getFrom());
                 while (features.hasNext()) {
-                    featureElement = DocumentHelper.createElement("feature");
-                    featureElement.addAttribute("var", (String)features.next());
-                    queryElement.add(featureElement);
+                    queryElement.addElement("feature").addAttribute("var", (String)features.next());
                 }
 
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider

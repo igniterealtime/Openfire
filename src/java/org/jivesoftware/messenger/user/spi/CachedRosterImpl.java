@@ -13,6 +13,8 @@ package org.jivesoftware.messenger.user.spi;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
+
 import org.jivesoftware.messenger.ChannelHandler;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.RoutingTable;
@@ -85,12 +87,19 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             RosterItem item = (RosterItem)items.next();
             if (item.getSubStatus() != RosterItem.SUB_NONE || item.getAskStatus() != RosterItem.ASK_NONE) {
                 roster.addItem(item.getJid(), item.getNickname(),
-                        Roster.Ask.valueOf(item.getAskStatus().getName()),
+                        getAskStatus(item.getAskStatus()),
                         Roster.Subscription.valueOf(item.getSubStatus().getName()),
                         item.getGroups());
             }
         }
         return roster;
+    }
+
+    private Roster.Ask getAskStatus(RosterItem.AskType askType) {
+        if ("".equals(askType.getName())) {
+            return null;
+        }
+        return Roster.Ask.valueOf(askType.getName());
     }
 
     public void broadcastPresence(Presence packet) {
@@ -127,6 +136,12 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         }
     }
 
+    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item)
+            throws UserAlreadyExistsException, UnauthorizedException {
+        return provideRosterItem(item.getJID(), item.getName(),
+                new ArrayList<String>(item.getGroups()));
+    }
+
     protected RosterItem provideRosterItem(JID user, String nickname, List<String> group) throws UserAlreadyExistsException, UnauthorizedException {
         Roster roster = new Roster();
         roster.setType(IQ.Type.set);
@@ -149,7 +164,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             cachedItem = (CachedRosterItem)item;
         }
         else {
-            // This is a different item object, probably an BasicRosterItem update for an existing
+            // This is a different item object, probably a BasicRosterItem update for an existing
             // item. So grab the cached version out of the super to learn the rosterID for the item
             // And create a new cached roster item with the new info
             cachedItem = (CachedRosterItem)super.getRosterItem(item.getJid());
@@ -167,7 +182,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
             Roster roster = new Roster();
             roster.setType(IQ.Type.set);
             roster.addItem(cachedItem.getJid(), cachedItem.getNickname(),
-                    Roster.Ask.valueOf(cachedItem.getAskStatus().getName()),
+                    getAskStatus(cachedItem.getAskStatus()),
                     Roster.Subscription.valueOf(cachedItem.getSubStatus().getName()),
                     cachedItem.getGroups());
             broadcast(roster);

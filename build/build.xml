@@ -48,6 +48,7 @@
     <property name="jspc.dest.dir" value="${target.dir}/jspc" />
     <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java" />
     <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes" />
+    <property name="jspc.jar.name" value="admin-jsp.jar" />
     <property name="test.dest.dir" value="${target.dir}/test" />
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes" />
     <property name="test.results.dest.dir" value="${test.dest.dir}/results" />
@@ -90,6 +91,15 @@
 
     <patternset id="test.sources">
         <include name="**/*Test.java" />
+    </patternset>
+
+    <patternset id="web.sources">
+        <include name="**/*.jsp" />
+        <include name="**/*.jspf" />
+        <include name="**/*.html" />
+        <include name="**/*.css" />
+        <include name="**/*.gif" />
+        <include name="**/*.jpg" /> <!-- TODO: convert these to gif files -->
     </patternset>
 
     <filterset id="docs.filters">
@@ -234,6 +244,11 @@
             </filterset>
         </copy>
 
+        <!-- Create a jar of compiled servlets -->
+        <jar jarfile="${jspc.dest.dir}/${jspc.jar.name}">
+            <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
+        </jar>
+
     </target>
 
     <!-- test ================================================================================== -->
@@ -297,8 +312,10 @@
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
         </copy>
 
-        <!-- Create a bin dir (TODO) -->
-        <mkdir dir="${release.out.dir}/bin" />
+        <!-- Copy bin dir -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${src.dir}" includes="bin/*.*" />
+        </copy>
 
         <!-- Create a logs dir in the binary release -->
         <mkdir dir="${release.out.dir}/logs" />
@@ -306,6 +323,29 @@
         <!-- Copy plugins -->
         <copy todir="${release.out.dir}">
             <fileset dir="${src.dir}" includes="plugins/**/*.*" />
+        </copy>
+
+        <!-- TODO: the following should probably take place in another target -->
+        <!-- Copy admin plugin resources -->
+        <copy todir="${release.out.dir}/plugins/admin/webapp">
+            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+            <fileset dir="${web.dir}">
+                <patternset refid="web.sources" />
+                <exclude name="**/*.jsp" />
+                <exclude name="**/*.jspf" />
+            </fileset>
+        </copy>
+        <!-- Copy other WEB-INF stuff -->
+        <copy todir="${release.out.dir}/plugins/admin/webapp">
+            <fileset dir="${webapp.dest.dir}" />
+        </copy>
+        <!-- Copy in pre-compiled JSP jar -->
+        <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+            <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}" />
+        </copy>
+        <!-- Copy in jasper runtime jar -->
+        <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+            <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar" />
         </copy>
 
         <!-- Copy dist docs, use filtering  -->

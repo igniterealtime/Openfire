@@ -65,7 +65,7 @@ public class JettyModule implements Module {
 
             // Add web-app
             webAppContext = jetty.addWebApplication("/",
-                    context.getHomeDirectory() + "/web-app/");
+                    context.getHomeDirectory() + "/webapp/");
         }
         catch (Exception e) {
             Log.error("Trouble initializing Jetty", e);

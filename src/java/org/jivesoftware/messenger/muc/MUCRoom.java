@@ -217,24 +217,48 @@ public interface MUCRoom extends ChatDeliverer {
      * Adds a new user to the list of owners.
      * 
      * @param bareJID The bare JID of the user to add as owner.
-     * @param sendRole the role of the user that is trying to modify the owners list.
+     * @param senderRole the role of the user that is trying to modify the owners list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List addOwner(String bareJID, MUCRole sendRole) throws ForbiddenException;
+    public List addOwner(String bareJID, MUCRole senderRole) throws ForbiddenException;
+
+    /**
+     * Adds a list of users to the list of owners.
+     *
+     * @param newOwners the list of bare JIDs of the users to add to the list of existing owners.
+     * @param senderRole the role of the user that is trying to modify the owners list.
+     * @return the list of updated presences of all the clients resources that the clients used to
+     *         join the room.
+     * @throws ForbiddenException If the user is not allowed to modify the owner list.
+     */
+    public List addOwners(List newOwners, MUCRole senderRole) throws ForbiddenException;
+
+    /**
+     * Adds a list of users to the list of admins.
+     *
+     * @param newAdmins the list of bare JIDs of the users to add to the list of existing admins.
+     * @param senderRole the role of the user that is trying to modify the admins list.
+     * @return the list of updated presences of all the clients resources that the clients used to
+     *         join the room.
+     * @throws ForbiddenException If the user is not allowed to modify the admin list.
+     * @throws ConflictException If the room was going to lose all its owners.
+     */
+    public List addAdmins(List newAdmins, MUCRole senderRole) throws ForbiddenException,
+            ConflictException;
 
     /**
      * Adds a new user to the list of admins.
      * 
      * @param bareJID The bare JID of the user to add as admin.
-     * @param sendRole the role of the user that is trying to modify the admins list.
+     * @param senderRole The role of the user that is trying to modify the admins list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addAdmin(String bareJID, MUCRole sendRole) throws ForbiddenException,
+    public List addAdmin(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException;
 
     /**
@@ -242,14 +266,14 @@ public interface MUCRoom extends ChatDeliverer {
      * 
      * @param bareJID The bare JID of the user to add as a member.
      * @param nickname The reserved nickname of the member for the room or null if none.
-     * @param sendRole the role of the user that is trying to modify the members list.
+     * @param senderRole the role of the user that is trying to modify the members list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the members list.
      * @throws ConflictException If the desired room nickname is already reserved for the room or if
      *             the room was going to lose all its owners.
      */
-    public List addMember(String bareJID, String nickname, MUCRole sendRole)
+    public List addMember(String bareJID, String nickname, MUCRole senderRole)
             throws ForbiddenException, ConflictException;
 
     /**
@@ -257,28 +281,71 @@ public interface MUCRoom extends ChatDeliverer {
      * 
      * @param bareJID The bare JID of the user to add as an outcast.
      * @param reason The reason why the user was banned.
-     * @param sendRole the role of the user that initiated the ban.
+     * @param senderRole The role of the user that initiated the ban.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws ForbiddenException If the user is not allowed to modify the outcast list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addOutcast(String bareJID, String reason, MUCRole sendRole)
+    public List addOutcast(String bareJID, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException, ConflictException;
 
     /**
      * Removes the user from all the other affiliation list thus giving the user a NONE affiliation.
      * 
      * @param bareJID The bare JID of the user to keep with a NONE affiliation.
-     * @param sendRole the role of the user that set the affiliation to none.
+     * @param senderRole The role of the user that set the affiliation to none.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room or null if none was updated.
      * @throws ForbiddenException If the user is not allowed to modify the none list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List addNone(String bareJID, MUCRole sendRole) throws ForbiddenException,
+    public List addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException;
+
+    /**
+     * Changes the role of the user within the room to moderator. A moderator is allowed to kick
+     * occupants as well as granting/revoking voice from occupants.
+     *
+     * @param fullJID The full JID of the occupant to give moderator privileges.
+     * @param senderRole The role of the user that is granting moderator privileges to an occupant.
+     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     *         an existing occupant.
+     * @throws ForbiddenException If the user is not allowed to grant moderator privileges.
+     */
+    public Presence addModerator(String fullJID, MUCRole senderRole) throws ForbiddenException;
+
+    /**
+     * Changes the role of the user within the room to participant. A participant is allowed to send
+     * messages to the room (i.e. has voice) and may change the room's subject.
+     *
+     * @param fullJID The full JID of the occupant to give participant privileges.
+     * @param reason The reason why participant privileges were gave to the user or <tt>null</tt>
+     *        if none.
+     * @param senderRole The role of the user that is granting participant privileges to an occupant.
+     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     *         an existing occupant.
+     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
+     * @throws ForbiddenException If the user is not allowed to grant participant privileges.
+     */
+    public Presence addParticipant(String fullJID, String reason, MUCRole senderRole)
+            throws NotAllowedException, ForbiddenException;
+
+    /**
+     * Changes the role of the user within the room to visitor. A visitor can receive messages but
+     * is not allowed to send messages to the room (i.e. does not has voice) and may invite others
+     * to the room.
+     *
+     * @param fullJID The full JID of the occupant to change to visitor.
+     * @param senderRole The role of the user that is changing the role to visitor.
+     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     *         an existing occupant.
+     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
+     * @throws ForbiddenException If the user is not a moderator.
+     */
+    public Presence addVisitor(String fullJID, MUCRole senderRole) throws NotAllowedException,
+            ForbiddenException;
 
     /**
      * Returns true if the room is locked. The lock will persist for a defined period of time. If 
@@ -350,14 +417,6 @@ public interface MUCRoom extends ChatDeliverer {
      */
     public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException;
 
-    public Presence addModerator(String fullJID, MUCRole sendRole) throws ForbiddenException;
-
-    public Presence addParticipant(String fullJID, String reason, MUCRole sendRole)
-            throws NotAllowedException, ForbiddenException;
-
-    public Presence addVisitor(String fullJID, MUCRole sendRole) throws NotAllowedException,
-            ForbiddenException;
-
     /**
      * Kicks a user from the room. If the user was in the room, the returned updated presence will
      * be sent to the remaining occupants. 
@@ -375,62 +434,247 @@ public interface MUCRoom extends ChatDeliverer {
 
     public IQAdminHandler getIQAdminHandler();
 
+    /**
+     * Returns an iterator over the current list of owners. The iterator contains the bareJID of the
+     * users with owner affiliation.
+     *
+     * @return an iterator over the current list of owners.
+     */
     public Iterator<String> getOwners();
 
+    /**
+     * Returns an iterator over the current list of admins. The iterator contains the bareJID of the
+     * users with admin affiliation.
+     *
+     * @return an iterator over the current list of admins.
+     */
     public Iterator<String> getAdmins();
 
+    /**
+     * Returns an iterator over the current list of room members. The iterator contains the bareJID
+     * of the users with member affiliation. If the room is not members-only then the list will
+     * contain the users that registered with the room and therefore they may have reserved a
+     * nickname.
+     *
+     * @return an iterator over the current list of members.
+     */
     public Iterator<String> getMembers();
 
+    /**
+     * Returns an iterator over the current list of outcast users. An outcast user is not allowed to
+     * join the room again. The iterator contains the bareJID of the users with outcast affiliation.
+     *
+     * @return an iterator over the current list of outcast users.
+     */
     public Iterator<String> getOutcasts();
 
+    /**
+     * Returns an iterator over the current list of room moderators. The iterator contains the
+     * MUCRole of the occupants with moderator role.
+     *
+     * @return an iterator over the current list of moderators.
+     */
     public Iterator<MUCRole> getModerators();
 
+    /**
+     * Returns an iterator over the current list of room participants. The iterator contains the
+     * MUCRole of the occupants with participant role.
+     *
+     * @return an iterator over the current list of moderators.
+     */
     public Iterator<MUCRole> getParticipants();
 
+    /**
+     * Returns true if every presence packet will include the JID of every occupant. This
+     * configuration can be modified by the owner while editing the room's configuration.
+     *
+     * @return true if every presence packet will include the JID of every occupant.
+     */
     public boolean canAnyoneDiscoverJID();
 
+    /**
+     * Sets if every presence packet will include the JID of every occupant. This
+     * configuration can be modified by the owner while editing the room's configuration.
+     *
+     * @param canAnyoneDiscoverJID boolean that specifies if every presence packet will include the
+     *        JID of every occupant.
+     */
     public void setCanAnyoneDiscoverJID(boolean canAnyoneDiscoverJID);
 
+    /**
+     * Returns true if participants are allowed to change the room's subject.
+     *
+     * @return true if participants are allowed to change the room's subject.
+     */
     public boolean canOccupantsChangeSubject();
 
+    /**
+     * Sets if participants are allowed to change the room's subject.
+     *
+     * @param canOccupantsChangeSubject boolean that specifies if participants are allowed to
+     *        change the room's subject.
+     */
     public void setCanOccupantsChangeSubject(boolean canOccupantsChangeSubject);
 
+    /**
+     * Returns true if occupants can invite other users to the room. If the room does not require an
+     * invitation to enter (i.e. is not members-only) then any occupant can send invitations. On
+     * the other hand, if the room is members-only and occupants cannot send invitation then only
+     * the room owners and admins are allowed to send invitations.
+     *
+     * @return true if occupants can invite other users to the room.
+     */
     public boolean canOccupantsInvite();
 
+    /**
+     * Sets if occupants can invite other users to the room. If the room does not require an
+     * invitation to enter (i.e. is not members-only) then any occupant can send invitations. On
+     * the other hand, if the room is members-only and occupants cannot send invitation then only
+     * the room owners and admins are allowed to send invitations.
+     *
+     * @param canOccupantsInvite boolean that specified in any occupant can invite other users to
+     *        the room.
+     */
     public void setCanOccupantsInvite(boolean canOccupantsInvite);
 
+    /**
+     * Returns the natural language name of the room. This name can only be modified by room owners.
+     * It's mainly used for users while discovering rooms hosted by the Multi-User Chat service.
+     *
+     * @return the natural language name of the room.
+     */
     public String getNaturalLanguageName();
 
+    /**
+     * Sets the natural language name of the room. This name can only be modified by room owners.
+     * It's mainly used for users while discovering rooms hosted by the Multi-User Chat service.
+     *
+     * @param naturalLanguageName the natural language name of the room.
+     */
     public void setNaturalLanguageName(String naturalLanguageName);
 
+    /**
+     * Returns a description set by the room's owners about the room. This information will be used
+     * when discovering extended information about the room.
+     *
+     * @return a description set by the room's owners about the room.
+     */
     public String getDescription();
 
+    /**
+     * Sets a description set by the room's owners about the room. This information will be used
+     * when discovering extended information about the room.
+     *
+     * @param description a description set by the room's owners about the room.
+     */
     public void setDescription(String description);
 
+    /**
+     * Returns true if the room requires an invitation to enter. This is a "complicated" way to say
+     * whether the room is members-only or not.
+     *
+     * @return true if the room requires an invitation to enter.
+     */
     public boolean isInvitationRequiredToEnter();
 
+    /**
+     * Sets if the room requires an invitation to enter. This is a "complicated" way to say
+     * whether the room is members-only or not.
+     *
+     * @param invitationRequiredToEnter if true then the room is members-only.
+     */
     public void setInvitationRequiredToEnter(boolean invitationRequiredToEnter);
 
+    /**
+     * Returns true if the room's conversation is being logged. If logging is activated the room
+     * conversation will be saved to the database every couple of minutes. The saving frequency is
+     * the same for all the rooms and can be configured by changing the property
+     * "xmpp.muc.tasks.log.timeout" of MultiUserChatServerImpl.
+     *
+     * @return true if the room's conversation is being logged.
+     */
     public boolean isLogEnabled();
 
+    /**
+     * Sets if the room's conversation is being logged. If logging is activated the room
+     * conversation will be saved to the database every couple of minutes. The saving frequency is
+     * the same for all the rooms and can be configured by changing the property
+     * "xmpp.muc.tasks.log.timeout" of MultiUserChatServerImpl.
+     *
+     * @param logEnabled boolean that specified if the room's conversation must be logged.
+     */
     public void setLogEnabled(boolean logEnabled);
 
+    /**
+     * Returns the maximum number of occupants that can be simultaneously in the room. If the number
+     * is zero then there is no limit.
+     *
+     * @return the maximum number of occupants that can be simultaneously in the room. Zero means
+     *         unlimited number of occupants.
+     */
     public int getMaxUsers();
 
+    /**
+     * Sets the maximum number of occupants that can be simultaneously in the room. If the number
+     * is zero then there is no limit.
+     *
+     * @param maxUsers the maximum number of occupants that can be simultaneously in the room. Zero
+     *        means unlimited number of occupants.
+     */
     public void setMaxUsers(int maxUsers);
 
+    /**
+     * Returns if the room in which only those with "voice" may send messages to all occupants.
+     *
+     * @return if the room in which only those with "voice" may send messages to all occupants.
+     */
     public boolean isModerated();
 
+    /**
+     * Sets if the room in which only those with "voice" may send messages to all occupants.
+     *
+     * @param moderated if the room in which only those with "voice" may send messages to all
+     *        occupants.
+     */
     public void setModerated(boolean moderated);
 
-    public String getPassword();
-
-    public void setPassword(String password);
-
+    /**
+     * Returns true if a user cannot enter without first providing the correct password.
+     *
+     * @return true if a user cannot enter without first providing the correct password.
+     */
     public boolean isPasswordProtected();
 
+    /**
+     * Returns the password that the user must provide to enter the room.
+     *
+     * @return the password that the user must provide to enter the room.
+     */
+    public String getPassword();
+
+    /**
+     * Sets the password that the user must provide to enter the room.
+     *
+     * @param password the password that the user must provide to enter the room.
+     */
+    public void setPassword(String password);
+
+    /**
+     * Returns true if the room is not destroyed if the last occupant exits. Persistent rooms are
+     * saved to the database to make their configurations persistent together with the affiliation
+     * of the users.
+     *
+     * @return true if the room is not destroyed if the last occupant exits.
+     */
     public boolean isPersistent();
 
+    /**
+     * Sets if the room is not destroyed if the last occupant exits. Persistent rooms are
+     * saved to the database to make their configurations persistent together with the affiliation
+     * of the users.
+     *
+     * @param persistent if the room is not destroyed if the last occupant exits.
+     */
     public void setPersistent(boolean persistent);
 
     /**
@@ -498,14 +742,9 @@ public interface MUCRoom extends ChatDeliverer {
      * the owner of the room can unlock it by sending the configuration form to the Multi-User Chat
      * service.
      *
-     * @param sendRole the role of the occupant that unlocked the room.
+     * @param senderRole the role of the occupant that unlocked the room.
      */
-    public void unlockRoom(MUCRole sendRole);
-
-    public List addAdmins(List newAdmins, MUCRole sendRole) throws ForbiddenException,
-            ConflictException;
-
-    public List addOwners(List newOwners, MUCRole sendRole) throws ForbiddenException;
+    public void unlockRoom(MUCRole senderRole);
 
     /**
      * Sends an invitation to a user. The invitation will be sent as if the room is inviting the 

@@ -944,6 +944,8 @@ public class MUCRoomImpl implements MUCRoom {
      * @param newRole the new role for the JID.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
+     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin or
+     *         if trying to ban an owner or an administrator.
      */
     private List changeOccupantAffiliation(String bareJID, int newAffiliation, int newRole)
             throws NotAllowedException {
@@ -981,6 +983,7 @@ public class MUCRoomImpl implements MUCRoom {
      * @param fullJID the full jid of the user to update his/her role.
      * @param newRole the new role for the JID.
      * @return the updated presence of the user or null if none.
+     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      */
     private Presence changeOccupantRole(String fullJID, int newRole) throws NotAllowedException {
         // Try looking the role in the bare JID list
@@ -1313,7 +1316,8 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void changeSubject(Message packet, MUCRole role) throws UnauthorizedException,
             ForbiddenException {
-        if (canOccupantsChangeSubject() || MUCRole.MODERATOR == role.getRole()) {
+        if ((canOccupantsChangeSubject() && role.getRole() > MUCRole.VISITOR) ||
+                MUCRole.MODERATOR == role.getRole()) {
             lock.writeLock().lock();
             try {
                 // Set the new subject to the room

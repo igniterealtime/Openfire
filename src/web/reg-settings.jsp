@@ -29,6 +29,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="reg-settings.jsp" />
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 <c:set var="success" value="false" />
 

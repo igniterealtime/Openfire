@@ -9,6 +9,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.HistoryStrategy"
 %>
 
@@ -16,12 +17,16 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Chatroom Message History Settings"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="chatroom-history-settings.jsp" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Chat Room History Settings";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "chatroom-history-settings.jsp"));
+    pageinfo.setPageID("server-chatroom-history");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 
 <%! // Global vars and methods:

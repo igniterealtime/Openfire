@@ -11,6 +11,7 @@
                  java.util.Map,
                  org.jivesoftware.messenger.XMPPServerInfo,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.JiveGlobals"
 %>
 <%
@@ -26,13 +27,17 @@
 <c:set var="admin" value="${admin.manager}" />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Edit Multi-User Chat Server Properties"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="muc-server-props-edit-form.jsp" />
-
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Edit MultiUser Chat Properties";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-server-props-edit-form.jsp"));
+    pageinfo.setPageID("muc-server-props");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
 
 <%  // Get parameters
     boolean save = ParamUtils.getBooleanParameter(request,"save");

@@ -13,17 +13,17 @@
 %>
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <!-- Define BreadCrumbs -->
 <c:set var="title" value="User Summary"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
+<c:set var="breadcrumbs" value="${webManager.breadCrumbs}"  />
 <c:set var="image" value="/images/user.jpg" />
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="user-summary.jsp" />
 <c:set var="sbar" value="users"/>
-<jsp:include page="top.jsp" flush="true" />
+<%@ include file="top.jsp" %>
 
 
 
@@ -32,10 +32,10 @@
     int range = ParamUtils.getIntParameter(request,"range",15);
 
     // Get the user manager
-    int userCount = admin.getUserManager().getUserCount();
+    int userCount = webManager.getUserManager().getUserCount();
 
     // Get the presence manager
-    PresenceManager presenceManager = (PresenceManager)admin.getServiceLookup().lookup(PresenceManager.class);
+    PresenceManager presenceManager = (PresenceManager)webManager.getServiceLookup().lookup(PresenceManager.class);
 
     // paginator vars
     int numPages = (int)Math.ceil((double)userCount/(double)range);
@@ -52,7 +52,7 @@ Below is a list of users in the system.
 </p>
 
 <p>
-Total Users: <%= admin.getUserManager().getUserCount() %>,
+Total Users: <%= webManager.getUserManager().getUserCount() %>,
 <%  if (numPages > 1) { %>
 
     Showing <%= (start+1) %>-<%= (start+range) %>,
@@ -94,7 +94,7 @@ Sorted by User ID
     <th>Delete</th>
 </tr>
 <%  // Print the list of users
-    Iterator users = admin.getUserManager().users(start, range);
+    Iterator users = webManager.getUserManager().users(start, range);
     if (!users.hasNext()) {
 %>
     <tr>

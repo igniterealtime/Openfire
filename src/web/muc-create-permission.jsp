@@ -7,6 +7,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  java.util.Iterator"
 %>
@@ -14,11 +15,16 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Users allowed to create rooms"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="muc-create-permission.jsp" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Users allowed to create rooms";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
+    pageinfo.setPageID("muc-perms");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 
 
@@ -61,12 +67,6 @@
     int numPages = (int)Math.ceil((double)userCount/(double)range);
     int curPage = (start/range) + 1;
 %>
-
-
-
-
-
-<jsp:include page="top.jsp" flush="true" />
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="8">

@@ -12,7 +12,16 @@
                  java.util.Date,
                  java.text.DateFormat,
                  java.util.HashMap,
-                 java.util.Map" %>
+                 java.util.Map,
+                 org.jivesoftware.admin.AdminPageBean" %>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Conflict Policy";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Session Conflict", "session-conflict.jsp"));
+    pageinfo.setPageID("server-session-conflict");
+%>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -24,6 +33,7 @@
 <c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
 <c:set target="${breadcrumbs}" property="${title}" value="session-conflict.jsp" />
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;

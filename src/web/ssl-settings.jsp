@@ -13,20 +13,24 @@
                  java.security.KeyStore,
                  java.security.cert.CertificateFactory,
                  java.security.cert.Certificate,
-                 java.io.ByteArrayInputStream"
+                 java.io.ByteArrayInputStream,
+                 org.jivesoftware.admin.*"
 %>
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="SSL/TLS Security Settings">
-  <P>&nbsp;</P>
-</c:set>
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="ssl-settings.jsp" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "SSL Security Settings";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "ssl-settings.jsp"));
+    pageinfo.setPageID("server-ssl");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -76,7 +80,7 @@
 <%  } %>
 
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="100%">
-<tr class="tableHeaderBlue"><td colspan="2" align="center">Current SSL/TLS Setup</td></tr>
+
 <tr><td colspan="2" class="text">
 SSL/TLS allows secure connections to be made between the server and clients.
 This page displays your current SSL/TLS setup.

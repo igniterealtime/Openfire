@@ -25,19 +25,10 @@
 %>
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
-<% admin.init(request, response, session, application, out ); %>
-
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Create User"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set var="sbar" value="users" scope="page" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-create.jsp" />
-<jsp:include page="top.jsp" flush="true" />
-
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
     boolean create = request.getParameter("create") != null;
@@ -73,7 +64,7 @@
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
-                User newUser = admin.getUserManager().createUser(username, password, email);
+                User newUser = webManager.getUserManager().createUser(username, password, email);
                 if (name != null) {
                     newUser.getInfo().setName(name);
                 }
@@ -84,15 +75,29 @@
                 return;
             }
             catch (UserAlreadyExistsException e) {
+                e.printStackTrace();
                 errors.put("usernameAlreadyExists","");
             }
             catch (Exception e) {
+                e.printStackTrace();
                 errors.put("general","");
                 Log.error(e);
             }
         }
     }
 %>
+
+
+
+<!-- Define BreadCrumbs -->
+<c:set var="title" value="Create User"  />
+<c:set var="breadcrumbs" value="${webManager.breadCrumbs}"  />
+<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
+<c:set var="sbar" value="users" scope="page" />
+<c:set target="${breadcrumbs}" property="${title}" value="user-create.jsp" />
+<%@ include file="top.jsp" %>
+
+
 <c:set var="submit" value="${param.create}" />
 <c:set var="errors" value="${errors}" />
 

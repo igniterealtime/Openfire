@@ -5,18 +5,26 @@
   -	$Date$
 --%>
 <P>
-  <%@ page import="org.jivesoftware.messenger.audit.AuditManager,                  org.jivesoftware.util.*,                  java.util.*"%>
+  <%@ page import="org.jivesoftware.messenger.audit.AuditManager,
+                   org.jivesoftware.admin.*,
+                   org.jivesoftware.util.*,
+                   java.util.*"%>
  
   <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Audit Policy"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="audit-policy.jsp" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Audit Policy";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "audit-policy.jsp"));
+    pageinfo.setPageID("server-audit-policy");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
   
   
   

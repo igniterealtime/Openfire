@@ -12,17 +12,23 @@
                  java.util.Date,
                  java.text.DateFormat,
                  java.util.HashMap,
-                 java.util.Map" %>
+                 java.util.Map,
+                 org.jivesoftware.admin.*" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" scope="page" />
 <% admin.init(request, response, session, application, out ); %>
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Offline Message Settings"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="offline-messages.jsp" />
+
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Offline Messages";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "offline-messages.jsp"));
+    pageinfo.setPageID("server-offline-messages");
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 <c:set var="success" />
 

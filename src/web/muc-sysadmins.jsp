@@ -7,6 +7,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  java.util.Iterator"
 %>
@@ -14,11 +15,17 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="System Administrators of the Multi-User Chat service"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="muc-sysadmins.jsp" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "System Administrators For MultiUser Chat Rooms";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-sysadmins.jsp"));
+    pageinfo.setPageID("muc-sysadmins");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
@@ -60,7 +67,6 @@
     int curPage = (start/range) + 1;
 %>
 
-<jsp:include page="top.jsp" flush="true" />
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
 <tr><td colspan="8">

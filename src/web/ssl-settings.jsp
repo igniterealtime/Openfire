@@ -36,6 +36,7 @@
     String cert = ParamUtils.getParameter(request, "cert");
     String alias = ParamUtils.getParameter(request, "alias");
     boolean install = request.getParameter("install") != null;
+    boolean uninstall = ParamUtils.getBooleanParameter(request,"uninstall");
 
     KeyStore keyStore = SSLConfig.getKeyStore();
     KeyStore trustStore = SSLConfig.getTrustStore();
@@ -67,6 +68,25 @@
             }
         }
     }
+    if (uninstall) {
+        if (type != null && alias != null) {
+            try {
+                if ("client".equals(type)){
+                    SSLConfig.getTrustStore().deleteEntry(alias);
+                }
+                else if ("server".equals(type)) {
+                    SSLConfig.getKeyStore().deleteEntry(alias);
+                }
+                SSLConfig.saveStores();
+                response.sendRedirect("ssl-settings.jsp?deletesuccess=true");
+                return;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                errors.put("delete", e);
+            }
+        }
+    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -88,6 +108,37 @@
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
         Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (ParamUtils.getBooleanParameter(request,"deletesuccess")) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Certificate uninstalled successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (errors.containsKey("delete")) {
+        Exception e = (Exception)errors.get("delete");
+%>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error uninstalling the certificate.
+        <%  if (e != null && e.getMessage() != null) { %>
+            Error message: <%= e.getMessage() %>
+        <%  } %>
         </td></tr>
     </tbody>
     </table>
@@ -120,14 +171,14 @@ install a new certificate.
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-        <th>&nbsp;</th>
+        <th width="1%">&nbsp;</th>
         <th>
             Alias (host)
         </th>
         <th>
             Certificate Type
         </th>
-        <th>
+        <th width="1%">
             Uninstall
         </th>
     </tr>
@@ -149,8 +200,9 @@ install a new certificate.
             <%= c.getType() %>
         </td>
         <td width="1" align="center">
-            <a href="ssl-delete.jsp?alias=<%= a %>&type=server"
+            <a href="ssl-settings.jsp?alias=<%= a %>&type=server&uninstall=true"
              title="Click to uninstall..."
+             onclick="return confirm('Are you sure you want to uninstall this certificate?');"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>
@@ -161,6 +213,18 @@ install a new certificate.
             </span>
 <textarea cols="40" rows="3" style="width:100%;font-size:8pt;" wrap="virtual">
 <%= c.getPublicKey() %></textarea>
+        </td>
+    </tr>
+
+<%  } %>
+
+<%  if (i==0) { %>
+
+    <tr>
+        <td colspan="4">
+            <p>
+            No certificates installed. Use the form below to install one.
+            </p>
         </td>
     </tr>
 

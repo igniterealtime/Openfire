@@ -226,9 +226,9 @@
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>
-        <!-- Copy application dependent jars -->
+        <!-- Copy application dependent files -->
         <copy todir="${jar.dest.dir}">
-            <fileset dir="${lib.dist.dir}" includes="*.jar" />
+            <fileset dir="${lib.dist.dir}" includes="*.*" />
         </copy>
 
         <!-- Setup environment -->

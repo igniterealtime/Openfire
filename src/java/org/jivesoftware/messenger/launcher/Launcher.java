@@ -102,8 +102,6 @@ public class Launcher {
         // create the main menu of the system tray icon
         JPopupMenu menu = new JPopupMenu("Messenger Menu");
 
-        menu.addSeparator();
-
         final JMenuItem showMenuItem = new JMenuItem("Hide");
         showMenuItem.setActionCommand("Hide/Show");
         menu.add(showMenuItem);
@@ -255,64 +253,32 @@ public class Launcher {
 
     private synchronized void startApplication() {
         if (messengerd == null) {
-            File binDir = null;
-            File libDir = null;
-            File homeDir = null;
-            File exe = null;
-
             try {
-                // Aliases keep their cwd rather than the aliased binDir's cwd on MacOS X
-                // so we'll do a search for messengerd rather than relying on it being where
-                // we think it will be...
-                binDir = new File("").getAbsoluteFile();
-                libDir = new File("../lib").getAbsoluteFile();
-                homeDir = binDir.getParentFile();
-
-
-                if (libDir.exists()) {
-                    messengerd = Runtime.getRuntime().exec(new String[]{"java", "-jar", new File(libDir, "startup.jar").toString()});
+                File windowsExe = new File(new File("").getAbsoluteFile(), "messengerd.exe");
+                File unixExe = new File(new File("").getAbsoluteFile(), "messengerd");
+                if (windowsExe.exists()) {
+                    messengerd = Runtime.getRuntime().exec(new String[] { windowsExe.toString() });
+                }
+                else if (unixExe.exists()) {
+                     messengerd = Runtime.getRuntime().exec(new String[] { unixExe.toString() });   
                 }
                 else {
-                    // MacOS X
-                    exe = new File(homeDir, "messenger.app");
-
-                    if (exe.exists()) {
-                        messengerd = Runtime.getRuntime().exec(new String[]{
-                            "open", exe.toString()
-                        });
-                    }
-                    else {
-                        // Unix
-                        exe = new File(homeDir, "messenger");
-
-                        if (exe.exists()) {
-                            messengerd = Runtime.getRuntime().exec(new String[]{exe.toString()});
-                        }
-                        else {
-                            throw new FileNotFoundException();
-                        }
-                    }
+                    throw new FileNotFoundException();
                 }
             }
             catch (Exception e) {
+                e.printStackTrace();
                 // Try one more time using the jar and hope java is on the path
                 try {
-                    if (binDir != null) {
-                        messengerd = Runtime.getRuntime().exec(new String[]{
-                            "java", "-jar", new File(libDir, "startup.jar").toString()
-                        });
-                    }
-                    else {
-                        e.printStackTrace();
-                        JOptionPane.showMessageDialog(null,
-                                "Launcher could not locate messengerd,\nthe Jive Messenger server daemon executable",
-                                "File not found", JOptionPane.ERROR_MESSAGE);
-                    }
+                    File libDir = new File("../lib").getAbsoluteFile();
+                    messengerd = Runtime.getRuntime().exec(new String[]{
+                        "java", "-jar", new File(libDir, "startup.jar").toString()
+                    });
                 }
                 catch (Exception ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(null,
-                            "Launcher could not locate messengerd,\nthe Jive Messenger server daemon executable",
+                            "Launcher could not start,\nJive Messenger",
                             "File not found", JOptionPane.ERROR_MESSAGE);
                 }
             }

@@ -134,6 +134,10 @@ LABEL { font-weight : normal; }
         <input type="radio" name="sslEnabled" value="false" id="rb02"
             <%= ((!sslEnabled) ? " checked" : "") %>>
         <label for="rb02">No</label>
+        <span class="jive-description">
+        <br>
+        Enables or disables secure XMPP connections are allowed.
+        </span>
     </td>
 </tr>
 </table>

@@ -313,7 +313,13 @@ public class XPPPacketReader {
                 case XmlPullParser.START_TAG:
                     {
                         QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
-                        Element newElement = df.createElement(qname);
+                        Element newElement = null;
+                        if ("jabber:client".equals(qname.getNamespaceURI())) {
+                            newElement = df.createElement(pp.getName());
+                        }
+                        else {
+                            newElement = df.createElement(qname);
+                        }
                        // Element newElement = DocumentHelper.createElement(pp.getName());
                         int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
                         int nsEnd = pp.getNamespaceCount(pp.getDepth());

@@ -96,6 +96,12 @@ CREATE TABLE jiveProperty (
   PRIMARY KEY (name)
 );
 
+
+CREATE TABLE jiveVersion (
+  majorVersion  INTEGER  NOT NULL,
+  minorVersion  INTEGER  NOT NULL
+);
+
 # MUC Tables
 
 CREATE TABLE mucRoom (
@@ -156,6 +162,8 @@ CREATE TABLE mucConversationLog (
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
+
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

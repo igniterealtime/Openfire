@@ -33,6 +33,7 @@ CREATE TABLE jiveGroupUser (
 // mucRoom: Add new columns: "lockedDate" and "emptyDate". Rename column "invitationRequired" to "membersOnly". Delete columns: "lastActiveDate" and "inMemory".
 ALTER TABLE mucRoom ADD COLUMN lockedDate CHAR(15) NOT NULL BEFORE canChangeSubject;
 ALTER TABLE mucRoom ADD COLUMN emptyDate CHAR(15) NULL BEFORE canChangeSubject;
+// ALTER TABLE <tablename> ALTER COLUMN <columnname> {RENAME TO <newname> };
 ALTER TABLE mucRoom ALTER COLUMN invitationRequired RENAME TO membersOnly;
 ALTER TABLE mucRoom DROP COLUMN lastActiveDate;
 ALTER TABLE mucRoom DROP COLUMN inMemory;
@@ -50,3 +51,10 @@ CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 // Deletes no longer needed entries
 DELETE FROM jiveID where idType = 3;
 DELETE FROM jiveID where idType = 4;
+
+// Add jiveVersion table
+CREATE TABLE jiveVersion (
+  majorVersion  INTEGER  NOT NULL,
+  minorVersion  INTEGER  NOT NULL
+);
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);

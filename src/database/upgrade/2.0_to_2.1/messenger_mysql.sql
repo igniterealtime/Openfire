@@ -51,3 +51,10 @@ ALTER TABLE mucConversationLog ADD INDEX mucLog_time_idx (time);
 # Deletes no longer needed entries
 DELETE FROM jiveID where idType = 3;
 DELETE FROM jiveID where idType = 4;
+
+# Add jiveVersion table
+CREATE TABLE jiveVersion (
+  majorVersion  INTEGER  NOT NULL,
+  minorVersion  INTEGER  NOT NULL
+);
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);

@@ -53,3 +53,10 @@ CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 REM // Deletes no longer needed entries
 DELETE FROM jiveID where idType = 3;
 DELETE FROM jiveID where idType = 4;
+
+REM // Add jiveVersion table
+CREATE TABLE jiveVersion (
+  majorVersion  INTEGER  NOT NULL,
+  minorVersion  INTEGER  NOT NULL
+);
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);

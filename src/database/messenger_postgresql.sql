@@ -103,10 +103,17 @@ CREATE TABLE jiveID (
   CONSTRAINT jiveID_pk PRIMARY KEY (idType)
 );
 
+
 CREATE TABLE jiveProperty (
   name        VARCHAR(100) NOT NULL,
   propValue   VARCHAR(4000) NOT NULL,
   CONSTRAINT jiveProperty_pk PRIMARY KEY (name)
+);
+
+
+CREATE TABLE jiveVersion (
+  majorVersion  INTEGER  NOT NULL,
+  minorVersion  INTEGER  NOT NULL
 );
 
 -- MUC Tables
@@ -170,6 +177,8 @@ CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
+
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

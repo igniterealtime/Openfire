@@ -68,7 +68,7 @@ public class StreamTarget extends AbstractOutputTarget {
 
         try {
             //TODO: We should be able to specify encoding???
-            outputStream.write(data.getBytes());
+            outputStream.write(data.getBytes("UTF-8"));
             outputStream.flush();
         }
         catch (final IOException ioe) {

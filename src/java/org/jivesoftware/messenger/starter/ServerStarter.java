@@ -32,7 +32,7 @@ import java.io.File;
 public class ServerStarter {
 
     public static void main(String [] args) {
-         new ServerStarter().start();
+        new ServerStarter().start();
     }
 
     /**

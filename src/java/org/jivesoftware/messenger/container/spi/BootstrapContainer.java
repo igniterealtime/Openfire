@@ -503,6 +503,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 shutdownContainer();
             }
             Log.info("Server halted");
+            System.err.println("Server halted");
         }
     }
 

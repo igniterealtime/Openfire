@@ -21,5 +21,7 @@ plugin.dev.dir=
 
 #
 # Path to your Install4j installation. Typically this is c:\Program Files\install4j
+# This property is set by default in the build.xml file as c:\Program Files\install4j so
+# if you used the standard location you won't need to edit the property below.
 #
-installer.install4j.home=
+# installer.install4j.home=

@@ -73,6 +73,7 @@
     <property name="version.extra" value="beta" />
     <property name="dist.prefix" value="jive_messenger" />
     <property name="overwrite" value="false" />
+    <property name="deploy.jar.dir" value="${jar.dest.dir}" />
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -204,6 +205,14 @@
         <!-- Setup environment -->
         <antcall target="-prepare" />
     </target>
+
+    <!-- deployjar ============================================================================= -->
+    <target name="deployjar" depends="jar" description="Pushes JARs to specified location.">
+        <copy todir="${deploy.jar.dir}" overwrite="${overwrite}">
+            <fileset dir="${jar.dest.dir}" includes="*.jar"  />
+        </copy>
+    </target>
+
 
     <!-- war =================================================================================== -->
     <target name="war" depends="jar" description="Creates a WAR of Messenger">

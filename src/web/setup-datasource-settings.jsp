@@ -22,7 +22,7 @@
     static final String EMBEDDED = "embedded";
 %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 
 <%  // Get parameters
     String mode = ParamUtils.getParameter(request,"mode");

@@ -9,7 +9,7 @@
 <%@ page import="java.lang.reflect.Method,
                  java.io.File" %>
 
-<%-- note, the loadClass method is defined in setup-global.jsp --%>
+<%-- note, the loadClass method is defined in setup-global.jspf --%>
 
 <%  // Check the user's environment for minimum requirements.
 
@@ -20,47 +20,47 @@
     boolean jiveHomeExists = false;
     File jiveHome = null;
 
-    // Check for JDK 1.3
-//    try {
-//        loadClass("java.util.concurrent.ConcurrentHashMap");
-//        jdk13Installed = true;
-//    }
-//    catch (ClassNotFoundException cnfe) {}
-//    // Check for Servlet 2.3:
-//    try {
-//        Class c = loadClass("javax.servlet.http.HttpSession");
-//        Method m = c.getMethod("getAttribute",new Class[]{String.class});
-//        servlet22Installed = true;
-//    }
-//    catch (ClassNotFoundException cnfe) {}
-//    // Check for JSP 1.1:
-//    try {
-//        loadClass("javax.servlet.jsp.tagext.Tag");
-//        jsp11Installed = true;
-//    }
-//    catch (ClassNotFoundException cnfe) {}
-//    // Check that the Messenger jar are installed:
-//    try {
-//        loadClass("org.jivesoftware.xmpp.XMPPServer");
-//        jiveJarsInstalled = true;
-//    }
-//    catch (ClassNotFoundException cnfe) {}
+    // Check for JDK 1.5
+    try {
+        loadClass("java.util.concurrent.ConcurrentHashMap");
+        jdk13Installed = true;
+    }
+    catch (ClassNotFoundException cnfe) {}
+    // Check for Servlet 2.3:
+    try {
+        Class c = loadClass("javax.servlet.http.HttpSession");
+        Method m = c.getMethod("getAttribute",new Class[]{String.class});
+        servlet22Installed = true;
+    }
+    catch (ClassNotFoundException cnfe) {}
+    // Check for JSP 1.1:
+    try {
+        loadClass("javax.servlet.jsp.tagext.Tag");
+        jsp11Installed = true;
+    }
+    catch (ClassNotFoundException cnfe) {}
+    // Check that the Messenger jar are installed:
+    try {
+        loadClass("org.jivesoftware.xmpp.XMPPServer");
+        jiveJarsInstalled = true;
+    }
+    catch (ClassNotFoundException cnfe) {}
 
     // Try to determine what the jiveHome directory is:
-//    try {
-//        Class jiveGlobalsClass = loadClass("org.jivesoftware.xmpp.JiveGlobals");
-//        Method getJiveHomeMethod = jiveGlobalsClass.getMethod("getJiveHome", null);
-//        String jiveHomeProp = (String)getJiveHomeMethod.invoke(jiveGlobalsClass, null);
-//        if (jiveHomeProp != null) {
-//            jiveHome = new File(jiveHomeProp);
-//            if (jiveHome.exists()) {
-//                jiveHomeExists = true;
-//            }
-//        }
-//    }
-//    catch (Exception e) {
-//        e.printStackTrace();
-//    }
+    try {
+        Class jiveGlobalsClass = loadClass("org.jivesoftware.xmpp.JiveGlobals");
+        Method getJiveHomeMethod = jiveGlobalsClass.getMethod("getJiveHome", (Class[])null);
+        String jiveHomeProp = (String)getJiveHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (jiveHomeProp != null) {
+            jiveHome = new File(jiveHomeProp);
+            if (jiveHome.exists()) {
+                jiveHomeExists = true;
+            }
+        }
+    }
+    catch (Exception e) {
+        e.printStackTrace();
+    }
 
     // If there were no errors, redirect to the main setup page
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled

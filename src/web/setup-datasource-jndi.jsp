@@ -17,7 +17,7 @@
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider" %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 
 <%  // check for embedded mode:
     if (embeddedMode) {

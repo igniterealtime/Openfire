@@ -22,7 +22,7 @@
     static final String JIVE_CONFIG_FILE = "jive_config_file";
 %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 
 <%@ include file="setup-env-check.jspf" %>
 

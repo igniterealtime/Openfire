@@ -23,7 +23,7 @@
                  org.jivesoftware.database.DefaultConnectionProvider"
 %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 
 <%  // Get parameters
     String driver = ParamUtils.getParameter(request,"driver");

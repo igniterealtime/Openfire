@@ -11,7 +11,7 @@
                  java.util.HashMap,
                  java.net.InetAddress" %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");

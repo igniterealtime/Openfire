@@ -30,7 +30,7 @@
     }
 %>
 
-<%@ include file="setup-global.jsp" %>
+<%@ include file="setup-global.jspf" %>
 <jsp:useBean id="adminManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters

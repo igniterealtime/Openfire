@@ -42,7 +42,7 @@ public class XMPPBootContainer extends BootstrapContainer {
             AuditManagerImpl.class.getName(),
             UserManagerImpl.class.getName(),
             RosterManagerImpl.class.getName(),
-            DbPrivateStore.class.getName()};
+            PrivateStorage.class.getName()};
     }
 
     protected String[] getCoreModuleNames() {

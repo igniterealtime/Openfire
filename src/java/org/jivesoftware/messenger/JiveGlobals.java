@@ -25,11 +25,10 @@ import org.dom4j.Document;
 import javax.naming.InitialContext;
 
 /**
- * This class controls Jive properties. Jive properties are only meant to be set and retrieved
- * by core Jive classes.<p>
+ * Controls Jive properties. Jive properties are only meant to be set and retrieved
+ * by core Jive classes.
  * <p/>
- * All properties are stored in the file <tt>jive_config.xml</tt> which is located in the
- * <tt>messengerHome/conf</tt> directory. The location of that directory should be specified one of
+ * The location of the messengerHome directory should be specified one of
  * three ways:
  * <ol>
  * <li>Set a Java system property named <tt>messengerHome</tt> with the full path to your
@@ -338,7 +337,7 @@ public class JiveGlobals {
             loadSetupProperties();
         }
 
-        // jiveHome not loaded?
+        // messengerHome not loaded?
         if (xmlProperties == null) {
             return null;
         }
@@ -489,6 +488,7 @@ public class JiveGlobals {
         }
         xmlProperties.deleteProperty(name);
     }
+
     /**
      * Returns a Jive property.
      *
@@ -497,9 +497,11 @@ public class JiveGlobals {
      */
     public static String getProperty(String name) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return null;
+            }
             properties = JiveProperties.getInstance();
         }
-
         return (String)properties.get(name);
     }
 
@@ -513,11 +515,12 @@ public class JiveGlobals {
      */
     public static String getProperty(String name, String defaultValue) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return defaultValue;
+            }
             properties = JiveProperties.getInstance();
         }
-
         String value = (String)properties.get(name);
-
         if (value != null) {
             return value;
         }
@@ -588,11 +591,14 @@ public class JiveGlobals {
      *
      * @return a List of all immediate children property names (Strings).
      */
-    public static List getPropertyNames(String parent) {
+    public static List<String> getPropertyNames(String parent) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return new ArrayList<String>();
+            }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList(properties.getChildrenNames(parent));
+        return new ArrayList<String>(properties.getChildrenNames(parent));
     }
 
     /**
@@ -607,6 +613,9 @@ public class JiveGlobals {
      */
     public static List<String> getProperties(String parent) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return new ArrayList<String>();
+            }
             properties = JiveProperties.getInstance();
         }
 
@@ -628,11 +637,14 @@ public class JiveGlobals {
      *
      * @return a List of all property names (Strings).
      */
-    public static List getPropertyNames() {
+    public static List<String> getPropertyNames() {
         if (properties == null) {
+            if (isSetupMode()) {
+                return new ArrayList<String>();
+            }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList(properties.getPropertyNames());
+        return new ArrayList<String>(properties.getPropertyNames());
     }
 
     /**
@@ -644,6 +656,9 @@ public class JiveGlobals {
      */
     public static void setProperty(String name, String value) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return;
+            }
             properties = JiveProperties.getInstance();
         }
         properties.put(name, value);
@@ -657,6 +672,9 @@ public class JiveGlobals {
      */
     public static void setProperties(Map propertyMap) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return;
+            }
             properties = JiveProperties.getInstance();
         }
 
@@ -671,6 +689,9 @@ public class JiveGlobals {
      */
     public static void deleteProperty(String name) {
         if (properties == null) {
+            if (isSetupMode()) {
+                return;
+            }
             properties = JiveProperties.getInstance();;
         }
         properties.remove(name);
@@ -684,6 +705,15 @@ public class JiveGlobals {
     */
     public static void setConfigName(String configName) {
         JIVE_CONFIG_FILENAME = configName;
+    }
+
+    /**
+     * Returns true if in setup mode.
+     *
+     * @return true if in setup mode.
+     */
+    private static boolean isSetupMode() {
+        return !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     }
 
     /**

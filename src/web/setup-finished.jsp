@@ -37,7 +37,9 @@
 </p>
 
 <p>
-<fmt:message key="setup.finished.info" /> <fmt:message key="title" /> <fmt:message key="setup.finished.info1" />
+<fmt:message key="setup.finished.info">
+    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+</fmt:message>
 </p>
 
 <ol>

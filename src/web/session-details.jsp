@@ -82,9 +82,11 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-<fmt:message key="session.details.info" /> <b><%= address.toString() %></b>. 
-<fmt:message key="session.details.info1" /> <b><%= address.getNode() %></b> 
-<fmt:message key="session.details.info2" />
+<fmt:message key="session.details.info">
+    <fmt:param value="<%= "<b>"+address.toString()+"</b>" %>" />
+    <fmt:param value="<%= "<b>"+address.getNode()+"</b>" %>" />
+</fmt:message>
+
 </p>
 
 <div class="jive-table">

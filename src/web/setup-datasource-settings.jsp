@@ -78,8 +78,9 @@
 </p>
 
 <p>
-<fmt:message key="setup.datasource.settings.info" /> <fmt:message key="short.title" /> 
-<fmt:message key="setup.datasource.settings.info1" />
+<fmt:message key="setup.datasource.settings.info">
+    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
+</fmt:message>
 </p>
 
 <%  if (errors.size() > 0) { %>

@@ -78,8 +78,10 @@
 </p>
 
 <p>
-<fmt:message key="setup.datasource.jndi.setting_info" /><fmt:message key="short.title" /> 
-<fmt:message key="setup.datasource.jndi.setting_info1" /> <tt>java:comp/env/jdbc/[DataSourceName]</tt>. <fmt:message key="setup.datasource.jndi.setting_info2" />
+<fmt:message key="setup.datasource.jndi.setting_info">
+    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
+    <fmt:param value="<tt>java:comp/env/jdbc/[DataSourceName]</tt>" />
+</fmt:message>
 </p>
 
 <%  if (errors.size() > 0 && errors.get("jndiName") == null) { %>

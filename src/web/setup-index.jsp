@@ -63,8 +63,9 @@
 <p>
 
 
-<fmt:message key="setup.index.info" /><fmt:message key="title" />  
-<fmt:message key="setup.index.info1" />
+<fmt:message key="setup.index.info">
+    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+</fmt:message>
 </p>
 
 <%  if (errors.size() > 0) { %>

@@ -5,7 +5,8 @@
 --%>
 
 <%@ page import="java.lang.reflect.Method,
-                 java.io.File" %>
+                 java.io.File,
+                 org.jivesoftware.util.LocaleUtils" %>
 
 <%-- note, the loadClass method is defined in setup-global.jspf --%>
 
@@ -81,8 +82,9 @@
         </p>
 
         <p>
-        <fmt:message key="setup.env.check.error_info" /> <fmt:message key="title" /> 
-        <fmt:message key="setup.env.check.error_info1" />
+        <fmt:message key="setup.env.check.error_info">
+            <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+        </fmt:message>
         </p>
 
         <ul>

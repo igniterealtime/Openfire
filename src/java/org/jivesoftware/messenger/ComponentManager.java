@@ -1,11 +1,18 @@
 package org.jivesoftware.messenger;
 
+import java.io.StringReader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.ServiceLookupFactory;
+import org.jivesoftware.messenger.spi.PacketFactoryImpl;
 import org.jivesoftware.messenger.spi.PacketRouterImpl;
 import org.jivesoftware.messenger.spi.PresenceImpl;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Packet;
@@ -116,7 +123,7 @@ public class ComponentManager {
     public void sendPacket(XMPPPacket packet) {
         PacketRouter router;
         try {
-            router = (PacketRouterImpl) ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
+            router = (PacketRouterImpl)ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
             if (router != null) {
                 router.route(packet);
             }
@@ -126,7 +133,7 @@ public class ComponentManager {
         }
     }
 
-     /**
+    /**
      * Send a packet to the specified recipient. Please note that this sends packets only
      * to outgoing jids and does to the incoming server reader.
      *
@@ -135,12 +142,16 @@ public class ComponentManager {
     public void sendPacket(Packet packet) {
         PacketRouter router;
         try {
-            router = (PacketRouterImpl) ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
+            router = (PacketRouterImpl)ServiceLookupFactory.getLookup().lookup(PacketRouterImpl.class);
             if (router != null) {
-               // router.route(packet);
+                String packetString = packet.toXML();
+                System.out.println(packetString + "\n");
+
+                XMPPPacket p = readStream(packetString);
+                router.route(p);
             }
         }
-        catch (UnauthorizedException e) {
+        catch (Exception e) {
             Log.error(e);
         }
     }
@@ -165,6 +176,54 @@ public class ComponentManager {
                 // No reason to hold onto prober reference.
                 presenceMap.remove(prober);
             }
+        }
+    }
+
+    /**
+     * Read the incoming stream until it ends. Much of the reading
+     * will actually be done in the channel handlers as they run the
+     * XPP through the data. This method mostly handles the idle waiting
+     * for incoming data. To prevent clients from stalling channel handlers,
+     * a watch dog timer is used. Packets that take longer than the watch
+     * dog limit to read will cause the session to be closed.
+     *
+     * @throws javax.xml.stream.XMLStreamException
+     *          if there is trouble reading from the socket
+     */
+    private XMPPPacket readStream(String string) throws UnauthorizedException, XMLStreamException {
+        PacketFactoryImpl packetFactory = new PacketFactoryImpl();
+        XMLInputFactory x = packetFactory.getXMLFactory();
+        XMLStreamReader xpp = x.createXMLStreamReader(new StringReader(string));
+        XMPPPacket packet = null;
+        while (true) {
+            for (int eventType = xpp.next();
+                 eventType != XMLStreamConstants.START_ELEMENT;
+                 eventType = xpp.next()) {
+                if (eventType == XMLStreamConstants.CHARACTERS) {
+                    if (!xpp.isWhiteSpace()) {
+                        throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.packet.text"));
+                    }
+                }
+                else if (eventType == XMLStreamConstants.END_DOCUMENT) {
+                    return null;
+                }
+            }
+
+            String tag = xpp.getLocalName();
+
+            if ("message".equals(tag)) {
+              packet = packetFactory.getMessage(xpp);
+            }
+            else if ("presence".equals(tag)) {
+               packet = packetFactory.getPresence(xpp);
+            }
+            else if ("iq".equals(tag)) {
+               packet = packetFactory.getIQ(xpp);
+            }
+            else {
+                throw new XMLStreamException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
+            }
+            return packet;
         }
     }
 

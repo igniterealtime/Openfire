@@ -66,7 +66,7 @@ public class MulticastDNSService extends BasicModule {
                     try {
                         if (portNum != -1) {
                             String serverName = AdminConsole.getAppName();
-                            serviceInfo = new ServiceInfo("_xmpp._tcp.local.",
+                            serviceInfo = new ServiceInfo("_xmpp-client._tcp.local.",
                                     serverName, portNum, 0, 0, "XMPP Server");
                             jmdns.registerService(serviceInfo);
                         }

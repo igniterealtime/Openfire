@@ -93,11 +93,11 @@ public class MUCUserImpl implements MUCUser {
      * @param packet the packet to be bounced.
      */
     private void sendErrorPacket(Packet packet, PacketError.Condition error) {
-        packet = packet.createCopy();
-        packet.setError(error);
-        packet.setFrom(packet.getTo());
-        packet.setTo(packet.getFrom());
-        router.route(packet);
+        Packet reply = packet.createCopy();
+        reply.setError(error);
+        reply.setFrom(packet.getTo());
+        reply.setTo(packet.getFrom());
+        router.route(reply);
     }
 
     public JID getAddress() {

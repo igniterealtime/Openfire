@@ -135,9 +135,9 @@ public class IQMUCRegisterHandler extends IQHandler {
         if (IQ.Type.get == packet.getType()) {
             reply = IQ.createResultIQ(packet);
             String nickname = room.getReservedNickname(packet.getFrom().toBareJID());
+            Element currentRegistration = probeResult.createCopy();
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
-                Element currentRegistration = probeResult.createCopy();
                 ElementUtil.setProperty(currentRegistration, "query.registered", null);
                 XDataFormImpl form = new XDataFormImpl();
                 form.parse(currentRegistration);
@@ -146,7 +146,7 @@ public class IQMUCRegisterHandler extends IQHandler {
             }
             else {
                 // The user is not registered with the room so answer an empty form
-                reply.getElement().add(probeResult);
+                reply.getElement().add(currentRegistration);
             }
         }
         else if (IQ.Type.set ==  packet.getType()) {
@@ -179,7 +179,7 @@ public class IQMUCRegisterHandler extends IQHandler {
                         // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
 
                         // Add the new member to the members list
-                        presences.addAll(room.addMember(packet.getTo().toBareJID(),
+                        presences.addAll(room.addMember(packet.getFrom().toBareJID(),
                                 nickname,
                                 room.getRole()));
                     }

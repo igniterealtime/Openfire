@@ -1,10 +1,11 @@
-<%@ taglib uri="core" prefix="c" %>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
 --%>
+
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.HashMap,
@@ -12,8 +13,7 @@
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.messenger.user.*,
                  java.util.*,
-                 java.text.*,
-                 org.jivesoftware.messenger.chat.*"
+                 java.text.*"
 %>
 <%@ include file="global.jsp" %>
 <!-- Define Administration Bean -->
@@ -60,12 +60,4 @@
 </table>
 </div>
 
-
-
-
-
 <%@ include file="bottom.jsp" %>
-
-
-
-

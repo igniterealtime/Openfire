@@ -9,8 +9,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
-                 org.jivesoftware.messenger.chat.HistoryStrategy,
-                 org.jivesoftware.messenger.chat.ChatServer"
+                 org.jivesoftware.messenger.muc.HistoryStrategy"
 %>
 
 <!-- Define Administration Bean -->
@@ -40,8 +39,8 @@
     int numMessages = ParamUtils.getIntParameter(request,"numMessages",0);
 
     // Get an audit manager:
-    ChatServer chatServer = (ChatServer)admin.getServiceLookup().lookup(ChatServer.class);
-    HistoryStrategy historyStrat = chatServer.getHistoryStrategy();
+//    ChatServer chatServer = (ChatServer)admin.getServiceLookup().lookup(ChatServer.class);
+//    HistoryStrategy historyStrat = chatServer.getHistoryStrategy();
 
     Map errors = new HashMap();
     if (update) {
@@ -55,14 +54,14 @@
         }
         if (errors.size() == 0) {
             if (policy == ALL) {
-                historyStrat.setType(HistoryStrategy.Type.all);
+//                historyStrat.setType(HistoryStrategy.Type.all);
             }
             else if (policy == NONE) {
-                historyStrat.setType(HistoryStrategy.Type.none);
+//                historyStrat.setType(HistoryStrategy.Type.none);
             }
             else if (policy == NUMBER) {
-                historyStrat.setType(HistoryStrategy.Type.number);
-                historyStrat.setMaxNumber(numMessages);
+//                historyStrat.setType(HistoryStrategy.Type.number);
+//                historyStrat.setMaxNumber(numMessages);
             }
             // All done, redirect
             %>
@@ -75,16 +74,16 @@
 
     // Set page vars
     if (errors.size() == 0) {
-        if (historyStrat.getType() == HistoryStrategy.Type.all) {
-            policy = ALL;
-        }
-        else if (historyStrat.getType() == HistoryStrategy.Type.none) {
-            policy = NONE;
-        }
-        else if (historyStrat.getType() == HistoryStrategy.Type.number) {
-            policy = NUMBER;
-        }
-        numMessages = historyStrat.getMaxNumber();
+//        if (historyStrat.getType() == HistoryStrategy.Type.all) {
+//            policy = ALL;
+//        }
+//        else if (historyStrat.getType() == HistoryStrategy.Type.none) {
+//            policy = NONE;
+//        }
+//        else if (historyStrat.getType() == HistoryStrategy.Type.number) {
+//            policy = NUMBER;
+//        }
+//        numMessages = historyStrat.getMaxNumber();
     }
 %>
 <form action="chatroom-history-settings.jsp">

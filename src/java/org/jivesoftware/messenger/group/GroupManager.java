@@ -18,7 +18,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.event.GroupEvent;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.roster.RosterManager;
 
@@ -86,9 +85,8 @@ public class GroupManager {
                 groupCache.put(name, newGroup);
 
                 // Fire event.
-                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_created,
-                        newGroup, Collections.EMPTY_MAP);
-                GroupEventDispatcher.dispatchEvent(event);
+                GroupEventDispatcher.dispatchEvent(newGroup,
+                        GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
             }
             return newGroup;
         }
@@ -124,9 +122,8 @@ public class GroupManager {
      */
     public void deleteGroup(Group group) {
         // Fire event.
-        GroupEvent event = new GroupEvent(GroupEvent.EventType.group_deleting,
-                group, Collections.EMPTY_MAP);
-        GroupEventDispatcher.dispatchEvent(event);
+        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting,
+                Collections.emptyMap());
 
         // Delete the group.
         provider.deleteGroup(group.getName());

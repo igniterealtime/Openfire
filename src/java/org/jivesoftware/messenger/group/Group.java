@@ -16,7 +16,6 @@ import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.event.GroupEvent;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.stringprep.Stringprep;
@@ -101,9 +100,8 @@ public class Group implements Cacheable {
             Map params = new HashMap();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
-            GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
-                    this, params);
-            GroupEventDispatcher.dispatchEvent(event);
+            GroupEventDispatcher.dispatchEvent(this, GroupEventDispatcher.EventType.group_modified,
+                    params);
         }
         catch (Exception e) {
             Log.error(e);
@@ -137,9 +135,8 @@ public class Group implements Cacheable {
             Map params = new HashMap();
             params.put("type", "descriptionModified");
             params.put("originalValue", originalDescription);
-            GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
-                    this, params);
-            GroupEventDispatcher.dispatchEvent(event);
+            GroupEventDispatcher.dispatchEvent(this,
+                    GroupEventDispatcher.EventType.group_modified, params);
         }
         catch (Exception e) {
             Log.error(e);
@@ -247,16 +244,14 @@ public class Group implements Cacheable {
                     if (adminCollection) {
                         Map params = new HashMap();
                         params.put("admin", user);
-                        GroupEvent event = new GroupEvent(GroupEvent.EventType.admin_removed,
-                                Group.this, params);
-                        GroupEventDispatcher.dispatchEvent(event);
+                        GroupEventDispatcher.dispatchEvent(Group.this,
+                                GroupEventDispatcher.EventType.admin_removed, params);
                     }
                     else {
                         Map params = new HashMap();
                         params.put("member", user);
-                        GroupEvent event = new GroupEvent(GroupEvent.EventType.member_removed,
-                                Group.this, params);
-                        GroupEventDispatcher.dispatchEvent(event);
+                        GroupEventDispatcher.dispatchEvent(Group.this,
+                                GroupEventDispatcher.EventType.member_removed, params);
                     }
                 }
             };
@@ -293,16 +288,14 @@ public class Group implements Cacheable {
                 if (adminCollection) {
                     Map params = new HashMap();
                     params.put("admin", username);
-                    GroupEvent event = new GroupEvent(GroupEvent.EventType.admin_added,
-                            Group.this, params);
-                    GroupEventDispatcher.dispatchEvent(event);
+                    GroupEventDispatcher.dispatchEvent(Group.this,
+                                GroupEventDispatcher.EventType.admin_added, params);
                 }
                 else {
                     Map params = new HashMap();
                     params.put("member", username);
-                    GroupEvent event = new GroupEvent(GroupEvent.EventType.member_added,
-                            Group.this, params);
-                    GroupEventDispatcher.dispatchEvent(event);
+                    GroupEventDispatcher.dispatchEvent(Group.this,
+                                GroupEventDispatcher.EventType.member_added, params);
                 }
 
                 // Update the group users' roster -- TODO: remove and use event.
@@ -327,9 +320,8 @@ public class Group implements Cacheable {
                 params.put("type", "propertyModified");
                 params.put("propertyKey", key);
                 params.put("originalValue", originalValue);
-                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
-                        Group.this, params);
-                GroupEventDispatcher.dispatchEvent(event);
+                GroupEventDispatcher.dispatchEvent(Group.this,
+                        GroupEventDispatcher.EventType.group_modified, params);
             }
             else {
                 insertProperty((String)key, (String)value);
@@ -337,9 +329,8 @@ public class Group implements Cacheable {
                 Map params = new HashMap();
                 params.put("type", "propertyAdded");
                 params.put("propertyKey", key);
-                GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
-                        Group.this, params);
-                GroupEventDispatcher.dispatchEvent(event);
+                GroupEventDispatcher.dispatchEvent(Group.this,
+                        GroupEventDispatcher.EventType.group_modified, params);
             }
             return properties.put((String)key, (String)value);
         }
@@ -383,9 +374,8 @@ public class Group implements Cacheable {
                     Map params = new HashMap();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", current.getKey());
-                    GroupEvent event = new GroupEvent(GroupEvent.EventType.group_modified,
-                            Group.this, params);
-                    GroupEventDispatcher.dispatchEvent(event);
+                    GroupEventDispatcher.dispatchEvent(Group.this,
+                        GroupEventDispatcher.EventType.group_modified, params);
                 }
             };
         }

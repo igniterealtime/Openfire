@@ -45,7 +45,7 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-01.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel(in);
+        AdminConsole.addModel("test1", in);
         in.close();
         String name = AdminConsole.getAppName();
         assertEquals("Foo Bar", name);
@@ -58,7 +58,7 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel(in);
+        AdminConsole.addModel("test2", in);
         in.close();
         Collection tabs = AdminConsole.getModel().selectNodes("//tab");
         assertNotNull(tabs);
@@ -82,7 +82,7 @@ public class AdminConsoleTest extends TestCase {
         String filename = TestUtils.prepareFilename(
                 "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-03.xml");
         InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel(in);
+        AdminConsole.addModel("test3", in);
         in.close();
         boolean found = false;
         for (Iterator tabs=AdminConsole.getModel().selectNodes("//tab").iterator(); tabs.hasNext(); ) {

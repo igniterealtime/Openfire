@@ -20,6 +20,10 @@
 
 package org.jivesoftware.messenger.event;
 
+import org.jivesoftware.messenger.group.Group;
+
+import java.util.Map;
+
 /**
  * Interface to listen for group events. Use the
  * {@link GroupEventDispatcher#addListener(GroupEventListener)}
@@ -32,49 +36,56 @@ public interface GroupEventListener {
     /**
      * A group was created.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void groupCreated(GroupEvent event);
+    public void groupCreated(Group group, Map params);
 
     /**
      * A group is being deleted.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void groupDeleting(GroupEvent event);
+    public void groupDeleting(Group group, Map params);
 
     /**
      * A group's name, description, or an extended property was changed.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void groupModified(GroupEvent event);
+    public void groupModified(Group group, Map params);
 
     /**
      * A member was added to a group.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void memberAdded(GroupEvent event);
+    public void memberAdded(Group group, Map params);
 
     /**
      * A member was removed from a group.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void memberRemoved(GroupEvent event);
+    public void memberRemoved(Group group, Map params);
 
     /**
      * An administrator was added to a group.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void adminAdded(GroupEvent event);
+    public void adminAdded(Group group, Map params);
 
     /**
      * An administrator was removed from a group.
      *
-     * @param event the event.
+     * @param group the group.
+     * @param params event parameters.
      */
-    public void adminRemoved(GroupEvent event);
+    public void adminRemoved(Group group, Map params);
 }

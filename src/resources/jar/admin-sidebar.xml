@@ -37,6 +37,11 @@
             <item id="server-logs" name="${sidebar.server-logs}"
                     url="logviewer.jsp"
                     description="${sidebar.server-logs.descr}" />
+
+            <!-- Plugins -->
+			<item id="plugin-settings" name="${sidebar.plugin-settings}"
+                    url="plugin-admin.jsp"
+                    description="${sidebar.plugin-settings.descr}" />
         </sidebar>
 
         <!-- Server Settings -->

@@ -62,22 +62,12 @@ import org.xmpp.packet.Presence;
  * require to log their conversations. The conversations log is saved to the database using a 
  * separate process<p>
  *
- * Rooms in memory are held in the instance variable rooms. For optimization reasons, persistent
- * rooms that don't have occupants aren't kept in memory. But a client may need to discover all the
- * rooms (present in memory or not). So MultiUserChatServerImpl uses a cache of persistent room
- * surrogates. A room surrogate (lighter object) is created for each persistent room that is public,
- * persistent but is not in memory.  The cache starts up empty until a client requests the list of
- * rooms through service discovery. Once the disco request is received the cache is filled up with
- * persistent room surrogates.  The cache will keep all the surrogates in memory for an hour. If the
- * cache's entries weren't used in an hour, they will be removed from memory. Whenever a persistent
- * room is removed from memory (because all the occupants have left), the cache is cleared. But if
- * a persistent room is loaded from the database then the entry for that room in the cache is
- * removed. Note: Since the cache contains an entry for each room surrogate and the clearing
- * algorithm is based on the usage of each entry, it's possible that some entries are removed
- * while others don't thus generating that the provided list of discovered rooms won't be complete.
- * However, this possibility is low since the clients will most of the time ask for all the cache
- * entries and then ask for a particular entry. Anyway, if this possibility happens the cache will
- * be reset the next time that a persistent room is removed from memory.
+ * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
+ * the last occupant left the room. On the other hand, persistent rooms are always present in memory
+ * even after the last occupant left the room. In order to keep memory clean of peristent rooms that
+ * have been forgotten or abandonded this class includes a clean up process. The clean up process
+ * will remove from memory rooms that haven't had occupants for a while. Moreover, forgotten or
+ * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.
  *
  * @author Gaston Dombiak
  */
@@ -178,6 +168,22 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<ConversationLogEntry>();
 
     /**
+     * Max number of hours that a persistent room may be empty before the service removes the
+     * room from memory. Unloaded rooms will exist in the database and may be loaded by a user
+     * request. Default time limit is: 7 days.
+     */
+    private long emptyLimit = 7 * 24;
+    /**
+     * Task that removes rooms from memory that have been without activity for a period of time. A
+     * room is considered without activity when no occupants are present in the room for a while.
+     */
+    private CleanupTask cleanupTask;
+    /**
+     * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
+     */
+    private final long cleanup_frequency = 60 * 60 * 1000;
+
+    /**
      * Create a new group chat server.
      */
     public MultiUserChatServerImpl() {
@@ -274,6 +280,29 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
+    /**
+     * Removes from memory rooms that have been without activity for a period of time. A room is
+     * considered without activity when no occupants are present in the room for a while.
+     */
+    private class CleanupTask extends TimerTask {
+        public void run() {
+            try {
+                cleanupRooms();
+            }
+            catch (Throwable e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+    }
+
+    private void cleanupRooms() {
+        for (MUCRoom room : rooms.values()) {
+            if (room.getEmptyDate() != null && room.getEmptyDate().before(getCleanupDate())) {
+                removeChatRoom(room.getName());
+            }
+        }
+    }
+
     public MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException {
         MUCRoom room = null;
         synchronized (roomName.intern()) {
@@ -283,7 +312,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 // If the room is persistent load the configuration values from the DB
                 try {
                     // Try to load the room's configuration from the database (if the room is
-                    // persistent but was added to the DB after the server was started up)
+                    // persistent but was added to the DB after the server was started up or the
+                    // room may be an old room that was not present in memory)
                     MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
                 }
                 catch (IllegalArgumentException e) {
@@ -307,7 +337,29 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public MUCRoom getChatRoom(String roomName) {
-        return rooms.get(roomName.toLowerCase());
+        MUCRoom room = rooms.get(roomName.toLowerCase());
+        if (room == null) {
+            // Check if the room exists in the database and was not present in memory
+            synchronized (roomName.intern()) {
+                room = rooms.get(roomName.toLowerCase());
+                if (room == null) {
+                    room = new MUCRoomImpl(this, roomName, router);
+                    // If the room is persistent load the configuration values from the DB
+                    try {
+                        // Try to load the room's configuration from the database (if the room is
+                        // persistent but was added to the DB after the server was started up or the
+                        // room may be an old room that was not present in memory)
+                        MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
+                        rooms.put(roomName.toLowerCase(), room);
+                    }
+                    catch (IllegalArgumentException e) {
+                        // The room does not exist so do nothing
+                        room = null;
+                    }
+                }
+            }
+        }
+        return room;
     }
 
     public List<MUCRoom> getChatRooms() {
@@ -373,6 +425,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public void setServiceName(String name) {
         JiveGlobals.setProperty("xmpp.muc.service", name);
+    }
+
+    /**
+     * Returns the limit date after which rooms whithout activity will be removed from memory.
+     *
+     * @return the limit date after which rooms whithout activity will be removed from memory.
+     */
+    private Date getCleanupDate() {
+        return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
     }
 
     public void setKickIdleUsersTimeout(int timeout) {
@@ -599,36 +660,35 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // (default values)
         logConversationTask = new LogConversationTask();
         timer.schedule(logConversationTask, log_timeout, log_timeout);
+        // Remove unused rooms from memory
+        cleanupTask = new CleanupTask();
+        timer.schedule(cleanupTask, cleanup_frequency, cleanup_frequency);
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
         // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
         registerHandler = server.getIQRegisterHandler();
         registerHandler.addDelegate(getServiceName(), new IQMUCRegisterHandler(this));
+    }
 
+    public void start() {
+        super.start();
         // Add the route to this service
         routingTable.addRoute(chatServiceAddress, this);
         ArrayList params = new ArrayList();
         params.clear();
         params.add(chatServiceName);
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
-    }
-
-    public void start() {
-        super.start();
-        routingTable.addRoute(chatServiceAddress, this);
-        ArrayList params = new ArrayList();
-        params.clear();
-        params.add(chatServiceName);
-        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
-        for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, router)) {
+        for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(),
+                router)) {
             rooms.put(room.getName().toLowerCase(), room);
         }
     }
 
     public void stop() {
         super.stop();
+        // Remove the route to this service
         routingTable.removeRoute(chatServiceAddress);
         timer.cancel();
         logAllConversation();

@@ -234,6 +234,12 @@ public class MUCRoomImpl implements MUCRoom {
     private Date modificationDate;
 
     /**
+     * The date when the last occupant left the room. A null value means that there are occupants
+     * in the room at the moment.
+     */
+    private Date emptyDate;
+
+    /**
      * Indicates if the room is present in the database.
      */
     private boolean savedToDB = false;
@@ -254,6 +260,7 @@ public class MUCRoomImpl implements MUCRoom {
         this.startTime = System.currentTimeMillis();
         this.creationDate = new Date(startTime);
         this.modificationDate = new Date(startTime);
+        this.emptyDate = new Date(startTime);
         // TODO Allow to set the history strategy from the configuration form?
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(server.getHistoryStrategy()));
         role = new RoomRole(this);
@@ -298,6 +305,19 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void setModificationDate(Date modificationDate) {
         this.modificationDate = modificationDate;
+    }
+
+    public void setEmptyDate(Date emptyDate) {
+        // Do nothing if old value is same as new value
+        if (this.emptyDate == emptyDate) {
+            return;
+        }
+        this.emptyDate = emptyDate;
+        MUCPersistenceManager.updateRoomEmptyDate(this);
+    }
+
+    public Date getEmptyDate() {
+        return this.emptyDate;
     }
 
     public MUCRole getRole() {
@@ -542,6 +562,8 @@ public class MUCRoomImpl implements MUCRoom {
             else {
                 historyRequest.sendHistory(joinRole, roomHistory);
             }
+            // Update the date when the last occupant left the room
+            setEmptyDate(null);
         }
         return joinRole;
     }
@@ -570,6 +592,10 @@ public class MUCRoomImpl implements MUCRoom {
                 endTime = System.currentTimeMillis();
 
                 server.removeChatRoom(name);
+            }
+            if (occupants.isEmpty()) {
+                // Update the date when the last occupant left the room
+                setEmptyDate(new Date());
             }
         }
         finally {

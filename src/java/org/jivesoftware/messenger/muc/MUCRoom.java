@@ -90,6 +90,24 @@ public interface MUCRoom extends ChatDeliverer {
     void setModificationDate(Date modificationDate);
 
     /**
+     * Sets the date when the last occupant left the room. A null value means that there are
+     * occupants in the room at the moment.
+     *
+     * @param emptyDate the date when the last occupant left the room or null if there are occupants
+     *        in the room.
+     */
+    void setEmptyDate(Date emptyDate);
+
+    /**
+     * Returns the date when the last occupant left the room. A null value means that there are
+     * occupants in the room at the moment.
+     *
+     * @return the date when the last occupant left the room or null if there are occupants in the
+     *         room at the moment.
+     */
+    Date getEmptyDate();
+
+    /**
      * Obtain the role of the chat server (mainly for addressing messages and presence).
      *
      * @return The role for the chat room itself

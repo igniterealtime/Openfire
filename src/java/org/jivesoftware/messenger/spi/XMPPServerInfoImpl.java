@@ -35,11 +35,10 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     /**
      * Simple constructor
      *
-     * @param serverName The server's serverName (e.g. jivesoftware.com)
-     * @param version    The server's version number
-     * @param startDate  The server's last start time (can be null indicating it hasn't been started)
-     * @param stopDate   The server's last stop time (can be null indicating it is running or hasn't been started)
-     * @param portIter   The portIter active on the server
+     * @param serverName the server's serverName (e.g. example.org).
+     * @param version the server's version number.
+     * @param startDate the server's last start time (can be null indicating it hasn't been started).     * @param stopDate   The server's last stop time (can be null indicating it is running or hasn't been started)
+     * @param portIter the portIter active on the server.
      */
     public XMPPServerInfoImpl(String serverName, Version version, Date startDate, Date stopDate,
             Iterator portIter)

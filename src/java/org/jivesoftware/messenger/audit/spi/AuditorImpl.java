@@ -112,7 +112,7 @@ public class AuditorImpl implements Auditor {
             try {
                 prepareAuditFile();
                 xmlSerializer.writeStartElement("packet");
-                xmlSerializer.writeDefaultNamespace("http://jivesoftware.com");
+                xmlSerializer.writeDefaultNamespace("http://jivesoftware.org");
                 Session session = packet.getOriginatingSession();
                 if (session != null) {
                     if (session.getStreamID() != null) {
@@ -200,7 +200,7 @@ public class AuditorImpl implements Auditor {
         writer = new FileWriter(currentAuditFile);
         xmlSerializer = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
         xmlSerializer.setDefaultNamespace("jabber:client");
-        xmlSerializer.writeStartElement("jive", "jive", "http://jivesoftware.com");
-        xmlSerializer.writeNamespace("jive", "http://jivesoftware.com");
+        xmlSerializer.writeStartElement("jive", "jive", "http://jivesoftware.org");
+        xmlSerializer.writeNamespace("jive", "http://jivesoftware.org");
     }
 }

@@ -247,7 +247,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
 
     /**
      * Returns the server portion of a XMPP address. For example, for the
-     * address "matt@jivesoftware.com/Smack", "jivesoftware.com" would be returned.
+     * address "matt@example.org/Smack", "example.org" would be returned.
      * If no server is present in the address, the empty string will be returned.
      *
      * @param XMPPAddress the XMPP address.

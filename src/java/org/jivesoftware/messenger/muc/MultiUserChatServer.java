@@ -175,7 +175,7 @@ public interface MultiUserChatServer {
      * 
      * @param room the room that received the message.
      * @param message the message to log as part of the conversation in the room.
-     * @param sender the real XMPPAddress of the sender (e.g. john@jivesoftware.com). 
+     * @param sender the real XMPPAddress of the sender (e.g. john@example.org). 
      */
     void logConversation(MUCRoom room, Message message, XMPPAddress sender);
 }

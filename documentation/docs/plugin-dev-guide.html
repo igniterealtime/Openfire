@@ -214,8 +214,15 @@ points that are the most common:
  for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the 
  example above); sub-domains are only used for routing within the XMPP server.
  
-   <li>Register a plugin as an IQHandler. IQ handlers respond to IQ packets with a particular element name and 
-  namespace.
+   <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and 
+  namespace. The following code snippet demonstrates how to register an IQHandler:
+  
+  <pre>
+  IQHandler myHandler = new MyIQHander();
+  IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+  iqRouter.addHandler(myHandler);
+  </pre>
+  
 </ol>
 
 </p>

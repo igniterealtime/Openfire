@@ -426,6 +426,10 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 room = rooms.get(rs.getLong(1));
+                // Skip to the next position if the room does not exist
+                if (room == null) {
+                    continue;
+                }
                 Date sentDate = new Date(Long.parseLong(rs.getString(4).trim()));
                 try {
                     // Recreate the history only for the rooms that have the conversation logging

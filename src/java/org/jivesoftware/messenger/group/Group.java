@@ -152,8 +152,7 @@ public class Group implements Cacheable {
     }
 
     /**
-     * Returns a Collection of the group members. Administrators are also
-     * considered to be members, so are included in the Collection.
+     * Returns a Collection of the group members.
      *
      * @return a Collection of the group members.
      */

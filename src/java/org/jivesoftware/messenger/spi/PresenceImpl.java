@@ -93,6 +93,8 @@ public class PresenceImpl extends AbstractPacket implements Presence, Cacheable 
             Element root = doc.getRootElement();
 
             show = Presence.SHOW_NONE;
+            // Default priority is zero unless a value is provided
+            priority = 0;
 
             Iterator subElements = root.elementIterator();
             while (subElements.hasNext()) {

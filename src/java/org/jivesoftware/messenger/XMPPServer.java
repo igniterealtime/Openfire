@@ -324,8 +324,8 @@ public class XMPPServer {
         if (isStandAlone() && isRestartable()) {
             try {
                 Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
-                Method restartMethod = wrapperClass.getMethod("restart", null);
-                restartMethod.invoke(null, null);
+                Method restartMethod = wrapperClass.getMethod("restart", (Class [])null);
+                restartMethod.invoke(null, (Object [])null);
             }
             catch (Exception e) {
                 Log.error("Could not restart container", e);

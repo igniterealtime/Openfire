@@ -134,7 +134,7 @@ CREATE TABLE jiveProperty (
 
 CREATE TABLE mucRoom (
   roomID              BIGINT        NOT NULL,
-  name                VARCHAR(50)   NULL,
+  name                VARCHAR(50)   NOT NULL,
   description         VARCHAR(255),
   canChangeSubject    TINYINT       NOT NULL,
   maxUsers            INTEGER       NOT NULL,

@@ -22,7 +22,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.PresenceImpl;
 import org.jivesoftware.messenger.user.*;
 
 import java.util.ArrayList;
@@ -34,6 +33,10 @@ import javax.xml.stream.XMLStreamException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -49,12 +52,7 @@ import org.dom4j.QName;
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
  * <p/>
- * <h2>Warning</h2>
- * There should be a way of determining whether a session has
- * authorization to access this feature. I'm not sure it is a good
- * idea to do authorization in each handler. It would be nice if
- * the framework could assert authorization policies across channels.
- * <p/>
+
  * <h2>Compatibility</h2>
  * The current behavior is designed to emulate jabberd1.4. However
  * this behavior differs significantly from JEP-0078 (non-SASL registration).
@@ -67,7 +65,7 @@ import org.dom4j.QName;
  */
 public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvider {
 
-    private static MetaDataFragment probeResult;
+    private static Element probeResult;
 
     public UserManager userManager;
     public RosterManager rosterManager;
@@ -91,10 +89,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         if (probeResult == null) {
             // Create the basic element of the probeResult which contains the basic registration
             // information (e.g. username, passoword and email)
-            Element element = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
-            element.addElement("username");
-            element.addElement("password");
-            element.addElement("email");
+            probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
+            probeResult.addElement("username");
+            probeResult.addElement("password");
+            probeResult.addElement("email");
 
             // Create the registration form to include in the probeResult. The form will include
             // the basic information plus name and visibility of name and email.
@@ -130,9 +128,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             field.setRequired(true);
             registrationForm.addField(field);
 
-            // Create the probeResult and add the basic info together with the registration form
-            probeResult = new MetaDataFragment(element);
-            probeResult.addFragment(registrationForm);
+            // Add the registration form to the probe result.
+            probeResult.add(registrationForm.asXMLElement());
         }
         // Check for the default case where no inband property is set and
         // make the default true (allowing inband registration)
@@ -148,71 +145,71 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     public synchronized IQ handleIQ(IQ packet) throws
             PacketException, UnauthorizedException, XMLStreamException {
         // Look for a delegate for this packet
-        IQHandler delegate = getDelegate(packet.getRecipient());
+        IQHandler delegate = getDelegate(packet.getTo());
         // We assume that the registration packet was meant to the server if delegate is
         // null
         if (delegate != null) {
             // Pass the packet to the real packet handler
             return delegate.handleIQ(packet); 
         }
-        
-        Session session = packet.getOriginatingSession();
+
+        Session session = null;
+        try {
+            session = SessionManager.getInstance().getSession(packet.getFrom());
+        }
+        catch (Exception e) {
+        }
         IQ reply = null;
         if (!enabled) {
-            reply = packet.createResult();
-            reply.setError(XMPPError.Code.FORBIDDEN);
+            reply = IQ.createResultIQ(packet);
+            reply.setError(PacketError.Condition.forbidden);
         }
-        else if (IQ.GET.equals(packet.getType())) {
-            reply = packet.createResult();
+        else if (IQ.Type.get.equals(packet.getType())) {
+            reply = IQ.createResultIQ(packet);
             if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                 try {
                     User user = userManager.getUser(session.getUsername());
-                    MetaDataFragment currentRegistration = (MetaDataFragment) probeResult
-                            .createDeepCopy();
-                    currentRegistration.setProperty("query.registered", null);
-                    currentRegistration.setProperty("query.username", user.getUsername());
-                    currentRegistration.setProperty("query.password", null);
-                    currentRegistration.setProperty("query.email", user.getInfo().getEmail());
+                    Element currentRegistration = probeResult.createCopy();
+                    currentRegistration.element("registered").setText(null);
+                    currentRegistration.element("username").setText(user.getUsername());
+                    currentRegistration.element("password").setText(null);
+                    currentRegistration.element("email").setText(user.getInfo().getEmail());
                     
-                    XDataFormImpl form = (XDataFormImpl) currentRegistration.getFragment(
-                        "x",
-                        "jabber:x:data");
-                    form.getField("username").addValue(user.getUsername());
-                    form.getField("name").addValue(user.getInfo().getName());
-                    form.getField("email").addValue(user.getInfo().getEmail());
-                    reply.setChildFragment(currentRegistration);
+                    Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
+                    form.element("username").setText(user.getUsername());
+                    form.element("name").setText(user.getInfo().getName());
+                    form.element("email").setText(user.getInfo().getEmail());
+                    reply.setChildElement(currentRegistration);
                 }
                 catch (UserNotFoundException e) {
-                    reply.setChildFragment(probeResult);
+                    reply.setChildElement(probeResult);
                 }
                 catch (UnauthorizedException e) {
-                    reply.setChildFragment(probeResult);
+                    reply.setChildElement(probeResult);
                 }
             }
             else {
-                reply.setChildFragment(probeResult);
+                reply.setChildElement(probeResult);
             }
         }
-        else if (IQ.SET.equals(packet.getType())) {
+        else if (IQ.Type.set.equals(packet.getType())) {
             try {
-                XMPPFragment iq = packet.getChildFragment();
-                MetaDataFragment metaData = MetaDataFragment.convertToMetaData(iq);
-                if (metaData.includesProperty("query.remove")) {
+                Element iqElement = packet.getChildElement();
+                if (iqElement.element("remove") != null) {
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                         // Send an unavailable presence to the user's subscribers
                         // Note: This gives us a chance to send an unavailable presence to the 
                         // entities that the user sent directed presences
-                        Presence presence = new PresenceImpl();
-                        presence.setAvailable(false);
-                        presence.setVisible(false);
-                        presence.setSender(packet.getSender());
+                        Presence presence = new Presence();
+                        presence.setType(Presence.Type.unavailable);
+                        presence.setFrom(packet.getFrom());
                         presenceHandler.process(presence);
                         // Delete the user
                         userManager.deleteUser(userManager.getUser(session.getUsername()));
                         // Delete the roster of the user
                         rosterManager.deleteRoster(session.getAddress());
 
-                        reply = packet.createResult();
+                        reply = IQ.createResultIQ(packet);
                         session.getConnection().deliver(reply);
                         // Close the user's connection
                         session.getConnection().close();
@@ -229,10 +226,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     XDataFormImpl registrationForm = null;
                     FormField field;
 
-                    // We prefer to assume that iq is an XMPPDOMFragment for performance reasons. 
-                    // The other choice is to use metaData.convertToDOMFragment() which creates new 
-                    // objects.
-                    Element formElement = ((XMPPDOMFragment)iq).getRootElement().element("x");
+                    Element formElement = iqElement.element("x");
                     // Check if a form was used to provide the registration info
                     if (formElement != null) {
                         // Get the sent form
@@ -256,9 +250,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
                     else {
                         // Get the registration info from the query elements
-                        username = metaData.getProperty("query.username");
-                        password = metaData.getProperty("query.password");
-                        email = metaData.getProperty("query.email");
+                        username = iqElement.elementText("username");
+                        password = iqElement.elementText("password");
+                        email = iqElement.elementText("email");
                     }
                     if (email == null || "".equals(email)) {
                         email = " ";
@@ -267,8 +261,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     // Inform the entity of failed registration if some required information was
                     // not provided
                     if (password == null || password.trim().length() == 0) {
-                        reply = packet.createResult();
-                        reply.setError(XMPPError.Code.NOT_ACCEPTABLE);
+                        reply = IQ.createResultIQ(packet);
+                        reply.setError(PacketError.Condition.not_acceptable);
                         return reply;
                     }
 
@@ -310,16 +304,16 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         newUser.saveInfo();
                     }
 
-                    reply = packet.createResult();
+                    reply = IQ.createResultIQ(packet);
                 }
             }
             catch (UserAlreadyExistsException e) {
-                reply = packet.createResult();
-                reply.setError(XMPPError.Code.CONFLICT);
+                reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.conflict);
             }
             catch (UserNotFoundException e) {
-                reply = packet.createResult();
-                reply.setError(XMPPError.Code.BAD_REQUEST);
+                reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.bad_request);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -341,11 +335,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         JiveGlobals.setProperty("register.inband", enabled ? "true" : "false");
     }
     
-    private IQHandler getDelegate(XMPPAddress recipientJID) {
+    private IQHandler getDelegate(JID recipientJID) {
         if (recipientJID == null) {
             return null;
         }
-        return (IQHandler) delegates.get(recipientJID.getHostPrep());
+        return (IQHandler) delegates.get(recipientJID.getDomain());
     }
     
     public void addDelegate(String serviceName, IQHandler delegate) {

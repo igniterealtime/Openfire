@@ -11,10 +11,10 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.XMPPAddress;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import org.xmpp.packet.JID;
 
 /**
  * <p>Implements the basic RosterItem interface storing all data into simple fields.</p>
@@ -24,7 +24,15 @@ import java.util.List;
  * @author Iain Shigeoka
  */
 public class BasicRosterItem implements RosterItem {
-    public BasicRosterItem(XMPPAddress jid,
+    protected RecvType recvStatus;
+    protected JID jid;
+    protected String nickname;
+    protected List groups;
+    protected SubType subStatus;
+    protected AskType askStatus;
+
+
+    public BasicRosterItem(JID jid,
                            SubType subStatus,
                            AskType askStatus,
                            RecvType recvStatus,
@@ -44,7 +52,7 @@ public class BasicRosterItem implements RosterItem {
         }
     }
 
-    public BasicRosterItem(XMPPAddress jid) {
+    public BasicRosterItem(JID jid) {
         this(jid,
                 RosterItem.SUB_NONE,
                 RosterItem.ASK_NONE,
@@ -53,7 +61,7 @@ public class BasicRosterItem implements RosterItem {
                 null);
     }
 
-    public BasicRosterItem(XMPPAddress jid, String nickname, List groups) {
+    public BasicRosterItem(JID jid, String nickname, List groups) {
         this(jid,
                 RosterItem.SUB_NONE,
                 RosterItem.ASK_NONE,
@@ -76,12 +84,7 @@ public class BasicRosterItem implements RosterItem {
                 item.getGroups());
     }
 
-    protected RecvType recvStatus;
-    protected XMPPAddress jid;
-    protected String nickname;
-    protected List groups;
-    protected SubType subStatus;
-    protected AskType askStatus;
+
 
     public SubType getSubStatus() {
         return subStatus;
@@ -107,7 +110,7 @@ public class BasicRosterItem implements RosterItem {
         this.recvStatus = recvStatus;
     }
 
-    public XMPPAddress getJid() {
+    public JID getJid() {
         return jid;
     }
 

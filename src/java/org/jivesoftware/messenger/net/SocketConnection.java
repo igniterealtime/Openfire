@@ -194,20 +194,4 @@ public class SocketConnection extends BasicConnection {
             session.incrementServerPacketCount();
         }
     }
-
-    public void deliver(String text) throws UnauthorizedException, IOException {
-        if (isClosed()) {
-            // TODO Do we want to store offline this text?
-            //deliverer.deliver(packet);
-        }
-        else {
-            synchronized (writer) {
-                writer.write(text);
-                writer.flush();
-            }
-            // TODO Do we need to audit and count these packets?
-            //auditor.audit(packet);
-            //session.incrementServerPacketCount();
-        }
-    }
 }

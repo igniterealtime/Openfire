@@ -447,7 +447,7 @@ public class MUCUserImpl implements MUCUser {
                                     Element frag = presence.getChildElement("x",
                                             "http://jabber.org/protocol/muc#user");
                                     frag.element("item").addAttribute("nick", resource);
-                                    frag.element("status").addAttribute("code", "303");
+                                    frag.addElement("status").addAttribute("code", "303");
                                     role.getChatRoom().send(presence);
 
                                     // Send availability presence for the new nickname

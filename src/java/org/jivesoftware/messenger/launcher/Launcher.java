@@ -16,6 +16,7 @@ import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
 import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.XMLProperties;
+import org.jivesoftware.util.WebManager;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -360,7 +361,7 @@ public class Launcher {
 
                 // Copy Plugin into Dir.
                 try {
-                    URLFileSystem.copy(plugin.toURL(), tempPluginsFile);
+                    WebManager.copy(plugin.toURL(), tempPluginsFile);
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);

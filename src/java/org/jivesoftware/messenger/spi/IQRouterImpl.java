@@ -37,12 +37,19 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
     public RoutingTable routingTable;
     public LinkedList iqHandlers = new LinkedList();
     private HashMap namespace2Handlers = new HashMap();
+    private ChatbotManager chatBotManager;
 
     /**
      * Creates a packet router.
      */
     public IQRouterImpl() {
         super("XMPP IQ Router");
+        try {
+            chatBotManager = (ChatbotManager)ServiceLookupFactory.getLookup().lookup(ChatbotManager.class);
+        }
+        catch (UnauthorizedException e) {
+            Log.error(e);
+        }
     }
 
     public void route(IQ packet) {
@@ -75,15 +82,10 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                 || "".equals(recipientJID.getHost()) || recipientJID.getResource() == null
                 || "".equals(recipientJID.getResource());
 
-         try {
+
              if(recipientJID != null){
-               ChatbotManager chatBotManager = (ChatbotManager)ServiceLookupFactory.getLookup().lookup(ChatbotManager.class);
                isLocalServer = !chatBotManager.isChatbot(recipientJID);
              }
-         }
-         catch (UnauthorizedException e) {
-             e.printStackTrace();
-         }
          return isLocalServer;
      }
 

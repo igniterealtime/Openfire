@@ -16,9 +16,9 @@ import java.util.Collection;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.Component;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
+import org.xmpp.component.Component;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -30,12 +30,20 @@ import org.xmpp.packet.JID;
 public interface MultiUserChatServer extends Component {
 
     /**
-     * Obtain the domain of this chat service. The domain is composed by the service name and the
-     * name of the xmpp server where the service is running.
+     * Returns the fully-qualifed domain name of this chat service.
+     * The domain is composed by the service name and the
+     * name of the XMPP server where the service is running.
      * 
-     * @return The chat server domain (service name + host name).
+     * @return the chat server domain (service name + host name).
      */
     String getServiceDomain();
+
+    /**
+     * Returns the subdomain of the chat service.
+     *
+     * @return the subdomain of the chat service.
+     */
+    String getServiceName();
 
     /**
      * Set the name of this chat service. The new name won't go into effect until the server is

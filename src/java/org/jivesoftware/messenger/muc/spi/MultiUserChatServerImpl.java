@@ -45,6 +45,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.xmpp.component.ComponentManager;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -97,7 +98,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * the chat service's hostname
      */
     private String chatServiceName = null;
-    private JID chatServiceAddress = null;
 
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
@@ -110,7 +110,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private Map<JID, MUCUser> users = new ConcurrentHashMap<JID, MUCUser>();
     private HistoryStrategy historyStrategy;
 
-    private RoutingTable routingTable = null;
     /**
      * The packet router for the server.
      */
@@ -184,6 +183,34 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public MultiUserChatServerImpl() {
         super("Basic multi user chat server");
         historyStrategy = new HistoryStrategy(null);
+    }
+
+    public String getDescription() {
+        return null;
+    }
+
+    public void processPacket(Packet packet) {
+        try {
+            MUCUser user = getChatUser(packet.getFrom());
+            user.process(packet);
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+    }
+
+    public void initialize(JID jid, ComponentManager componentManager) {
+
+    }
+
+    public void shutdown() {
+
+    }
+
+
+
+    public String getServiceDomain() {
+        return chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getName();
     }
 
     /**
@@ -375,10 +402,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public String getServiceName() {
         return chatServiceName;
-    }
-
-    public String getServiceDomain() {
-        return chatServiceAddress.getDomain();
     }
 
     public HistoryStrategy getHistoryStrategy() {
@@ -645,12 +668,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (chatServiceName == null) {
             chatServiceName = "conference";
         }
-        String serverName = server.getServerInfo().getName();
-        String domain = chatServiceName;
-        if (serverName != null) {
-            domain = chatServiceName + "." + serverName;
-        }
-        chatServiceAddress = new JID(null, domain, null);
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         userTimeoutTask = new UserTimeoutTask();
@@ -663,21 +680,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         cleanupTask = new CleanupTask();
         timer.schedule(cleanupTask, cleanup_frequency, cleanup_frequency);
 
-        routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
-        // TODO Remove the tracking for IQRegisterHandler when the component JEP gets implemented.
-        registerHandler = server.getIQRegisterHandler();
-        registerHandler.addDelegate(getServiceDomain(), new IQMUCRegisterHandler(this));
     }
 
     public void start() {
         super.start();
-        // Add the route to this service
-        routingTable.addRoute(chatServiceAddress, this);
-        ArrayList params = new ArrayList();
-        params.clear();
-        params.add(chatServiceAddress.getDomain());
-        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
+        InternalComponentManager.getInstance().addComponent(chatServiceName, this);
         // Load all the persistent rooms to memory
         for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(),
                 router)) {
@@ -688,28 +696,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         // Remove the route to this service
-        routingTable.removeRoute(chatServiceAddress);
+        InternalComponentManager.getInstance().removeComponent(chatServiceName);
         timer.cancel();
         logAllConversation();
         if (registerHandler != null) {
             registerHandler.removeDelegate(getServiceDomain());
-        }
-    }
-
-    public JID getAddress() {
-        if (chatServiceAddress == null) {
-            throw new IllegalStateException("Not initialized");
-        }
-        return chatServiceAddress;
-    }
-
-    public void process(Packet packet) {
-        try {
-            MUCUser user = getChatUser(packet.getFrom());
-            user.process(packet);
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
 
@@ -726,7 +717,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
         items.add(new DiscoServerItem() {
             public String getJID() {
-                return chatServiceAddress.getDomain();
+                return getServiceDomain();
             }
 
             public String getName() {

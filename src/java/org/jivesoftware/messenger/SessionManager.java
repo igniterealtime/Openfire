@@ -979,7 +979,7 @@ public class SessionManager extends BasicModule {
             try {
                 ComponentSession session = (ComponentSession)handback;
                 // Unbind the domain for this external component
-                ComponentManager.getInstance().removeComponent(session.getAddress().getDomain());
+                InternalComponentManager.getInstance().removeComponent(session.getAddress().getDomain());
                 // Remove the session
                 componentsSessions.remove(session);
             }

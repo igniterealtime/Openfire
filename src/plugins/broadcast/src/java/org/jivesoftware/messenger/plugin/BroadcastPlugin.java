@@ -23,6 +23,9 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.JID;
+import org.xmpp.component.Component;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
 
 import java.io.File;
 import java.util.Collection;
@@ -46,7 +49,7 @@ public class BroadcastPlugin implements Plugin, Component {
     private GroupManager groupManager;
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
-    private JID serviceJID;
+    private ComponentManager componentManager;
 
     /**
      * Constructs a new broadcast plugin.
@@ -56,8 +59,6 @@ public class BroadcastPlugin implements Plugin, Component {
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
-        serviceJID =
-                new JID(serviceName + "." + XMPPServer.getInstance().getServerInfo().getName());
     }
 
     // Plugin Interface
@@ -83,20 +84,39 @@ public class BroadcastPlugin implements Plugin, Component {
         groupManager = GroupManager.getInstance();
 
         // Register as a component.
-        ComponentManager.getInstance().addComponent(serviceName, this);
+        componentManager = ComponentManagerFactory.getComponentManager();
+        try {
+            componentManager.addComponent(serviceName, this);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
     }
 
     public void destroy() {
         // Unregister component.
-        ComponentManager.getInstance().removeComponent(serviceName);
+        try {
+            componentManager.removeComponent(serviceName);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
         sessionManager = null;
         groupManager = null;
         allowedUsers.clear();
     }
 
+    public void initialize(JID jid, ComponentManager componentManager) {
+
+    }
+
+    public void shutdown() {
+
+    }
+
     // Component Interface
 
-    public void process(Packet packet) {
+    public void processPacket(Packet packet) {
         // Only respond to incoming messages. TODO: handle disco, presence, etc.
         if (packet instanceof Message) {
             Message message = (Message)packet;
@@ -118,7 +138,7 @@ public class BroadcastPlugin implements Plugin, Component {
                         error.setSubject("Error sending broadcast message");
                         error.setBody("Not allowed to send a broadcast message to " +
                                 message.getTo());
-                        ComponentManager.getInstance().sendPacket(error);
+                        InternalComponentManager.getInstance().sendPacket(this, error);
                         return;
                     }
                 }
@@ -141,7 +161,7 @@ public class BroadcastPlugin implements Plugin, Component {
                             Message newMessage = message.createCopy();
                             JID userJID = XMPPServer.getInstance().createJID(user, null);
                             newMessage.setTo(userJID);
-                            ComponentManager.getInstance().sendPacket(newMessage);
+                            InternalComponentManager.getInstance().sendPacket(this, newMessage);
                         }
                     }
                     else {
@@ -155,7 +175,7 @@ public class BroadcastPlugin implements Plugin, Component {
                         error.setSubject("Error sending broadcast message");
                         error.setBody("Not allowed to send a broadcast message to " +
                                 message.getTo());
-                        ComponentManager.getInstance().sendPacket(error);
+                        InternalComponentManager.getInstance().sendPacket(this, error);
                     }
                 }
                 catch (GroupNotFoundException gnfe) {
@@ -169,7 +189,7 @@ public class BroadcastPlugin implements Plugin, Component {
                     error.setSubject("Error sending broadcast message");
                     error.setBody("Address not valid: " +
                             message.getTo());
-                    ComponentManager.getInstance().sendPacket(error);
+                    InternalComponentManager.getInstance().sendPacket(this, error);
                 }
             }
         }
@@ -186,10 +206,6 @@ public class BroadcastPlugin implements Plugin, Component {
         return serviceName;
     }
 
-    public JID getAddress() {
-        return serviceJID;
-    }
-
     /**
      * Sets the service name of this component, which is "broadcast" by default.
      *
@@ -204,11 +220,19 @@ public class BroadcastPlugin implements Plugin, Component {
         }
         JiveGlobals.setProperty("plugin.broadcast.serviceName", serviceName);
         // Re-register the service.
-        ComponentManager.getInstance().removeComponent(this.serviceName);
-        ComponentManager.getInstance().addComponent(serviceName, this);
+        try {
+            componentManager.removeComponent(this.serviceName);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
+        try {
+            componentManager.addComponent(serviceName, this);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
         this.serviceName = serviceName;
-        serviceJID =
-                new JID(serviceName + "." + XMPPServer.getInstance().getServerInfo().getName());
     }
 
     /**

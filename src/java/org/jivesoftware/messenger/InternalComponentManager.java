@@ -15,6 +15,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.xmpp.component.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,62 +28,73 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Derek DeMoro
  */
-public class ComponentManager {
+public class InternalComponentManager implements ComponentManager {
 
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
 
-    private static ComponentManager instance = new ComponentManager();
+    private static InternalComponentManager instance;
 
+    static {
+        instance = new InternalComponentManager();
+        ComponentManagerFactory.setComponentManager(instance);
+    }
 
-    /**
-     * Returns the singleton instance of <CODE>ComponentManager</CODE>,
-     * creating it if necessary.
-     * <p/>
-     *
-     * @return the singleton instance of <Code>ComponentManager</CODE>
-     */
-    public static ComponentManager getInstance() {
+    public static InternalComponentManager getInstance() {
         return instance;
     }
 
-    private ComponentManager() {
+    private InternalComponentManager() {
     }
 
-    /**
-     * Registers a <code>Component</code> with the server and maps
-     * to particular jid. A route for the new Component will be added to
-     * the <code>RoutingTable</code> based on the address of the component.
-     * Note: The address of the component will be a JID wih empties node and resource.
-     *
-     * @param jid       the jid to map to.
-     * @param component the <code>Component</code> to register.
-     */
-    public void addComponent(String jid, Component component) {
-        jid = new JID(jid).toBareJID();
-        components.put(jid, component);
+    public void addComponent(String subdomain, Component component) {
+        components.put(subdomain, component);
+
+        JID componentJID = new JID(subdomain + "." +
+                XMPPServer.getInstance().getServerInfo().getName());
 
         // Add the route to the new service provided by the component
-        XMPPServer.getInstance().getRoutingTable().addRoute(component.getAddress(), component);
+        XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
+                new RoutableComponent(componentJID, component));
 
         // Check for potential interested users.
         checkPresences();
     }
 
-    /**
-     * Removes a <code>Component</code> from the server. The route for the new Component
-     * will be removed from the <code>RoutingTable</code>.
-     *
-     * @param jid the jid mapped to the particular component.
-     */
-    public void removeComponent(String jid) {
-        JID componentJID = new JID(jid);
-        components.remove(componentJID.toBareJID());
+    public void removeComponent(String subdomain) {
+        components.remove(subdomain);
+
+        JID componentJID = new JID(subdomain + "." +
+                XMPPServer.getInstance().getServerInfo().getName());
 
         // Remove the route for the service provided by the component
         if (XMPPServer.getInstance().getRoutingTable() != null) {
             XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
         }
+    }
+
+    public void sendPacket(Component component, Packet packet) {
+        PacketRouter router;
+        router = XMPPServer.getInstance().getPacketRouter();
+        if (router != null) {
+            router.route(packet);
+        }
+    }
+
+    public String getProperty(String name) {
+        return JiveGlobals.getProperty(name);
+    }
+
+    public void setProperty(String name, String value) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean isExternalMode() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public Log getLog() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     /**
@@ -118,20 +130,6 @@ public class ComponentManager {
         presenceMap.put(prober, probee);
     }
 
-    /**
-     * Send a packet to the specified recipient. Please note that this sends packets only
-     * to outgoing jids and does to the incoming server reader.
-     *
-     * @param packet the packet to send.
-     */
-    public void sendPacket(Packet packet) {
-        PacketRouter router;
-        router = XMPPServer.getInstance().getPacketRouter();
-        if (router != null) {
-            router.route(packet);
-        }
-    }
-
     private void checkPresences() {
         for (JID prober : presenceMap.keySet()) {
             JID probee = presenceMap.get(prober);
@@ -141,17 +139,33 @@ public class ComponentManager {
                 Presence presence = new Presence();
                 presence.setFrom(prober);
                 presence.setTo(probee);
-                try {
-                    component.process(presence);
+                component.processPacket(presence);
 
-                    // No reason to hold onto prober reference.
-                    presenceMap.remove(prober);
-                }
-                catch (UnauthorizedException e) {
-                    // Do nothing. This error should never occur
-                }
-
+                // No reason to hold onto prober reference.
+                presenceMap.remove(prober);
             }
+        }
+    }
+
+    /**
+     * Exposes a Component as a RoutableChannelHandler.
+     */
+    public static class RoutableComponent implements RoutableChannelHandler {
+
+        private JID jid;
+        private Component component;
+
+        public RoutableComponent(JID jid, Component component) {
+            this.jid = jid;
+            this.component = component;
+        }
+
+        public JID getAddress() {
+            return jid;
+        }
+
+        public void process(Packet packet) throws UnauthorizedException, PacketException {
+            component.processPacket(packet);
         }
     }
 }

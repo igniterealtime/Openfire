@@ -20,6 +20,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.component.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class IQRouter extends BasicModule {
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
     private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
     private SessionManager sessionManager;
-    private ComponentManager componentManager;
+    private InternalComponentManager componentManager;
 
     /**
      * Creates a packet router.
@@ -124,7 +125,7 @@ public class IQRouter extends BasicModule {
         routingTable = server.getRoutingTable();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
-        componentManager = ComponentManager.getInstance();
+        componentManager = InternalComponentManager.getInstance();
     }
 
     /**
@@ -149,7 +150,7 @@ public class IQRouter extends BasicModule {
             }
             if (component != null) {
                 // A component was found that can handle the Packet
-                component.process(packet);
+                component.processPacket(packet);
             }
             else if (isLocalServer(recipientJID)) {
                 // Let the server handle the Packet

@@ -12,6 +12,8 @@ package org.jivesoftware.messenger;
 
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
+import org.xmpp.component.*;
+import org.xmpp.component.ComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.util.Log;
@@ -47,7 +49,8 @@ public class ComponentSession extends Session {
      */
     public static Session createSession(String serverName, XPPPacketReader reader,
             Connection connection) throws UnauthorizedException, IOException,
-            XmlPullParserException {
+            XmlPullParserException
+    {
         XmlPullParser xpp = reader.getXPPParser();
         Session session;
         String domain = xpp.getAttributeValue("", "to");
@@ -95,7 +98,7 @@ public class ComponentSession extends Session {
             return null;
         }
         // Check that the requested domain is not already in use
-        if (ComponentManager.getInstance().getComponent(domain) != null) {
+        if (InternalComponentManager.getInstance().getComponent(domain) != null) {
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
             sb.append("<stream:error>");
@@ -155,7 +158,7 @@ public class ComponentSession extends Session {
             else {
                 // Bind the domain to this component
                 ExternalComponent component = ((ComponentSession) session).getExternalComponent();
-                ComponentManager.getInstance().addComponent(domain, component);
+                InternalComponentManager.getInstance().addComponent(domain, component);
                 // Set the service name to the component
                 component.setServiceName(domain);
                 // Component has authenticated fine
@@ -181,7 +184,7 @@ public class ComponentSession extends Session {
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Since ComponentSessions are not being stored in the RoutingTable this messages is very
         // unlikely to be sent
-        component.process(packet);
+        component.processPacket(packet);
     }
 
     public ExternalComponent getExternalComponent() {
@@ -202,7 +205,7 @@ public class ComponentSession extends Session {
 
         private String serviceName;
 
-        public void process(Packet packet) {
+        public void processPacket(Packet packet) {
             if (conn != null && !conn.isClosed()) {
                 try {
                     conn.deliver(packet);
@@ -216,6 +219,22 @@ public class ComponentSession extends Session {
                     }
                 }
             }
+        }
+
+        public String getName() {
+            return null;
+        }
+
+        public String getDescription() {
+            return null;
+        }
+
+        public void initialize(JID jid, ComponentManager componentManager) {
+
+        }
+
+        public void shutdown() {
+
         }
 
         public JID getAddress() {

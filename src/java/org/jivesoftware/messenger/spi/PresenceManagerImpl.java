@@ -22,6 +22,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.xmpp.component.Component;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,13 +47,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private XMPPServer server;
     private PacketDeliverer deliverer;
 
-    private ComponentManager componentManager;
+    private InternalComponentManager componentManager;
 
     public PresenceManagerImpl() {
         super("Presence manager");
 
         // Use component manager for Presence Updates.
-        componentManager = ComponentManager.getInstance();
+        componentManager = InternalComponentManager.getInstance();
     }
 
     private void initializeCaches() {
@@ -306,7 +307,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 presence.setType(Presence.Type.probe);
                 presence.setFrom(server.createJID(prober, ""));
                 presence.setTo(probee);
-                component.process(presence);
+                component.processPacket(presence);
             }
             else {
                 Presence presence = (Presence) foreignUserCache.get(probee.toBareJID());

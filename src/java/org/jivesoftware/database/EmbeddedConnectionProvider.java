@@ -23,9 +23,9 @@ import java.sql.SQLException;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
- * <tt>jiveHome/database</tt>. The log file for this connection provider is stored at
- * <tt>[jiveHome]/logs/EmbeddedConnectionProvider.log</tt>, so you should ensure
- * that the <tt>[jiveHome]/logs</tt> directory exists.
+ * <tt>messengerHome/database</tt>. The log file for this connection provider is stored at
+ * <tt>[messengerHome]/logs/EmbeddedConnectionProvider.log</tt>, so you should ensure
+ * that the <tt>[messengerHome]/logs</tt> directory exists.
  *
  * @author Matt Tucker
  */
@@ -60,8 +60,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         synchronized (initLock) {
             try {
                 String driver = "org.hsqldb.jdbcDriver";
-                File jiveHome = new File(JiveGlobals.getJiveHome(), File.separator + "database" + File.separator + "messenger");
-                String path = jiveHome.getCanonicalPath();
+                File messengerHome = new File(JiveGlobals.getMessengerHome(), File.separator + "database" + File.separator + "messenger");
+                String path = messengerHome.getCanonicalPath();
 
                 String serverURL = "jdbc:hsqldb:" + path;
                 String username = "sa";

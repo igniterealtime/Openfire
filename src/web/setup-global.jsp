@@ -94,7 +94,7 @@
                 success = false;
                 errors.put("general","A connection to the database could not be "
                     + "made. View the error message by opening the "
-                    + "\"[jiveHome]" + File.separator + "logs" + File.separator + "error.log\" log "
+                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
                     + "file, then go back to fix the problem.");
             }
             else {

@@ -17,8 +17,8 @@
     boolean servlet22Installed = false;
     boolean jsp11Installed = false;
     boolean jiveJarsInstalled = false;
-    boolean jiveHomeExists = false;
-    File jiveHome = null;
+    boolean messengerHomeExists = false;
+    File messengerHome = null;
 
     // Check for JDK 1.5
     try {
@@ -41,20 +41,20 @@
     catch (ClassNotFoundException cnfe) {}
     // Check that the Messenger jar are installed:
     try {
-        loadClass("org.jivesoftware.xmpp.XMPPServer");
+        loadClass("org.jivesoftware.messenger.XMPPServer");
         jiveJarsInstalled = true;
     }
     catch (ClassNotFoundException cnfe) {}
 
     // Try to determine what the jiveHome directory is:
     try {
-        Class jiveGlobalsClass = loadClass("org.jivesoftware.xmpp.JiveGlobals");
-        Method getJiveHomeMethod = jiveGlobalsClass.getMethod("getJiveHome", (Class[])null);
-        String jiveHomeProp = (String)getJiveHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
-        if (jiveHomeProp != null) {
-            jiveHome = new File(jiveHomeProp);
-            if (jiveHome.exists()) {
-                jiveHomeExists = true;
+        Class jiveGlobalsClass = loadClass("org.jivesoftware.messenger.JiveGlobals");
+        Method getMessengerHomeMethod = jiveGlobalsClass.getMethod("getMessengerHome", (Class[])null);
+        String messengerHomeProp = (String)getMessengerHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (messengerHomeProp != null) {
+            messengerHome = new File(messengerHomeProp);
+            if (messengerHome.exists()) {
+                messengerHomeExists = true;
             }
         }
     }
@@ -64,7 +64,7 @@
 
     // If there were no errors, redirect to the main setup page
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled
-            || !jiveHomeExists)
+            || !messengerHomeExists)
     {
 %>
         <html>
@@ -173,13 +173,13 @@
             </tr>
 
         <%  }
-            if (jiveHomeExists) {
+            if (messengerHomeExists) {
         %>
             <tr>
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    Jive Home Directory (<%= jiveHome.toString() %>)
+                    Jive Home Directory (<%= messengerHome.toString() %>)
                     </span>
                 </td>
             </tr>
@@ -190,7 +190,7 @@
                 <td><img src="images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    Jive Home Directory - Not Set
+                    Messenger Home Directory - Not Set
                     </span>
                 </td>
             </tr>

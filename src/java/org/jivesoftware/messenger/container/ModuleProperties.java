@@ -40,7 +40,7 @@ public interface ModuleProperties {
 
     /**
      * Returns a Jive property. Jive properties are stored in the file
-     * <tt>jive_config.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * <tt>jive-messenger.xml</tt> that exists in the <tt>messengerHome/conf</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -185,7 +185,7 @@ public interface ModuleProperties {
     /**
      * Sets a Jive property. If the property doesn't already exists, a new
      * one will be created. Jive properties are stored in the file
-     * <tt>jive_config.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * <tt>jive-messenger.xml</tt> that exists in the <tt>messengerHome/conf</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>

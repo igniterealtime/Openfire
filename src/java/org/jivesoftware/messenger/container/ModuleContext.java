@@ -26,7 +26,7 @@ import java.util.TimeZone;
  * <p>There are some special Jive properties that will always be set:</p>
  * <p/>
  * <ul>
- * <li><strong>jiveHome</strong> - The directory where the XMPP server is
+ * <li><strong>messengerHome</strong> - The directory where the XMPP server is
  * installed</li>
  * <li><strong>locale</strong> - The locale settings used by Jive including
  * timezone, character encoding, date formats, etc.</li>

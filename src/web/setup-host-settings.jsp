@@ -281,7 +281,7 @@ function toggle(form,disabled) {
          value="<%= ((keystore != null) ? keystore : "") %>">
         <span class="jive-description">
         <br>
-        Filename (relative to jiveHome directory) of the certificate used for this server.
+        Filename (relative to meessengerHome directory) of the certificate used for this server.
         </span>
     </td>
 </tr>
@@ -307,7 +307,7 @@ function toggle(form,disabled) {
          value="<%= ((truststore != null) ? truststore : "") %>">
         <span class="jive-description">
         <br>
-        Filename (relative to jiveHome directory) of the store used for client certificates.
+        Filename (relative to messengerHome directory) of the store used for client certificates.
         </span>
     </td>
 </tr>

@@ -40,61 +40,19 @@
     Map errors = new HashMap();
 
     // Error checking
-    Map jiveHomeErrors = new HashMap();
+    Map messengerHomeErrors = new HashMap();
     // Get a handle on the jiveHome directory
-    File jiveHomeDir = new File(JiveGlobals.getJiveHome());
+    File messengerHomeDir = new File(JiveGlobals.getMessengerHome());
     // Validate it:
-    if (jiveHomeDir == null || !jiveHomeDir.exists()) {
-        jiveHomeErrors.put("exists","exists");
+    if (messengerHomeDir == null || !messengerHomeDir.exists()) {
+        messengerHomeErrors.put("exists","exists");
     }
     else {
-        if (!jiveHomeDir.canRead()) {
-            jiveHomeErrors.put("read","read");
+        if (!messengerHomeDir.canRead()) {
+            messengerHomeErrors.put("read","read");
         }
-        if (!jiveHomeDir.canWrite()) {
-            jiveHomeErrors.put("write","write");
-        }
-    }
-
-    // If this is JDK 1.3, check for dependencies:
-    boolean isJDK13 = false;
-    boolean isJDK14 = false;
-    try {
-        loadClass("java.util.TimerTask");
-        isJDK13 = true;
-    }
-    catch (Exception ignored) {}
-    try {
-        loadClass("java.nio.Buffer");
-        isJDK14 = true;
-    }
-    catch (Exception ignored) {}
-    Map depErrors = new HashMap();
-    if (isJDK13 && !isJDK14) {
-        // Check for jcert.jar, jnet.jar, jsse.jar
-        try {
-            loadClass("javax.security.cert.Certificate");
-        }
-        catch (ClassNotFoundException e) {
-            depErrors.put("jcert.jar","jcert.jar");
-        }
-        try {
-            loadClass("javax.net.SocketFactory");
-        }
-        catch (ClassNotFoundException e) {
-            depErrors.put("jnet.jar","jnet.jar");
-        }
-        try {
-            loadClass("javax.net.ssl.SSLSocket");
-        }
-        catch (ClassNotFoundException e) {
-            depErrors.put("jsse.jar","jsse.jar");
-        }
-        try {
-            loadClass("javax.sql.DataSource");
-        }
-        catch (ClassNotFoundException e) {
-            depErrors.put("jdbc2_0-stdext.jar","jdbc2_0-stdext.jar");
+        if (!messengerHomeDir.canWrite()) {
+            messengerHomeErrors.put("write","write");
         }
     }
 %>
@@ -231,29 +189,29 @@ below.
         jiveHome Directory
         <br>
         <span class="jive-info">
-        <%  boolean jiveHomeOK = true;
-            if (jiveHomeErrors.size() == 0) {
+        <%  boolean messengerHomeOK = true;
+            if (messengerHomeErrors.size() == 0) {
         %>
 
-            Valid jiveHome directory.
+            Valid messengerHome directory.
 
         <%  } else {
-                jiveHomeOK = false;
+                messengerHomeOK = false;
         %>
 
-            <%  if (jiveHomeErrors.get("exists") != null) { %>
+            <%  if (messengerHomeErrors.get("exists") != null) { %>
 
-                Unable to locate valid jiveHome directory. Please refer to the installation
+                Unable to locate valid messengerHome directory. Please refer to the installation
                 documentation for the correct way to set the jiveHome directory.
 
-            <%  } else if (jiveHomeErrors.get("read") != null) { %>
+            <%  } else if (messengerHomeErrors.get("read") != null) { %>
 
-                Setup was able to find your jiveHome directory but does not have read
+                Setup was able to find your messengerHome directory but does not have read
                 permission on it. Please alter the directory permissions.
 
-            <%  } else if (jiveHomeErrors.get("write") != null) { %>
+            <%  } else if (messengerHomeErrors.get("write") != null) { %>
 
-                Setup was able to find your jiveHome directory but does not have write permission
+                Setup was able to find your messengerHome directory but does not have write permission
                 on it. Please alter the directory permissions.
 
            
@@ -263,7 +221,7 @@ below.
         <%  } %>
         </span>
     </td>
-    <%  if (jiveHomeOK) { %>
+    <%  if (messengerHomeOK) { %>
 
         <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
         <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
@@ -283,7 +241,7 @@ below.
 
 <form action="setup-index.jsp">
 <div align="right">
-<%  if (!jiveHomeOK || !depsOK) { %>
+<%  if (!messengerHomeOK || !depsOK) { %>
 
     <input type="submit" value=" Continue " disabled onclick="return false;">
 

@@ -100,7 +100,7 @@
             }
             catch (Exception e) {
                 errors.put("general","Setting connection properties failed - please see the error "
-                        + "log located in jiveHome/logs for more details.");
+                        + "log located in messengerHome/logs for more details.");
                 Log.error(e);
             }
             // No errors setting the properties, so test the connection

@@ -53,7 +53,7 @@ public class SSLConfig {
             keystore = null;
         }
         else {
-            keystore = JiveGlobals.getJiveHome() + File.separator + keystore;
+            keystore = JiveGlobals.getMessengerHome() + File.separator + keystore;
         }
         keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass");
         if (keypass == null) {
@@ -67,7 +67,7 @@ public class SSLConfig {
             truststore = null;
         }
         else {
-            truststore = JiveGlobals.getJiveHome() + File.separator + truststore;
+            truststore = JiveGlobals.getMessengerHome() + File.separator + truststore;
         }
         trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass");
         if (trustpass == null) {

@@ -37,24 +37,21 @@ import org.dom4j.Document;
  * <p/>
  * <p>The boostrap container operates in a similar manner to the basic container
  * but alters the standard module layout for better packaging of server.
- * Notice that the bootstrap server runs from the jiveHome directory whether
- * the server is run in standalone mode (jiveHome == server directory) or
- * as a web-app (jiveHome == setting in jive_init.xml).</p>
+ * Notice that the bootstrap server runs from the messengerHome directory whether
+ * the server is run in standalone mode (messengerHome == server directory) or
+ * as a web-app (messengerHome == setting in messenger_init.xml).</p>
  * <p/>
  * <p>Bootstrap systems should have a directory layout that looks like:</p>
  * <p/>
  * <ul>
- * <li>config - Contains configuration information for the server as a whole
+ * <li>conf - Contains configuration information for the server as a whole
  * <ul>
- * <li>[product-name].xml - The configuration file
- * for the server and it's core modules. Product-name
- * varies, e.g. jive_messenger, jive_nntp, etc.</li>
- * <li>[product-name].license - Optional license file for the server</li>
+ * <li>jive-messenger.xml - The bootstrap configuration file.</li>
  * </ul>
  * </li>
- * <li>log - The root directory for log files</li>
+ * <li>logs - The root directory for log files</li>
  * <li>security - The security keystores for the server (if any)</li>
- * <li>plug-ins - The module directory for loading server modules</li>
+ * <li>plugins - The module directory for loading server modules</li>
  * </li>
  * <p/>
  * <p>Note that the root lib directory is NOT part
@@ -144,10 +141,10 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
     private List modules = new ArrayList();
 
     /**
-     * Location of the jiveHome directory. All configuration files should be
+     * Location of the messengerHome directory. All configuration files should be
      * located here.
      */
-    private File jiveHome;
+    private File messengerHome;
     private File logDir;
     private File configFile;
     private ClassLoader loader;
@@ -180,7 +177,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         try {
             // Let's specify jive_messenger.xml as the new config file.
             locateJiveHome();
-            context = new XMLModuleContext(null, configFile, jiveHome, logDir);
+            context = new XMLModuleContext(null, configFile, messengerHome, logDir);
             if ("true".equals(context.getProperty("setup"))) {
                 setupMode = false;
             }
@@ -254,7 +251,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
         catch (Exception e) {
             System.out.println("Database setup or configuration error: " +
                     "Please verify your database settings and check the " +
-                    "jiveHome/logs/jive.error.log file for detailed error messages.");
+                    "logs/error.log file for detailed error messages.");
             Log.error("Database could not be accessed", e);
             throw new IllegalArgumentException();
         }
@@ -347,14 +344,14 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * @param setupMode True if starting in setup mode.
      */
     private void loadPlugins(boolean setupMode) {
-        File pluginDir = new File(jiveHome + "/plug-ins");
+        File pluginDir = new File(messengerHome + "/plugins");
         if (pluginDir.exists()) {
             File[] plugins = pluginDir.listFiles();
             for (int i = 0; i < plugins.length; i++) {
                 if (plugins[i].isDirectory()) {
                     if (setupMode) {
                         // Only load web-admin plug-in
-                        if ("web-admin".equals(plugins[i].getName())) {
+                        if ("admin".equals(plugins[i].getName())) {
                             loadPlugin(plugins[i]);
                         }
                     }
@@ -396,7 +393,7 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 this.modules.add(mod);
             }
             else {
-                Log.warn("Plug-in " + pluginDir +
+                Log.warn("Plugin " + pluginDir +
                         " not loaded: no module.xml configuration file found");
             }
         }
@@ -562,31 +559,26 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
      * @throws FileNotFoundException If jiveHome could not be located
      */
     private void locateJiveHome() throws FileNotFoundException {
-        String jiveConfigName = "config" + File.separator + "jive-" + getFileCoreName() + ".xml";
+        String jiveConfigName = "conf" + File.separator + "jive-" + getFileCoreName() + ".xml";
         // First, try to load it jiveHome as a system property.
-        if (jiveHome == null) {
-            String homeProperty = System.getProperty("jiveHome");
+        if (messengerHome == null) {
+            String homeProperty = System.getProperty("messengerHome");
             try {
                 if (homeProperty != null) {
-                    jiveHome = verifyHome(homeProperty, jiveConfigName);
+                    messengerHome = verifyHome(homeProperty, jiveConfigName);
                 }
             }
             catch (FileNotFoundException fe) {
-                System.err.println("Messenger and Forums/KB cannot share " +
-                        "the same jiveHome directory!");
-                System.err.println(" *  A Forum/KB jiveHome directory was detected " +
-                        "using the system property 'jiveHome' pointing to " +
-                        homeProperty);
-                System.err.println(" *  Messenger will continue looking for jiveHome");
+
             }
         }
 
         // If we still don't have jiveHome, let's assume this is standalone
         // and just look for jiveHome in a standard sub-dir location and verify
         // by looking for the config file
-        if (jiveHome == null) {
+        if (messengerHome == null) {
             try {
-                jiveHome = verifyHome("..", jiveConfigName);
+                messengerHome = verifyHome("..", jiveConfigName);
             }
             catch (FileNotFoundException fe) {
                 String path = "..";
@@ -596,47 +588,33 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
                 catch (Exception e) {
                     System.err.println("Could not resolve path to '..'");
                 }
-                System.err.println("Messenger and Forums/KB cannot share " +
-                        "the same jiveHome directory!");
-                System.err.println(" *  A Forum/KB jiveHome directory was detected " +
-                        "where a standalone Messenger installation was " +
-                        "expected: " + path);
-                System.err.println(" *  Messenger will continue looking for jiveHome");
             }
         }
 
-        // If jiveHome is still null, no outside process has set it and
-        // we have to attempt to load the value from jive_init.xml,
+        // If messengerHome is still null, no outside process has set it and
+        // we have to attempt to load the value from messenger_init.xml,
         // which must be in the classpath.
-        if (jiveHome == null) {
+        if (messengerHome == null) {
             InputStream in = null;
             try {
-                in = getClass().getResourceAsStream("/jive_init.xml");
+                in = getClass().getResourceAsStream("/messenger_init.xml");
                 if (in != null) {
                     Document doc = XPPReader.parseDocument(new InputStreamReader(in),
                             this.getClass());
                     String path = doc.getRootElement().getText();
                     try {
                         if (path != null) {
-                            jiveHome = verifyHome(path,
+                            messengerHome = verifyHome(path,
                                     jiveConfigName);
                         }
                     }
                     catch (FileNotFoundException fe) {
-                        System.err.println("Messenger and Forums/KB cannot share " +
-                                "the same jiveHome directory");
-                        System.err.println(" *  A Forum/KB jiveHome directory was " +
-                                "detected by following the directory " +
-                                "specified in the resource stream " +
-                                "'/jive_init.xml'" +
-                                "probably located on your classpath. The" +
-                                "init file pointed to " +
-                                path);
+                        fe.printStackTrace();
                     }
                 }
             }
             catch (Exception e) {
-                System.err.println("Error loading jive_init.xml to find jiveHome.");
+                System.err.println("Error loading messenger_init.xml to find messengerHome.");
                 e.printStackTrace();
             }
             finally {
@@ -652,14 +630,14 @@ public abstract class BootstrapContainer implements Container, ServiceLookupProv
             }
         }
 
-        if (jiveHome == null) {
-            System.err.println("Could not locate jiveHome");
+        if (messengerHome == null) {
+            System.err.println("Could not locate messengerHome");
             throw new FileNotFoundException();
         }
         else {
-            JiveGlobals.jiveHome = jiveHome.toString();
-            configFile = new File(jiveHome, jiveConfigName);
-            logDir = new File(jiveHome, JIVE_LOG_DIR);
+            JiveGlobals.messengerHome = messengerHome.toString();
+            configFile = new File(messengerHome, jiveConfigName);
+            logDir = new File(messengerHome, JIVE_LOG_DIR);
         }
     }
 }

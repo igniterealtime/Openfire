@@ -19,7 +19,7 @@ import javax.swing.*;
 public class Launcher {
 
     private Process messengerd = null;
-    private String configFile = JiveGlobals.getJiveHome() + File.separator + "config" +
+    private String configFile = JiveGlobals.getMessengerHome() + File.separator + "config" +
             File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 

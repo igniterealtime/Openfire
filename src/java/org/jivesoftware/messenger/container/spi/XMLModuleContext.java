@@ -247,7 +247,7 @@ public class XMLModuleContext implements ModuleContext {
 
     /**
      * Loads properties if necessary. Property loading must be done lazily so
-     * that we give outside classes a chance to set <tt>jiveHome</tt>.
+     * that we give outside classes a chance to set <tt>messengerHome</tt>.
      */
     private synchronized void loadProperties(File filename) {
         if (properties == null) {

@@ -59,16 +59,16 @@ public class Log {
     /**
      * This method is used to initialize the Log class. For normal operations this method
      * should <b>never</b> be called, rather it's only publically available so that the class
-     * can be reset by the setup process once the jiveHome directory has been specified.
+     * can be reset by the setup process once the messengerHome directory has been specified.
      */
     public static void initLog() {
         try {
             logDirectory = JiveGlobals.getXMLProperty("log.directory");
             if (logDirectory == null) {
-                if (JiveGlobals.getJiveHome() != null) {
-                    File jiveHome = new File(JiveGlobals.getJiveHome());
-                    if (jiveHome.exists() && jiveHome.canWrite()) {
-                        logDirectory = (new File(jiveHome, "logs")).toString();
+                if (JiveGlobals.getMessengerHome() != null) {
+                    File messengerHome = new File(JiveGlobals.getMessengerHome());
+                    if (messengerHome.exists() && messengerHome.canWrite()) {
+                        logDirectory = (new File(messengerHome, "logs")).toString();
                     }
                 }
             }
@@ -83,10 +83,10 @@ public class Log {
                 logDir.mkdir();
             }
 
-            logNameDebug = logDirectory + "jive.debug.log";
-            logNameInfo = logDirectory + "jive.info.log";
-            logNameWarn = logDirectory + "jive.warn.log";
-            logNameError = logDirectory + "jive.error.log";
+            logNameDebug = logDirectory + "debug.log";
+            logNameInfo = logDirectory + "info.log";
+            logNameWarn = logDirectory + "warn.log";
+            logNameError = logDirectory + "error.log";
 
             debugPattern = JiveGlobals.getXMLProperty("log.debug.format");
             infoPattern = JiveGlobals.getXMLProperty("log.info.format");
@@ -105,7 +105,7 @@ public class Log {
             debugEnabled = "true".equals(JiveGlobals.getXMLProperty("log.debug.enabled"));
         }
         catch (Exception e) {
-            // we'll get an exception if jiveHome isn't setup yet - we ignore that since
+            // we'll get an exception if messengerHome isn't setup yet - we ignore that since
             // it's sure to be logged elsewhere :)
         }
 
@@ -137,9 +137,9 @@ public class Log {
         Exception ioe = null;
 
         try {
-            // jiveHome was not setup correctly
+            // messengerHome was not setup correctly
             if (logName == null) {
-                throw new IOException("LogName was null - JiveHome not set?");
+                throw new IOException("LogName was null - MessengerHome not set?");
             }
             else {
                 RevolvingFileStrategy fileStrategy = new RevolvingFileStrategy(logName, 5);

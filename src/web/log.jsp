@@ -90,7 +90,7 @@
     String filename = log + ".log";
     File logFile = new File(logDir, filename);
 
-    BufferedReader in = new BufferedReader(new FileReader(logFile));
+    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
     String line = null;
     int totalNumLines = 0;
     while ((line=in.readLine()) != null) {
@@ -102,7 +102,7 @@
         numLines = totalNumLines;
     }
     String[] lines = new String[numLines];
-    in = new BufferedReader(new FileReader(logFile));
+    in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
     // skip lines
     int start = totalNumLines - numLines;
     if (start < 0) { start = 0; }

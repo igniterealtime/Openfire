@@ -65,6 +65,13 @@ public interface Connection {
      */
     XMLWriter getSerializer() throws UnauthorizedException;
 
+     /**
+     * <p>Obtain the Writer used to send data to the client.</p>
+     * <P>The writer should be used with caution.</p>
+     *
+     * @return The Writer underlying this connection
+     * @throws UnauthorizedException If caller doesn't have permission to access this resource
+     */
     Writer getWriter() throws UnauthorizedException;
 
     /**

@@ -1,5 +1,3 @@
-<%@ taglib uri="core" prefix="c"%>
-<%@ taglib uri="fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -13,9 +11,13 @@
                  java.text.DateFormat,
                  java.util.HashMap,
                  java.util.Map,
-                 org.jivesoftware.admin.*" %>
+                 org.jivesoftware.admin.*"
+    errorPage="error.jsp"
+%>
 
-<%-- Define Administration Bean --%>
+<%@ taglib uri="core" prefix="c"%>
+<%@ taglib uri="fmt" prefix="fmt" %>
+
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" scope="page" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -31,7 +33,6 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <c:set var="success" />
-
 
 <%! // Global vars and methods:
 
@@ -146,140 +147,145 @@
 
 
 <c:if test="${success}" >
-    <p class="jive-success-text">
-    Settings updated.
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 </c:if>
-<%  if (errors.get("general") != null) { %>
 
-    <p class="jive-error-text">
-    <%= errors.get("general") %>
-    </p>
+<%  if (errors.containsKey("general") || errors.containsKey("quota")) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        <%  if (errors.containsKey("general")) { %>
+            <%= errors.get("general") %>
+        <%  } else if (errors.containsKey("quota")) { %>
+            <%= errors.get("quota") %>
+        <%  } %>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
 
-
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<form action="offline-messages.jsp">
-<tr><td class="text" colspan="2">
+<p>
 XMPP provides the option for servers to store-and-forward IM messages when they sent to a user that
 is not logged in. Supporting store-and-forward of 'offline messages' can be a very convenient
 feature of an XMPP deployment. However, offline messages, like email, can take up a significant
 amount of space on a server. <fmt:message key="title" bundle="${lang}" /> provides the option to handle offline messages in a
 variety of ways. Select the offline message handling strategy that best suites your needs.
-</td></tr>
+</p>
 
-<tr valign="top" class="">
-    <td width="1%" nowrap>
-        <input type="radio" name="strategy" value="<%= BOUNCE %>" id="rb01"
-         <%= ((strategy==BOUNCE) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb01"><b>Always Bounce</b></label> - Never store the message, bounce the user
-        back to the sender.
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        <input type="radio" name="strategy" value="<%= DROP %>" id="rb02"
-         <%= ((strategy==DROP) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb02"><b>Always Drop</b></label> - Never store the message, drop the message
-        so the sender is not notified.
-    </td>
-</tr>
-<tr valign="top" class="">
-    <td width="1%" nowrap>
-        <input type="radio" name="strategy" value="<%= STORE %>" id="rb03"
-         <%= ((strategy==STORE) ? "checked" : "") %>>
-    </td>
-    <td width="99%">
-        <label for="rb03"><b>Store the Message</b></label> - Store the message for later. The
-        message will be delivered when the recipient next logs-in. Choose a storage policy and
-        storage store max size below.
-    </td>
-</tr>
-<tr valign="top">
-    <td width="1%" nowrap>
-        &nbsp;
-    </td>
-    <td width="99%">
+<form action="offline-messages.jsp">
 
-        <table cellpadding="4" cellspacing="0" border="0" width="100%">
+<fieldset>
+    <legend>Offline Message Policy</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
         <tr valign="top">
             <td width="1%" nowrap>
-                <input type="radio" name="storeStrategy" value="<%= ALWAYS_STORE %>" id="rb05"
-                 onclick="this.form.strategy[2].checked=true;"
-                 <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
+                <input type="radio" name="strategy" value="<%= BOUNCE %>" id="rb01"
+                 <%= ((strategy==BOUNCE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb05"><b>Always Store</b></label> - Always save the message.
+                <label for="rb01"><b>Always Bounce</b></label> - Never store the message, bounce the user
+                back to the sender.
             </td>
         </tr>
         <tr valign="top">
             <td width="1%" nowrap>
-                <input type="radio" name="storeStrategy" value="<%= STORE_AND_BOUNCE%>" id="rb06"
-                 onclick="this.form.strategy[2].checked=true;"
-                 <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
+                <input type="radio" name="strategy" value="<%= DROP %>" id="rb02"
+                 <%= ((strategy==DROP) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb06"><b>Always Store then Bounce</b></label> - Always save the message
-                but bounce the message back to the sender.
+                <label for="rb02"><b>Always Drop</b></label> - Never store the message, drop the message
+                so the sender is not notified.
+            </td>
+        </tr>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>
+                <input type="radio" name="strategy" value="<%= STORE %>" id="rb03"
+                 <%= ((strategy==STORE) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb03"><b>Store the Message</b></label> - Store the message for later. The
+                message will be delivered when the recipient next logs-in. Choose a storage policy and
+                storage store max size below.
             </td>
         </tr>
         <tr valign="top">
             <td width="1%" nowrap>
-                <input type="radio" name="storeStrategy" value="<%= STORE_AND_DROP %>" id="rb07"
-                 onclick="this.form.strategy[2].checked=true;"
-                 <%= ((storeStrategy==STORE_AND_DROP) ? "checked" : "") %>>
+                &nbsp;
             </td>
             <td width="99%">
-                <label for="rb07"><b>Always Store then Drop</b></label> - Always save the message
-                but drop the message so the sender is not notified.
+
+                <table cellpadding="4" cellspacing="0" border="0" width="100%">
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="storeStrategy" value="<%= ALWAYS_STORE %>" id="rb05"
+                         onclick="this.form.strategy[2].checked=true;"
+                         <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
+                    </td>
+                    <td width="99%">
+                        <label for="rb05"><b>Always Store</b></label> - Always save the message.
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="storeStrategy" value="<%= STORE_AND_BOUNCE%>" id="rb06"
+                         onclick="this.form.strategy[2].checked=true;"
+                         <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
+                    </td>
+                    <td width="99%">
+                        <label for="rb06"><b>Always Store then Bounce</b></label> - Always save the message
+                        but bounce the message back to the sender.
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="storeStrategy" value="<%= STORE_AND_DROP %>" id="rb07"
+                         onclick="this.form.strategy[2].checked=true;"
+                         <%= ((storeStrategy==STORE_AND_DROP) ? "checked" : "") %>>
+                    </td>
+                    <td width="99%">
+                        <label for="rb07"><b>Always Store then Drop</b></label> - Always save the message
+                        but drop the message so the sender is not notified.
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        Offline message storage limit (in bytes):
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="text" size="5" maxlength="12" name="quota"
+                         value="<%= (quota>0 ? ""+quota : "") %>"
+                         onclick="this.form.strategy[2].checked=true;">
+                        bytes (1024 bytes = 1 K, 1048576 bytes = 1 Megabyte)
+                    </td>
+                </tr>
+                </table>
+
             </td>
         </tr>
-        <tr>
-            <td colspan="2"><img src="images/blank.gif" width="1" height="1" border="0"></td>
-        </tr>
-        </table>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
 
-    </td>
-</tr>
-</table>
-
-</ul>
-
-<table  cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="2" align="left">Message Storage Limit</td></tr>
-
-<ul>
-
-<%  if (errors.get("quota") != null) { %>
-
-    <p class="jive-error-text">
-    <%= errors.get("quota") %>
-    </p>
-
-<%  } %>
-
-<tr class="">
-<td>The storage limit (in bytes) of stored messages:</td></tr>
-
-<tr class="">
-   
-    <td width="99%">
-        <input type="text" size="5" maxlength="12" name="quota"
-         value="<%= (quota>0 ? ""+quota : "") %>"
-         onclick="this.form.strategy[2].checked=true;">
-        bytes (1024 bytes = 1 K, 1048576 bytes = 1 Megabyte)
-    </td>
-</tr>
-</table>
-
-</ul>
-
-<br>
+<br><br>
 
 <input type="submit" name="update" value="Save Settings">
 

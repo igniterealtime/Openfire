@@ -171,6 +171,8 @@ CREATE TABLE jiveProperty (
 
 CREATE TABLE mucRoom (
   roomID              INT           NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
   name                NVARCHAR(50)  NOT NULL,
   description         NVARCHAR(255),
   canChangeSubject    INT           NOT NULL,

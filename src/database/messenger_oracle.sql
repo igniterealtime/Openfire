@@ -169,6 +169,8 @@ REM // MUC Tables
 
 CREATE TABLE mucRoom(
   roomID              INT           NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
   name                VARCHAR2(50)  NOT NULL,
   description         VARCHAR2(255),
   canChangeSubject    INTEGER       NOT NULL,

@@ -59,7 +59,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
     private int conflictLimit;
     private Random randomResource = new Random();
 
-    private Map<String, Session> preAuthenticatedSessions = new HashMap<String, Session>();
+    private Map<String, Session> preAuthenticatedSessions = new ConcurrentHashMap<String, Session>();
 
     /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.

@@ -20,6 +20,8 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
 import org.mortbay.log.*;
 import org.mortbay.http.SunJsseListener;
+import org.mortbay.http.HttpListener;
+import org.mortbay.util.InetAddrPort;
 
 /**
  * The admin console plugin. It starts a Jetty instance on the configured
@@ -73,13 +75,16 @@ public class AdminConsolePlugin implements Plugin {
 
             jetty = new Server();
 
-            // Configure HTTP socket listener
+            // Configure HTTP socket secureListener
             port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
-            jetty.addListener(Integer.toString(port));
+            String domain = JiveGlobals.getProperty("xmpp.domain");
 
+            HttpListener httpListener = jetty.addListener(new InetAddrPort(domain, port));
+
+            SunJsseListener secureListener = new SunJsseListener();
             boolean secureStarted = false;
             try {
-                SunJsseListener listener = new SunJsseListener();
+
                 // Get the keystore location. The default location is security/keystore
                 String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
                     "resources" + File.separator + "security" + File.separator + "keystore");
@@ -98,13 +103,14 @@ public class AdminConsolePlugin implements Plugin {
                 String trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
                 trustpass = trustpass.trim();
 
-                listener.setKeystore(keyStoreLocation);
-                listener.setKeyPassword(keypass);
-                listener.setPassword(keypass);
+                secureListener.setHost(domain);
+                secureListener.setKeystore(keyStoreLocation);
+                secureListener.setKeyPassword(keypass);
+                secureListener.setPassword(keypass);
                 securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
-                listener.setPort(securePort);
+                secureListener.setPort(securePort);
 
-                jetty.addListener(listener);
+                jetty.addListener(secureListener);
                 secureStarted = true;
             }
             catch (Exception e) {
@@ -127,9 +133,9 @@ public class AdminConsolePlugin implements Plugin {
                 Log.info("Started secure admin console on port: " + securePort);
                 System.out.println("Admin console listening at:");
                 System.out.println("  http://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+                        httpListener.getHost() + ":" + port);
                 System.out.println("  https://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+                         secureListener.getHost()+ ":" + securePort);
             }
         }
         catch (Exception e) {

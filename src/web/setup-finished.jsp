@@ -36,10 +36,9 @@
 </p>
 
 <p>
-This installation of <fmt:message key="title" bundle="${lang}" /> is now complete. Please close this window and
-restart your server.
-Launch the admin using either the launcher or start as a service to enter the admin console.
-
+This installation of <fmt:message key="title" bundle="${lang}" /> is now complete.
+To continue, please restart the server then
+<a href="index.jsp">login to the admin console</a>.
 </p>
 
 <center><input type="button" value="Exit Setup" onClick="javascript:window.close();"></a>

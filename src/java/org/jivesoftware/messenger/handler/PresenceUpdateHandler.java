@@ -19,9 +19,7 @@ import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.spi.SessionImpl;
 import org.jivesoftware.messenger.roster.CachedRoster;
-import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.roster.CachedRoster;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.*;
 

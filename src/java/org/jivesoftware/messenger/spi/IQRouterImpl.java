@@ -14,7 +14,7 @@ package org.jivesoftware.messenger.spi;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import javax.xml.stream.XMLStreamException;
+import java.util.Map;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
@@ -38,13 +38,15 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
     public OfflineMessageStore messageStore;
     public RoutingTable routingTable;
     public LinkedList iqHandlers = new LinkedList();
-    private HashMap namespace2Handlers = new HashMap();
+    private Map namespace2Handlers = new HashMap();
+    private SessionManager sessionManager;
 
     /**
      * Creates a packet router.
      */
     public IQRouterImpl() {
         super("XMPP IQ Router");
+        sessionManager = SessionManager.getInstance();
     }
 
     public void route(IQ packet) {
@@ -54,17 +56,16 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         Session session = SessionManager.getInstance().getSession(packet.getFrom());
         if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED
                 || (isLocalServer(packet.getTo())
-                && ("jabber:iq:auth".equals(packet.getChildNamespace())
-                || "jabber:iq:register".equals(packet.getChildNamespace())))
+                && ("jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI())
+                || "jabber:iq:register".equals(packet.getChildElement().getNamespaceURI())))
         ) {
             handle(packet);
         }
         else {
-            packet.setRecipient(packet.getOriginatingSession().getAddress());
-            packet.setSender(null);
-            packet.setError(XMPPError.Code.UNAUTHORIZED);
+            packet.setTo(sessionManager.getSession(packet.getFrom()).getAddress());
+            packet.setError(PacketError.Condition.not_authorized);
             try {
-                packet.getOriginatingSession().process(packet);
+                sessionManager.getSession(packet.getFrom()).process(packet);
             }
             catch (UnauthorizedException ue) {
                 Log.error(ue);
@@ -117,7 +118,7 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                             // Answer an error since the server can't handle packets sent to a node
                             packet.setError(PacketError.Condition.service_unavailable);
                         }
-                        Session session = packet.getOriginatingSession();
+                        Session session = sessionManager.getSession(packet.getFrom());
                         if (session != null) {
                             session.getConnection().deliver(packet);
                         }
@@ -139,16 +140,13 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         }
         catch (NoSuchRouteException e) {
             Log.info("Packet sent to unreachable address " + packet);
-            Session session = packet.getOriginatingSession();
+            Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
                 try {
-                    packet.setError(XMPPError.Code.SERVICE_UNAVAILABLE);
+                    packet.setError(PacketError.Condition.service_unavailable);
                     session.getConnection().deliver(packet);
                 }
                 catch (UnauthorizedException ex) {
-                    // do nothing
-                }
-                catch (XMLStreamException ex) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
                 }
             }
@@ -156,7 +154,7 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             try {
-                Session session = packet.getOriginatingSession();
+                Session session = sessionManager.getSession(packet.getFrom());
                 if (session != null) {
                     Connection conn = session.getConnection();
                     if (conn != null) {

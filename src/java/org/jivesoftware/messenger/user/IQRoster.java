@@ -14,13 +14,11 @@ package org.jivesoftware.messenger.user;
 import java.util.Iterator;
 import java.util.List;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XPPReader;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 

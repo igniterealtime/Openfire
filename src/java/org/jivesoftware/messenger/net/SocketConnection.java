@@ -26,7 +26,6 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.spi.BasicConnection;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Packet;
 
 /**
@@ -79,7 +78,7 @@ public class SocketConnection extends BasicConnection {
      * @throws NullPointerException If the socket is null
      */
     public SocketConnection(PacketDeliverer deliverer, Auditor auditor,
-                            Socket socket, boolean isSecure) throws IOException, XmlPullParserException {
+                            Socket socket, boolean isSecure) throws IOException {
 
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
@@ -175,7 +174,7 @@ public class SocketConnection extends BasicConnection {
      *
      * @param packet The packet to deliver.
      */
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (isClosed()) {
             deliverer.deliver(packet);
         }

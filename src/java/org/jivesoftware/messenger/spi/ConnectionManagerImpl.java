@@ -44,7 +44,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private void createSocket() {
         if (!isStarted ||  isSocketStarted || auditManager == null ||
                 sessionManager == null || deliverer == null ||
-                router == null || serverName == null || packetFactory == null)
+                router == null || serverName == null)
         {
             return;
         }
@@ -106,7 +106,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public PacketRouter router;
     private String serverName;
     public XMPPServer server;
-    public PacketFactory packetFactory;
 
     public void addSocket(Socket sock, boolean isSecure)  {
         try {
@@ -137,7 +136,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
         trackInfo.getTrackerClasses().put(AuditManager.class, "auditManager");
-        trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         return trackInfo;
     }
 

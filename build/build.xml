@@ -68,7 +68,7 @@
     <property name="version.major" value="2" />
     <property name="version.minor" value="0" />
     <property name="version.revision" value="0" />
-    <property name="version.extra" value="beta1" />
+    <property name="version.extra" value="beta" />
     <property name="dist.prefix" value="jive_messenger" />
 
     <!-- ======================================================================================= -->

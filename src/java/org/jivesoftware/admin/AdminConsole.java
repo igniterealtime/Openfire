@@ -118,7 +118,7 @@ public class AdminConsole {
      * @return the element.
      */
     public static Element getElemnetByID(String id) {
-        return (Element)generatedModel.selectSingleNode("//item[@id='" + id + "']");
+        return (Element)generatedModel.selectSingleNode("//*[@id='" + id + "']");
     }
 
     private static void load() {
@@ -217,9 +217,15 @@ public class AdminConsole {
 
     private static void overrideTab(Element tab, Element overrideTab) {
         // Override name, url, description.
-        tab.addAttribute("name", overrideTab.attributeValue("name"));
-        tab.addAttribute("url", overrideTab.attributeValue("url"));
-        tab.addAttribute("description", overrideTab.attributeValue("description"));
+        if (overrideTab.attributeValue("name") != null) {
+            tab.addAttribute("name", overrideTab.attributeValue("name"));
+        }
+        if (overrideTab.attributeValue("url") != null) {
+            tab.addAttribute("url", overrideTab.attributeValue("url"));
+        }
+        if (overrideTab.attributeValue("description") != null) {
+            tab.addAttribute("description", overrideTab.attributeValue("description"));
+        }
         // Override sidebar items.
         for (Iterator i=overrideTab.elementIterator(); i.hasNext(); ) {
             Element sidebar = (Element)i.next();
@@ -240,7 +246,9 @@ public class AdminConsole {
 
     private static void overrideSidebar(Element sidebar, Element overrideSidebar) {
         // Override name.
-        sidebar.addAttribute("name", overrideSidebar.attributeValue("name"));
+        if (overrideSidebar.attributeValue("name") != null) {
+            sidebar.addAttribute("name", overrideSidebar.attributeValue("name"));
+        }
         // Override entries.
         for (Iterator i=overrideSidebar.elementIterator(); i.hasNext(); ) {
             Element entry = (Element)i.next();
@@ -261,9 +269,15 @@ public class AdminConsole {
 
     private static void overrideEntry(Element entry, Element overrideEntry) {
         // Override name.
-        entry.addAttribute("name", overrideEntry.attributeValue("name"));
-        entry.addAttribute("url", overrideEntry.attributeValue("url"));
-        entry.addAttribute("description", overrideEntry.attributeValue("description"));
+        if (overrideEntry.attributeValue("name") != null) {
+            entry.addAttribute("name", overrideEntry.attributeValue("name"));
+        }
+        if (overrideEntry.attributeValue("url") != null) {
+            entry.addAttribute("url", overrideEntry.attributeValue("url"));
+        }
+        if (overrideEntry.attributeValue("description") != null) {
+            entry.addAttribute("description", overrideEntry.attributeValue("description"));
+        }
         // Override any sidebars contained in the entry.
         for (Iterator i=overrideEntry.elementIterator(); i.hasNext(); ) {
             Element sidebar = (Element)i.next();

@@ -111,7 +111,7 @@ Sorted by Room ID
         <th>&nbsp;</th>
         <th>Room ID</th>
         <th>Description</th>
-        <th>Lock</th>
+        <th>Persistent</th>
         <th>Users</th>
         <th>Edit</th>
         <th>Destroy</th>
@@ -147,10 +147,10 @@ Sorted by Room ID
             <%=  room.getDescription() %>
         </td>
         <td width="1%" align="center">
-                <% if (room.isLocked()) { %>
-                <img src="images/lock-16x16.gif" width="16" height="16" border="0" alt="Room is locked">
+                <% if (room.isPersistent()) { %>
+                <img src="images/tape.gif" width="16" height="16" border="0" alt="Room is persistent">
                 <% } else { %>
-                <img src="images/lock-open-16x16.gif" width="16" height="16" border="0" alt="Room is unlocked">
+                <img src="images/blank.gif" width="16" height="16" border="0" alt="Room is temporary">
                 <% } %>
         </td>
         <td width="1%" align="center">

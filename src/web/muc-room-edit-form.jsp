@@ -20,15 +20,19 @@
                  org.dom4j.DocumentHelper,
                  org.dom4j.QName,
                  org.xmpp.packet.IQ,
-                 org.xmpp.packet.Message"
+                 org.xmpp.packet.Message,
+                 org.xmpp.packet.JID,
+                 org.jivesoftware.messenger.auth.UnauthorizedException"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters
+    boolean create = ParamUtils.getBooleanParameter(request,"create");
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean addsuccess = ParamUtils.getBooleanParameter(request,"addsuccess");
@@ -53,31 +57,32 @@
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        response.sendRedirect("muc-room-edit-form.jsp?roomName=" + roomName);
-        return;
-    }
-
-    // Load the room object
-    MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
-
-    if (room == null) {
-        // The requested room name does not exist so return to the list of the existing rooms
         response.sendRedirect("muc-room-summary.jsp");
         return;
     }
 
-    // Handle a save
+    // Load the room object
+    MUCRoom room = null;
+    if (!create) {
+        room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+
+        if (room == null) {
+            // The requested room name does not exist so return to the list of the existing rooms
+            response.sendRedirect("muc-room-summary.jsp");
+            return;
+        }
+    }
+
+    // Handle an save
     Map errors = new HashMap();
     if (save) {
         // do validation
+
         if (naturalName == null) {
             errors.put("roomconfig_roomname","roomconfig_roomname");
         }
         if (description == null) {
             errors.put("roomconfig_roomdesc","roomconfig_roomdesc");
-        }
-        if (roomSubject == null) {
-            errors.put("room_topic","room_topic");
         }
         if (maxUsers == null) {
             errors.put("roomconfig_maxusers","roomconfig_maxusers");
@@ -88,6 +93,34 @@
         if (whois == null) {
             errors.put("roomconfig_whois","roomconfig_whois");
         }
+        if (create && errors.size() == 0) {
+            if (roomName == null || roomName.contains("@")) {
+                errors.put("roomName","roomName");
+            }
+            else {
+                // Check that the requested room ID is available
+                room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+                if (room != null) {
+                    errors.put("room_already_exists", "room_already_exists");
+                }
+                else {
+                    // Try to create a new room
+                    JID address = new JID(webManager.getUser().getUsername(), webManager.getServerInfo().getName(), null);
+                    try {
+                        room = webManager.getMultiUserChatServer().getChatRoom(roomName, address);
+                        // Check if the room was created concurrently by another user
+                        if (!room.getOwners().contains(address.toBareJID())) {
+                            errors.put("room_already_exists", "room_already_exists");
+                        }
+                    }
+                    catch (UnauthorizedException e) {
+                        // This user is not allowed to create rooms
+                        errors.put("not_enough_permissions", "not_enough_permissions");
+                    }
+                }
+            }
+        }
+
         if (errors.size() == 0) {
             // Set the new configuration sending an IQ packet with an dataform
             FormField field;
@@ -183,41 +216,59 @@
             // Send the IQ packet that will modify the room's configuration
             room.getIQOwnerHandler().handleIQ(iq, room.getRole());
 
-            // Change the subject of the room by sending a new message
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setSubject(roomSubject);
-            message.setFrom(room.getRole().getRoleAddress());
-            room.changeSubject(message, room.getRole());
+            if (roomSubject != null) {
+                // Change the subject of the room by sending a new message
+                Message message = new Message();
+                message.setType(Message.Type.groupchat);
+                message.setSubject(roomSubject);
+                message.setFrom(room.getRole().getRoleAddress());
+                message.setTo(room.getRole().getRoleAddress());
+                room.changeSubject(message, room.getRole());
+            }
 
             // Changes good, so redirect
-            response.sendRedirect("muc-room-edit-form.jsp?success=true&roomName=" + roomName);
+            String params = "";
+            if (create) {
+                params = "addsuccess=true&roomName=" + roomName;
+            }
+            else {
+                params = "success=true&roomName=" + roomName;
+            }
+            response.sendRedirect("muc-room-edit-form.jsp?" + params);
             return;
         }
     }
     else {
-        naturalName = room.getNaturalLanguageName();
-        description = room.getDescription();
-        roomSubject = room.getSubject();
-        maxUsers = Integer.toString(room.getMaxUsers());
-        broadcastModerator = Boolean.toString(room.canBroadcastPresence("moderator"));
-        broadcastParticipant = Boolean.toString(room.canBroadcastPresence("participant"));
-        broadcastVisitor = Boolean.toString(room.canBroadcastPresence("visitor"));
-        password = room.getPassword();
-        confirmPassword = room.getPassword();
-        whois = (room.canAnyoneDiscoverJID() ? "anyone" : "moderator");
-        publicRoom = Boolean.toString(room.isPublicRoom());
-        // Only set the room persistence property if a value was not provided already. If the room has
-        // just been created, this property will already have a value of "true"
-        if (persistentRoom == null) {
-            persistentRoom = Boolean.toString(room.isPersistent());
+        if (create) {
+            // TODO Make this default values configurable (see JM-79)
+            maxUsers = "30";
+            broadcastModerator = "true";
+            broadcastParticipant = "true";
+            broadcastVisitor = "true";
+            whois = "moderator";
+            publicRoom = "true";
+            // Rooms created from the admin console are always persistent
+            persistentRoom = "true";
         }
-        moderatedRoom = Boolean.toString(room.isModerated());
-        membersOnly = Boolean.toString(room.isMembersOnly());
-        allowInvites = Boolean.toString(room.canOccupantsInvite());
-        changeSubject = Boolean.toString(room.canOccupantsChangeSubject());
-        enableLog = Boolean.toString(room.isLogEnabled());
-
+        else {
+            naturalName = room.getNaturalLanguageName();
+            description = room.getDescription();
+            roomSubject = room.getSubject();
+            maxUsers = Integer.toString(room.getMaxUsers());
+            broadcastModerator = Boolean.toString(room.canBroadcastPresence("moderator"));
+            broadcastParticipant = Boolean.toString(room.canBroadcastPresence("participant"));
+            broadcastVisitor = Boolean.toString(room.canBroadcastPresence("visitor"));
+            password = room.getPassword();
+            confirmPassword = room.getPassword();
+            whois = (room.canAnyoneDiscoverJID() ? "anyone" : "moderator");
+            publicRoom = Boolean.toString(room.isPublicRoom());
+            persistentRoom = Boolean.toString(room.isPersistent());
+            moderatedRoom = Boolean.toString(room.isModerated());
+            membersOnly = Boolean.toString(room.isMembersOnly());
+            allowInvites = Boolean.toString(room.canOccupantsInvite());
+            changeSubject = Boolean.toString(room.canOccupantsChangeSubject());
+            enableLog = Boolean.toString(room.isLogEnabled());
+        }
     }
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
@@ -228,9 +279,15 @@
     String title = "Room Administration";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+roomName));
-    pageinfo.setSubPageID("muc-room-edit-form");
-    pageinfo.setExtraParams("roomName="+roomName);
+    if (create) {
+        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?create=true"));
+        pageinfo.setPageID("muc-room-create");
+    }
+    else {
+        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+roomName));
+        pageinfo.setSubPageID("muc-room-edit-form");
+    }
+    pageinfo.setExtraParams("roomName="+roomName+"&create="+create);
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
@@ -258,40 +315,82 @@
 
 <%  } %>
 
-<p>
-Use the form below to edit the room settings.
-</p>
+<%  if (!create) { %>
+    <p>
+    Use the form below to edit the room settings.
+    </p>
+    <div class="jive-table">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <thead>
+        <tr>
+            <th scope="col">Room ID</th>
+            <th scope="col">Users</th>
+            <th scope="col">Created On</th>
+            <th scope="col">Last Modified</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><%= room.getName() %></td>
+            <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
+            <td><%= dateFormatter.format(room.getCreationDate()) %></td>
+            <td><%= dateFormatter.format(room.getModificationDate()) %></td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    <br>
+    <p>Change the room settings of this room using the form below</p>
+<%  } else { %>
+    <p>Use the form below to create a new persistent room. The new room will be immediately available.</p>
 
-<div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr>
-        <th scope="col">Room ID</th>
-        <th scope="col">Users</th>
-        <th scope="col">Created On</th>
-        <th scope="col">Last Modified</th>
-    </tr>
-</thead>
-<tbody>
-    <tr>
-        <td><%= room.getName() %></td>
-        <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
-        <td><%= dateFormatter.format(room.getCreationDate()) %></td>
-        <td><%= dateFormatter.format(room.getModificationDate()) %></td>
-    </tr>
-</tbody>
-</table>
-</div>
-<br>
-<p>Change the room settings of this room using the form below</p>
+    <% if (errors.containsKey("room_already_exists") || errors.containsKey("not_enough_permissions")) { %>
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        <%  if (errors.containsKey("room_already_exists")) { %>
+
+        Error creating the room. A room with the request ID already exists.
+
+        <%  } else if (errors.containsKey("not_enough_permissions")) { %>
+
+        Error creating the room. You do not have enough privileges to create rooms.
+
+        <%  } %>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+    <%  } %>
+
+<%  } %>
 <form action="muc-room-edit-form.jsp">
-
-<input type="hidden" name="roomName" value="<%= roomName %>">
+<% if (!create) { %>
+    <input type="hidden" name="roomName" value="<%= roomName %>">
+<% } %>
 <input type="hidden" name="save" value="true">
+<input type="hidden" name="create" value="<%= create %>">
+<input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">
 
     <table width="100%" border="0"> <tr>
          <td width="70%"><table width="100%"  border="0">
                 <tbody>
+                <% if (create) { %>
+                <tr>
+                    <td>Room ID:</td>
+                    <td><input type="text" name="roomName" value="<%= roomName != null ? roomName : ""%>">
+                    <%  if (errors.get("roomName") != null) { %>
+
+                        <span class="jive-error-text">
+                        Please enter a valid ID. Do not include the service name in the ID.
+                        </span>
+
+                    <%  } %>
+                    </td>
+                </tr>
+                <% } %>
                  <tr>
                     <td>Room Name:</td>
                     <td><input type="text" name="roomconfig_roomname" value="<%= (naturalName == null ? "" : naturalName) %>">
@@ -401,16 +500,12 @@ Use the form below to edit the room settings.
                     <LABEL FOR="public">List Room in Directory</LABEL></td>
             </tr>
             <tr>
-                <td><input type="checkbox" name="roomconfig_persistentroom" value="true" id="persistent" <% if ("true".equals(persistentRoom)) out.write("checked");%>>
-                    <LABEL FOR="persistent">Make Room Persistant</LABEL></td>
-            </tr>
-            <tr>
                 <td><input type="checkbox" name="roomconfig_moderatedroom" value="true" id="moderated" <% if ("true".equals(moderatedRoom)) out.write("checked");%>>
                     <LABEL FOR="moderated">Make Room Moderated</LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_membersonly" value="true" id="membersOnly" <% if ("true".equals(membersOnly)) out.write("checked");%>>
-                    <LABEL FOR="membersOnly">Invitation Required to Enter</LABEL></td>
+                    <LABEL FOR="membersOnly">Make Room Members-only</LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_allowinvites" value="true" id="allowinvites" <% if ("true".equals(allowInvites)) out.write("checked");%>>

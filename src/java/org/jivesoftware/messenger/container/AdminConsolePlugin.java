@@ -19,6 +19,7 @@ import java.io.File;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
 import org.mortbay.log.*;
+import org.mortbay.http.SunJsseListener;
 
 /**
  * The admin console plugin. It starts a Jetty instance on the configured
@@ -29,7 +30,8 @@ import org.mortbay.log.*;
 public class AdminConsolePlugin implements Plugin {
 
     private static Server jetty = null;
-    private String port = null;
+    private int port;
+    private int securePort;
 
     /**
      * Create a jetty module.
@@ -72,8 +74,42 @@ public class AdminConsolePlugin implements Plugin {
             jetty = new Server();
 
             // Configure HTTP socket listener
-            port = JiveGlobals.getXMLProperty("adminConsole.port", "9090");
-            jetty.addListener(port);
+            port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
+            jetty.addListener(Integer.toString(port));
+
+            boolean secureStarted = false;
+            try {
+                SunJsseListener listener = new SunJsseListener();
+                // Get the keystore location. The default location is security/keystore
+                String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
+                    "resources" + File.separator + "security" + File.separator + "keystore");
+                keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
+
+                // Get the keystore password. The default password is "changeit".
+                String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
+                keypass = keypass.trim();
+
+                // Get the truststore location; default at security/truststore
+                String trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
+                        "resources" + File.separator + "security" + File.separator + "truststore");
+                trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator + trustStoreLocation;
+
+                // Get the truststore passwprd; default is "changeit".
+                String trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
+                trustpass = trustpass.trim();
+
+                listener.setKeystore(keyStoreLocation);
+                listener.setKeyPassword(keypass);
+                listener.setPassword(keypass);
+                securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
+                listener.setPort(securePort);
+
+                jetty.addListener(listener);
+                secureStarted = true;
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
 
             // Add web-app
             WebApplicationContext webAppContext = jetty.addWebApplication("/",
@@ -83,8 +119,18 @@ public class AdminConsolePlugin implements Plugin {
             jetty.start();
 
             Log.info("Started admin console on port: " + port);
-            System.out.println("Admin console listening at http://" +
-                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+            if (!secureStarted) {
+                System.out.println("Admin console listening at http://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+            }
+            else {
+                Log.info("Started secure admin console on port: " + securePort);
+                System.out.println("Admin console listening at:");
+                System.out.println("  http://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+                System.out.println("  https://" +
+                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+            }
         }
         catch (Exception e) {
             Log.error("Trouble initializing admin console", e);

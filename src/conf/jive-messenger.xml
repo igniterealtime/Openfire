@@ -18,7 +18,8 @@
 <jive>
     <adminConsole>
         <port>9090</port>
-        <!-- By default, only the user with the username "admin" can login 
+        <securePort>9091</securePort>
+        <!-- By default, only the user with the username "admin" can login
          to the admin console. Alternatively, you can specify a comma-delimitted 
          list usernames that should be authorized to login by setting the  
          <authorizedUsernames> field below. --> 

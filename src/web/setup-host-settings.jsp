@@ -16,8 +16,9 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
-    int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
-    boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled",true);
+    int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", -1);
+    int securePort = ParamUtils.getIntParameter(request, "securePort", -1);
+    boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
 
     boolean doContinue = request.getParameter("continue") != null;
 
@@ -37,6 +38,7 @@
 
             xmppSettings.put("xmpp.domain",domain);
             xmppSettings.put("adminConsole.port",Integer.toString(embeddedPort));
+            xmppSettings.put("adminConsole.securePort",Integer.toString(securePort));
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "true" );
             session.setAttribute("xmppSettings", xmppSettings);
@@ -54,7 +56,8 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getProperty("xmpp.domain");
-        embeddedPort = JiveGlobals.getIntProperty("adminConsole.port", 9090);
+        embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
+        securePort = JiveGlobals.getXMLProperty("adminConsole.port", 9091);
         sslEnabled = JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
 
         // If the domain is still blank, guess at the value:
@@ -118,6 +121,26 @@ LABEL { font-weight : normal; }
         <span class="jive-description">
         <br>
         <fmt:message key="setup.host.settings.port_number" />
+        </span>
+    </td>
+</tr>
+<tr valign="top">
+    <td width="1%" nowrap>
+        <fmt:message key="setup.host.settings.secure_port" />
+        <%  if (errors.get("securePort") != null) { %>
+
+            <span class="jive-error-text"><br>
+            <fmt:message key="setup.host.settings.invalid_port" />
+            </span>
+
+        <%  } %>
+    </td>
+    <td width="99%">
+        <input type="text" size="6" maxlength="6" name="securePort"
+         value="<%= ((securePort != -1) ? ""+securePort : "9091") %>">
+        <span class="jive-description">
+        <br>
+        <fmt:message key="setup.host.settings.secure_port_number" />
         </span>
     </td>
 </tr>

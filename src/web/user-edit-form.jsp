@@ -140,7 +140,7 @@
                 <%  if (errors.get("email") != null) { %>
 
                     <span class="jive-error-text">
-                    fmt:message key="user.edit.form.enter_mail" />
+                    <fmt:message key="user.edit.form.enter_mail" />
                     </span>
 
                 <%  } %>

@@ -261,7 +261,7 @@ public class SessionManager implements ConnectionCloseListener {
          *
          * @param packet
          */
-        private void broadcast(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
+        private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
             Iterator entries = resources.values().iterator();
             while (entries.hasNext()) {
                 Session session = (Session)entries.next();
@@ -776,7 +776,7 @@ public class SessionManager implements ConnectionCloseListener {
      *
      * @param packet The packet to be broadcast
      */
-    public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException {
+    public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
         sessionLock.readLock().lock();
         try {
             SessionMap sessionMap = (SessionMap)sessions.get(username);

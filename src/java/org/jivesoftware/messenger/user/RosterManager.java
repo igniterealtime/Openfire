@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.XMPPAddress;
 import org.xmpp.packet.JID;
 
 /**

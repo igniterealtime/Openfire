@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.user.spi;
 
 import java.util.Iterator;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
 import org.jivesoftware.messenger.ChannelHandler;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.RoutingTable;
@@ -218,20 +217,15 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
 
     private void broadcast(IQRoster roster) throws UnauthorizedException {
-        try {
-            if (server == null) {
-                server = (XMPPServer)ServiceLookupFactory.getLookup().lookup(XMPPServer.class);
-            }
-            JID recipient = server.createJID(username, null);
-            roster.setTo(recipient);
-            if (sessionManager == null) {
-                sessionManager = SessionManager.getInstance();
-            }
-            sessionManager.userBroadcast(username, roster);
+        if (server == null) {
+            server = (XMPPServer)ServiceLookupFactory.getLookup().lookup(XMPPServer.class);
         }
-        catch (XMLStreamException e) {
-            // We couldn't send to the user, no big deal
+        JID recipient = server.createJID(username, null);
+        roster.setTo(recipient);
+        if (sessionManager == null) {
+            sessionManager = SessionManager.getInstance();
         }
+        sessionManager.userBroadcast(username, roster);
     }
 
     public int getCachedSize() {

@@ -26,6 +26,10 @@ import java.util.*;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#owner. This kind of 
@@ -41,7 +45,7 @@ public class IQOwnerHandler {
 
     private XDataFormImpl configurationForm;
 
-    private MetaDataFragment probeResult;
+    private Element probeResult;
 
     public IQOwnerHandler(MUCRoomImpl chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
@@ -74,8 +78,8 @@ public class IQOwnerHandler {
             throw new ForbiddenException();
         }
 
-        IQ reply = packet.createResult();
-        Element element = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
+        IQ reply = IQ.createResultIQ(packet);
+        Element element = packet.getChildElement();
 
         // Analyze the action to perform based on the included element
         Element formElement = element.element(QName.get("x", "jabber:x:data"));
@@ -98,17 +102,17 @@ public class IQOwnerHandler {
                     // configuration form
                     if (!element.elementIterator().hasNext()) {
                         refreshConfigurationFormValues();
-                        reply.setChildFragment(probeResult);
+                        reply.setChildElement(probeResult.createCopy());
                     }
                     // An unknown and possibly incorrect element was included in the query
                     // element so answer a BAD_REQUEST error
                     else {
-                        reply.setError(XMPPError.Code.BAD_REQUEST);
+                        reply.setError(PacketError.Condition.bad_request);
                     }
                 }
             }
         }
-        if (reply.getRecipient() != null) {
+        if (reply.getTo() != null) {
             // Send a reply only if the sender of the original packet was from a real JID. (i.e. not
             // a packet generated locally)
             router.route(reply);
@@ -212,13 +216,12 @@ public class IQOwnerHandler {
                     item = (Element)items.next();
                     affiliation = item.attributeValue("affiliation");
                     if (hasJID) {
-                        bareJID = XMPPAddress.parseBareAddress(item.attributeValue("jid"));
+                        bareJID = new JID(item.attributeValue("jid")).toBareJID();
                     }
                     else {
                         // Get the bare JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        bareJID = room.getOccupant(nick).getChatUser().getAddress()
-                                .toBareStringPrep();
+                        bareJID = room.getOccupant(nick).getChatUser().getAddress().toBareJID();
                     }
                     jids.put(bareJID, affiliation);
                 }

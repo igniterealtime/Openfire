@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.XMPPFragment;
 import org.dom4j.Element;
 
 /**
@@ -28,7 +27,7 @@ import org.dom4j.Element;
  *
  * @author Iain Shigeoka
  */
-public interface IQRosterItem extends XMPPFragment, RosterItem {
+public interface IQRosterItem extends RosterItem {
 
     /**
      * <p>Obtain the roster item as an XML DOM element.</p>

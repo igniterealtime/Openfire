@@ -16,11 +16,11 @@ import org.jivesoftware.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.util.*;
 
 import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
 
 import javax.naming.InitialContext;
 
@@ -861,7 +861,8 @@ class InitPropLoader {
         try {
             in = getClass().getResourceAsStream("/messenger_init.xml");
             if (in != null) {
-                Document doc = XPPReader.parseDocument(new InputStreamReader(in), this.getClass());
+                SAXReader reader = new SAXReader();
+                Document doc = reader.read(in);
                 messengerHome = doc.getRootElement().getText();
             }
         }
@@ -869,13 +870,8 @@ class InitPropLoader {
             Log.error("Error loading messenger_init.xml to find messengerHome.", e);
         }
         finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            }
-            catch (Exception e) {
-            }
+            try { if (in != null) { in.close(); } }
+            catch (Exception e) { }
         }
         if (messengerHome != null) {
             messengerHome = messengerHome.trim();

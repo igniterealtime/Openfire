@@ -17,9 +17,12 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Routes packets to the appropriate transport gateway or drops the packet.
@@ -38,9 +41,9 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
         transports.put(transport.getName(), transport);
     }
 
-    public void process(XMPPPacket packet) throws UnauthorizedException, PacketException {
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
         boolean handled = false;
-        String host = packet.getRecipient().getHost();
+        String host = packet.getTo().getDomain();
         for (Channel channel : transports.values()) {
             if (channel.getName().equalsIgnoreCase(host)) {
                 channel.add(packet);
@@ -48,11 +51,11 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
             }
         }
         if (!handled) {
-            XMPPAddress recipient = packet.getRecipient();
-            XMPPAddress sender = packet.getSender();
-            packet.setError(XMPPError.Code.REMOTE_SERVER_TIMEOUT);
-            packet.setSender(recipient);
-            packet.setRecipient(sender);
+            JID recipient = packet.getTo();
+            JID sender = packet.getFrom();
+            packet.setError(PacketError.Condition.remote_server_timeout);
+            packet.setFrom(recipient);
+            packet.setTo(sender);
             try {
                 deliverer.deliver(packet);
             }
@@ -61,9 +64,6 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
             }
             catch (PacketException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-            catch (XMLStreamException xse) {
-                Log.error(xse);
             }
         }
     }

@@ -13,7 +13,6 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Delivers packets to locally connected streams. This is the opposite
@@ -33,5 +32,5 @@ public interface PacketDeliverer {
      * @param packet The packet to route
      * @throws java.lang.NullPointerException If the packet is null or the packet could not be routed
      */
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException, XmlPullParserException;
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException;
 }

@@ -14,14 +14,13 @@ package org.jivesoftware.messenger;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
 import org.dom4j.io.XMLWriter;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.io.Writer;
 
 /**
- * <p>Represents a connection on the server.</p>
+ * Represents a connection on the server.
  *
  * @author Iain Shigeoka
  */
@@ -138,7 +137,6 @@ public interface Connection {
      *
      * @param packet The packet to deliver.
      * @throws UnauthorizedException If caller doesn't have permission to access this resource
-     * @throws org.xmlpull.v1.XmlPullParserException if there was a problem sending the packet
      */
-    void deliver(Packet packet) throws UnauthorizedException, XmlPullParserException;
+    void deliver(Packet packet) throws UnauthorizedException;
 }

@@ -125,13 +125,15 @@ public class OfflineMessageStrategy extends BasicModule {
             Message response = new Message();
             response.setTo(message.getFrom());
             response.setFrom(xmppServer.createJID(null, null));
-            response.setBody("Message could not be delivered to " + message.getTo() + ". User is offline or unreachable.");
+            response.setBody("Message could not be delivered to " + message.getTo() +
+                    ". User is offline or unreachable.");
 
             Session session = sessionManager.getSession(message.getFrom());
             session.getConnection().deliver(response);
 
             Message errorResponse = message.createCopy();
-            errorResponse.setError(new PacketError(PacketError.Type.continue_processing, PacketError.Condition.item_not_found));
+            errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
+                    PacketError.Type.continue_processing));
             session.getConnection().deliver(errorResponse);
         }
         catch (Exception e) {

@@ -96,6 +96,7 @@
     <property name="deploy.jar.dir" value="${jar.dest.dir}" />
     <property name="anttools.src.dir" value="${src.dir}/tools" />
     <property name="anttools.target.dir" value="${target.dir}/tools" />
+    <property name="copy.dbscripts" value="true" />
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j" />
     <property name="installer.src" value="${basedir}/build/installer" />
@@ -472,9 +473,14 @@
         </copy>
 
         <!-- Copy database scripts -->
-        <copy todir="${prepare.out.dir}/resources">
-            <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
-        </copy>
+        <if>
+            <equals arg1="${copy.dbscripts}" arg2="true" />
+            <then>
+                <copy todir="${prepare.out.dir}/resources">
+                    <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
+                </copy>
+            </then>
+        </if>
 
         <!-- Copy security resources -->
         <copy todir="${prepare.out.dir}/resources">

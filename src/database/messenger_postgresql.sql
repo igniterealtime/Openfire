@@ -184,6 +184,7 @@ CREATE TABLE mucRoom (
   logEnabled          INTEGER       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    INTEGER       NOT NULL,
+  lastActiveDate      CHAR(15)      NULL,
   inMemory            INTEGER       NOT NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );

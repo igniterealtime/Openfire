@@ -147,6 +147,7 @@ CREATE TABLE mucRoom (
   logEnabled          TINYINT       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    TINYINT       NOT NULL,
+  lastActiveDate      CHAR(15)      NULL,
   inMemory            TINYINT       NOT NULL,
   PRIMARY KEY (name),
   INDEX mucRoom_roomid_idx (roomID)

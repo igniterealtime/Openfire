@@ -91,7 +91,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * The number of milliseconds a user must be idle before he/she gets kicked from all the rooms.
      */
-    private int user_idle = 1800000;
+    private int user_idle = -1;
     /**
      * Task that kicks idle users from the rooms.
      */

@@ -14,7 +14,8 @@
                  java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.*"
+                 org.jivesoftware.messenger.*,
+                 org.xmpp.packet.Presence"
     errorPage="error.jsp"
 %>
 
@@ -138,23 +139,23 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             <%  if (presenceManager.isAvailable(user)) {
                     Presence presence = presenceManager.getPresence(user);
             %>
-                <% if (presence.getShow() == Presence.SHOW_NONE) { %>
+                <% if (presence.getShow() == null) { %>
                     <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
                     Available
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
+                <% if (presence.getShow() == Presence.Show.chat) { %>
                     <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
                     Available to Chat
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
+                <% if (presence.getShow() == Presence.Show.away) { %>
                     <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
                     Away
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_XA) { %>
+                <% if (presence.getShow() == Presence.Show.xa) { %>
                     <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
                     Extended Away
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_DND) { %>
+                <% if (presence.getShow() == Presence.Show.dnd) { %>
                     <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
                     Do not Disturb
                 <% } %>

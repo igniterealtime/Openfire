@@ -18,8 +18,6 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.net.SocketPacketWriteHandler;
 import org.xmpp.packet.Packet;
 
-import javax.xml.stream.XMLStreamException;
-
 /**
  * In-memory implementation of the packet deliverer service
  *
@@ -39,12 +37,12 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         super("Packet Delivery");
     }
 
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException, XMLStreamException {
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (packet == null) {
             throw new PacketException("Packet was null");
         }
         if (deliverHandler == null) {
-            throw new XMLStreamException("Could not send packet - no route" + packet.toString());
+            throw new PacketException("Could not send packet - no route" + packet.toString());
         }
         deliverHandler.process(packet);
     }

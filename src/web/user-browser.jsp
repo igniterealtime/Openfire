@@ -5,18 +5,13 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.util.Iterator"
+                 java.util.Iterator,
+                 org.jivesoftware.messenger.user.User"
     errorPage="error.jsp"
 %>
 
 <%@ include file="global.jsp" %>
 
-<%  // Check to see if the server is down.
-    if (xmppServer == null) {
-        response.sendRedirect("error-serverdown.jsp");
-        return;
-    }
-%>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);

@@ -17,7 +17,8 @@
                  java.text.DateFormat,
                  java.util.HashMap,
                  org.jivesoftware.messenger.user.*,
-                 java.util.Map"
+                 java.util.Map,
+                 org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
 
@@ -81,13 +82,13 @@
                     // loop through all sessions based on the user assoc with the JID, send
                     // message to all
                     for (int i=0; i<jids.length; i++) {
-                        XMPPAddress address = XMPPAddress.parseJID(jids[i]);
+                        JID address = new JID(jids[i]);
                         Session s = sessionManager.getSession(address);
                         sessionManager.sendServerMessage(address, null, message);
                     }
                 }
                 else {
-                    sessionManager.sendServerMessage(XMPPAddress.parseJID(jid),null,message);
+                    sessionManager.sendServerMessage(new JID(jid),null,message);
                 }
             }
             if (username != null){

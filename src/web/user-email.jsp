@@ -6,7 +6,9 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.UserManager,
-                 java.text.DateFormat"
+                 java.text.DateFormat,
+                 org.jivesoftware.messenger.user.User,
+                 org.jivesoftware.messenger.user.spi.UserManagerImpl"
     errorPage="error.jsp"
 %>
 

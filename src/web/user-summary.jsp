@@ -16,7 +16,7 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.PresenceManager,
-                 org.jivesoftware.messenger.Presence"
+                 org.xmpp.packet.Presence"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -141,19 +141,19 @@ Sorted by Username
             <%  if (presenceManager.isAvailable(user)) {
                     Presence presence = presenceManager.getPresence(user);
             %>
-                <% if (presence.getShow() == Presence.SHOW_NONE) { %>
+                <% if (presence.getShow() == null) { %>
                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available">
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_CHAT) { %>
+                <% if (presence.getShow() == Presence.Show.chat) { %>
                 <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="Available to Chat">
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_AWAY) { %>
+                <% if (presence.getShow() == Presence.Show.away) { %>
                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Away">
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_XA) { %>
+                <% if (presence.getShow() == Presence.Show.xa) { %>
                 <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="Extended Away">
                 <% } %>
-                <% if (presence.getShow() == Presence.SHOW_DND) { %>
+                <% if (presence.getShow() == Presence.Show.dnd) { %>
                 <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="Do not Disturb">
                 <% } %>
 

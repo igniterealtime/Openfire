@@ -8,7 +8,9 @@ import="java.text.DateFormat,
                  org.jivesoftware.messenger.group.GroupManager,
                  org.jivesoftware.messenger.group.Group,
         java.net.URLEncoder,
-        java.net.URLDecoder"%>
+        java.net.URLDecoder,
+        org.jivesoftware.messenger.user.UserManager,
+        org.jivesoftware.messenger.user.UserNotFoundException"%>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%
@@ -19,21 +21,23 @@ import="java.text.DateFormat,
     boolean add = request.getParameter("add") != null;
     boolean delete = request.getParameter("remove") != null;
     boolean update = request.getParameter("update") != null;
-    String  users = ParamUtils.getParameter(request, "users");
+    String users = ParamUtils.getParameter(request, "users");
     String [] adminIDs = ParamUtils.getParameters(request, "admin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
-    String  groupName = ParamUtils.getParameter(request, "group");
+    String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
     boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
     String newName = ParamUtils.getParameter(request, "newName");
+    String newDescription = ParamUtils.getParameter(request, "newDescription");
 
-    Group   group = groupManager.getGroup(groupName);
+    Group group = groupManager.getGroup(groupName);
 
-    boolean nameChanged = false;
-    if(newName != null && newName.length() > 0){
+    boolean groupInfoChanged = false;
+    if (newName != null && newName.length() > 0) {
         group.setName(newName);
+        group.setDescription(newDescription);
         groupName = newName;
-        nameChanged = true;
+        groupInfoChanged = true;
     }
 
     if (update) {
@@ -49,7 +53,7 @@ import="java.text.DateFormat,
             }
         }
         Iterator groupIter = Collections.unmodifiableCollection(group.getAdmins()).iterator();
-        Set      removeList = new HashSet();
+        Set removeList = new HashSet();
         while (groupIter.hasNext()) {
             String m = (String) groupIter.next();
             if (!adminIDSet.contains(m)) {
@@ -67,20 +71,29 @@ import="java.text.DateFormat,
         return;
     }
     else if (add && users != null) {
-        String hostName = webManager.getXMPPServer().getServerInfo().getName();
         StringTokenizer tokenizer = new StringTokenizer(users, ",");
+        int count = 0;
         while (tokenizer.hasMoreTokens()) {
-            String tok = tokenizer.nextToken();
-            String address = tok;
-            if (address.indexOf("@") == -1) {
-                address = address + "@" + hostName;
-            }
-            // Add To Group as member by default.
-            if (!group.getMembers().contains(address) && !group.getAdmins().contains(address)) {
-                group.getMembers().add(address);
+            String username = tokenizer.nextToken();
+            // Add to group as member by default.
+            if (!group.getMembers().contains(username) && !group.getAdmins().contains(username)) {
+                // Ensure that the user is valid
+                try {
+                    UserManager.getInstance().getUser(username);
+                    group.getMembers().add(username);
+                    count++;
+                }
+                catch (UserNotFoundException unfe) { }
             }
         }
-        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&success=true");
+        if (count > 0) {
+            response.sendRedirect("group-edit.jsp?group=" +
+                    URLEncoder.encode(groupName, "UTF-8") + "&success=true");
+        }
+        else {
+            response.sendRedirect("group-edit.jsp?group=" +
+                    URLEncoder.encode(groupName, "UTF-8") + "&success=false");
+        }
         return;
     }
     else if (delete) {
@@ -92,11 +105,13 @@ import="java.text.DateFormat,
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true");
         return;
     }
-    DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
+    boolean success = groupInfoChanged || "true".equals(request.getParameter("success")) ||
+            "true".equals(request.getParameter("deletesuccess")) ||
+            "true".equals(request.getParameter("updatesuccess"));
 %>
     <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <% // Title of this page and breadcrumbs
-    String     title = "Edit Group";
+    String title = "Edit Group";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp"));
@@ -105,49 +120,37 @@ import="java.text.DateFormat,
 %>
     <jsp:include page="top.jsp" flush="true"/>
     <jsp:include page="title.jsp" flush="true"/>
-    <script language="JavaScript" type="text/javascript">
-        function openWin(el) {
-            var win = window.open(
-                          'user-browser.jsp?formName=f&elName=agents', 'newWin',
-                          'width=500,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
-        }
-    </script>
     <p>
-        Below is a summary of properties for the group as well as admins and members. Use the forms on the page to add
-        members and optionally designate them as groups administrators.
+        Edit group settings and add or remove group members and administrators
+        using the forms below.
     </p>
 <%
-    if (nameChanged){
+    if (success) {
 %>
-            <p class="jive-success-text">
-            Name has been changed successfully.
-            </p>
-<%
-    }
-%>
-<%
-    if ("true".equals(request.getParameter("success"))) {
-%>
-            <p class="jive-success-text">
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        <% if (groupInfoChanged) { %>
+        Group information updated successfully.
+        <% } else if ("true".equals(request.getParameter("success"))) { %>
             User(s) added successfully.
-            </p>
-<%
-    }
-    else if ("true".equals(request.getParameter("deletesuccess"))) {
-%>
-            <p class="jive-success-text">
+        <% } else if ("true".equals(request.getParameter("deletesuccess"))) { %>
             User(s) deleted successfully.
-            </p>
-<%
-    }
-    else if ("true".equals(request.getParameter("updatesuccess"))) {
-%>
-            <p class="jive-success-text">
+        <% } else if ("true".equals(request.getParameter("updatesuccess"))) { %>
             User(s) updated successfully.
-            </p>
+        <%
+            }
+        %>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 <%
     }
 %>
+
 <form name="ff" action="group-edit.jsp">
 <input type="hidden" name="group" value="<%= groupName %>"/>
 
@@ -161,31 +164,48 @@ import="java.text.DateFormat,
                 <td  width="1%">
                     Name:
                 </td>
+                <% if(!edit) { %>
                 <td align=left nowrap width="1%">
                     <b><%= group.getName() %></b>
                 </td>
-                <% if(!edit) { %>
                 <td>
-                  <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
+                    <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
                     <img src="images/edit-16x16.gif" border="0">
                    </a>
                 </td>
-                <% }else { %>
+                <% } else { %>
 
                 <td>
-                New Name:<input type="text" name="newName"><input type="submit" value="Change">
+                <input type="text" name="newName" value="<%= group.getName() %>">
                 </td>
 
                 <% } %>
+            </tr>
             <tr>
                 <td width="1%">
                     Description:
                 </td>
+                <% if(!edit) { %>
                 <td colspan="3">
-                    <%= ((group.getDescription() != null) ? group.getDescription() : "No Description") %>
+                    <%= ((group.getDescription() != null) ? group.getDescription() : "<i>No Description</i>") %>
                 </td>
+                <% } else { %>
+
+                <td>
+                <input type="text" name="newDescription" value="<%= group.getDescription() != null ? group.getDescription() : "" %>">
+                </td>
+
+                <% } %>
             </tr>
+            <% if(edit) { %>
+            <tr>
+            <td colspan="3">
+            <input type="submit" value="Change">
+            </td>
+            </tr>
+            <% } %>
         </table>
+
     </fieldset> </form>
     <br>
 
@@ -202,12 +222,6 @@ import="java.text.DateFormat,
                     &nbsp;<input type="submit" name="addbutton" value="Add">
                 </td>
             </tr>
-            <td width="1%">
-            </td>
-            <td nowrap align="left" class="jive-description">
-                Comma delimited list. Example: "user1@site.com", "user2@site.com"
-            </td>
-            </tr>
         </table>
     </form>
 
@@ -215,11 +229,11 @@ import="java.text.DateFormat,
         <input type="hidden" name="group" value="<%= groupName %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
             <tr>
-                <th width="10%">Name</th> <th width="60%">Address</th> <th>Admin</th> <th>Remove</th>
+                <th>Username</th><th width="1%">Admin</th><th width="1%">Remove</th>
             </tr>
             <!-- Add admins first -->
 <%
-            int memberCount = group.getCachedSize();
+            int memberCount = group.getMembers().size() + group.getAdmins().size();
             Iterator members = group.getMembers().iterator();
             Iterator admins = group.getAdmins().iterator();
 %>
@@ -227,7 +241,7 @@ import="java.text.DateFormat,
             if (memberCount == 0) {
 %>
                 <tr>
-                    <td align="center" colspan="4">
+                    <td align="center" colspan="3">
                         <br>
                         No members in this group. Use the form above to add some.
                         <br>
@@ -240,19 +254,15 @@ import="java.text.DateFormat,
 <%
             boolean showUpdateButtons = memberCount > 0;
             while (admins.hasNext()) {
-                String adminName = (String) admins.next();
-                JID    adminJID = new JID(adminName);
+                String username = (String)admins.next();
 %>
                 <tr>
-                    <td><%= adminJID.getNode() %>
-                    </td>
-                    <td><%= adminName %>
-                    </td>
-                    <td>
-                        <input type="checkbox" name="admin" value="<%= adminName %>" checked>
+                    <td><%= username %></td>
+                    <td align="center">
+                        <input type="checkbox" name="admin" value="<%= username %>" checked>
                     </td>
                     <td align="center">
-                        <input type="checkbox" name="delete" value="<%= adminName %>">
+                        <input type="checkbox" name="delete" value="<%= username %>">
                     </td>
                 </tr>
 <%
@@ -260,19 +270,15 @@ import="java.text.DateFormat,
 %>
 <%
             while (members.hasNext()) {
-                String member = (String) members.next();
-                JID    memberJID = new JID(member);
+                String username = (String)members.next();
 %>
                 <tr>
-                    <td><%= memberJID.getNode() %>
-                    </td>
-                    <td><%= member %>
-                    </td>
-                    <td>
-                        <input type="checkbox" name="admin" value="<%= member %>">
+                    <td><%= username %></td>
+                    <td align="center">
+                        <input type="checkbox" name="admin" value="<%= username %>">
                     </td>
                     <td align="center">
-                        <input type="checkbox" name="delete" value="<%= member %>">
+                        <input type="checkbox" name="delete" value="<%= username %>">
                     </td>
                 </tr>
 <%
@@ -282,7 +288,7 @@ import="java.text.DateFormat,
             if (showUpdateButtons) {
 %>
                 <tr>
-                    <td colspan="2">
+                    <td>
                         &nbsp;
                     </td>
                     <td align="center">

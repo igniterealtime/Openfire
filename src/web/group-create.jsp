@@ -23,7 +23,9 @@ import   ="org.jivesoftware.util.*,
                  org.dom4j.xpath.DefaultXPath,
                  org.dom4j.*,
                  org.jivesoftware.messenger.group.*,
-           java.net.URLEncoder"
+           java.net.URLEncoder,
+           org.jivesoftware.messenger.user.UserManager,
+           org.jivesoftware.messenger.user.UserNotFoundException"
 errorPage="error.jsp"%>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
@@ -57,15 +59,14 @@ errorPage="error.jsp"%>
                 }
 
                 if(users.length() > 0){
-                    String hostName = webManager.getXMPPServer().getServerInfo().getName();
                     StringTokenizer tokenizer = new StringTokenizer(users, ",");
                     while (tokenizer.hasMoreTokens()) {
-                        String tok = tokenizer.nextToken();
-                        String address = tok;
-                        if (address.indexOf("@") == -1) {
-                            address = address + "@" + hostName;
+                        String username = tokenizer.nextToken();
+                        try {
+                            UserManager.getInstance().getUser(username);
+                            newGroup.getMembers().add(username);
                         }
-                        newGroup.getMembers().add(address);
+                        catch (UserNotFoundException unfe) { }
                     }
                 }
                 // Successful, so redirect
@@ -166,18 +167,12 @@ errorPage="error.jsp"%>
                     </tr>
                     <tr>
                         <td nowrap width="1%">
-                            Add User(s):
+                            Initial Member(s):
                         </td>
                         <td nowrap class="c1" align="left">
                             <input type="text" size="40" name="users"/>
                             &nbsp;
                         </td>
-                    </tr>
-                    <td width="1%">
-                    </td>
-                    <td nowrap align="left" class="jive-description">
-                        Comma delimited list. Example: "user1@site.com", "user2@site.com"
-                    </td>
                     </tr>
                 </table>
                 <br>

@@ -589,6 +589,8 @@ public class XMPPServer {
         if (pluginManager != null) {
             pluginManager.shutdown();
         }
+        // Stop the Db connection manager.
+        DbConnectionManager.getConnectionProvider().destroy();
         // TODO: hack to allow safe stopping
         Log.info("Jive Messenger stopped");
     }

@@ -216,7 +216,7 @@ public class Group implements Cacheable {
                         throw new IllegalStateException();
                     }
                     iter.remove();
-                    String user = (String) current;
+                    String user = (String)current;
                     // Remove the group user from the backend store
                     provider.deleteMember(name, user);
                     // Update the group users' roster

@@ -13,9 +13,11 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.TrackInfo;
+import org.jivesoftware.messenger.container.ServiceLookupFactory;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.chatbot.ChatbotManager;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.HashMap;
@@ -68,15 +70,22 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         }
     }
 
+     private boolean isLocalServer(XMPPAddress recipientJID) {
+        boolean isLocalServer = recipientJID == null || recipientJID.getHost() == null
+                || "".equals(recipientJID.getHost()) || recipientJID.getResource() == null
+                || "".equals(recipientJID.getResource());
 
-     private boolean isLocalServer(XMPPAddress recipientJID){
-        // ridiculously long check for local server target
-        return recipientJID == null
-                    || recipientJID.getHost() == null
-                    || "".equals(recipientJID.getHost())
-                    || ((recipientJID.getName() == null || "".equals(recipientJID.getName()))
-                        && (recipientJID.getResource() == null || "".equals(recipientJID.getResource())));
-    }
+         try {
+             if(recipientJID != null){
+               ChatbotManager chatBotManager = (ChatbotManager)ServiceLookupFactory.getLookup().lookup(ChatbotManager.class);
+               isLocalServer = !chatBotManager.isChatbot(recipientJID);
+             }
+         }
+         catch (UnauthorizedException e) {
+             e.printStackTrace();
+         }
+         return isLocalServer;
+     }
 
     private void handle(IQ packet) {
 
@@ -98,10 +107,10 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
                             packet.setError(XMPPError.Code.NOT_IMPLEMENTED);
                         }
                         else {
-                            // JID is of the form <node@domain> 
+                            // JID is of the form <node@domain>
                             try {
                                 // Let a "service" handle this packet otherwise return an error
-                                // Useful for MUC where node refers to a room and domain is the 
+                                // Useful for MUC where node refers to a room and domain is the
                                 // MUC service.
                                 ChannelHandler route = routingTable.getRoute(recipientJID);
                                 if (route instanceof BasicModule) {
@@ -130,7 +139,7 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
 
             }
             else {
-                // JID is of the form <node@domain/resource> 
+                // JID is of the form <node@domain/resource>
                 ChannelHandler route = routingTable.getRoute(recipientJID);
                 route.process(packet);
             }

@@ -16,23 +16,25 @@ import java.util.Iterator;
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
- * <p>Coordinates connections (accept, read, termination) on the server.</p>
+ * Coordinates connections (accept, read, termination) on the server.
  *
  * @author Iain Shigeoka
  */
 public interface ConnectionManager {
+
     /**
-     * <p>Obtain an array of the ports managed by this connection manager.</p>
+     * Returns an array of the ports managed by this connection manager.
      *
-     * @return Iterator of the ports managed by this connection manager (can be an empty but never null)
+     * @return an iterator of the ports managed by this connection manager
+     *      (can be an empty but never null).
      */
     public Iterator<ServerPort> getPorts();
 
     /**
-     * <p>Adds a socket to be managed by the connection manager.</p>
+     * Adds a socket to be managed by the connection manager.
      *
-     * @param sock     The socket to add to this manager for management
-     * @param isSecure True if this is a secure connection
+     * @param socket the socket to add to this manager for management.
+     * @param isSecure true if the connection is secure.
      */
-    public void addSocket(Socket sock, boolean isSecure) throws XmlPullParserException;
+    public void addSocket(Socket socket, boolean isSecure) throws XmlPullParserException;
 }

@@ -107,7 +107,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void addSocket(Socket sock, boolean isSecure)  {
         try {
             // the order of these calls is critical (stupid huh?)
-            Connection conn = new SocketConnection(deliverer, sock, isSecure);
+            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
             SocketReadThread reader = new SocketReadThread(router, serverName, sock, conn);
             reader.setDaemon(true);
             reader.start();

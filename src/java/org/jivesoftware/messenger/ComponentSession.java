@@ -178,7 +178,7 @@ public class ComponentSession extends Session {
         super(serverName, conn, id);
     }
 
-    public void process(Packet packet) throws UnauthorizedException, PacketException {
+    public void process(Packet packet) throws PacketException {
         // Since ComponentSessions are not being stored in the RoutingTable this messages is very
         // unlikely to be sent
         component.processPacket(packet);
@@ -209,12 +209,7 @@ public class ComponentSession extends Session {
                 }
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    try {
-                        conn.close();
-                    }
-                    catch (UnauthorizedException e1) {
-                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e1);
-                    }
+                    conn.close();
                 }
             }
         }

@@ -246,5 +246,4 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         };
         return discoItemsProvider;
     }
-
 }

@@ -12,13 +12,10 @@
 package org.jivesoftware.messenger.net;
 
 import org.dom4j.io.XMLWriter;
-import org.jivesoftware.messenger.PacketDeliverer;
-import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
-import org.jivesoftware.messenger.spi.BasicConnection;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
@@ -29,48 +26,47 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
- * An object to track the state of a Jabber client-server session.
+ * An object to track the state of a XMPP client-server session.
  * Currently this class contains the socket channel connecting the
  * client and server.
  *
  * @author Iain Shigeoka
  */
-public class SocketConnection extends BasicConnection {
+public class SocketConnection implements Connection {
+
+    private Map listeners = new HashMap();
+
+    private Socket socket;
 
     /**
-     * The socket this session represents
-     */
-    private Socket sock;
-
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
+     * The utf-8 charset for decoding and encoding XMPP packet streams.
      */
     private String charset = "UTF-8";
 
-    /**
-     * The writer used to send outgoing data.
-     */
     private Writer writer;
 
-    /**
-     * The packet deliverer for local packets
-     */
     private PacketDeliverer deliverer;
 
     private Session session;
     private boolean secure;
     private XMLWriter xmlSerializer;
     private boolean flashClient = false;
+    private int majorVersion = 1;
+    private int minorVersion = 0;
+    private String language = null;
 
     /**
      * Create a new session using the supplied socket.
      *
-     * @param deliverer The packet deliverer this connection will use
-     * @param socket    The socket to represent
-     * @param isSecure  True if this is a secure connection
-     * @throws NullPointerException If the socket is null
+     * @param deliverer the packet deliverer this connection will use.
+     * @param socket the socket to represent.
+     * @param isSecure true if this is a secure connection.
+     * @throws NullPointerException if the socket is null.
      */
     public SocketConnection(PacketDeliverer deliverer, Socket socket, boolean isSecure)
             throws IOException
@@ -80,8 +76,8 @@ public class SocketConnection extends BasicConnection {
         }
 
         this.secure = isSecure;
-        sock = socket;
-        writer = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream(), charset));
+        this.socket = socket;
+        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), charset));
         this.deliverer = deliverer;
         xmlSerializer = new XMLWriter(writer);
     }
@@ -107,32 +103,88 @@ public class SocketConnection extends BasicConnection {
         session = owner;
     }
 
-    public InetAddress getInetAddress() throws UnauthorizedException {
-        return sock.getInetAddress();
+    public Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
+        Object status = null;
+        if (isClosed()) {
+            listener.onConnectionClose(handbackMessage);
+        }
+        else {
+            status = listeners.put(listener, handbackMessage);
+        }
+        return status;
     }
 
-    public XMLWriter getSerializer() throws UnauthorizedException {
-        return xmlSerializer;
+    public Object removeCloseListener(ConnectionCloseListener listener) {
+        return listeners.remove(listener);
     }
 
-    public Writer getWriter() throws UnauthorizedException {
+    public InetAddress getInetAddress() {
+        return socket.getInetAddress();
+    }
+
+    public Writer getWriter() {
         return writer;
     }
 
-    /**
-     * Retrieve the closed state of the Session.
-     *
-     * @return true if the session is closed.
-     */
     public boolean isClosed() {
         if (session == null) {
-            return sock.isClosed();
+            return socket.isClosed();
         }
         return session.getStatus() == Session.STATUS_CLOSED;
     }
 
     public boolean isSecure() {
         return secure;
+    }
+
+    public int getMajorXMPPVersion() {
+        return majorVersion;
+    }
+
+    public int getMinorXMPPVersion() {
+        return minorVersion;
+    }
+
+    /**
+     * Sets the XMPP version information. In most cases, the version should be "1.0".
+     * However, older clients using the "Jabber" protocol do not set a version. In that
+     * case, the version is "0.0".
+     *
+     * @param majorVersion the major version.
+     * @param minorVersion the minor version.
+     */
+    public void setXMPPVersion(int majorVersion, int minorVersion) {
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    /**
+     * Sets the language code that should be used for this connection (e.g. "en").
+     *
+     * @param language the language code.
+     */
+    public void setLanaguage(String language) {
+        this.language = language;
+    }
+
+    public boolean isFlashClient() {
+        return flashClient;
+    }
+
+    /**
+     * Sets whether the connected client is a flash client. Flash clients need to
+     * receive a special character (i.e. \0) at the end of each xml packet. Flash
+     * clients may send the character \0 in incoming packets and may start a
+     * connection using another openning tag such as: "flash:client".
+     *
+     * @param flashClient true if the if the connection is a flash client.
+     */
+    public void setFlashClient(boolean flashClient) {
+        this.flashClient = flashClient;
     }
 
     public synchronized void close() {
@@ -156,7 +208,7 @@ public class SocketConnection extends BasicConnection {
                 // Do nothing
             }
             try {
-                sock.close();
+                socket.close();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close")
@@ -166,12 +218,6 @@ public class SocketConnection extends BasicConnection {
         }
     }
 
-    /**
-     * Delivers the packet to this XMPPAddress without checking the recipient.
-     * The method essentially calls <tt>packet.send(serializer,version)</tt>.
-     *
-     * @param packet The packet to deliver.
-     */
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (isClosed()) {
             deliverer.deliver(packet);
@@ -203,11 +249,17 @@ public class SocketConnection extends BasicConnection {
         }
     }
 
-    public void setFlashClient(boolean flashClient) {
-        this.flashClient = flashClient;
-    }
-
-    public boolean isFlashClient() {
-        return flashClient;
+    /**
+     * Notifies all close listeners that the connection has been closed.
+     * Used by subclasses to properly finish closing the connection.
+     */
+    private void notifyCloseListeners() {
+        synchronized (listeners) {
+            Iterator itr = listeners.keySet().iterator();
+            while (itr.hasNext()) {
+                ConnectionCloseListener listener = (ConnectionCloseListener)itr.next();
+                listener.onConnectionClose(listeners.get(listener));
+            }
+        }
     }
 }

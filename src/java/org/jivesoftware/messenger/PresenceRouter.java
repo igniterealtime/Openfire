@@ -112,17 +112,12 @@ public class PresenceRouter extends BasicModule {
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
-            try {
-                Session session = sessionManager.getSession(packet.getFrom());
-                if (session != null) {
-                    Connection conn = session.getConnection();
-                    if (conn != null) {
-                        conn.close();
-                    }
+            Session session = sessionManager.getSession(packet.getFrom());
+            if (session != null) {
+                Connection conn = session.getConnection();
+                if (conn != null) {
+                    conn.close();
                 }
-            }
-            catch (UnauthorizedException e1) {
-                // do nothing
             }
         }
     }

@@ -11,9 +11,8 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
-import org.dom4j.io.XMLWriter;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -27,136 +26,141 @@ import java.io.Writer;
 public interface Connection {
 
     /**
-     * <p>Verify that the connection is still live.</p>
-     * <p>Typically this is done by sending a whitespace character between packets.</p>
+     * Verifies that the connection is still live. Typically this is done by
+     * sending a whitespace character between packets.
      *
-     * @return True if the socket remains valid, false otherwise
+     * @return true if the socket remains valid, false otherwise.
      */
-    boolean validate();
+    public boolean validate();
 
     /**
      * Initializes the connection with it's owning session. Allows the
      * connection class to configure itself with session related information
      * (e.g. stream ID).
      *
-     * @param session The session that owns this connection
+     * @param session the session that owns this connection
      */
-    void init(Session session);
+    public void init(Session session);
 
     /**
-     * <p>Obtain the InetAddress describing the connection.</p>
+     * Returns the InetAddress describing the connection.
      *
-     * @return The InetAddress describing the underlying connection properties
-     * @throws UnauthorizedException If caller doesn't have permission to
-     *                               access this resource
+     * @return the InetAddress describing the underlying connection properties.
      */
-    InetAddress getInetAddress() throws UnauthorizedException, UnknownHostException;
-
-    /**
-     * <p>Obtain the XmlSerializer used to send data to the client.</p>
-     * <P>The serializer should only be used to obtain information about the
-     * serialization and should not be written to directly. Other threads maybe
-     * trying to write to the serializer so it is important that all writes are
-     * properly synchronized.</p>
-     *
-     * @return The XmlSerializer underlying this connection
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
-     */
-    XMLWriter getSerializer() throws UnauthorizedException;
+    public InetAddress getInetAddress() throws UnknownHostException;
 
      /**
-     * <p>Obtain the Writer used to send data to the client.</p>
-     * <P>The writer should be used with caution.</p>
-     *
-     * @return The Writer underlying this connection
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
-     */
-    Writer getWriter() throws UnauthorizedException;
+      * Returns the Writer used to send data to the connection. The writer should be
+      * used with caution. In the majority of cases, the {@link #deliver(Packet)}
+      * method should be used to send data instead of using the writer directly.
+      * You must synchronize on the writer before writing data to it to ensure
+      * data consistency:
+      *
+      * <pre>
+      * Writer writer = connection.getWriter();
+      * synchronized(writer) {
+      *     // write data....
+      * }</pre>
+      *
+      * @return the Writer for this connection.
+      */
+    public Writer getWriter();
 
     /**
-     * Close this session including associated socket connection.
-     * <p/>
-     * Any selector registrations (if using nio) are also removed.
-     * The order of events for closing the session is:
+     * Close this session including associated socket connection. The order of
+     * events for closing the session is:
      * <ul>
-     * <li>set closing flag to prevent redundant shutdowns
-     * <li>notifyEvent all listeners that the channel is shutting down
-     * <li>close the socket
+     *      <li>Set closing flag to prevent redundant shutdowns.
+     *      <li>Call notifyEvent all listeners that the channel is shutting down.
+     *      <li>Close the socket.
      * </ul>
-     *
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
      */
-    void close() throws UnauthorizedException;
+    public void close();
 
     /**
-     * Retrieve the closed state of the Session.
+     * Returns true if the connection/session is closed.
      *
-     * @return True if the session is closed
+     * @return true if the connection is closed.
      */
-    boolean isClosed();
+    public boolean isClosed();
 
     /**
-     * <p>Determines if this connection is secure.</p>
+     * Returns true if this connection is secure.
      *
-     * @return True if the connection is secure (e.g. SSL/TLS)
+     * @return true if the connection is secure (e.g. SSL/TLS)
      */
-    boolean isSecure();
+    public boolean isSecure();
 
     /**
-     * Register a listener for close event notification.  Registrations after
+     * Registers a listener for close event notification. Registrations after
      * the Session is closed will be immediately notified <em>before</em>
      * the registration call returns (within the context of the
      * registration call). An optional handback object can be associated with
      * the registration if the same listener is registered to listen for multiple
      * connection closures.
      *
-     * @param listener        The listener to register for events
-     * @param handbackMessage The object to send in the event notification
-     * @return The message previously registered for this channel or null if no registration existed
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
+     * @param listener the listener to register for events.
+     * @param handbackMessage the object to send in the event notification.
+     * @return the message previously registered for this channel or <tt>null</tt>
+     *      if no registration existed
      */
-    Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) throws UnauthorizedException;
+    public Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage);
 
     /**
-     * 9
-     * Remove a registered close event listener.  Registered listeners must
+     * Removes a registered close event listener. Registered listeners must
      * be able to receive close events up until the time this method returns.
-     * (i.e. It is possible to call unregister, receive a close event registration,
+     * (i.e. it is possible to call unregister, receive a close event registration,
      * and then have the unregister call return.)
      *
-     * @param listener The listener  to deregister for close events
-     * @return The Message registered with this listener or null if the channel was never registered
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
+     * @param listener the listener to deregister for close events.
+     * @return the Message registered with this listener or <tt>null</tt> if the
+     *      channel was never registered.
      */
-    Object removeCloseListener(ConnectionCloseListener listener) throws UnauthorizedException;
+    public Object removeCloseListener(ConnectionCloseListener listener);
 
     /**
-     * Delivers the packet to this XMPPAddress without checking the recipient.
-     * The method essentially calls
-     * <code>socket.send(packet.getWriteBuffer())</code>
+     * Delivers the packet to this connection without checking the recipient.
+     * The method essentially calls <code>socket.send(packet.getWriteBuffer())</code>.
      *
-     * @param packet The packet to deliver.
-     * @throws UnauthorizedException If caller doesn't have permission to access this resource
+     * @param packet the packet to deliver.
      */
-    void deliver(Packet packet) throws UnauthorizedException;
+    public void deliver(Packet packet) throws UnauthorizedException;
 
     /**
-     * Sets whether the connected client is a flash client or not. Flash clients need to receive
-     * a special character (i.e. \0) at the end of each xml packet. Flash clients may send the
-     * character \0 in incoming packets and may start a connection using another openning tag
-     * such as: "flash:client".
-     *
-     * @param flashClient flag that indicates if the client is a flash client.
-     */
-    void setFlashClient(boolean flashClient);
-
-    /**
-     * Returns true if the connected client is a flash client. Flash clients need to receive
-     * a special character (i.e. \0) at the end of each xml packet. Flash clients may send the
-     * character \0 in incoming packets and may start a connection using another openning tag
-     * such as: "flash:client".
+     * Returns true if the connected client is a flash client. Flash clients need
+     * to receive a special character (i.e. \0) at the end of each xml packet. Flash
+     * clients may send the character \0 in incoming packets and may start a connection
+     * using another openning tag such as: "flash:client".
      *
      * @return true if the connected client is a flash client.
      */
-    boolean isFlashClient();
+    public boolean isFlashClient();
+
+    /**
+     * Returns the major version of XMPP being used by this connection
+     * (major_version.minor_version. In most cases, the version should be
+     * "1.0". However, older clients using the "Jabber" protocol do not set a
+     * version. In that case, the version is "0.0".
+     *
+     * @return the major XMPP version being used by this connection.
+     */
+    public int getMajorXMPPVersion();
+
+    /**
+     * Returns the minor version of XMPP being used by this connection
+     * (major_version.minor_version. In most cases, the version should be
+     * "1.0". However, older clients using the "Jabber" protocol do not set a
+     * version. In that case, the version is "0.0".
+     *
+     * @return the minor XMPP version being used by this connection.
+     */
+    public int getMinorXMPPVersion();
+
+    /**
+     * Returns the language code that should be used for this connection
+     * (e.g. "en").
+     *
+     * @return the language code for the connection.
+     */
+    public String getLanguage();
 }

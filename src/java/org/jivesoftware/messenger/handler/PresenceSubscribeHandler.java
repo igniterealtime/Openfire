@@ -18,7 +18,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Packet;
@@ -82,7 +81,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         super("Presence subscription handler");
     }
 
-    public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
+    public void process(Packet xmppPacket) throws PacketException {
         Presence presence = (Presence)xmppPacket;
         try {
             JID senderJID = presence.getFrom();

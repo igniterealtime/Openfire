@@ -60,9 +60,6 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
             try {
                 deliverer.deliver(packet);
             }
-            catch (UnauthorizedException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
             catch (PacketException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }

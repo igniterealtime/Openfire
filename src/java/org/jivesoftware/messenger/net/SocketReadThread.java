@@ -47,9 +47,9 @@ public class SocketReadThread extends Thread {
      */
     private static XmlPullParserFactory factory = null;
 
-    private Socket sock;
+    private Socket socket;
     private Session session;
-    private Connection connection;
+    private SocketConnection connection;
     private String serverName;
     /**
      * Router used to route incoming packets to the correct channels.
@@ -67,21 +67,22 @@ public class SocketReadThread extends Thread {
         }
     }
 
-
     /**
-     * Create dedicated read thread for this socket.
+     * Creates a dedicated read thread for a socket.
      *
-     * @param router     The router for sending packets that were read
-     * @param serverName The name of the server this socket is working for
-     * @param sock       The socket to read from
-     * @param conn       The connection being read
+     * @param router the router for sending packets that were read.
+     * @param serverName the name of the server this socket is working for.
+     * @param socket the socket to read from.
+     * @param connection the connection being read.
      */
-    public SocketReadThread(PacketRouter router, String serverName, Socket sock, Connection conn) {
+    public SocketReadThread(PacketRouter router, String serverName, Socket socket,
+            SocketConnection connection)
+    {
         super("SRT reader");
         this.serverName = serverName;
         this.router = router;
-        this.connection = conn;
-        this.sock = sock;
+        this.connection = connection;
+        this.socket = socket;
     }
 
     /**
@@ -93,7 +94,7 @@ public class SocketReadThread extends Thread {
             reader = new XPPPacketReader();
             reader.setXPPFactory(factory);
 
-            reader.getXPPParser().setInput(new InputStreamReader(sock.getInputStream(),
+            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
                     CHARSET));
 
             // Read in the opening tag and prepare for packet stream
@@ -109,8 +110,8 @@ public class SocketReadThread extends Thread {
             // Normal disconnect
         }
         catch (SocketException se) {
-            // The socket was closed. The server may close the connection for several reasons (e.g.
-            // user requested to remove his account). Do nothing here. 
+            // The socket was closed. The server may close the connection for several
+            // reasons (e.g. user requested to remove his account). Do nothing here.
         }
         catch (XmlPullParserException ie) {
             // Check if the user abruptly cut the connection without sending previously an
@@ -131,9 +132,9 @@ public class SocketReadThread extends Thread {
                 }
             }
             // It is normal for clients to abruptly cut a connection
-            // rather than closing the stream document
-            // Since this is normal behavior, we won't log it as an error
-//            Log.error(LocaleUtils.getLocalizedString("admin.disconnect"),ie);
+            // rather than closing the stream document. Since this is
+            // normal behavior, we won't log it as an error.
+            // Log.error(LocaleUtils.getLocalizedString("admin.disconnect"),ie);
         }
         catch (Exception e) {
             if (session != null) {
@@ -152,31 +153,26 @@ public class SocketReadThread extends Thread {
                 }
                 catch (Exception e) {
                     Log.warn(LocaleUtils.getLocalizedString("admin.error.connection")
-                            + "\n" + sock.toString());
+                            + "\n" + socket.toString());
                 }
             }
             else {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.connection")
-                        + "\n" + sock.toString());
+                        + "\n" + socket.toString());
             }
         }
     }
 
     /**
-     * Read the incoming stream until it ends. Much of the reading
-     * will actually be done in the channel handlers as they run the
-     * XPP through the data. This method mostly handles the idle waiting
-     * for incoming data. To prevent clients from stalling channel handlers,
-     * a watch dog timer is used. Packets that take longer than the watch
-     * dog limit to read will cause the session to be closed.
+     * Read the incoming stream until it ends.
      */
     private void readStream() throws Exception {
         while (true) {
             Element doc = reader.parseDocument().getRootElement();
 
             if (doc == null) {
-                // Stop reading the stream since the client has sent an end of stream element and
-                // probably closed the connection
+                // Stop reading the stream since the client has sent an end of
+                // stream element and probably closed the connection.
                 return;
             }
 
@@ -187,7 +183,7 @@ public class SocketReadThread extends Thread {
                     packet = new Message(doc);
                 }
                 catch(IllegalArgumentException e) {
-                    // The original packet contains a malformed JID so answer an error
+                    // The original packet contains a malformed JID so answer with an error.
                     Message reply = new Message();
                     reply.setID(doc.attributeValue("id"));
                     reply.setTo(session.getAddress());
@@ -298,7 +294,8 @@ public class SocketReadThread extends Thread {
                 }
             }
             else {
-                throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.packet.tag") + tag);
+                throw new XmlPullParserException(LocaleUtils.getLocalizedString(
+                        "admin.error.packet.tag") + tag);
             }
         }
     }

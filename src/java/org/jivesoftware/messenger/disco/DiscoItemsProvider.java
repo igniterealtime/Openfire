@@ -36,8 +36,8 @@ public interface DiscoItemsProvider {
      * case that the sender of the disco request is not authorized to discover items an
      * UnauthorizedException will be thrown.
      *
-     * @param name      the recipient JID's name.
-     * @param node      the requested disco node.
+     * @param name the recipient JID's name.
+     * @param node the requested disco node.
      * @param senderJID the XMPPAddress of user that sent the disco items request.
      * @return an Iterator (of Element) with the target entity's items or null if none.
      * @throws UnauthorizedException if the senderJID is not authorized to discover items.

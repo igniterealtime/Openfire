@@ -255,7 +255,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      *
      * @param packet the packet to process.
      */
-    public void process(Packet packet) throws UnauthorizedException, PacketException {
+    public void process(Packet packet) throws PacketException {
         Component component = getComponent(packet.getFrom().getDomain());
         // Only process packets that were sent by registered components
         if (component != null) {
@@ -293,7 +293,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             return jid;
         }
 
-        public void process(Packet packet) throws UnauthorizedException, PacketException {
+        public void process(Packet packet) throws PacketException {
             component.processPacket(packet);
         }
     }

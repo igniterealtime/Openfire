@@ -11,8 +11,8 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 /**
  * Delivers packets to locally connected streams. This is the opposite
@@ -29,8 +29,8 @@ public interface PacketDeliverer {
      * Be careful to enforce concurrency DbC of concurrent by synchronizing
      * any accesses to class resources.
      *
-     * @param packet The packet to route
-     * @throws java.lang.NullPointerException If the packet is null or the packet could not be routed
+     * @param packet the packet to route
+     * @throws PacketException if the packet is null or the packet could not be routed.
      */
     public void deliver(Packet packet) throws UnauthorizedException, PacketException;
 }

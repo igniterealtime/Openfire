@@ -42,7 +42,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         super(moduleName);
     }
 
-    public void process(Packet packet) throws UnauthorizedException, PacketException {
+    public void process(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
         try {
             iq = handleIQ(iq);

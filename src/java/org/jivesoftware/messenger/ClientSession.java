@@ -16,6 +16,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -37,6 +38,13 @@ public class ClientSession extends Session {
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
+    private static final String TLS_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-tls";
+
+    /**
+     * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
+     */
+    private static final int MAJOR_VERSION = 0;
+    private static final int MINOR_VERSION = 0;
 
     /**
      * The authentication token for this session.
@@ -53,9 +61,9 @@ public class ClientSession extends Session {
     private int conflictCount = 0;
 
     /**
-     * Returns a newly created session between the server and a client. The session will be created
-     * and returned only if correct Name/Prefix (i.e. 'stream' or 'flash') and Namespace were
-     * provided by the client.
+     * Returns a newly created session between the server and a client. The session will
+     * be created and returned only if correct name/prefix (i.e. 'stream' or 'flash')
+     * and namespace were provided by the client.
      *
      * @param serverName the name of the server where the session is connecting to.
      * @param reader the reader that is reading the provided XML through the connection.
@@ -63,36 +71,72 @@ public class ClientSession extends Session {
      * @return a newly created session between the server and a client.
      */
     public static Session createSession(String serverName, XPPPacketReader reader,
-            Connection connection) throws XmlPullParserException, UnauthorizedException,
-            IOException {
+            SocketConnection connection) throws XmlPullParserException, UnauthorizedException,
+            IOException
+    {
         XmlPullParser xpp = reader.getXPPParser();
-        Session session;
 
         boolean isFlashClient = xpp.getPrefix().equals("flash");
+        connection.setFlashClient(isFlashClient);
+
         // Conduct error checking, the opening tag should be 'stream'
         // in the 'etherx' namespace
         if (!xpp.getName().equals("stream") && !isFlashClient) {
-            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
+            throw new XmlPullParserException(
+                    LocaleUtils.getLocalizedString("admin.error.bad-stream"));
         }
 
         if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE) &&
-                !(isFlashClient && xpp.getNamespace(xpp.getPrefix()).equals(FLASH_NAMESPACE))) {
-            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
+                !(isFlashClient && xpp.getNamespace(xpp.getPrefix()).equals(FLASH_NAMESPACE)))
+        {
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString(
+                    "admin.error.bad-namespace"));
         }
 
-        // Create a ClientSession for this user
-        session = SessionManager.getInstance().createClientSession(connection);
-
-        // TODO Should we keep the language requested by the client in the session so that
-        // future messages to the client may use the correct resource bundle? So far we are
-        // only answering the same language specified by the client (if any) or if none then
-        // answer a default language
+        // Default language is English ("en").
         String language = "en";
+        // Default to a version of "0.0". Clients written before the XMPP 1.0 spec may
+        // not report a version in which case "0.0" should be assumed (per rfc3920
+        // section 4.4.1).
+        int majorVersion = 0;
+        int minorVersion = 0;
         for (int i = 0; i < xpp.getAttributeCount(); i++) {
             if ("lang".equals(xpp.getAttributeName(i))) {
                 language = xpp.getAttributeValue(i);
             }
+            if ("version".equals(xpp.getAttributeName(i))) {
+                try {
+                    String [] versionString = xpp.getAttributeValue(i).split("\\.");
+                    majorVersion = Integer.parseInt(versionString[0]);
+                    minorVersion = Integer.parseInt(versionString[1]);
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
         }
+
+        // If the client supports a greater major version than the server,
+        // set the version to the highest one the server supports.
+        if (majorVersion > MAJOR_VERSION) {
+            majorVersion = MAJOR_VERSION;
+            minorVersion = MINOR_VERSION;
+        }
+        else if (majorVersion == MAJOR_VERSION) {
+            // If the client supports a greater minor version than the
+            // server, set the version to the highest one that the server
+            // supports.
+            if (minorVersion > MINOR_VERSION) {
+                minorVersion = MINOR_VERSION;
+            }
+        }
+
+        // Store language and version information in the connection.
+        connection.setLanaguage(language);
+        connection.setXMPPVersion(majorVersion, minorVersion);
+
+        // Create a ClientSession for this user.
+        Session session = SessionManager.getInstance().createClientSession(connection);
 
         Writer writer = connection.getWriter();
         // Build the start packet response
@@ -112,18 +156,58 @@ public class ClientSession extends Session {
         sb.append(session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
         sb.append(language);
+        // Don't include version info if the version is 0.0.
+        if (majorVersion != 0) {
+            sb.append("\" version=\"");
+            sb.append(majorVersion).append(".").append(minorVersion);
+        }
         sb.append("\">");
         writer.write(sb.toString());
 
-        // If this is a flash client then flag the connection and append a special caracter
-        // to the response
+        // If this is a "Jabber" connection, the session is now initialized and we can
+        // return to allow normal packet parsing.
+        if (majorVersion == 0) {
+            // If this is a flash client append a special caracter to the response.
+            if (isFlashClient) {
+                writer.write('\0');
+            }
+            writer.flush();
+
+            return session;
+        }
+        // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
+
+        sb = new StringBuilder();
+        sb.append("<stream:features>");
+        sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+        // sb.append("<required/>");
+        sb.append("</starttls></stream:features>");
+
+        writer.write(sb.toString());
+
         if (isFlashClient) {
-            session.getConnection().setFlashClient(true);
             writer.write('\0');
         }
-
         writer.flush();
-        // TODO: check for SASL support in opening stream tag
+
+        boolean done = false;
+        while (!done) {
+            if (xpp.next() == XmlPullParser.START_TAG) {
+                done = true;
+                if (xpp.getName().equals("starttls") &&
+                        xpp.getNamespace(xpp.getPrefix()).equals(TLS_NAMESPACE))
+                {
+                    writer.write("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+                    if (isFlashClient) {
+                        writer.write('\0');
+                    }
+                    writer.flush();
+
+                    // TODO: setup SSLEngine and negotiate TLS.
+                }
+            }
+        }
+
         return session;
     }
 
@@ -161,11 +245,13 @@ public class ClientSession extends Session {
      * status to authenticated and enables many features that are not
      * available until authenticated (obtaining managers for example).
      *
-     * @param auth        The authentication token obtained from the AuthFactory
-     * @param resource    The resource this session authenticated under
-     * @param userManager The user manager this authentication occured under
+     * @param auth the authentication token obtained from the AuthFactory.
+     * @param resource the resource this session authenticated under.
+     * @param userManager the user manager this authentication occured under.
      */
-    public void setAuthToken(AuthToken auth, UserManager userManager, String resource) throws UserNotFoundException {
+    public void setAuthToken(AuthToken auth, UserManager userManager, String resource)
+            throws UserNotFoundException
+    {
         User user = userManager.getUser(auth.getUsername());
         setAddress(new JID(user.getUsername(), getServerName(), resource));
         authToken = auth;
@@ -186,9 +272,9 @@ public class ClientSession extends Session {
     }
 
     /**
-     * <p>Obtain the authentication token associated with this session.</p>
+     * Returns the authentication token associated with this session.
      *
-     * @return The authentication token associated with this session (can be null)
+     * @return the authentication token associated with this session (can be null).
      */
     public AuthToken getAuthToken() {
         return authToken;
@@ -289,15 +375,7 @@ public class ClientSession extends Session {
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                 // TODO: Should attempt to do something with the packet
-                try {
-                    conn.close();
-                }
-                catch (UnauthorizedException e1) {
-                    // TODO: something more intelligent, if the connection is
-                    // already closed this will throw an exception but it is not a
-                    // logged error
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e1);
-                }
+                conn.close();
             }
         }
     }

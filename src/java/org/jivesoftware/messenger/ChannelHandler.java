@@ -11,8 +11,8 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 /**
  * Interface to handle packets delivered by Channels.
@@ -25,8 +25,7 @@ public interface ChannelHandler<T extends Packet> {
      * Process an XMPP packet.
      *
      * @param packet a packet to process.
-     * @throws UnauthorizedException thrown if the packet's sender lacks authorization
-     *      to access resources (will result in uniform unauthorized access error reply).
+     * @throws UnauthorizedException if not allowed to process the packet.
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */

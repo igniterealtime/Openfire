@@ -57,7 +57,7 @@ public class SocketAcceptThread extends Thread {
     private ConnectionManager connManager;
 
     public SocketAcceptThread(ConnectionManager connManager) {
-        super("SAT accept");
+        super("Socket Listener");
         this.connManager = connManager;
         port = JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
         String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");

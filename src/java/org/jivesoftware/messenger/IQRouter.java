@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.LocaleUtils;
@@ -215,32 +214,22 @@ public class IQRouter extends BasicModule {
                     Log.info("Packet sent to unreachable address " + packet);
                     Session session = sessionManager.getSession(packet.getFrom());
                     if (session != null) {
-                        try {
-                            IQ reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
-                            session.getConnection().deliver(reply);
-                        }
-                        catch (UnauthorizedException ex) {
-                            Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
-                        }
+                        IQ reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.service_unavailable);
+                        session.getConnection().deliver(reply);
                     }
                 }
             }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
-            try {
-                Session session = sessionManager.getSession(packet.getFrom());
-                if (session != null) {
-                    Connection conn = session.getConnection();
-                    if (conn != null) {
-                        conn.close();
-                    }
+            Session session = sessionManager.getSession(packet.getFrom());
+            if (session != null) {
+                Connection conn = session.getConnection();
+                if (conn != null) {
+                    conn.close();
                 }
-            }
-            catch (UnauthorizedException e1) {
-                // do nothing
             }
         }
     }

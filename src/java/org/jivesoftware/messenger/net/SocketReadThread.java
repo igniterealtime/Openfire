@@ -44,6 +44,10 @@ public class SocketReadThread extends Thread {
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     private static String CHARSET = "UTF-8";
+    /**
+     * Reuse the same factory for all the connections.
+     */
+    private static XmlPullParserFactory factory = null;
 
     private Socket sock;
     private Session session;
@@ -58,8 +62,17 @@ public class SocketReadThread extends Thread {
      */
     private Auditor auditor;
     private boolean clearSignout = false;
-    XmlPullParserFactory factory = null;
     XPPPacketReader reader = null;
+
+    static {
+        try {
+            factory = XmlPullParserFactory.newInstance();
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+    }
+
 
     /**
      * Create dedicated read thread for this socket.
@@ -86,9 +99,6 @@ public class SocketReadThread extends Thread {
      */
     public void run() {
         try {
-            factory = XmlPullParserFactory.newInstance();
-            // factory.setNamespaceAware(true);
-
             reader = new XPPPacketReader();
             reader.setXPPFactory(factory);
 

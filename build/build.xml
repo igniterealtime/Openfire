@@ -343,9 +343,14 @@
             </classpath>
         </javac>
 
+        <!-- Copy resources -->
+        <copy todir="${test.dest.dir}">
+            <fileset dir="${src.test.dir}" includes="resources/**/*.*" />
+        </copy>
+
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}" />
-        <junit printsummary="yes" haltonfailure="no" fork="yes" dir="${src.test.dir}">
+        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
 
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>

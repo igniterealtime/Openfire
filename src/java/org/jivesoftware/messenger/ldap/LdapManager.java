@@ -195,7 +195,7 @@ public class LdapManager {
             }
         }
         // No login information so attempt to use anonymous login.
-        if (adminDN != null) {
+        else {
             env.put(Context.SECURITY_AUTHENTICATION, "none");
         }
 

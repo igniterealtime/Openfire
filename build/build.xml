@@ -360,8 +360,8 @@
         <!-- Copy security resources -->
         <copy todir="${prepare.out.dir}">
             <fileset dir="${src.dir}">
-                <include name="security/jive*" />
-                <include name="security/*store" />
+                <include name="security/*" />
+                <include name="security/*.*" />
             </fileset>
         </copy>
 

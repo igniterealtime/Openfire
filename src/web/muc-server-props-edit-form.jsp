@@ -10,7 +10,8 @@
                  java.util.HashMap,
                  java.util.Map,
                  org.jivesoftware.messenger.XMPPServerInfo,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer"
+                 org.jivesoftware.messenger.muc.MultiUserChatServer,
+                 org.jivesoftware.messenger.JiveGlobals"
 %>
 <%
    // Handle a cancel
@@ -32,8 +33,6 @@
 <c:set target="${breadcrumbs}" property="${title}" value="muc-server-props-edit-form.jsp" />
 
 <%@ include file="top.jsp" %>
-
-
 
 <%  // Get parameters
     boolean save = ParamUtils.getBooleanParameter(request,"save");
@@ -57,6 +56,11 @@
     else {
         name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
         muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
+        // Remove the server address part from the MUC domain name.
+        int index = muc.indexOf("." + name);
+        if (index > 0) {
+            muc = muc.substring(0, index);
+        }
     }
 %>
 
@@ -94,7 +98,7 @@ Use the form below to edit Multi-User Chat server properties.
         Multi User Chat server name:
     </td>
     <td>
-    <input type="text" size="30" maxlength="150" name="mucname"  value="<%= muc %>">
+    <input type="text" size="30" maxlength="150" name="mucname"  value="<%= muc %>">.<%=name%>
 
     <%  if (errors.get("mucname") != null) { %>
 

@@ -67,12 +67,69 @@
 <div class="header">
 Jive Messenger Changelog
 </div>
+
+<p>
+<b>2.1.0 Beta</b> -- January 7, 2005
+<p>
+ 
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-1'>JM-1</a>] - Flash XML streams are now supported.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-10'>JM-10</a>] - LDAP can now be used for authentication and user information. <b>(3 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-21'>JM-21</a>] - Created plugin to let users easily broadcast messages to groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-22'>JM-22</a>] - Groups can now be automatically added to group member's rosters. <b>(10 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-39'>JM-39</a>] - History is now saved to the database in persistent group chat rooms.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-41'>JM-41</a>] - Added auto-archive process to clean-up unused group chat rooms.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-44'>JM-44</a>] - Added ability to cleanly shut down the server with a "stop" button in the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-47'>JM-47</a>] - Group chat visibility policy can now be set based on room lock status.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-60'>JM-60</a>] - Plugins are now supported.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-62'>JM-62</a>] - Added full support for groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-63'>JM-63</a>] - Under Windows, the launcher now appears in the system tray.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-77'>JM-77</a>] - Group chat rooms can be created and administered from the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-84'>JM-84</a>] - Zeroconf (Rendezvous) support added.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-96'>JM-96</a>] - Improved installer which is simpler ans smaller.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-97'>JM-97</a>] - Added support for deploying as Windows service.</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-34'>JM-34</a>] - Broadcast messages from the admin console now support i18n.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-35'>JM-35</a>] - Improved UI of user creation screens.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-36'>JM-36</a>] - Fixed Postgres setup documentation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-37'>JM-37</a>] - Fixed Postgres database schema typo.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-39'>JM-39</a>] - Minor bugs in SSLConfig fixed.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-43'>JM-43</a>] - Idle users and log conversation settings now in the group chat section of admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-51'>JM-51</a>] - Fixed how group chat subject-change messages are saved in the history.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-52'>JM-52</a>] - Fixed bug when broadcasting messages in group chat rooms for users that are logged off.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-53'>JM-54</a>] - Fixed ClassCastException in MucRoomImpl.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-54'>JM-54</a>] - Refactored admin console framework.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-55'>JM-55</a>] - Fixed bug where presence was being sent twice to clients during login.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-56'>JM-56</a>] - SSL support can now be activated and deactivated.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-57'>JM-57</a>] - Updated SSL guide.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-61'>JM-61</a>] - Replaced core packet representation in server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-64'>JM-64</a>] - Participants can now change the group chat room subject if they should be able to.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-66'>JM-66</a>] - Fixed error in the SQL Server database schema.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-75'>JM-75</a>] - VCARD is now vCard, which fixes vCard support in clients.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-76'>JM-76</a>] - Resolved Trillian compatability issues.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-80'>JM-80</a>] - Unavailable presence now correctly sent when a connection is closed.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-81'>JM-81</a>] - Removed join/leave broadcast messages from group chat rooms.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-85'>JM-85</a>] - Name field now works for in-band registration.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-87'>JM-87</a>] - Fixed NullPointerException when setting history type in group chat.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-88'>JM-88</a>] - Added URLEncoding to the admin console so that i18n usernames work correctly.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-90'>JM-90</a>] - Fixed redirect in last step of admin console when admin port is not 9090.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-91'>JM-91</a>] - Cleaned up configuration file property names.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-92'>JM-92</a>] - Owner and admin fields are now optional in group chat room config form.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-93'>JM-93</a>] - Group chat service now correctly passes through extended presence information in presence broadcasts.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-94'>JM-94</a>] - Fixed exception in group chat when banning users.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-98'>JM-98</a>] - Added room creation date to disco information.</li>
+</ul>
  
 <p>
 <b>2.0.1</b> -- November 16, 2004
 <p>
 
-<h2>Bugs</h2>
+<h2>Bugs Fixes</h2>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-28'>JM-28</a>] - Fixed i18n bug: incoming streams were using the default encoding instead of UTF-8.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-30'>JM-30</a>] - DB2 and Oracle database scripts had incorrect references to userID.</li>

@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.auth;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.auth.spi.AuthTokenImpl;
 import org.jivesoftware.messenger.user.UserIDProvider;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -65,14 +64,6 @@ public abstract class AuthFactory {
         authProvider = AuthProviderFactory.getAuthProvider();
         userIDProvider = UserProviderFactory.getUserIDProvider();
 
-        // Get the cookie password, stored as a Jive property. Obviously,
-        // protecting your jive_config.xml file is critical for making cookie
-        // encryption secure.
-        String keyString = JiveGlobals.getProperty("cookieKey");
-        if (keyString == null) {
-            keyString = StringUtils.randomString(15);
-            JiveGlobals.setProperty("cookieKey", keyString);
-        }
         try {
             sha = MessageDigest.getInstance("SHA");
         }

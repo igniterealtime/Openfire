@@ -59,9 +59,6 @@ public class SequenceManager {
         new SequenceManager(JiveConstants.GROUP, 1);
         new SequenceManager(JiveConstants.ROSTER, 5);
         new SequenceManager(JiveConstants.OFFLINE, 1);
-        new SequenceManager(JiveConstants.WORKGROUP_AGENT, 1);
-        new SequenceManager(JiveConstants.WORKGROUP_GROUP, 1);
-        new SequenceManager(JiveConstants.WORKGROUP_QUEUE, 1);
         new SequenceManager(JiveConstants.MUC_ROOM, 1);
 }
 
@@ -145,6 +142,7 @@ public class SequenceManager {
                         "jiveID table may not be correctly populated.");
             }
             long currentID = rs.getLong(1);
+            rs.close();
             pstmt.close();
 
             // Increment the id to define our block.
@@ -170,14 +168,8 @@ public class SequenceManager {
             abortTransaction = true;
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
 

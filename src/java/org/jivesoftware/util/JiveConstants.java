@@ -22,9 +22,6 @@ public class JiveConstants {
     public static final int SYSTEM = 17;
     public static final int ROSTER = 18;
     public static final int OFFLINE = 19;
-    public static final int WORKGROUP_AGENT = 20;
-    public static final int WORKGROUP_QUEUE = 21;
-    public static final int WORKGROUP_GROUP = 22;
     public static final int MUC_ROOM = 23;
 
     public static final long SECOND = 1000;

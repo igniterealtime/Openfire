@@ -17,7 +17,7 @@ MESSENGER_GROUP="jive"
 
 if [ ! $MESSENGER_HOME ]; then
 	if [ -d "/opt/jive_messenger" ]; then
-		MESSENGER_HOME="/opt/jive_messsenger"
+		MESSENGER_HOME="/opt/jive_messenger"
 	elif [ -d "/usr/local/jive_messenger" ]; then
 		MESSENGER_HOME="/usr/local/jive_messenger"
 	fi

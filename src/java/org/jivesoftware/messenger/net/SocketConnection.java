@@ -61,13 +61,9 @@ public class SocketConnection extends BasicConnection {
      * Audits packets
      */
     private Auditor auditor;
-
     private Session session;
-
     private boolean secure;
-
     private XMLWriter xmlSerializer;
-
     private boolean flashClient = false;
 
     /**
@@ -79,9 +75,9 @@ public class SocketConnection extends BasicConnection {
      * @param isSecure  True if this is a secure connection
      * @throws NullPointerException If the socket is null
      */
-    public SocketConnection(PacketDeliverer deliverer, Auditor auditor,
-                            Socket socket, boolean isSecure) throws IOException {
-
+    public SocketConnection(PacketDeliverer deliverer, Auditor auditor, Socket socket,
+            boolean isSecure) throws IOException
+    {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
         }
@@ -129,17 +125,11 @@ public class SocketConnection extends BasicConnection {
     /**
      * Retrieve the closed state of the Session.
      *
-     * @return True if the session is closed
+     * @return true if the session is closed.
      */
     public boolean isClosed() {
         if (session == null) {
-            try {
-                sock.getInputStream();
-            }
-            catch (IOException e) {
-                return false;
-            }
-            return true;
+            return sock.isClosed();
         }
         return session.getStatus() == Session.STATUS_CLOSED;
     }
@@ -171,8 +161,7 @@ public class SocketConnection extends BasicConnection {
 
     /**
      * Delivers the packet to this XMPPAddress without checking the recipient.
-     * The method essentially calls
-     * <code>packet.send(serializer,version)</code>
+     * The method essentially calls <tt>packet.send(serializer,version)</tt>.
      *
      * @param packet The packet to deliver.
      */
@@ -190,8 +179,8 @@ public class SocketConnection extends BasicConnection {
                     xmlSerializer.flush();
                 }
                 catch (IOException e) {
-                    Log.error("Problem sending the following packet: "+packet.toXML());
                     Log.error(e);
+                    close();
                 }
             }
             auditor.audit(packet, session);

@@ -196,6 +196,10 @@ plugin structure and JAR file. Put your plugin directories in the <tt>src/plugin
 directory of the source distribution and then use <tt>ant plugins</tt> to
 build your plugins.</p>
 
+<p>Any JAR files your plugin needs during compilation should be put
+into the <tt>lib</tt> directory. These JAR files will also be copied into
+the plugin's generated <tt>lib</tt> directory as part of the build process.
+
 <h2>Implementing Your Plugin</h2>
 
 <p>Plugins have full access to the Jive Messenger API. This provides a tremendous 

@@ -15,7 +15,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.stringprep.Stringprep;
@@ -37,13 +36,13 @@ import java.sql.SQLException;
 public class Group implements Cacheable {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM jiveGroupProp WHERE groupID=?";
+        "SELECT name, propValue FROM jiveGroupProp WHERE groupName=?";
     private static final String DELETE_PROPERTY =
-        "DELETE FROM jiveGroupProp WHERE groupID=? AND name=?";
+        "DELETE FROM jiveGroupProp WHERE groupName=? AND name=?";
     private static final String UPDATE_PROPERTY =
-        "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupID=?";
+        "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupName=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveGroupProp (groupID, name, propValue) VALUES (?, ?, ?)";
+        "INSERT INTO jiveGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
 
     private GroupProvider provider;
     private GroupManager groupManager;
@@ -234,8 +233,6 @@ public class Group implements Cacheable {
                         throw new IllegalStateException();
                     }
                     String user = (String)current;
-                    // Update the group users' roster -- TODO: remove and use event.
-                    XMPPServer.getInstance().getRosterManager().groupUserDeleted(Group.this, user);
                     // Remove the user from the collection in memory.
                     iter.remove();
                     // Remove the group user from the backend store.
@@ -297,9 +294,6 @@ public class Group implements Cacheable {
                     GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.member_added, params);
                 }
-
-                // Update the group users' roster -- TODO: remove and use event.
-                XMPPServer.getInstance().getRosterManager().groupUserAdded(Group.this, username);
                 return true;
             }
             return false;
@@ -361,7 +355,7 @@ public class Group implements Cacheable {
 
                 public Object next() {
                     current = (Map.Entry)iter.next();
-                    return iter.next();
+                    return current;
                 }
 
                 public void remove() {

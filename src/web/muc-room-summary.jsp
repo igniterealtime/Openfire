@@ -109,7 +109,7 @@ Sorted by Room ID
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th>Room ID</th>
+        <th>Room</th>
         <th>Description</th>
         <th>Persistent</th>
         <th>Users</th>
@@ -141,7 +141,12 @@ Sorted by Room ID
             <%= i %>
         </td>
         <td width="45%" valign="middle">
-           <%=  room.getName() %>
+            <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
+                <%=  room.getName() %>
+            <% }
+               else { %>
+                <%= room.getNaturalLanguageName() %> (<%=  room.getName() %>)
+            <% } %>
         </td>
         <td width="45%" valign="middle">
             <%=  room.getDescription() %>

@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.2">
   <directoryPresets config="" />
-  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="%APP_NAME%" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
       <envVar name="JDK_HOME" />
     </searchSequence>
     <variables>
-      <variable name="VERSION_MAJOR" value="" />
-      <variable name="VERSION_MINOR" value="" />
-      <variable name="VERSION_REVISION" value="" />
-      <variable name="RELEASE_DIR" value="jive_messenger_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" />
+      <variable name="VERSION_MAJOR" value="2" />
+      <variable name="VERSION_MINOR" value="1" />
+      <variable name="VERSION_REVISION" value="2" />
+      <variable name="APP_NAME" value="Jive Messenger" />
+      <variable name="APP_SHORT_NAME" value="jive_messenger" />
+      <variable name="PRODUCT_NAME" value="messenger" />
+      <variable name="PUBLISHER" value="Jive Software" />
+      <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
+      <variable name="RELEASE_DIR" value="%APP_SHORT_NAME%" />
+      <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
+      <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
+      <variable name="FILE_PREFIX" value="" />
     </variables>
   </application>
   <files>
@@ -19,7 +27,7 @@
       <mountPoint name="" id="1" location="" mode="755" />
     </mountPoints>
     <entries>
-      <dirEntry mountPoint="1" file="../../target/release/%RELEASE_DIR%" overwrite="4" shared="false" mode="644" dontUninstall="false" excludeSuffixes="" dirMode="755">
+      <dirEntry mountPoint="1" file="%RELEASE_FULL_PATH%" overwrite="4" shared="false" mode="644" dontUninstall="false" excludeSuffixes="" dirMode="755">
         <exclude />
       </dirEntry>
     </entries>
@@ -27,8 +35,8 @@
   </files>
   <launchers>
     <launcher name="Jive Messenger" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="messenger-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="Jive Messenger" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="Jive Messenger XMPP Server" legalCopyright="Jive Software" productVersion="" internalName="Jive Messenger" />
+      <executable name="%PRODUCT_NAME%-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="%APP_NAME%" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Server" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
@@ -49,9 +57,9 @@
       </java>
       <includedFiles />
     </launcher>
-    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="Jive Messenger" icnsFile="" pngIcon16File="./images/messenger-16x16.png" pngIcon32File="./images/messenger-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="messenger" type="1" iconSet="true" iconFile="./images/messenger.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="Jive Messenger Launcher" legalCopyright="Jive Software" productVersion="" internalName="Jive Messenger" />
+    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="%APP_NAME% Server" icnsFile="" pngIcon16File="./images/messenger-16x16.png" pngIcon32File="./images/messenger-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="%PRODUCT_NAME%" type="1" iconSet="true" iconFile="./images/messenger.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Launcher" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
@@ -73,8 +81,8 @@
       <includedFiles />
     </launcher>
     <launcher name="messengerd" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/messengerd-16x16.png" pngIcon32File="./images/messengerd-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="messengerd" type="1" iconSet="true" iconFile="./images/messengerd.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="XMPP Server" legalCopyright="Jive Software" productVersion="" internalName="Jive Messenger" />
+      <executable name="%PRODUCT_NAME%d" type="1" iconSet="true" iconFile="./images/messengerd.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Server" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
@@ -96,7 +104,7 @@
       <includedFiles />
     </launcher>
     <launcher name="messenger" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="messenger" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+      <executable name="%PRODUCT_NAME%" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
         <versionInfo include="false" fileVersion="" companyName="" fileDescription="" legalCopyright="" productVersion="" internalName="" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
@@ -123,7 +131,7 @@
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="false" postUninstallActionClass="" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="" />
     <standardScreens>
       <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
-      <screen id="license" enabled="true" file="../../target/release/%RELEASE_DIR%/GPL.txt" />
+      <screen id="license" enabled="true" file="%RELEASE_FULL_PATH%/GPL.txt" />
       <screen id="location" enabled="true" showSpace="true" suggestAppDir="true" />
       <screen id="components" enabled="true" allSelected="true" firstMandatory="true">
         <selectedComponents />
@@ -147,7 +155,7 @@
     <customScreens />
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="Jive Messenger" allLaunchers="false" includedJRE="windows-x86-1.5.0" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="Jive Messenger" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="%APP_NAME% Server" allLaunchers="false" includedJRE="windows-x86-1.5.0" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME% Server" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
       <selectedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -165,24 +173,26 @@
         <entry name="Readme" target="README.html" icon="" />
       </additionalStartMenuEntries>
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/jive_messenger" allLaunchers="false" includedJRE="linux-x86-1.5.0" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/jive_%PRODUCT_NAME%" allLaunchers="false" includedJRE="linux-x86-1.5.0" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra" launcher="false" />
         <entry location="bin/messenger.bat" launcher="false" />
         <entry location="bin/messenger.sh" launcher="false" />
       </exclude>
       <variables />
       <customScriptLines />
     </linuxRPM>
-    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_messenger" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_%PRODUCT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra" launcher="false" />
         <entry location="bin/messenger.bat" launcher="false" />
         <entry location="bin/messenger.sh" launcher="false" />
       </exclude>

@@ -464,8 +464,11 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @return the <code>Session</code> associated with the JID.
      */
     public Session getSession(JID from) {
-        Session session = null;
+        if (from == null) {
+            return null;
+        }
 
+        Session session = null;
         // Initially Check preAuthenticated Sessions
         session = preAuthenticatedSessions.get(from.toString());
         if(session != null){

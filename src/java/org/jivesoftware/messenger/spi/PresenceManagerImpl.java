@@ -26,7 +26,6 @@ import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
@@ -230,12 +229,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public boolean isAvailable(User user) {
-        try {
-            return sessionManager.getSessionCount(user.getUsername()) > 0;
-        }
-        catch (UnauthorizedException ue) {
-        }
-        return false;
+        return sessionManager.getSessionCount(user.getUsername()) > 0;
     }
 
     public Presence getPresence(User user) {

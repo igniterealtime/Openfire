@@ -88,7 +88,7 @@
                     UserManager userManager = (UserManager)lookup.lookup(UserManager.class);
                     if(userManager == null) {
                         userManager = new UserManagerImpl();
-                        userManager.initialize(container.getModuleContext(), container);
+                        userManager.initialize(container);
                     }
 
 

@@ -12,7 +12,6 @@
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.messenger.container.*,
                  org.jivesoftware.messenger.spi.BasicServer,
-                 org.jivesoftware.messenger.container.spi.XMLModuleContext,
                  org.jivesoftware.messenger.auth.UnauthorizedException"
 %>
 <!-- Define Administration Bean -->

@@ -362,7 +362,7 @@ String log = ParamUtils.getParameter(request, "log");
     }
 
     // Other vars
-    File logDir = admin.getContainer().getModuleContext().getLogDirectory();
+    File logDir = new File(Log.getLogDirectory());
     String filename = "jive." + log + ".log";
     File logFile = new File(logDir, filename);
     boolean tooBig = false;

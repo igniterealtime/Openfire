@@ -115,7 +115,7 @@ Use the form below to edit user properties.
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
-                 value="<%= ((user.getName()!=null) ? user.getName() : "") %>">
+                 value="<%= user.getName() %>">
 
                 <%  if (errors.get("name") != null) { %>
 

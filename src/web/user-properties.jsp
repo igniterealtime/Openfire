@@ -173,7 +173,7 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
             Name:
         </td>
         <td>
-            <%  if (user.getName() == null || "".equals(user.getName())) { %>
+            <%  if ("".equals(user.getName())) { %>
 
                 <span style="color:#999">
                 <i>Not set.</i>

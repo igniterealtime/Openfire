@@ -21,20 +21,6 @@
 <%@ taglib uri="core" prefix="c"%>
 <%@ taglib uri="fmt" prefix="fmt"%>
 
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"/>
-<%  admin.init(request, response, session, application, out ); %>
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Group Chat History Settings";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat History", "muc-history-settings.jsp"));
-    pageinfo.setPageID("muc-history");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
-
 <%!  // Global vars and methods:
 
     // Strategy definitions:
@@ -42,6 +28,10 @@
     static final int NONE = 2;
     static final int NUMBER = 3;
 %>
+
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"/>
+<%  admin.init(request, response, session, application, out ); %>
+
 <%   // Get parameters:
     boolean update = request.getParameter("update") != null;
     int policy = ParamUtils.getIntParameter(request,"policy",-1);
@@ -76,9 +66,8 @@
                 historyStrat.setMaxNumber(numMessages);
             }
             // All done, redirect
-            %>
-            <p class="jive-success-text">Settings updated.</p>
-            <% 
+            response.sendRedirect("muc-history-settings.jsp?success=true");
+            return;
         }
     }
 
@@ -97,53 +86,90 @@
     }
 %>
 
-  <table cellpadding="3" cellspacing="1" border="0" width="600">
-<form action="muc-history-settings.jsp">
-   
-    <tr>
-      <td class="text" colspan="2">Group Chat rooms can replay conversation histories to provide context to new members joining a room.
-        <fmt:message key="short.title" bundle="${lang}"/> provides several options for controlling how much history to store for each room.
-      </td>
-    </tr>
-    <tr valign="top" class="">
-      <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
-      </td>
-      <td width="99%">
-        <label for="rb01">
-          <b>Don't Show History</b>
-        </label>- Do not show the entire chat history.
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
-      </td>
-      <td width="99%">
-        <label for="rb02">
-          <b>Show Entire Chat History</b>
-        </label>- Show the entire chat history to the user.
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="1%" nowrap>
-        <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
-      </td>
-      <td width="99%">
-        <label for="rb03">
-          <b>Show a Specific Number of Messages</b>
-        </label>- Show a specific number of the most recent messages in the chat. Use the box below to specify that number.
-      </td>
-    </tr>
-    <tr valign="top" class="">
-      <td width="1%" nowrap>&nbsp;</td>
-      <td width="99%">
-        <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> messages
-      </td>
-    </tr>
-  </table>
-  <br/>
-  <input type="submit" name="update" value="Save Settings"/>
-</form>
-<%@ include file="bottom.jsp"%>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Group Chat History Settings";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat History", "muc-history-settings.jsp"));
+    pageinfo.setPageID("muc-history");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
+<p>
+Group Chat rooms can replay conversation histories to provide context to new members joining a room.
+<fmt:message key="short.title" bundle="${lang}"/> provides several options for controlling how much
+history to store for each room.
+</p>
+
+<%  if ("true".equals(request.getParameter("success"))) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Settings updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } %>
+
+<form action="muc-history-settings.jsp" method="post">
+
+<fieldset>
+    <legend>Set Conflict Policy</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
+            </td>
+            <td width="99%">
+                <label for="rb01">
+                <b>Don't Show History</b>
+                </label>- Do not show the entire chat history.
+            </td>
+        </tr>
+        <tr valign="top">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb02">
+                <b>Show Entire Chat History</b>
+                </label>- Show the entire chat history to the user.
+            </td>
+        </tr>
+        <tr valign="top">
+            <td width="1%" nowrap>
+                <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
+            </td>
+            <td width="99%">
+                <label for="rb03">
+                <b>Show a Specific Number of Messages</b>
+                </label>- Show a specific number of the most recent messages in the chat. Use the box below to specify that number.
+            </td>
+        </tr>
+        <tr valign="top" class="">
+            <td width="1%" nowrap>&nbsp;</td>
+            <td width="99%">
+                <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> messages
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
+<br><br>
+
+<input type="submit" name="update" value="Save Settings"/>
+
+</form>
+
+<jsp:include page="bottom.jsp" flush="true" />

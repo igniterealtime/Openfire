@@ -40,9 +40,9 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupID               BIGINT          NOT NULL,
-  userID                BIGINT          NOT NULL,
+  username              VARCHAR(32)     NOT NULL,
   administrator         TINYINT         NOT NULL,
-  PRIMARY KEY (groupID, userID, administrator)
+  PRIMARY KEY (groupID, username, administrator)
 );
 
 CREATE TABLE jivePrivate (

@@ -14,6 +14,11 @@ package org.jivesoftware.messenger.container;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLProperties;
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.admin.AdminConsole;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Attribute;
+import org.dom4j.io.SAXReader;
 
 import java.io.*;
 import java.util.*;
@@ -102,9 +107,10 @@ public class PluginManager {
         try {
             File pluginConfig = new File(pluginDir, "plugin.xml");
             if (pluginConfig.exists()) {
-                XMLProperties pluginProps = new XMLProperties(pluginConfig);
+                SAXReader saxReader = new SAXReader();
+                Document pluginXML = saxReader.read(pluginConfig);
                 PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
-                String className = pluginProps.getProperty("class");
+                String className = pluginXML.selectSingleNode("/plugin/class").getText();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
                 plugin.initialize(this, pluginDir);
                 plugins.put(pluginDir.getName(), plugin);
@@ -112,6 +118,18 @@ public class PluginManager {
                 File webXML = new File(pluginDir, "web" + File.separator + "web.xml");
                 if (webXML.exists()) {
                     PluginServlet.registerServlets(plugin, webXML);
+                }
+                // If there a <adminconsole> section defined, register it.
+                Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
+                if (adminElement != null) {
+                    // Modify all the URL's in the XML so that they are passed through
+                    // the plugin servlet correctly.
+                    List urls = adminElement.selectNodes("//@url");
+                    for (int i=0; i<urls.size(); i++) {
+                        Attribute attr = (Attribute)urls.get(i);
+                        attr.setValue("/plugins/" + pluginDir.getName() + "/" + attr.getValue());
+                    }
+                    AdminConsole.addXMLSource(adminElement);
                 }
             }
             else {

@@ -27,7 +27,6 @@ import java.io.*;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -87,6 +86,13 @@ public class PluginServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Registers all JSP page servlets for a plugin.
+     *
+     * @param plugin the plugin.
+     * @param webXML the web.xml file containing JSP page names to servlet class file
+     *      mappings.
+     */
     public static void registerServlets(Plugin plugin, File webXML) {
         if (!webXML.exists()) {
             Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +

@@ -13,13 +13,12 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XPPReader;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 
 import java.util.*;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 
 /**
@@ -63,7 +62,19 @@ public class AdminConsole {
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
     public static void addXMLSource(InputStream in) throws Exception {
-        addToModel(in);
+        SAXReader saxReader = new SAXReader();
+        Document doc = saxReader.read(in);
+        addXMLSource((Element)doc.selectSingleNode("/adminconsole"));
+    }
+
+    /**
+     * Adds an &lt;adminconsole&gt; Element to the tabs/sidebar model.
+     *
+     * @param element the Element
+     * @throws Exception if an error occurs.
+     */
+    public static void addXMLSource(Element element) throws Exception {
+        addToModel(element);
     }
 
     /**
@@ -339,7 +350,7 @@ public class AdminConsole {
             return;
         }
         try {
-            addToModel(in);
+            addXMLSource(in);
         }
         catch (Exception e) {
             Log.error("Failure when parsing main admin-sidebar.xml file", e);
@@ -359,7 +370,7 @@ public class AdminConsole {
                     while (e.hasMoreElements()) {
                         url = (URL)e.nextElement();
                         in = url.openStream();
-                        addToModel(in);
+                        addXMLSource(in);
                         try {
                             in.close();
                         }
@@ -377,21 +388,20 @@ public class AdminConsole {
         }
     }
 
-    private static void addToModel(InputStream in) throws Exception {
-
-        Document doc = XPPReader.parseDocument(new InputStreamReader(in), AdminConsole.class);
+    private static void addToModel(Element element) throws Exception {
         // Set any global properties
-        String globalAppname = getProperty(doc, "global.appname");
-        if (globalAppname != null) {
-            appName = globalAppname;
+        Element globalEl = (Element)element.selectSingleNode("/adminconsole/global/appname");
+        if (globalEl != null) {
+            appName = globalEl.getText();
         }
-        String globalLogoImage = getProperty(doc, "global.logo-image");
-        if (globalLogoImage != null) {
-            logoImage = globalLogoImage;
+        Element globalLogoImageEl = (Element)element.selectSingleNode(
+                "/adminconsole/global/logo-image");
+        if (globalLogoImageEl != null) {
+            logoImage = globalLogoImageEl.getText();
         }
 
         // Get all children of the 'tabs' element - should be 'tab' items:
-        List tabs = doc.getRootElement().elements("tab");
+        List tabs = element.elements("tab");
         for (int i=0; i<tabs.size(); i++) {
             Element tab = (Element)tabs.get(i);
 
@@ -438,82 +448,6 @@ public class AdminConsole {
                 item.addItem(sidebarItem);
             }
         }
-    }
-
-    private static String getProperty(Document doc, String propName) {
-        String[] name = parsePropertyName(propName);
-        String value = null;
-        // Search for this property by traversing down the XML heirarchy.
-        Element element = doc.getRootElement();
-        for (int i = 0; i < name.length; i++) {
-            element = element.element(name[i]);
-            if (element == null) {
-                value = null;
-                break;
-            }
-        }
-        // At this point, we found a matching property, so return its value.
-        // Empty strings are returned as null.
-        if (element != null) {
-            value = element.getTextTrim();
-            if ("".equals(value)) {
-                value = null;
-            }
-        }
-        return value;
-    }
-
-    private static String getAttribute(Document doc, String propName, String attribute) {
-        String[] name = parsePropertyName(propName);
-        String value = null;
-        // Search for this property by traversing down the XML heirarchy.
-        Element element = doc.getRootElement();
-        for (int i = 0; i < name.length; i++) {
-            element = element.element(name[i]);
-            if (element == null) {
-                value = null;
-                break;
-            }
-        }
-        // At this point, we found a matching property, so return its value.
-        // Empty strings are returned as null.
-        value = element.attributeValue(attribute);
-        if ("".equals(value)) {
-            value = null;
-        }
-        return value;
-    }
-
-    private static Element[] getChildElements(Document doc, String propName) {
-        String[] name = parsePropertyName(propName);
-        // Search for this property by traversing down the XML heirarchy.
-        Element element = doc.getRootElement();
-        for (int i = 0; i < name.length; i++) {
-            element = element.element(name[i]);
-            if (element == null) {
-                // This node doesn't match this part of the property name which
-                // indicates this property doesn't exist so return empty array.
-                return new Element[]{};
-            }
-        }
-        // We found matching property, return names of children.
-        List children = element.elements();
-        int childCount = children.size();
-        Element[] elements = new Element[childCount];
-        for (int i=0; i<childCount; i++) {
-            elements[i] = (Element)children.get(i);
-        }
-        return elements;
-    }
-
-    private static String[] parsePropertyName(String name) {
-        List propName = new ArrayList(5);
-        // Use a StringTokenizer to tokenize the property name.
-        StringTokenizer tokenizer = new StringTokenizer(name, ".");
-        while (tokenizer.hasMoreTokens()) {
-            propName.add(tokenizer.nextToken());
-        }
-        return (String[])propName.toArray(new String[propName.size()]);
     }
 
     private static void subAddtoModel(Element parentElement, Item parentItem) {

@@ -288,11 +288,14 @@ public class XPPPacketReader {
                     }
                 case XmlPullParser.CDSECT:
                     {
+                        String text = pp.getText();
                         if (parent != null) {
-                            parent.addCDATA(pp.getText());
+                            parent.addCDATA(text);
                         }
                         else {
-                            throw new DocumentException("Cannot have text content outside of the root document");
+                            if (text.trim().length() > 0) {
+                                throw new DocumentException("Cannot have text content outside of the root document");
+                            }
                         }
                         break;
 
@@ -349,7 +352,9 @@ public class XPPPacketReader {
                             parent.addText(text);
                         }
                         else {
-                            throw new DocumentException("Cannot have text content outside of the root document");
+                            if (text.trim().length() > 0) {
+                                throw new DocumentException("Cannot have text content outside of the root document");
+                            }
                         }
                         break;
                     }

@@ -222,11 +222,7 @@ public class DbConnectionManager {
         // If the driver supports scrollable result sets, use that feature.
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
-                // Newer oracle JDBC driver do not like fetch-foward result sets to
-                // use absolute(int) or relative(int) calls, so special-case.
-                if (getDatabaseType() != DatabaseType.oracle) {
-                    rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-                }
+                rs.setFetchDirection(ResultSet.FETCH_FORWARD);
                 rs.relative(rowNumber);
             }
         }
@@ -452,6 +448,7 @@ public class DbConnectionManager {
         if (dbName.indexOf("oracle") != -1) {
             databaseType = DatabaseType.oracle;
             streamTextRequired = true;
+            scrollResultsSupported = false;
             // The i-net AUGURO JDBC driver
             if (driverName.indexOf("auguro") != -1) {
                 streamTextRequired = false;

@@ -321,7 +321,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
                     itemList.add(item);
                 }
                 finally {
-                    DbConnectionManager.close(pstmt, con);
+                    DbConnectionManager.close(gstmt, con);
                 }
             }
         }

@@ -10,7 +10,7 @@
                 </is>
             </name>
         </prop>
-		
+
       Most properties are stored in the Jive Messenger database. A
 	property viewer and editor is included in the admin console.
 -->
@@ -20,14 +20,14 @@
         <port>9090</port>
         <securePort>9091</securePort>
         <!-- By default, only the user with the username "admin" can login
-         to the admin console. Alternatively, you can specify a comma-delimitted 
-         list usernames that should be authorized to login by setting the  
-         <authorizedUsernames> field below. --> 
+         to the admin console. Alternatively, you can specify a comma-delimitted
+         list usernames that should be authorized to login by setting the
+         <authorizedUsernames> field below. -->
         <!-- <authorizedUsernames></authorizedUsernames> -->
     </adminConsole>
 
     <locale>en</locale>
-    
+
     <!-- Example LDAP settings -->
     <!--
     <ldap>
@@ -39,7 +39,7 @@
         <baseDN></baseDN>
         <adminDN></adminDN>
         <adminPassword></adminPassword>
-    </ldap> 
+    </ldap>
     <provider>
         <user>
             <className>org.jivesoftware.messenger.ldap.LdapUserProvider</className>

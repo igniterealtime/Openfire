@@ -111,12 +111,12 @@ user <b><%= address.getNode() %></b> has multiple sessions open, they will appea
             <%  String n = address.getNode(); %>
             <%  if (n == null || "".equals(n)) { %>
 
-                <i>Anonymous</i> - <%= address.getResource() %>
+                <i>Anonymous</i> - <%= address.getResource()==null?"":address.getResource() %>
 
             <%  } else { %>
 
                 <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
-                - <%= address.getResource() %>
+                - <%= address.getResource()==null?"":address.getResource() %>
 
             <%  } %>
         </td>

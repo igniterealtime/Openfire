@@ -15,9 +15,11 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.XMPPServer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,8 +48,8 @@ public class Group implements Cacheable {
     private String name;
     private String description;
     private Map<String, String> properties;
-    private Collection<String> members;
-    private Collection<String> administrators;
+    private Collection<String> members = new CopyOnWriteArrayList<String>();
+    private Collection<String> administrators = new CopyOnWriteArrayList<String>();
 
     /**
      * Constructs a new group.
@@ -55,7 +57,7 @@ public class Group implements Cacheable {
      * @param provider the group provider.
      * @param name the name.
      * @param description the description.
-     * @param members a Collection of the group members (includes administrators).
+     * @param members a Collection of the group members.
      * @param administrators a Collection of the group administrators.
      */
     protected Group(GroupProvider provider, String name, String description,
@@ -65,8 +67,8 @@ public class Group implements Cacheable {
         this.groupManager = GroupManager.getInstance();
         this.name = name;
         this.description = description;
-        this.members = members;
-        this.administrators = administrators;
+        this.members.addAll(members);
+        this.administrators.addAll(administrators);
     }
 
     /**
@@ -142,23 +144,35 @@ public class Group implements Cacheable {
     }
 
     /**
-     * Returns a Collection of the group members that are administrators.
+     * Returns a Collection of the group administrators. Use <code>getUsers()</code> to get the
+     * complete list of group users.
      *
      * @return a Collection of the group administrators.
      */
-    public Collection<String> getAdministrators() {
-        // Return a wrapper that will intercept add and remove commands.
-        return new MemberCollection(administrators, true);
+    public Collection<String> getAdmins() {
+        return Collections.unmodifiableCollection(administrators);
     }
 
     /**
-     * Returns a Collection of the group members.
+     * Returns a Collection of the group members. Use <code>getUsers()</code> to get the complete
+     * list of group users.
      *
      * @return a Collection of the group members.
      */
     public Collection<String> getMembers() {
-        // Return a wrapper that will intercept add and remove commands.
-        return new MemberCollection(members, false);
+        return Collections.unmodifiableCollection(members);
+    }
+
+    /**
+     * Returns a Collection with all the group users. The collection will include group members
+     * as well as group administrators.
+     *
+     * @return a Collection with all the group users.
+     */
+    public Collection<String> getUsers() {
+        Collection<String> answer = new ArrayList<String>(members);
+        answer.addAll(administrators);
+        return Collections.unmodifiableCollection(answer);
     }
 
     /**
@@ -171,6 +185,102 @@ public class Group implements Cacheable {
         return members.contains(username) || administrators.contains(username);
     }
 
+    /**
+     * Returns true if the provided username belongs to a member of the group.
+     *
+     * @param username the username to check.
+     * @return true if the provided username belongs to a member of the group.
+     */
+    public boolean isMember(String username) {
+        return members.contains(username);
+    }
+
+    /**
+     * Returns true if the provided username belongs to an administrator of the group.
+     *
+     * @param username the username to check.
+     * @return true if the provided username belongs to an administrator of the group.
+     */
+    public boolean isAdmin(String username) {
+        return administrators.contains(username);
+    }
+
+    /**
+     * Adds a new user as a member of the group. The roster of all group users that are currently
+     * logged into the server will be updated.
+     *
+     * @param user the user to add as a member of the goup.
+     */
+    public void addMember(String user) {
+        if (members.contains(user)) {
+            return;
+        }
+        members.add(user);
+        userAdded(user, false);
+    }
+
+    /**
+     * Removes a member from the group.  The roster of all group users that are currently
+     * logged into the server will be updated.
+     *
+     * @param user the user to remove as a member of the group.
+     */
+    public void removeMember(String user) {
+        if (members.remove(user)) {
+            userRemoved(user);
+        }
+    }
+
+    /**
+     * Adds a new user as an administrator of the group. The roster of all group users that are
+     * currently logged into the server will be updated.
+     *
+     * @param user the user to add as an administrator of the goup.
+     */
+    public void addAdmin(String user) {
+        if (administrators.contains(user)) {
+            return;
+        }
+        administrators.add(user);
+        userAdded(user, true);
+    }
+
+    /**
+     * Removes an administrator from the group.  The roster of all group users that are currently
+     * logged into the server will be updated.
+     *
+     * @param user the user to remove as an administrator of the group.
+     */
+    public void removeAdmin(String user) {
+        if (administrators.remove(user)) {
+            userRemoved(user);
+        }
+    }
+
+    /**
+     * Update backend store and update group users' roster.
+     *
+     * @param user the user that was added to the group.
+     */
+    private void userAdded(String user, boolean administrator) {
+        // Add the new group user to the backend store
+        provider.addMember(name, user, administrator);
+        // Update the group users' roster
+        XMPPServer.getInstance().getRosterManager().groupUserAdded(this, user);
+    }
+
+    /**
+     * Update backend store and update group users' roster.
+     *
+     * @param user the user that was removed from the group.
+     */
+    private void userRemoved(String user) {
+        // Remove the group user from the backend store
+        provider.deleteMember(name, user);
+        // Update the group users' roster
+        XMPPServer.getInstance().getRosterManager().groupUserDeleted(this, user);
+    }
+
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -179,55 +289,6 @@ public class Group implements Cacheable {
         size += CacheSizes.sizeOfString(name);
         size += CacheSizes.sizeOfString(description);
         return size;
-    }
-
-    /**
-     * Collection implementation that notifies the GroupProvider of any
-     * changes to the collection.
-     */
-    private class MemberCollection extends AbstractCollection {
-
-        private Collection<String> users;
-        private boolean adminCollection;
-
-        public MemberCollection(Collection<String> users, boolean adminCollection) {
-            this.users = users;
-            this.adminCollection = adminCollection;
-        }
-
-        public Iterator iterator() {
-            return new Iterator() {
-
-                Iterator iter = users.iterator();
-                Object current = null;
-
-                public boolean hasNext() {
-                    return iter.hasNext();
-                }
-
-                public Object next() {
-                    current = iter.next();
-                    return current;
-                }
-
-                public void remove() {
-                    if (current == null) {
-                        throw new IllegalStateException();
-                    }
-                    provider.deleteMember(name, (String)current);
-                    iter.remove();
-                }
-            };
-        }
-
-        public int size() {
-            return users.size();
-        }
-
-        public boolean add(Object member) {
-            provider.addMember(name, (String)member, adminCollection);
-            return users.add((String)member);
-        }
     }
 
     /**

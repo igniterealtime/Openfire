@@ -13,7 +13,8 @@
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.admin.*,
                  org.xmpp.packet.JID,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 org.jivesoftware.messenger.group.GroupManager"
     errorPage="error.jsp"
 %>
 
@@ -42,7 +43,10 @@
         webManager.getUserManager().deleteUser(user);
         // Delete the user's roster
         JID userAddress = new JID(username, webManager.getServerInfo().getName(), null);
+        // Delete the roster of the user
         webManager.getRosterManager().deleteRoster(userAddress);
+        // Delete the user from all the Groups
+        GroupManager.getInstance().deleteUser(user);
         // Deleted your own user account, force login
         if (username.equals(webManager.getAuthToken().getUsername())){
             session.removeAttribute("jive.admin.authToken");

@@ -38,8 +38,6 @@ public class DefaultUserProvider implements UserProvider {
     private static final String INSERT_USER =
             "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
             "VALUES (?,?,?,?,?,?)";
-    private static final String DELETE_USER_GROUPS =
-            "DELETE FROM jiveGroupUser WHERE username=?";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM jiveUserProp WHERE username=?";
     private static final String DELETE_VCARD_PROPS =
@@ -140,11 +138,6 @@ public class DefaultUserProvider implements UserProvider {
         boolean abortTransaction = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
-            // Remove user from all groups
-            pstmt = con.prepareStatement(DELETE_USER_GROUPS);
-            pstmt.setString(1, username);
-            pstmt.execute();
-            pstmt.close();
             // Delete all of the users's extended properties
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
             pstmt.setString(1, username);

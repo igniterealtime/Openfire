@@ -18,6 +18,7 @@ import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.group.GroupManager;
 import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
@@ -202,10 +203,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                        User user = userManager.getUser(session.getUsername());
                         // Delete the user
-                        userManager.deleteUser(userManager.getUser(session.getUsername()));
+                        userManager.deleteUser(user);
                         // Delete the roster of the user
                         rosterManager.deleteRoster(session.getAddress());
+                        // Delete the user from all the Groups
+                        GroupManager.getInstance().deleteUser(user);
 
                         reply = IQ.createResultIQ(packet);
                         session.getConnection().deliver(reply);

@@ -354,8 +354,17 @@ public class RosterItem implements Cacheable {
      *
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
-    public void addSharedGroups(String sharedGroup) {
+    public void addSharedGroup(String sharedGroup) {
         sharedGroups.add(sharedGroup);
+    }
+
+    /**
+     * Removes a group from the shared groups list.
+     *
+     * @param sharedGroup The shared group to remove from the list of shared groups.
+     */
+    public void removeSharedGroup(String sharedGroup) {
+        sharedGroups.remove(sharedGroup);
     }
 
     /**

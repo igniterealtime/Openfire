@@ -139,7 +139,7 @@ Total Groups: <%= webManager.getGroupManager().getGroupCount() %>,
             <%= group.getMembers().size() %>
         </td>
         <td width="10%" align="center">
-            <%= group.getAdministrators().size() %>
+            <%= group.getAdmins().size() %>
         </td>
         <td width="1%" align="center">
             <a href="group-edit-form.jsp?group=<%= group.getName() %>"

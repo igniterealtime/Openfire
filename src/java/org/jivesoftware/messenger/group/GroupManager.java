@@ -17,6 +17,8 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.roster.RosterManager;
 
 import java.util.Collection;
 
@@ -118,6 +120,27 @@ public class GroupManager {
 
         // Expire all relevant caches.
         groupCache.remove(group.getName());
+
+        // Notify the RosterManager that the group has been deleted
+        RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
+        rosterManager.groupDeleted(group);
+    }
+
+    /**
+     * Deletes a user from all the groups where he/she belongs. The most probable cause for this
+     * request is that the user has been deleted from the system.
+     *
+     * @param user the deleted user from the system.
+     */
+    public void deleteUser(User user) {
+        for (Group group : getGroups(user)) {
+            if (group.isAdmin(user.getUsername())) {
+                group.removeAdmin(user.getUsername());
+            }
+            else {
+                group.removeMember(user.getUsername());
+            }
+        }
     }
 
     /**

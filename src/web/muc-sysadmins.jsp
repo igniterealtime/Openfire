@@ -17,11 +17,11 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "System Administrators For MultiUser Chat Rooms";
+    String title = "Group Chat Administrators";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-sysadmins.jsp"));
-    pageinfo.setPageID("muc-sysadmins");
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Group Chat Admin", "muc-sysadmins.jsp"));
+    pageinfo.setPageID("muc-sysadmin");
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />

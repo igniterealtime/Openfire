@@ -18,10 +18,10 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Users allowed to create rooms";
+    String title = "Room Creation Permissions";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-create-permission.jsp"));
     pageinfo.setPageID("muc-perms");
 %>
 <jsp:include page="top.jsp" flush="true" />

@@ -73,7 +73,7 @@
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-details.jsp"));
-    pageinfo.setSubPageID("session-summary");
+    pageinfo.setPageID("session-summary");
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
@@ -309,11 +309,11 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
 <form action="session-details.jsp">
 <input type="hidden" name="jid" value="<%= jid %>">
 <center>
-<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>
-
-    <input type="submit" name="message" value="Message this Session">
-
-<%  } %>
+<%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
+<%----%>
+<%--    <input type="submit" name="message" value="Message this Session">--%>
+<%----%>
+<%--<%  } %>--%>
 <input type="submit" name="back" value="Back to Summary">
 </center>
 </form>

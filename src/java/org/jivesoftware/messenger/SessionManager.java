@@ -289,7 +289,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         conn.registerCloseListener(this, session);
 
         // Add to pre-authenticated sessions.
-        preAuthenticatedSessions.put(session.getAddress().toBareJID(), session);
+        preAuthenticatedSessions.put(session.getAddress().toString(), session);
         return session;
     }
 
@@ -312,7 +312,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
             // remove its route from the sessions set. We hand the session back
             // to ourselves in the message.
             session.getConnection().registerCloseListener(this, session);
-            preAuthenticatedSessions.remove(session.getAddress().toBareJID());
+            preAuthenticatedSessions.remove(session.getAddress().toString());
             success = true;
         }
         catch (UnauthorizedException e) {
@@ -467,7 +467,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         Session session = null;
 
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(from.toBareJID());
+        session = preAuthenticatedSessions.get(from.toString());
         if(session != null){
             return session;
         }

@@ -63,7 +63,7 @@ public class IQOwnerHandler {
         // Analyze the action to perform based on the included element
         Element formElement = element.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
-            handleDataFormElement(role, formElement, reply);
+            handleDataFormElement(role, formElement);
         }
         else {
             Element destroyElement = element.element("destroy");
@@ -222,8 +222,7 @@ public class IQOwnerHandler {
                 if (jids.keySet().containsAll(room.owners)) {
                     // Answer a conflict error if we are only removing ALL the owners
                     if (!jids.containsValue("owner")) {
-                        reply.setError(XMPPError.Code.CONFLICT);
-                        return;
+                        throw new ConflictException();
                     }
                 }
 
@@ -269,13 +268,8 @@ public class IQOwnerHandler {
             }
 
             // Send the updated presences to the room occupants
-            try {
-                for (Presence presence : presences) {
-                    room.send(presence);
-                }
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
+            for (Presence presence : presences) {
+                room.send(presence);
             }
         }
     }
@@ -286,13 +280,10 @@ public class IQOwnerHandler {
      *
      * @param senderRole  the role of the user that sent the data form.
      * @param formElement the element that contains the data form specification.
-     * @param reply       the iq packet that will be sent back as a reply to the client's request.
-     * @throws UnauthorizedException If the user doesn't have permission to destroy/configure the
-     *                               room.
      * @throws ForbiddenException    if the user does not have enough privileges.
      */
-    private void handleDataFormElement(MUCRole senderRole, Element formElement, IQ reply)
-            throws UnauthorizedException, ForbiddenException, ConflictException {
+    private void handleDataFormElement(MUCRole senderRole, Element formElement)
+            throws ForbiddenException, ConflictException {
         XDataFormImpl completedForm = new XDataFormImpl();
         completedForm.parse(formElement);
 
@@ -310,7 +301,7 @@ public class IQOwnerHandler {
             }
             // The owner is requesting a reserved room or is changing the current configuration
             else {
-                processConfigurationForm(completedForm, senderRole, reply);
+                processConfigurationForm(completedForm, senderRole);
             }
             // If the room was locked, unlock it and send to the owner the "room is now unlocked"
             // message
@@ -320,7 +311,7 @@ public class IQOwnerHandler {
         }
     }
 
-    private void processConfigurationForm(XDataFormImpl completedForm, MUCRole senderRole, IQ reply)
+    private void processConfigurationForm(XDataFormImpl completedForm, MUCRole senderRole)
             throws ForbiddenException, ConflictException {
         Iterator<String> values;
         String booleanValue;
@@ -349,8 +340,7 @@ public class IQOwnerHandler {
 
         // Answer a conflic error if all the current owners will be removed
         if (owners.isEmpty()) {
-            reply.setError(XMPPError.Code.CONFLICT);
-            return;
+            throw new ConflictException();
         }
 
         // Keep a registry of the updated presences
@@ -503,12 +493,7 @@ public class IQOwnerHandler {
             // Destroy the room if the room is no longer persistent and there are no occupants in
             // the room
             if (!room.isPersistent() && room.getOccupantsCount() == 0) {
-                try {
-                    room.destroyRoom(null, null);
-                }
-                catch (UnauthorizedException e) {
-                    // Do nothing.
-                }
+                room.destroyRoom(null, null);
             }
 
         }
@@ -517,13 +502,8 @@ public class IQOwnerHandler {
         }
 
         // Send the updated presences to the room occupants
-        try {
-            for (Iterator it = presences.iterator(); it.hasNext();) {
-                room.send((Presence)it.next());
-            }
-        }
-        catch (UnauthorizedException e) {
-            // Do nothing
+        for (Iterator it = presences.iterator(); it.hasNext();) {
+            room.send((Presence)it.next());
         }
     }
 

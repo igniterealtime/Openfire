@@ -1,4 +1,4 @@
-/*
+
  * $RCSfile$
  * $Revision$
  * $Date$
@@ -75,9 +75,9 @@ CREATE TABLE jiveVCard (
 
 
 CREATE TABLE jiveGroup (
-  name                  NVARCHAR(100)   NOT NULL,
+  groupName             NVARCHAR(50)   NOT NULL,
   description           NVARCHAR(255),
-  CONSTRAINT group_pk PRIMARY KEY (name)
+  CONSTRAINT group_pk PRIMARY KEY (groupName)
 );
 
 
@@ -129,7 +129,6 @@ CREATE TABLE mucRoom (
   logEnabled          INT           NOT NULL,
   subject             NVARCHAR(100) NULL,
   rolesToBroadcast    INT           NOT NULL,
-  lastActiveDate      CHAR(15)      NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );
 
@@ -157,7 +156,7 @@ CREATE TABLE mucConversationLog (
   subject             NVARCHAR(255)  NULL,
   body                NTEXT          NULL
 );
-CREATE INDEX mucLog_time_idx ON mucConversationLog (time, roomID);
+CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 
 /* Finally, insert default table values. */
 

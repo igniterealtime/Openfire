@@ -145,7 +145,7 @@ CREATE TABLE mucRoom (
   rolesToBroadcast    INTEGER       NOT NULL,
   lastActiveDate      CHAR(15)      NULL,
   inMemory            INTEGER       NOT NULL,
-  PRIMARY KEY (name)
+  CONSTRAINT mucRoom_pk PRIMARY KEY (name)
 );
 
 CREATE INDEX mucRoom_roomid_idx ON mucRoom(roomID);
@@ -154,14 +154,14 @@ CREATE TABLE mucAffiliation (
   roomID              BIGINT        NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   affiliation         INTEGER       NOT NULL,
-  PRIMARY KEY (roomID, jid)
+  CONSTRAINT mucAffiliation_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucMember (
   roomID              BIGINT        NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
-  PRIMARY KEY (roomID, jid)
+  CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucConversationLog (

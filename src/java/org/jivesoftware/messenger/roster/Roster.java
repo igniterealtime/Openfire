@@ -19,7 +19,6 @@ import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.group.GroupManager;
 import org.jivesoftware.messenger.group.Group;
-import org.jivesoftware.messenger.group.GroupNotFoundException;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Log;
@@ -97,7 +96,7 @@ public class Roster implements Cacheable {
             for (Group group : sharedGroups) {
                 if (group.isUser(item.getJid().getNode())) {
                     // TODO Group name conflicts are not being considered (do we need this?)
-                    item.addSharedGroup(group.getProperties().get("sharedRoster.displayName"));
+                    item.addSharedGroup(group);
                 }
             }
             rosterItems.put(item.getJid().toBareJID(), item);
@@ -114,11 +113,11 @@ public class Roster implements Cacheable {
                 // Add the shared groups to the new roster item
                 for (Group group : sharedUsers.get(jid)) {
                     if (group.isUser(jid.getNode())) {
-                        item.addSharedGroup(group.getProperties().get("sharedRoster.displayName"));
+                        item.addSharedGroup(group);
                         itemGroups.add(group);
                     }
                     else {
-                        item.addInvisibleSharedGroup(group.getProperties().get("sharedRoster.displayName"));
+                        item.addInvisibleSharedGroup(group);
                     }
                 }
                 // Set subscription type to BOTH if the roster user belongs to a shared group
@@ -372,7 +371,9 @@ public class Roster implements Cacheable {
                     .getName());
             // Set the groups to broadcast (include personal and shared groups)
             List<String> groups = new ArrayList<String>(item.getGroups());
-            groups.addAll(item.getSharedGroups());
+            for (Group sharedGroup : item.getSharedGroups()) {
+                groups.add(sharedGroup.getProperties().get("sharedRoster.displayName"));
+            }
             if (item.getSubStatus() != RosterItem.SUB_NONE ||
                     item.getAskStatus() != RosterItem.ASK_NONE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
@@ -474,7 +475,9 @@ public class Roster implements Cacheable {
     void broadcast(RosterItem item) {
         // Set the groups to broadcast (include personal and shared groups)
         List<String> groups = new ArrayList<String>(item.getGroups());
-        groups.addAll(item.getSharedGroups());
+        for (Group sharedGroup : item.getSharedGroups()) {
+            groups.add(sharedGroup.getProperties().get("sharedRoster.displayName"));
+        }
 
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
         roster.setType(IQ.Type.set);
@@ -510,13 +513,11 @@ public class Roster implements Cacheable {
         boolean newItem = false;
         RosterItem item = null;
         JID jid = XMPPServer.getInstance().createJID(addedUser, "");
-        // Get the display name of the group
-        String groupName = group.getProperties().get("sharedRoster.displayName");
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(jid);
             // Do nothing if the item already includes the shared group
-            if (item.getSharedGroups().contains(groupName)) {
+            if (item.getSharedGroups().contains(group)) {
                 return;
             }
             newItem = false;
@@ -534,7 +535,7 @@ public class Roster implements Cacheable {
                 newItem = true;
             }
             catch (UserNotFoundException ex) {
-                Log.error("Group (" + groupName + ") includes non-existent username (" +
+                Log.error("Group (" + group.getName() + ") includes non-existent username (" +
                         addedUser +
                         ")");
             }
@@ -547,15 +548,9 @@ public class Roster implements Cacheable {
                 User rosterUser = UserManager.getInstance().getUser(getUsername());
                 GroupManager groupManager = GroupManager.getInstance();
                 userGroups = groupManager.getGroups(rosterUser);
-                for (String name : item.getSharedGroups()) {
-                    try {
-                        sharedGroups.add(groupManager.getGroup(name));
-                    }
-                    catch (GroupNotFoundException e) {
-                    }
-                }
+                sharedGroups.addAll(item.getSharedGroups());
                 // Add the new group to the list of groups to check
-                sharedGroups.add(groupManager.getGroup(groupName));
+                sharedGroups.add(group);
                 // Set subscription type to BOTH if the roster user belongs to a shared group
                 // that is mutually visible with a shared group of the new roster item
                 if (rosterManager.hasMutualVisibility(getUsername(), userGroups, jid.getNode(),
@@ -573,16 +568,14 @@ public class Roster implements Cacheable {
             }
             catch (UserNotFoundException e) {
             }
-            catch (GroupNotFoundException e) {
-            }
         }
 
         // Add the shared group to the list of shared groups
         if (item.getSubStatus() != RosterItem.SUB_FROM) {
-            item.addSharedGroup(groupName);
+            item.addSharedGroup(group);
         }
         else {
-            item.addInvisibleSharedGroup(groupName);
+            item.addInvisibleSharedGroup(group);
         }
         // Brodcast to all the user resources of the updated roster item
         broadcast(item);
@@ -639,10 +632,19 @@ public class Roster implements Cacheable {
                     item.setSubStatus(RosterItem.SUB_BOTH);
                     for (Group group : groups) {
                         if (rosterManager.isGroupVisible(group, getUsername())) {
-                            // Get the display name of the group
-                            String groupName = group.getProperties().get("sharedRoster.displayName");
                             // Add the shared group to the list of shared groups
-                            item.addSharedGroup(groupName);
+                            item.addSharedGroup(group);
+                        }
+                    }
+                    // Add to the item the groups of this user that generated a FROM subscription
+                    // Note: This FROM subscription is overridden by the BOTH subscription but in
+                    // fact there is a TO-FROM relation between these two users that ends up in a
+                    // BOTH subscription
+                    for (Group group : userGroups) {
+                        if (!group.isUser(addedUser) &&
+                                rosterManager.isGroupVisible(group, addedUser)) {
+                            // Add the shared group to the list of invisible shared groups
+                            item.addInvisibleSharedGroup(group);
                         }
                     }
                 }
@@ -653,15 +655,13 @@ public class Roster implements Cacheable {
                     // Check if the user may see the new contact in a shared group
                     for (Group group : groups) {
                         if (rosterManager.isGroupVisible(group, getUsername())) {
-                            // Get the display name of the group
-                            String groupName = group.getProperties().get("sharedRoster.displayName");
                             // Add the shared group to the list of shared groups
-                            item.addSharedGroup(groupName);
+                            item.addSharedGroup(group);
                             item.setSubStatus(RosterItem.SUB_TO);
                         }
                     }
                     if (item.getSubStatus() == RosterItem.SUB_FROM) {
-                        item.addInvisibleSharedGroup(addedGroup.getProperties().get("sharedRoster.displayName"));
+                        item.addInvisibleSharedGroup(addedGroup);
                     }
                 }
             }
@@ -686,7 +686,7 @@ public class Roster implements Cacheable {
      * @param sharedGroup the shared group from where the user was deleted.
      * @param deletedUser the contact to update in the roster.
      */
-    void deleteSharedUser(String sharedGroup, String deletedUser) {
+    void deleteSharedUser(Group sharedGroup, String deletedUser) {
         JID jid = XMPPServer.getInstance().createJID(deletedUser, "");
         try {
             // Get the RosterItem for the *local* user to remove
@@ -712,13 +712,7 @@ public class Roster implements Cacheable {
                         User rosterUser = UserManager.getInstance().getUser(getUsername());
                         GroupManager groupManager = GroupManager.getInstance();
                         userGroups = groupManager.getGroups(rosterUser);
-                        for (String groupName : item.getSharedGroups()) {
-                            try {
-                                sharedGroups.add(groupManager.getGroup(groupName));
-                            }
-                            catch (GroupNotFoundException e) {
-                            }
-                        }
+                        sharedGroups.addAll(item.getSharedGroups());
                         // Set subscription type to BOTH if the roster user belongs to a shared group
                         // that is mutually visible with a shared group of the new roster item
                         if (rosterManager.hasMutualVisibility(getUsername(), userGroups,
@@ -761,14 +755,12 @@ public class Roster implements Cacheable {
                 deleteRosterItem(jid, false);
             }
             else {
-                item.removeSharedGroup(deletedGroup.getProperties().get("sharedRoster.displayName"));
+                item.removeSharedGroup(deletedGroup);
                 // Remove all invalid shared groups from the roster item
                 for (Group group : groups) {
                     if (!rosterManager.isGroupVisible(group, getUsername())) {
-                        // Get the display name of the group
-                        String groupName = group.getProperties().get("sharedRoster.displayName");
                         // Remove the shared group from the list of shared groups
-                        item.removeSharedGroup(groupName);
+                        item.removeSharedGroup(group);
                     }
                 }
 
@@ -816,11 +808,9 @@ public class Roster implements Cacheable {
      * A shared group of the user has been renamed. Update the existing roster items with the new
      * name of the shared group and make a roster push for all the available resources.
      *
-     * @param oldName old name of the shared group.
-     * @param newName new name of the shared group.
      * @param users group users of the renamed group.
      */
-    void shareGroupRenamed(String oldName, String newName, Collection<String> users) {
+    void shareGroupRenamed(Collection<String> users) {
         for (String user : users) {
             if (username.equals(user)) {
                 continue;
@@ -830,9 +820,6 @@ public class Roster implements Cacheable {
             try {
                 // Get the RosterItem for the *local* user to add
                 item = getRosterItem(jid);
-                // Update the shared group name in the list of shared groups
-                item.removeSharedGroup(oldName);
-                item.addSharedGroup(newName);
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item);
             }

@@ -283,7 +283,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 Roster roster = (Roster) CacheManager.getCache("username2roster").get(updatedUser);
                 if (roster != null) {
                     // Update the roster with the new group display name
-                    roster.shareGroupRenamed(originalValue, currentValue, users);
+                    roster.shareGroupRenamed(users);
                 }
             }
         }
@@ -407,8 +407,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     private void groupUserDeleted(Group group, Collection<String> users, String deletedUser) {
         // Get the roster of the deleted user.
         Roster deletedUserRoster = (Roster) CacheManager.getCache("username2roster").get(deletedUser);
-        // Get the display name of the group
-        String groupName = group.getProperties().get("sharedRoster.displayName");
 
         // Iterate on all the affected users and update their rosters
         for (String userToUpdate : users) {
@@ -416,7 +414,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToUpdate);
             // Only update rosters in memory
             if (roster != null) {
-                roster.deleteSharedUser(groupName, deletedUser);
+                roster.deleteSharedUser(group, deletedUser);
             }
             // Update the roster of the newly deleted group user.
             if (deletedUserRoster != null) {
@@ -523,8 +521,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
         // Get the roster of the user from which we need to remove the shared group users
         Roster userRoster = (Roster) CacheManager.getCache("username2roster").get(username);
-        // Get the display name of the group
-        String groupName = group.getProperties().get("sharedRoster.displayName");
 
         // Iterate on all the group users and update their rosters
         for (String userToRemove : users) {
@@ -532,7 +528,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             Roster roster = (Roster)CacheManager.getCache("username2roster").get(userToRemove);
             // Only update rosters in memory
             if (roster != null) {
-                roster.deleteSharedUser(groupName, username);
+                roster.deleteSharedUser(group, username);
             }
             // Update the roster of the user
             if (userRoster != null) {
@@ -636,7 +632,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
      * Returns true if a group in the first collection may mutually see a group of the
      * second collection. More precisely, return true if both collections contain a public
      * group (i.e. anybody can see the group) or if both collection have a group that may see
-     * each other and the users are members of those groups.
+     * each other and the users are members of those groups or if one group is public and the
+     * other group allowed the public group to see it.
      *
      * @param user the name of the user associated to the first collection of groups.
      * @param groups a collection of groups to check against the other collection of groups.
@@ -671,6 +668,23 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                                 otherGroupNames.contains(group.getName())) {
                             return true;
                         }
+                    }
+                }
+                else if ("everybody".equals(showInRoster) && "onlyGroup".equals(otherShowInRoster)) {
+                    // Return true if one group is public and the other group allowed the public
+                    // group to see him
+                    String otherGroupNames = otherGroup.getProperties().get("sharedRoster.groupList");
+                    if (otherGroupNames != null && otherGroupNames.contains(group.getName())) {
+                            return true;
+                    }
+                }
+                else if ("onlyGroup".equals(showInRoster) && "everybody".equals(otherShowInRoster)) {
+                    // Return true if one group is public and the other group allowed the public
+                    // group to see him
+                    String groupNames = group.getProperties().get("sharedRoster.groupList");
+                    // Return true if each group may see the other group
+                    if (groupNames != null && groupNames.contains(otherGroup.getName())) {
+                            return true;
                     }
                 }
             }

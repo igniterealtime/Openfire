@@ -16,6 +16,7 @@ import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.messenger.group.GroupManager;
 import org.jivesoftware.messenger.group.GroupNotFoundException;
+import org.jivesoftware.messenger.group.Group;
 import org.jivesoftware.messenger.SharedGroupException;
 import org.xmpp.packet.JID;
 
@@ -124,8 +125,8 @@ public class RosterItem implements Cacheable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<String> sharedGroups = new HashSet<String>();
-    protected Set<String> invisibleSharedGroups = new HashSet<String>();
+    protected Set<Group> sharedGroups = new HashSet<Group>();
+    protected Set<Group> invisibleSharedGroups = new HashSet<Group>();
     protected SubType subStatus;
     protected AskType askStatus;
     private long rosterID;
@@ -311,7 +312,9 @@ public class RosterItem implements Cacheable {
         }
         else {
             // Raise an error if the user is trying to remove the item from a shared group
-            for (String groupName : getSharedGroups()) {
+            for (Group group: getSharedGroups()) {
+                // Get the display name of the group
+                String groupName = group.getProperties().get("sharedRoster.displayName");
                 // Check if the group has been removed from the new groups list
                 if (!groups.contains(groupName)) {
                     throw new SharedGroupException("Cannot remove item from shared group");
@@ -340,7 +343,7 @@ public class RosterItem implements Cacheable {
      *
      * @return The shared groups this item belongs to.
      */
-    public Collection<String> getSharedGroups() {
+    public Collection<Group> getSharedGroups() {
         return sharedGroups;
     }
 
@@ -351,7 +354,7 @@ public class RosterItem implements Cacheable {
      *
      * @return The shared groups this item belongs to.
      */
-    public Collection<String> getInvisibleSharedGroups() {
+    public Collection<Group> getInvisibleSharedGroups() {
         return invisibleSharedGroups;
     }
 
@@ -360,7 +363,7 @@ public class RosterItem implements Cacheable {
      *
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
-    public void addSharedGroup(String sharedGroup) {
+    public void addSharedGroup(Group sharedGroup) {
         sharedGroups.add(sharedGroup);
         invisibleSharedGroups.remove(sharedGroup);
     }
@@ -372,7 +375,7 @@ public class RosterItem implements Cacheable {
      *
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
-    public void addInvisibleSharedGroup(String sharedGroup) {
+    public void addInvisibleSharedGroup(Group sharedGroup) {
         invisibleSharedGroups.add(sharedGroup);
     }
 
@@ -381,7 +384,7 @@ public class RosterItem implements Cacheable {
      *
      * @param sharedGroup The shared group to remove from the list of shared groups.
      */
-    public void removeSharedGroup(String sharedGroup) {
+    public void removeSharedGroup(Group sharedGroup) {
         sharedGroups.remove(sharedGroup);
         invisibleSharedGroups.remove(sharedGroup);
     }

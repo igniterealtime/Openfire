@@ -59,7 +59,11 @@
     <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
     <property name="lib.dist.dir" value="${lib.build.dir}/dist" />
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib" />
+    <property name="i18n.basename" value="messenger_i18n" />
+    <property name="i18n.default.locale" value="en" />
     <property name="target.dir" value="${basedir}/target" />
+    <property name="temp.build.dir" value="${basedir}/target/tempbuild" />
+    <property name="target.i18n.dir" value="${temp.build.dir}/i18n" />
     <property name="compile.dir" value="${target.dir}/classes" />
     <property name="jar.name" value="messenger.jar" />
     <property name="jar.starter.name" value="startup.jar" />
@@ -197,14 +201,24 @@
         </javac>
     </target>
 
+    <!-- i18n ================================================================================== -->
+    <!-- Note, this is a "private" target - no need to call it externally -->
+    <target name="-i18n">
+        <!-- Auto generates a default base i18n file -->
+        <mkdir dir="${target.i18n.dir}" />
+        <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
+            tofile="${target.i18n.dir}/${i18n.basename}.properties" />
+    </target>
+
     <!-- jar =================================================================================== -->
-    <target name="jar" depends="compile, jspc" description="Produces Messengers jars and sets up dependencies">
+    <target name="jar" depends="compile, jspc, -i18n" description="Produces Messengers jars and sets up dependencies">
         <mkdir dir="${jar.dest.dir}" />
         <!-- Make main Messenger jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true">
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class" />
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class" />
             <fileset dir="${src.i18n.dir}" includes="*.properties" />
+            <fileset dir="${target.i18n.dir}" includes="*.properties" />
             <fileset dir="${src.dir}" includes="database/*.sql" />
             <fileset dir="${resources.dir}/jar" includes="admin-sidebar.xml" />
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif" />

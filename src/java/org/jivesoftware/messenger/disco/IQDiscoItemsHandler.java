@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.disco;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -53,7 +52,7 @@ public class IQDiscoItemsHandler extends IQDiscoHandler implements ServerFeature
 
     public IQDiscoItemsHandler() {
         super("XMPP Disco Items Handler");
-        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#items", IQImpl.class);
+        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#items");
     }
 
     public IQHandlerInfo getInfo() {

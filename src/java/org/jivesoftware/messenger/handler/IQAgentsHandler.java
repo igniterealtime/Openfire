@@ -17,7 +17,6 @@ import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PayloadFragment;
 import org.jivesoftware.messenger.XMPPDOMFragment;
-import org.jivesoftware.messenger.spi.IQImpl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.dom4j.DocumentHelper;
@@ -57,7 +56,7 @@ public class IQAgentsHandler extends IQHandler implements ServerFeaturesProvider
 
     public IQAgentsHandler() {
         super("XMPP WorkgroupAgent handler");
-        info = new IQHandlerInfo("query", "jabber:iq:agents", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:agents");
     }
 
     public IQ handleIQ(IQ packet) {

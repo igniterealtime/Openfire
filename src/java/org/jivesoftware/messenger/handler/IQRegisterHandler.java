@@ -22,7 +22,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.Permissions;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import org.jivesoftware.messenger.spi.PresenceImpl;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
@@ -81,7 +80,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
      */
     public IQRegisterHandler() {
         super("XMPP Registration Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:register", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:register");
     }
 
     public void initialize(ModuleContext context, Container container) {

@@ -33,7 +33,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQHandler;
-import org.jivesoftware.messenger.spi.IQImpl;
 
 /**
  * This class is not an actual IQHandler since all the packets with namespace
@@ -58,7 +57,7 @@ public class IQMUCRegisterHandler extends IQHandler {
 
     public IQMUCRegisterHandler(MultiUserChatServer mucServer) {
         super("XMPP MUC Registration Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:register", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:register");
         this.mucServer = mucServer;
         initialize();
     }

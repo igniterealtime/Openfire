@@ -17,7 +17,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.chatbot.Chatbot;
-import org.jivesoftware.messenger.spi.IQImpl;
 import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
     public IQRosterHandler() {
         super("XMPP Roster Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:roster", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:roster");
     }
 
     /**

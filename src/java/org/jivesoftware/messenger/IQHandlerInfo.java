@@ -9,9 +9,6 @@
  */
 package org.jivesoftware.messenger;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
 /**
  * <p>A simple meta-data class that stores several related tools for
  * generic IQ protocol handling.</p>
@@ -36,20 +33,16 @@ public class IQHandlerInfo {
 
     private String name;
     private String namespace;
-    private Class iq;
 
     /**
      * <p>Construct an info object.</p>
-     * <p>Note: the IQ child class must have a public, no-arg constructor.</p>
      *
      * @param name      The name of the root iq element
      * @param namespace The namespace of the root iq element
-     * @param iq        The class of IQ packet to use in parsing
      */
-    public IQHandlerInfo(String name, String namespace, Class iq) {
+    public IQHandlerInfo(String name, String namespace) {
         this.name = name;
         this.namespace = namespace;
-        this.iq = iq;
     }
 
     /**
@@ -69,24 +62,4 @@ public class IQHandlerInfo {
     public String getNamespace() {
         return namespace;
     }
-
-    /**
-     * <p>Obtain the name of the root iq element for this packet type.</p>
-     *
-     * @return the name of the root iq element.
-     */
-    /*public IQ parse(XMLStreamReader xpp) throws XMLStreamException {
-        IQ packet = null;
-        try {
-            packet = (IQ)iq.newInstance();
-            packet.parse(xpp);
-        }
-        catch (InstantiationException e) {
-            throw new XMLStreamException(e.getMessage());
-        }
-        catch (IllegalAccessException e) {
-            throw new XMLStreamException(e.getMessage());
-        }
-        return packet;
-    }*/
 }

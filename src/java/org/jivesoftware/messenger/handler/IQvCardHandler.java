@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.handler;
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -62,7 +61,7 @@ public class IQvCardHandler extends IQHandler {
 
     public IQvCardHandler() {
         super("XMPP vCard Handler");
-        info = new IQHandlerInfo("vcard", "vcard-temp", IQImpl.class);
+        info = new IQHandlerInfo("vcard", "vcard-temp");
     }
 
     public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {

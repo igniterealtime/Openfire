@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.handler;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.spi.IQImpl;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,7 +49,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
 
     public IQTimeHandler() {
         super("XMPP Server Time Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:time", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:time");
         responseElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:time"));
         responseElement.addElement("utc");
         responseElement.addElement("tz").setText(TIME_FORMAT.getTimeZone().getDisplayName());

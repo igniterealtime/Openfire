@@ -14,7 +14,6 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.forms.XDataForm;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,7 +50,7 @@ public class IQDiscoInfoHandler extends IQDiscoHandler {
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
-        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info", IQImpl.class);
+        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
         serverFeatures.add("http://jabber.org/protocol/disco#info");
     }
 

@@ -16,7 +16,6 @@ import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PacketException;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.spi.IQImpl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.dom4j.DocumentHelper;
@@ -52,7 +51,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
 
     public IQVersionHandler() {
         super("XMPP Server Version Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:version", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:version");
         if (bodyElement == null) {
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
             bodyElement.addElement("name").setText("Jive Messenger");

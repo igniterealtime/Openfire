@@ -17,7 +17,6 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
      */
     public IQAuthHandler() {
         super("XMPP Authentication handler");
-        info = new IQHandlerInfo("query", "jabber:iq:auth", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:auth");
 
         probeResponse = DocumentHelper.createElement(QName.get("query", "jabber:iq:auth"));
         probeResponse.add(DocumentHelper.createElement("username"));

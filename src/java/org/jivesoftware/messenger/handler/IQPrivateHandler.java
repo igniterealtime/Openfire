@@ -14,7 +14,6 @@ import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.spi.IQImpl;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -53,7 +52,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
 
     public IQPrivateHandler() {
         super("XMPP Private Storage Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:private", IQImpl.class);
+        info = new IQHandlerInfo("query", "jabber:iq:private");
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {

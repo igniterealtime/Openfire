@@ -120,56 +120,82 @@ public class IQMUCRegisterHandler extends IQHandler {
     public IQ handleIQ(IQ packet) throws UnauthorizedException, XMLStreamException {
         Session session = packet.getOriginatingSession();
         IQ reply = null;
+        // Get the target room
+        MUCRoom room = mucServer.getChatRoom(packet.getRecipient().getNamePrep());
+        if (room == null) {
+            // The room doesn't exist so answer a NOT_FOUND error
+            reply = packet.createResult();
+            reply.setError(XMPPError.Code.NOT_FOUND);
+            return reply;
+        }
+
         if (IQ.GET.equals(packet.getType())) {
             reply = packet.createResult();
-            reply.setChildFragment(probeResult);
+            String nickname = room.getReservedNickname(packet.getSender().toBareStringPrep());
+            if (nickname != null) {
+                // The user is already registered with the room so answer a completed form
+                MetaDataFragment currentRegistration = (MetaDataFragment) probeResult
+                        .createDeepCopy();
+                currentRegistration.setProperty("query.registered", null);
+                XDataFormImpl form = (XDataFormImpl) currentRegistration.getFragment("x",
+                        "jabber:x:data");
+                form.getField("muc#user_roomnick").addValue(nickname);
+                reply.setChildFragment(currentRegistration);
+            }
+            else {
+                // The user is not registered with the room so answer an empty form
+                reply.setChildFragment(probeResult);
+            }
         }
         else if (IQ.SET.equals(packet.getType())) {
             try {
-                reply = packet.createResult();
+                // Keep a registry of the updated presences
+                List presences = new ArrayList();
 
+                reply = packet.createResult();
                 XMPPFragment iq = packet.getChildFragment();
-                Element formElement = ((XMPPDOMFragment)iq).getRootElement().element("x");
-                // Check if a form was used to provide the registration info
-                if (formElement != null) {
-                    // Get the sent form
-                    XDataFormImpl registrationForm = new XDataFormImpl();
-                    registrationForm.parse(formElement);
-                    // Get the desired nickname sent in the form
-                    Iterator values = registrationForm.getField("muc#user_roomnick").getValues();
-                    String nickname = (values.hasNext() ? (String)values.next() : null);
-                    
-                    // TODO The rest of the fields of the form are ignored. If we have a requirement
-                    // in the future where we need those fields we'll have to change 
-                    // MUCRoom.addMember in order to receive a RegistrationInfo (new class) 
-                    
-                    // Get the target room
-                    MUCRoom room = mucServer.getChatRoom(packet.getRecipient().getNamePrep());
-                    if (room != null) {
-                        // Keep a registry of the updated presences
-                        List presences = new ArrayList();
-                        // Add the new member to the members list
-                        presences.addAll(room.addMember(
-                                packet.getSender().toBareStringPrep(),
-                                nickname,
-                                room.getRole()));
-                        // Send the updated presences to the room occupants
-                        try {
-                            for (Iterator it = presences.iterator(); it.hasNext();) {
-                                room.send((Presence)it.next());
-                            }
-                        }
-                        catch (UnauthorizedException e) {
-                            // Do nothing
-                        }
-                    }
-                    else {
-                        reply.setError(XMPPError.Code.NOT_FOUND);
-                    }
+                MetaDataFragment metaData = MetaDataFragment.convertToMetaData(iq);
+
+                if (metaData.includesProperty("query.remove")) {
+                    // The user is deleting his registration
+                    presences.addAll(room.addNone(packet.getSender().toBareStringPrep(),
+                            room.getRole()));
                 }
                 else {
-                    reply.setError(XMPPError.Code.BAD_REQUEST);
+                    // The user is trying to register with a room
+                    Element formElement = ((XMPPDOMFragment)iq).getRootElement().element("x");
+                    // Check if a form was used to provide the registration info
+                    if (formElement != null) {
+                        // Get the sent form
+                        XDataFormImpl registrationForm = new XDataFormImpl();
+                        registrationForm.parse(formElement);
+                        // Get the desired nickname sent in the form
+                        Iterator values = registrationForm.getField("muc#user_roomnick").getValues();
+                        String nickname = (values.hasNext() ? (String)values.next() : null);
+
+                        // TODO The rest of the fields of the form are ignored. If we have a
+                        // requirement in the future where we need those fields we'll have to change
+                        // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
+
+                        // Add the new member to the members list
+                        presences.addAll(room.addMember(packet.getSender().toBareStringPrep(),
+                                nickname,
+                                room.getRole()));
+                    }
+                    else {
+                        reply.setError(XMPPError.Code.BAD_REQUEST);
+                    }
                 }
+                // Send the updated presences to the room occupants
+                try {
+                    for (Iterator it = presences.iterator(); it.hasNext();) {
+                        room.send((Presence)it.next());
+                    }
+                }
+                catch (UnauthorizedException e) {
+                    // Do nothing
+                }
+
             }
             catch (ForbiddenException e) {
                 reply = packet.createResult();

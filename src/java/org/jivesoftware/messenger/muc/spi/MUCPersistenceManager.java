@@ -77,6 +77,8 @@ public class MUCPersistenceManager {
         "DELETE FROM mucMember WHERE roomID=?";
     private static final String ADD_MEMBER =
         "INSERT INTO mucMember (roomID,jid,nickname) VALUES (?,?,?)";
+    private static final String UPDATE_MEMBER =
+        "UPDATE mucMember SET nickname=? WHERE roomID=? AND jid=?";
     private static final String DELETE_MEMBER =
         "DELETE FROM mucMember WHERE roomID=? AND jid=?";
     private static final String ADD_AFFILIATION =
@@ -528,7 +530,29 @@ public class MUCPersistenceManager {
             }
         }
         else {
-            if (MUCRole.MEMBER == newAffiliation) {
+            if (MUCRole.MEMBER == newAffiliation && MUCRole.MEMBER == oldAffiliation) {
+                // Update the member's data in the member table.
+                Connection con = null;
+                PreparedStatement pstmt = null;
+                try {
+                    con = DbConnectionManager.getConnection();
+                    pstmt = con.prepareStatement(UPDATE_MEMBER);
+                    pstmt.setString(1, nickname);
+                    pstmt.setLong(2, room.getID());
+                    pstmt.setString(3, bareJID);
+                    pstmt.execute();
+                }
+                catch (SQLException sqle) {
+                    Log.error(sqle);
+                }
+                finally {
+                    try { if (pstmt != null) pstmt.close(); }
+                    catch (Exception e) { Log.error(e); }
+                    try { if (con != null) con.close(); }
+                    catch (Exception e) { Log.error(e); }
+                }
+            }
+            else if (MUCRole.MEMBER == newAffiliation) {
                 Connection con = null;
                 PreparedStatement pstmt = null;
                 boolean abortTransaction = false;

@@ -1115,7 +1115,7 @@ public class MUCRoomImpl implements MUCRoom {
 
     public List addMember(String bareJID, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
-        int oldAffiliation = MUCRole.NONE;
+        int oldAffiliation = (members.containsKey(bareJID) ? MUCRole.MEMBER : MUCRole.NONE);
         if (isInvitationRequiredToEnter()) {
             if (!canOccupantsInvite()) {
                 if (MUCRole.ADMINISTRATOR != sendRole.getAffiliation()
@@ -1253,7 +1253,6 @@ public class MUCRoomImpl implements MUCRoom {
         if (owners.contains(bareJID) && owners.size() == 1) {
             throw new ConflictException();
         }
-        String actorJID = senderRole.getChatUser().getAddress().toBareStringPrep();
         List updatedPresences = null;
         boolean wasMember = members.containsKey(bareJID);
         // Remove the user from ALL the affiliation lists
@@ -1309,6 +1308,9 @@ public class MUCRoomImpl implements MUCRoom {
                     // different client resources, he/she will be kicked from all the client
                     // resources.
                     // Effectively kick the occupant from the room
+                    MUCUser senderUser = senderRole.getChatUser();
+                    String actorJID = (senderUser == null ?
+                            null : senderUser.getAddress().toBareStringPrep());
                     kickPresence(presence, actorJID);
                 }
             }
@@ -1570,6 +1572,8 @@ public class MUCRoomImpl implements MUCRoom {
      * from the occupants lists.
      * 
      * @param kickPresence the presence of the occupant to kick from the room.
+     * @param actorJID The JID of the actor that initiated the kick or <tt>null</tt> if the info
+     * was not provided.
      */
     private void kickPresence(Presence kickPresence, String actorJID) {
         MUCRole kickedRole;

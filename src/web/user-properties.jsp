@@ -108,6 +108,19 @@ Below is a summary of user properties. To edit properties, click the "Edit" butt
     </table>
     </div><br>
 
+<%  } else if (request.getParameter("editsuccess") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        User properties updated successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
 <%  } %>
 
 <div class="jive-table">

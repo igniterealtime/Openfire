@@ -16,6 +16,7 @@
                  org.jivesoftware.admin.*,
                  java.util.HashMap,
                  java.util.Map"
+    errorPage="error.jsp"
 %>
 
 <%@ taglib uri="core" prefix="c"%>
@@ -59,14 +60,11 @@
             user.saveInfo();
 
             // Changes good, so redirect
-            response.sendRedirect("user-edit-form.jsp?success=true&username=" + username);
+            response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + username);
             return;
         }
     }
 %>
-
-
-
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
@@ -74,80 +72,89 @@
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
-    pageinfo.setSubPageID("user-edit");
+    pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+username);
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
-<c:set var="tab" value="edit" />
-<%@ include file="user-tabs.jsp" %>
 
 <%  if (success) { %>
 
-    <p class="jive-success-text">
-    User edited successfully.
-    </p>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        User edited successfully.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br
 
 <%  } %>
 
-
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<form action="user-edit-form.jsp">
-<tr><td colspan="2">
+<p>
 Use the form below to edit user properties.
-</td></tr>
-</table>
+</p>
 
-<table  cellpadding="3" cellspacing="1" border="0">
+<form action="user-edit-form.jsp">
 
 <input type="hidden" name="username" value="<%= username %>">
 <input type="hidden" name="save" value="true">
 
+<fieldset>
+    <legend>User Properties</legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td class="c1">
+                Username:
+            </td>
+            <td>
+                <%= user.getUsername() %>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                Name:
+            </td>
+            <td>
+                <input type="text" size="30" maxlength="150" name="name"
+                 value="<%= ((user.getInfo().getName()!=null) ? user.getInfo().getName() : "") %>">
 
-<tr>
-    <td>
-        Username:
-    </td>
-    <td>
-        <%= user.getUsername() %>
-    </td>
-</tr>
-<tr>
-    <td>
-        Name:
-    </td>
-    <td>
-        <input type="text" size="30" maxlength="150" name="name"
-         value="<%= ((user.getInfo().getName()!=null) ? user.getInfo().getName() : "") %>">
+                <%  if (errors.get("name") != null) { %>
 
-        <%  if (errors.get("name") != null) { %>
+                    <span class="jive-error-text">
+                    Please enter a valid name.
+                    </span>
 
-            <span class="jive-error-text">
-            Please enter a valid name.
-            </span>
+                <%  } %>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                Email:
+            </td>
+            <td>
+                <input type="text" size="30" maxlength="150" name="email"
+                 value="<%= ((user.getInfo().getEmail()!=null) ? user.getInfo().getEmail() : "") %>">
 
-        <%  } %>
-    </td>
-</tr>
-<tr>
-    <td>
-        Email:
-    </td>
-    <td>
-        <input type="text" size="30" maxlength="150" name="email"
-         value="<%= ((user.getInfo().getEmail()!=null) ? user.getInfo().getEmail() : "") %>">
+                <%  if (errors.get("email") != null) { %>
 
-        <%  if (errors.get("email") != null) { %>
+                    <span class="jive-error-text">
+                    Please enter a valid email address.
+                    </span>
 
-            <span class="jive-error-text">
-            Please enter a valid email address.
-            </span>
+                <%  } %>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
 
-        <%  } %>
-    </td>
-</tr>
-</table>
-<br>
+<br><br>
 
 <input type="submit" value="Save User Properties">
 <input type="submit" name="cancel" value="Cancel">

@@ -66,15 +66,14 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         info = new IQHandlerInfo("query", "jabber:iq:auth");
 
         probeResponse = DocumentHelper.createElement(QName.get("query", "jabber:iq:auth"));
-        probeResponse.addAttribute("type", "get");
-        probeResponse.add(DocumentHelper.createElement("username"));
+        probeResponse.addElement("username");
         if (AuthFactory.isPlainSupported()) {
-            probeResponse.add(DocumentHelper.createElement("password"));
+            probeResponse.addElement("password");
         }
         if (AuthFactory.isDigestSupported()) {
-            probeResponse.add(DocumentHelper.createElement("digest"));
+            probeResponse.addElement("digest");
         }
-        probeResponse.add(DocumentHelper.createElement("resource"));
+        probeResponse.addElement("resource");
         anonymousAllowed = "true".equals(JiveGlobals.getProperty("xmpp.auth.anonymous"));
     }
 
@@ -89,7 +88,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 if (IQ.Type.get == packet.getType()) {
                     String username = query.elementTextTrim("username");
                     probeResponse.element("username").setText(username);
-                    response = IQ.createResultIQ(new IQ(probeResponse));
+                    response = IQ.createResultIQ(packet);
+                    response.setChildElement(probeResponse);
                 }
                 // Otherwise set query
                 else {
@@ -112,7 +112,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                         }
                         else {
                             // it is an auth attempt
-                            response = login(username, iq, packet, response, password, session, digest);
+                            response =
+                                    login(username, query, packet, response, password, session,
+                                            digest);
                         }
                     }
                 }
@@ -136,7 +138,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     private IQ login(String username, Element iq, IQ packet, IQ response, String password,
             Session session, String digest) throws UnauthorizedException, UserNotFoundException
     {
-        JID jid = localServer.createJID(username, iq.element("resource").getTextTrim());
+        JID jid = localServer.createJID(username, iq.elementTextTrim("resource"));
 
 
         // If a session already exists with the requested JID, then check to see

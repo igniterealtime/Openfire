@@ -21,6 +21,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.IQ;
+import org.dom4j.io.XMLWriter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,8 +41,7 @@ public class AuditorImpl implements Auditor {
     private AuditManager auditManager;
     private File currentAuditFile;
     private Writer writer;
-    private XMLStreamWriter xmlSerializer;
-    private static final int MEGABYTE = 1024 * 1024;
+    private XMLWriter xmlWriter;
     private int maxSize;
     private long maxCount;
     private int logTimeout;
@@ -81,14 +82,6 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    /*public void auditDroppedPacket(XMPPPacket packet) {
-        writePacket(packet, true);
-    }
-
-    public void audit(AuditEvent event) {
-        // TODO Implement this functionality. Not used currently.
-    }*/
-
     public void stop() {
         // Stop the scheduled task for saving queued packets to the XML file
         timer.cancel();
@@ -115,7 +108,7 @@ public class AuditorImpl implements Auditor {
     private void writePacket(Packet packet, boolean dropped) {
         if (!closed) {
             // Add to the logging queue this new entry that will be saved later
-            logQueue.add(new AuditPacket((Packet) packet.createDeepCopy(), dropped));
+            logQueue.add(new AuditPacket(packet.createCopy(), dropped));
         }
     }
 
@@ -126,7 +119,7 @@ public class AuditorImpl implements Auditor {
     }
 
     protected void setMaxValues(int size, int count) {
-        maxSize = size * MEGABYTE;
+        maxSize = size * 1024*1024;
         maxCount = count;
     }
 
@@ -226,26 +219,25 @@ public class AuditorImpl implements Auditor {
     }
 
     /**
-     * Wrapper on a Packet with information about the packet's status at the moment when the message
-     * was queued.<p>
+     * Wrapper on a Packet with information about the packet's status at the moment
+     * when the message was queued.<p>
      *
-     * The idea is to wrap every packet that is needed to be audited and then add the wrapper to a
-     * queue that will be later processed (i.e. saved to the XML file).
+     * The idea is to wrap every packet that is needed to be audited and then add the
+     * wrapper to a queue that will be later processed (i.e. saved to the XML file).
      */
     private class AuditPacket {
+
         private Packet packet;
         private String streamID;
         private String sessionStatus;
         private Date timestamp;
-        private boolean sending;
         private boolean dropped;
 
         public AuditPacket(Packet packet, boolean dropped) {
             this.packet = packet;
             this.dropped = dropped;
             this.timestamp = new Date();
-            this.sending = packet.isSending();
-            Session session = packet.getOriginatingSession();
+            Session session = SessionManager.getInstance().getSessions(packet.getFrom());
             if (session != null) {
                 if (session.getStreamID() != null) {
                     this.streamID = session.getStreamID().toString();
@@ -282,9 +274,6 @@ public class AuditorImpl implements Auditor {
                     xmlSerializer.writeAttribute("status", sessionStatus);
                 }
                 xmlSerializer.writeAttribute("timestamp", timestamp.toString());
-                if (sending) {
-                    xmlSerializer.writeAttribute("sending", "true");
-                }
                 if (dropped) {
                     xmlSerializer.writeAttribute("dropped", "true");
                 }
@@ -295,7 +284,5 @@ public class AuditorImpl implements Auditor {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
-
     }
-
 }

@@ -14,9 +14,15 @@ package org.jivesoftware.messenger.plugin;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.group.GroupManager;
+import org.jivesoftware.messenger.group.Group;
+import org.jivesoftware.messenger.group.GroupNotFoundException;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.JID;
 
 import java.io.File;
 import java.util.Collection;
@@ -36,6 +42,7 @@ public class BroadcastPlugin implements Plugin, Component {
 
     private String serviceName;
     private SessionManager sessionManager;
+    private GroupManager groupManager;
     private List<String> allowedUsers;
     private boolean groupMembersAllowed;
 
@@ -45,7 +52,7 @@ public class BroadcastPlugin implements Plugin, Component {
     public BroadcastPlugin() {
         serviceName = JiveGlobals.getProperty("plugin.broadcast.serviceName", "broadcast");
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
-                "plugin.broadcast.groupMembersAllowed");
+                "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = new ArrayList<String>();
     }
 
@@ -69,6 +76,7 @@ public class BroadcastPlugin implements Plugin, Component {
 
     public void initialize(PluginManager manager, File pluginDirectory) {
         sessionManager = SessionManager.getInstance();
+        groupManager = GroupManager.getInstance();
 
         // Register as a component.
         ComponentManager.getInstance().addComponent(serviceName, this);
@@ -86,9 +94,10 @@ public class BroadcastPlugin implements Plugin, Component {
         // Only respond to incoming messages. TODO: handle disco, presence, etc.
         if (packet instanceof Message) {
             Message message = (Message)packet;
-            String name = message.getTo().getNode();
+            String toNode = message.getTo().getNode();
+            String fromNode = message.getFrom().getNode();
             // Check to see if trying to broadcast to all connected users.
-            if ("all".equals(name)) {
+            if ("all".equals(toNode)) {
                 if (allowedUsers.size() > 0) {
                     // See if the user is allowed to send the message.
                     String address = message.getFrom().toBareJID();
@@ -106,22 +115,54 @@ public class BroadcastPlugin implements Plugin, Component {
                         return;
                     }
                 }
-                sessionManager.sendServerMessage(message.getSubject(), message.getBody());
+                try {
+                    sessionManager.broadcast(message);
+                }
+                catch (UnauthorizedException ue) {
+                    Log.error(ue);
+                }
             }
             // See if the name is a group.
-           
-            // Otherwise, the address is recognized so send an error message back.
             else {
-                Message error = new Message();
-                if (message.getID() != null) {
-                    error.setID(message.getID());
+                try {
+                    Group group = groupManager.getGroup(toNode);
+                    if ((groupMembersAllowed && group.isUser(fromNode)) ||
+                            group.getAdmins().contains(fromNode))
+                    {
+                        for (String user : group.getMembers()) {
+                            Message newMessage = message.createCopy();
+                            JID userJID = XMPPServer.getInstance().createJID(user, null);
+                            newMessage.setTo(userJID);
+                            ComponentManager.getInstance().sendPacket(newMessage);
+                        }
+                    }
+                    else {
+                        // Otherwise, the address is recognized so send an error message back.
+                        Message error = new Message();
+                        if (message.getID() != null) {
+                            error.setID(message.getID());
+                        }
+                        error.setTo(message.getFrom());
+                        error.setError(PacketError.Condition.not_allowed);
+                        error.setSubject("Error sending broadcast message");
+                        error.setBody("Not allowed to send a broadcast message to " +
+                                message.getTo());
+                        ComponentManager.getInstance().sendPacket(error);
+                    }
                 }
-                error.setTo(message.getFrom());
-                error.setError(PacketError.Condition.not_allowed);
-                error.setSubject("Error sending broadcast message");
-                error.setBody("Not allowed to send a broadcast message to " +
-                        message.getTo());
-                ComponentManager.getInstance().sendPacket(error);
+                catch (GroupNotFoundException gnfe) {
+                    // Otherwise, the address is recognized so send an error message back.
+                    Message error = new Message();
+                    if (message.getID() != null) {
+                        error.setID(message.getID());
+                    }
+                    error.setTo(message.getFrom());
+                    error.setError(PacketError.Condition.not_allowed);
+                    error.setSubject("Error sending broadcast message");
+                    error.setBody("Address not valid: " +
+                            message.getTo());
+                    ComponentManager.getInstance().sendPacket(error);
+                }
             }
         }
     }

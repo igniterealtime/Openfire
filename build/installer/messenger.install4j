@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.2">
   <directoryPresets config="C:/Documents and Settings/Matt/Desktop" />
-  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%PLATFORM%_%VERSION%" compression="9" shortName="messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.0" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.0" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
@@ -116,7 +116,7 @@
       <includedFiles />
     </launcher>
   </launchers>
-  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="false" useCustomHeaderImage="false" customHeaderImage="" customSize="false" customWidth="500" customHeight="390">
+  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="false" customHeaderImage="" customSize="false" customWidth="500" customHeight="390">
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="false" postUninstallActionClass="" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="" />
     <standardScreens>
       <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
@@ -167,8 +167,8 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
-        <entry location="bin/startup.bat" launcher="false" />
-        <entry location="bin/startup.sh" launcher="false" />
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
       </exclude>
       <variables />
       <customScriptLines />

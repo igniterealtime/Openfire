@@ -21,6 +21,7 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 
 /**
  * Implementation of MUCUser. There will be a MUCUser per user that is connected to one or more 
@@ -418,6 +419,9 @@ public class MUCUserImpl implements MUCUser {
                             try {
                                 roles.remove(group.toLowerCase());
                                 role.getChatRoom().leaveRoom(role.getNickname());
+                            }
+                            catch (UserNotFoundException e) {
+                                // Do nothing since the users has already left the room
                             }
                             catch (Exception e) {
                                 Log.error(e);

@@ -21,7 +21,7 @@ For a full list of available JDBC drivers, please see:
 http://industry.java.sun.com/products/jdbc/drivers</a>.</p>
 
 <p>
-All database schemas can be found in the <tt>database</tt> directory of the
+All database schemas can be found in the <tt>resources/database</tt> directory of the
 Jive Messenger installation.
 </p>
 
@@ -74,10 +74,10 @@ Choose your database from the list below for setup details:
 	    <code>mysqladmin create [databaseName]</code><br>
 	    (note: "databaseName" can be something like 'jivexmpp')
 
-	    <li>Import the schema file from the <tt>database</tt> directory of the installation folder:<br>
-	    Unix/Linux: <code>cat jive_xmpp_mysql.sql | mysql [databaseName];</code>
+	    <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
+	    Unix/Linux: <code>cat messenger_mysql.sql | mysql [databaseName];</code>
 		<br>   
-        Windows: <code>type jive_xmpp_mysql.sql | mysql [databaseName];</code>
+        Windows: <code>type messenger_mysql.sql | mysql [databaseName];</code>
 		
 		<li>Start the Jive Messenger setup tool, and use the appropriate JDBC connection
 			settings.
@@ -131,12 +131,12 @@ Choose your database from the list below for setup details:
 	that will "own" the Jive tables. This isn't necessary, but doing so
 	will allow your tables to exist in a seperate tablespace.
 	<p>
-	Next import the schema from the <tt>database</tt> directory of the installation
+	Next import the schema from the <tt>resources/database</tt> directory of the installation
     using sqlplus (or your favorite Oracle tool such
-	as Toad). For sqlplus: copy the "jive_xmpp_oracle.sql" file to the same 
+	as Toad). For sqlplus: copy the "messenger_oracle.sql" file to the same
 	directory where sqlplus is installed (should be something like 
 	/Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
-		<code>@ jive_xmpp_oracle</code><br>
+		<code>@ messenger_oracle</code><br>
 	That will import the schema file. Your database is now setup.
 </ul>
 
@@ -171,7 +171,7 @@ Choose your database from the list below for setup details:
 		<li>Open the Query Analyser and connect to the server.
 		<li>Select the database you want to use for Jive Messenger
 		    from the DB drop down (the one you created in step 1 if you're using a new database).
-		<li>Open the jive_xmpp_sqlserver_2000.sql file.
+		<li>Open the messenger_sqlserver_2000.sql file.
 		<li>Press F5 to run the script. The script will run and create the
 			necessary tables.
 		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
@@ -205,11 +205,11 @@ Choose your database from the list below for setup details:
 	  	PostgreSQL <code>&quot;createdb&quot;</code> utility:
 	  	<br>
 	  	<code>createdb -E UNICODE jivexmpp</code>
-	  <li>Import the schema from the <tt>database</tt> directory of the installation. 
+	  <li>Import the schema from the <tt>resources/database</tt> directory of the installation.
         Use psql (or your favorite Postgres sql 
 	  	utility) to import the Jive Messenger database schema:
 	  	<br>
-	  	<code>psql -d jivexmpp -f jive_xmpp_postgresql.sql</code>
+	  	<code>psql -d jivexmpp -f messenger_postgresql.sql</code>
 	  <li>Proceed to Jive Messenger setup and use the appropriate JDBC settings when
 	  	prompted.	  
 	</ol>
@@ -246,9 +246,9 @@ Choose your database from the list below for setup details:
 	(or you can use the Command Center GUI)
 	<p>
 	Start the DB2 command window (in Windows), or the user's shell in 
-	Unix and import the schema in the <tt>database</tt> directory of the
+	Unix and import the schema in the <tt>resources/database</tt> directory of the
     installation with:<p>
-		<code>db2 -tvf jive_xmpp_db2.sql</code>
+		<code>db2 -tvf messenger_db2.sql</code>
 	<p>
 	Or, use the DB2 Command Center and run the script
 	through the "Replication Sources" folder in the Database tree.
@@ -303,8 +303,8 @@ Choose your database from the list below for setup details:
 	    as the Driver, and specify the URL of your database in
 	    the URL field. The default password is already entered.
 	
-	    <li>Now copy and paste the contents of <tt>jive_xmpp_hsql.sql</tt> from
-        the <tt>database</tt> directory of the installation into the
+	    <li>Now copy and paste the contents of <tt>messenger_hsql.sql</tt> from
+        the <tt>resources/database</tt> directory of the installation into the
 	    command window, and hit execute.  If no errors are
 	    reported, then your database is setup properly.
 	

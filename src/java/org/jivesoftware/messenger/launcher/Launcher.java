@@ -266,7 +266,6 @@ public class Launcher {
                 }
             }
             catch (Exception e) {
-                e.printStackTrace();
                 // Try one more time using the jar and hope java is on the path
                 try {
                     File libDir = new File("../lib").getAbsoluteFile();

@@ -160,16 +160,6 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-# Create User  Permissions Table
-CREATE TABLE jiveUserPerm (
-  objectType            INTEGER         NOT NULL,
-  objectID              BIGINT          NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
-  permission            INTEGER         NOT NULL,
-  INDEX jiveUserPerm_object_idx (objectType, objectID),
-  INDEX jiveUserPerm_uname_idx (username)
-);
-
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

@@ -10,9 +10,6 @@
  */
 package org.jivesoftware.util;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.LinkedList;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -27,14 +24,15 @@ import java.util.*;
  * they were originally added to cache. When objects are added to cache, they
  * are first wrapped by a CacheObject which maintains the following pieces
  * of information:<ul>
+ *
  * <li> The size of the object (in bytes).
  * <li> A pointer to the node in the linked list that maintains accessed
  * order for the object. Keeping a reference to the node lets us avoid
  * linear scans of the linked list.
  * <li> A pointer to the node in the linked list that maintains the age
  * of the object in cache. Keeping a reference to the node lets us avoid
- * linear scans of the linked list.</ul>
- * <p/>
+ * linear scans of the linked list.</ul><p>
+ *
  * To get an object from cache, a hash lookup is performed to get a reference
  * to the CacheObject that wraps the real object we are looking for.
  * The object is subsequently moved to the front of the accessed linked list
@@ -81,7 +79,7 @@ public class DefaultCache implements Cache {
      * Maintain the number of cache hits and misses. A cache hit occurs every
      * time the get method is called and the cache contains the requested
      * object. A cache miss represents the opposite occurence.<p>
-     * <p/>
+     *
      * Keeping track of cache hits and misses lets one measure how efficient
      * the cache is; the higher the percentage of hits, the more efficient.
      */
@@ -96,18 +94,18 @@ public class DefaultCache implements Cache {
      * Create a new cache and specify the maximum size of for the cache in
      * bytes, and the maximum lifetime of objects.
      *
-     * @param name        a name for the cache.
-     * @param maxSize     the maximum size of the cache in bytes. -1 means the cache
-     *                    has no max size.
+     * @param name a name for the cache.
+     * @param maxSize the maximum size of the cache in bytes. -1 means the cache
+     *      has no max size.
      * @param maxLifetime the maximum amount of time objects can exist in
-     *                    cache before being deleted. -1 means objects never expire.
+     *      cache before being deleted. -1 means objects never expire.
      */
-    protected DefaultCache(String name, int maxSize, long maxLifetime) {
+    public DefaultCache(String name, int maxSize, long maxLifetime) {
         this.name = name;
         this.maxCacheSize = maxSize;
         this.maxLifetime = maxLifetime;
 
-        // Our primary data structure is a hash map. The default capacity of 11
+        // Our primary data structure is a HashMap. The default capacity of 11
         // is too small in almost all cases, so we set it bigger.
         map = new HashMap(103);
 
@@ -328,16 +326,6 @@ public class DefaultCache implements Cache {
         if (object instanceof Cacheable) {
             return ((Cacheable)object).getCachedSize();
         }
-        // Coherence puts DataInputStream objects in cache.
-        else if (object instanceof DataInputStream) {
-            int size = 1;
-            try {
-                size = ((DataInputStream)object).available();
-            }
-            catch (IOException ioe) {
-            }
-            return size;
-        }
         // Check for other common types of objects put into cache.
         else if (object instanceof Long) {
             return CacheSizes.sizeOfLong();
@@ -392,7 +380,7 @@ public class DefaultCache implements Cache {
         // Determine the expireTime, which is the moment in time that elements
         // should expire from cache. Then, we can do an easy to check to see
         // if the expire time is greater than the expire time.
-        long expireTime = CacheFactory.currentTime - maxLifetime;
+        long expireTime = System.currentTimeMillis() - maxLifetime;
 
         while (expireTime > node.timestamp) {
             // Remove the object

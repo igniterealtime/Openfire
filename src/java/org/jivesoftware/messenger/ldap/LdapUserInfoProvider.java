@@ -29,26 +29,29 @@ import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
 
 /**
- * <p>LDAP implementation of the UserInfoProvider interface.</p>
- * <p>The LdapUserIDProvider can operate in two modes -- in the pure LDAP mode, all user data is stored in the LDAP
- * store. This mode generally requires modifications to the LDAP schema to accommodate data that Messenger needs.</p>
- * <p>In the mixed mode, data that Messenger needs is stored locally.</p>
+ * LDAP implementation of the UserInfoProvider interface. The LdapUserIDProvider
+ * can operate in two modes -- in the pure LDAP mode, all user data is stored in
+ * the LDAP store. This mode generally requires modifications to the LDAP schema
+ * to accommodate data that Messenger needs. In the mixed mode, data that Messenger
+ * needs is stored locally.
  *
  * @author Jim Berrettini
  */
 public class LdapUserInfoProvider implements UserInfoProvider {
-    private LdapManager manager;
+
     private static final String LOAD_USER_BY_ID =
-            "SELECT name, nameVisible, email, emailVisible, " +
-            "creationDate, modificationDate FROM jiveUser WHERE userID=?";
+        "SELECT name, nameVisible, email, emailVisible, " +
+        "creationDate, modificationDate FROM jiveUser WHERE userID=?";
     private static final String INSERT_USER =
-            "INSERT INTO jiveUser (userID, password, name, nameVisible, " +
-            "email, emailVisible, creationDate, modificationDate) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO jiveUser (userID, password, name, nameVisible, " +
+        "email, emailVisible, creationDate, modificationDate) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String SAVE_USER =
-            "UPDATE jiveUser SET name=?, nameVisible=?, email=?," +
-            "emailVisible=?, creationDate=?, modificationDate=? WHERE " +
-            "userID=?";
+        "UPDATE jiveUser SET name=?, nameVisible=?, email=?," +
+        "emailVisible=?, creationDate=?, modificationDate=? WHERE " +
+        "userID=?";
+
+    private LdapManager manager;
 
     /**
      * Constructor initializes the internal LdapManager instance.
@@ -112,22 +115,10 @@ public class LdapUserInfoProvider implements UserInfoProvider {
             throw new UnauthorizedException();
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
 
@@ -242,22 +233,10 @@ public class LdapUserInfoProvider implements UserInfoProvider {
                     + id + " could not be loaded from the database.");
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return userInfo;
     }
@@ -273,7 +252,6 @@ public class LdapUserInfoProvider implements UserInfoProvider {
         PreparedStatement pstmt = null;
         Date now = new Date();
         try {
-
             // Add the user record in jiveUser
             pstmt = con.prepareStatement(INSERT_USER);
             pstmt.setLong(1, id);
@@ -290,22 +268,10 @@ public class LdapUserInfoProvider implements UserInfoProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return new BasicUserInfo(id,
                 "", // name

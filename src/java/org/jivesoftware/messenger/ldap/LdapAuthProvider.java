@@ -15,8 +15,8 @@ import org.jivesoftware.messenger.auth.AuthProvider;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 
 /**
- * <p>Implementation of auth provider interface for LDAP
- * authentication service plug-in.</p>
+ * Implementation of auth provider interface for LDAP
+ * authentication service plug-in.
  *
  * @author Jim Berrettini
  */

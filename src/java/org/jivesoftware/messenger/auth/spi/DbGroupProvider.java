@@ -3,11 +3,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
- * Use is subject to license terms.
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.auth.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
@@ -31,15 +32,59 @@ import java.util.Date;
  */
 public class DbGroupProvider implements GroupProvider {
 
-
     private static final String INSERT_GROUP =
-            "INSERT INTO jiveGroup " +
-            "(name, description, groupID, creationDate, modificationDate) " +
-            "VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO jiveGroup " +
+        "(name, description, groupID, creationDate, modificationDate) " +
+        "VALUES (?, ?, ?, ?, ?)";
+    private static final String LOAD_PROPERTIES =
+        "SELECT name, propValue FROM jiveGroupProp WHERE groupID=?";
+    private static final String LOAD_GROUP_BY_ID =
+        "SELECT name, description, groupID, creationDate, modificationDate " +
+        "FROM jiveGroup WHERE groupID=?";
+    private static final String DELETE_PROPERTY =
+        "DELETE FROM jiveGroupProp WHERE groupID=? AND name=?";
+    private static final String SAVE_GROUP =
+        "UPDATE jiveGroup SET name=?, description=?, creationDate=?, modificationDate=? " +
+        "WHERE groupID=?";
+    private static final String DELETE_GROUP_USERS =
+        "DELETE FROM jiveGroupUser WHERE groupID=?";
+    private static final String DELETE_GROUP =
+        "DELETE FROM jiveGroup WHERE groupID=?";
+    private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
+    private static final String UPDATE_PROPERTY =
+        "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupID=?";
+    private static final String INSERT_PROPERTY =
+        "INSERT INTO jiveGroupProp (groupID, name, propValue) VALUES (?, ?, ?)";
+     private static final String MEMBER_TEST =
+        "SELECT userID FROM jiveGroupUser " +
+        "WHERE groupID=? AND userID=? AND administrator=0";
+    private static final String ADMIN_TEST =
+        "SELECT userID FROM jiveGroupUser " +
+        "WHERE groupID=? AND userID=? AND administrator=1";
+     private static final String LOAD_ADMINS =
+        "SELECT userID FROM jiveGroupUser WHERE administrator=1 AND groupID=?";
+    private static final String LOAD_MEMBERS =
+        "SELECT userID FROM jiveGroupUser WHERE administrator=0 AND groupID=?";
+    private static final String GROUP_MEMBER_COUNT =
+        "SELECT count(*) FROM jiveGroupUser WHERE administrator =0";
+    private static final String GROUP_ADMIN_COUNT =
+        "SELECT count(*) FROM jiveGroupUser WHERE administrator =1";
+    private static final String SELECT_GROUP_BY_NAME =
+        "SELECT name, description, groupID, creationDate, modificationDate " +
+        "FROM jiveGroup WHERE name=?";
+    private static final String REMOVE_USER =
+        "DELETE FROM jiveGroupUser WHERE groupID=? AND userID=?";
+    private static final String UPDATE_USER =
+        "UPDATE jiveGroupUser SET administrator=? WHERE  groupID=? userID=?";
+    private static final String ADD_USER =
+        "INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (?, ?, ?)";
+    private static final String USER_GROUPS =
+        "SELECT groupID FROM jiveGroupUser WHERE userID=? AND administrator=0";
+    private static final String ALL_GROUPS = "SELECT groupID FROM jiveGroup";
 
-    public Group createGroup(String name)
-            throws UnauthorizedException, GroupAlreadyExistsException {
-
+    public Group createGroup(String name) throws UnauthorizedException,
+            GroupAlreadyExistsException
+    {
         long now = System.currentTimeMillis();
         Date nowDate = new Date(now);
         long id = SequenceManager.nextID(JiveConstants.GROUP);
@@ -47,7 +92,6 @@ public class DbGroupProvider implements GroupProvider {
 
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_GROUP);
@@ -63,34 +107,16 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         if (group == null) {
             throw new GroupAlreadyExistsException(name);
         }
         return group;
     }
-
-    private static final String LOAD_PROPERTIES =
-            "SELECT name, propValue FROM jiveGroupProp WHERE groupID=?";
-    private static final String LOAD_GROUP_BY_ID =
-            "SELECT name, description, groupID, creationDate, modificationDate " +
-            "FROM jiveGroup WHERE groupID=?";
 
     public Group getGroup(long groupID) throws GroupNotFoundException {
         Connection con = null;
@@ -116,7 +142,6 @@ public class DbGroupProvider implements GroupProvider {
                     group.setProperty(rs.getString(1), rs.getString(2));
                 }
             }
-
         }
         catch (SQLException e) {
             Log.error(e);
@@ -133,22 +158,10 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         if (group == null) {
             throw new GroupNotFoundException("Group with ID "
@@ -157,12 +170,7 @@ public class DbGroupProvider implements GroupProvider {
         return group;
     }
 
-    private static final String SELECT_GROUP_BY_NAME =
-            "SELECT name, description, groupID, creationDate, modificationDate " +
-            "FROM jiveGroup WHERE name=?";
-
     public Group getGroup(String name) throws GroupNotFoundException {
-        long id = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
         Group group = null;
@@ -172,9 +180,7 @@ public class DbGroupProvider implements GroupProvider {
             pstmt.setString(1, name);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                group = new GroupImpl(rs.getLong(3),
-                        rs.getString(1),
-                        rs.getString(2),
+                group = new GroupImpl(rs.getLong(3), rs.getString(1), rs.getString(2),
                         new java.util.Date(Long.parseLong(rs.getString(4).trim())),
                         new java.util.Date(Long.parseLong(rs.getString(5).trim())));
                 // Load any extended properties.
@@ -194,22 +200,10 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         if (group == null) {
             throw new GroupNotFoundException("Group with name "
@@ -218,12 +212,7 @@ public class DbGroupProvider implements GroupProvider {
         return group;
     }
 
-    private static final String SAVE_GROUP =
-            "UPDATE jiveGroup SET name=?, description=?, creationDate=?, modificationDate=? "
-            + "WHERE groupID=?";
-
-    public void updateGroup(Group group)
-            throws UnauthorizedException, GroupNotFoundException {
+    public void updateGroup(Group group) throws UnauthorizedException, GroupNotFoundException {
         group.setModificationDate(new Date());
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -243,29 +232,12 @@ public class DbGroupProvider implements GroupProvider {
             throw new GroupNotFoundException();
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String DELETE_GROUP_USERS =
-            "DELETE FROM jiveGroupUser WHERE groupID=?";
-    private static final String DELETE_GROUP =
-            "DELETE FROM jiveGroup WHERE groupID=?";
 
     public void deleteGroup(long groupID) throws UnauthorizedException {
         Connection con = null;
@@ -290,21 +262,13 @@ public class DbGroupProvider implements GroupProvider {
             abortTransaction = true;
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
         // Removing a group can change the permissions of all the users in that
         // group. Therefore, expire permissions cache.
     }
-
-    private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
 
     public int getGroupCount() {
         int count = 0;
@@ -323,27 +287,13 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return count;
     }
-
-    private static final String ALL_GROUPS = "SELECT groupID FROM jiveGroup";
 
     public LongList getGroups() {
         LongList groups = new LongList();
@@ -362,22 +312,10 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return groups;
     }
@@ -411,34 +349,18 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return groups;
     }
-
-    private static final String USER_GROUPS =
-            "SELECT groupID FROM jiveGroupUser WHERE userID=? AND administrator=0";
 
     public LongList getGroups(long entityID) {
         Connection con = null;
         PreparedStatement pstmt = null;
         LongList groups = new LongList();
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_GROUPS);
@@ -452,28 +374,13 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return groups;
     }
-
-    private static final String ADD_USER =
-            "INSERT INTO jiveGroupUser (groupID, userID, administrator) VALUES (?, ?, ?)";
 
     public void createMember(long groupID, long entityID, boolean administrator)
             throws UserAlreadyExistsException {
@@ -493,27 +400,12 @@ public class DbGroupProvider implements GroupProvider {
             throw new UserAlreadyExistsException(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String UPDATE_USER =
-            "UPDATE jiveGroupUser SET administrator=? WHERE  groupID=? userID=?";
 
     public void updateMember(long groupID, long entityID, boolean administrator) {
         Connection con = null;
@@ -531,27 +423,12 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String REMOVE_USER =
-            "DELETE FROM jiveGroupUser WHERE groupID=? AND userID=?";
 
     public void deleteMember(long groupID, long entityID) {
         Connection con = null;
@@ -568,29 +445,12 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String GROUP_MEMBER_COUNT =
-            "SELECT count(*) FROM jiveGroupUser WHERE administrator =0";
-    private static final String GROUP_ADMIN_COUNT =
-            "SELECT count(*) FROM jiveGroupUser WHERE administrator =1";
 
     public int getMemberCount(long groupID, boolean adminsOnly) {
         int count = 0;
@@ -614,30 +474,13 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return count;
     }
-
-    private static final String LOAD_ADMINS =
-            "SELECT userID FROM jiveGroupUser WHERE administrator=1 AND groupID=?";
-    private static final String LOAD_MEMBERS =
-            "SELECT userID FROM jiveGroupUser WHERE administrator=0 AND groupID=?";
 
     public LongList getMembers(long groupID, boolean adminsOnly) {
         Connection con = null;
@@ -661,30 +504,15 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
-
         return members;
     }
 
-    public LongList getMembers(long groupID,
-                               BasicResultFilter filter,
-                               boolean adminsOnly) {
+    public LongList getMembers(long groupID, BasicResultFilter filter, boolean adminsOnly) {
         Connection con = null;
         PreparedStatement pstmt = null;
         LongList members = new LongList();
@@ -718,34 +546,13 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
-
         return members;
     }
-
-
-    private static final String MEMBER_TEST =
-            "SELECT userID FROM jiveGroupUser " +
-            "WHERE groupID=? AND userID=? AND administrator=0";
-    private static final String ADMIN_TEST =
-            "SELECT userID FROM jiveGroupUser " +
-            "WHERE groupID=? AND userID=? AND administrator=1";
 
     public boolean isMember(long groupID, long entityID, boolean adminsOnly) {
         boolean member = false;
@@ -770,28 +577,13 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
         return member;
     }
-
-    private static final String INSERT_PROPERTY =
-            "INSERT INTO jiveGroupProp (groupID, name, propValue) VALUES (?, ?, ?)";
 
     public void createProperty(long groupID, String name, String value) {
         Connection con = null;
@@ -809,27 +601,12 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String UPDATE_PROPERTY =
-            "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupID=?";
 
     public void updateProperty(long groupID, String name, String value) {
         Connection con = null;
@@ -847,27 +624,12 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
-
-    private static final String DELETE_PROPERTY =
-            "DELETE FROM jiveGroupProp WHERE groupID=? AND name=?";
 
     public void deleteProperty(long groupID, String name) {
         Connection con = null;
@@ -884,22 +646,10 @@ public class DbGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
 }

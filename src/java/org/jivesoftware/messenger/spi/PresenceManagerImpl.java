@@ -10,16 +10,12 @@
  */
 package org.jivesoftware.messenger.spi;
 
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheFactory;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.container.Container;
 import org.jivesoftware.messenger.container.ModuleContext;
 import org.jivesoftware.messenger.container.TrackInfo;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.chatbot.ChatbotManager;
@@ -73,10 +69,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
         // create caches - no size limit and never expire for presence caches
         long HOUR = JiveConstants.HOUR;
-        onlineGuestCache = CacheFactory.createCache("Online Guests", -1, -1);
-        onlineUserCache = CacheFactory.createCache("Online Users", -1, -1);
-        foreignUserCache = CacheFactory.createCache("Foreign Users",
-                foreignCacheSize, HOUR);
+        onlineGuestCache = new DefaultCache("Online Guests", -1, -1);
+        onlineUserCache = new DefaultCache("Online Users", -1, -1);
+        foreignUserCache = new DefaultCache("Foreign Users", foreignCacheSize, HOUR);
     }
 
     public boolean isAvailable(User user) throws UnauthorizedException {

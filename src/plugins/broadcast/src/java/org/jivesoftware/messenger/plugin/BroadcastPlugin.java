@@ -14,6 +14,8 @@ package org.jivesoftware.messenger.plugin;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.event.PropertyEventListener;
+import org.jivesoftware.messenger.event.PropertyEventDispatcher;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.group.GroupManager;
 import org.jivesoftware.messenger.group.Group;
@@ -28,10 +30,7 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Broadcast service plugin. It accepts messages and broadcasts them out to
@@ -42,13 +41,14 @@ import java.util.StringTokenizer;
  *
  * @author Matt Tucker
  */
-public class BroadcastPlugin implements Plugin, Component {
+public class BroadcastPlugin implements Plugin, Component, PropertyEventListener {
 
     private String serviceName;
     private SessionManager sessionManager;
     private GroupManager groupManager;
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
+    private boolean disableGroupPermissions;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
 
@@ -57,6 +57,8 @@ public class BroadcastPlugin implements Plugin, Component {
      */
     public BroadcastPlugin() {
         serviceName = JiveGlobals.getProperty("plugin.broadcast.serviceName", "broadcast");
+        disableGroupPermissions = JiveGlobals.getBooleanProperty(
+                "plugin.broadcast.disableGroupPermissions");
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
@@ -77,9 +79,11 @@ public class BroadcastPlugin implements Plugin, Component {
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        PropertyEventDispatcher.addListener(this);
     }
 
     public void destroyPlugin() {
+        PropertyEventDispatcher.removeListener(this);
         // Unregister component.
         try {
             componentManager.removeComponent(serviceName);
@@ -125,7 +129,6 @@ public class BroadcastPlugin implements Plugin, Component {
                 if (allowedUsers.size() > 0) {
                     // See if the user is allowed to send the message.
                     JID address = new JID(message.getFrom().toBareJID());
-                    System.out.println("address: " + address);
                     if (!allowedUsers.contains(address)) {
                         Message error = new Message();
                         if (message.getID() != null) {
@@ -156,7 +159,7 @@ public class BroadcastPlugin implements Plugin, Component {
             else {
                 try {
                     Group group = groupManager.getGroup(toNode);
-                    if ((groupMembersAllowed && group.isUser(fromNode)) ||
+                    if (disableGroupPermissions || (groupMembersAllowed && group.isUser(fromNode)) ||
                             group.getAdmins().contains(fromNode) ||
                             allowedUsers.contains(message.getFrom().toBareJID()))
                     {
@@ -230,34 +233,14 @@ public class BroadcastPlugin implements Plugin, Component {
      * @param serviceName the service name of this component.
      */
     public void setServiceName(String serviceName) {
-        if (serviceName == null) {
-            throw new NullPointerException("Service name cannot be null");
-        }
-        if (this.serviceName.equals(serviceName)) {
-            return;
-        }
         JiveGlobals.setProperty("plugin.broadcast.serviceName", serviceName);
-        // Re-register the service.
-        try {
-            componentManager.removeComponent(this.serviceName);
-        }
-        catch (Exception e) {
-            componentManager.getLog().error(e);
-        }
-        try {
-            componentManager.addComponent(serviceName, this);
-        }
-        catch (Exception e) {
-            componentManager.getLog().error(e);
-        }
-        this.serviceName = serviceName;
     }
 
     /**
      * Returns a collection of the addresses of users allowed to send broadcast
-     * messages. If no users are defined, anyone can send broadcast messages.
-     * Additional users may also be allowed to send broadcast messages to
-     * specific groups depending on the group settings.
+     * messages. If no users are defined, anyone can send broadcast messages to
+     * all users. Additional users may also be allowed to send broadcast messages
+     * to specific groups depending on the group settings.
      *
      * @return the users allowed to send broadcast messages.
      */
@@ -280,6 +263,29 @@ public class BroadcastPlugin implements Plugin, Component {
             buf.append(jid).append(",");
         }
         JiveGlobals.setProperty("plugin.broadcast.allowedUsers", buf.toString());
+    }
+
+    /**
+     * Returns true if all permission checking on sending messages to groups is disabled
+     * (enabled by default). When disabled, any user in the system can send a message to
+     * a group.
+     *
+     * @return true if group permission checking is disabled.
+     */
+    public boolean isGroupPermissionsDisabled() {
+        return disableGroupPermissions;
+    }
+
+    /**
+     * Enables or disables permission checking when sending messages to a group. When
+     * disabled, any user in the system can send a message to a group.
+     *
+     * @param disableGroupPermissions true if group permission checking should be disabled.
+     */
+    public void setGroupPermissionsDisabled(boolean disableGroupPermissions) {
+        this.disableGroupPermissions = disableGroupPermissions;
+        JiveGlobals.setProperty("plugin.broadcast.disableGroupPermissions",
+                Boolean.toString(disableGroupPermissions));
     }
 
     /**
@@ -307,6 +313,75 @@ public class BroadcastPlugin implements Plugin, Component {
     public void setGroupMembersAllowed(boolean allowed) {
         this.groupMembersAllowed = allowed;
         JiveGlobals.setProperty("plugin.broadcast.groupMembersAllowed", Boolean.toString(allowed));
+    }
+
+    // PropertyEventListener Methods
+
+    public void propertySet(String property, Map params) {
+        if (property.equals("plugin.broadcast.groupMembersAllowed")) {
+            this.groupMembersAllowed = Boolean.parseBoolean((String)params.get("value"));
+        }
+        else if (property.equals("plugin.broadcast.disableGroupPermissions")) {
+            this.disableGroupPermissions = Boolean.parseBoolean((String)params.get("value"));
+        }
+        else if (property.equals("plugin.broadcast.allowedUsers")) {
+            this.allowedUsers = stringToList((String)params.get("value"));
+        }
+        else if (property.equals("plugin.broadcast.serviceName")) {
+            changeServiceName((String)params.get("value"));
+        }
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        if (property.equals("plugin.broadcast.groupMembersAllowed")) {
+            this.groupMembersAllowed = true;
+        }
+        else if (property.equals("plugin.broadcast.disableGroupPermissions")) {
+            this.disableGroupPermissions = false;
+        }
+        else if (property.equals("plugin.broadcast.allowedUsers")) {
+            this.allowedUsers = Collections.emptyList();
+        }
+        else if (property.equals("plugin.broadcast.serviceName")) {
+            changeServiceName("broadcast");
+        }
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+        // Ignore.
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+        // Ignore.
+    }
+
+    /**
+     * Changes the service name to a new value.
+     *
+     * @param serviceName the service name.
+     */
+    private void changeServiceName(String serviceName) {
+         if (serviceName == null) {
+            throw new NullPointerException("Service name cannot be null");
+        }
+        if (this.serviceName.equals(serviceName)) {
+            return;
+        }
+
+        // Re-register the service.
+        try {
+            componentManager.removeComponent(this.serviceName);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
+        try {
+            componentManager.addComponent(serviceName, this);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
+        this.serviceName = serviceName;
     }
 
     /**

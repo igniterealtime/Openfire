@@ -37,10 +37,75 @@
                             <id>server-reg-and-login</id>
                             <url>reg-settings.jsp</url>
                             <name>Registration &amp; Login</name>
-                            <description>Click to edit registration &amp; login policies.</description>
+                            <description>Click to edit registration &amp; login policies</description>
                         </item0>
+                        <item1>
+                            <id>server-session-conflict</id>
+                            <url>session-conflict.jsp</url>
+                            <name>Resource Conflict Policy</name>
+                            <description></description>
+                        </item1>
+                        <item2>
+                            <id>server-offline-messages</id>
+                            <url>offline-messages.jsp</url>
+                            <name>Offline Message Policy</name>
+                            <description></description>
+                        </item2>
+                        <item3>
+                            <id>server-audit-policy</id>
+                            <url>audit-policy.jsp</url>
+                            <name>Message Audit Policy</name>
+                            <description></description>
+                        </item3>
+                        <item4>
+                            <id>server-data-settings</id>
+                            <url>private-data-settings.jsp</url>
+                            <name>Private Data Storage</name>
+                            <description></description>
+                        </item4>
+                        <item5>
+                            <id>server-chatroom-history</id>
+                            <url>chatroom-history-settings.jsp</url>
+                            <name>Chatroom History Settings</name>
+                            <description></description>
+                        </item5>
+                        <item6>
+                            <id>server-ssl</id>
+                            <url>ssl-settings.jsp</url>
+                            <name>SSL Settings</name>
+                            <description></description>
+                        </item6>
                     </items>
                 </sidebar1>
+                <sidebar2>
+                    <name>Group Chat Settings</name>
+                    <items>
+                        <item0>
+                            <id>muc-server-props</id>
+                            <url>muc-server-props-edit-form.jsp</url>
+                            <name>Group Chat Properties</name>
+                            <description></description>
+                        </item0>
+                        <item1>
+                            <id>muc-history</id>
+                            <url>muc-history-settings.jsp</url>
+                            <name>Group Chat History Settings</name>
+                            <description></description>
+                        </item1>
+                        <item2>
+                            <id>muc-sysadmins</id>
+                            <url>muc-sysadmins.jsp</url>
+                            <name>Group Chat System Administrators</name>
+                            <description></description>
+                        </item2>
+                        <item3>
+                            <id>muc-perms</id>
+                            <url>muc-create-permission.jsp</url>
+                            <name>Group Chat Room Permissions</name>
+                            <description></description>
+                        </item3>
+                    </items>
+                </sidebar2>
             </sidebars>
         </tab0>
         <tab1>
@@ -82,7 +147,7 @@
         <tab3>
             <id>groupchat</id>
             <name>Group Chat</name>
-            <description>Click to manage MUC (multi-user chat) settings</description>
+            <description>Click to manage group chat settings</description>
             <sidebars>
                 <sidebar0>
                     <name>MUC Manager</name>

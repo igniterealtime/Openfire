@@ -31,11 +31,11 @@ import java.util.Collection;
 public class DbGroupProvider implements GroupProvider {
 
     private static final String INSERT_GROUP =
-        "INSERT INTO jiveGroup (name, description) VALUES (?, ?)";
+        "INSERT INTO jiveGroup (groupName, description) VALUES (?, ?)";
     private static final String SAVE_GROUP =
-        "UPDATE jiveGroup SET description=? WHERE name=?";
+        "UPDATE jiveGroup SET description=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_1 =
-        "UPDATE jiveGroup SET name=? WHERE name=?";
+        "UPDATE jiveGroup SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_2 =
         "UPDATE jiveGroupProp SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_3 =
@@ -43,21 +43,21 @@ public class DbGroupProvider implements GroupProvider {
     private static final String DELETE_GROUP_USERS =
         "DELETE FROM jiveGroupUser WHERE groupName=?";
     private static final String DELETE_GROUP =
-        "DELETE FROM jiveGroup WHERE name=?";
+        "DELETE FROM jiveGroup WHERE groupName=?";
     private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
      private static final String LOAD_ADMINS =
         "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupName=?";
     private static final String LOAD_MEMBERS =
         "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=?";
     private static final String SELECT_GROUP_BY_NAME =
-        "SELECT description FROM jiveGroup WHERE name=?";
+        "SELECT description FROM jiveGroup WHERE groupName=?";
     private static final String REMOVE_USER =
         "DELETE FROM jiveGroupUser WHERE groupName=? AND username=?";
     private static final String ADD_USER =
         "INSERT INTO jiveGroupUser (groupName, username, administrator) VALUES (?, ?, ?)";
     private static final String USER_GROUPS =
         "SELECT groupName FROM jiveGroupUser WHERE username=?";
-    private static final String ALL_GROUPS = "SELECT name FROM jiveGroup ORDER BY name";
+    private static final String ALL_GROUPS = "SELECT groupName FROM jiveGroup ORDER BY groupName";
 
     public Group createGroup(String name) throws GroupAlreadyExistsException {
         Connection con = null;

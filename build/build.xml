@@ -242,9 +242,6 @@
         <mkdir dir="${jspc.classes.dest.dir}" />
         <mkdir dir="${webapp.dest.dir}" />
 
-        <antcall target="-jspc-impl" />
-
-        </target><target name="-jspc-impl" unless="no.jspc">
         <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
         <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
             <classpath id="jspc.classpath">

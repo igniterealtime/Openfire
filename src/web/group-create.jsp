@@ -38,6 +38,8 @@ errorPage="error.jsp"%>
     boolean cancel = request.getParameter("cancel") != null;
     String  name = ParamUtils.getParameter(request, "name");
     String  description = ParamUtils.getParameter(request, "description");
+    boolean showInRoster = ParamUtils.getBooleanParameter(request, "show", false);
+    String  displayName = ParamUtils.getParameter(request, "display");
     String  users = ParamUtils.getParameter(request, "users", true);
     // Handle a cancel
     if (cancel) {
@@ -50,12 +52,23 @@ errorPage="error.jsp"%>
         if (name == null) {
             errors.put("name", "");
         }
+        if (showInRoster && (displayName == null || displayName.length() == 0)) {
+            errors.put("display", "");
+        }
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
                 Group newGroup = webManager.getGroupManager().createGroup(name);
                 if (description != null) {
                     newGroup.setDescription(description);
+                }
+                if (showInRoster) {
+                    newGroup.getProperties().put("showInRoster", "true");
+                    newGroup.getProperties().put("displayName", displayName);
+                }
+                else {
+                    newGroup.getProperties().put("showInRoster", "false");
+                    newGroup.getProperties().put("displayName", "");
                 }
 
                 if(users.length() > 0){
@@ -160,6 +173,29 @@ errorPage="error.jsp"%>
                                 if (errors.get("description") != null) {
 %>
                                                             <span class="jive-error-text"> Invalid description. </span>
+<%
+                                }
+%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="1%" nowrap>
+                            <label for="gshow">Show group in group members' rosters:</label>
+                        </td>
+                        <td width="99%">
+                            <input type="checkbox" name="show" value="true" id="gshow"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td nowrap width="1%">
+                            <label for="gdisplay">Display name in roster:</label>
+                        </td>
+                        <td nowrap class="c1" align="left">
+                            <input type="text" size="40" name="display" id="gdisplay"/>
+<%
+                                if (errors.get("display") != null) {
+%>
+                                                            <span class="jive-error-text"> Please enter a display name. </span>
 <%
                                 }
 %>

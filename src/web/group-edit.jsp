@@ -14,6 +14,7 @@ import="java.text.DateFormat,
         org.jivesoftware.stringprep.Stringprep"%>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<jsp:useBean id="errors" class="java.util.HashMap"/>
 <%
     webManager.init(pageContext);
 %>
@@ -30,6 +31,8 @@ import="java.text.DateFormat,
     boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
     String newName = ParamUtils.getParameter(request, "newName");
     String newDescription = ParamUtils.getParameter(request, "newDescription");
+    boolean newShowInRoster = ParamUtils.getBooleanParameter(request, "newShow", false);
+    String  newDisplayName = ParamUtils.getParameter(request, "newDisplay");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     Group group = groupManager.getGroup(groupName);
@@ -38,13 +41,30 @@ import="java.text.DateFormat,
 
 
     if (newName != null && newName.length() > 0) {
-        group.setName(newName);
-        group.setDescription(newDescription);
-        groupName = newName;
-        groupInfoChanged = true;
-         // Get admin list and compare it the admin posted list.
-        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
-        return;
+        if (newShowInRoster && (newDisplayName == null || newDisplayName.length() == 0)) {
+            errors.put("display", "");
+        }
+        if (errors.isEmpty()) {
+            group.setName(newName);
+            group.setDescription(newDescription);
+            if (newShowInRoster) {
+                group.getProperties().put("showInRoster", "true");
+                group.getProperties().put("displayName", newDisplayName);
+            }
+            else {
+                group.getProperties().put("showInRoster", "false");
+                group.getProperties().put("displayName", "");
+            }
+            groupName = newName;
+            groupInfoChanged = true;
+             // Get admin list and compare it the admin posted list.
+            response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
+            return;
+        }
+        else {
+            // Continue editing since there are some errors
+            edit = true;
+        }
     }
 
 
@@ -219,13 +239,54 @@ import="java.text.DateFormat,
                     Description:
                 </td>
                 <% if(!edit) { %>
-                <td colspan="3">
+                <td colspan="2">
                     <%= ((group.getDescription() != null) ? group.getDescription() : "<i>No Description</i>") %>
                 </td>
                 <% } else { %>
 
                 <td>
                 <input type="text" name="newDescription" value="<%= group.getDescription() != null ? group.getDescription() : "" %>">
+                </td>
+
+                <% } %>
+            </tr>
+            <tr>
+                <td width="1%" nowrap>
+                    Show group in group members' rosters:
+                </td>
+                <%  boolean showInRoster = "true".equals(group.getProperties().get("showInRoster"));
+                    if(!edit) { %>
+                <td colspan="2">
+                    <%= (showInRoster ? "Enabled" : "Disabled") %>
+                </td>
+                <% } else { %>
+
+                <td>
+                <input type="checkbox" name="newShow" value="true" <%= (showInRoster ? "checked" : "") %>/>
+                </td>
+
+                <% } %>
+            </tr>
+            <tr>
+                <td width="1%" nowrap>
+                    Display name in roster:
+                </td>
+                <%  String displayName = (group.getProperties().get("displayName") == null ? "" : group.getProperties().get("displayName"));
+                    if(!edit) { %>
+                <td colspan="2">
+                    <%= displayName %>
+                </td>
+                <% } else { %>
+
+                <td>
+                <input type="text" size="40" name="newDisplay" value="<%= displayName %>"/>
+<%
+                if (errors.get("display") != null) {
+%>
+                <span class="jive-error-text"> Please enter a display name. </span>
+<%
+                }
+%>
                 </td>
 
                 <% } %>

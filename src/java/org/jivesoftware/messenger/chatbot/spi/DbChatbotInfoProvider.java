@@ -98,7 +98,7 @@ public class DbChatbotInfoProvider implements ChatbotInfoProvider {
             pstmt.setString(2, StringUtils.dateToMillis(info.getCreationDate()));
             pstmt.setString(3, StringUtils.dateToMillis(info.getModificationDate()));
             pstmt.setLong(4, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

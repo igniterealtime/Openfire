@@ -196,7 +196,7 @@ public class JiveProperties implements Map {
             pstmt = con.prepareStatement(INSERT_PROPERTY);
             pstmt.setString(1, name);
             pstmt.setString(2, value);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -217,7 +217,7 @@ public class JiveProperties implements Map {
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
             pstmt.setString(1, value);
             pstmt.setString(2, name);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -237,7 +237,7 @@ public class JiveProperties implements Map {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_PROPERTY);
             pstmt.setString(1, name + "%");
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);

@@ -30,10 +30,6 @@ public abstract class IQDiscoHandler extends IQHandler {
         super(name);
     }
 
-    protected TrackInfo getTrackInfo() {
-        TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
-        return trackInfo;
-    }
+
 
 }

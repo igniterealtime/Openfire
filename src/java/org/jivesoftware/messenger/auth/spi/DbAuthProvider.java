@@ -205,7 +205,7 @@ public class DbAuthProvider implements AuthProvider {
             pstmt.setString(1, password);
             pstmt.setLong(2, userID);
 
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error("Exception in DbAuthProvider", e);

@@ -115,7 +115,7 @@ public class DbUserInfoProvider implements UserInfoProvider {
             pstmt.setString(5, StringUtils.dateToMillis(info.getCreationDate()));
             pstmt.setString(6, StringUtils.dateToMillis(info.getModificationDate()));
             pstmt.setLong(7, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

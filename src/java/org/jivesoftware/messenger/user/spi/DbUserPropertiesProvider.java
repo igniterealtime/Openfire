@@ -122,7 +122,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             pstmt.setLong(1, id);
             pstmt.setString(2, name);
             pstmt.setString(3, value);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -165,7 +165,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             pstmt.setString(1, value);
             pstmt.setString(2, name);
             pstmt.setLong(3, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
@@ -207,7 +207,7 @@ public class DbUserPropertiesProvider implements UserPropertiesProvider {
             }
             pstmt.setLong(1, id);
             pstmt.setString(2, name);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);

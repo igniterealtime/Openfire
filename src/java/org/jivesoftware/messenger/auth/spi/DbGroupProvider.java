@@ -249,12 +249,12 @@ public class DbGroupProvider implements GroupProvider {
             // Remove all users in the group.
             pstmt = con.prepareStatement(DELETE_GROUP_USERS);
             pstmt.setLong(1, groupID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             pstmt.close();
             // Remove the group entry.
             pstmt = con.prepareStatement(DELETE_GROUP);
             pstmt.setLong(1, groupID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             pstmt.close();
         }
         catch (SQLException e) {
@@ -640,7 +640,7 @@ public class DbGroupProvider implements GroupProvider {
             pstmt = con.prepareStatement(DELETE_PROPERTY);
             pstmt.setLong(1, groupID);
             pstmt.setString(2, name);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);

@@ -403,7 +403,7 @@ public class LdapUserIDProvider implements UserIDProvider {
             pstmt.setLong(2, DbUserIDProvider.DEFAULT_DOMAIN);
             pstmt.setLong(3, DbUserIDProvider.USER_TYPE);
             pstmt.setLong(4, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);

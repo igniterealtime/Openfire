@@ -58,7 +58,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             pstmt.setInt(5, item.getAskStatus().getValue());
             pstmt.setInt(6, item.getRecvStatus().getValue());
             pstmt.setString(7, item.getNickname());
-            pstmt.execute();
+            pstmt.executeUpdate();
 
             if (item instanceof CachedRosterItemImpl) {
                 // If a RosterItemImpl we can reuse it by setting the new roster ID
@@ -103,12 +103,12 @@ public class DbRosterItemProvider implements RosterItemProvider {
             pstmt.setInt(3, item.getRecvStatus().getValue());
             pstmt.setString(4, item.getNickname());
             pstmt.setLong(5, rosterID);
-            pstmt.execute();
+            pstmt.executeUpdate();
 
             // Delete old group list
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
             pstmt.setLong(1, rosterID);
-            pstmt.execute();
+            pstmt.executeUpdate();
 
             insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
 
@@ -144,7 +144,7 @@ public class DbRosterItemProvider implements RosterItemProvider {
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);
                 pstmt.setString(3, (String)iter.next());
-                pstmt.execute();
+                pstmt.executeUpdate();
             }
         }
         finally {
@@ -173,13 +173,13 @@ public class DbRosterItemProvider implements RosterItemProvider {
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
 
             pstmt.setLong(1, rosterItemID);
-            pstmt.execute();
+            pstmt.executeUpdate();
 
             // Remove roster
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM);
 
             pstmt.setLong(1, rosterItemID);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -214,11 +214,11 @@ public class DbRosterItemProvider implements RosterItemProvider {
             for (int i = 0; i < list.size(); i++) {
                 pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
                 pstmt.setLong(1, list.get(i));
-                pstmt.execute();
+                pstmt.executeUpdate();
             }
             pstmt = con.prepareStatement(DELETE_ROSTER);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
 
         }
         catch (SQLException e) {

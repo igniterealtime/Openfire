@@ -52,13 +52,13 @@ public class DbChatbotAccountProvider implements ChatbotAccountProvider {
             pstmt.setLong(2, DbUserIDProvider.DEFAULT_DOMAIN);
             pstmt.setLong(3, DbUserIDProvider.CHATBOT_TYPE);
             pstmt.setLong(4, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
             pstmt = con.prepareStatement(INSERT_CHATBOT_INFO);
             pstmt.setLong(1, id);
             pstmt.setString(2, "None");
             pstmt.setString(3, StringUtils.dateToMillis(now));
             pstmt.setString(4, StringUtils.dateToMillis(now));
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -100,13 +100,13 @@ public class DbChatbotAccountProvider implements ChatbotAccountProvider {
             // Delete the actual chatbot info entry
             pstmt = con.prepareStatement(DELETE_CHATBOT_INFO);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Delete the actual user ID entry
             pstmt = con.prepareStatement(DELETE_CHATBOT_ID);
             pstmt.setLong(1, userID);
             pstmt.setInt(2, DbUserIDProvider.CHATBOT_TYPE);
             pstmt.setLong(3, DbUserIDProvider.DEFAULT_DOMAIN);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (Exception e) {
             Log.error(e);

@@ -53,7 +53,7 @@ public class DbUserAccountProvider implements UserAccountProvider {
             pstmt.setLong(2, DbUserIDProvider.DEFAULT_DOMAIN);
             pstmt.setLong(3, DbUserIDProvider.USER_TYPE);
             pstmt.setLong(4, id);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Add the user record in jiveUser
             pstmt = con.prepareStatement(INSERT_USER);
             pstmt.setLong(1, id);
@@ -65,7 +65,7 @@ public class DbUserAccountProvider implements UserAccountProvider {
             Date now = new Date();
             pstmt.setString(7, StringUtils.dateToMillis(now));
             pstmt.setString(8, StringUtils.dateToMillis(now));
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -111,25 +111,25 @@ public class DbUserAccountProvider implements UserAccountProvider {
             // Remove user from all groups
             pstmt = con.prepareStatement(DELETE_USER_GROUPS);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Delete all of the users's extended properties
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Delete all of the users's vcard properties
             pstmt = con.prepareStatement(DELETE_VCARD_PROPS);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Delete the actual user entry
             pstmt = con.prepareStatement(DELETE_USER);
             pstmt.setLong(1, userID);
-            pstmt.execute();
+            pstmt.executeUpdate();
             // Delete the actual user ID entry
             pstmt = con.prepareStatement(DELETE_USER_ID);
             pstmt.setLong(1, userID);
             pstmt.setInt(2, DbUserIDProvider.USER_TYPE);
             pstmt.setLong(3, DbUserIDProvider.DEFAULT_DOMAIN);
-            pstmt.execute();
+            pstmt.executeUpdate();
         }
         catch (Exception e) {
             Log.error(e);

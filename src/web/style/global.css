@@ -20,6 +20,10 @@ FIELDSET DIV {
     padding : 5px 3px 5px 0px;
     width : 100%;
 }
+FIELDSET DIV .jive-table {
+    margin : 0px;
+    padding : 0px;
+}
 FIELDSET {
     -moz-border-radius : 3px;
     border-style : solid;

@@ -1,5 +1,3 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -10,10 +8,14 @@
                  org.jivesoftware.messenger.JiveGlobals,
                  java.util.Map,
                  java.util.HashMap,
-                 java.net.InetAddress" %>
+                 java.net.InetAddress"
+%>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ include file="setup-global.jspf" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", -1);
@@ -69,6 +71,10 @@
 
 <%@ include file="setup-header.jspf" %>
 
+<style type="text/css">
+LABEL { font-weight : normal; }
+</style>
+
 <p class="jive-setup-page-header">
 <fmt:message key="setup.host.settings.title" />
 </p>
@@ -76,10 +82,6 @@
 <p>
 <fmt:message key="setup.host.settings.info" />
 </p>
-
-<style type="text/css">
-LABEL { font-weight : normal; }
-</style>
 
 <form action="setup-host-settings.jsp" name="f" method="post">
 

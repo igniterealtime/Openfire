@@ -44,15 +44,15 @@ public class SSLConfig {
         String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
         // Get the keystore location. The default location is security/keystore
         keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
-                JiveGlobals.getMessengerHome() + File.separator + "security" +
-                File.separator + "keystore");
+                JiveGlobals.getMessengerHome() + File.separator + "resources" + File.separator +
+                "security" + File.separator + "keystore");
         // Get the keystore password. The default password is "changeit".
         keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
         keypass = keypass.trim();
         // Get the truststore location; default at security/truststore
         trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
-                JiveGlobals.getMessengerHome() + File.separator + "security" +
-                File.separator + "truststore");
+                JiveGlobals.getMessengerHome() + File.separator + "resources" + File.separator +
+                "security" + File.separator + "truststore");
         // Get the truststore passwprd; default is "changeit".
         trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
         trustpass = trustpass.trim();

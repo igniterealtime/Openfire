@@ -13,8 +13,7 @@
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.messenger.user.*,
-                 java.util.*,
-                 org.jivesoftware.util.CacheFactory"
+                 java.util.*"
 %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -105,7 +104,7 @@ String log = ParamUtils.getParameter(request, "log");
         // Time difference between now and the parameter object's time. Using
         // the cache timer means the resolution is no better than a seconds,
         // for for our purposes, we don't need better.
-        long delta = CacheFactory.currentTime - date.getTime();
+        long delta = System.currentTimeMillis() - date.getTime();
 
         // Within the last hour
         if ((delta / JiveConstants.HOUR) < 1) {

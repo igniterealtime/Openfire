@@ -51,6 +51,16 @@ public class AdminConsole {
     }
 
     /**
+     * Adds XML stream to the tabs/sidebar model.
+     *
+     * @param in the XML input stream.
+     * @throws Exception if an error occurs when parsing the XML or adding it to the model.
+     */
+    public static void addXMLSource(InputStream in) throws Exception {
+        addToModel(in);
+    }
+
+    /**
      * Returns all items starting from the root. Getting the iterator from this collection returns
      * all root items (should be used as tabs in the admin tool).
      *
@@ -298,7 +308,7 @@ public class AdminConsole {
             URL url = null;
             try {
                 if (classLoaders[i] != null) {
-                    Enumeration e = classLoaders[i].getResources("META-INF/admin-sidebar.xml");
+                    Enumeration e = classLoaders[i].getResources("/META-INF/admin-sidebar.xml");
                     while (e.hasMoreElements()) {
                         url = (URL)e.nextElement();
                         in = url.openStream();
@@ -322,41 +332,41 @@ public class AdminConsole {
 
     private static void addToModel(InputStream in) throws Exception {
         // Build an XMLPropertiesTest object from the input stream:
-        XMLProperties xmlTest = new XMLProperties(in);
+        XMLProperties xml = new XMLProperties(in);
         // Get all children of the 'tabs' element - should be 'tab' items:
-        String[] tabs = xmlTest.getChildrenProperties("tabs");
+        String[] tabs = xml.getChildrenProperties("tabs");
         for (int i=0; i<tabs.length; i++) {
             String propName = "tabs." + tabs[i];
-            // Create a new top level item with data from the xmlTest file:
-            String id = xmlTest.getProperty(propName + ".id");
-            String name = xmlTest.getProperty(propName + ".name");
-            String description = xmlTest.getProperty(propName + ".description");
+            // Create a new top level item with data from the xml file:
+            String id = xml.getProperty(propName + ".id");
+            String name = xml.getProperty(propName + ".name");
+            String description = xml.getProperty(propName + ".description");
             Item item = new Item(id, name, description, null);
             // Add that item to the item collection
             getItems().add(item);
             // Delve down into this item's sidebars - build up a model of these then add into
             // the item above.
-            String[] sidebars = xmlTest.getChildrenProperties(propName + ".sidebars");
+            String[] sidebars = xml.getChildrenProperties(propName + ".sidebars");
             for (int j=0; j<sidebars.length; j++) {
                 String sidebarName = propName + ".sidebars." + sidebars[j];
-                name = xmlTest.getProperty(sidebarName + ".name");
+                name = xml.getProperty(sidebarName + ".name");
                 // Create a new item, set its name
                 Item subItem = new Item(null, name, null, null);
                 // Now iterate down another level, get the items for this item - this will be the
                 // specific links on the sidebar
-                String[] subitems = xmlTest.getChildrenProperties(sidebarName + ".items");
+                String[] subitems = xml.getChildrenProperties(sidebarName + ".items");
                 for (int k=0; k<subitems.length; k++) {
                     String subitemName = sidebarName + ".items." + subitems[k];
                     // Get the id, name, descr and url attributes:
-                    String subID = xmlTest.getProperty(subitemName + ".id");
-                    String subName = xmlTest.getProperty(subitemName + ".name");
-                    String subDescr = xmlTest.getProperty(subitemName + ".description");
-                    String subURL = xmlTest.getProperty(subitemName + ".url");
+                    String subID = xml.getProperty(subitemName + ".id");
+                    String subName = xml.getProperty(subitemName + ".name");
+                    String subDescr = xml.getProperty(subitemName + ".description");
+                    String subURL = xml.getProperty(subitemName + ".url");
                     // Build an item with this, add it to the subItem we made above
                     Item kItem = new Item(subID, subName, subDescr, subURL, subItem);
                     subItem.getItems().add(kItem);
                     // Build any sub-sub menus:
-                    subAddtoModel(subitemName, xmlTest, kItem);
+                    subAddtoModel(subitemName, xml, kItem);
                     // If this is the first item, set the root menu item's URL as this URL:
                     if (j==0 && k == 0) {
                         item.setUrl(subURL);

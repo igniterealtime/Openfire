@@ -59,7 +59,7 @@
         It appears setup has already been run. To administer your community, please use the
         <a href="index.jsp"><fmt:message key="short.title" bundle="${lang}" /> Admin Tool</a>. To re-run
         setup, you need to stop your appserver, delete the "setup" property from the
-        jive-messenger.xmlTest file, restart Messenger then reload the setup tool.
+        jive-messenger.xml file, restart Messenger then reload the setup tool.
         </p>
 
         <form action="index.jsp">

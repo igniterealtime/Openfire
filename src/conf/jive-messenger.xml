@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xmlTest version="1.0" encoding="UTF-8"?>
 <!--
     This file stores bootstrap properties needed by Jive Messenger.
     Property names must be in the format: "prop.name.is.blah=value"

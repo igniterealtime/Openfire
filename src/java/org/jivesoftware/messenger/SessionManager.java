@@ -51,7 +51,7 @@ import org.xmpp.packet.Presence;
  */
 public class SessionManager implements ConnectionCloseListener {
     private int sessionCount = 0;
-    final int NEVER_KICK = -1;
+    public static final int NEVER_KICK = -1;
 
     public XMPPServer server;
     public PacketRouter router;

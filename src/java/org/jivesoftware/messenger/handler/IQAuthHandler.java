@@ -76,7 +76,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
-            Session session = packet.getOriginatingSession();
+            Session session = SessionManager.getInstance().getSession(packet.getFrom());
             IQ response = null;
             try {
                 Element iq = packet.getElement();

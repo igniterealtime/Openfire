@@ -18,10 +18,9 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.*;
+import org.jivesoftware.messenger.user.Roster;
 import org.jivesoftware.messenger.user.spi.IQRosterItemImpl;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.IQ;
+import org.xmpp.packet.*;
 import org.dom4j.Element;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -127,8 +126,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                     item.setSubStatus(RosterItem.SUB_REMOVE);
                     item.setSubStatus(RosterItem.SUB_NONE);
 
-                    Packet itemPacket = (Packet)packet.createDeepCopy();
-                    sessionManager.userBroadcast(recipientJID.getName().toLowerCase(), itemPacket);
+                    Packet itemPacket = packet.createCopy();
+                    sessionManager.userBroadcast(recipientJID.getNode(), itemPacket);
                 }
             }
         }
@@ -149,30 +148,38 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     private IQ manageRoster(IQRoster packet) throws UnauthorizedException, UserAlreadyExistsException, XMLStreamException {
 
         IQ returnPacket = null;
-        Session session = packet.getOriginatingSession();
+        Session session = null;
+        try {
+            SessionManager.getInstance().getSession(packet.getFrom());
+        }
+        catch (Exception e) {
+            IQ error = IQ.createResultIQ(packet);
+            error.setError(PacketError.Condition.internal_server_error);
+            return error;
+        }
 
-        XMPPPacket.Type type = packet.getType();
+        IQ.Type type = packet.getType();
 
         try {
             User sessionUser = userManager.getUser(session.getUsername());
             CachedRoster cachedRoster = (CachedRoster)sessionUser.getRoster();
-            if (IQ.GET == type) {
+            if (IQ.Type.get == type) {
                 returnPacket = cachedRoster.getReset();
-                returnPacket.setType(IQ.RESULT);
-                returnPacket.setRecipient(session.getAddress());
+                returnPacket.setType(IQ.Type.result);
+                returnPacket.setTo(session.getAddress());
                 returnPacket.setID(packet.getID());
                 // Force delivery of the response because we need to trigger
                 // a presence probe from all contacts
                 deliverer.deliver(returnPacket);
                 returnPacket = null;
             }
-            else if (IQ.SET == type) {
+            else if (IQ.Type.set == type) {
 
                 Iterator itemIter = packet.getRosterItems();
                 while (itemIter.hasNext()) {
                     RosterItem item = (RosterItem)itemIter.next();
                     if (item.getSubStatus() == RosterItem.SUB_REMOVE) {
-                        removeItem(cachedRoster, packet.getSender(), item);
+                        removeItem(cachedRoster, packet.getFrom(), item);
                     }
                     else {
                         if (cachedRoster.isRosterItem(item.getJid())) {
@@ -187,7 +194,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                         }
                     }
                 }
-                returnPacket = packet.createResult();
+                returnPacket = IQ.createResultIQ(packet);
             }
         }
         catch (UserNotFoundException e) {
@@ -207,7 +214,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param item   The removal item element
      */
     private void removeItem(Roster roster, JID sender, RosterItem item)
-            throws UnauthorizedException, XMLStreamException {
+            throws UnauthorizedException
+    {
 
         JID recipient = item.getJid();
         // Remove recipient from the sender's roster
@@ -215,7 +223,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         // Forward set packet to the subscriber
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
-                CachedRoster recipientRoster = userManager.getUser(recipient.getName()).getRoster();
+                CachedRoster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
                 recipientRoster.deleteRosterItem(sender);
             }
             catch (UserNotFoundException e) {
@@ -223,8 +231,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         }
         else { // Recipient is remote so we just forward the packet to them
 
-            XMPPPacket removePacket = createRemoveForward(sender, recipient);
-            transporter.deliver(removePacket);
+            Packet removePacket = createRemoveForward(sender, recipient);
+            router.route(removePacket);
         }
     }
 
@@ -246,7 +254,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
         IQRosterItem responseItem = new IQRosterItemImpl(from);
         responseItem.setSubStatus(RosterItem.SUB_REMOVE);
-        query.addFragment(responseItem);
+        query.add(responseItem.asXMLElement());
 
         return response;
     }
@@ -255,7 +263,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     public XMPPServer localServer;
     public SessionManager sessionManager;
     public PresenceManager presenceManager;
-    public PacketTransporter transporter;
+    public PacketRouter router;
     public PacketFactory packetFactory;
     public RoutingTable routingTable;
 
@@ -266,7 +274,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         trackInfo.getTrackerClasses().put(XMPPServer.class, "localServer");
         trackInfo.getTrackerClasses().put(SessionManager.class, "sessionManager");
         trackInfo.getTrackerClasses().put(PresenceManager.class, "presenceManager");
-        trackInfo.getTrackerClasses().put(PacketTransporter.class, "transporter");
+        trackInfo.getTrackerClasses().put(PacketRouter.class, "router");
         trackInfo.getTrackerClasses().put(PacketFactory.class, "packetFactory");
         return trackInfo;
     }

@@ -23,6 +23,9 @@ import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * Implements the TYPE_IQ vcard-temp protocol. Clients
@@ -68,25 +71,24 @@ public class IQvCardHandler extends IQHandler {
     public synchronized IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = null;
         try {
-            XMPPAddress recipient = packet.getRecipient();
-            XMPPPacket.Type type = packet.getType();
-            if (type.equals(IQ.SET)) {
-                User user = userManager.getUser(packet.getOriginatingSession().getUsername());
+            JID recipient = packet.getTo();
+            IQ.Type type = packet.getType();
+            if (type.equals(IQ.Type.set)) {
+                User user = userManager.getUser(packet.getFrom().getNode());
                 // Proper format
-                Element vcard = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
+                Element vcard = packet.getChildElement();
                 if (vcard != null) {
                     List nameStack = new ArrayList(5);
                     readVCard(vcard, nameStack, user);
                 }
-                result = packet.createResult();
+                result = IQ.createResultIQ(packet);
             }
-            else if (type.equals(IQ.GET)) {
-                User user = userManager.getUser(recipient.getName());
-                result = packet.createResult();
+            else if (type.equals(IQ.Type.get)) {
+                User user = userManager.getUser(recipient.getNode());
+                result = IQ.createResultIQ(packet);
 
                 Element vcard = DocumentHelper.createElement(QName.get("VCARD", "vcard-temp"));
-                XMPPDOMFragment frag = new XMPPDOMFragment(vcard);
-                result.setChildFragment(frag);
+                result.setChildElement(vcard);
 
                 Iterator names = user.getVCardPropertyNames();
                 while (names.hasNext()) {
@@ -97,13 +99,13 @@ public class IQvCardHandler extends IQHandler {
                 }
             }
             else {
-                result = packet.createResult();
-                result.setError(XMPPError.Code.NOT_ACCEPTABLE);
+                result = IQ.createResultIQ(packet);
+                result.setError(PacketError.Condition.not_acceptable);
             }
         }
         catch (UserNotFoundException e) {
-            result = packet.createResult();
-            result.setError(XMPPError.Code.NOT_FOUND);
+            result = IQ.createResultIQ(packet);
+                result.setError(PacketError.Condition.item_not_found);
         }
         return result;
     }

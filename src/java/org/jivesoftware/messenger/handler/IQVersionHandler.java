@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.handler;
 
 import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.PacketException;
 import org.jivesoftware.messenger.XMPPServer;
@@ -22,6 +21,7 @@ import java.util.Iterator;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
 
 /**
  * Implements the TYPE_IQ jabber:iq:version protocol (version info). Allows
@@ -65,7 +65,8 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         // Could cache this information for every server we see
         versionElement.setText(localServer.getServerInfo().getVersion().getVersionString());
         IQ result = null;
-        result = packet.createResult(bodyElement);
+        result = IQ.createResultIQ(packet);
+        result.setChildElement(bodyElement.createCopy());
         return result;
     }
 

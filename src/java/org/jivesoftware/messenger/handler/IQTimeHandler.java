@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger.handler;
 
 import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.IQ;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,6 +22,7 @@ import java.util.TimeZone;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.xmpp.packet.IQ;
 
 /**
  * Implements the TYPE_IQ jabber:iq:time protocol (time info). Allows
@@ -62,7 +62,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
 
         buildResponse();
 
-        response = packet.createResult(responseElement);
+        response = IQ.createResultIQ(packet);
         return response;
     }
 

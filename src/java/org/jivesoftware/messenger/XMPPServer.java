@@ -414,7 +414,7 @@ public class XMPPServer {
                     "Please verify your database settings and check the " +
                     "logs/error.log file for detailed error messages.");
             Log.error("Database could not be accessed", e);
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(e);
         }
         finally {
             if (conn != null) {

@@ -16,7 +16,8 @@
                  org.jivesoftware.messenger.user.*,
                  java.util.*,
                  java.text.*,
-                 org.jivesoftware.admin.AdminPageBean"
+                 org.jivesoftware.admin.AdminPageBean,
+                 org.jivesoftware.admin.AdminConsole"
 
 %>
 

@@ -14,7 +14,8 @@
                  org.jivesoftware.messenger.*,
                  java.util.Date,
                  org.jivesoftware.admin.*,
-                 java.text.DateFormat"
+                 java.text.DateFormat,
+                 org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
 
@@ -37,7 +38,7 @@
 
     // Close a connection if requested
     if (close) {
-        XMPPAddress address = XMPPAddress.parseJID(jid);
+        JID address = new JID(jid);
         try {
             Session sess = sessionManager.getSession(address);
             sess.getConnection().close();

@@ -1,5 +1,5 @@
 <%@ page import="org.jivesoftware.messenger.Session,
-                 org.jivesoftware.messenger.Presence"%>
+                 org.xmpp.packet.Presence"%>
  <%--
   -	$RCSfile$
   -	$Revision$
@@ -27,7 +27,7 @@
 
     <td width="1%" nowrap><%= count %></td>
     <td width="10%" nowrap>
-        <%  String name = sess.getAddress().getName(); %>
+        <%  String name = sess.getAddress().getNode(); %>
         <a href="session-details.jsp?jid=<%= sess.getAddress() %>" title="Click for more info..."
          ><%= ((name != null && !"".equals(name)) ? name : "<i>Anonymous</i>") %></a>
 
@@ -67,9 +67,9 @@
         <%  } %>
     </td>
 
-    <%  int _show = sess.getPresence().getShow();
+    <%  Presence.Show _show = sess.getPresence().getShow();
         String _stat = sess.getPresence().getStatus();
-        if (_show == Presence.SHOW_AWAY) {
+        if (_show == Presence.Show.away) {
     %>
         <td width="1%"
             ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away"
@@ -86,7 +86,7 @@
             <%  } %>
         </td>
 
-    <%  } else if (_show == Presence.SHOW_CHAT) { %>
+    <%  } else if (_show == Presence.Show.chat) { %>
 
         <td width="1%"
             ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat"
@@ -95,7 +95,7 @@
             Available to Chat
         </td>
 
-    <%  } else if (_show == Presence.SHOW_DND) { %>
+    <%  } else if (_show == Presence.Show.dnd) { %>
 
         <td width="1%"
             ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do Not Disturb"
@@ -112,7 +112,7 @@
             <%  } %>
         </td>
 
-    <%  } else if (_show == Presence.SHOW_NONE) { %>
+    <%  } else if (_show == null) { %>
 
         <td width="1%"
             ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online"
@@ -121,7 +121,7 @@
             Online
         </td>
 
-    <%  } else if (_show == Presence.SHOW_XA) { %>
+    <%  } else if (_show == Presence.Show.xa) { %>
 
         <td width="1%"
             ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Extended Away"

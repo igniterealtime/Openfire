@@ -15,7 +15,9 @@
                  java.text.DateFormat,
                  java.text.NumberFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User"
+                 org.jivesoftware.messenger.user.User,
+                 org.xmpp.packet.JID,
+                 org.xmpp.packet.Presence"
     errorPage="error.jsp"
 %>
 
@@ -34,9 +36,9 @@
 
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
-    XMPPAddress address = XMPPAddress.parseJID(jid);
+    JID address = new JID(jid);
     Session currentSess = sessionManager.getSession(address);
-    boolean isAnonymous = address.getName() == null || "".equals(address.getName());
+    boolean isAnonymous = address.getNode() == null || "".equals(address.getNode());
 
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();
@@ -44,7 +46,7 @@
     // Get user object
     User user = null;
     if (!isAnonymous) {
-        user = webManager.getUserManager().getUser(address.getName());
+        user = webManager.getUserManager().getUser(address.getNode());
     }
 
     // Handle a "message" click:
@@ -55,9 +57,9 @@
 
     // See if there are multiple sessions for this user:
     Collection<Session> sessions = null;
-    int sessionCount = sessionManager.getSessionCount(address.getName());
+    int sessionCount = sessionManager.getSessionCount(address.getNode());
     if (!isAnonymous && sessionCount > 1) {
-        sessions = sessionManager.getSessions(address.getName());
+        sessions = sessionManager.getSessions(address.getNode());
     }
 
     // Date dateFormatter for all dates on this page:
@@ -80,7 +82,7 @@
 
 <p>
 Below are session details for the session <b><%= address.toString() %></b>. If the
-user <b><%= address.getName() %></b> has multiple sessions open, they will appear below.
+user <b><%= address.getNode() %></b> has multiple sessions open, they will appear below.
 </p>
 
 <div class="jive-table">
@@ -106,7 +108,7 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
             User Name &amp; Resource:
         </td>
         <td>
-            <%  String n = address.getName(); %>
+            <%  String n = address.getNode(); %>
             <%  if (n == null || "".equals(n)) { %>
 
                 <i>Anonymous</i> - <%= address.getResource() %>
@@ -165,7 +167,7 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
         </td>
         <td>
             <%
-                int show = currentSess.getPresence().getShow();
+                Presence.Show show = currentSess.getPresence().getShow();
                 String statusTxt = currentSess.getPresence().getStatus();
                 if (statusTxt != null) {
                     statusTxt = " -- " + statusTxt;
@@ -173,33 +175,33 @@ user <b><%= address.getName() %></b> has multiple sessions open, they will appea
                 else {
                     statusTxt = "";
                 }
-                if (show == Presence.SHOW_AWAY) {
+                if (show == Presence.Show.away) {
             %>
 
                 <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
                 Away <%= statusTxt %>
 
             <%
-                } else if (show == Presence.SHOW_CHAT) {
+                } else if (show == Presence.Show.chat) {
             %>
                 <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
                 Available to Chat <%= statusTxt %>
             <%
-                } else if (show == Presence.SHOW_DND) {
+                } else if (show == Presence.Show.dnd) {
             %>
 
                 <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
                 Do Not Disturb <%= statusTxt %>
 
             <%
-                } else if (show == Presence.SHOW_NONE) {
+                } else if (show == null) {
             %>
 
                 <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
                 Online <%= statusTxt %>
 
             <%
-                } else if (show == Presence.SHOW_XA) {
+                } else if (show == Presence.Show.xa) {
             %>
 
                 <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">

@@ -11,7 +11,6 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.XMPPAddress,
                  org.jivesoftware.messenger.group.Group"
     errorPage="error.jsp"
 %>

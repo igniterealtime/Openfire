@@ -242,8 +242,16 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             if (presence == null) {
                 presence = session.getPresence();
             }
-            else if (presence.getShow().ordinal() > session.getPresence().getShow().ordinal()) {
-                presence = session.getPresence();
+            else {
+                // Get the ordinals of the presences to compare. If no ordinal is available then
+                // assume a value of -1
+                int o1 = presence.getShow() != null ? presence.getShow().ordinal() : -1;
+                int o2 = session.getPresence().getShow() != null ?
+                        session.getPresence().getShow().ordinal() : -1;
+                // Compare the presences' show ordinals
+                if (o1 > o2) {
+                    presence = session.getPresence();
+                }
             }
         }
         return presence;

@@ -25,7 +25,6 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -36,10 +35,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     private static final String lastPresenceProp = "lastUnavailablePresence";
 
-    private Map<String, Presence> onlineGuests;
-    private Map<String, Presence> onlineUsers;
-
-    private UserManager userManager;
     private SessionManager sessionManager;
     private XMPPServer server;
     private PacketDeliverer deliverer;
@@ -51,164 +46,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
         // Use component manager for Presence Updates.
         componentManager = InternalComponentManager.getInstance();
-    }
-
-    private void initializeCaches() {
-        // create caches - no size limit and never expire for presence caches
-        onlineGuests = new ConcurrentHashMap<String, Presence>();
-        onlineUsers = new ConcurrentHashMap<String, Presence>();
-    }
-
-    public int getOnlineGuestCount() {
-        int count = 0;
-        for (Presence presence : onlineGuests.values()) {
-            if (presence.isAvailable()) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public Collection<User> getOnlineUsers() {
-        List<User> users = new ArrayList<User>();
-        for (Presence presence : onlineUsers.values()) {
-            if (presence.isAvailable()) {
-                try {
-                    users.add(userManager.getUser(presence.getFrom().getNode()));
-                }
-                catch (UserNotFoundException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                }
-            }
-        }
-        return Collections.unmodifiableCollection(users);
-    }
-
-    public Collection<User> getOnlineUsers(boolean ascending, int sortField) {
-        return getOnlineUsers(ascending, sortField, Integer.MAX_VALUE);
-    }
-
-    public Collection<User> getOnlineUsers(final boolean ascending, int sortField, int numResults) {
-        Iterator iter = onlineUsers.values().iterator();
-        List presences = new ArrayList();
-
-        while (iter.hasNext()) {
-            Presence presence = (Presence) iter.next();
-
-            if (presence.isAvailable()) {
-                presences.add(presence);
-            }
-        }
-
-        switch (sortField) {
-            case PresenceManager.SORT_ONLINE_TIME:
-                {
-                    Collections.sort(presences, new Comparator() {
-                        public int compare(Object object1, Object object2) {
-                            Presence presence1 = (Presence) object1;
-                            Presence presence2 = (Presence) object2;
-                            Session presence1Session = sessionManager.getSession(presence1.getFrom());
-                            Session presence2Session = sessionManager.getSession(presence2.getFrom());
-
-                            if (ascending) {
-                                return presence1Session.getCreationDate().compareTo(presence2Session.getCreationDate());
-                            }
-                            else {
-                                return presence2Session.getCreationDate().compareTo(presence1Session.getCreationDate());
-
-                            }
-                        }
-                    });
-                    break;
-                }
-            case PresenceManager.SORT_USERNAME:
-                {
-                    Collections.sort(presences, new Comparator() {
-                        public int compare(Object object1, Object object2) {
-                            Presence presence1 = (Presence) object1;
-                            Presence presence2 = (Presence) object2;
-                            String presenceUser1 = "";
-                            String presenceUser2 = "";
-                            try {
-                                presenceUser1 =
-                                        userManager.getUser(presence1.getFrom().getNode()).getUsername();
-                                presenceUser2 =
-                                        userManager.getUser(presence2.getFrom().getNode()).getUsername();
-                            }
-                            catch (UserNotFoundException e) {
-                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                            }
-                            if (ascending) {
-                                return presenceUser1.compareTo(presenceUser2);
-                            }
-                            else {
-                                return presenceUser2.compareTo(presenceUser1);
-                            }
-                        }
-                    });
-                    break;
-                }
-            default:
-                {
-                    // ignore invalid sort field
-                }
-        }
-
-        List<User> users = new ArrayList<User>();
-
-        for (int i = 0; i < presences.size(); i++) {
-            Presence presence = (Presence) presences.get(i);
-            try {
-                users.add(userManager.getUser(presence.getFrom().getNode()));
-            }
-            catch (UserNotFoundException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-        }
-
-        if (numResults > users.size()) {
-            return Collections.unmodifiableCollection(users);
-        }
-        else {
-            return Collections.unmodifiableCollection(users.subList(0, numResults - 1));
-        }
-    }
-
-    public Presence createPresence(User user) {
-        Presence presence = null;
-        presence = new Presence();
-        presence.setFrom(server.createJID(user.getUsername(), null));
-        setOnline(presence);
-        return presence;
-    }
-
-    public void setOnline(Presence presence) {
-        User user = null;
-        try {
-            user = userManager.getUser(presence.getFrom().getNode());
-        }
-        catch (UserNotFoundException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-
-        if (user != null) {
-            onlineUsers.put(user.getUsername(), presence);
-        }
-        else {
-            onlineGuests.put(presence.getID(), presence);
-        }
-    }
-
-    public void setOffline(Presence presence) {
-        if (presence.getFrom().getNode() != null) {
-            onlineUsers.remove(presence.getFrom().getNode());
-        }
-        else {
-            onlineGuests.remove(presence.getID());
-        }
-    }
-
-    public void setOffline(JID jid) {
     }
 
     public boolean isAvailable(User user) {
@@ -250,30 +87,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             presences.add(session.getPresence());
         }
         return Collections.unmodifiableCollection(presences);
-    }
-
-    public Presence getPresence(String presenceID) {
-        if (presenceID == null) {
-            return null;
-        }
-        // search the current lists for the presence
-        Iterator onlineUsers = this.onlineUsers.values().iterator();
-        while (onlineUsers.hasNext()) {
-            Presence presence = (Presence) onlineUsers.next();
-
-            if (presence.getID().equals(presenceID)) {
-                return presence;
-            }
-        }
-        Iterator guestUsers = onlineGuests.values().iterator();
-        while (guestUsers.hasNext()) {
-            Presence presence = (Presence) guestUsers.next();
-
-            if (presence.getID().equals(presenceID)) {
-                return presence;
-            }
-        }
-        return null;
     }
 
     public void probePresence(JID prober, JID probee) {
@@ -388,10 +201,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
-        userManager = server.getUserManager();
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
-        initializeCaches();
     }
 
     public Component getPresenceComponent(JID probee) {

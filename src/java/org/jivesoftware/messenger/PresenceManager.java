@@ -64,69 +64,6 @@ public interface PresenceManager {
     public Collection<Presence> getPresences(User user);
 
     /**
-     * Returns the number of guests who are currently online. Guests with a
-     * presence status other that online or idle will not be included.
-     *
-     * @return the number of online users.
-     */
-    public int getOnlineGuestCount();
-
-    /**
-     * Returns a Collection of users who are currently online. Online users with a
-     * presence status other that online or idle will not be included.
-     *
-     * @return a Collection of online users.
-     */
-    public Collection<User> getOnlineUsers();
-
-    /**
-     * Returns a Collection of users sorted in the manner requested who are currently online.
-     * Online users with a presence status other that online or idle will not be included.
-     *
-     * @param ascending sort ascending if true, descending if false.
-     * @param sortField a valid sort field from the PresenceManager interface.
-     * @return a Collection of online users.
-     */
-    public Collection<User> getOnlineUsers(boolean ascending, int sortField);
-
-    /**
-     * Returns a Collection of users who are currently online matching the criteria given.
-     * Online users with a presence status other than online or idle will not be included.
-     *
-     * @param ascending sort ascending if true, descending if false.
-     * @param sortField  a valid sort field from the PresenceManager interface.
-     * @param numResults - the number of results to return.
-     * @return an Collection of online users matching the given criteria.
-     */
-    public Collection<User> getOnlineUsers(boolean ascending, int sortField, int numResults);
-
-    /**
-     * Create a presence for a user. Creating a presence will automatically set the user to be
-     * online.<p>
-     * <p/>
-     * The uid should be unique within the application instance. A good source of a uid is the
-     * servlet session id.
-     *
-     * @param user the user to create a presence for.
-     * @return the presence for the user.
-     */
-    public Presence createPresence(User user);
-
-    /**
-     * Sets a presence to be offline which causes the presence to be removed from the system.
-     *
-     * @param presence to presence to set to be offline.
-     */
-    public void setOffline(Presence presence);
-
-    /**
-     * Sets a user to be offline which causes the presence to be removed from the system.
-     *
-     * @param jid the user to set to be offline.
-     */
-    public void setOffline(JID jid);
-
-    /**
      * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
      *
      * @param prober The user requesting the probe

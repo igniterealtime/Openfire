@@ -128,58 +128,6 @@ below.
     <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
 </tr>
 <tr>
-    <td class="jive-setup-category">
-        Dependency Libraries
-        <br>
-        <span class="jive-info">
-        <%  boolean depsOK = true;
-            if (isJDK14) {
-        %>
-
-            Found <fmt:message key="title" bundle="${lang}" /> dependency classes.
-
-        <%  } else { %>
-
-            <%  if (depErrors.size() == 0) { %>
-
-                Found <fmt:message key="title" bundle="${lang}" /> dependency classes.
-
-            <%  } else {
-                    depsOK = false;
-            %>
-
-                Missing some dependency classes. You are running JDK 1.3 - please make
-                sure you have copied all required JDK 1.3 JAR files from the distribution to the
-                'lib' directory of this server.
-
-                <ul>
-
-                <%  for (Iterator iter=depErrors.keySet().iterator(); iter.hasNext(); ) { %>
-
-                    <li><%= (depErrors.get(iter.next())) %></li>
-
-                <%  } %>
-
-                </ul>
-
-            <%  } %>
-
-        <%  } %>
-        </span>
-    </td>
-    <%  if (depsOK) { %>
-
-        <td align="center" class="jive-setup-checklist-box"><img src="images/check.gif" width="13" height="13" border="0"></td>
-        <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-
-    <%  } else { %>
-
-        <td align="center" class="jive-setup-checklist-box"><img src="images/blank.gif" width="13" height="13" border="0"></td>
-        <td align="center" class="jive-setup-checklist-box"><img src="images/x.gif" width="13" height="13" border="0"></td>
-
-    <%  } %>
-</tr>
-<tr>
     <td colspan="3" class="jive-setup-category-header">
         <fmt:message key="title" bundle="${lang}" /> Configuration Files
     </td>
@@ -241,7 +189,7 @@ below.
 
 <form action="setup-index.jsp">
 <div align="right">
-<%  if (!messengerHomeOK || !depsOK) { %>
+<%  if (!messengerHomeOK) { %>
 
     <input type="submit" value=" Continue " disabled onclick="return false;">
 

@@ -26,6 +26,8 @@ import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.messenger.muc.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.handler.IQRegisterHandler;
@@ -37,11 +39,28 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 
 /**
- * Implements the chat server as a cached memory resident chat server. The server is also 
+ * <p>Implements the chat server as a cached memory resident chat server. The server is also
  * responsible for responding Multi-User Chat disco requests as well as removing inactive users from
  * the rooms after a period of time and to maintain a log of the conversation in the rooms that 
  * require to log their conversations. The conversations log is saved to the database using a 
- * separate process.
+ * separate process</p>
+ *
+ * Rooms in memory are held in the instance variable rooms. For optimization reasons, persistent
+ * rooms that don't have occupants aren't kept in memory. But a client may need to discover all the
+ * rooms (present in memory or not). So MultiUserChatServerImpl uses a cache of persistent room
+ * surrogates. A room surrogate (lighter object) is created for each persistent room that is public,
+ * persistent but is not in memory.  The cache starts up empty until a client requests the list of
+ * rooms through service discovery. Once the disco request is received the cache is filled up with
+ * persistent room surrogates.  The cache will keep all the surrogates in memory for an hour. If the
+ * cache's entries weren't used in an hour, they will be removed from memory. Whenever a persistent
+ * room is removed from memory (because all the occupants have left), the cache is cleared. But if
+ * a persistent room is loaded from the database then the entry for that room in the cache is
+ * removed. Note: Since the cache contains an entry for each room surrogate and the clearing
+ * algorithm is based on the usage of each entry, it's possible that some entries are removed
+ * while others don't thus generating that the provided list of discovered rooms won't be complete.
+ * However, this possibility is low since the clients will most of the time ask for all the cache
+ * entries and then ask for a particular entry. Anyway, if this possibility happens the cache will
+ * be reset the next time that a persistent room is removed from memory.
  *
  * @author Gaston Dombiak
  */
@@ -69,7 +88,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
      */
-    private Map rooms = Collections.synchronizedMap(new HashMap());
+    private Map<String,MUCRoom> rooms = Collections.synchronizedMap(new HashMap<String,MUCRoom>());
+
+    /**
+     * Cache for the persistent room surrogates. There will be a persistent room surrogate for each
+     * persistent room that has not been loaded into memory. Whenever a persistent room is loaded or
+     * unloaded from memory the cache is updated.
+     */
+    private Cache persistentRoomSurrogateCache;
 
     /**
      * chat users managed by this manager, table: key user jid (XMPPAddress); value ChatUser
@@ -128,6 +154,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public MultiUserChatServerImpl() {
         super("Basic multi user chat server");
         historyStrategy = new HistoryStrategy(null);
+    }
+
+    private void initializeCaches() {
+        // create cache - no size limit and expires after one hour of being idle
+        persistentRoomSurrogateCache = new Cache("Room Surrogates", -1, JiveConstants.HOUR);
     }
 
     /**
@@ -203,7 +234,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public MUCRoom getChatRoom(String roomName, XMPPAddress userjid) throws UnauthorizedException {
         MUCRoom room = null;
         synchronized (rooms) {
-            room = (MUCRoom) rooms.get(roomName.toLowerCase());
+            room = rooms.get(roomName.toLowerCase());
             if (room == null) {
                 room = new MUCRoomImpl(this, roomName, router);
                 // Check whether the room was just created or loaded from the database 
@@ -224,6 +255,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     // The room was loaded from the database and is now available in memory.
                     // Update in the database that the room is now available in memory
                     MUCPersistenceManager.updateRoomInMemory(room, true);
+                    // Remove the surrogate of the room (if any) from the surrogates cache
+                    persistentRoomSurrogateCache.remove(room.getName());
                 }
                 rooms.put(roomName.toLowerCase(), room);
             }
@@ -233,24 +266,43 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public MUCRoom getChatRoom(String roomName) {
         synchronized (rooms) {
-            return (MUCRoom) rooms.get(roomName.toLowerCase());
+            MUCRoom answer = rooms.get(roomName.toLowerCase());
+            // If the room is not in memory check if there exists a surrogate of the room. There
+            // will be a surrogate if and only if exists an room in the database for the requested
+            // room name
+            if (answer == null) {
+                if (persistentRoomSurrogateCache.size() == 0) {
+                    populateRoomSurrogateCache();
+                }
+                answer = (MUCRoom) persistentRoomSurrogateCache.get(roomName);
+            }
+            return answer;
+        }
+    }
+
+    private void populateRoomSurrogateCache() {
+        for (MUCRoom room : MUCPersistenceManager.getRoomSurrogates(this, router)) {
+            persistentRoomSurrogateCache.put(room.getName(), room);
         }
     }
 
     public boolean hasChatRoom(String roomName) {
-        synchronized (rooms) {
-            return rooms.get(roomName.toLowerCase()) != null;
-        }
+        return getChatRoom(roomName) != null;
     }
 
     public void removeChatRoom(String roomName) throws UnauthorizedException {
         synchronized (rooms) {
-            final MUCRoom room = (MUCRoom)rooms.get(roomName.toLowerCase());
+            final MUCRoom room = rooms.get(roomName.toLowerCase());
             final long chatLength = room.getChatLength();
             totalChatTime += chatLength;
             // Update the database to indicate that the room is no longer in memory (only if the
             // room is persistent
             MUCPersistenceManager.updateRoomInMemory(room, false);
+            // Clear the surrogates cache if the room thas is being removed from memory is
+            // persistent
+            if (room.isPersistent()) {
+                persistentRoomSurrogateCache.clear();
+            }
             rooms.remove(roomName.toLowerCase());
         }
     }
@@ -461,6 +513,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Update the DB to indicate that no room is in-memory. This may be necessary when the 
         // server went down unexpectedly
         MUCPersistenceManager.resetRoomInMemory();
+        initializeCaches();
         super.initialize(context, container);
     }
 
@@ -477,7 +530,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         timer.cancel();
-        registerHandler.removeDelegate(getChatServerName());
+        if (registerHandler != null) {
+            registerHandler.removeDelegate(getChatServerName());
+        }
     }
 
     public XMPPAddress getAddress() {
@@ -504,7 +559,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void roomRenamed(String oldName, String newName) {
         MUCRoom room = null;
         synchronized (rooms) {
-            room = (MUCRoom)rooms.get(oldName);
+            room = rooms.get(oldName);
             rooms.put(newName, room);
             rooms.remove(oldName);
         }
@@ -713,6 +768,21 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
                         answer.add(item);
                     }
+                }
+                // Load the room surrogates for persistent rooms that aren't in memory (if the cache
+                // is still empty)
+                if (persistentRoomSurrogateCache.size() == 0) {
+                    populateRoomSurrogateCache();
+                }
+                // Add items for each room surrogate (persistent room that is not in memory at
+                // the moment)
+                for (Iterator it=persistentRoomSurrogateCache.values().iterator(); it.hasNext();) {
+                    room = (MUCRoom)it.next();
+                    item = DocumentHelper.createElement("item");
+                    item.addAttribute("jid", room.getRole().getRoleAddress().toStringPrep());
+                    item.addAttribute("name", room.getName());
+
+                    answer.add(item);
                 }
             }
         }

@@ -109,6 +109,8 @@
     <property name="installer.file_prefix" value="${installer.app_short_name}" />
     <property name="installer.release_root_path" value="${release.dest.dir}" />
 
+    <property name="license.file.path" value="${docs.dir}/dist" />
+
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
     <!-- ======================================================================================= -->
@@ -553,19 +555,22 @@
 
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
-            <fileset dir="${docs.dir}/dist" includes="*.*" />
+            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html" />
             <filterset>
                 <filter token="builddate" value="${builddate}" />
                 <filter token="version" value="${version}" />
             </filterset>
         </copy>
         <copy todir="${release.src.out.dir}">
-            <fileset dir="${docs.dir}/dist" includes="*.*" />
+            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html" />
             <filterset>
                 <filter token="builddate" value="${builddate}" />
                 <filter token="version" value="${version}" />
             </filterset>
         </copy>
+        <!-- Copy the license -->
+        <copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html" />
+        <copy todir="${release.src.out.dir}" file="${license.file.path}/LICENSE.html" />
 
         <!-- Copy docs -->
         <copy todir="${release.out.dir}/documentation">

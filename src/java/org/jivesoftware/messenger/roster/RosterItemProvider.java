@@ -299,10 +299,11 @@ public class RosterItemProvider {
                         RosterItem.RecvType.getTypeFromInt(rs.getInt(5)),
                         rs.getString(6),
                         null);
+                Connection con2 = DbConnectionManager.getConnection();
                 PreparedStatement gstmt = null;
                 ResultSet gs = null;
                 try {
-                    gstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+                    gstmt = con2.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
                     gstmt.setLong(1, item.getID());
                     gs = gstmt.executeQuery();
                     while (gs.next()) {
@@ -311,9 +312,9 @@ public class RosterItemProvider {
                     itemList.add(item);
                 }
                 finally {
-                    try { if (pstmt != null) { pstmt.close(); } }
+                    try { if (gstmt != null) { gstmt.close(); } }
                     catch (Exception e) { Log.error(e); }
-                    try { if (con != null) { con.close(); } }
+                    try { if (con2 != null) { con2.close(); } }
                     catch (Exception e) { Log.error(e); }
                 }
             }

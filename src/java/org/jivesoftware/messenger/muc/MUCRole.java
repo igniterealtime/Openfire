@@ -16,11 +16,6 @@ import org.jivesoftware.messenger.Presence;
 import org.jivesoftware.messenger.XMPPAddress;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 
-import org.jivesoftware.messenger.muc.ChatDeliverer;
-import org.jivesoftware.messenger.muc.MUCRoom;
-import org.jivesoftware.messenger.muc.MUCUser;
-import org.jivesoftware.messenger.muc.NotAllowedException;
-
 /**
  * Defines the permissions and actions that a MUCUser may use in
  * a particular room. Each MUCRole defines the relationship between

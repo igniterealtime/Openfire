@@ -54,13 +54,9 @@
     Settings saved successfully.
     </p>
 </c:if>
-<form action="session-settings.jsp" method="post">
-
 <table cellpadding="3" cellspacing="1" border="0" width="600">
-
+<form action="session-settings.jsp" method="post">
 <tr><td colspan=3 class="text">
-
-
     By default, anonymous logins are disabled. Enabling them would allow guests
     without accounts to join the server. To enable this, choose
     "enable" below.

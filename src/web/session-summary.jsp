@@ -110,7 +110,7 @@ Maximum Allowable Sessions: <%= maxSession %>
     </p>
 
 <%  } %>
-<table  cellpadding="3" cellspacing="1" border="0" width="600">
+<table cellpadding="3" cellspacing="1" border="0" width="600">
 <tr class="tableHeader"><td colspan="8" align="left">Current Sessions</td></tr>
 <tr><td colspan="8" class="text">
 Below is a list of sessions on this server.
@@ -119,9 +119,9 @@ Below is a list of sessions on this server.
 
 
 </table>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
+<table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="600">
 
-<tr class="tableHeaderBlue">
+<tr>
     <th>&nbsp;</th>
     <th>Name</th>
     <th>Resource</th>
@@ -139,7 +139,7 @@ Below is a list of sessions on this server.
     if (!sessions.hasNext()) {
 %>
     <tr>
-        <td colspan="6">
+        <td colspan="8">
 
             No Sessions
 

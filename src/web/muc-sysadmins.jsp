@@ -68,7 +68,7 @@
 %>
 
 <table  cellpadding="3" cellspacing="1" border="0" width="600">
-<tr><td colspan="8">
+<tr><td colspan="1">
 Below is the list of system administrators of the Multi-User Chat service. System administrators can
 enter any groupchat room and their permissions are the same as the room owner.</td></tr>
 </table>
@@ -76,7 +76,7 @@ enter any groupchat room and their permissions are the same as the room owner.</
 <table cellpadding="3" cellspacing="1" border="0" width="600">
 <tr class="tableHeader"><td colspan="8" align="left">User Summary</td></tr>
 
-<tr><td colspan="8" class="text">
+<tr><td colspan="1" class="text">
 Total Users: <%= userCount %>.
 <%  if (numPages > 1) { %>
 
@@ -87,7 +87,7 @@ Total Users: <%= userCount %>.
 
 <%  if (numPages > 1) { %>
 
-  <tr><td colspan="8" class="text">
+  <tr><td colspan="1" class="text">
     Pages:
     [
     <%  for (int pageIndex=0; pageIndex<numPages; pageIndex++) {
@@ -121,6 +121,7 @@ Total Users: <%= userCount %>.
 
 <%  } %>
 
+
 <table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="400">
 <tr>
     <th nowrap align="left">User</th>
@@ -146,7 +147,7 @@ Total Users: <%= userCount %>.
         userJID = (String)users.next();
         i++;
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+    <tr>
         <td width="90%" align="left">
             <%= userJID %>
         </td>
@@ -161,7 +162,6 @@ Total Users: <%= userCount %>.
     }
 %>
 </table>
-</div>
 <%  if (numPages > 1) { %>
 
     <p>

@@ -73,7 +73,7 @@ public class AdminConsolePlugin implements Plugin {
             
 
             // Configure HTTP socket listener
-            port = JiveGlobals.getProperty("adminConsole.port", "9090");
+            port = JiveGlobals.getXMLProperty("adminConsole.port", "9090");
             jetty.addListener(port);
 
             // Add web-app

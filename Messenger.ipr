@@ -233,14 +233,6 @@
       <JAVADOC />
       <SOURCES />
     </library>
-    <library name="Clover">
-      <CLASSES>
-        <root url="jar://C:/java/clover/1.3.2/lib/clover.jar!/" />
-        <root url="jar://C:/java/clover/1.3.2/lib/clover-idea4.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
   </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />

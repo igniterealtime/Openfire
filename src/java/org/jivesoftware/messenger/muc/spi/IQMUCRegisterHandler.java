@@ -67,10 +67,8 @@ public class IQMUCRegisterHandler extends IQHandler {
 
     public void initialize() {
         if (probeResult == null) {
-            // Create the basic element of the probeResult which contains the basic registration
-            // information for the room (e.g. first name, last name, nickname, etc.)
-            Element element = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
-
+            // Create the registration form of the room which contains information
+            // such as: first name, last name and  nickname.
             XDataFormImpl registrationForm = new XDataFormImpl(DataForm.TYPE_FORM);
             registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title"));
             registrationForm.addInstruction(LocaleUtils
@@ -114,8 +112,8 @@ public class IQMUCRegisterHandler extends IQHandler {
             field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
             registrationForm.addField(field);
 
-            // Create the probeResult and add the basic info together with the registration form
-            probeResult = element;
+            // Create the probeResult and add the registration form
+            probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
             probeResult.add(registrationForm.asXMLElement());
         }
     }
@@ -139,14 +137,20 @@ public class IQMUCRegisterHandler extends IQHandler {
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
                 ElementUtil.setProperty(currentRegistration, "query.registered", null);
-                XDataFormImpl form = new XDataFormImpl();
-                form.parse(currentRegistration);
-                form.getField("muc#register_roomnick").addValue(nickname);
-                reply.getElement().add(currentRegistration);
+                Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
+                Iterator fields = form.elementIterator("field");
+                Element field;
+                while (fields.hasNext()) {
+                    field = (Element) fields.next();
+                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
+                        field.addElement("value").addText(nickname);
+                    }
+                }
+                reply.setChildElement(currentRegistration);
             }
             else {
                 // The user is not registered with the room so answer an empty form
-                reply.getElement().add(currentRegistration);
+                reply.setChildElement(currentRegistration);
             }
         }
         else if (IQ.Type.set ==  packet.getType()) {

@@ -93,6 +93,7 @@ public class IQDiscoInfoHandler extends IQHandler {
             
             // Check if we have information about the requested name and node
             if (infoProvider.hasInfo(name, node, packet.getFrom())) {
+                reply.setChildElement(iq.createCopy());
                 Element queryElement = reply.getChildElement();
 
                 // Add to the reply all the identities provided by the DiscoInfoProvider

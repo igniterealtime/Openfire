@@ -11,17 +11,16 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.messenger.XMPPAddress;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.util.Cacheable;
-
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.xmpp.packet.JID;
 
 /**
  * <p>Implements the basic Roster interface storing all roster items into a simple hash table.</p>
@@ -47,10 +46,10 @@ public class BasicRoster implements Roster, Cacheable {
     public BasicRoster() {
     }
 
-    public boolean isRosterItem(XMPPAddress user) {
+    public boolean isRosterItem(JID user) {
         itemLock.readLock().lock();
         try {
-            return rosterItems.containsKey(user.toBareStringPrep());
+            return rosterItems.containsKey(user.toBareJID());
         }
         finally {
             itemLock.readLock().unlock();
@@ -82,12 +81,12 @@ public class BasicRoster implements Roster, Cacheable {
         }
     }
 
-    public RosterItem getRosterItem(XMPPAddress user) throws UnauthorizedException, UserNotFoundException {
+    public RosterItem getRosterItem(JID user) throws UnauthorizedException, UserNotFoundException {
         itemLock.readLock().lock();
         try {
-            RosterItem item = (RosterItem)rosterItems.get(user.toBareStringPrep());
+            RosterItem item = (RosterItem)rosterItems.get(user.toBareJID());
             if (item == null) {
-                throw new UserNotFoundException(user.toBareStringPrep());
+                throw new UserNotFoundException(user.toBareJID());
             }
             return item;
         }
@@ -96,15 +95,15 @@ public class BasicRoster implements Roster, Cacheable {
         }
     }
 
-    public RosterItem createRosterItem(XMPPAddress user) throws UnauthorizedException, UserAlreadyExistsException {
+    public RosterItem createRosterItem(JID user) throws UnauthorizedException, UserAlreadyExistsException {
         return createRosterItem(user, null, null);
     }
 
-    public RosterItem createRosterItem(XMPPAddress user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException {
+    public RosterItem createRosterItem(JID user, String nickname, List groups) throws UnauthorizedException, UserAlreadyExistsException {
         RosterItem item = provideRosterItem(user, nickname, groups);
         itemLock.writeLock().lock();
         try {
-            rosterItems.put(item.getJid().toBareStringPrep(), item);
+            rosterItems.put(item.getJid().toBareJID(), item);
             return item;
         }
         finally {
@@ -116,7 +115,7 @@ public class BasicRoster implements Roster, Cacheable {
         item = provideRosterItem(item);
         itemLock.writeLock().lock();
         try {
-            rosterItems.put(item.getJid().toBareStringPrep(), item);
+            rosterItems.put(item.getJid().toBareJID(), item);
             return item;
         }
         finally {
@@ -135,7 +134,7 @@ public class BasicRoster implements Roster, Cacheable {
      * @param groups   The groups the item belongs to (or null for none)
      * @return The newly created roster items ready to be stored by the BasicRoster item's hash table
      */
-    protected RosterItem provideRosterItem(XMPPAddress user, String nickname, List groups)
+    protected RosterItem provideRosterItem(JID user, String nickname, List groups)
             throws UserAlreadyExistsException, UnauthorizedException {
         return new BasicRosterItem(user, nickname, groups);
     }
@@ -157,22 +156,22 @@ public class BasicRoster implements Roster, Cacheable {
     public void updateRosterItem(RosterItem item) throws UnauthorizedException, UserNotFoundException {
         itemLock.writeLock().lock();
         try {
-            if (rosterItems.get(item.getJid().toBareStringPrep()) == null) {
-                throw new UserNotFoundException(item.getJid().toBareStringPrep());
+            if (rosterItems.get(item.getJid().toBareJID()) == null) {
+                throw new UserNotFoundException(item.getJid().toBareJID());
             }
-            rosterItems.put(item.getJid().toBareStringPrep(), item);
+            rosterItems.put(item.getJid().toBareJID(), item);
         }
         finally {
             itemLock.writeLock().unlock();
         }
     }
 
-    public RosterItem deleteRosterItem(XMPPAddress user) throws UnauthorizedException {
+    public RosterItem deleteRosterItem(JID user) throws UnauthorizedException {
 
         itemLock.writeLock().lock();
         try {
             // If removing the user was successful, remove the user from the subscriber list:
-            return (RosterItem)rosterItems.remove(user.toBareStringPrep());
+            return (RosterItem)rosterItems.remove(user.toBareJID());
         }
         finally {
             itemLock.writeLock().unlock();

@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.audit.spi;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.audit.AuditEvent;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
 import org.xmpp.packet.Packet;
@@ -22,6 +21,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.IQ;
 import org.dom4j.io.XMLWriter;
+import org.dom4j.Element;
+import org.dom4j.DocumentFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -32,9 +33,6 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
 
 public class AuditorImpl implements Auditor {
 
@@ -66,17 +64,17 @@ public class AuditorImpl implements Auditor {
         if (auditManager.isEnabled()) {
             if (packet instanceof Message) {
                 if (auditManager.isAuditMessage()) {
-                    writePacket(packet, false);
+                    writePacket(packet);
                 }
             }
             else if (packet instanceof Presence) {
                 if (auditManager.isAuditPresence()) {
-                    writePacket(packet, false);
+                    writePacket(packet);
                 }
             }
             else if (packet instanceof IQ) {
                 if (auditManager.isAuditIQ()) {
-                    writePacket(packet, false);
+                    writePacket(packet);
                 }
             }
         }
@@ -91,11 +89,11 @@ public class AuditorImpl implements Auditor {
     }
 
     private void close() {
-        if (xmlSerializer != null) {
+        if (xmlWriter != null) {
             try {
-                xmlSerializer.writeEndElement();
-                xmlSerializer.flush();
-                xmlSerializer = null;
+                xmlWriter.flush();
+                xmlWriter.close();
+                writer.write("</jive>");
                 writer.close();
                 writer = null;
             }
@@ -105,14 +103,14 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void writePacket(Packet packet, boolean dropped) {
+    private void writePacket(Packet packet) {
         if (!closed) {
             // Add to the logging queue this new entry that will be saved later
-            logQueue.add(new AuditPacket(packet.createCopy(), dropped));
+            logQueue.add(new AuditPacket(packet.createCopy()));
         }
     }
 
-    private void prepareAuditFile() throws IOException, XMLStreamException {
+    private void prepareAuditFile() throws IOException {
         if (currentAuditFile == null || currentAuditFile.length() > maxSize) {
             rotateFiles();
         }
@@ -139,7 +137,7 @@ public class AuditorImpl implements Auditor {
         return logQueue.size();
     }
 
-    private void rotateFiles() throws IOException, XMLStreamException {
+    private void rotateFiles() throws IOException {
         close();
         int i;
         // Find the next available log file name
@@ -173,10 +171,8 @@ public class AuditorImpl implements Auditor {
         }
 
         writer = new FileWriter(currentAuditFile);
-        xmlSerializer = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
-        xmlSerializer.setDefaultNamespace("jabber:client");
-        xmlSerializer.writeStartElement("jive", "jive", "http://jivesoftware.org");
-        xmlSerializer.writeNamespace("jive", "http://jivesoftware.org");
+        writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
+        xmlWriter = new XMLWriter(writer);
     }
 
     /**
@@ -194,27 +190,26 @@ public class AuditorImpl implements Auditor {
     }
 
     private void saveQueuedPackets() {
-        AuditPacket entry;
         int batchSize = logQueue.size();
         for (int index = 0; index < batchSize; index++) {
-            entry = logQueue.poll();
-            if (entry != null) {
+            AuditPacket auditPacket = logQueue.poll();
+            if (auditPacket != null) {
                 try {
                     prepareAuditFile();
-                    entry.send(xmlSerializer);
-                    xmlSerializer.flush();
+                    xmlWriter.write(auditPacket.getElement());
                 }
                 catch (IOException e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     // Add again the entry to the queue to save it later
-                    logQueue.add(entry);
-                }
-                catch (XMLStreamException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    // Add again the entry to the queue to save it later
-                    logQueue.add(entry);
+                    logQueue.add(auditPacket);
                 }
             }
+        }
+        try {
+            xmlWriter.flush();
+        }
+        catch (IOException ioe) {
+
         }
     }
 
@@ -225,64 +220,48 @@ public class AuditorImpl implements Auditor {
      * The idea is to wrap every packet that is needed to be audited and then add the
      * wrapper to a queue that will be later processed (i.e. saved to the XML file).
      */
-    private class AuditPacket {
+    private static class AuditPacket {
 
-        private Packet packet;
-        private String streamID;
-        private String sessionStatus;
-        private Date timestamp;
-        private boolean dropped;
+        private static DocumentFactory docFactory = DocumentFactory.getInstance();
 
-        public AuditPacket(Packet packet, boolean dropped) {
-            this.packet = packet;
-            this.dropped = dropped;
-            this.timestamp = new Date();
-            Session session = SessionManager.getInstance().getSessions(packet.getFrom());
+        private Element element;
+
+        public AuditPacket(Packet packet) {
+            element = docFactory.createElement("packet", "http://www.jivesoftware.org");
+            Session session = SessionManager.getInstance().getSession(packet.getFrom());
             if (session != null) {
                 if (session.getStreamID() != null) {
-                    this.streamID = session.getStreamID().toString();
+                    element.addAttribute("streamID", session.getStreamID().toString());
                 }
                 switch (session.getStatus()) {
                     case Session.STATUS_AUTHENTICATED:
-                        this.sessionStatus =  "auth";
+                        element.addAttribute("status", "auth");
                         break;
                     case Session.STATUS_CLOSED:
-                        this.sessionStatus = "closed";
+                        element.addAttribute("status", "closed");
                         break;
                     case Session.STATUS_CONNECTED:
-                        this.sessionStatus = "connected";
+                        element.addAttribute("status", "connected");
                         break;
                     case Session.STATUS_STREAMING:
-                        this.sessionStatus = "stream";
+                        element.addAttribute("status", "stream");
                         break;
                     default:
-                        this.sessionStatus = "unknown";
+                        element.addAttribute("status", "unknown");
                         break;
                 }
             }
+            element.addAttribute("timestap", new Date().toString());
+            element.add(packet.getElement());
         }
 
-        public void send(XMLStreamWriter xmlSerializer) {
-            try {
-                xmlSerializer.writeStartElement("packet");
-                xmlSerializer.writeDefaultNamespace("http://jivesoftware.org");
-
-                if (streamID != null) {
-                    xmlSerializer.writeAttribute("session", streamID);
-                }
-                if (sessionStatus != null) {
-                    xmlSerializer.writeAttribute("status", sessionStatus);
-                }
-                xmlSerializer.writeAttribute("timestamp", timestamp.toString());
-                if (dropped) {
-                    xmlSerializer.writeAttribute("dropped", "true");
-                }
-                packet.send(xmlSerializer, 0);
-                xmlSerializer.writeEndElement();
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+        /**
+         * Returns the Element associated with this audit packet.
+         *
+         * @return the Element.
+         */
+        public Element getElement() {
+            return element;
         }
     }
 }

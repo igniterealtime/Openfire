@@ -17,7 +17,7 @@ echo.
 goto end
 
 :run
-start "Jive Messenger" %JAVA_HOME%\bin\java -jar ..\lib\startup.jar
+start "Jive Messenger" "%JAVA_HOME%\bin\java" -jar ..\lib\startup.jar
 goto end
 
 :end

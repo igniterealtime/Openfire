@@ -107,7 +107,7 @@
       <screen id="fileAssociations" enabled="true">
         <associations />
       </screen>
-      <screen id="services" enabled="true" allSelected="false">
+      <screen id="services" enabled="false" allSelected="false">
         <selectedServiceLaunchers />
       </screen>
       <screen id="additionalTasks" enabled="false" customTasksPlacement="1">

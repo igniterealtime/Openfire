@@ -302,8 +302,16 @@ public class XPPPacketReader {
                     }
                 case XmlPullParser.ENTITY_REF:
                     {
+                        String text = pp.getText();
+                        if (parent != null) {
+                            parent.addText(text);
+                        }
+                        else {
+                            if (text.trim().length() > 0) {
+                                throw new DocumentException("Cannot have an entityref outside of the root document");
+                            }
+                        }
                         break;
-
                     }
 
                 case XmlPullParser.END_DOCUMENT:

@@ -356,11 +356,9 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
         String username = recipient.getNode();
         if (username == null || "".equals(username)) {
             if (resource != null) {
-                synchronized (username.intern()) {
-                    session = anonymousSessions.get(resource);
-                    if (session == null){
-                        session = getSession(recipient);
-                    }
+                session = anonymousSessions.get(resource);
+                if (session == null){
+                    session = getSession(recipient);
                 }
             }
         }

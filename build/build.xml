@@ -616,10 +616,11 @@
         </ant>
 
         <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin" />
+
         <antcall target="-plugins-impl" />
         <antcall target="-plugins-impl-dev" />
 
-        </target><target name="-plugins-impl" if="${dirlist}">
+        </target><target name="-plugins-impl" unless="${dirlist}">
 
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
@@ -654,7 +655,7 @@
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target" />
 
             <!-- Compile plugin source code -->
-            <mkdir dir="@{pluginsrc}/@{plugin}/target/classes" />
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" />
             <javac
                 destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
                 includeAntRuntime="no"
@@ -756,7 +757,7 @@
 
             <!-- Jar the plugin -->
             <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">
-                <fileset dir="${plugin.dest.dir}" />
+                <fileset dir="${plugin.dest.dir}/@{plugin}" />
             </jar>
 
         </sequential>

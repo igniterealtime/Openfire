@@ -69,19 +69,26 @@ public class PluginServlet extends HttpServlet {
             return;
         }
         else {
-            // Handle JSP requests.
-            if (pathInfo.endsWith(".jsp")) {
-                handleJSP(pathInfo, request, response);
-                return;
+            try {
+                // Handle JSP requests.
+                if (pathInfo.endsWith(".jsp")) {
+                    handleJSP(pathInfo, request, response);
+                    return;
+                }
+                // Handle image requests.
+                else if (pathInfo.endsWith(".gif") || pathInfo.endsWith(".png")) {
+                    handleImage(pathInfo, response);
+                    return;
+                }
+                // Anything else results in a 404.
+                else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
             }
-            // Handle image requests.
-            else if (pathInfo.endsWith(".gif") || pathInfo.endsWith(".png")) {
-                handleImage(pathInfo, response);
-                return;
-            }
-            // Anything else results in a 404.
-            else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            catch (Exception e) {
+                Log.error(e);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
         }
@@ -135,7 +142,7 @@ public class PluginServlet extends HttpServlet {
             }
         }
         catch (Throwable e) {
-            e.printStackTrace();
+            Log.error(e);
         }
     }
 

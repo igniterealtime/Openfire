@@ -680,7 +680,7 @@
                 <classpath>
                     <path refid="plugin.dependencies" />
                     <!-- Jars used by the plugin to compile with -->
-                    <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="*.jar" />
+                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar" />
                 </classpath>
             </javac>
 

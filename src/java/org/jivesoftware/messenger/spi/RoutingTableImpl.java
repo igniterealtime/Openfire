@@ -52,19 +52,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
         routeLock.writeLock().lock();
         try {
-            if (routes.isEmpty() || destination instanceof InternalComponentManager.RoutableComponent) {
+            if (destination instanceof InternalComponentManager.RoutableComponent) {
                 routes.put(node.getDomain(), destination);
             }
             else {
                 Object nameRoutes = routes.get(node.getDomain());
-                if (nameRoutes == null || nameRoutes instanceof ChannelHandler) {
-                    nameRoutes = new Hashtable();
-                    routes.put(node.getDomain(), nameRoutes);
+                if (nameRoutes == null) {
+                    routes.put(node.getDomain(), destination);
                 }
-                if (((Hashtable)nameRoutes).isEmpty()) {
+                else if (nameRoutes instanceof Hashtable && ((Hashtable)nameRoutes).isEmpty()) {
                     ((Hashtable)nameRoutes).put(nodeJID, destination);
                 }
                 else {
+                    if (nameRoutes instanceof ChannelHandler) {
+                        nameRoutes = new Hashtable();
+                        Object item = routes.put(node.getDomain(), nameRoutes);
+                        // Associate the previous Route withno  the bare JID
+                        ((Hashtable)nameRoutes).put("", item);
+                    }
+
                     Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
                     if (resourceRoutes == null || resourceRoutes instanceof ChannelHandler) {
                         resourceRoutes = new Hashtable();

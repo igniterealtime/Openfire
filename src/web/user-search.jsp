@@ -65,7 +65,7 @@
     <legend><fmt:message key="user.search.search_user" /></legend>
     <table cellpadding="3" cellspacing="1" border="0" width="600">
       <tr class="c1">
-        <td width="1%"><fmt:message key="user.create.username" />:</td>
+        <td width="1%" nowrap><fmt:message key="user.create.username" />:</td>
         <td class="c2">
           <input type="text" name="username" value="<%= ((username!=null) ? username : "") %>" size="30" maxlength="75"/>
         </td>

@@ -19,7 +19,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
@@ -32,11 +31,9 @@ import java.util.Collection;
 public class DbGroupProvider implements GroupProvider {
 
     private static final String INSERT_GROUP =
-        "INSERT INTO jiveGroup (name, description, creationDate, modificationDate) " +
-        "VALUES (?, ?, ?, ?)";
+        "INSERT INTO jiveGroup (name, description) VALUES (?, ?)";
     private static final String SAVE_GROUP =
-        "UPDATE jiveGroup SET description=?, creationDate=?, modificationDate=? " +
-        "WHERE name=?";
+        "UPDATE jiveGroup SET description=? WHERE name=?";
     private static final String SET_GROUP_NAME_1 =
         "UPDATE jiveGroup SET name=? WHERE name=?";
     private static final String SET_GROUP_NAME_2 =
@@ -53,7 +50,7 @@ public class DbGroupProvider implements GroupProvider {
     private static final String LOAD_MEMBERS =
         "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=?";
     private static final String SELECT_GROUP_BY_NAME =
-        "SELECT description, creationDate, modificationDate FROM jiveGroup WHERE name=?";
+        "SELECT description FROM jiveGroup WHERE name=?";
     private static final String REMOVE_USER =
         "DELETE FROM jiveGroupUser WHERE groupName=? AND username=?";
     private static final String ADD_USER =
@@ -63,8 +60,6 @@ public class DbGroupProvider implements GroupProvider {
     private static final String ALL_GROUPS = "SELECT name FROM jiveGroup";
 
     public Group createGroup(String name) throws GroupAlreadyExistsException {
-        long now = System.currentTimeMillis();
-        Date nowDate = new Date(now);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -72,8 +67,6 @@ public class DbGroupProvider implements GroupProvider {
             pstmt = con.prepareStatement(INSERT_GROUP);
             pstmt.setString(1, name);
             pstmt.setString(2, "");
-            pstmt.setString(3, StringUtils.dateToMillis(nowDate));
-            pstmt.setString(4, StringUtils.dateToMillis(nowDate));
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -87,13 +80,11 @@ public class DbGroupProvider implements GroupProvider {
         }
         Collection<String> members = getMembers(name, false);
         Collection<String> administrators = getMembers(name, true);
-        return new Group(this, name, "", nowDate, nowDate, members, administrators);
+        return new Group(this, name, "", members, administrators);
     }
 
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
-        Date creationDate = null;
-        Date modificationDate = null;
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -108,8 +99,6 @@ public class DbGroupProvider implements GroupProvider {
             }
             if (rs.next()) {
                 description = rs.getString(1);
-                creationDate = new java.util.Date(Long.parseLong(rs.getString(2).trim()));
-                modificationDate = new java.util.Date(Long.parseLong(rs.getString(3).trim()));
             }
         }
         catch (SQLException e) {
@@ -123,12 +112,11 @@ public class DbGroupProvider implements GroupProvider {
         }
         Collection<String> members = getMembers(name, false);
         Collection<String> administrators = getMembers(name, true);
-        return new Group(this, name, description, creationDate, modificationDate,
-                members, administrators);
+        return new Group(this, name, description, members, administrators);
     }
 
-    public void updateGroup(String name, String description, Date creationDate,
-            Date modificationDate) throws GroupNotFoundException
+    public void setDescription(String name, String description)
+            throws GroupNotFoundException
     {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -136,9 +124,7 @@ public class DbGroupProvider implements GroupProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SAVE_GROUP);
             pstmt.setString(1, description);
-            pstmt.setString(2, StringUtils.dateToMillis(creationDate));
-            pstmt.setString(3, StringUtils.dateToMillis(modificationDate));
-            pstmt.setString(4, name);
+            pstmt.setString(2, name);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -153,7 +139,7 @@ public class DbGroupProvider implements GroupProvider {
         }
     }
 
-    public void setGroupName(String oldName, String newName) throws UnsupportedOperationException,
+    public void setName(String oldName, String newName) throws UnsupportedOperationException,
             GroupAlreadyExistsException
     {
         Connection con = null;

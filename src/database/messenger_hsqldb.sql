@@ -85,11 +85,8 @@ CREATE TABLE jiveDomain (
 CREATE TABLE jiveGroup (
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  creationDate          VARCHAR(15)     NOT NULL,
-  modificationDate      VARCHAR(15)     NOT NULL,
   CONSTRAINT jiveGroup_pk PRIMARY KEY (name)
 );
-CREATE INDEX jiveGroup_cDate_idx ON jiveGroup (creationDate);
 
 
 CREATE TABLE jiveGroupProp (

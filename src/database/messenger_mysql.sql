@@ -23,10 +23,7 @@ CREATE TABLE jiveUserProp (
 CREATE TABLE jiveGroup (
   name                  VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
   PRIMARY KEY (name),
-  INDEX jiveGroup_cDate_idx (creationDate)
 );
 
 CREATE TABLE jiveGroupProp (

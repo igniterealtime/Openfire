@@ -14,7 +14,6 @@ package org.jivesoftware.messenger.group;
 import org.jivesoftware.messenger.user.User;
 
 import java.util.Collection;
-import java.util.Date;
 
 /**
  * Group providers load and store group information from a back-end store
@@ -68,19 +67,17 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    public void setGroupName(String oldName, String newName) throws UnsupportedOperationException,
+    void setName(String oldName, String newName) throws UnsupportedOperationException,
             GroupAlreadyExistsException;
 
     /**
-     * Updates the backend storage with the group's information.
+     * Updates the group's description.
      *
      * @param name the group name.
      * @param description the group description.
-     * @param creationDate the date the group was created.
-     * @param modificationDate the date the group was last modified.
      * @throws GroupNotFoundException if no existing group could be found to update.
      */
-    void updateGroup(String name, String description, Date creationDate, Date modificationDate)
+    void setDescription(String name, String description)
             throws GroupNotFoundException;
 
     /**

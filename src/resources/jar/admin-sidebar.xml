@@ -54,7 +54,7 @@
         </sidebar>
     </tab>
 
-    <tab id="tab-users" name="Users" url="user-summary.jsp" description="Click to manage users">
+    <tab id="tab-users" name="Users/Groups" url="user-summary.jsp" description="Click to manage users and groups">
 
         <sidebar id="sidebar-users" name="Users">
 
@@ -85,6 +85,28 @@
             <item id="user-search" name="User Search"
                     url="user-search.jsp"
                     description="Click to search for a particular user" />
+        </sidebar>
+        <sidebar id="sidebar-groups" name="Groups">
+
+            <item id="group-summary" name="Group Summary"
+                    url="group-summary.jsp"
+                    description="Click to see a list of groups in the system">
+
+                <sidebar id="sidebar-group-options" name="Group Options">
+
+                    <item id="group-properties" name="Group Properties"
+                            url="group-properties.jsp"
+                            description="Click to edit the groups's properties" />
+
+                    <item id="group-delete" name="Delete Group"
+                            url="group-delete.jsp"
+                            description="Click to delete the group" />
+                </sidebar>
+            </item>
+
+            <item id="group-create" name="Create New Group"
+                    url="group-create.jsp"
+                    description="Click to add a new group to the system" />
         </sidebar>
     </tab>
 

@@ -12,6 +12,8 @@
 package org.jivesoftware.messenger.group;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
 
 import java.util.*;
@@ -28,7 +30,7 @@ import java.sql.SQLException;
  *
  * @author Matt Tucker
  */
-public class Group {
+public class Group implements Cacheable {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveGroupProp WHERE groupID=?";
@@ -43,8 +45,6 @@ public class Group {
     private GroupManager groupManager;
     private String name;
     private String description;
-    private Date creationDate;
-    private Date modificationDate;
     private Map<String, String> properties;
     private Collection<String> members;
     private Collection<String> administrators;
@@ -55,20 +55,16 @@ public class Group {
      * @param provider the group provider.
      * @param name the name.
      * @param description the description.
-     * @param creationDate the date the group was created.
-     * @param modificationDate the date the group was latest modified.
      * @param members a Collection of the group members (includes administrators).
      * @param administrators a Collection of the group administrators.
      */
-    protected Group(GroupProvider provider, String name, String description, Date creationDate,
-            Date modificationDate, Collection<String> members, Collection<String> administrators)
+    protected Group(GroupProvider provider, String name, String description,
+            Collection<String> members, Collection<String> administrators)
     {
         this.provider = provider;
         this.groupManager = GroupManager.getInstance();
         this.name = name;
         this.description = description;
-        this.creationDate = creationDate;
-        this.modificationDate = modificationDate;
         this.members = members;
         this.administrators = administrators;
     }
@@ -90,7 +86,7 @@ public class Group {
      */
     public void setName(String name) {
         try {
-            provider.setGroupName(this.name, name);
+            provider.setName(this.name, name);
             groupManager.groupCache.remove(this.name);
             this.name = name;
             groupManager.groupCache.put(name, this);
@@ -120,61 +116,8 @@ public class Group {
      */
     public void setDescription(String description) {
         try {
-            provider.updateGroup(name, description, creationDate, modificationDate);
+            provider.setDescription(name, description);
             this.description = description;
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-    }
-
-    /**
-     * Returns the date that the group was created.
-     *
-     * @return the date the group was created.
-     */
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    /**
-     * Sets the creation date of the group. In most cases, the
-     * creation date will default to when the group was entered
-     * into the system. However, the date needs to be set manually when
-     * importing data.
-     *
-     * @param creationDate the date the group was created.
-     */
-    public void setCreationDate(Date creationDate) {
-        try {
-            provider.updateGroup(name, description, creationDate, modificationDate);
-            this.creationDate = creationDate;
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-    }
-
-    /**
-     * Returns the date that the group was last modified.
-     *
-     * @return the date the group record was last modified.
-     */
-    public Date getModificationDate() {
-        return modificationDate;
-    }
-
-    /**
-     * Sets the date the group was last modified. Skin authors
-     * should ignore this method since it only intended for
-     * system maintenance.
-     *
-     * @param modificationDate the date the group was modified.
-     */
-    public void setModificationDate(Date modificationDate) {
-        try {
-            provider.updateGroup(name, description, creationDate, modificationDate);
-            this.modificationDate = modificationDate;
         }
         catch (Exception e) {
             Log.error(e);
@@ -219,6 +162,16 @@ public class Group {
     public Collection<String> getMembers() {
         // Return a wrapper that will intercept add and remove commands.
         return new MemberCollection(members, false);
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();              // overhead of object
+        size += CacheSizes.sizeOfString(name);
+        size += CacheSizes.sizeOfString(description);
+        return size;
     }
 
     /**

@@ -16,8 +16,11 @@ import org.jivesoftware.messenger.user.UserInfo;
 import org.jivesoftware.messenger.user.UserInfoProvider;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.spi.BasicUserInfo;
+import org.jivesoftware.util.Log;
+
 import java.util.Date;
 import javax.naming.directory.*;
+import javax.naming.NamingException;
 
 /**
  * LDAP implementation of the UserInfoProvider interface. The LdapUserIDProvider
@@ -104,4 +107,7 @@ public class LdapUserInfoProvider implements UserInfoProvider {
         }
         return userInfo;
     }
+
+
+
 }

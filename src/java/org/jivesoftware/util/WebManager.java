@@ -25,6 +25,7 @@ import org.jivesoftware.messenger.PrivateStorage;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
+import org.jivesoftware.messenger.group.GroupManager;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -92,6 +93,10 @@ public class WebManager extends WebBean {
 
     public UserManager getUserManager() {
         return (UserManager)getServiceLookup().lookup(UserManager.class);
+    }
+
+    public GroupManager getGroupManager() {
+        return GroupManager.getInstance();
     }
 
     public RosterManager getRosterManager() {

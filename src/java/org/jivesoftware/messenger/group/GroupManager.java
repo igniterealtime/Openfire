@@ -33,8 +33,15 @@ public class GroupManager {
     Cache groupMemberCache;
     private GroupProvider provider;
 
+    private static GroupManager instance = new GroupManager();
+
+    /**
+     * Returns a singleton instance of GroupManager.
+     *
+     * @return a GroupManager instance.
+     */
     public static GroupManager getInstance() {
-        return null;
+        return instance;
     }
 
     private GroupManager() {

@@ -10,7 +10,7 @@
                  org.jivesoftware.messenger.JiveGlobals,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.user.UserNotFoundException,
-                 org.jivesoftware.messenger.auth.GroupNotFoundException"
+                 org.jivesoftware.messenger.group.GroupNotFoundException"
     isErrorPage="true"
 %>
 

@@ -74,11 +74,8 @@ CREATE TABLE jiveVCard (
 CREATE TABLE jiveGroup (
   name                  VARCHAR2(50)    NOT NULL,
   description           VARCHAR2(255),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
   CONSTRAINT jiveGroup_pk PRIMARY KEY (groupName)
 );
-CREATE INDEX jiveGroup_cDate_idx ON jiveGroup (creationDate ASC);
 
 CREATE TABLE jiveGroupProp (
   groupName             VARCHAR(50)     NOT NULL,

@@ -212,10 +212,6 @@ public class MUCRoleImpl implements MUCRole {
         return nick;
     }
 
-    public void kick() {
-        getChatUser().removeRole(room.getName());
-    }
-
     public void changeNickname(String nickname) {
         this.nick = nickname;
         setRoleAddress(new JID(room.getName(), server.getServiceName(), nick));

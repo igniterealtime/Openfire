@@ -151,13 +151,6 @@ public interface MUCRole extends ChatDeliverer {
     String getNickname();
 
     /**
-     * An event callback for kicks (being removed from a room). This provides the user an
-     * opportunity to react to the kick (although the chat user has already been kicked when this
-     * method is called). Remove users from a chatroom by calling ChatRoom.leaveRoom().
-     */
-    void kick();
-
-    /**
      * Changes the nickname of the occupant within the room to the new nickname.
      *
      * @param nickname the new nickname of the occupant in the room.

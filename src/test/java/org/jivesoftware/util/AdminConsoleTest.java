@@ -8,14 +8,13 @@
 
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
-import org.jivesoftware.admin.AdminConsole;
-
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.lang.reflect.Method;
+import junit.framework.TestCase;
+import org.jivesoftware.admin.AdminConsole;
 
 public class AdminConsoleTest extends TestCase {
 
@@ -31,6 +30,13 @@ public class AdminConsoleTest extends TestCase {
         Method clear = c.getDeclaredMethod("clear", (Class[])null);
         clear.setAccessible(true);
         clear.invoke((Object)null, (Object[])null);
+    }
+
+    public void testGetGlobalProps() throws Exception {
+        String name = AdminConsole.getAppName();
+        String image = AdminConsole.getLogoImage();
+        assertEquals("Jive Messenger", name);
+        assertEquals("images/header-title.gif", image);
     }
 
     public void testModifyGlobalProps() throws Exception {
@@ -73,7 +79,7 @@ public class AdminConsoleTest extends TestCase {
     public void testTabOverwrite() throws Exception {
         // Add a new stream to the AdminConsole:
         String filename = TestUtils.prepareFilename(
-                "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml");
+                "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-03.xml");
         InputStream in = new FileInputStream(filename);
         AdminConsole.addXMLSource(in);
         in.close();

@@ -14,5 +14,5 @@ wls_stax.jar         | Downloaded 10/19/2004
 dom4j.jar            | 1.5.2
 jaxen.jar            | 1.1 beta 4 (from DOM4J 1.5.2)
 junit.jar            | 3.8.1
-ant-contrib.jar      | 0.6
-ant-subdirtask.jar   | Revision 1.3 (CVS)
+ant-contrib.jar      | 1.0b1
+ant-subdirtask.jar   | Revision 1.4 (CVS)

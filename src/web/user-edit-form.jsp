@@ -8,10 +8,11 @@
                  org.jivesoftware.messenger.user.*,
                  org.jivesoftware.messenger.*,
                  java.text.DateFormat,
+                 org.jivesoftware.admin.*,
                  java.util.HashMap,
                  java.util.Map"
 %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 
 <%  // Get parameters
@@ -28,10 +29,10 @@
     }
 
     // Load the user object
-    User user = admin.getUserManager().getUser(username);
+    User user = webManager.getUserManager().getUser(username);
   
     // Get a private data manager //
-    final PrivateStore privateStore = admin.getPrivateStore();
+    final PrivateStore privateStore = webManager.getPrivateStore();
     userData.setState( user.getUsername(), privateStore );
 
     // Handle a save
@@ -58,20 +59,21 @@
 
 
 
-<c:set var="sbar" value="users" scope="page" />
 
-
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Edit User Properties"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />  
-<c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
-<c:set target="${breadcrumbs}" property="User Properties" value="user-properties.jsp?userID=${param.userID}" />
-<c:set var="tab" value="edit" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Edit User";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
+    pageinfo.setSubPageID("user-edit");
+    pageinfo.setExtraParams("username="+username);
+%>
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+<c:set var="tab" value="edit" />
 <%@ include file="user-tabs.jsp" %>
 
-<br>
 <%  if (success) { %>
 
     <p class="jive-success-text">
@@ -80,18 +82,21 @@
 
 <%  } %>
 
+
+<table cellpadding="3" cellspacing="1" border="0" width="600">
 <form action="user-edit-form.jsp">
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center">Edit User Properties for <%= user.getUsername() %></td></tr>
-<tr><td class="text" colspan="2">
+<tr><td colspan="2">
 Use the form below to edit user properties.
 </td></tr>
+</table>
+
+<table  cellpadding="3" cellspacing="1" border="0">
 
 <input type="hidden" name="username" value="<%= username %>">
 <input type="hidden" name="save" value="true">
 
 
-<tr class="jive-odd">
+<tr>
     <td>
         Username:
     </td>
@@ -99,8 +104,8 @@ Use the form below to edit user properties.
         <%= user.getUsername() %>
     </td>
 </tr>
-<tr class="jive-odd">
-    <td class="jive-label">
+<tr>
+    <td>
         Name:
     </td>
     <td>
@@ -116,7 +121,7 @@ Use the form below to edit user properties.
         <%  } %>
     </td>
 </tr>
-<tr class="jive-even">
+<tr>
     <td>
         Email:
     </td>

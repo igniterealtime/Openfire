@@ -1,4 +1,5 @@
-<%@ taglib uri="core" prefix="c"%><%--
+<%@ taglib uri="core" prefix="c"%>
+<%--
   -	$RCSfile$
   -	$Revision$
   -	$Date$
@@ -6,10 +7,11 @@
 
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*"
+                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.admin.*"
 %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 
 <%  // Get parameters //
@@ -24,13 +26,13 @@
     }
 
     // Load the user object
-    User user = admin.getUserManager().getUser(username);
+    User user = webManager.getUserManager().getUser(username);
 
     // Handle a user delete:
     if (delete) {
-        admin.getUserManager().deleteUser(user);
+        webManager.getUserManager().deleteUser(user);
         // Deleted your own user account, force login
-        if (username.equals(admin.getAuthToken().getUsername())){
+        if (username.equals(webManager.getAuthToken().getUsername())){
             session.removeAttribute("jive.admin.authToken");
             response.sendRedirect("login.jsp");
         }
@@ -47,15 +49,18 @@
 
 <c:set var="sbar" value="users" scope="page" />
 
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="Delete User"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
-<c:set target="${breadcrumbs}" property="User Properties" value="user-properties.jsp?userID=${param.userID}" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-delete.jsp?userID=${param.userID}" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Change Password";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-password.jsp?username="+username));
+    pageinfo.setSubPageID("user-delete");
+    pageinfo.setExtraParams("username="+username);
+%>
 <c:set var="tab" value="delete" />
 <jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
 
 
 

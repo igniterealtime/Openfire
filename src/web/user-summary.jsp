@@ -84,11 +84,11 @@ Sorted by User ID
 
 <%  } %>
 
-<table cellpadding="3" cellspacing="1" border="0" width="600">
+<table  cellpadding="3" cellspacing="0" border="0" width="600">
 <tr class="tableHeader"><td colspan="7" align="left">List Of Users</td></tr>
 </table>
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue">
+<table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
+<tr >
     <th>&nbsp;</th>
     <th>Online</th>
     <th>Username</th>

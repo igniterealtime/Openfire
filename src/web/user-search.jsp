@@ -10,21 +10,10 @@
                  org.jivesoftware.admin.*,
                  java.util.Map" %>
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "User Search";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
-    pageinfo.setPageID("user-search");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
-
-<% 
+<%
 
     // Get parameters
     boolean search = ParamUtils.getBooleanParameter(request,"search");
@@ -41,7 +30,7 @@
     if (search) {
         User user = null;
         try {
-            user = admin.getUserManager().getUser(username);
+            user = webManager.getUserManager().getUser(username);
         }
         catch (Exception e2) {
             errors.put("username","username");
@@ -53,6 +42,18 @@
         }
     }
 %>
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "User Search";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
+    pageinfo.setPageID("user-search");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
+
 <%  if (errors.size() > 0) { %>
 
     <p class="jive-error-text">
@@ -60,8 +61,8 @@
     </p>
 
 <%  } %>
-<form name="f" action="user-search.jsp">
 <table cellpadding="3" cellspacing="1" border="0" width="600">
+<form name="f" action="user-search.jsp">
 <tr><td class="text" colspan="2">
 Use the form below to search for users in the system.
 

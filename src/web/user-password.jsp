@@ -8,7 +8,8 @@
                  org.jivesoftware.messenger.user.UserManager,
                  java.text.DateFormat,
                  org.jivesoftware.messenger.auth.AuthFactory,
-                 org.jivesoftware.messenger.user.*"
+                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.admin.AdminPageBean"
 %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 
@@ -46,20 +47,18 @@
 %>
 
 <c:set var="sbar" value="users" scope="page" />
-
-
-
-
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="User Password"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
-<c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
-<c:set target="${breadcrumbs}" property="User Properties" value="user-properties.jsp?userID=${param.userID}" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-password.jsp?userID=${param.userID}" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Change Password";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-password.jsp?username="+username));
+    pageinfo.setSubPageID("user-edit-password");
+    pageinfo.setExtraParams("username="+username);
+%>
 <c:set var="tab" value="pass" />
 <jsp:include page="top.jsp" flush="true" />
-
+<jsp:include page="title.jsp" flush="true" />
 
 <%@ include file="user-tabs.jsp" %>
 <br>
@@ -72,46 +71,46 @@
     </p>
 
 <%  } %>
+<table cellpadding="3" cellspacing="1" border="0" width="600">
 <form action="user-password.jsp" name="passform">
-<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center">Change Password For <%= user.getUsername() %></td></tr>
 <tr><td colspan="2" class="text">
 Use the form below to change the user's password
 </td></tr>
-
+</table>
+<table cellpadding="3" cellspacing="1" border="0">
 
 <input type="hidden" name="username" value="<%= username %>">
 
 
-<tr class="jive-even">
-    <td class="jive-label">
+<tr>
+    <td class="c1">
         User ID:
     </td>
-    <td>
+    <td class="c2">
         <%= user.getUsername() %>
     </td>
 </tr>
-<tr class="jive-odd">
-    <td>
+<tr>
+    <td class="c1">
         Username:
     </td>
-    <td>
+    <td class="c2">
         <%= user.getUsername() %>
     </td>
 </tr>
-<tr class="jive-even">
-    <td class="jive-label">
+<tr>
+    <td class="c1">
         New Password:
     </td>
-    <td>
+    <td clas="c2">
         <input type="password" name="password" value="" size="20" maxlength="50">
     </td>
 </tr>
-<tr class="jive-odd">
-    <td>
+<tr>
+    <td class="c1">
         Confirm New Password:
     </td>
-    <td>
+    <td class="c2">
         <input type="password" name="passwordConfirm" value="" size="20" maxlength="50">
     </td>
 </tr>

@@ -108,14 +108,15 @@
     </p>
 
 <%  } %>
-<form name="f" action="user-create.jsp" method="post">
+
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
+<form name="f" action="user-create.jsp" method="post">
 <tr><td class="text" colspan="2">
 Use the form below to create a new user in the system.
 </td></tr>
 
 <tr class="jive-even">
-    <td>  
+    <td>
         Username: *
     </td>
     <td>

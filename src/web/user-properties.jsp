@@ -8,9 +8,10 @@
                  org.jivesoftware.messenger.user.*,
                  java.text.DateFormat,
                  java.util.Iterator,
+                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.*"
 %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 
 
@@ -49,42 +50,42 @@
     // Load the user object
     User user = null;
     try {
-        user = admin.getUserManager().getUser(username);
+        user = webManager.getUserManager().getUser(username);
     }
     catch (UserNotFoundException unfe) {
-        user = admin.getUserManager().getUser(username);
+        user = webManager.getUserManager().getUser(username);
     }
 
-  
+
 
     // Date formatter for dates
     DateFormat formatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
 %>
 <%
  // Get a private data manager //
-  final PrivateStore privateStore = admin.getPrivateStore();
+  final PrivateStore privateStore = webManager.getPrivateStore();
   userData.setState( user.getUsername(), privateStore );
   String nickname = userData.getProperty( "nickname" );
     if(nickname == null){
         nickname = "";
     }
 %>
-<c:set var="sbar" value="users" scope="page" />
-
-
-
-<!-- Define BreadCrumbs -->
-<c:set var="title" value="User Properties"  />
-<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
-<c:set target="${breadcrumbs}" property="User Summary" value="user-summary.jsp" />
-<c:set target="${breadcrumbs}" property="${title}" value="user-properties.jsp?userID=${param.userID}" />
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "User Properties";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-properties.jsp"));
+    pageinfo.setSubPageID("user-properties");
+    pageinfo.setExtraParams("username="+username);
+%>
 <c:set var="tab" value="props" />
-<jsp:include page="top.jsp" flush="true" />
+<%@ include file="top.jsp" %>
+<jsp:include page="title.jsp" flush="true" />
 
 <%@ include file="user-tabs.jsp" %>
 <br/>
 <table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeaderBlue"><td colspan="2" align="center">User Properties For <%= user.getUsername() %></td></tr>
 <tr><td class="text" colspan="2">
 Below is a summary of user properties. Use the tabs above to do things like edit user properties,
 send the user a message (if they're online) or delete the user.

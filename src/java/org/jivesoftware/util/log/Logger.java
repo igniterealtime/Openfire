@@ -462,12 +462,11 @@ public class Logger {
      * Get a copy of log targets for this logger.
      *
      * @return the child loggers
-     * @deprecated This method is deprecated and will be removed in Future version.
-     *             Previously it allowed unsafe access to logtargets which permitted
-     *             masqurade attacks. It currently returns a zero sized array.
      */
     public LogTarget[] getLogTargets() {
-        return new LogTarget[0];
+        // Jive change - we ignore the deprecated warning above and just return the log targets
+        // since it's a closed system for us anyways
+        return m_logTargets;
     }
 
     /**

@@ -44,7 +44,7 @@ public class RotatingFileTarget extends FileTarget {
         getInitialFile();
     }
 
-    protected synchronized void rotate()
+    public synchronized void rotate()
             throws IOException {
         close();
 
@@ -56,7 +56,7 @@ public class RotatingFileTarget extends FileTarget {
     /**
      * Output the log message, and check if rotation is needed.
      */
-    protected synchronized void write(final String data) {
+    public synchronized void write(final String data) {
         // send the log message
         super.write(data);
 
@@ -88,4 +88,3 @@ public class RotatingFileTarget extends FileTarget {
         openFile();
     }
 }
-

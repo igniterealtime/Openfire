@@ -29,21 +29,13 @@
     <td width="1%" nowrap><%= count %></td>
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
-        <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="Click for more info..."
-         ><%= ((name != null && !"".equals(name)) ? name : "<i>Anonymous</i>") %></a>
-
-        <%  if (sess.getConnection().isSecure()) { %>
-
-            <img src="images/lock.gif" width="9" height="12" border="0"
-             title="User is connected via SSL" hspace="2">
-
-        <%  } %>
-
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="Click for more info..."
+             ><%= ((name != null && !"".equals(name)) ? name : "<i>Anonymous</i>") %></a>
     </td>
     <td width="15%" nowrap>
         <%= sess.getAddress().getResource() %>
     </td>
-    <td width="25%">
+    <td>
         <%  int _status = sess.getStatus();
             if (_status == Session.STATUS_CLOSED) {
         %>
@@ -67,6 +59,14 @@
 
         <%  } %>
     </td>
+    <%  if (sess.getConnection().isSecure()) { %>
+        <td width="1%">
+            <img src="images/lock.gif" width="16" height="16" border="0"
+            title="User is connected via SSL">
+        </td>
+     <% } else { %>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+     <% } %>
 
     <%  Presence.Show _show = sess.getPresence().getShow();
         String _stat = sess.getPresence().getStatus();

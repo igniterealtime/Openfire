@@ -119,7 +119,7 @@ Below is a list of sessions on this server.
         <th>&nbsp;</th>
         <th>Name</th>
         <th>Resource</th>
-        <th>Status</th>
+        <th nowrap colspan="2">Status</th>
         <th nowrap colspan="2">Presence</th>
         <th nowrap>Client IP</th>
         <th nowrap>Close Connection</th>

@@ -42,7 +42,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
 
-    private static InternalComponentManager instance;
+    private static InternalComponentManager instance = new InternalComponentManager();
     /**
      * XMPP address of this internal service. The address is of the form: component.[domain]
      */
@@ -53,22 +53,22 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      */
     private String serverDomain;
 
-    static {
-        instance = new InternalComponentManager();
-        ComponentManagerFactory.setComponentManager(instance);
-    }
-
     public static InternalComponentManager getInstance() {
         return instance;
     }
 
-    private InternalComponentManager() {
+    public void start() {
+        // Set this ComponentManager as the current component manager
+        ComponentManagerFactory.setComponentManager(instance);
+
         XMPPServer server = XMPPServer.getInstance();
         serverDomain = server.getServerInfo().getName();
         // Set the address of this internal service. component.[domain]
         serviceAddress = new JID(null, "component." + serverDomain, null);
-        // Add a route to this service
-        server.getRoutingTable().addRoute(getAddress(), this);
+        if (!server.isSetupMode()) {
+            // Add a route to this service
+            server.getRoutingTable().addRoute(getAddress(), this);
+        }
     }
 
     public void addComponent(String subdomain, Component component) {

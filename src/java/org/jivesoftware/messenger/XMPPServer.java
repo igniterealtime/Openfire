@@ -198,7 +198,7 @@ public class XMPPServer {
                 startModules();
             }
             // Load plugins. First, initialize component manager.
-            InternalComponentManager.getInstance();
+            InternalComponentManager.getInstance().start();
             File pluginDir = new File(messengerHome, "plugins");
             pluginManager = new PluginManager(pluginDir);
             pluginManager.start();

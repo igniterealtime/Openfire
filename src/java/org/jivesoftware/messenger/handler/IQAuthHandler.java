@@ -153,7 +153,14 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             UserNotFoundException
     {
         String resource = iq.elementTextTrim("resource");
-        resource = resource != null ? resource.toLowerCase() : null;
+        if (resource != null) {
+            try {
+                resource = Stringprep.resourceprep(resource);
+            }
+            catch (StringprepException e) {
+                throw new IllegalArgumentException("Invalid resource: " + resource);
+            }
+        }
 
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection

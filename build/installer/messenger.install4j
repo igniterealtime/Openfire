@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.2">
   <directoryPresets config="C:/Documents and Settings/Matt/Desktop" />
-  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.0" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.1" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
       <envVar name="JDK_HOME" />
     </searchSequence>
     <variables>
-      <variable name="RELEASE_DIR" value="jive_messenger_2_1_0" />
+      <variable name="RELEASE_DIR" value="jive_messenger_2_1_1" />
     </variables>
   </application>
   <files>
@@ -152,6 +152,7 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra" launcher="false" />
         <entry location="bin/messenger.bat" launcher="false" />
         <entry location="bin/messenger.sh" launcher="false" />
       </exclude>
@@ -173,6 +174,18 @@
       <variables />
       <customScriptLines />
     </linuxRPM>
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_messenger" allLaunchers="false" includedJRE="linux-x86-1.5.0" manualJREEntry="false" customScriptMode="1" customScriptFile="">
+      <selectedLaunchers>
+        <launcher id="22" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
+      </exclude>
+      <variables />
+      <customScriptLines />
+    </unixArchive>
   </mediaSets>
   <buildIds buildAll="true">
     <mediaSet refId="18" />

@@ -14,26 +14,30 @@ application. For a full list of features and more information, please
 visit the Jive Messenger website: <a href="http://www.jivesoftware.org/messenger"
  target="_top">http://www.jivesoftware.org/messenger</a></p>
 
-<p>In order to install Jive Messenger, you'll need a server environment
-that meets the following requirements: </p>
+<h2>Installation</h2>
 <ul>
-  <li><b>JDK 1.5.0</b> (Java 5) or later. Java 5 is bundled with the 
-platform-specific Jive Messenger installers. If you are using the ".zip" or ".tar.gz" 
-distribution, you can check your java version by typing "java -version" at the 
-command line and (if necessary) upgrade your Java installation by visiting 
-<a href="http://java.sun.com">http://java.sun.com</a>.</li>
-  <li>A supported database with a robust JDBC driver, or you can
-choose to use the embedded database during the setup process. Supported 
-databases and recommended JDBC drivers are detailed in the database 
-documentation below.</li>
-</ul>
+<h3>Windows</h3>
+Run the Jive Messenger installer. The application will be installed to <tt>c:\Program Files\Jive Messenger</tt> by default.
+ 
+ <h3>Linux/Unix</h3>
+ 
+ Choose either the RPM or tar.gz build. If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
 
-<h2>Installation Overview</h2>
+ <p><tt>tar -xzvf jive_messenger_2_1_1.tar.gz<br>
+ mv jive_messenger /opt</tt></p>
+
+ If using the RPM, run it using your package manager:
+
+ <p><tt>rpm -ivh jive_messenger_2_1_1.rpm</tt></p>
+
+ which will install Jive Messenger in /opt/jive_messenger.<p>
+ </ul>
+<h2>Setup Overview</h2>
 <p>To complete the installation of Jive Messenger, you'll need to
 perform each of the following steps: </p>
 <ol>
-  <li><a href="#database">Database</a> - prepare your database for Jive
-Messenger. </li>
+  <li><a href="#database">Database</a> - if you choose to use an external database, you must
+ prepare your database for Jive Messenger. </li>
   <li><a href="#config">Setup</a> - Use the built in web based setup
 tool to setup and verify the server configuration.</li>
   <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
@@ -47,6 +51,7 @@ sub-directories omitted for brevity): </p>
  |- license.html
  |- conf/
  |- bin/
+ |- jre/
  |- lib/
  |- plugins/
      |- admin/
@@ -60,6 +65,7 @@ sub-directories omitted for brevity): </p>
 configuration files.</li>
   <li>The <tt>bin</tt> directory contains the server executables. Depending
 on which distribution you installed, different executables will be available.</li>
+  <li>The <tt>jre</tt> directory contains a Java 5 runtime that is bundled with Jive Messenger.</li>
   <li>The <tt>lib</tt> directory contains libraries necessary for
 running Jive Messenger.</li>
   <li>The <tt>plugins</tt> directory contains server plugins. By
@@ -74,27 +80,35 @@ documentation.</li>
 </ul><p>
 
 <h2><a name="database">Setup the Database</a></h2>
-<p> <a>Jive Messenger uses a database to store it's data. To setup
-your database you must load the appropriate database schema. You can find
-schemas in the <tt>resources/database</tt> directory of this distribution. View
-the </a><a href="database.html">database
-setup</a> documentation to learn how to install the schemas and JDBC
-drivers. Alternatively, you can select the embedded database during
-the setup process.</p>
-<p>Complete the database steps outlined in the database setup
-documentation before proceeding further.<br>
+<p> <a>Jive Messenger can store its data in an embedded database or you can choose to use
+an external database such as MySQL, or Oracle. If you would like to use an external database,
+you must prepare it before proceeding with installation by running the appropriate database
+schema. View the </a><a href="database.html">database
+setup</a> documentation for more information.</p>
+
 </p>
 <h2><a name="config"></a>Setup the Server</h2>
 <p>A web based, "wizard" driven setup and configuration tool is built
-into
-Jive Messenger. Simply launch Jive Messenger and use a web browser to
+into Jive Messenger. Simply launch Jive Messenger (platform-specific instructions below) and use a web browser to
 connect to the admin console. The default port for the
 web-based admin console is 9090. If you are on the same machine as Messenger, the
 following URL will usually work: 
 <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>.</p>
 
+<h2><a name="tools">Admin Console</a></h2>
+<p>After completing the above steps, Messenger will be configured
+and you can use the web-based admin console to administer
+the server. The URL should be the same as you used to setup the server
+unless you changed the port during the setup.<br>
+</p>
+
+<hr>
+
+<h2>Running Jive Messenger in Windows</h2>
+
 <p>If you used the Jive Messenger installer, a shortcut for starting the
-a graphical launcher is provided. A button on the on the launcher allows 
+a graphical launcher is provided in your Start Menu. Otherwise, run messenger.exe in the <tt>bin/</tt> directory of your
+Jive Messenger installation. A button on the on the launcher allows 
 you to automatically open your web browser to the correct URL to finish 
 setting up the server: 
 
@@ -103,7 +117,6 @@ setting up the server:
 <img src="images/launcher.png" alt="Jive Messenger Launcher" width="323" height="277" align="center">
 </div>
 </p>
-
 
 <h3>Windows Service</h3>
 <p>If you're running Messenger on Windows, you will likely want to
@@ -134,6 +147,26 @@ stop the service.</p>
 at this time. If you install the service, you should use service controls
 as described above to control the server rather than the graphical launcher.</p> 
 
+<h2>Running Jive Messenger in Linux/Unix</h2>
+
+You can start and stop Jive Messenger using the <tt>bin/messenger</tt> script in your Jive messenger installation:
+
+<p>
+<tt>
+# ./messenger<br>
+Usage: ./messenger {start|stop}<br>
+# ./messenger start<br>
+Starting messenger
+</tt></p>
+
+
+ If you would like to install Jive Messenger as a service, two scripts are provided in the <tt>bin/extra</tt>
+directory:
+<ul>
+    <li>redhat-postinstall.sh -- automatically installs Jive Messenger as a service on Red Hat. It does so by creating a "jive" user and then copying the jive-messengerd script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
+    <li>jive-messengerd -- script to run Jive Messenger as a service. You must manually configure this script. See the comments in
+the script for additional details.</li>
+</ul>   
 
 <!--
 <h3>Solaris/Linux/MacOS X Deployment</h3>
@@ -170,13 +203,6 @@ If the Messenger JVM runs into trouble, the wrapper will detect and
 restart Messenger automatically
 ensuring that Messenger continues to be available to users.</p>
 -->
-
-<h2><a name="tools">Admin Console</a></h2>
-<p>After completing the above steps, Messenger will be configured
-and you can use the web-based admin console to administer
-the server. The URL should be the same as you used to setup the server
-unless you changed the port during the setup.<br>
-</p>
 
 </body>
 </html>

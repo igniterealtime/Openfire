@@ -88,7 +88,7 @@
     <property name="release.dest.dir" value="${target.dir}/release" />
     <property name="version.major" value="2" />
     <property name="version.minor" value="1" />
-    <property name="version.revision" value="0" />
+    <property name="version.revision" value="1" />
     <property name="version.extra" value="" />
     <property name="dist.prefix" value="jive_messenger" />
     <property name="overwrite" value="false" />
@@ -474,7 +474,7 @@
 
         <!-- Copy bin dir -->
         <copy todir="${prepare.out.dir}">
-            <fileset dir="${src.dir}" includes="bin/*.*" />
+            <fileset dir="${src.dir}" includes="bin/**/*" />
         </copy>
         <fixcrlf srcdir="${prepare.out.dir}/bin" eol="lf" eof="remove" includes="*.sh" />
 

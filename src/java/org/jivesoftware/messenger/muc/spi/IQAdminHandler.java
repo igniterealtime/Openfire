@@ -11,23 +11,20 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import org.dom4j.Element;
+import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.muc.ConflictException;
 import org.jivesoftware.messenger.muc.ForbiddenException;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.NotAllowedException;
-import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-import org.xmpp.packet.JID;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
@@ -73,7 +70,7 @@ public class IQAdminHandler {
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException,
             NotAllowedException {
         IQ reply = IQ.createResultIQ(packet);
-        Element element = ((XMPPDOMFragment)packet.getChildFragment()).getRootElement();
+        Element element = packet.getChildElement();
 
         // Analyze the action to perform based on the included element
         List itemsList = element.elements("item");
@@ -123,10 +120,9 @@ public class IQAdminHandler {
                 roleAttribute = item.attributeValue("role");
                 // Create the result that will hold an item for each
                 // moderator/member/participant/outcast
-                MetaDataFragment result = new MetaDataFragment(DocumentHelper.createElement(QName
-                        .get("query", "http://jabber.org/protocol/muc#admin")));
+                Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#admin");
 
-                MetaDataFragment metaData;
+                Element metaData;
                 if ("outcast".equals(affiliation)) {
                     // The client is requesting the list of outcasts
                     if (MUCRole.ADMINISTRATOR != senderRole.getAffiliation()
@@ -134,15 +130,11 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (String jid : room.getOutcasts()) {
-                        metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
-                                "item");
-                        metaData.setProperty("item:affiliation", "outcast");
-                        metaData.setProperty("item:jid", jid);
-                        // Add the item with the outcast's information to the result
-                        result.addFragment(metaData);
+                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        metaData.addAttribute("affiliation", "outcast");
+                        metaData.addAttribute("jid", jid);
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
+
                 }
                 else if ("member".equals(affiliation)) {
                     // The client is requesting the list of members
@@ -153,24 +145,19 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (String jid : room.getMembers()) {
-                        metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
-                                "item");
-                        metaData.setProperty("item:affiliation", "member");
-                        metaData.setProperty("item:jid", jid);
+                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        metaData.addAttribute("affiliation", "member");
+                        metaData.addAttribute("jid", jid);
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             MUCRole role = roles.get(0);
-                            metaData.setProperty("item:role", role.getRoleAsString());
-                            metaData.setProperty("item:nick", role.getNickname());
+                            metaData.addAttribute("role", role.getRoleAsString());
+                            metaData.addAttribute("nick", role.getNickname());
                         }
                         catch (UserNotFoundException e) {
                             // Do nothing
                         }
-                        // Add the metadata to the result
-                        result.addFragment(metaData);
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
                 }
                 else if ("moderator".equals(roleAttribute)) {
                     // The client is requesting the list of moderators
@@ -179,18 +166,12 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getModerators()) {
-                        metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
-                                "item");
-                        metaData.setProperty("item:role", "moderator");
-                        metaData.setProperty("item:jid", role.getChatUser().getAddress()
-                                .toStringPrep());
-                        metaData.setProperty("item:nick", role.getNickname());
-                        metaData.setProperty("item:affiliation", role.getAffiliationAsString());
-                        // Add the metadata to the result
-                        result.addFragment(metaData);
+                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        metaData.addAttribute("role", "moderator");
+                        metaData.addAttribute("jid", role.getChatUser().getAddress().toBareJID());
+                        metaData.addAttribute("nick", role.getNickname());
+                        metaData.addAttribute("affiliation", role.getAffiliationAsString());
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
                 }
                 else if ("participant".equals(roleAttribute)) {
                     // The client is requesting the list of participants
@@ -198,21 +179,15 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getParticipants()) {
-                        metaData = new MetaDataFragment("http://jabber.org/protocol/muc#admin",
-                                "item");
-                        metaData.setProperty("item:role", "participant");
-                        metaData.setProperty("item:jid", role.getChatUser().getAddress()
-                                .toStringPrep());
-                        metaData.setProperty("item:nick", role.getNickname());
-                        metaData.setProperty("item:affiliation", role.getAffiliationAsString());
-                        // Add the metadata to the result
-                        result.addFragment(metaData);
+                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        metaData.addAttribute("role", "participant");
+                        metaData.addAttribute("jid", role.getChatUser().getAddress().toBareJID());
+                        metaData.addAttribute("nick", role.getNickname());
+                        metaData.addAttribute("affiliation", role.getAffiliationAsString());
                     }
-                    // Add the result items to the reply
-                    reply.addFragment(result);
                 }
                 else {
-                    reply.setError(XMPPError.Code.BAD_REQUEST);
+                    reply.setError(PacketError.Condition.bad_request);
                 }
             }
         }
@@ -262,30 +237,22 @@ public class IQAdminHandler {
                         }
                         else if ("member".equals(target)) {
                             // Add the user as a member of the room based on the bare JID
-                            boolean hadAffiliation = room.getAffiliation(XMPPAddress
-                                    .parseBareAddress(jid)) != MUCRole.NONE;
-                            presences.addAll(room.addMember(
-                                    XMPPAddress.parseBareAddress(jid),
-                                    null,
-                                    senderRole));
+                            boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.NONE;
+                            presences.addAll(room.addMember(jid.toBareJID(), null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
                             if (!hadAffiliation && room.isInvitationRequiredToEnter()) {
-                                room.sendInvitation(jid, null, senderRole, reply
-                                        .getOriginatingSession());
+                                room.sendInvitation(jid, null, senderRole);
                             }
                         }
                         else if ("outcast".equals(target)) {
                             // Add the user as an outcast of the room based on the bare JID
-                            presences.addAll(room.addOutcast(XMPPAddress.parseBareAddress(jid),
-                                    item.elementTextTrim("reason"),
-                                    senderRole));
+                            presences.addAll(room.addOutcast(jid.toBareJID(), item.elementTextTrim("reason"), senderRole));
                         }
                         else if ("none".equals(target)) {
                             if (hasAffiliation) {
                                 // Set that this jid has a NONE affiliation based on the bare JID
-                                presences.addAll(room.addNone(XMPPAddress.parseBareAddress(jid),
-                                        senderRole));
+                                presences.addAll(room.addNone(jid.toBareJID(), senderRole));
                             }
                             else {
                                 // Kick the user from the room

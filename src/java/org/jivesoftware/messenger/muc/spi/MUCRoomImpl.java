@@ -702,7 +702,7 @@ public class MUCRoomImpl implements MUCRoom {
     }
 
     public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException {
-        String resource = message.setTo().getResource();
+        String resource = message.getTo().getResource();
         MUCRole occupant = occupants.get(resource.toLowerCase());
         if (occupant != null) {
             message.setFrom(senderRole.getRoleAddress());
@@ -1558,8 +1558,13 @@ public class MUCRoomImpl implements MUCRoom {
             // of the room
             for (MUCRole occupant : occupants.values()) {
                 if (occupant.getAffiliation() > MUCRole.MEMBER) {
-                    presences.add(kickOccupant(jid, null,
-                            LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
+                    try {
+                        presences.add(kickOccupant(occupant.getRoleAddress(), null,
+                                LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
+                    }
+                    catch (NotAllowedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

@@ -88,13 +88,47 @@ public class AdminConsole {
     }
 
     /**
-     * Returns the URL (relative or absolute) of the main logo image for the admin console.
+     * Returns the URL of the main logo image for the admin console.
+     *
+     * @return the logo image.
      */
     public static String getLogoImage() {
         Element globalLogoImage = (Element)generatedModel.selectSingleNode(
                 "/adminconsole/global/logo-image");
         if (globalLogoImage != null) {
             return globalLogoImage.getText();
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the URL of the login image for the admin console.
+     *
+     * @return the login image.
+     */
+    public static String getLoginLogoImage() {
+        Element globalLoginLogoImage = (Element)generatedModel.selectSingleNode(
+                "/adminconsole/global/login-image");
+        if (globalLoginLogoImage != null) {
+            return globalLoginLogoImage.getText();
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the version string displayed in the admin console.
+     *
+     * @return the version string.
+     */
+    public static String getVersionString() {
+        Element globalVersion = (Element)generatedModel.selectSingleNode(
+                "/adminconsole/global/version");
+        if (globalVersion != null) {
+            return globalVersion.getText();
         }
         else {
             return null;
@@ -195,6 +229,18 @@ public class AdminConsole {
                 Element existingLogoImage = (Element)generatedModel.selectSingleNode(
                         "/adminconsole/global/logo-image");
                 existingLogoImage.setText(appLogoImage.getText());
+            }
+            Element appLoginImage = (Element)element.selectSingleNode("/adminconsole/global/login-image");
+            if (appLogoImage != null) {
+                Element existingLoginImage = (Element)generatedModel.selectSingleNode(
+                        "/adminconsole/global/login-image");
+                existingLoginImage.setText(appLoginImage.getText());
+            }
+            Element appVersion = (Element)element.selectSingleNode("/adminconsole/global/version");
+            if (appLogoImage != null) {
+                Element existingVersion = (Element)generatedModel.selectSingleNode(
+                        "/adminconsole/global/version");
+                existingVersion.setText(appVersion.getText());
             }
             // Tabs
             for (Iterator i=element.selectNodes("//tab").iterator(); i.hasNext(); ) {

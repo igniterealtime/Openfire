@@ -443,12 +443,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext("xmpp.muc.history");
         // Load the list of JIDs that are sysadmins of the MUC service
-        String[] jids = JiveGlobals.getProperty("xmpp.muc.sysadmin.jid").split(",");
+        String property = JiveGlobals.getProperty("xmpp.muc.sysadmin.jid");
+        String[] jids = (property != null ? property.split(",") : new String[]{""});
         for (int i = 0; i < jids.length; i++) {
             sysadmins.add(jids[i].trim().toLowerCase());
         }
         // Load the list of JIDs that are allowed to create a MUC room
-        jids = JiveGlobals.getProperty("xmpp.muc.create.jid").split(",");
+        property = JiveGlobals.getProperty("xmpp.muc.create.jid");
+        jids = (property != null ? property.split(",") : new String[]{""});
         for (int i = 0; i < jids.length; i++) {
             allowedToCreate.add(jids[i].trim().toLowerCase());
         }

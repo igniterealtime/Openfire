@@ -305,7 +305,23 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.bad_request);
             }
+            catch (IllegalArgumentException e) {
+                // The specified username is not correct according to the stringprep specs
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.jid_malformed);
+            }
+            catch (UnsupportedOperationException e) {
+                // The User provider is read-only so this operation is not allowed
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.not_allowed);
+            }
             catch (Exception e) {
+                // Some unexpected error happened so return an internal_server_error 
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.internal_server_error);
                 Log.error(e);
             }
         }

@@ -213,8 +213,10 @@ public class User implements Cacheable {
         if (properties == null) {
             loadPropertiesFromDb();
         }
-        properties.remove(name);
-        deletePropertyFromDb(name);
+        if (properties.remove(name) != null) {
+            // Only delete the propery from the DB if it was removed from memory
+            deletePropertyFromDb(name);
+        }
     }
 
     /**

@@ -1,4 +1,3 @@
-<%@ taglib uri="core" prefix="c"%>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -11,39 +10,46 @@
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  java.util.Iterator"
+    errorPage="error.jsp"
 %>
-<%-- Define Administration Bean --%>
+
+<%@ taglib uri="core" prefix="c"%>
+
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Room Creation Permissions";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-create-permission.jsp"));
-    pageinfo.setPageID("muc-perms");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
-
-
-
 <%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",15);
     String userJID = ParamUtils.getParameter(request,"userJID");
-    boolean add = ParamUtils.getBooleanParameter(request,"add");
+    boolean add = request.getParameter("add") != null;
+    boolean save = request.getParameter("save") != null;
+    boolean success = request.getParameter("success") != null;
+    boolean addsuccess = request.getParameter("addsuccess") != null;
+    boolean deletesuccess = request.getParameter("deletesuccess") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
+    boolean openPerms = ParamUtils.getBooleanParameter(request,"openPerms");
 
 	// Get muc server
     MultiUserChatServer mucServer = (MultiUserChatServer)admin.getServiceLookup().lookup(MultiUserChatServer.class);
 
-    // Get the total allowed users count:
-    int userCount = mucServer.getUsersAllowedToCreate().size();
-
     // Handle a save
     Map errors = new HashMap();
+    if (save) {
+        if (openPerms) {
+            // Remove all users who have the ability to create rooms
+            List<String> removeables = new ArrayList<String>();
+            for (Object obj : mucServer.getUsersAllowedToCreate()) {
+                String user = (String)obj;
+                removeables.add(user);
+            }
+            for (String user : removeables) {
+                mucServer.removeUserAllowedToCreate(user);
+            }
+            response.sendRedirect("muc-create-permission.jsp?success=true");
+            return;
+        }
+    }
+
+    // Handle an add
     if (add) {
         // do validation
         if (userJID == null || userJID.indexOf('@') == -1) {
@@ -64,150 +70,161 @@
         return;
     }
 
-    // paginator vars
-    int numPages = (int)Math.ceil((double)userCount/(double)range);
-    int curPage = (start/range) + 1;
+    if (errors.size() == 0) {
+        openPerms = mucServer.getUsersAllowedToCreate().size() == 0;
+    }
 %>
 
-<table  cellpadding="3" cellspacing="1" border="0" width="600">
-<tr><td colspan="8">
+<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
+<%  // Title of this page and breadcrumbs
+    String title = "Room Creation Permissions";
+    pageinfo.setTitle(title);
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Room Permissions", "muc-create-permission.jsp"));
+    pageinfo.setPageID("muc-perms");
+%>
+<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="title.jsp" flush="true" />
+
+<p>
 Below is a list of users allowed to create rooms. An empty list means that <b>anyone</b> can create
-a room.</td></tr>
-</table>
+a room.
+</p>
 
+<%  if (errors.size() > 0) { %>
 
-<table cellpadding="3" cellspacing="1" border="0" width="600">
-<tr class="tableHeader"><td colspan="8" align="left">User Summary</td></tr>
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        Error adding the user. Please verify the JID is correct.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
-<tr><td colspan="8" class="text">
-Total Users: <%= userCount %>.
-<%  if (numPages > 1) { %>
+<%  } else if (success || addsuccess || deletesuccess) { %>
 
-    Showing <%= (start+1) %>-<%= (start+range) %>.
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <td class="jive-icon-label">
+        <%  if (success) { %>
 
-<%  } %>
-</td></tr>
+            Settings updated successfully.
 
-<%  if (numPages > 1) { %>
+        <%  } else if (addsuccess) { %>
 
-  <tr><td colspan="8" class="text">
-    Pages:
-    [
-    <%  for (int pageIndex=0; pageIndex<numPages; pageIndex++) {
-            String sep = ((pageIndex+1)<numPages) ? " " : "";
-            boolean isCurrent = (pageIndex+1) == curPage;
-    %>
-        <a href="muc-create-permission.jsp?start=<%= (pageIndex*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (pageIndex+1) %></a><%= sep %>
+            User added successfully.
 
-    <%  } %>
-    ]
-  </td></tr>
-<%  } %>
-</table>
+        <%  } else if (deletesuccess) { %>
 
+            User removed successfully.
 
-<%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
-
-    <p class="jive-success-text">
-    User removed from the list successfully.
-    </p>
-
-<%  } %>
-
-<%  if ("true".equals(request.getParameter("addsuccess"))) { %>
-
-  <p class="jive-success-text">
-    User added to the list successfully.
-    </p>
+        <%  } %>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 
 <%  } %>
 
-<table class="jive-table" cellpadding="3" cellspacing="1" border="0" width="400">
-<tr class="tableHeaderBlue">
-    <th nowrap align="left">User</th>
-    <th>Delete</th>
-</tr>
-<%  // Print the list of users
-    int max = start + range;
-    max = (max > mucServer.getUsersAllowedToCreate().size() ? mucServer.getUsersAllowedToCreate().size() : max);
-    Iterator users = mucServer.getUsersAllowedToCreate().subList(start, max).iterator();
-    if (!users.hasNext()) {
-%>
-    <tr>
-        <td align="center" colspan="2">
-            <br>
-            Anyone is allowed to create a room since the list is empty.
-            <br><br>
-        </td>
-    </tr>
+<form action="muc-create-permission.jsp" method="post">
 
-<%
-    }
-    int i = start;
-    while (users.hasNext()) {
-        userJID = (String)users.next();
-        i++;
-%>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="90%" align="left">
-            <%= userJID %>
-        </td>
-        <td width="10%" align="center">
-            <a href="muc-create-permission.jsp?userJID=<%= userJID %>&delete=true"
-             title="Click to delete..."
-             onclick="return confirm('Are you sure you want to remove this user from the list?');"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-        </td>
-    </tr>
-<%
-    }
-%>
-</table>
-</div>
-<%  if (numPages > 1) { %>
+<fieldset>
+    <legend>Permission Policy</legend>
+    <div>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <tbody>
+            <tr>
+                <td width="1%">
+                    <input type="radio" name="openPerms" value="true" id="rb01"
+                     <%= ((openPerms) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01">Anyone can create a chat room.</label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    <input type="radio" name="openPerms" value="false" id="rb02"
+                     onfocus="this.form.userJID.focus();"
+                     <%= ((!openPerms) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02">Only specific users can create a chat room:</label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    &nbsp;
+                </td>
+                <td width="99%">
 
-    <p>
-    Pages:
-    [
-    <%  for (int pageIndex=0; pageIndex<numPages; pageIndex++) {
-            String sep = ((pageIndex+1)<numPages) ? " " : "";
-            boolean isCurrent = (pageIndex+1) == curPage;
-    %>
-        <a href="muc-create-permission.jsp?start=<%= (pageIndex*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (pageIndex+1) %></a><%= sep %>
+                    <fieldset>
+                        <legend>Allowed Users</legend>
+                        <div>
+                            <p>
+                            Add User (enter JID):
+                            <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+                             onclick="this.form.openPerms[1].checked=true;">
+                            <input type="submit" name="add" value="Add">
+                            </p>
 
-    <%  } %>
-    ]
-    </p>
+                            <div class="jive-table" style="width:400px;">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <thead>
+                                <tr>
+                                    <th width="99%">User</th>
+                                    <th width="1%">Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
 
-<%  } %>
+                                    <tr>
+                                        <td colspan="2">
+                                            No allowed users, use the form above to add one.
+                                        </td>
+                                    </tr>
 
-<form action="muc-create-permission.jsp">
-<input type="hidden" name="add" value="true">
+                                <%  } %>
 
-<table cellpadding="3" cellspacing="1" border="0" width="400">
-<tr>
-    <td class="c1">
-        Enter bare JID of user to add:
-    </td>
-    <td>
-    <input type="text" size="30" maxlength="150" name="userJID">
+                                <%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
+                                        String user = (String)obj;
+                                %>
+                                    <tr>
+                                        <td width="99%">
+                                            <%= user %>
+                                        </td>
+                                        <td width="1%" align="center">
+                                            <a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
+                                             title="Click to delete..."
+                                             onclick="return confirm('Are you sure you want to remove this user from the list?');"
+                                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                                        </td>
+                                    </tr>
 
-    <%  if (errors.get("userJID") != null) { %>
+                                <%  } %>
+                            </tbody>
+                            </table>
+                            </div>
+                        </div>
+                    </fieldset>
 
-        <span class="jive-error-text">
-        Please enter a valid bare JID (e.g. johndoe@company.org).
-        </span>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
+</fieldset>
 
-    <%  } %>
-    </td>
-</tr>
-</table>
+<br><br>
 
-<br>
+<input type="submit" name="save" value="Save Settings">
 
-<input type="submit" value="Add">
+</form>
+
 <jsp:include page="bottom.jsp" flush="true" />

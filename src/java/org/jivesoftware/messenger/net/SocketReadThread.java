@@ -253,6 +253,17 @@ public class SocketReadThread extends Thread {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
         }
 
+        // TODO Should we keep the language requested by the client in the session so that future
+        // messages to the client may use the correct resource bundle? So far we are only answering
+        // the same language specified by the client (if any) or if none then answer a default
+        // language
+        String language = "en";
+        for (int i = 0; i < xpp.getAttributeCount(); i++) {
+            if ("lang".equals(xpp.getAttributeName(i))) {
+                language = xpp.getAttributeValue(i);
+            }
+        }
+
         Writer writer = connection.getWriter();
         // Build the start packet response
         StringBuffer sb = new StringBuffer();
@@ -269,6 +280,8 @@ public class SocketReadThread extends Thread {
         sb.append(serverName);
         sb.append("\" id=\"");
         sb.append(session.getStreamID().toString());
+        sb.append("\" xml:lang=\"");
+        sb.append(language);
         sb.append("\">");
         writer.write(sb.toString());
 

@@ -1,11 +1,9 @@
 package org.jivesoftware.messenger;
 
 import java.util.Map;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.messenger.spi.PresenceImpl;
+import org.jivesoftware.util.StringUtils;
 
 public class ComponentManager {
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
@@ -20,7 +18,7 @@ public class ComponentManager {
      * creating it if necessary.
      * <p/>
      *
-     * @return the singleton instance of <Code>UserManager</CODE>
+     * @return the singleton instance of <Code>ComponentManager</CODE>
      */
     public static ComponentManager getInstance() {
         // Synchronize on LOCK to ensure that we don't end up creating
@@ -84,6 +82,9 @@ public class ComponentManager {
                 presence.setSender(prober);
                 presence.setRecipient(probee);
                 component.processPacket(presence);
+
+                // No reason to hold onto prober reference.
+                presenceMap.remove(prober);
             }
         }
     }

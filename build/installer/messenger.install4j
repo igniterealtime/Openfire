@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.2">
-  <directoryPresets config="C:/Documents and Settings/Matt/Desktop" />
   <application name="Jive Messenger" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%SHORT_NAME%_%VERSION%" compression="9" shortName="jive_messenger" publisher="Jive Software" publisherWeb="http://www.jivesoftware.org" version="2.1.1" allPathsRelative="true" backupOnSave="false" autoSave="true" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
@@ -138,7 +137,7 @@
       </screen>
       <screen id="preInfo" enabled="false" file="" />
       <screen id="install" enabled="true" />
-      <screen id="postInfo" enabled="false" file="C:/Documents and Settings/Matt/Desktop/text.html" />
+      <screen id="postInfo" enabled="false" file="" />
       <screen id="finished" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
     </standardScreens>
     <customScreens />

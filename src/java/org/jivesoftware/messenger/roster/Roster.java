@@ -323,10 +323,27 @@ public class Roster implements Cacheable {
     public RosterItem deleteRosterItem(JID user, boolean doChecking) throws SharedGroupException {
         // Answer an error if user (i.e. contact) to delete belongs to a shared group
         RosterItem itemToRemove = rosterItems.get(user.toBareJID());
-        if (doChecking && itemToRemove.isShared()) {
+        if (doChecking && itemToRemove != null && itemToRemove.isShared()) {
             throw new SharedGroupException("Cannot remove contact that belongs to a shared group");
         }
 
+        /*RosterItem.SubType subType = itemToRemove.getSubStatus();
+        // Cancel any existing presence subscription between the user and the contact
+        if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
+            Presence presence = new Presence();
+            presence.setFrom(server.createJID(username, null));
+            presence.setTo(itemToRemove.getJid());
+            presence.setType(Presence.Type.unsubscribe);
+            server.getPacketRouter().route(presence);
+        }
+        // cancel any existing presence subscription between the contact and the user
+        if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
+            Presence presence = new Presence();
+            presence.setFrom(server.createJID(username, null));
+            presence.setTo(itemToRemove.getJid());
+            presence.setType(Presence.Type.unsubscribed);
+            server.getPacketRouter().route(presence);
+        }*/
         // If removing the user was successful, remove the user from the subscriber list:
         RosterItem item = rosterItems.remove(user.toBareJID());
         if (item != null) {
@@ -342,6 +359,14 @@ public class Roster implements Cacheable {
             roster.setType(IQ.Type.set);
             roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
             broadcast(roster);
+            /*// Send unavailable presence from all of the user's available resources to the contact
+            for (ClientSession session : sessionManager.getSessions(username)) {
+                Presence presence = new Presence();
+                presence.setFrom(session.getAddress());
+                presence.setTo(item.getJid());
+                presence.setType(Presence.Type.unavailable);
+                server.getPacketRouter().route(presence);
+            }*/
         }
         return item;
 

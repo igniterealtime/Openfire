@@ -49,22 +49,6 @@ Below are properties for this server. Click the "Edit Properties" button below t
 some of the server settings. Some settings can not be changed.
 </p>
 
-<%  if ("true".equals(request.getParameter("success"))) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-        <td class="jive-icon-label">
-        Server properties updated successfully. You'll need to restart the server to see
-        the changes.
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
-
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
@@ -140,32 +124,22 @@ some of the server settings. Some settings can not be changed.
             </td>
         </tr>
     </c:if>
+</tbody>
+<thead>
+    <tr>
+        <th colspan="2">Server Ports</th>
+    </tr>
+</thead>
+<tbody>
+    <%  int i=0; %>
     <c:forEach var="port" items="${webManager.serverInfo.serverPorts}">
+        <%  i++; %>
         <tr>
             <td class="c1">
-                IP and Port:
+                <%= i %>: IP:Port, Security:
             </td>
             <td class="c2">
-                <c:out value="${port.IPAddress}" />:<c:out value="${port.port}" />
-            </td>
-        </tr>
-        <tr valign="top">
-            <td class="c1">
-                Domain Name(s):
-            </td>
-            <td class="c2">
-                <c:set var="sep" value="" />
-                <c:forEach var="name" items="${port.domainNames}">
-                    <c:out value="${sep}" /><c:out value="${name}" />
-                    <c:set var="set" value=", " />
-                </c:forEach>
-            </td>
-        </tr>
-        <tr>
-            <td class="c1">
-                Security Type:
-            </td>
-            <td>
+                <c:out value="${port.IPAddress}" />:<c:out value="${port.port}" />,
                 <c:choose>
                     <c:when test="${empty port.securityType}">
                         NORMAL
@@ -181,6 +155,18 @@ some of the server settings. Some settings can not be changed.
                         </c:choose>
                     </c:otherwise>
                 </c:choose>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td class="c1">
+                <nobr>&nbsp;&nbsp;&nbsp; Domain Name(s):</nobr>
+            </td>
+            <td class="c2">
+                <c:set var="sep" value="" />
+                <c:forEach var="name" items="${port.domainNames}">
+                    <c:out value="${sep}" /><c:out value="${name}" />
+                    <c:set var="set" value=", " />
+                </c:forEach>
             </td>
         </tr>
     </c:forEach>
@@ -222,7 +208,7 @@ some of the server settings. Some settings can not be changed.
 <br>
 
 <form action="server-props.jsp">
-<input type="submit" name="edit" value="Edit Properties">
+<input type="submit" value="Edit Properties">
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />

@@ -11,23 +11,28 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.container.TrackInfo;
+import org.jivesoftware.messenger.ChannelHandler;
+import org.jivesoftware.messenger.IQHandlerInfo;
+import org.jivesoftware.messenger.IQRouter;
+import org.jivesoftware.messenger.PacketDeliverer;
+import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.container.TrackInfo;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import javax.xml.stream.XMLStreamException;
 
 /**
  * <p>Base class whose main responsibility is to handle IQ packets. Subclasses may only need to
  * specify the IQHandlerInfo (i.e. name and namespace of the packets to handle) and actually handle
  * the IQ packet.</p>
- *
+ * <p/>
  * Simplifies creation of simple TYPE_IQ message handlers.
  *
  * @author Gaston Dombiak
@@ -52,7 +57,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
-        IQ iq = (IQ)packet;
+        IQ iq = (IQ) packet;
         try {
             iq = handleIQ(iq);
             if (iq != null) {
@@ -71,12 +76,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
                 }
                 catch (Exception de) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), de);
-                    try {
-                        SessionManager.getInstance().getSession(iq.getFrom()).getConnection().close();
-                    }
-                    catch (SessionNotFoundException se) {
-                        // do nothing
-                    }
+                    SessionManager.getInstance().getSession(iq.getFrom()).getConnection().close();
                 }
             }
         }
@@ -91,14 +91,15 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
      * @param packet the IQ packet to handle.
      * @return the response to send back.
      * @throws UnauthorizedException If the user that sent the packet is not authorized to request
-     * the given operation.
-     * @throws XMLStreamException If there was trouble reading the stream.
+     *                               the given operation.
+     * @throws org.xmlpull.v1.XmlPullParserException
+     *                               If there was trouble reading the stream.
      */
-    public abstract IQ handleIQ(IQ packet) throws UnauthorizedException, XMLStreamException;
+    public abstract IQ handleIQ(IQ packet) throws UnauthorizedException, XmlPullParserException;
 
     /**
      * <p>Obtain the handler information to help generically handle IQ packets.</p>
-     *
+     * <p/>
      * <p>IQHandlers that aren't local server iq handlers (e.g. chatbots, transports, etc)
      * return a null.</p>
      *

@@ -56,12 +56,16 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
- * new plugins, and they are dynamically loaded.
+ * new plugins, and they are dynamically loaded.<p>
+ * 
+ * An instance of this class can be obtained using:
+ *
+ * <tt>XMPPServer.getInstance().getPluginManager()</tt>
  *
  * @see Plugin
+ * @see org.jivesoftware.messenger.XMPPServer#getPluginManager()
  * @author Matt Tucker
  */
-
 public class PluginManager {
 
     private File pluginDirectory;
@@ -115,6 +119,18 @@ public class PluginManager {
      */
     public Collection<Plugin> getPlugins() {
         return Collections.unmodifiableCollection(plugins.values());
+    }
+
+    /**
+     * Returns a plugin by name or <tt>null</tt> if a plugin with that name does not
+     * exist.. The name is the name of the directory that the plugin is in such as
+     * "broadcast".
+     *
+     * @param name the name of the plugin.
+     * @return the plugin.
+     */
+    public Plugin getPlugin(String name) {
+        return plugins.get(name);
     }
 
     /**

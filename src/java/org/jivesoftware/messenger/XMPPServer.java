@@ -671,7 +671,7 @@ public class XMPPServer {
      * @return the <code>OfflineMessageStrategy</code> registered with this server.
      */
     public OfflineMessageStrategy getOfflineMessageStrategy() {
-        return (OfflineMessageStrategy) modules.get(OfflineMessageStrategy.class);
+        return (OfflineMessageStrategy)modules.get(OfflineMessageStrategy.class);
     }
 
     /**
@@ -682,7 +682,7 @@ public class XMPPServer {
      * @return the <code>PacketRouter</code> registered with this server.
      */
     public PacketRouter getPacketRouter() {
-        return (PacketRouter) modules.get(PacketRouter.class);
+        return (PacketRouter)modules.get(PacketRouter.class);
     }
 
     /**
@@ -693,7 +693,16 @@ public class XMPPServer {
      * @return the <code>IQRegisterHandler</code> registered with this server.
      */
     public IQRegisterHandler getIQRegisterHandler() {
-        return (IQRegisterHandler) modules.get(IQRegisterHandler.class);
+        return (IQRegisterHandler)modules.get(IQRegisterHandler.class);
+    }
+
+    /**
+     * Returns the <code>PluginManager</code> instance registered with this server.
+     *
+     * @return the PluginManager instance.
+     */
+    public PluginManager getPluginManager() {
+        return pluginManager;
     }
 
     /**

@@ -22,7 +22,8 @@ import="java.text.DateFormat,
     // Get parameters
     boolean add = request.getParameter("add") != null;
     boolean delete = request.getParameter("remove") != null;
-    boolean update = request.getParameter("update") != null;
+    boolean update = request.getParameter("save") != null;
+    boolean cancel = request.getParameter("cancel") != null;
     String users = ParamUtils.getParameter(request, "users");
     String [] adminIDs = ParamUtils.getParameters(request, "admin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
@@ -37,10 +38,21 @@ import="java.text.DateFormat,
     String newGroupList = ParamUtils.getParameter(request, "newGroupList");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
+    boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
+    String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
+    String showGroup = ParamUtils.getParameter(request,"showGroup");
+    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
+
+    edit = true;
+
     Group group = groupManager.getGroup(groupName);
     boolean success = false;
     StringBuffer errorBuf = new StringBuffer();
 
+    if (cancel) {
+        response.sendRedirect("group-summary.jsp");
+        return;
+    }
 
     if (newName != null && newName.length() > 0) {
         if (newShowInRoster && (newDisplayName == null || newDisplayName.length() == 0)) {
@@ -49,16 +61,31 @@ import="java.text.DateFormat,
         if (errors.isEmpty()) {
             group.setName(newName);
             group.setDescription(newDescription);
-            if (newShowInRoster) {
-                group.getProperties().put("sharedRoster.showInRoster", newShowInRosterType);
-                group.getProperties().put("sharedRoster.displayName", newDisplayName);
-                group.getProperties().put("sharedRoster.groupList", newGroupList == null ? "" : newGroupList);
-            }
-            else {
-                group.getProperties().put("sharedRoster.showInRoster", "nobody");
-                group.getProperties().put("sharedRoster.displayName", "");
-                group.getProperties().put("sharedRoster.groupList", "");
-            }
+
+
+
+                if (enableRosterGroups) {
+                    boolean shizzledizzle = false;
+                    if ("spefgroups".equals(showGroup)) {
+                        showGroup = "onlyGroup";
+                        shizzledizzle = true;
+                    }
+                    group.getProperties().put("sharedRoster.showInRoster", showGroup);
+                    if (groupDisplayName != null) {
+                        group.getProperties().put("sharedRoster.displayName", groupDisplayName);
+                    }
+                    if (shizzledizzle) {
+                        group.getProperties().put("sharedRoster.groupList", toList(groupNames));
+                    }
+                }
+                else {
+                    group.getProperties().put("sharedRoster.showInRoster", "nobody");
+                    group.getProperties().put("sharedRoster.displayName", "");
+                    group.getProperties().put("sharedRoster.groupList", "");
+                }
+
+
+
             groupName = newName;
             groupInfoChanged = true;
              // Get admin list and compare it the admin posted list.
@@ -152,6 +179,24 @@ import="java.text.DateFormat,
             "true".equals(request.getParameter("deletesuccess")) ||
             "true".equals(request.getParameter("updatesuccess")) ||
             "true".equals(request.getParameter("creategroupsuccess"));
+
+    if (errors.size() == 0) {
+        enableRosterGroups = !"nobody".equals(group.getProperties().get("sharedRoster.showInRoster"));
+        showGroup = group.getProperties().get("sharedRoster.showInRoster");
+        if (!"onlyGroup".equals(showGroup)) {
+            String glist = group.getProperties().get("sharedRoster.groupList");
+            List l = new ArrayList();
+            if (glist != null) {
+                StringTokenizer tokenizer = new StringTokenizer(glist,",");
+                while (tokenizer.hasMoreTokens()) {
+                    String tok = tokenizer.nextToken().trim();
+                    l.add(tok.trim());
+                }
+            }
+            groupNames = (String[])l.toArray(new String[]{});
+        }
+        groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
+    }
 %>
     <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
 <% // Title of this page and breadcrumbs
@@ -278,103 +323,129 @@ import="java.text.DateFormat,
 
                 <% } %>
             </tr>
-            <tr><td height="15" colspan="3"><img src="images/blank.gif"></td>
-            <tr>
-                <td width="1%" nowrap>
-                    Show group in rosters for:
-                </td>
-                <%  boolean showInRoster = webManager.getRosterManager().isSharedGroup(group) || errors.get("display") != null;
-                    if(!edit) { %>
-                <td colspan="2">
-                    <% if ("onlyGroup".equals(group.getProperties().get("sharedRoster.showInRoster"))) {
-                           out.print("Only group users");
-                       }
-                       else if ("everybody".equals(group.getProperties().get("sharedRoster.showInRoster"))) {
-                           out.print("Everybody");
-                       }
-                       else {
-                           out.print("Nobody");
-                       }
-                    %>
-                </td>
-                <% } else {
-                        String showInRosterType = group.getProperties().get("sharedRoster.showInRoster");
-                        if (errors.get("display") != null && newShowInRosterType != null) {
-                            showInRosterType = newShowInRosterType;
-                        }
-                %>
+            </table>
 
-                <td>
-                <label for="onlyGroup">Only group users</label>
-                <input type="radio" name="newShow" id="onlyGroup" value="onlyGroup" <%= ("onlyGroup".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
-                <label for="everybody">Everybody</label>
-                <input type="radio" name="newShow" id="everybody" value="everybody" <%= ("everybody".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>&nbsp;&nbsp;
-                <label for="nobody">Nobody</label>
-                <input type="radio" name="newShow" id="nobody" value="nobody" <%= (!"onlyGroup".equals(showInRosterType) && !"everybody".equals(showInRosterType) ? "checked" : "") %> onclick="refreshDisplayName(this)"/>
-                </td>
 
-                <% } %>
-            </tr>
-            <tr>
-                <td width="1%" nowrap>
-                    Display name in roster:
-                </td>
-                <%  String displayName = (group.getProperties().get("sharedRoster.displayName") == null ? "" : group.getProperties().get("sharedRoster.displayName"));
-                    if(!edit) { %>
-                <td colspan="2">
-                    <%= displayName %>
-                </td>
-                <% } else { %>
 
-                <td>
-                <input type="text" size="40" name="newDisplay" value="<%= displayName %>" <%= showInRoster ? "" : "disabled"%>/>
-<%
-                if (errors.get("display") != null) {
-%>
-                <span class="jive-error-text"> Please enter a display name. </span>
-<%
-                }
-%>
-                </td>
-
-                <% } %>
-            </tr>
-            <tr>
-                <td width="1%" nowrap>
-                    Viewable by groups:
-                </td>
-                <%  boolean enableGroupList = "onlyGroup".equals(group.getProperties().get("sharedRoster.showInRoster")) || errors.get("display") != null;
-                    String groupList = (group.getProperties().get("sharedRoster.groupList") == null ? "" : group.getProperties().get("sharedRoster.groupList"));
-                    if(!edit) { %>
-                <td colspan="2">
-                    <%= groupList %>
-                </td>
-                <% } else { %>
-
-                <td>
-                <textarea name="newGroupList" cols="40" rows="2" <%= enableGroupList ? "" : "disabled"%>><%= groupList %></textarea>
-<%
-                if (errors.get("groupList") != null) {
-%>
-                <span class="jive-error-text"> Please enter existing group names separated by commas. </span>
-<%
-                }
-%>
-                </td>
-
-                <% } %>
-            </tr>
-            <% if(edit) { %>
-            <tr>
-            <td colspan="3">
-            <input type="submit" value="Change">
-            </td>
-            </tr>
-            <% } %>
-        </table>
-
-    </fieldset> </form>
     <br>
+    <p>Shared Roster Groups</p>
+
+    <p>
+    You can use the form below to show this group in users' rosters. Select from one of three
+    options for who should see this group in their rosters.
+    </p>
+
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
+            </td>
+            <td width="99%">
+                <label for="rb201">Disable sharing group in rosters</label>
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
+            </td>
+            <td width="99%">
+                <label for="rb202">Enable sharing group in rosters</label>
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+                &nbsp;
+            </td>
+            <td width="99%">
+
+                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tbody>
+                    <tr>
+                        <td width="1%" nowrap>
+                            Group Display Name
+                        </td>
+                        <td width="99%">
+                            <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
+                             onclick="this.form.enableRosterGroups[1].checked=true;">
+                        </td>
+                    </tr>
+                </tbody>
+                </table>
+
+                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tbody>
+                    <tr>
+                        <td width="1%" nowrap>
+                            <input type="radio" name="showGroup" value="everybody" id="rb002"
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
+                        </td>
+                        <td width="99%">
+                            <label for="rb002"
+                             >Show group in all users' rosters.</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="1%" nowrap>
+                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= ("onlyGroup".equals(showGroup) ? "checked" : "") %>>
+                        </td>
+                        <td width="99%">
+                            <label for="rb001"
+                             >Show group in group members' rosters</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="1%" nowrap>
+                            <input type="radio" name="showGroup" value="spefgroups" id="rb003"
+                             onclick="this.form.enableRosterGroups[1].checked=true;"
+                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
+                        </td>
+                        <td width="99%">
+                            <label for="rb003"
+                             >Show group to members' rosters of these groups:</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="1%" nowrap>
+                            &nbsp;
+                        </td>
+                        <td width="99%">
+                            <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
+                             multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
+
+                            <%  for (Group g : webManager.getGroupManager().getGroups()) { %>
+
+                                <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+                                 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
+                                 ><%= g.getName() %></option>
+
+                            <%  } %>
+
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+                </table>
+
+            </td>
+        </tr>
+    </tbody>
+    </table>
+
+    </fieldset>
+    <br>
+
+    <%  if (edit) { %>
+        <input type="submit" name="save" value="Save Settings">
+        <input type="submit" name="cancel" value="Cancel">
+    <%  } %>
+
+                    </form>
+
+    <br><br>
 
     <form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
@@ -471,7 +542,38 @@ import="java.text.DateFormat,
         </table>
         </div>
     </form>
-    <jsp:include page="footer.jsp" flush="true"/>
-    <script>
+
+    <script type="text/javascript">
         document.f.users.focus();
     </script>
+
+    <jsp:include page="footer.jsp" flush="true"/>
+
+
+
+<%!
+    private static String toList(String[] array) {
+        if (array == null || array.length == 0) {
+            return "";
+        }
+        StringBuffer buf = new StringBuffer();
+        String sep = "";
+        for (int i=0; i<array.length; i++) {
+            buf.append(sep).append(array[i]);
+            sep = ",";
+        }
+        return buf.toString();
+    }
+
+    private static boolean contains(String[] array, String item) {
+        if (array == null || array.length == 0 || item == null) {
+            return false;
+        }
+        for (int i=0; i<array.length; i++) {
+            if (item.equals(array[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+%>

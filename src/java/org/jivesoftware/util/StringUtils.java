@@ -910,9 +910,6 @@ public class StringUtils {
         if (atIndex + 1 > XMPPAddress.length()) {
             return "";
         }
-        if (atIndex < 0) {
-            atIndex = 0;
-        }
         int slashIndex = XMPPAddress.indexOf("/");
         if (slashIndex > 0) {
             return XMPPAddress.substring(atIndex + 1, slashIndex);

@@ -19,7 +19,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate ASC);
 CREATE TABLE jiveUserProp (
   username              NVARCHAR(32)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
-  propValue             NVARCHAR(3900)  NOT NULL,
+  propValue             NVARCHAR(2000)  NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
 );
 
@@ -38,7 +38,7 @@ CREATE TABLE jiveOffline (
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  message               NVARCHAR(3700)  NOT NULL,
+  message               NTEXT           NOT NULL,
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
@@ -69,7 +69,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 CREATE TABLE jiveVCard (
   username              NVARCHAR(32)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
-  propValue             NVARCHAR(3900)  NOT NULL,
+  propValue             NVARCHAR(2000)  NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (username, name)
 );
 
@@ -84,7 +84,7 @@ CREATE TABLE jiveGroup (
 CREATE TABLE jiveGroupProp (
    groupName            NVARCHAR(100)   NOT NULL,
    name                 NVARCHAR(100)   NOT NULL,
-   propValue            NVARCHAR(3900)  NOT NULL,
+   propValue            NVARCHAR(2000)  NOT NULL,
    CONSTRAINT jiveGroupProp_pk PRIMARY KEY (groupName, name)
 );
 
@@ -96,7 +96,7 @@ CREATE TABLE jiveGroupUser (
   CONSTRAINT jiveGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
 
- 
+
 CREATE TABLE jiveID (
   idType                INTEGER         NOT NULL,
   id                    INTEGER         NOT NULL,
@@ -155,7 +155,7 @@ CREATE TABLE mucConversationLog (
   nickname            NVARCHAR(255)  NULL,
   time                CHAR(15)       NOT NULL,
   subject             NVARCHAR(255)  NULL,
-  body                NVARCHAR(3700) NULL
+  body                NTEXT          NULL
 );
 CREATE INDEX mucLog_time_idx ON mucConversationLog (time, roomID);
 

@@ -134,7 +134,7 @@ Below is a list of sessions on this server.
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="8">
+            <td colspan="9">
 
                 No Sessions
 

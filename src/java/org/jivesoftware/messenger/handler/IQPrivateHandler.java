@@ -88,7 +88,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(PrivateStorage.class, "privateStore");
+        trackInfo.getTrackerClasses().put(PrivateStorage.class, "privateStorage");
         return trackInfo;
     }
 

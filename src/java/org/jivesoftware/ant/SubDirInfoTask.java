@@ -13,6 +13,7 @@ package org.jivesoftware.ant;
 
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
 
 import java.io.File;
 
@@ -27,6 +28,7 @@ public class SubDirInfoTask extends Task {
     private String property;
     private String delimiter;
     private String ifexists;
+    private String except;
 
     public SubDirInfoTask() {
     }
@@ -66,6 +68,14 @@ public class SubDirInfoTask extends Task {
         this.ifexists = ifexists;
     }
 
+    public String getExcept() {
+        return except;
+    }
+
+    public void setExcept(String except) {
+        this.except = except;
+    }
+
     public void execute() throws BuildException {
         // Get the siblings of the given directory, add sub directory names to the property
         File[] subdirs = dir.listFiles();
@@ -85,12 +95,16 @@ public class SubDirInfoTask extends Task {
                     add = true;
                 }
             }
-            if (add) {
+            if (add && !subdir.getName().equals(except)) {
                 buf.append(sep).append(subdir.getName());
                 sep = getDelimiter();
             }
         }
+        if (buf.length() == 0) {
+            log("No tokens found.", Project.MSG_DEBUG);
+        }
         if (buf.length() > 0) {
+            log("Setting property '" + property + "' to " + buf.toString(), Project.MSG_DEBUG);
             getProject().setProperty(property, buf.toString());
         }
     }

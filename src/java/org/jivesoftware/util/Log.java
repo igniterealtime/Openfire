@@ -63,7 +63,7 @@ public class Log {
      */
     public static void initLog() {
         try {
-            logDirectory = JiveGlobals.getLocalProperty("log.directory");
+            logDirectory = JiveGlobals.getXMLProperty("log.directory");
             if (logDirectory == null) {
                 if (JiveGlobals.getJiveHome() != null) {
                     File jiveHome = new File(JiveGlobals.getJiveHome());
@@ -88,21 +88,21 @@ public class Log {
             logNameWarn = logDirectory + "jive.warn.log";
             logNameError = logDirectory + "jive.error.log";
 
-            debugPattern = JiveGlobals.getLocalProperty("log.debug.format");
-            infoPattern = JiveGlobals.getLocalProperty("log.info.format");
-            warnPattern = JiveGlobals.getLocalProperty("log.warn.format");
-            errorPattern = JiveGlobals.getLocalProperty("log.error.format");
+            debugPattern = JiveGlobals.getXMLProperty("log.debug.format");
+            infoPattern = JiveGlobals.getXMLProperty("log.info.format");
+            warnPattern = JiveGlobals.getXMLProperty("log.warn.format");
+            errorPattern = JiveGlobals.getXMLProperty("log.error.format");
 
-            try { maxDebugSize = Long.parseLong(JiveGlobals.getLocalProperty("log.debug.size")); }
+            try { maxDebugSize = Long.parseLong(JiveGlobals.getXMLProperty("log.debug.size")); }
             catch (NumberFormatException e) { /* ignore */ }
-            try { maxInfoSize = Long.parseLong(JiveGlobals.getLocalProperty("log.info.size")); }
+            try { maxInfoSize = Long.parseLong(JiveGlobals.getXMLProperty("log.info.size")); }
             catch (NumberFormatException e) { /* ignore */ }
-            try { maxWarnSize = Long.parseLong(JiveGlobals.getLocalProperty("log.warn.size")); }
+            try { maxWarnSize = Long.parseLong(JiveGlobals.getXMLProperty("log.warn.size")); }
             catch (NumberFormatException e) { /* ignore */ }
-            try { maxErrorSize = Long.parseLong(JiveGlobals.getLocalProperty("log.error.size")); }
+            try { maxErrorSize = Long.parseLong(JiveGlobals.getXMLProperty("log.error.size")); }
             catch (NumberFormatException e) { /* ignore */ }
 
-            debugEnabled = "true".equals(JiveGlobals.getLocalProperty("log.debug.enabled"));
+            debugEnabled = "true".equals(JiveGlobals.getXMLProperty("log.debug.enabled"));
         }
         catch (Exception e) {
             // we'll get an exception if jiveHome isn't setup yet - we ignore that since
@@ -186,7 +186,7 @@ public class Log {
     }
 
     public static void setDebugEnabled(boolean enabled) {
-        JiveGlobals.setLocalProperty("log.debug.enabled", Boolean.toString(enabled));
+        JiveGlobals.setXMLProperty("log.debug.enabled", Boolean.toString(enabled));
         debugEnabled = enabled;
     }
 

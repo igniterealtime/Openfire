@@ -11,18 +11,18 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XMLProperties;
-import org.jivesoftware.util.XPPReader;
+import org.jivesoftware.util.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
+
 import org.dom4j.Document;
+
+import javax.naming.InitialContext;
 
 /**
  * This class controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -53,7 +53,9 @@ import org.dom4j.Document;
  */
 public class JiveGlobals {
 
-    private static final String JIVE_CONFIG_FILENAME = "jive-messenger.xml";
+    private static String JIVE_CONFIG_FILENAME = "jive-messenger.xml";
+
+    private static final String DEFAULT_CHAR_ENCODING = "UTF-8";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -63,10 +65,8 @@ public class JiveGlobals {
 
     public static boolean failedLoading = false;
 
-    /**
-     * XML properties to actually get and set the Jive properties.
-     */
-    private static XMLProperties properties = null;
+    private static XMLProperties xmlProperties = null;
+    private static JiveProperties properties = null;
 
     private static Locale locale = null;
     private static TimeZone timeZone = null;
@@ -83,16 +83,28 @@ public class JiveGlobals {
      */
     public static Locale getLocale() {
         if (locale == null) {
-            loadProperties();
+            if (properties != null) {
+                String language = (String)properties.get("locale.language");
+                if (language == null) {
+                    language = "";
+                }
+                String country = (String)properties.get("locale.country");
+                if (country == null) {
+                    country = "";
+                }
+                // If no locale info is specified, return the system default Locale.
+                if (language.equals("") && country.equals("")) {
+                    locale = Locale.getDefault();
+                }
+                else {
+                    locale = new Locale(language, country);
+                }
+            }
+            else {
+                return Locale.getDefault();
+            }
         }
-
-        if (locale != null) {
-            return locale;
-        }
-        else {
-            // we don't want the locale to be null ever so just return the system default locale
-            return Locale.getDefault();
-        }
+        return locale;
     }
 
     /**
@@ -105,8 +117,8 @@ public class JiveGlobals {
     public static void setLocale(Locale newLocale) {
         locale = newLocale;
         // Save values to Jive properties.
-        setJiveProperty("locale.country", locale.getCountry());
-        setJiveProperty("locale.language", locale.getLanguage());
+        setProperty("locale.country", locale.getCountry());
+        setProperty("locale.language", locale.getLanguage());
         // Reset the date formatter objects
         dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
         dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
@@ -127,7 +139,7 @@ public class JiveGlobals {
      * by your JVM. A list of encodings supported by the Sun JVM can be found
      * <a href="http://java.sun.com/j2se/1.3/docs/guide/intl/encoding.doc.html">
      * here.</a><p>
-     * <p/>
+     *
      * In order for a particular encoding to work (such as Unicode), your
      * application server and database may need to be specially configured.
      * Please consult your server documentation for more information. For
@@ -143,8 +155,21 @@ public class JiveGlobals {
      * @return the global Jive character encoding.
      */
     public static String getCharacterEncoding() {
-        if (locale == null) {
-            loadProperties();
+        if (characterEncoding == null) {
+            if (properties != null) {
+                String charEncoding = (String)properties.get("locale.characterEncoding");
+                if (charEncoding != null) {
+                    characterEncoding = charEncoding;
+                }
+                else {
+                    // The default encoding is ISO-8859-1. We use the version of
+                    // the encoding name that seems to be most widely compatible.
+                    characterEncoding = DEFAULT_CHAR_ENCODING;
+                }
+            }
+            else {
+                return DEFAULT_CHAR_ENCODING;
+            }
         }
         return characterEncoding;
     }
@@ -161,7 +186,7 @@ public class JiveGlobals {
      * by your JVM. A list of encodings supported by the Sun JVM can be found
      * <a href="http://java.sun.com/j2se/1.3/docs/guide/intl/encoding.doc.html">
      * here.</a><p>
-     * <p/>
+     *
      * In order for a particular encoding to work (such as Unicode), your
      * application server and database may need to be specially configured.
      * Please consult your server documentation for more information. For
@@ -178,7 +203,7 @@ public class JiveGlobals {
      */
     public static void setCharacterEncoding(String characterEncoding) {
         JiveGlobals.characterEncoding = characterEncoding;
-        setJiveProperty("locale.characterEncoding", characterEncoding);
+        setProperty("locale.characterEncoding", characterEncoding);
     }
 
     /**
@@ -188,8 +213,19 @@ public class JiveGlobals {
      * @return the global time zone used by Jive.
      */
     public static TimeZone getTimeZone() {
-        if (locale == null) {
-            loadProperties();
+        if (timeZone == null) {
+            if (properties != null) {
+                String timeZoneID = (String)properties.get("locale.timeZone");
+                if (timeZoneID == null) {
+                    timeZone = TimeZone.getDefault();
+                }
+                else {
+                    timeZone = TimeZone.getTimeZone(timeZoneID);
+                }
+            }
+            else {
+                return TimeZone.getDefault();
+            }
         }
         return timeZone;
     }
@@ -202,7 +238,7 @@ public class JiveGlobals {
         timeZone = newTimeZone;
         dateFormat.setTimeZone(timeZone);
         dateTimeFormat.setTimeZone(timeZone);
-        setJiveProperty("locale.timeZone", timeZone.getID());
+        setProperty("locale.timeZone", timeZone.getID());
     }
 
     /**
@@ -212,8 +248,16 @@ public class JiveGlobals {
      * @return a String representing the date.
      */
     public static String formatDate(Date date) {
-        if (locale == null) {
-            loadProperties();
+        if (dateFormat == null) {
+            if (properties != null) {
+                dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, getLocale());
+                dateFormat.setTimeZone(getTimeZone());
+            }
+            else {
+                DateFormat instance = DateFormat.getDateInstance(DateFormat.MEDIUM, getLocale());
+                instance.setTimeZone(getTimeZone());
+                return instance.format(date);
+            }
         }
         return dateFormat.format(date);
     }
@@ -225,8 +269,18 @@ public class JiveGlobals {
      * @return a String representing the date and time.
      */
     public static String formatDateTime(Date date) {
-        if (locale == null) {
-            loadProperties();
+        if (dateTimeFormat == null) {
+            if (properties != null) {
+                dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
+                        DateFormat.MEDIUM, getLocale());
+                dateTimeFormat.setTimeZone(getTimeZone());
+            }
+            else {
+                DateFormat instance = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
+                        DateFormat.MEDIUM, getLocale());
+                instance.setTimeZone(getTimeZone());
+                return instance.format(date);
+            }
         }
         return dateTimeFormat.format(date);
     }
@@ -238,14 +292,35 @@ public class JiveGlobals {
      */
     public static String getJiveHome() {
         if (jiveHome == null) {
-            loadProperties();
+            loadSetupProperties();
         }
         return jiveHome;
     }
 
     /**
-     * Returns a Jive property. Jive properties are stored in the file
-     * <tt>jive_config.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * Sets the location of the <code>jiveHome</code> directory. This method is only intended to be
+     * used during setup and should <b>not</b> set called in normal Jive operations.
+     */
+    public static void setJiveHome(String jHome) {
+        properties = null;
+        xmlProperties = null;
+        failedLoading = false;
+        jiveHome = jHome;
+        locale = null;
+        timeZone = null;
+        characterEncoding = null;
+        dateFormat = null;
+        dateTimeFormat = null;
+
+        loadSetupProperties();
+        System.err.println("Warning - jiveHome is being reset to " + jHome +
+                "! Resetting the jiveHome is a normal part of the setup process, " +
+                "however it should not occur during the normal operations of Jive.");
+    }
+
+    /**
+     * Returns a local property. Local properties are stored in the file
+     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -259,23 +334,22 @@ public class JiveGlobals {
      * @param name the name of the property to return.
      * @return the property value specified by name.
      */
-    public static String getJiveProperty(String name) {
-        if (properties == null) {
-            loadProperties();
+    public static String getXMLProperty(String name) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
         }
 
         // jiveHome not loaded?
-        if (properties == null) {
+        if (xmlProperties == null) {
             return null;
         }
 
-        return properties.getProperty(name);
+        return xmlProperties.getProperty(name);
     }
 
     /**
-     * Sets a Jive property. If the property doesn't already exists, a new
-     * one will be created. Jive properties are stored in the file
-     * <tt>jive_config.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * Returns an integer value local property. Local properties are stored in the file
+     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -286,128 +360,400 @@ public class JiveGlobals {
      * &lt;/foo&gt;
      * </pre>
      *
-     * @param name  the name of the property being set.
+     * If the specified property can't be found, or if the value is not a number, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property could not be loaded or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static int getXMLProperty(String name, int defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            }
+            catch (NumberFormatException nfe) { }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Sets a local property. If the property doesn't already exists, a new
+     * one will be created. Local properties are stored in the file
+     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * Properties are always specified as "foo.bar.prop", which would map to
+     * the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     * @param name the name of the property being set.
      * @param value the value of the property being set.
      */
-    public static void setJiveProperty(String name, String value) {
-        if (properties == null) {
-            loadProperties();
+    public static void setXMLProperty(String name, String value) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
         }
 
-        if (properties != null) {
-            properties.setProperty(name, value);
+        // jiveHome not loaded?
+        if (xmlProperties != null) {
+            xmlProperties.setProperty(name, value);
         }
     }
 
     /**
-     * Deletes a Jive property. If the property doesn't exist, the method
+     * Sets multiple local properties at once. If a property doesn't already exists, a new
+     * one will be created. Local properties are stored in the file
+     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * Properties are always specified as "foo.bar.prop", which would map to
+     * the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     * @param propertyMap a map of properties, keyed on property name.
+     */
+    public static void setXMLProperties(Map propertyMap) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
+        }
+
+        if (xmlProperties != null) {
+            xmlProperties.setProperties(propertyMap);
+        }
+    }
+
+    /**
+     * Return all immediate children property values of a parent local property as a list of strings,
+     * or an empty list if there are no children. For example, given
+     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
+     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
+     * <tt>C</tt> (the value of <tt>C.D</tt> would not be returned using this method).<p>
+     *
+     * Local properties are stored in the file <tt>jive_forums.xml</tt> that exists
+     * in the <tt>jiveHome</tt> directory. Properties are always specified as "foo.bar.prop",
+     * which would map to the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     *
+     * @param parent the name of the parent property to return the children for.
+     * @return all child property values for the given parent.
+     */
+    public static List getXMLProperties(String parent) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
+        }
+
+        // jiveHome not loaded?
+        if (xmlProperties == null) {
+            return Collections.EMPTY_LIST;
+        }
+
+        String[] propNames = xmlProperties.getChildrenProperties(parent);
+        List values = new ArrayList();
+        for (int i = 0; i < propNames.length; i++) {
+            String propName = propNames[i];
+            String value = getProperty(parent + "." + propName);
+            if (value != null) {
+                values.add(value);
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Deletes a locale property. If the property doesn't exist, the method
      * does nothing.
      *
      * @param name the name of the property to delete.
      */
-    public static void deleteJiveProperty(String name) {
+    public static void deleteXMLProperty(String name) {
+        if (xmlProperties == null) {
+            loadSetupProperties();
+        }
+        xmlProperties.deleteProperty(name);
+    }
+    /**
+     * Returns a Jive property.
+     *
+     * @param name the name of the property to return.
+     * @return the property value specified by name.
+     */
+    public static String getProperty(String name) {
         if (properties == null) {
-            loadProperties();
+            properties = JiveProperties.getInstance();
         }
-        if (properties != null) {
-            properties.deleteProperty(name);
+
+        return (String)properties.get(name);
+    }
+
+    /**
+     * Returns a Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist.
+     * @return the property value specified by name.
+     */
+    public static String getProperty(String name, String defaultValue) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
         }
+
+        String value = (String)properties.get(name);
+
+        if (value != null) {
+            return value;
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Returns an integer value Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static int getIntProperty(String name, int defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            }
+            catch (NumberFormatException nfe) { }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Returns a boolean value Jive property.
+     *
+     * @param name the name of the property to return.
+     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
+     *      Otherwise <tt>false</tt> is returned.
+     */
+    public static boolean getBooleanProperty(String name) {
+        return Boolean.valueOf(getProperty(name)).booleanValue();
+    }
+
+    /**
+     * Returns a boolean value Jive property. If the property doesn't exist, the <tt>defaultValue</tt>
+     * will be returned.
+     *
+     * If the specified property can't be found, or if the value is not a number, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist.
+     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
+     *      Otherwise <tt>false</tt> is returned.
+     */
+    public static boolean getBooleanProperty(String name, boolean defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            return Boolean.valueOf(getProperty(name)).booleanValue();
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Return all immediate children property names of a parent Jive property as a list of strings,
+     * or an empty list if there are no children. For example, given
+     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
+     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
+     * <tt>C</tt> (<tt>C.D</tt> would not be returned using this method).<p>
+     *
+     * @return a List of all immediate children property names (Strings).
+     */
+    public static List getPropertyNames(String parent) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+        return new ArrayList(properties.getChildrenNames(parent));
+    }
+
+    /**
+     * Return all immediate children property values of a parent Jive property as a list of strings,
+     * or an empty list if there are no children. For example, given
+     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
+     * the immediate child properties of <tt>X.Y</tt> are <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and
+     * <tt>X.Y.C</tt> (the value of <tt>X.Y.C.D</tt> would not be returned using this method).<p>
+     *
+     * @param parent the name of the parent property to return the children for.
+     * @return all child property values for the given parent.
+     */
+    public static List getProperties(String parent) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+
+        Collection propertyNames = properties.getChildrenNames(parent);
+        List values = new ArrayList();
+        for (Iterator i=propertyNames.iterator(); i.hasNext(); ) {
+            String propName = (String)i.next();
+            String value = getProperty(propName);
+            if (value != null) {
+                values.add(value);
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Returns all Jive property names.
+     *
+     * @return a List of all property names (Strings).
+     */
+    public static List getPropertyNames() {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+        return new ArrayList(properties.getPropertyNames());
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
+     */
+    public static void setProperty(String name, String value) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+        properties.put(name, value);
+    }
+
+   /**
+     * Sets multiple Jive properties at once. If a property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param propertyMap a map of properties, keyed on property name.
+     */
+    public static void setProperties(Map propertyMap) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+
+        properties.putAll(propertyMap);
+    }
+
+    /**
+     * Deletes a Jive property. If the property doesn't exist, the method
+     * does nothing. All children of the property will be deleted as well.
+     *
+     * @param name the name of the property to delete.
+     */
+    public static void deleteProperty(String name) {
+        if (properties == null) {
+            properties = JiveProperties.getInstance();;
+        }
+        properties.remove(name);
+    }
+
+   /**
+    * Allows the name of the local config file name to be changed. The
+    * default is "jive_startup.xml".
+    *
+    * @param configName the name of the config file.
+    */
+    public static void setConfigName(String configName) {
+        JIVE_CONFIG_FILENAME = configName;
     }
 
     /**
      * Loads properties if necessary. Property loading must be done lazily so
      * that we give outside classes a chance to set <tt>jiveHome</tt>.
      */
-    private synchronized static void loadProperties() {
+    private synchronized static void loadSetupProperties() {
         if (failedLoading) {
             return;
         }
-        if (properties == null) {
-            // First, try to load it jiveHome as a system property.
-            if (jiveHome == null) {
-                jiveHome = System.getProperty("jiveHome");
-            }
-
-            // If we still don't have jiveHome, let's assume this is standalone
-            // and just look for jiveHome in a standard sub-dir location and verify
-            // by looking for the config file
-            if (jiveHome == null) {
-                jiveHome = "..";
-                // Create a manager with the full path to the xml config file.
-                try {
-                    properties = new XMLProperties(jiveHome + File.separator +
-                            "config" + File.separator +
-                            JIVE_CONFIG_FILENAME);
-                }
-                catch (IOException ioe) {
-                    jiveHome = null;
-                }
-            }
-
+        if (xmlProperties == null) {
             // If jiveHome is still null, no outside process has set it and
-            // we have to attempt to load the value from messenger_init.xml,
+            // we have to attempt to load the value from jive_init.xml,
             // which must be in the classpath.
             if (jiveHome == null) {
                 jiveHome = new InitPropLoader().getJiveHome();
             }
-
+            // If that failed, try loading it from JNDI
             if (jiveHome == null) {
-                Log.error("Jive Home was never set. In order to continue, Jive Home will need to be set");
+                try {
+                    InitialContext context = new InitialContext();
+                    jiveHome = (String)context.lookup("java:comp/env/jiveHome");
+                }
+                catch (Exception e) { }
+            }
+            // Finally, try to load it jiveHome as a system property.
+            if (jiveHome == null) {
+                jiveHome = System.getProperty("jiveHome");
+            }
+            // If still null, finding jiveHome failed.
+            if (jiveHome == null) {
+                failedLoading = true;
+                StringBuffer msg = new StringBuffer();
+                msg.append("Critical Error! The jiveHome directory could not be loaded, \n");
+                msg.append("which will prevent the application from working correctly.\n\n");
+                msg.append("You must set jiveHome in one of four ways:\n");
+                msg.append("    1) Set a servlet init parameter named jiveHome.\n");
+                msg.append("    2) Add a jive_init.xml file to your classpath, which points \n ");
+                msg.append("       to jiveHome. Normally, this file will be in WEB-INF/classes.\n");
+                msg.append("    3) Set the JNDI value \"java:comp/env/jiveHome\" with a String \n");
+                msg.append("       that points to your jiveHome directory. \n");
+                msg.append("    4) Set the Java system property \"jiveHome\".\n\n");
+                msg.append("Further instructions for setting jiveHome can be found in the \n");
+                msg.append("installation documentation.");
+                System.err.println(msg.toString());
+                return;
+            }
+            // Create a manager with the full path to the xml config file.
+            try {
+                // Do a permission check on the jiveHome directory:
+                File jh = new File(jiveHome);
+                if (!jh.exists()) {
+                    Log.error("Error - the specified jiveHome directory does not exist (" + jiveHome + ")");
+                }
+                else {
+                    if (!jh.canRead() || !jh.canWrite()) {
+                        Log.error("Error - the user running this Jive application can not read and write to the "
+                                + "specified jiveHome directory (" + jiveHome + "). Please grant the executing user "
+                                + "read and write perms.");
+                    }
+                }
+                xmlProperties = new XMLProperties(jiveHome + File.separator +
+                        JIVE_CONFIG_FILENAME);
+            }
+            catch (IOException ioe) {
+                Log.error(ioe);
                 failedLoading = true;
                 return;
             }
-            else {
-                // Create a manager with the full path to the xml config file.
-                try {
-                    properties = new XMLProperties(jiveHome + File.separator +
-                            "config" + File.separator +
-                            JIVE_CONFIG_FILENAME);
-                }
-                catch (IOException ioe) {
-                    Log.error(ioe);
-                    failedLoading = true;
-                    return;
-                }
-            }
-        }
-
-        if (locale == null) {
-            String language = properties.getProperty("locale.language");
-            if (language == null) {
-                language = "";
-            }
-            String country = properties.getProperty("locale.country");
-            if (country == null) {
-                country = "";
-            }
-            // If no locale info is specified, default to system default Locale
-            if (language.equals("") && country.equals("")) {
-                locale = Locale.getDefault();
-            }
-            else {
-                locale = new Locale(language, country);
-            }
-            String charEncoding = properties.getProperty("locale.characterEncoding");
-            if (charEncoding != null) {
-                characterEncoding = charEncoding;
-            }
-            else {
-                // The default encoding is ISO-8859-1. We use the version of
-                // the encoding name that seems to be most widely compatible.
-                characterEncoding = "ISO-8859-1";
-            }
-            String timeZoneID = properties.getProperty("locale.timeZone");
-            if (timeZoneID == null) {
-                timeZone = TimeZone.getDefault();
-            }
-            else {
-                timeZone = TimeZone.getTimeZone(timeZoneID);
-            }
-            dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
-            dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
-                    DateFormat.MEDIUM, locale);
-            dateFormat.setTimeZone(timeZone);
-            dateTimeFormat.setTimeZone(timeZone);
         }
     }
 }

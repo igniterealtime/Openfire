@@ -74,7 +74,7 @@
             // set properties, test connection, etc
 
             // Force the standard jive connection provider to be used by deleting the current setting:
-            JiveGlobals.setJiveProperty("connectionProvider.className",
+            JiveGlobals.setProperty("connectionProvider.className",
                     "org.jivesoftware.database.DefaultConnectionProvider");
             DefaultConnectionProvider conProvider = new DefaultConnectionProvider();
             try {
@@ -86,16 +86,16 @@
                 conProvider.setUsername(username);
                 conProvider.setPassword(password);
 
-                 JiveGlobals.setJiveProperty("database.defaultProvider.driver", driver);
-        JiveGlobals.setJiveProperty("database.defaultProvider.serverURL", serverURL);
-        JiveGlobals.setJiveProperty("database.defaultProvider.username", username);
-        JiveGlobals.setJiveProperty("database.defaultProvider.password", password);
+                 JiveGlobals.setProperty("database.defaultProvider.driver", driver);
+        JiveGlobals.setProperty("database.defaultProvider.serverURL", serverURL);
+        JiveGlobals.setProperty("database.defaultProvider.username", username);
+        JiveGlobals.setProperty("database.defaultProvider.password", password);
 
-        JiveGlobals.setJiveProperty("database.defaultProvider.minConnections",
+        JiveGlobals.setProperty("database.defaultProvider.minConnections",
                 Integer.toString(minConnections));
-        JiveGlobals.setJiveProperty("database.defaultProvider.maxConnections",
+        JiveGlobals.setProperty("database.defaultProvider.maxConnections",
                 Integer.toString(maxConnections));
-        JiveGlobals.setJiveProperty("database.defaultProvider.connectionTimeout",
+        JiveGlobals.setProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
             }
             catch (Exception e) {
@@ -118,27 +118,27 @@
 
     if (!doContinue) {
         // reset values of jdbc driver from props file
-        driver = JiveGlobals.getJiveProperty("database.defaultProvider.driver");
-        serverURL = JiveGlobals.getJiveProperty("database.defaultProvider.serverURL");
-        username = JiveGlobals.getJiveProperty("database.defaultProvider.username");
-        password = JiveGlobals.getJiveProperty("database.defaultProvider.password");
+        driver = JiveGlobals.getProperty("database.defaultProvider.driver");
+        serverURL = JiveGlobals.getProperty("database.defaultProvider.serverURL");
+        username = JiveGlobals.getProperty("database.defaultProvider.username");
+        password = JiveGlobals.getProperty("database.defaultProvider.password");
         try {
             minConnections = Integer.parseInt(
-                    JiveGlobals.getJiveProperty("database.defaultProvider.minConnections"));
+                    JiveGlobals.getProperty("database.defaultProvider.minConnections"));
         }
         catch (Exception e) {
             minConnections = 5;
         }
         try {
             maxConnections = Integer.parseInt(
-                    JiveGlobals.getJiveProperty("database.defaultProvider.maxConnections"));
+                    JiveGlobals.getProperty("database.defaultProvider.maxConnections"));
         }
         catch (Exception e) {
             maxConnections = 15;
         }
         try {
             connectionTimeout = Double.parseDouble(
-                    JiveGlobals.getJiveProperty("database.defaultProvider.connectionTimeout"));
+                    JiveGlobals.getProperty("database.defaultProvider.connectionTimeout"));
         }
         catch (Exception e) {
             connectionTimeout = 1.0;

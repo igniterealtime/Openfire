@@ -24,7 +24,7 @@
 
 <%! // Global vars, methods, etc
     void setSetupFinished(HttpSession session) {
-        JiveGlobals.setJiveProperty("setup","true");
+        JiveGlobals.setXMLProperty("setup","true");
         // update the sidebar status
         session.setAttribute("jive.setup.sidebar.4","done");
     }

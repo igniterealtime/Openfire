@@ -14,7 +14,7 @@
     isErrorPage="true"
 %>
 
-<%  boolean debug = "true".equals(JiveGlobals.getJiveProperty("skin.default.debug"));
+<%  boolean debug = "true".equals(JiveGlobals.getProperty("skin.default.debug"));
     if (debug) {
         exception.printStackTrace();
     }

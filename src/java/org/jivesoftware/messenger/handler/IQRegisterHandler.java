@@ -148,7 +148,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
         // Check for the default case where no inband property is set and
         // make the default true (allowing inband registration)
-        String inband = JiveGlobals.getJiveProperty("register.inband");
+        String inband = JiveGlobals.getProperty("register.inband");
         if (inband == null || "".equals(inband)) {
             setInbandRegEnabled(true);
         }
@@ -367,7 +367,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     public void setInbandRegEnabled(boolean allowed) {
         enabled = allowed;
-        JiveGlobals.setJiveProperty("register.inband", enabled ? "true" : "false");
+        JiveGlobals.setProperty("register.inband", enabled ? "true" : "false");
     }
     
     private IQHandler getDelegate(XMPPAddress recipientJID) {

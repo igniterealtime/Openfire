@@ -40,36 +40,36 @@ public class SSLConfig {
     }
 
     static {
-        String algorithm = JiveGlobals.getJiveProperty("xmpp.socket.ssl.algorithm");
+        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
         if ("".equals(algorithm) || algorithm == null) {
             algorithm = "TLS";
         }
-        String storeType = JiveGlobals.getJiveProperty("xmpp.socket.ssl.storeType");
+        String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType");
         if ("".equals(storeType)) {
             storeType = null;
         }
-        keystore = JiveGlobals.getJiveProperty("xmpp.socket.ssl.keystore");
+        keystore = JiveGlobals.getProperty("xmpp.socket.ssl.keystore");
         if ("".equals(keystore) || keystore == null) {
             keystore = null;
         }
         else {
             keystore = JiveGlobals.getJiveHome() + File.separator + keystore;
         }
-        keypass = JiveGlobals.getJiveProperty("xmpp.socket.ssl.keypass");
+        keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass");
         if (keypass == null) {
             keypass = "";
         }
         else {
             keypass = keypass.trim();
         }
-        truststore = JiveGlobals.getJiveProperty("xmpp.socket.ssl.truststore");
+        truststore = JiveGlobals.getProperty("xmpp.socket.ssl.truststore");
         if ("".equals(truststore) || truststore == null) {
             truststore = null;
         }
         else {
             truststore = JiveGlobals.getJiveHome() + File.separator + truststore;
         }
-        trustpass = JiveGlobals.getJiveProperty("xmpp.socket.ssl.trustpass");
+        trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass");
         if (trustpass == null) {
             trustpass = "";
         }

@@ -48,11 +48,11 @@
         // if no errors, continue
         if (errors.size() == 0) {
             // Set the JNDI connection class property in the jive props file
-            JiveGlobals.setJiveProperty("connectionProvider.className",
+            JiveGlobals.setProperty("connectionProvider.className",
                     "org.jivesoftware.database.JNDIDataSourceProvider");
             // Save the name (must do this *first* before initializing
             // the JNDIDataSourceProvider
-            JiveGlobals.setJiveProperty("database.JNDIProvider.name",lookupName);
+            JiveGlobals.setProperty("database.JNDIProvider.name",lookupName);
             // Use the Jive default connection provider
             JNDIDataSourceProvider conProvider = new JNDIDataSourceProvider();
             conProvider.setProperty("name", lookupName);

@@ -73,7 +73,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             probeResponse.add(DocumentHelper.createElement("digest"));
         }
         probeResponse.add(DocumentHelper.createElement("resource"));
-        anonymousAllowed = "true".equals(JiveGlobals.getJiveProperty("xmpp.auth.anonymous"));
+        anonymousAllowed = "true".equals(JiveGlobals.getProperty("xmpp.auth.anonymous"));
     }
 
     public synchronized IQ handleIQ(IQ packet) throws
@@ -239,7 +239,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public void setAllowAnonymous(boolean isAnonymous) throws UnauthorizedException {
         anonymousAllowed = isAnonymous;
-        JiveGlobals.setJiveProperty("xmpp.auth.anonymous", anonymousAllowed ? "true" : "false");
+        JiveGlobals.setProperty("xmpp.auth.anonymous", anonymousAllowed ? "true" : "false");
     }
 
     public UserManager userManager;

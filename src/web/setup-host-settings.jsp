@@ -51,13 +51,13 @@
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
-            JiveGlobals.setJiveProperty("xmpp.domain",domain);
-            JiveGlobals.setJiveProperty("xmpp.chat.domain",chatDomain);
-            JiveGlobals.setJiveProperty("xmpp.socket.plain.port",Integer.toString(port));
-            JiveGlobals.setJiveProperty("embedded-web.port",Integer.toString(embeddedPort));
-            JiveGlobals.setJiveProperty("xmpp.socket.ssl.active",""+sslEnabled);
-            JiveGlobals.setJiveProperty("xmpp.socket.ssl.port",Integer.toString(sslPort));
-            JiveGlobals.setJiveProperty("xmpp.auth.anonymous", "true" );
+            JiveGlobals.setProperty("xmpp.domain",domain);
+            JiveGlobals.setProperty("xmpp.chat.domain",chatDomain);
+            JiveGlobals.setProperty("xmpp.socket.plain.port",Integer.toString(port));
+            JiveGlobals.setProperty("embedded-web.port",Integer.toString(embeddedPort));
+            JiveGlobals.setProperty("xmpp.socket.ssl.active",""+sslEnabled);
+            JiveGlobals.setProperty("xmpp.socket.ssl.port",Integer.toString(sslPort));
+            JiveGlobals.setProperty("xmpp.auth.anonymous", "true" );
             // JiveGlobals.setProperty("xmpp.socket.ssl.storeType",storeType);
             // JiveGlobals.setProperty("xmpp.socket.ssl.keystore",keystore);
             // JiveGlobals.setProperty("xmpp.socket.ssl.keypass",keypass);
@@ -76,23 +76,23 @@
 
     // Load the current values:
     if (!doContinue) {
-        domain = JiveGlobals.getJiveProperty("xmpp.domain");
-        chatDomain = JiveGlobals.getJiveProperty("xmpp.chat.domain");
+        domain = JiveGlobals.getProperty("xmpp.domain");
+        chatDomain = JiveGlobals.getProperty("xmpp.chat.domain");
         // storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType");
         // keystore = JiveGlobals.getProperty("xmpp.socket.ssl.keystore");
         // keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass");
         // truststore = JiveGlobals.getProperty("xmpp.socket.ssl.truststore");
         // trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass");
         try {
-            port = Integer.parseInt(JiveGlobals.getJiveProperty("xmpp.socket.plain.port"));
+            port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port"));
         } catch (Exception ignored) {}
         try {
-            embeddedPort = Integer.parseInt(JiveGlobals.getJiveProperty("embedded-web.port"));
+            embeddedPort = Integer.parseInt(JiveGlobals.getProperty("embedded-web.port"));
         } catch (Exception ignored) {}
         try {
-            sslPort = Integer.parseInt(JiveGlobals.getJiveProperty("xmpp.socket.ssl.port"));
+            sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port"));
         } catch (Exception ignored) {}
-        sslEnabled = "true".equals(JiveGlobals.getJiveProperty("xmpp.socket.ssl.active"));
+        sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
 
         // If the domain and chat domain are still blank, guess at their values:
         if (domain == null) {

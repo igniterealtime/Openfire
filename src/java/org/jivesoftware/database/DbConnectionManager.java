@@ -69,7 +69,7 @@ public class DbConnectionManager {
                 if (connectionProvider == null) {
                     // Attempt to load the connection provider classname as
                     // a Jive property.
-                    String className = JiveGlobals.getJiveProperty("connectionProvider.className");
+                    String className = JiveGlobals.getXMLProperty("connectionProvider.className");
                     if (className != null) {
                         // Attempt to load the class.
                         try {
@@ -268,7 +268,7 @@ public class DbConnectionManager {
             }
         }
         // Remember what connection provider we want to use for restarts.
-        JiveGlobals.setJiveProperty("connectionProvider.className",
+        JiveGlobals.setProperty("connectionProvider.className",
                 provider.getClass().getName());
     }
 

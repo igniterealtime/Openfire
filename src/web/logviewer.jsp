@@ -343,12 +343,12 @@ String log = ParamUtils.getParameter(request, "log");
 
     // Enable/disable debugging
     if (request.getParameter("wasDebugEnabled") != null && wasDebugEnabled != debugEnabled) {
-        JiveGlobals.setJiveProperty("log.debug.enabled",String.valueOf(debugEnabled));
+        JiveGlobals.setProperty("log.debug.enabled",String.valueOf(debugEnabled));
         response.sendRedirect("logviewer.jsp?log=debug&debugAlert=true");
         return;
     }
 
-    debugEnabled = "true".equals(JiveGlobals.getJiveProperty("log.debug.enabled"));
+    debugEnabled = "true".equals(JiveGlobals.getProperty("log.debug.enabled"));
 
     // Set defaults
     if (log == null) {

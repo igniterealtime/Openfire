@@ -67,7 +67,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
 
         // Now start up the acceptor (and associated read selector)
-        if ("true".equals(JiveGlobals.getJiveProperty("xmpp.socket.plain.active"))) {
+        if ("true".equals(JiveGlobals.getProperty("xmpp.socket.plain.active"))) {
             socketThread = new SocketAcceptThread(this);
             ports.add(new ServerPortImpl(socketThread.getPort(),
                     serverName,
@@ -81,11 +81,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             params.add(Integer.toString(socketThread.getPort()));
             Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
         }
-        if ("true".equals(JiveGlobals.getJiveProperty("xmpp.socket.ssl.active"))) {
+        if ("true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"))) {
             try {
                 sslSocketThread = new SSLSocketAcceptThread(this);
                 String algorithm =
-                        JiveGlobals.getJiveProperty("xmpp.socket.ssl.algorithm");
+                        JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
                 if ("".equals(algorithm) || algorithm == null) {
                     algorithm = "TLS";
                 }

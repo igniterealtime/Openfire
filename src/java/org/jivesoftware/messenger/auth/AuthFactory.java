@@ -68,10 +68,10 @@ public abstract class AuthFactory {
         // Get the cookie password, stored as a Jive property. Obviously,
         // protecting your jive_config.xml file is critical for making cookie
         // encryption secure.
-        String keyString = JiveGlobals.getJiveProperty("cookieKey");
+        String keyString = JiveGlobals.getProperty("cookieKey");
         if (keyString == null) {
             keyString = StringUtils.randomString(15);
-            JiveGlobals.setJiveProperty("cookieKey", keyString);
+            JiveGlobals.setProperty("cookieKey", keyString);
         }
         try {
             sha = MessageDigest.getInstance("SHA");

@@ -27,7 +27,7 @@
 
 <%! // List of allowed usernames:
     static Map allowedUsernames = null;
-    static String allowedUsernameProp = JiveGlobals.getJiveProperty("admin.login.allowedUsernames");
+    static String allowedUsernameProp = JiveGlobals.getProperty("admin.login.allowedUsernames");
     static {
         if (allowedUsernameProp != null) {
             StringTokenizer tokenizer = new StringTokenizer(allowedUsernameProp, ",");

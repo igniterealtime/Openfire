@@ -70,7 +70,7 @@ public class AuthProviderFactory {
                 if (authProvider == null) {
                     //See if the classname has been set as a Jive property.
                     String classNameProp =
-                            JiveGlobals.getJiveProperty("AuthProvider.className");
+                            JiveGlobals.getProperty("AuthProvider.className");
                     if (classNameProp != null) {
                         authClassName = classNameProp;
                     }
@@ -103,7 +103,7 @@ public class AuthProviderFactory {
                 if (groupProvider == null) {
                     //See if the classname has been set as a Jive property.
                     String classNameProp =
-                            JiveGlobals.getJiveProperty("GroupProvider.className");
+                            JiveGlobals.getProperty("GroupProvider.className");
                     if (classNameProp != null) {
                         groupClassName = classNameProp;
                     }

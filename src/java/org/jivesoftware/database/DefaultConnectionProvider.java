@@ -13,8 +13,6 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.database.ConnectionPool;
-import org.jivesoftware.database.ConnectionProvider;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -276,15 +274,15 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      * Load properties that already exist from Jive properties.
      */
     private void loadProperties() {
-        driver = JiveGlobals.getJiveProperty("database.defaultProvider.driver");
-        serverURL = JiveGlobals.getJiveProperty("database.defaultProvider.serverURL");
-        username = JiveGlobals.getJiveProperty("database.defaultProvider.username");
-        password = JiveGlobals.getJiveProperty("database.defaultProvider.password");
-        String minCons = JiveGlobals.getJiveProperty("database.defaultProvider.minConnections");
-        String maxCons = JiveGlobals.getJiveProperty("database.defaultProvider.maxConnections");
-        String conTimeout = JiveGlobals.getJiveProperty("database.defaultProvider.connectionTimeout");
+        driver = JiveGlobals.getXMLProperty("database.defaultProvider.driver");
+        serverURL = JiveGlobals.getXMLProperty("database.defaultProvider.serverURL");
+        username = JiveGlobals.getXMLProperty("database.defaultProvider.username");
+        password = JiveGlobals.getXMLProperty("database.defaultProvider.password");
+        String minCons = JiveGlobals.getXMLProperty("database.defaultProvider.minConnections");
+        String maxCons = JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections");
+        String conTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout");
         // See if we should use Unicode under MySQL
-        mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getJiveProperty("database.mysql.useUnicode")).booleanValue();
+        mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode")).booleanValue();
         try {
             if (minCons != null) {
                 minConnections = Integer.parseInt(minCons);
@@ -307,16 +305,16 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     private void saveProperties() {
 
-        JiveGlobals.setJiveProperty("database.defaultProvider.driver", driver);
-        JiveGlobals.setJiveProperty("database.defaultProvider.serverURL", serverURL);
-        JiveGlobals.setJiveProperty("database.defaultProvider.username", username);
-        JiveGlobals.setJiveProperty("database.defaultProvider.password", password);
+        JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
+        JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
+        JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
+        JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
 
-        JiveGlobals.setJiveProperty("database.defaultProvider.minConnections",
+        JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
                 Integer.toString(minConnections));
-        JiveGlobals.setJiveProperty("database.defaultProvider.maxConnections",
+        JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
                 Integer.toString(maxConnections));
-        JiveGlobals.setJiveProperty("database.defaultProvider.connectionTimeout",
+        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
     }
 }

@@ -64,7 +64,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
      * Initialize.
      */
     public JNDIDataSourceProvider() {
-        dataSourceName = JiveGlobals.getJiveProperty("database.JNDIProvider.name");
+        dataSourceName = JiveGlobals.getXMLProperty("database.JNDIProvider.name");
     }
 
     public String getName() {
@@ -103,7 +103,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
             Properties contextProperties = new Properties();
             for (int i = 0; i < jndiPropertyKeys.length; i++) {
                 String k = jndiPropertyKeys[i];
-                String v = JiveGlobals.getJiveProperty(k);
+                String v = JiveGlobals.getXMLProperty(k);
                 if (v != null) {
                     contextProperties.setProperty(k, v);
                 }
@@ -157,7 +157,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
     public void setProperty(String name, String value) {
         if ("name".equals(name)) {
             this.dataSourceName = value;
-            JiveGlobals.setJiveProperty("database.JNDIProvider.name", value);
+            JiveGlobals.setXMLProperty("database.JNDIProvider.name", value);
         }
     }
 

@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+
+<!--
+    $RCSfile$
+    $Revision$
+    $Date$
+
+    LICENSE INFO HERE
+-->
+
+<!--
+    Build Requirements:
+
+        * Ant 1.6 (including optional tasks)
+        * JDK 1.5
+        * jUnit in your Ant or Java classpath
+-->
+
+<project name="Messenger XMPP Server" default="all" basedir="..">
+
+    <description>
+        Jive Messenger build script.
+    </description>
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL PROPERTIES                                                                       -->
+    <!-- ======================================================================================= -->
+
+    <property file="${basedir}/build/build.properties" />
+
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="src.java.dir" value="${src.dir}/java" />
+    <property name="src.i18n.dir" value="${src.dir}/i18n" />
+    <property name="lib.build.dir" value="${basedir}/build/lib" />
+    <property name="lib.merge.dir" value="${lib.build.dir}/merge" />
+    <property name="target.dir" value="${basedir}/target" />
+    <property name="compile.dir" value="${basedir}/target/classes" />
+    <property name="jar.name" value="messengerd.jar" />
+    <property name="jar.dest.dir" value="${target.dir}/lib" />
+    <property name="javadoc.dir" value="${basedir}/target/javadoc" />
+    <property name="jspc.dest.dir" value="${target.dir}/jspc" />
+    <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java" />
+    <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes" />
+    <property name="release.dest.dir" value="${target.dir}/release" />
+
+    <!-- ======================================================================================= -->
+    <!-- PATHs / PATTERNSETs                                                                     -->
+    <!-- ======================================================================================= -->
+
+    <path id="javadoc.dependencies">
+        <fileset dir="${lib.build.dir}" includes="*.jar" />
+    </path>
+
+    <path id="compile.dependencies">
+        <path refid="javadoc.dependencies" />
+        <fileset dir="${lib.merge.dir}" includes="*.jar" />
+    </path>
+
+    <patternset id="compile.sources">
+        <include name="**/*.java" />
+    </patternset>
+
+    <!-- ======================================================================================= -->
+    <!-- TARGETs                                                                                 -->
+    <!-- ======================================================================================= -->
+
+    <!-- all =================================================================================== -->
+    <target name="all" depends="war" description="Calls 'war' target" />
+
+    <!-- init ================================================================================== -->
+    <target name="init">
+        <!-- Check for min build requirements -->
+        <!-- TODO - this doesn't work for some reason -->
+        <condition property="ant.not.ok" value="true"><not><contains string="${ant.version}" substring="1.6" /></not></condition>
+        <condition property="java.not.ok" value="true"><not><contains string="${ant.java.version}" substring="1.5" /></not></condition>
+        <fail if="${ant.not.ok}" message="Must use Ant 1.6.x to build Jive Messenger" />
+        <fail if="${java.not.ok}" message="Must use JDK 1.5.x to build Jive Messenger" />
+
+        <tstamp />
+        <mkdir dir="${target.dir}" />
+    </target>
+
+    <!-- compile =============================================================================== -->
+    <target name="compile" depends="init" description="Compiles Messenger app code">
+        <mkdir dir="${compile.dir}" />
+        <javac
+            destdir="${compile.dir}"
+            includeAntRuntime="no"
+            debug="on"
+        >
+            <src path="${src.java.dir}" />
+            <patternset refid="compile.sources" />
+            <classpath>
+                <path refid="compile.dependencies" />
+            </classpath>
+        </javac>
+    </target>
+
+    <!-- jar =================================================================================== -->
+    <target name="jar" depends="compile" description="Produces a JAR of Messenger app code">
+        <mkdir dir="${jar.dest.dir}" />
+        <jar jarfile="${jar.dest.dir}/${jar.name}">
+            <fileset dir="${compile.dir}" includes="**/*.class" />
+            <fileset dir="${src.i18n.dir}" includes="*.properties" />
+            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <manifest>
+                <attribute name="Main-Class" value="org.jivesoftware.SplashScreen"/>
+                <attribute name="Built-By" value="Jive Software"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- war =================================================================================== -->
+    <target name="war" description="Creates a WAR of the Messenger app">
+    </target>
+
+    <!-- javadoc =============================================================================== -->
+    <target name="javadoc" description="Produces Messenger Javadocs">
+    </target>
+
+    <!-- jspc ================================================================================== -->
+    <target name="jspc" description="Compiles all JSP pages in the admin console">
+        <mkdir dir="${jspc.dest.dir}" />
+        <mkdir dir="${jspc.java.dest.dir}" />
+        <mkdir dir="${jspc.classes.dest.dir}" />
+
+        <!--
+        <jspc srcdir="${src.admin.dir}"
+                destdir="${out.jspc.java.dir}"
+                package="com.jivesoftware.messenger.admin"
+                webinc="${out.jspc.webinf.dir}/web.tmp.xml">
+            <include name="**/*.jsp" />
+            <exclude name="error.jsp" />
+            <exclude name="header.jsp" />
+            <exclude name="footer.jsp" />
+            <exclude name="title.jsp" />
+            <exclude name="title-browser.jsp" />
+            <exclude name="breadcrumbs.jsp" />
+            <exclude name="workgroup-agents.jsp" />
+            <exclude name="session-row.jsp" />
+            <exclude name="setup-env-check.jsp" />
+            <exclude name="setup-header.jsp" />
+            <exclude name="setup-footer.jsp" />
+            <exclude name="upgrade/index.jsp" />
+            <classpath>
+                <pathelement path="${out.classes.dir}"/>
+                <path refid="compile.dependencies"/>
+                <path refid="compile.web.dependencies"/>
+            </classpath>
+        </jspc>
+        -->
+    </target>
+
+    <!-- jspcjar =============================================================================== -->
+    <target name="jspcjar" description="Creates a JAR of generated JSP files">
+
+    </target>
+
+    <!-- release =============================================================================== -->
+    <target name="release" description="Creates a distribution">
+    </target>
+
+    <!-- test ================================================================================== -->
+    <target name="test" description="Runs test cases">
+    </target>
+
+    <!-- clean ================================================================================= -->
+    <target name="clean" description="Cleans up all build-generated output">
+        <delete dir="${target.dir}" />
+    </target>
+
+</project>

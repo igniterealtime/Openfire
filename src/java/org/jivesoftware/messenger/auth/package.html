@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<p>Provides the interfaces and classes necessary to create custom
+authentication data providers for Messenger.</p>
+<p>Authentication can be separately provided from user accounts and is
+only used during initial XMPP session connection (an infrequent
+operation considering the persistent nature of most XMPP connections).
+Implementors should concentrate on the AuthProvider interface.</p>
+<p>Messenger also includes the concept of user groups, used to assign
+permissions to sets of users rather than having to assign permissions
+to many individuals which can be tedious with large user populations.
+The group concept is heavily used in Jive Forums upon which the
+Messenger user system is based. Messenger 1.1 does not actively use
+groups but group support was kept in Messenger to ease future
+integration with Forums. Custom data provider implementors are
+discouraged from implementing custom GroupProvider classes as the
+interface may change. Contact <a href="http://www.jivesoftware.com">Jive
+Software</a> if group support
+is needed in your deployment.</p>
+</body>
+</html>

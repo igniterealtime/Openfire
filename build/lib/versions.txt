@@ -1,0 +1,12 @@
+Name                 |  Version
+---------------------------------------------
+hsqldb.jar           |
+mysql.jar            | 3.0.15
+postgres.jar         | 7.4 version 215
+ant.jar              | Jetty 5.0.0
+jetty.jar            |     ^
+jasper-compiler.jar  |     |
+jasper-runtime.jar   |     |
+servlets.jar         |     -
+wls_stax.jar         | Downloaded 10/19/2004
+dom4j.jar            | 1.5

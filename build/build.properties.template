@@ -1,0 +1,17 @@
+#
+# $RCSfile$
+# $Revision$
+# $Date$
+#
+
+#
+# Directory where the jar files will be deployed (see the deployjar task)
+#
+deploy.jar.dir=
+
+#
+# Directory where the installer messenger.iap_xml file is located.
+# Example: d:\\cvs\\xmpp\\chat\\build\\installer (win paths must have \\)
+# Note: Do not put a trailing "\" at the end!
+#
+installer.new.path=

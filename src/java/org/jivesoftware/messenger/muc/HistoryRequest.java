@@ -1,0 +1,249 @@
+/**
+ * $RCSfile$
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ *
+ * This software is the proprietary information of CoolServlets, Inc.
+ * Use is subject to license terms.
+ */
+package org.jivesoftware.messenger.muc;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.TimeZone;
+
+import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.messenger.Message;
+import org.jivesoftware.messenger.MetaDataFragment;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+
+import org.jivesoftware.messenger.muc.MUCRoomHistory;
+
+/**
+ * Represents the amount of history requested by an occupant while joining a room. There are 
+ * basically four ways to control the amount of history that a user may receive. Those are: limit
+ * by the maximum limit of characters to receive, limit by a maximum number of stanzas to receive,
+ * limit to receive only the messages before a given date or of the last X seconds.<p>
+ * 
+ * A user may combine any of these four methods. The idea is that the user will receive the smallest 
+ * amount of traffic so the amount of history to collect will stop as soon as any of the requested 
+ * method has reached its limit.
+ * 
+ * @author Gaston Dombiak
+ */
+public class HistoryRequest {
+
+    private static final DateFormat formatter = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+    private static final DateFormat delayedFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+    static {
+        delayedFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+    }
+
+    private int maxChars = -1;
+    private int maxStanzas = -1;
+    private int seconds = -1;
+    private Date since;
+
+    public HistoryRequest(MetaDataFragment userFragment) {
+        if (userFragment.includesProperty("x.history")) {
+            if (userFragment.includesProperty("x.history:maxchars")) {
+                this.maxChars = Integer.parseInt(userFragment.getProperty("x.history:maxchars"));
+            }
+            if (userFragment.includesProperty("x.history:maxstanzas")) {
+                this.maxStanzas = Integer.parseInt(userFragment.getProperty("x.history:maxstanzas"));
+            }
+            if (userFragment.includesProperty("x.history:seconds")) {
+                this.seconds = Integer.parseInt(userFragment.getProperty("x.history:seconds"));
+            }
+            if (userFragment.includesProperty("x.history:since")) {
+                try {
+                    // parse utc into Date
+                    this.since = formatter.parse(userFragment.getProperty("x.history:since"));
+                }
+                catch(ParseException pe) {
+                    Log.error("Error parsing date from history management", pe);
+                    this.since = null;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Returns the total number of characters to receive in the history.
+     * 
+     * @return total number of characters to receive in the history.
+     */
+    public int getMaxChars() {
+        return maxChars;
+    }
+
+    /**
+     * Returns the total number of messages to receive in the history.
+     * 
+     * @return the total number of messages to receive in the history.
+     */
+    public int getMaxStanzas() {
+        return maxStanzas;
+    }
+
+    /**
+     * Returns the number of seconds to use to filter the messages received during that time. 
+     * In other words, only the messages received in the last "X" seconds will be included in 
+     * the history.
+     * 
+     * @return the number of seconds to use to filter the messages received during that time.
+     */
+    public int getSeconds() {
+        return seconds;
+    }
+
+    /**
+     * Returns the since date to use to filter the messages received during that time. 
+     * In other words, only the messages received since the datetime specified will be 
+     * included in the history.
+     * 
+     * @return the since date to use to filter the messages received during that time.
+     */
+    public Date getSince() {
+        return since;
+    }
+
+    /**
+     * Sets the total number of characters to receive in the history.
+     * 
+     * @param maxChars the total number of characters to receive in the history.
+     */
+    public void setMaxChars(int maxChars) {
+        this.maxChars = maxChars;
+    }
+
+    /**
+     * Sets the total number of messages to receive in the history.
+     * 
+     * @param maxStanzas the total number of messages to receive in the history.
+     */
+    public void setMaxStanzas(int maxStanzas) {
+        this.maxStanzas = maxStanzas;
+    }
+
+    /**
+     * Sets the number of seconds to use to filter the messages received during that time. 
+     * In other words, only the messages received in the last "X" seconds will be included in 
+     * the history.
+     * 
+     * @param seconds the number of seconds to use to filter the messages received during 
+     * that time.
+     */
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
+    }
+
+    /**
+     * Sets the since date to use to filter the messages received during that time. 
+     * In other words, only the messages received since the datetime specified will be 
+     * included in the history.
+     * 
+     * @param since the since date to use to filter the messages received during that time.
+     */
+    public void setSince(Date since) {
+        this.since = since;
+    }
+
+    /**
+     * Returns true if the history has been configured with some values.
+     * 
+     * @return true if the history has been configured with some values.
+     */
+    private boolean isConfigured() {
+        return maxChars > -1 || maxStanzas > -1 || seconds > -1 || since != null;
+    }
+
+    /**
+     * Sends the smallest amount of traffic that meets any combination of the requested criteria.
+     * 
+     * @param joinRole the user that will receive the history.
+     * @param roomHistory the history of the room.
+     */
+    public void sendHistory(MUCRoleImpl joinRole, MUCRoomHistory roomHistory) {
+        try {
+            if (!isConfigured()) {
+                Iterator history = roomHistory.getMessageHistory();
+                while (history.hasNext()) {
+                    joinRole.send((Message) history.next());
+                }
+            }
+            else {
+                if (getMaxChars() == 0) {
+                    // The user requested to receive no history
+                    return;
+                }
+                Message message;
+                int accumulatedChars = 0;
+                int accumulatedStanzas = 0;
+                MetaDataFragment delayInformation;
+                LinkedList historyToSend = new LinkedList();
+                ListIterator iterator = roomHistory.getReverseMessageHistory();
+                while (iterator.hasPrevious()) {
+                    message = (Message)iterator.previous();
+                    // Update number of characters to send
+                    accumulatedChars += message.getBody().length();
+                    if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
+                        // Stop collecting history since we have exceded a limit
+                        break;
+                    }
+                    // Update number of messages to send
+                    accumulatedStanzas ++;
+                    if (getMaxStanzas() > -1 && accumulatedStanzas > getMaxStanzas()) {
+                        // Stop collecting history since we have exceded a limit
+                        break;
+                    }
+                    
+                    if (getSeconds() > -1 || getSince() != null) {
+                        delayInformation = (MetaDataFragment) message.getFragment(
+                                "x",
+                                "jabber:x:delay");
+                        try {
+                            // Get the date when the historic message was sent
+                            Date delayedDate = delayedFormatter.parse(delayInformation
+                                    .getProperty("x:stamp"));
+                            if (getSince() != null && delayedDate.before(getSince())) {
+                                // Stop collecting history since we have exceded a limit
+                                break;
+                            }
+                            if (getSeconds() > -1) {
+                                Date current = new Date();
+                                long diff = (current.getTime() - delayedDate.getTime()) / 1000;
+                                if (getSeconds() <= diff) {
+                                    // Stop collecting history since we have exceded a limit
+                                    break;
+                                }
+                            }
+                        }
+                        catch (ParseException e) {
+                            Log.error("Error parsing date from historic message", e);
+                        }
+
+                    }
+                    
+                    historyToSend.addFirst(message);
+                }
+                // Send the smallest amount of traffic to the user
+                Iterator history = historyToSend.iterator();
+                while (history.hasNext()) {
+                    joinRole.send((Message) history.next());
+                }
+            }
+        }
+        catch (UnauthorizedException e) {
+            // Do nothing
+        }
+    }
+}

@@ -1,0 +1,136 @@
+<%@ taglib uri="core" prefix="c" %>
+<%@ taglib uri="fmt" prefix="ftm" %>
+<%--
+  -	$RCSfile$
+  -	$Revision$
+  -	$Date$
+--%>
+
+<%@ page import="org.jivesoftware.util.*,
+                 org.jivesoftware.messenger.Session,
+                 java.text.DateFormat,
+                 org.jivesoftware.messenger.XMPPServer,
+                 org.jivesoftware.messenger.container.*,
+                 org.jivesoftware.messenger.spi.BasicServer,
+                 org.jivesoftware.messenger.container.spi.XMLModuleContext,
+                 org.jivesoftware.messenger.auth.UnauthorizedException"
+%>
+<!-- Define Administration Bean -->
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
+<% admin.init(request, response, session, application, out ); %>
+
+<!-- Define Title and BreadCrumbs -->
+<c:set var="title" value="Server Status"  />
+<c:set var="breadcrumbs" value="${admin.breadCrumbs}"  />
+<c:set target="${breadcrumbs}" property="Home" value="main.jsp" />
+<c:set target="${breadcrumbs}" property="${title}" value="server-status.jsp" />
+<%@ include file="top.jsp" %>
+
+
+<%  // Get parameters //
+    boolean stop = request.getParameter("stop") != null;
+    boolean restart = request.getParameter("restart") != null;
+
+    boolean serverOn = (admin.getXMPPServer() != null);
+
+    // Handle starts, stops & restarts
+    if (stop) {
+      admin.stop(admin.getContainer());
+      response.sendRedirect("server-status.jsp");
+      return;
+    }
+    else if (restart) {
+      admin.restart(admin.getContainer());
+      response.sendRedirect("server-status.jsp");
+      return;
+    }
+%>
+
+<p>
+Below is the status of your <fmt:message key="short.title" bundle="${lang}" /> server.
+</p>
+
+<table class="box" cellpadding="3" cellspacing="1" border="0" width="600">
+<tr class="tableHeaderBlue"><td colspan="2" align="center">Current Status</td></tr>
+<tr>
+<td class="jive-label">Server Status</td>
+  
+      
+    <%  if (serverOn) { %>
+      <td>
+      <img src="images/greenlight-24x24.jpg" />
+      
+        </td>
+
+    <%  } else { %>
+<td>
+     <img src="images/redlight-24x24.jpg" />
+    
+        </td>
+        
+       
+
+    <%  } %>
+</tr>
+<%  if (serverOn) { %>
+  
+     <tr><td class="jive-label">Server Uptime</td>   
+        <td>
+            <%  DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+                long now = System.currentTimeMillis();
+                long lastStarted = admin.getXMPPServer().getServerInfo().getLastStarted().getTime();
+                long uptime = (now - lastStarted) / 1000L;
+                String uptimeDisplay = null;
+                if (uptime < 60) {
+                    uptimeDisplay = "Less than 1 minute";
+                }
+                else if (uptime < 60*60) {
+                    long mins = uptime / (60);
+                    uptimeDisplay = "Approx " + mins + ((mins==1) ? " minute" : " minutes");
+                }
+                else if (uptime < 60*60*24) {
+                    long days = uptime / (60*60);
+                    uptimeDisplay = "Approx " + days + ((days==1) ? " hour" : " hours");
+                }
+            %>
+
+            <%  if (uptimeDisplay != null) { %>
+
+                <%= uptimeDisplay %> -
+
+            <%  } %>
+
+            <%= formatter.format(admin.getXMPPServer().getServerInfo().getLastStarted()) %>
+        </td>
+    </tr>
+<%  } %>
+</table>
+</div>
+
+<br>
+
+<script lang="JavaScript" type="text/javascript">
+var checked = false;
+function checkClick() {
+    if (checked) { return false; }
+    else { checked = true; return true; }
+}
+</script>
+<% if (admin.getContainer().isStandAlone()){ %>
+    <form action="server-status.jsp" onsubmit="return checkClick();">
+        <input type="submit" value="Stop" name="stop" <%= ((serverOn) ? "" : "disabled") %>>
+    <% if (admin.getContainer().isRestartable()){ %>
+        <input type="submit" value="Restart" name="restart" <%= ((serverOn) ? "" : "disabled") %>>
+    <% } %>
+    </form>
+<% } else { %>
+<table width=600>
+<tr><td>
+<span class="highlight">Note: </span><fmt:message key="short.title" bundle="${lang}" /> is running in an application server. You must stop and restart <fmt:message key="short.title" bundle="${lang}" />
+by stopping or restarting your application server.</td></tr></table>
+<% } %>
+<p>
+<a href="server-props.jsp">View Server Properties</a>
+</p>
+
+<%@ include file="bottom.jsp" %>

@@ -45,8 +45,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public XMPPServer server;
     public PacketDeliverer deliverer;
 
+    private ComponentManager componentManager;
+
     public PresenceManagerImpl() {
         super("Presence manager");
+
+        // Use component manager for Presence Updates.
+        componentManager = ComponentManager.getInstance();
     }
 
     private void initializeCaches() {
@@ -360,5 +365,14 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         trackInfo.getTrackerClasses().put(PacketDeliverer.class, "deliverer");
         trackInfo.getTrackerClasses().put(RoutingTable.class, "routingTable");
         return trackInfo;
+    }
+
+     public Component getPresenceComponent(XMPPAddress probee){
+         // Check for registered components
+        Component component = componentManager.getComponent(probee.toBareStringPrep());
+        if(component != null){
+            return component;
+        }
+        return null;
     }
 }

@@ -15,7 +15,6 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.xmpp.packet.Message;
 import org.dom4j.io.SAXReader;
 import org.dom4j.DocumentFactory;
@@ -51,7 +50,7 @@ public class OfflineMessageStore extends BasicModule {
      * @return the instance of <CODE>OfflineMessageStore</CODE> being used by the XMPPServer.
      */
     public static OfflineMessageStore getInstance() {
-        return BasicServer.getInstance().getOfflineMessageStore();
+        return XMPPServer.getInstance().getOfflineMessageStore();
     }
 
     private SAXReader saxReader = new SAXReader();

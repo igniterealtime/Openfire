@@ -12,8 +12,7 @@
 <%@ page import="org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.util.ClassUtils,
                  org.jivesoftware.messenger.XMPPServer,
-                 org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.messenger.spi.BasicServer"
+                 org.jivesoftware.messenger.user.*"
 %>
 
 <%	// Security check
@@ -38,7 +37,7 @@
     }
 
     // Check to see if we're in "setup" mode:
-    if (BasicServer.getInstance().isSetupMode()) {
+    if (XMPPServer.getInstance().isSetupMode()) {
       response.sendRedirect("setup-index.jsp");
       return;
     }
@@ -48,7 +47,7 @@
     boolean isSystemAdmin = true;
 
     // Otherwise, get the xmpp server
-    XMPPServer xmppServer = BasicServer.getInstance();
+    XMPPServer xmppServer = XMPPServer.getInstance();
 
     // The user object of the logged-in user
     UserManager userManager = xmppServer.getUserManager();

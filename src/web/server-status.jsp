@@ -14,7 +14,6 @@
                  java.text.DateFormat,
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.messenger.container.*,
-                 org.jivesoftware.messenger.spi.BasicServer,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.admin.AdminPageBean"
 %>

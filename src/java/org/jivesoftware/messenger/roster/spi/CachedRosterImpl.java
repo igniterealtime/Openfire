@@ -20,7 +20,6 @@ import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.RoutingTable;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.roster.BasicRoster;
 import org.jivesoftware.messenger.roster.BasicRosterItem;
@@ -104,7 +103,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
     public void broadcastPresence(Presence packet) {
         try {
             if (routingTable == null) {
-                routingTable = BasicServer.getInstance().getRoutingTable();
+                routingTable = XMPPServer.getInstance().getRoutingTable();
             }
             if (routingTable == null) {
                 return;
@@ -190,7 +189,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
         if (cachedItem.getSubStatus() == RosterItem.SUB_BOTH
                 || cachedItem.getSubStatus() == RosterItem.SUB_TO) {
             if (presenceManager == null) {
-                presenceManager = BasicServer.getInstance().getPresenceManager();
+                presenceManager = XMPPServer.getInstance().getPresenceManager();
             }
             presenceManager.probePresence(username, cachedItem.getJid());
         }
@@ -214,7 +213,7 @@ public class CachedRosterImpl extends BasicRoster implements CachedRoster {
 
     private void broadcast(Roster roster) throws UnauthorizedException {
         if (server == null) {
-            server = BasicServer.getInstance();
+            server = XMPPServer.getInstance();
         }
         JID recipient = server.createJID(username, null);
         roster.setTo(recipient);

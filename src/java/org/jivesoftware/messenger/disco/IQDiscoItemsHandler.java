@@ -20,7 +20,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.StringUtils;
@@ -88,7 +87,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
         // together with any possible requested node.  
         DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
-                BasicServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
+                XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
         if (itemsProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
@@ -198,7 +197,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     public void start() throws IllegalStateException {
         super.start();
-        for (ServerItemsProvider provider : BasicServer.getInstance().getServerItemsProviders()) {
+        for (ServerItemsProvider provider : XMPPServer.getInstance().getServerItemsProviders()) {
             addServerItemsProvider(provider);
         }
     }

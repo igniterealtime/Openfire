@@ -57,7 +57,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * </ul>
  * The valid types include "subscribe", "subscribed", "unsubscribed",
  * and "unsubscribe".
- * <li>BasicServer probes - Provides a mechanism for servers to query the presence
+ * <li>XMPPServer probes - Provides a mechanism for servers to query the presence
  * status of users on another server. This allows users to immediately
  * know the presence status of users when they come online rather than way
  * for a presence update broadcast from the other server or tracking them

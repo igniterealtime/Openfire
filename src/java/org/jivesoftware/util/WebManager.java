@@ -21,8 +21,6 @@ import org.jivesoftware.messenger.PrivateStorage;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.group.GroupManager;
 
 import java.util.LinkedHashMap;
@@ -61,7 +59,7 @@ public class WebManager extends WebBean {
      * Returns the XMPP server object -- can get many config items from here.
      */
     public XMPPServer getXMPPServer() {
-        final XMPPServer xmppServer = BasicServer.getInstance();
+        final XMPPServer xmppServer = XMPPServer.getInstance();
         if (xmppServer == null) {
             // Show that the server is down
             showServerDown();

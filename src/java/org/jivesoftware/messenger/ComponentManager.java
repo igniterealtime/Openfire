@@ -2,7 +2,6 @@ package org.jivesoftware.messenger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
@@ -102,7 +101,7 @@ public class ComponentManager {
      */
     public void sendPacket(Packet packet) {
         PacketRouter router;
-        router = BasicServer.getInstance().getPacketRouter();
+        router = XMPPServer.getInstance().getPacketRouter();
         if (router != null) {
             router.route(packet);
         }

@@ -11,8 +11,8 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.roster.CachedRoster;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
@@ -237,7 +237,7 @@ public class User implements Cacheable {
      */
     public CachedRoster getRoster() {
         try {
-            return BasicServer.getInstance().getRosterManager().getRoster(username);
+            return XMPPServer.getInstance().getRosterManager().getRoster(username);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);

@@ -14,8 +14,7 @@
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.JiveGlobals,
-                 org.jivesoftware.messenger.auth.DefaultAuthProvider,
-                 org.jivesoftware.messenger.spi.BasicServer" %>
+                 org.jivesoftware.messenger.auth.DefaultAuthProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

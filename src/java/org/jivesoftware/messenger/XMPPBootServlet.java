@@ -11,8 +11,6 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.spi.BasicServer;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -28,7 +26,7 @@ public class XMPPBootServlet extends HttpServlet {
         if (server == null) {
             synchronized (serverLock) {
                 if (server == null) {
-                    server = new BasicServer();
+                    server = new XMPPServer();
                 }
             }
         }

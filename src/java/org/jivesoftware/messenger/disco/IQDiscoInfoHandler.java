@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.disco;
 
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.ArrayList;
@@ -79,7 +78,7 @@ public class IQDiscoInfoHandler extends IQHandler {
         // DiscoInfoProvider responsibility to provide information about the JID's name together 
         // with any possible requested node.  
         DiscoInfoProvider infoProvider = getProvider(packet.getTo() == null ?
-                BasicServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
+                XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
         if (infoProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();

@@ -30,7 +30,6 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.spi.SessionImpl;
-import org.jivesoftware.messenger.spi.BasicServer;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
@@ -69,7 +68,7 @@ public class SessionManager extends BasicModule implements ConnectionCloseListen
      * @return the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      */
     public static SessionManager getInstance() {
-        return BasicServer.getInstance().getSessionManager();
+        return XMPPServer.getInstance().getSessionManager();
     }
 
     public SessionManager() {

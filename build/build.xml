@@ -668,8 +668,11 @@
 
         <mkdir dir="${installer.dest.dir}" />
 
-        <install4j projectfile="${installer.install4j.srcfile}"
-            destination="${installer.dest.dir}" />
+        <install4j projectfile="${installer.install4j.srcfile}" destination="${installer.dest.dir}">
+            <variable name="VERSION_MAJOR" value="${version.major}" />
+            <variable name="VERSION_MINOR" value="${version.minor}" />
+            <variable name="VERSION_REVISION" value="${version.revision}" />
+        </install4j>
 
     </target>
 

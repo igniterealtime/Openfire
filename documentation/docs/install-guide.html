@@ -44,6 +44,15 @@ tool to setup and verify the server configuration.</li>
   <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
 manage the server.</li>
 </ol>
+
+<p>This document also includes information on:</p>
+
+<ul>
+    <li><a href="#windows">Running under Windows</a>
+    <li><a href="#unix">Running under Unix/Linux</a>
+    <li><a href="#plugins">Installing and using Plugins</a>
+</ul>
+
 <h2><a name="distribution">Files in the Distribution</a></h2>
 <p> The files in your distribution should be as follows (some
 sub-directories omitted for brevity): </p>
@@ -105,7 +114,7 @@ unless you changed the port during the setup.<br>
 
 <hr>
 
-<h2>Running Jive Messenger in Windows</h2>
+<h2><a name="windows">Running Jive Messenger in Windows</a></h2>
 
 <p>If you used the Jive Messenger installer, a shortcut for starting the
 a graphical launcher is provided in your Start Menu. Otherwise, run messenger.exe in the <tt>bin/</tt> directory of your
@@ -148,7 +157,7 @@ stop the service.</p>
 at this time. If you install the service, you should use service controls
 as described above to control the server rather than the graphical launcher.</p> 
 
-<h2>Running Jive Messenger in Linux/Unix</h2>
+<h2><a name="unix">Running Jive Messenger in Linux/Unix</a></h2>
 
 You can start and stop Jive Messenger using the <tt>bin/messenger</tt> script in your Jive messenger installation:
 
@@ -160,50 +169,33 @@ Usage: ./messenger {start|stop}<br>
 Starting messenger
 </tt></p>
 
-
- If you would like to install Jive Messenger as a service, two scripts are provided in the <tt>bin/extra</tt>
+If you would like to install Jive Messenger as a service, two scripts are provided in the <tt>bin/extra</tt>
 directory:
 <ul>
     <li>redhat-postinstall.sh -- automatically installs Jive Messenger as a service on Red Hat. It does so by creating a "jive" user and then copying the jive-messengerd script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
     <li>jive-messengerd -- script to run Jive Messenger as a service. You must manually configure this script. See the comments in
 the script for additional details.</li>
-</ul>   
-
-<!--
-<h3>Solaris/Linux/MacOS X Deployment</h3>
-<p>If you are deploying Messenger on these three supported Unix
-systems, platform specific startup scripts and helper
-applications are provided in the <tt>bin</tt> directory. Copy the
-files from the appropriate directory into the <tt>bin</tt>
-directory and set the <tt>JIVE_HOME</tt> environmental variable.&nbsp;
-Edit the
-<tt>config/wrapper.conf</tt> file to allocate the proper amount of heap
-memory
-for your deployment. On most systems, Messenger will need about 256MB
-of heap memory for each 1000 simultaneous connections (<a href="#note1">1</a>).
-<br>
-</p>
-<p>Run
-the messengerd.sh shell script to start Messenger (you
-may have to set it's executable permission using chmod). The wrapper
-scripts and helper applications are fairly standard
-daemon scripts supporting the following commands:</p>
-<ul>
-  <li><tt>start</tt> - starts the Messenger daemon process. </li>
-  <li><tt>stop</tt> - stops the Messenger daemon process. </li>
-  <li><tt>restart</tt> - restarsts the Messenger daemon process. </li>
-  <li><tt>console</tt> - starts Messenger in the current shell allowing
-the user to watch the Wrapper and Messenger's action on the terminal
-and kill the application with CTRL-C. </li>
-  <li><tt>dump</tt> - sends a <tt>kill -3</tt> signal to the daemon
-process causing the JVM to do a full thread dump. </li>
 </ul>
-<p>The deployment service wrapper increases Messenger's reliability by
-running a monitor in a separate process that watches the Messenger JVM.
-If the Messenger JVM runs into trouble, the wrapper will detect and
-restart Messenger automatically
-ensuring that Messenger continues to be available to users.</p>
--->
+
+<h2><a name="plugins">Plugins</a></h2>
+
+Plugins add additional features and protocol support to Jive Messenger. After setting up your
+Jive Messenger installation, you may want to download and install plugins to enhance your
+server. Plugins can be downloaded from the
+<a href="http://www.jivesoftware.org/messenger/plugins.jsp">plugins page</a> on jivesoftware.org.
+
+<h3>Installing Plugins</h3>
+
+Each plugin comes packaged as a .jar (JAR) file. After download the plugin, you can deploy it
+by copying the plugin file to the <tt>plugins/</tt> directory of your Jive Messenger installation. A
+plugin monitor will automatically extract the plugin into a directory and install the plugin in Jive Messenger.
+
+
+<h3>Managing Plugins</h3>
+
+Plugins can be managed inside the Jive Messenger admin console. You can also manually delete a plugin at any time by 
+deleting its JAR file (Jive Messenger will automatically remove the plugin from memory and delete it's directory when you
+do so).
 
 </body>
 </html>

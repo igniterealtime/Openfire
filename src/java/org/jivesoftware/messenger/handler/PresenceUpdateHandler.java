@@ -290,62 +290,71 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
+            boolean keepTrack = false;
             WeakHashMap<ChannelHandler, Set<String>> map;
             String name = update.getFrom().getNode();
-            try {
-                if (name != null && !"".equals(name)) {
-                    name = name.toLowerCase();
+            if (name != null && !"".equals(name)) {
+                name = name.toLowerCase();
+                try {
                     Roster roster = rosterManager.getRoster(name);
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavailable presence to the entity
                     if (!roster.isRosterItem(update.getTo())) {
-                        map = directedPresences.get(update.getFrom().toString());
-                        if (map == null) {
-                            // We are using a set to avoid duplicate jids in case the user
-                            // sends several directed presences to the same handler. The Map also
-                            // ensures that if the user sends several presences to the same handler
-                            // we will have only one entry in the Map
-                            map = new WeakHashMap<ChannelHandler,Set<String>>();
-                            map.put(handler, new HashSet<String>());
-                            directedPresences.put(update.getFrom().toString(), map);
-                        }
-                        if (Presence.Type.unavailable.equals(update.getType())) {
-                            // It's a directed unavailable presence
-                            if (handler instanceof ClientSession) {
-                                // Client sessions will receive only presences to the same JID (the
-                                // address of the session) so remove the handler from the map
-                                map.remove(handler);
-                                if (map.isEmpty()) {
-                                    // Remove the user from the registry since the list of directed
-                                    // presences is empty
-                                    directedPresences.remove(update.getFrom().toString());
-                                }
-                            }
-                            else {
-                                // A service may receive presences for many JIDs so in this case we
-                                // just need to remove the jid that has received a directed
-                                // unavailable presence
-                                map.get(handler).remove(jid);
-                            }
-                        }
-                        else {
-                            // Add the handler to the list of handler that processed the directed
-                            // presence sent by the user. This handler will be used to send
-                            // the unavailable presence when the user goes offline
-                            if (map.get(handler) == null) {
-                                map.put(handler, new HashSet<String>());
-                            }
-                            map.get(handler).add(jid);
-                        }
+                        keepTrack = true;
                     }
                 }
+                catch (UserNotFoundException e) {
+                    Log.warn("Presence being sent from unknown user " + name, e);
+                }
+                catch (PacketException e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+
             }
-            catch (UserNotFoundException e) {
-                Log.warn("Presence being sent from unknown user " + name, e);
+            else if (update.getFrom().getResource() != null){
+                // Keep always track of anonymous users directed presences
+                keepTrack = true;
             }
-            catch (PacketException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            if (keepTrack) {
+                map = directedPresences.get(update.getFrom().toString());
+                if (map == null) {
+                    // We are using a set to avoid duplicate jids in case the user
+                    // sends several directed presences to the same handler. The Map also
+                    // ensures that if the user sends several presences to the same handler
+                    // we will have only one entry in the Map
+                    map = new WeakHashMap<ChannelHandler, Set<String>>();
+                    map.put(handler, new HashSet<String>());
+                    directedPresences.put(update.getFrom().toString(), map);
+                }
+                if (Presence.Type.unavailable.equals(update.getType())) {
+                    // It's a directed unavailable presence
+                    if (handler instanceof ClientSession) {
+                        // Client sessions will receive only presences to the same JID (the
+                        // address of the session) so remove the handler from the map
+                        map.remove(handler);
+                        if (map.isEmpty()) {
+                            // Remove the user from the registry since the list of directed
+                            // presences is empty
+                            directedPresences.remove(update.getFrom().toString());
+                        }
+                    }
+                    else {
+                        // A service may receive presences for many JIDs so in this case we
+                        // just need to remove the jid that has received a directed
+                        // unavailable presence
+                        map.get(handler).remove(jid);
+                    }
+                }
+                else {
+                    // Add the handler to the list of handler that processed the directed
+                    // presence sent by the user. This handler will be used to send
+                    // the unavailable presence when the user goes offline
+                    if (map.get(handler) == null) {
+                        map.put(handler, new HashSet<String>());
+                    }
+                    map.get(handler).add(jid);
+                }
             }
         }
     }

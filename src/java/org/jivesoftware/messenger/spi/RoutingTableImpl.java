@@ -252,7 +252,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                     ((Hashtable)nameRoutes).remove(nodeJID);
                 }
             }
-            else {
+            else if (nameRoutes != null) {
                 // The retrieved route points to a RoutableChannelHandler
                 if (((RoutableChannelHandler)nameRoutes).getAddress().equals(node)) {
                     // Remove the route to this domain

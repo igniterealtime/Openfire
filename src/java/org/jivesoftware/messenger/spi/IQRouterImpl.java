@@ -68,12 +68,14 @@ public class IQRouterImpl extends BasicModule implements IQRouter {
         }
     }
 
-    private boolean isLocalServer(XMPPAddress recipientJID) {
+
+     private boolean isLocalServer(XMPPAddress recipientJID){
         // ridiculously long check for local server target
-        // It's local if jid is null or host is null or resource is null
-        return recipientJID == null || recipientJID.getHost() == null
-                || "".equals(recipientJID.getHost()) || recipientJID.getResource() == null
-                || "".equals(recipientJID.getResource());
+        return recipientJID == null
+                    || recipientJID.getHost() == null
+                    || "".equals(recipientJID.getHost())
+                    || ((recipientJID.getName() == null || "".equals(recipientJID.getName()))
+                        && (recipientJID.getResource() == null || "".equals(recipientJID.getResource())));
     }
 
     private void handle(IQ packet) {

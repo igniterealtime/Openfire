@@ -22,7 +22,6 @@
 <%@ taglib uri="core" prefix="c"%>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 
 <%  // Get parameters
     boolean save = ParamUtils.getBooleanParameter(request,"save");
@@ -39,10 +38,6 @@
 
     // Load the user object
     User user = webManager.getUserManager().getUser(username);
-  
-    // Get a private data manager //
-    final PrivateStore privateStore = webManager.getPrivateStore();
-    userData.setState( user.getUsername(), privateStore );
 
     // Handle a save
     Map errors = new HashMap();

@@ -32,7 +32,6 @@
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
-<jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //

@@ -9,41 +9,28 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user.spi;
+package org.jivesoftware.messenger;
 
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.container.Container;
-import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.XPPReader;
-import org.jivesoftware.messenger.PrivateStore;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Document;
+
+import java.sql.*;
+import java.sql.Connection;
+import java.io.StringWriter;
+import java.io.StringReader;
 
 /**
- * <p>Store and retrieve data from the database.</p>
- * <p>The typical use cases don't give any advantage to caching the data so we won't. Direct
- * database access is used for all operations. We expect clients to retrieve private information
- * on login, and set private information on logout, or when the user changes settings in the
- * client application (occurs rarely and we expect the client to cache private data so we'll
- * only see a get, then a set).</p>
- * <p>We currently only match on namespace for backward compatibility,
- * although it is possible that future versions may make the element name a distinct
- * match requirement for requests. Therefore the element name as well as it's namespace
- * is stored in the database even though it is currently not used for matching purposes.</p>
+ * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
+ * for saving client settings on the server.
  *
  * @author Iain Shigeoka
  */
-public class DbPrivateStore extends BasicModule implements PrivateStore {
+public class PrivateStorage extends BasicModule {
 
     private static final String LOAD_PRIVATE =
         "SELECT value FROM jivePrivate WHERE username=? AND namespace=?";
@@ -52,30 +39,49 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
     private static final String UPDATE_PRIVATE =
         "UPDATE jivePrivate SET value=?, name=? WHERE username=? AND namespace=?";
 
-    // currently no delete supported, we can detect an add of an empty element and use that to
-    // signal a delete but that optimization doesn't seem necessary.
-    private static final String DELETE_PRIVATE =
-            "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
+    // Currently no delete supported, we can detect an add of an empty element and
+    // use that to signal a delete but that optimization doesn't seem necessary.
+    // private static final String DELETE_PRIVATE =
+    //     "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
 
-    // TODO: As with IQAuthHandler, this is not multi-server safe
-    private static boolean enabled;
+    private boolean enabled = JiveGlobals.getBooleanProperty("xmpp.privateStorageEnabled", true);
 
-    public DbPrivateStore() {
+    /**
+     * Constructs a new PrivateStore instance.
+     */
+    public PrivateStorage() {
         super("Private user data storage");
     }
 
+    /**
+     * Returns true if private storage is enabled.
+     *
+     * @return true if private storage is enabled.
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Sets whether private storage is enabled.
+     *
+     * @param enabled true if this private store is enabled.
+     */
     public void setEnabled(boolean enabled) {
-        DbPrivateStore.enabled = enabled;
-        JiveGlobals.setProperty("xmpp.private", Boolean.toString(enabled));
+        this.enabled = enabled;
+        JiveGlobals.setProperty("xmpp.privateStorageEnabled", Boolean.toString(enabled));
     }
 
-    public void add(String username, Element data) throws UnauthorizedException {
+    /**
+     * Stores private data. If the name and namespace of the element matches another
+     * stored private data XML document, then replace it with the new one.
+     *
+     * @param data the data to store (XML element)
+     * @param username the username of the account where private data is being stored
+     */
+    public void add(String username, Element data) {
         if (enabled) {
-            Connection con = null;
+            java.sql.Connection con = null;
             PreparedStatement pstmt = null;
             try {
                 StringWriter writer = new StringWriter();
@@ -91,7 +97,7 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 }
                 rs.close();
                 pstmt.close();
-                
+
                 if (update) {
                     pstmt = con.prepareStatement(UPDATE_PRIVATE);
                 }
@@ -116,7 +122,21 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
         }
     }
 
-    public Element get(String username, Element data) throws UnauthorizedException {
+    /**
+     * Returns the data stored under a key corresponding to the name and namespace
+     * of the given element. The Element must be in the form:<p>
+     *
+     * <code>&lt;name xmlns='namespace'/&gt;</code><p>
+     *
+     * If no data is currently stored under the given key, an empty element will be
+     * returned.
+     *
+     * @param data an XML document who's element name and namespace is used to
+     *      match previously stored private data.
+     * @param username the username of the account where private data is being stored.
+     * @return the data stored under the given key or the data element.
+     */
+    public Element get(String username, Element data) {
         data.clearContent();
         if (enabled) {
             Connection con = null;
@@ -130,8 +150,9 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
                 if (rs.next()) {
                     StringReader reader = new StringReader(rs.getString(1).trim());
                     Document doc = XPPReader.parseDocument(reader, this.getClass());
-                    return doc.getRootElement();
+                    data = doc.getRootElement();
                 }
+                rs.close();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -144,10 +165,5 @@ public class DbPrivateStore extends BasicModule implements PrivateStore {
             }
         }
         return data;
-    }
-
-    public void initialize(Container container) {
-        super.initialize(container);
-        enabled = JiveGlobals.getBooleanProperty("xmpp.private");
     }
 }

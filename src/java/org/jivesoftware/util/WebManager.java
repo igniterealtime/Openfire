@@ -21,7 +21,7 @@ import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.RosterManager;
 import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.PrivateStore;
+import org.jivesoftware.messenger.PrivateStorage;
 import org.jivesoftware.messenger.PresenceManager;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServerInfo;
@@ -98,8 +98,8 @@ public class WebManager extends WebBean {
         return (RosterManager)getServiceLookup().lookup(RosterManager.class);
     }
 
-    public PrivateStore getPrivateStore() {
-        return (PrivateStore)getServiceLookup().lookup(PrivateStore.class);
+    public PrivateStorage getPrivateStore() {
+        return (PrivateStorage)getServiceLookup().lookup(PrivateStorage.class);
     }
 
     public PresenceManager getPresenceManager() {

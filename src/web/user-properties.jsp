@@ -21,7 +21,6 @@
 <%@ taglib uri="core" prefix="c"%>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<jsp:useBean id="userData" class="org.jivesoftware.messenger.user.spi.UserPrivateData" />
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -67,16 +66,6 @@
 
     // Date formatter for dates
     DateFormat formatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
-%>
-
-<%
- // Get a private data manager //
-  final PrivateStore privateStore = webManager.getPrivateStore();
-  userData.setState( user.getUsername(), privateStore );
-  String nickname = userData.getProperty( "nickname" );
-    if(nickname == null){
-        nickname = "";
-    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />

@@ -37,11 +37,11 @@
     boolean privateEnabled = ParamUtils.getBooleanParameter(request,"privateEnabled");
 
     // Get an audit manager:
-    PrivateStore privateStore = admin.getPrivateStore();
+    PrivateStorage privateStorage = admin.getPrivateStore();
 
     Map errors = new HashMap();
-    if( update ) {
-      privateStore.setEnabled(privateEnabled);
+    if (update) {
+      privateStorage.setEnabled(privateEnabled);
     %>
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -59,7 +59,7 @@
 
     // Set page vars
     if (errors.size() == 0) {
-        privateEnabled = privateStore.isEnabled();
+        privateEnabled = privateStorage.isEnabled();
     }
 %>
 

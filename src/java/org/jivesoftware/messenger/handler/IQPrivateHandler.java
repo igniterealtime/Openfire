@@ -64,11 +64,11 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 if (IQ.GET.equals(packet.getType())) {
                     replyPacket = packet.createResult();
                     PayloadFragment frag = new PayloadFragment("jabber:iq:private", "query");
-                    frag.addFragment(new XMPPDOMFragment(privateStore.get(packet.getOriginatingSession().getUsername(), dataElement)));
+                    frag.addFragment(new XMPPDOMFragment(privateStorage.get(packet.getOriginatingSession().getUsername(), dataElement)));
                     replyPacket.setChildFragment(frag);
                 }
                 else {
-                    privateStore.add(packet.getOriginatingSession().getUsername(), dataElement);
+                    privateStorage.add(packet.getOriginatingSession().getUsername(), dataElement);
                     replyPacket = packet.createResult();
                 }
             }
@@ -84,11 +84,11 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         return replyPacket;
     }
 
-    public PrivateStore privateStore = null;
+    public PrivateStorage privateStorage = null;
 
     protected TrackInfo getTrackInfo() {
         TrackInfo trackInfo = super.getTrackInfo();
-        trackInfo.getTrackerClasses().put(PrivateStore.class, "privateStore");
+        trackInfo.getTrackerClasses().put(PrivateStorage.class, "privateStore");
         return trackInfo;
     }
 

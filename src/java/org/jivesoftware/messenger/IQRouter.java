@@ -74,9 +74,10 @@ public class IQRouter extends BasicModule {
             handle(packet);
         }
         else {
-            packet.setTo(sessionManager.getSession(packet.getFrom()).getAddress());
+            IQ reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
             packet.setError(PacketError.Condition.not_authorized);
-            sessionManager.getSession(packet.getFrom()).process(packet);
+            sessionManager.getSession(packet.getFrom()).process(reply);
         }
     }
 
@@ -164,8 +165,10 @@ public class IQRouter extends BasicModule {
                     namespace = childElement.getNamespaceURI();
                 }
                 if (namespace == null) {
-                    // Do nothing. We can't handle queries outside of a valid namespace
-                    Log.warn("Unknown packet " + packet);
+                    if (packet.getType() != IQ.Type.result) {
+                        // Do nothing. We can't handle queries outside of a valid namespace
+                        Log.warn("Unknown packet " + packet);
+                    }
                 }
                 else {
                     IQHandler handler = getHandler(namespace);
@@ -173,16 +176,19 @@ public class IQRouter extends BasicModule {
                         IQ reply = IQ.createResultIQ(packet);
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
+                            reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.service_unavailable);
                         }
                         else if (recipientJID.getNode() == null ||
                                 "".equals(recipientJID.getNode())) {
                             // Answer an error if JID is of the form <domain>
+                            reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.feature_not_implemented);
                         }
                         else {
                             // JID is of the form <node@domain>
                             // Answer an error since the server can't handle packets sent to a node
+                            reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.service_unavailable);
                         }
                         Session session = sessionManager.getSession(packet.getFrom());
@@ -200,21 +206,25 @@ public class IQRouter extends BasicModule {
 
             }
             else {
-                // JID is of the form <node@domain/resource>
-                ChannelHandler route = routingTable.getRoute(recipientJID);
-                route.process(packet);
-            }
-        }
-        catch (NoSuchRouteException e) {
-            Log.info("Packet sent to unreachable address " + packet);
-            Session session = sessionManager.getSession(packet.getFrom());
-            if (session != null) {
                 try {
-                    packet.setError(PacketError.Condition.service_unavailable);
-                    session.getConnection().deliver(packet);
+                    // JID is of the form <node@domain/resource>
+                    ChannelHandler route = routingTable.getRoute(recipientJID);
+                    route.process(packet);
                 }
-                catch (UnauthorizedException ex) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
+                catch (NoSuchRouteException e) {
+                    Log.info("Packet sent to unreachable address " + packet);
+                    Session session = sessionManager.getSession(packet.getFrom());
+                    if (session != null) {
+                        try {
+                            IQ reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.service_unavailable);
+                            session.getConnection().deliver(reply);
+                        }
+                        catch (UnauthorizedException ex) {
+                            Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
+                        }
+                    }
                 }
             }
         }

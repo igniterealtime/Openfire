@@ -10,15 +10,17 @@
  */
 package org.jivesoftware.util;
 
+import java.io.InputStream;
+
 /**
- * A utility class to assist with loading classes by name. Many application servers use
+ * A utility class to assist with loading classes or resources by name. Many application servers use
  * custom classloaders, which will break uses of:
  * <pre>
  *    Class.forName(className);
  * </pre>
- * <p/>
- * This utility attempts to load the class using a number of different mechanisms to work
- * around this problem.
+ *
+ * This utility attempts to load the class or resource using a number of different mechanisms to
+ * work around this problem.
  *
  * @author Matt Tucker
  */
@@ -37,9 +39,20 @@ public class ClassUtils {
         return instance.loadClass(className);
     }
 
-    private ClassUtils() {
-
+    /**
+     * Loads the given resource as a stream.
+     *
+     * @param name the name of the resource that exists in the classpath.
+     * @return the resource as an input stream or <tt>null</tt> if the resource was not found.
+     */
+    public static InputStream getResourceAsStream(String name) {
+        return instance.loadResource(name);
     }
+
+    /**
+     * Not instantiatable.
+     */
+    private ClassUtils() {}
 
     public Class loadClass(String className) throws ClassNotFoundException {
         Class theClass = null;
@@ -55,5 +68,16 @@ public class ClassUtils {
             }
         }
         return theClass;
+    }
+
+    private InputStream loadResource(String name) {
+        InputStream in = getClass().getResourceAsStream(name);
+        if (in == null) {
+            in = Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+            if (in == null) {
+                in = getClass().getClassLoader().getResourceAsStream(name);
+            }
+        }
+        return in;
     }
 }

@@ -651,8 +651,11 @@ public class SessionManager extends BasicModule {
         // Return null if the JID's data belongs to a foreign server. If the server is
         // shutting down then serverName will be null so answer null too in this case.
         if (serverName == null || !serverName.equals(domain)) {
-            Log.warn("Session not found for packet. Packet domain: " + domain + " Server name: " +
-                    serverName);
+            if (serverName == null || domain.indexOf(serverName) == -1) {
+                Log.warn("Session not found for packet. Packet domain: " + domain +
+                        " Server name: " +
+                        serverName);
+            }
             return null;
         }
 

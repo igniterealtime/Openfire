@@ -28,7 +28,7 @@ import java.util.Iterator;
  * as Rendezvous) protocol. This lets other nodes on the local network to discover
  * the name and port of Jive Messenger.<p>
  *
- * The multicast DNS entry is published with a type of "_xmpp._tcp.local.".
+ * The multicast DNS entry is published with a type of "_xmpp-client._tcp.local.".
  *
  * @author Matt Tucker
  */

@@ -342,7 +342,7 @@
             <fileset dir="${webapp.dest.dir}" />
         </copy>
         <!-- Copy in tag library support -->
-         <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+         <copy todir="${release.out.dir}/lib">
              <fileset dir="${lib.build.dir}" includes="commons-el.jar" />
          </copy>
         <!-- Copy in pre-compiled JSP jar -->
@@ -350,7 +350,7 @@
             <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}" />
         </copy>
         <!-- Copy in jasper runtime jar -->
-        <copy todir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+        <copy todir="${release.out.dir}/lib">
             <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar" />
             <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar" />
         </copy>

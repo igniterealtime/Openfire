@@ -56,26 +56,7 @@ public class WebManager extends WebBean {
      * Returns <tt>true</tt> if the Messenger container is in setup mode, <tt>false</tt> otherwise.
      */
     public boolean isSetupMode() {
-        return getContainer().isSetupMode();
-    }
-
-    /**
-     * Returns an instnace of the ServiceLookup.
-     */
-    public ServiceLookup getServiceLookup() {
-        try {
-            return ServiceLookupFactory.getLookup();
-        }
-        catch (UnauthorizedException ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the server's container.
-     */
-    public Container getContainer() {
-        return (Container)getServiceLookup().lookup(Container.class);
+        return getXMPPServer().isSetupMode();
     }
 
     /**
@@ -92,7 +73,7 @@ public class WebManager extends WebBean {
     }
 
     public UserManager getUserManager() {
-        return (UserManager)getServiceLookup().lookup(UserManager.class);
+        return getXMPPServer().getUserManager();
     }
 
     public GroupManager getGroupManager() {
@@ -100,23 +81,23 @@ public class WebManager extends WebBean {
     }
 
     public RosterManager getRosterManager() {
-        return (RosterManager)getServiceLookup().lookup(RosterManager.class);
+        return getXMPPServer().getRosterManager();
     }
 
     public PrivateStorage getPrivateStore() {
-        return (PrivateStorage)getServiceLookup().lookup(PrivateStorage.class);
+        return getXMPPServer().getPrivateStorage();
     }
 
     public PresenceManager getPresenceManager() {
-        return (PresenceManager)getServiceLookup().lookup(PresenceManager.class);
+        return getXMPPServer().getPresenceManager();
     }
 
     public SessionManager getSessionManager() {
-        return SessionManager.getInstance();
+        return getXMPPServer().getSessionManager();
     }
 
     public MultiUserChatServer getMultiUserChatServer() {
-        return (MultiUserChatServer)getServiceLookup().lookup(MultiUserChatServer.class);
+        return getXMPPServer().getMultiUserChatServer;
     }
 
     public XMPPServerInfo getServerInfo() {
@@ -151,7 +132,7 @@ public class WebManager extends WebBean {
     /**
      * Restarts the container then sleeps for 3 seconds.
      */
-    public void restart(Container container) {
+    /*public void restart(Container container) {
         try {
             container.restart();
         }
@@ -159,14 +140,14 @@ public class WebManager extends WebBean {
             Log.error(e);
         }
         sleep();
-    }
+    }*/
 
     /**
-     * Stops the container then sleeps for 3 seconds.
+     * Stops the server then sleeps for 3 seconds.
      */
-    public void stop(Container container) {
+    public void stop(XMPPServer server) {
         try {
-            container.stop();
+            server.stop();
         }
         catch (Exception e) {
             Log.error(e);

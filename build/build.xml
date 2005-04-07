@@ -836,11 +836,9 @@
                     -->
                     <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
                         <fileset dir="@{pluginsrc}/@{plugin}/src/web">
-                            <exclude name="WEB-INF/web.xml" />
                         </fileset>
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*" />
-                            <exclude name="WEB-INF/web.xml" />
                             <exclude name="WEB-INF/web.xml.startup.servlet" />
                             <exclude name="WEB-INF/classes/messenger_init.xml" />
                             <exclude name="WEB-INF/tmp/**/*.*" />

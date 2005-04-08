@@ -205,13 +205,34 @@ public class IQRouter extends BasicModule {
 
             }
             else {
-                try {
-                    // JID is of the form <node@domain/resource>
-                    ChannelHandler route = routingTable.getRoute(recipientJID);
-                    route.process(packet);
+                // JID is of the form <node@domain/resource>
+                boolean handlerFound = false;
+                // IQ packets should be sent to users even before they send an available presence.
+                // So if the target address belongs to this server then use the sessionManager
+                // instead of the routingTable since unavailable clients won't have a route to them
+                if (XMPPServer.getInstance().isLocal(recipientJID)) {
+                    Session session = sessionManager.getBestRoute(recipientJID);
+                    if (session != null) {
+                        session.getConnection().deliver(packet);
+                        handlerFound = true;
+                    }
+                    else {
+                        Log.info("Packet sent to unreachable address " + packet);
+                    }
                 }
-                catch (NoSuchRouteException e) {
-                    Log.info("Packet sent to unreachable address " + packet);
+                else {
+                    try {
+                        ChannelHandler route = routingTable.getRoute(recipientJID);
+                        route.process(packet);
+                        handlerFound = true;
+                    }
+                    catch (NoSuchRouteException e) {
+                        Log.info("Packet sent to unreachable address " + packet);
+                    }
+                }
+                // If a route to the target address was not found then try to answer a
+                // service_unavailable error code to the sender of the IQ packet
+                if (!handlerFound) {
                     Session session = sessionManager.getSession(packet.getFrom());
                     if (session != null) {
                         IQ reply = IQ.createResultIQ(packet);

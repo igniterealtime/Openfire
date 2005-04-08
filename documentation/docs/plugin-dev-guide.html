@@ -253,6 +253,13 @@ points that are the most common:
   iqRouter.addHandler(myHandler);
   </pre>
 
+   <li>You can store persistent plugin settings as Jive Messenger properties using the
+    JiveGlobals.getProperty(String) and JiveGlobals.setProperty(String, String) methods. Make
+    your plugin a property listener to listen for changes to its properties by implementing the
+    <tt>org.jivesoftware.messenger.event.PropertyEventListener</tt> method.
+    You can register your plugin as a listener using the PropertyEventDispatcher.addListener(PropertyEventListener)
+    method. Be sure to unregister your plugin as a listener in your plugin's destroyPlugin() method.
+
 </ol>
 
 </p>

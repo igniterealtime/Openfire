@@ -30,7 +30,7 @@ Run the Jive Messenger installer. The application will be installed to <tt>c:\Pr
  <p><tt>tar -xzvf jive_messenger_2_1_2.tar.gz<br>
  mv jive_messenger /opt</tt></p>
 
- <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime. Therefore, you must have JDK 1.5.0 (Java 5) or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting http://java.sun.com.</p>
+ <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE 1.5.0 (Java 5) or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting http://java.sun.com.</p>
 
   </ul>
 <h2>Setup Overview</h2>
@@ -39,7 +39,7 @@ perform each of the following steps: </p>
 <ol>
   <li><a href="#database">Database</a> - if you choose to use an external database, you must
  prepare your database for Jive Messenger. </li>
-  <li><a href="#config">Setup</a> - Use the built in web based setup
+  <li><a href="#config">Setup</a> - Use the built-in web-based setup
 tool to setup and verify the server configuration.</li>
   <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
 manage the server.</li>
@@ -50,7 +50,7 @@ manage the server.</li>
 <ul>
     <li><a href="#windows">Running under Windows</a>
     <li><a href="#unix">Running under Unix/Linux</a>
-    <li><a href="#plugins">Installing and using Plugins</a>
+    <li><a href="#plugins">Installing and using plugins</a>
 </ul>
 
 <h2><a name="distribution">Files in the Distribution</a></h2>
@@ -91,14 +91,14 @@ documentation.</li>
 
 <h2><a name="database">Setup the Database</a></h2>
 <p> <a>Jive Messenger can store its data in an embedded database or you can choose to use
-an external database such as MySQL, or Oracle. If you would like to use an external database,
+an external database such as MySQL or Oracle. If you would like to use an external database,
 you must prepare it before proceeding with installation by running the appropriate database
 schema. View the </a><a href="database.html">database
 setup</a> documentation for more information.</p>
 
 </p>
 <h2><a name="config"></a>Setup the Server</h2>
-<p>A web based, "wizard" driven setup and configuration tool is built
+<p>A web-based, "wizard" driven setup and configuration tool is built
 into Jive Messenger. Simply launch Jive Messenger (platform-specific instructions below) and use a web browser to
 connect to the admin console. The default port for the
 web-based admin console is 9090. If you are on the same machine as Messenger, the

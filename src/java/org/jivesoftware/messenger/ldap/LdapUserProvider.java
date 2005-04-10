@@ -218,8 +218,13 @@ public class LdapUserProvider implements UserProvider {
             }
             // Otherwise, only read in certain results.
             else {
-                for (int i = 0; i < startIndex; i++) {
-                    answer.next();
+                for (int i=0; i < startIndex; i++) {
+                    if (answer.hasMoreElements()) {
+                        answer.next();
+                    }
+                    else {
+                        return Collections.emptyList();
+                    }
                 }
                 // Now read in desired number of results (or stop if we run out of results).
                 for (int i = 0; i < numResults; i++) {
@@ -323,6 +328,86 @@ public class LdapUserProvider implements UserProvider {
                     manager.getUsernameField()).get()
                 );
             }
+            // If client-side sorting is enabled, sort.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
+                    "ldap.clientSideSorting")).booleanValue())
+            {
+                Collections.sort(usernames);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) { }
+        }
+        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+    }
+
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+            int numResults) throws UnsupportedOperationException
+    {
+        if (fields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (!searchFields.keySet().containsAll(fields)) {
+            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        }
+        List<String> usernames = new ArrayList<String>();
+        LdapContext ctx = null;
+        try {
+            ctx = manager.getContext();
+            // Sort on username field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
+            // Search for the dn based on the username.
+            SearchControls constraints = new SearchControls();
+            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            StringBuilder filter = new StringBuilder();
+            if (fields.size() > 1) {
+                filter.append("(|");
+            }
+            for (String field:fields) {
+                String attribute = searchFields.get(field);
+                filter.append("(").append(attribute).append("=").append(query).append(")");
+            }
+            if (fields.size() > 1) {
+                filter.append(")");
+            }
+            // TODO: used paged results is supported by LDAP server.
+            NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
+            for (int i=0; i < startIndex; i++) {
+                if (answer.hasMoreElements()) {
+                    answer.next();
+                }
+                else {
+                    return Collections.emptyList();
+                }
+            }
+            // Now read in desired number of results (or stop if we run out of results).
+            for (int i = 0; i < numResults; i++) {
+                if (answer.hasMoreElements()) {
+                    // Get the next userID.
+                    usernames.add(
+                        (String)((SearchResult)answer.next()).getAttributes().get(
+                        manager.getUsernameField()).get()
+                    );
+                }
+                else {
+                    break;
+                }
+            }
+            
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty(
                     "ldap.clientSideSorting")).booleanValue())

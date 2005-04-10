@@ -227,18 +227,11 @@ public class DefaultUserProvider implements UserProvider {
             pstmt = con.prepareStatement(ALL_USERS);
             ResultSet rs = pstmt.executeQuery();
             DbConnectionManager.setFetchSize(rs, startIndex + numResults);
-            // Move to start of index
-            for (int i = 0; i < startIndex; i++) {
-                rs.next();
-            }
-            // Now read in desired number of results (or stop if we run out of results).
-            for (int i = 0; i < numResults; i++) {
-                if (rs.next()) {
-                    usernames.add(rs.getString(1));
-                }
-                else {
-                    break;
-                }
+            DbConnectionManager.scrollResultSet(rs, startIndex);
+            int count = 0;
+            while (rs.next() && count < numResults) {
+                usernames.add(rs.getString(1));
+                count++;
             }
             rs.close();
         }
@@ -435,6 +428,72 @@ public class DefaultUserProvider implements UserProvider {
             ResultSet rs = stmt.executeQuery(sql.toString());
             while (rs.next()) {
                 usernames.add(rs.getString(1));
+            }
+            rs.close();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (stmt != null) { stmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+    }
+
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+            int numResults) throws UnsupportedOperationException
+    {
+        if (fields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (!getSearchFields().containsAll(fields)) {
+            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        }
+        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
+        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // surrounding the whole query with two '%'. This will return more data than desired,
+        // but is better than returning less data than desired.
+        query = "%" + query.replace('*', '%') + "%";
+        if (query.endsWith("%%")) {
+            query = query.substring(0, query.length()-1);
+        }
+
+        List<String> usernames = new ArrayList<String>(50);
+        Connection con = null;
+        Statement stmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            stmt = con.createStatement();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT username FROM jiveUser WHERE");
+            boolean first = true;
+            if (fields.contains("Username")) {
+                sql.append(" username LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
+                first = false;
+            }
+            if (fields.contains("Name")) {
+                if (!first) {
+                    sql.append(" AND");
+                }
+                sql.append(" name LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
+                first = false;
+            }
+            if (fields.contains("Email")) {
+                if (!first) {
+                    sql.append(" AND");
+                }
+                sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
+            }
+            ResultSet rs = stmt.executeQuery(sql.toString());
+            // Scroll to the start index.
+            DbConnectionManager.scrollResultSet(rs, startIndex);
+            int count = 0;
+            while (rs.next() && count < numResults) {
+                usernames.add(rs.getString(1));
+                count++;
             }
             rs.close();
         }

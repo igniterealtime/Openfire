@@ -8,37 +8,31 @@
 package org.jivesoftware.messenger.plugin;
 
 import java.io.File;
-import java.util.Iterator;
+import java.util.Map;
 
-import org.dom4j.Element;
 import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.SessionNotFoundException;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.interceptor.InterceptorManager;
-import org.jivesoftware.messenger.interceptor.PacketInterceptor;
+import org.jivesoftware.messenger.event.UserEventDispatcher;
+import org.jivesoftware.messenger.event.UserEventListener;
+import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.util.Log;
-import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 public class RegistrationNotificationPlugin implements Plugin {
-    private RegistrationInterceptor interceptor;
-    
     private PluginManager pluginManager;
     private SessionManager sessionManager;
+	private RegistrationUserEventListener listener = new RegistrationUserEventListener();
     
     private static String serverName;
     private boolean serviceEnabled;
     private String contact;
     
     public RegistrationNotificationPlugin() {
-        interceptor = new RegistrationInterceptor();        
-        
         sessionManager = SessionManager.getInstance();
         serverName = XMPPServer.getInstance().getServerInfo().getName();
         
@@ -50,6 +44,8 @@ public class RegistrationNotificationPlugin implements Plugin {
             contact = "admin";
             JiveGlobals.setProperty("registration.notification.contact", contact);
         }
+		
+		UserEventDispatcher.addListener(listener);
     }
 
     public String getName() {
@@ -76,7 +72,7 @@ public class RegistrationNotificationPlugin implements Plugin {
     }
 
     public void destroyPlugin() {
-        InterceptorManager.getInstance().removeInterceptor(interceptor);
+    	UserEventDispatcher.removeListener(listener);
         pluginManager = null;
         sessionManager = null;
     }
@@ -84,12 +80,6 @@ public class RegistrationNotificationPlugin implements Plugin {
     public void setServiceEnabled(boolean enable) {
         serviceEnabled = enable;
         JiveGlobals.setProperty("registration.notification.enabled", serviceEnabled ? "true" : "false");
-        
-        if (enable) {
-            InterceptorManager.getInstance().addInterceptor(interceptor);
-        } else {
-            InterceptorManager.getInstance().removeInterceptor(interceptor);
-        }        
     }
     
     public boolean serviceEnabled() {
@@ -104,56 +94,29 @@ public class RegistrationNotificationPlugin implements Plugin {
     public String getContact() {
         return contact;
     }
-    
-    private void interceptRegistration(Packet packet) {
-        if (packet instanceof IQ) {
-            IQ iqPacket = (IQ) packet;
-            
-            if (IQ.Type.set.equals(iqPacket.getType())) {
-                Element childElement = iqPacket.getChildElement();
-                String namespace = null;
-                if (childElement != null) {
-                    namespace = childElement.getNamespaceURI();
-                }
-                
-                if ("jabber:iq:register".equals(namespace)) {
-                    //this is similiar to the logic used in IQRegisterHandler
-                    XDataFormImpl registrationForm = null;
-                    Element iqElement = iqPacket.getChildElement();
-                    Element formElement = iqElement.element("x");
-                    
-                    String username = null;;
-                    // Check if a form was used to provide the registration info
-                    if (formElement != null) {
-                        Iterator<String> values = registrationForm.getField("username").getValues();
-                        username = (values.hasNext() ? values.next() : " ");
-                    }
-                    else {
-                        // Get the registration info from the query elements
-                        username = iqElement.elementText("username");
-                    }
-                    
-                    String msg = " A new user with the username of '" + username + "' just attempted to register";                    
-                    try {
-                        sessionManager.sendServerMessage(new JID(getContact() + "@" + serverName),
-                                "Registration Notification",
-                                msg);
-                    }
-                    catch (SessionNotFoundException e) {
-                        Log.error("SessionNotFoundException: could not send the following message to: "
-                                + getContact()
-                                + msg);
-                    }
-                }
+	
+	//TODO JM-170
+	//TODO add the ability to have a admin configurable messange sent to newly registered user
+	//TODO add the ability for the admin to monitor when users are created and/or deleted?
+	private class RegistrationUserEventListener implements UserEventListener {
+		public void userCreated(User user, Map params) {
+			String msg = " A new user with the username of '" + user.getUsername() + "' just registered";                    
+            try {
+                sessionManager.sendServerMessage(new JID(getContact() + "@" + serverName),
+                        "Registration Notification",
+                        msg);
             }
-        }
-    }
-    
-    private class RegistrationInterceptor implements PacketInterceptor {
-        public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
-            if (serviceEnabled()) {
-                interceptRegistration(packet);
+            catch (SessionNotFoundException e) {
+                Log.error("SessionNotFoundException: could not send the following message to: "
+                        + getContact()
+                        + msg);
             }
-        }
-    }
+		}
+
+		public void userDeleting(User user, Map params) {			
+		}
+
+		public void userModified(User user, Map params) {
+		}
+	}
 }

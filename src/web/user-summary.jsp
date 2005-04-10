@@ -53,10 +53,10 @@
         User user = webManager.getUser();
         if (user != null) {
             if (range == DEFAULT_RANGE) {
-                user.deleteProperty(USER_RANGE_PROP);
+                user.getProperties().remove(USER_RANGE_PROP);
             }
             else {
-                user.setProperty(USER_RANGE_PROP, String.valueOf(range));
+                user.getProperties().put(USER_RANGE_PROP, String.valueOf(range));
             }
         }
     }
@@ -65,10 +65,10 @@
     if (webManager.getUser() != null) {
         User user = webManager.getUser();
         try {
-            range = Integer.parseInt(user.getProperty(USER_RANGE_PROP));
+            range = Integer.parseInt(user.getProperties().get(USER_RANGE_PROP));
         }
         catch (Exception e) {
-            user.deleteProperty(USER_RANGE_PROP);
+            user.getProperties().remove(USER_RANGE_PROP);
         }
     }
 

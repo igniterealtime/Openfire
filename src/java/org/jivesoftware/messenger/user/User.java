@@ -13,12 +13,14 @@ package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.event.UserEventDispatcher;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -98,6 +100,12 @@ public class User implements Cacheable {
 
         try {
             UserManager.getUserProvider().setPassword(username, password);
+
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "passwordModified");
+            UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
+                    params);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -114,8 +122,16 @@ public class User implements Cacheable {
         }
 
         try {
+            String originalName = this.name;
             UserManager.getUserProvider().setName(username, name);
             this.name = name;
+
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "nameModified");
+            params.put("originalValue", originalName);
+            UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
+                    params);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -132,8 +148,15 @@ public class User implements Cacheable {
         }
 
         try {
+            String originalEmail= this.email;
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "emailModified");
+            params.put("originalValue", originalEmail);
+            UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
+                    params);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -150,8 +173,16 @@ public class User implements Cacheable {
         }
 
         try {
+            Date originalCreationDate = this.creationDate;
             UserManager.getUserProvider().setCreationDate(username, creationDate);
             this.creationDate = creationDate;
+
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "creationDateModified");
+            params.put("originalValue", originalCreationDate);
+            UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
+                    params);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -168,8 +199,16 @@ public class User implements Cacheable {
         }
 
         try {
+            Date originalModificationDate = this.modificationDate;
             UserManager.getUserProvider().setCreationDate(username, modificationDate);
             this.modificationDate = modificationDate;
+
+            // Fire event.
+            Map params = new HashMap();
+            params.put("type", "nameModified");
+            params.put("originalValue", originalModificationDate);
+            UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
+                    params);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -177,78 +216,20 @@ public class User implements Cacheable {
     }
 
     /**
-     * Returns an extended property of the user. Each user can have an arbitrary number of extended
-     * properties. This lets particular skins or filters provide enhanced functionality that is not
-     * part of the base interface.
+     * Returns all extended properties of the group. Groups
+     * have an arbitrary number of extended properties.
      *
-     * @param name the name of the property to get.
-     * @return the value of the property
+     * @return the extended properties.
      */
-    public String getProperty(String name) {
-        if (properties == null) {
-            loadPropertiesFromDb();
-        }
-        return properties.get(name);
-    }
-
-    /**
-     * Sets an extended property of the user. Each user can have an arbitrary number of extended
-     * properties. This lets particular skins or filters provide enhanced functionality that is not
-     * part of the base interface. Property names and values must be valid Strings. If <tt>null</tt>
-     * or an empty length String is used, a NullPointerException will be thrown.
-     *
-     * @param name  the name of the property to set.
-     * @param value the new value for the property.
-     */
-    public void setProperty(String name, String value) {
-        if (properties == null) {
-            loadPropertiesFromDb();
-        }
-        // Make sure the property name and value aren't null.
-        if (name == null || value == null || "".equals(name) || "".equals(value)) {
-            throw new NullPointerException("Cannot set property with empty or null value.");
-        }
-        // See if we need to update a property value or insert a new one.
-        if (properties.containsKey(name)) {
-            // Only update the value in the database if the property value
-            // has changed.
-            if (!(value.equals(properties.get(name)))) {
-                properties.put(name, value);
-                updatePropertyInDb(name, value);
+    public Map<String,String> getProperties() {
+        synchronized (this) {
+            if (properties == null) {
+                properties = new ConcurrentHashMap<String, String>();
+                loadProperties();
             }
         }
-        else {
-            properties.put(name, value);
-            insertPropertyIntoDb(name, value);
-        }
-    }
-
-    /**
-     * Deletes an extended property. If the property specified by <code>name</code> does not exist,
-     * this method will do nothing.
-     *
-     * @param name the name of the property to delete.
-     */
-    public void deleteProperty(String name) {
-        if (properties == null) {
-            loadPropertiesFromDb();
-        }
-        if (properties.remove(name) != null) {
-            // Only delete the propery from the DB if it was removed from memory
-            deletePropertyFromDb(name);
-        }
-    }
-
-    /**
-     * Returns a Collection of all the names of the extended user properties.
-     *
-     * @return a Collection of all the property names.
-     */
-    public Collection<String> getPropertyNames() {
-        if (properties == null) {
-            loadPropertiesFromDb();
-        }
-        return Collections.unmodifiableCollection(properties.keySet());
+        // Return a wrapper that will intercept add and remove commands.
+        return new PropertiesMap();
     }
 
     /**
@@ -300,92 +281,169 @@ public class User implements Cacheable {
         }
     }
 
-    private synchronized void loadPropertiesFromDb() {
-        properties = new Hashtable<String,String>();
+    /**
+     * Map implementation that updates the database when properties are modified.
+     */
+    private class PropertiesMap extends AbstractMap {
+
+        public Object put(Object key, Object value) {
+            Object answer;
+            if (properties.containsKey(key)) {
+                String originalValue = properties.get(key);
+                answer = properties.put((String)key, (String)value);
+                updateProperty((String)key, (String)value);
+                // Fire event.
+                Map params = new HashMap();
+                params.put("type", "propertyModified");
+                params.put("propertyKey", key);
+                params.put("originalValue", originalValue);
+                UserEventDispatcher.dispatchEvent(User.this,
+                        UserEventDispatcher.EventType.user_modified, params);
+            }
+            else {
+                answer = properties.put((String)key, (String)value);
+                insertProperty((String)key, (String)value);
+                // Fire event.
+                Map params = new HashMap();
+                params.put("type", "propertyAdded");
+                params.put("propertyKey", key);
+                UserEventDispatcher.dispatchEvent(User.this,
+                        UserEventDispatcher.EventType.user_modified, params);
+            }
+            return answer;
+        }
+
+        public Set<Entry> entrySet() {
+            return new PropertiesEntrySet();
+        }
+    }
+
+    /**
+     * Set implementation that updates the database when properties are deleted.
+     */
+    private class PropertiesEntrySet extends AbstractSet {
+
+        public int size() {
+            return properties.entrySet().size();
+        }
+
+        public Iterator iterator() {
+            return new Iterator() {
+
+                Iterator iter = properties.entrySet().iterator();
+                Map.Entry current = null;
+
+                public boolean hasNext() {
+                    return iter.hasNext();
+                }
+
+                public Object next() {
+                    current = (Map.Entry)iter.next();
+                    return current;
+                }
+
+                public void remove() {
+                    if (current == null) {
+                        throw new IllegalStateException();
+                    }
+                    deleteProperty((String)current.getKey());
+                    iter.remove();
+                    // Fire event.
+                    Map params = new HashMap();
+                    params.put("type", "propertyDeleted");
+                    params.put("propertyKey", current.getKey());
+                    UserEventDispatcher.dispatchEvent(User.this,
+                        UserEventDispatcher.EventType.user_modified, params);
+                }
+            };
+        }
+    }
+
+    private void loadProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, username);
+            pstmt.setString(1, name);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 properties.put(rs.getString(1), rs.getString(2));
             }
+            rs.close();
         }
-        catch (SQLException e) {
-            Log.error(e);
+        catch (SQLException sqle) {
+            Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
+            try { if (pstmt != null) pstmt.close(); }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
+            try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
     }
 
-    private void insertPropertyIntoDb(String name, String value) {
+    private void insertProperty(String propName, String propValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, name);
-            pstmt.setString(3, value);
+            pstmt.setString(1, name);
+            pstmt.setString(2, propName);
+            pstmt.setString(3, propValue);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
+            try { if (pstmt != null) pstmt.close(); }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
+            try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
     }
 
-    private void updatePropertyInDb(String name, String value) {
+    private void updateProperty(String propName, String propValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, value);
-            pstmt.setString(2, name);
-            pstmt.setString(3, username);
+            pstmt.setString(1, propValue);
+            pstmt.setString(2, propName);
+            pstmt.setString(3, name);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
+            try { if (pstmt != null) pstmt.close(); }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
+            try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
     }
 
-    private void deletePropertyFromDb(String name) {
+    private void deleteProperty(String propName) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, name);
+            pstmt.setString(1, name);
+            pstmt.setString(2, propName);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
+            try { if (pstmt != null) pstmt.close(); }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
+            try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
     }

@@ -104,7 +104,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         // prober
                         try {
                             User probeeUser = UserManager.getInstance().getUser(probee.getNode());
-                            String presenceXML = probeeUser.getProperty(lastPresenceProp);
+                            String presenceXML = probeeUser.getProperties().get(lastPresenceProp);
                             if (presenceXML != null) {
                                 try {
                                     // Parse the element
@@ -176,7 +176,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         try {
             User probeeUser = UserManager.getInstance().getUser(username);
-            probeeUser.deleteProperty(lastPresenceProp);
+            probeeUser.getProperties().remove(lastPresenceProp);
         }
         catch (UserNotFoundException e) {
         }
@@ -188,7 +188,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         try {
             User probeeUser = UserManager.getInstance().getUser(username);
-            probeeUser.setProperty(lastPresenceProp, presence.toXML());
+            probeeUser.getProperties().put(lastPresenceProp, presence.toXML());
         }
         catch (UserNotFoundException e) {
         }

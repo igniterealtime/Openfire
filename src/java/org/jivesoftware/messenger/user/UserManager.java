@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.messenger.event.UserEventDispatcher;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.ClassUtils;
@@ -21,6 +22,7 @@ import org.jivesoftware.stringprep.StringprepException;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.Collections;
 
 /**
  * Manages users, including loading, creating and deleting.
@@ -53,9 +55,10 @@ public class UserManager {
     }
 
     /**
-     * Returns the currently-installed UserProvider. Note, in most cases the user
-     * provider should not be used directly. Instead, the appropriate methods
-     * in UserManager should be called.
+     * Returns the currently-installed UserProvider. <b>Warning:</b> in virtually all
+     * cases the user provider should not be used directly. Instead, the appropriate
+     * methods in UserManager should be called. Direct access to the user provider is
+     * only provided for special-case logic.
      *
      * @return the current UserProvider.
      */
@@ -104,6 +107,11 @@ public class UserManager {
         }
         User user = provider.createUser(username, password, name, email);
         userCache.put(username, user);
+
+        // Fire event.
+        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_created,
+                Collections.emptyMap());
+
         return user;
     }
 
@@ -125,6 +133,11 @@ public class UserManager {
         catch (StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
+
+        // Fire event.
+        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_deleting,
+                Collections.emptyMap());
+
         provider.deleteUser(user.getUsername());
         // Remove the user from cache.
         userCache.remove(user.getUsername());

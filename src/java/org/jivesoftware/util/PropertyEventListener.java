@@ -18,13 +18,13 @@
  * limitations under the License.
  */
 
-package org.jivesoftware.messenger.event;
+package org.jivesoftware.util;
 
 import java.util.Map;
 
 /**
  * Interface to listen for property events. Use the
- * {@link PropertyEventDispatcher#addListener(PropertyEventListener)}
+ * {@link org.jivesoftware.util.PropertyEventDispatcher#addListener(PropertyEventListener)}
  * method to register for events.
  *
  * @author Matt Tucker

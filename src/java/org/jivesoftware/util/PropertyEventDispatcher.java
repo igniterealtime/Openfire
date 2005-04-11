@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package org.jivesoftware.messenger.event;
+package org.jivesoftware.util;
 
 import org.jivesoftware.util.Log;
 

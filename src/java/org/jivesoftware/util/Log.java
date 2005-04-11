@@ -11,15 +11,20 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.util.log.*;
-import org.jivesoftware.util.log.output.io.StreamTarget;
-import org.jivesoftware.util.log.output.io.rotate.*;
+import org.jivesoftware.util.log.Hierarchy;
+import org.jivesoftware.util.log.LogTarget;
+import org.jivesoftware.util.log.Logger;
+import org.jivesoftware.util.log.Priority;
 import org.jivesoftware.util.log.format.ExtendedPatternFormatter;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.util.log.output.io.StreamTarget;
+import org.jivesoftware.util.log.output.io.rotate.RevolvingFileStrategy;
+import org.jivesoftware.util.log.output.io.rotate.RotateStrategyBySize;
+import org.jivesoftware.util.log.output.io.rotate.RotatingFileTarget;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,14 +66,14 @@ public class Log {
     /**
      * This method is used to initialize the Log class. For normal operations this method
      * should <b>never</b> be called, rather it's only publically available so that the class
-     * can be reset by the setup process once the messengerHome directory has been specified.
+     * can be reset by the setup process once the home directory has been specified.
      */
     public static void initLog() {
         try {
             logDirectory = JiveGlobals.getXMLProperty("log.directory");
             if (logDirectory == null) {
-                if (JiveGlobals.getMessengerHome() != null) {
-                    File messengerHome = new File(JiveGlobals.getMessengerHome());
+                if (JiveGlobals.getHomeDirectory() != null) {
+                    File messengerHome = new File(JiveGlobals.getHomeDirectory());
                     if (messengerHome.exists() && messengerHome.canWrite()) {
                         logDirectory = (new File(messengerHome, "logs")).toString();
                     }
@@ -107,7 +112,7 @@ public class Log {
             debugEnabled = "true".equals(JiveGlobals.getXMLProperty("log.debug.enabled"));
         }
         catch (Exception e) {
-            // we'll get an exception if messengerHome isn't setup yet - we ignore that since
+            // we'll get an exception if home isn't setup yet - we ignore that since
             // it's sure to be logged elsewhere :)
         }
 
@@ -139,7 +144,7 @@ public class Log {
         Exception ioe = null;
 
         try {
-            // messengerHome was not setup correctly
+            // home was not setup correctly
             if (logName == null) {
                 throw new IOException("LogName was null - MessengerHome not set?");
             }
@@ -218,9 +223,9 @@ public class Log {
         }
     }
 
-    public static void markDebugLogFile(User user) {
+    public static void markDebugLogFile(String username) {
         RotatingFileTarget target = (RotatingFileTarget) debugLog.getLogTargets()[0];
-        markLogFile(user, target);
+        markLogFile(username, target);
     }
 
     public static void rotateDebugLogFile() {
@@ -252,9 +257,9 @@ public class Log {
         }
     }
 
-    public static void markInfoLogFile(User user) {
+    public static void markInfoLogFile(String username) {
         RotatingFileTarget target = (RotatingFileTarget) infoLog.getLogTargets()[0];
-        markLogFile(user, target);
+        markLogFile(username, target);
     }
 
     public static void rotateInfoLogFile() {
@@ -286,9 +291,9 @@ public class Log {
         }
     }
 
-    public static void markWarnLogFile(User user) {
+    public static void markWarnLogFile(String username) {
         RotatingFileTarget target = (RotatingFileTarget) warnLog.getLogTargets()[0];
-        markLogFile(user, target);
+        markLogFile(username, target);
     }
 
     public static void rotateWarnLogFile() {
@@ -329,9 +334,9 @@ public class Log {
         }
     }
 
-    public static void markErrorLogFile(User user) {
+    public static void markErrorLogFile(String username) {
         RotatingFileTarget target = (RotatingFileTarget) errorLog.getLogTargets()[0];
-        markLogFile(user, target);
+        markLogFile(username, target);
     }
 
     public static void rotateErrorLogFile() {
@@ -382,9 +387,9 @@ public class Log {
         return logDirectory;
     }
 
-    private static void markLogFile(User user, RotatingFileTarget target) {
+    private static void markLogFile(String username, RotatingFileTarget target) {
         List args = new ArrayList();
-        args.add(user.getUsername());
+        args.add(username);
         args.add(JiveGlobals.formatDateTime(new java.util.Date()));
         target.write(LocaleUtils.getLocalizedString("log.marker_inserted_by", args) + "\n");
     }

@@ -18,7 +18,7 @@
                  org.jivesoftware.messenger.PresenceManager,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.JiveGlobals"
+                 org.jivesoftware.util.JiveGlobals"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

@@ -12,17 +12,17 @@
 package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
-import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
+import javax.naming.directory.*;
 import javax.naming.ldap.Control;
-import javax.naming.ldap.SortControl;
 import javax.naming.ldap.LdapContext;
-import java.util.*;
+import javax.naming.ldap.SortControl;
 import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is

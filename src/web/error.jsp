@@ -6,7 +6,7 @@
 
 <%@ page import="java.io.*,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.user.UserNotFoundException,
                  org.jivesoftware.messenger.group.GroupNotFoundException"

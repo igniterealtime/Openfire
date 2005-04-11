@@ -20,8 +20,8 @@
 
 package org.jivesoftware.messenger.container;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.mortbay.http.SunJsseListener;
@@ -73,7 +73,7 @@ public class AdminConsolePlugin implements Plugin {
         try {
             // Configure logging to a file, creating log dir if needed
             System.setProperty("org.apache.commons.logging.LogFactory", "org.mortbay.log.Factory");
-            File logDir = new File(JiveGlobals.getMessengerHome(), "logs");
+            File logDir = new File(JiveGlobals.getHomeDirectory(), "logs");
             if (!logDir.exists()) {
                 logDir.mkdirs();
             }
@@ -107,7 +107,7 @@ public class AdminConsolePlugin implements Plugin {
                     // Get the keystore location. The default location is security/keystore
                     String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
                             "resources" + File.separator + "security" + File.separator + "keystore");
-                    keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
+                    keyStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + keyStoreLocation;
 
                     // Get the keystore password. The default password is "changeit".
                     String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
@@ -116,7 +116,7 @@ public class AdminConsolePlugin implements Plugin {
                     // Get the truststore location; default at security/truststore
                     String trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
                             "resources" + File.separator + "security" + File.separator + "truststore");
-                    trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator +
+                    trustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator +
                             trustStoreLocation;
 
                     // Get the truststore passwprd; default is "changeit".

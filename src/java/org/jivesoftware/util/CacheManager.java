@@ -10,8 +10,6 @@
  */
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.JiveGlobals;
-
 import java.util.*;
 
 /**

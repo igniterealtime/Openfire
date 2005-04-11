@@ -7,7 +7,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  java.util.*" %>
 
 <%! // Global vars, methods, etc

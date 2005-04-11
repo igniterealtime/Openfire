@@ -14,7 +14,7 @@
                  java.text.*,
                  org.jivesoftware.util.log.Logger,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.user.*,
                  java.util.*,
                  org.jivesoftware.admin.AdminPageBean"
@@ -150,16 +150,16 @@
     }
     else if (markLog && log != null) {
         if ("error".equals(log)) {
-            Log.markErrorLogFile(pageUser);
+            Log.markErrorLogFile(pageUser.getUsername());
         }
         else if ("warn".equals(log)) {
-            Log.markWarnLogFile(pageUser);
+            Log.markWarnLogFile(pageUser.getUsername());
         }
         else if ("info".equals(log)) {
-            Log.markInfoLogFile(pageUser);
+            Log.markInfoLogFile(pageUser.getUsername());
         }
         else if ("debug".equals(log)) {
-            Log.markDebugLogFile(pageUser);
+            Log.markDebugLogFile(pageUser.getUsername());
         }
         response.sendRedirect("logviewer.jsp?log=" + log);
         return;
@@ -431,7 +431,7 @@ IFRAME {
 <br>
 
 <span class="jive-description" style="color:#666;">
-Log dir: <%= JiveGlobals.getMessengerHome() %><%= File.separator %>logs
+Log dir: <%= JiveGlobals.getHomeDirectory() %><%= File.separator %>logs
 </span>
 
 <br><br>

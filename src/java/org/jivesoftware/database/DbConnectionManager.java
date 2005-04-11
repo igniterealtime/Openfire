@@ -13,8 +13,8 @@
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.JiveGlobals;
 
 import java.io.*;
 import java.sql.*;

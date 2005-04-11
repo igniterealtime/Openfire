@@ -11,7 +11,6 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

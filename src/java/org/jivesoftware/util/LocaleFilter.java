@@ -11,8 +11,6 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.JiveGlobals;
-
 import javax.servlet.*;
 import javax.servlet.jsp.jstl.core.Config;
 import java.io.IOException;

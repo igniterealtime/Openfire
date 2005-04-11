@@ -12,7 +12,7 @@
                  javax.naming.NamingEnumeration,
                  javax.naming.InitialContext,
                  javax.naming.Binding,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.database.JNDIDataSourceProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider" %>

@@ -40,6 +40,7 @@ import org.jivesoftware.messenger.muc.NotAllowedException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.*;
 import org.xmpp.component.ComponentManager;
 

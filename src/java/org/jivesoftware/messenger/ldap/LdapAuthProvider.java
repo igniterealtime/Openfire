@@ -13,9 +13,9 @@ package org.jivesoftware.messenger.ldap;
 
 import org.jivesoftware.messenger.auth.AuthProvider;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 
 /**

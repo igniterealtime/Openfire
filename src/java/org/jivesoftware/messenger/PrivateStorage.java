@@ -15,6 +15,7 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;

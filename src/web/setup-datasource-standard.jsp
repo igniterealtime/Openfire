@@ -11,7 +11,7 @@
                  java.beans.BeanInfo,
                  java.beans.Introspector,
                  java.beans.PropertyDescriptor,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
 
                  java.sql.Connection,
                  java.io.File,
@@ -100,7 +100,7 @@
             }
             catch (Exception e) {
                 errors.put("general","Setting connection properties failed - please see the error "
-                        + "log located in messengerHome/logs for more details.");
+                        + "log located in home/logs for more details.");
                 Log.error(e);
             }
             // No errors setting the properties, so test the connection

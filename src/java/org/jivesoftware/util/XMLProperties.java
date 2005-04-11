@@ -11,12 +11,14 @@
 
 package org.jivesoftware.util;
 
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
+
 import java.io.*;
 import java.util.*;
-import org.dom4j.Element;
-import org.dom4j.Document;
-import org.dom4j.io.*;
-import org.jivesoftware.messenger.event.PropertyEventDispatcher;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is

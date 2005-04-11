@@ -22,7 +22,7 @@ import java.io.File;
  *      <li>Use the Jive Messenger API to add new functionality to server.
  * </ul>
  *
- * Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. Plugins
+ * Plugins live in the <tt>plugins</tt> directory of <tt>home</tt>. Plugins
  * that are packaged as JAR files will be automatically expanded into directories. A
  * plugin directory should have the following structure:
  *

@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.sql.*;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.event.PropertyEventDispatcher;
 
 /**
  * Retrieves and stores Jive properties. Properties are stored in the database.

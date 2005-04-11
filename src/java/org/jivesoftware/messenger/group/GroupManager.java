@@ -11,12 +11,9 @@
 
 package org.jivesoftware.messenger.group;
 
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 
 import java.util.Collection;

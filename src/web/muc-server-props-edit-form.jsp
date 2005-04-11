@@ -14,7 +14,7 @@
                  org.jivesoftware.messenger.XMPPServerInfo,
                  org.jivesoftware.messenger.muc.MultiUserChatServer,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  java.util.*,
                  org.jivesoftware.util.LocaleUtils"
     errorPage="error.jsp"

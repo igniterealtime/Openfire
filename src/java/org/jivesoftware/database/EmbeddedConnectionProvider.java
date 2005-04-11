@@ -11,20 +11,22 @@
 
 package org.jivesoftware.database;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.JiveGlobals;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
- * <tt>messengerHome/database</tt>. The log file for this connection provider is stored at
- * <tt>[messengerHome]/logs/EmbeddedConnectionProvider.log</tt>, so you should ensure
- * that the <tt>[messengerHome]/logs</tt> directory exists.
+ * <tt>home/database</tt>. The log file for this connection provider is stored at
+ * <tt>[home]/logs/EmbeddedConnectionProvider.log</tt>, so you should ensure
+ * that the <tt>[home]/logs</tt> directory exists.
  *
  * @author Matt Tucker
  */
@@ -57,7 +59,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         synchronized (initLock) {
             try {
                 String driver = "org.hsqldb.jdbcDriver";
-                File databaseDir = new File(JiveGlobals.getMessengerHome(), File.separator +
+                File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator +
                         "embedded-db");
                 boolean initData = false;
                 // If the database doesn't exist, create it.

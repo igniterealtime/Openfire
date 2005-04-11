@@ -11,7 +11,6 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import java.text.*;
 import java.util.*;
 

@@ -9,9 +9,10 @@
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.Log,
-                 org.jivesoftware.admin.AdminConsole"
+                 org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
 

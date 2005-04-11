@@ -12,14 +12,15 @@
 package org.jivesoftware.messenger.net;
 
 import org.jivesoftware.util.Log;
-import com.sun.net.ssl.KeyManagerFactory;
-import com.sun.net.ssl.SSLContext;
-import com.sun.net.ssl.TrustManagerFactory;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
-import javax.net.ssl.SSLServerSocketFactory;
 
 /**
  * Securue socket factory wrapper allowing simple setup of all security

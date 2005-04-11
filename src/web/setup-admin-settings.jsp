@@ -13,7 +13,7 @@
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.AuthToken,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.auth.DefaultAuthProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

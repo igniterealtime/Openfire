@@ -14,7 +14,7 @@ package org.jivesoftware.messenger.container;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.servlet.ServletConfig;
@@ -23,12 +23,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +54,7 @@ public class PluginServlet extends HttpServlet {
 
     static {
         servlets = new ConcurrentHashMap<String, HttpServlet>();
-        pluginDirectory = new File(JiveGlobals.getMessengerHome(), "plugins");
+        pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
     }
 
     public void init(ServletConfig config) throws ServletException {

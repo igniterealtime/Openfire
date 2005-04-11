@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.audit.spi;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.audit.AuditManager;
@@ -19,6 +18,7 @@ import org.jivesoftware.messenger.audit.Auditor;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketInterceptor;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
 
 import java.util.Iterator;

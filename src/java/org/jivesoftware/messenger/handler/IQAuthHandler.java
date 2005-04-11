@@ -22,6 +22,7 @@ import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.xmpp.packet.IQ;

@@ -13,7 +13,7 @@
                  java.util.*,
                  org.jivesoftware.util.*,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.admin.AdminPageBean"
     errorPage="error.jsp"
 %>

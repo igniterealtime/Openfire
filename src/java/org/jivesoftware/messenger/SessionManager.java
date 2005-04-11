@@ -33,6 +33,7 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;

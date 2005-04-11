@@ -11,10 +11,11 @@
 
 package org.jivesoftware.messenger.net;
 
+import org.jivesoftware.messenger.ConnectionManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.ConnectionManager;
-import org.jivesoftware.messenger.JiveGlobals;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;

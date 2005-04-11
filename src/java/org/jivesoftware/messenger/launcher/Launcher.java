@@ -13,34 +13,18 @@ package org.jivesoftware.messenger.launcher;
 
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.util.XMLProperties;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.UIManager;
+import org.jivesoftware.util.XMLProperties;
 
-import java.awt.BorderLayout;
-import java.awt.Cursor;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * Graphical launcher for Jive Messenger.
@@ -50,7 +34,7 @@ import java.io.IOException;
 public class Launcher {
 
     private Process messengerd;
-    private String configFile = JiveGlobals.getMessengerHome() + File.separator + "conf" + File.separator + "jive-messenger.xml";
+    private String configFile = JiveGlobals.getHomeDirectory() + File.separator + "conf" + File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
@@ -352,7 +336,7 @@ public class Launcher {
 
         final SwingWorker installerThread = new SwingWorker() {
             public Object construct() {
-                File pluginsDir = new File(JiveGlobals.getMessengerHome(), "plugins");
+                File pluginsDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
 

@@ -7,7 +7,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.database.EmbeddedConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.ConnectionProvider,
@@ -61,7 +61,7 @@
     // Defaults
     if (mode == null) {
         // If the "embedded-database" directory exists, select to the embedded db as the default.
-        if (new File(JiveGlobals.getMessengerHome(), "embedded-db").exists()) {
+        if (new File(JiveGlobals.getHomeDirectory(), "embedded-db").exists()) {
             mode = EMBEDDED;
         }
         // Otherwise default to standard.

@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;

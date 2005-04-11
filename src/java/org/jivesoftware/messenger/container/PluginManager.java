@@ -20,39 +20,27 @@
 
 package org.jivesoftware.messenger.container;
 
+import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.admin.AdminConsole;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
 
-import org.jivesoftware.messenger.JiveGlobals;
-import org.jivesoftware.messenger.XMPPServer;
-
-import org.jivesoftware.admin.AdminConsole;
-
-import org.dom4j.Document;
-
-import org.dom4j.Element;
-
-import org.dom4j.Attribute;
-
-import org.dom4j.io.SAXReader;
-
-
-
-import java.io.*;
-
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.*;
-
-import java.util.jar.JarFile;
-
-import java.util.jar.JarEntry;
-
-import java.util.zip.ZipFile;
-
 import java.util.concurrent.ScheduledExecutorService;
-
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any

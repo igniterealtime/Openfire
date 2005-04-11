@@ -16,7 +16,7 @@
                  java.util.*,
                  org.jivesoftware.messenger.XMPPServer,
                  java.net.InetAddress,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.net.SSLSocketAcceptThread,
                  org.jivesoftware.messenger.net.SocketAcceptThread"
 %>

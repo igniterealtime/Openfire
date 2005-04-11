@@ -11,11 +11,8 @@
 
 package org.jivesoftware.messenger.auth;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

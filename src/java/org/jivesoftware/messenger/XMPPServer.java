@@ -31,6 +31,7 @@ import org.jivesoftware.messenger.net.MulticastDNSService;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.database.DbConnectionManager;
 import org.dom4j.io.SAXReader;
 import org.dom4j.Document;
@@ -77,7 +78,7 @@ public class XMPPServer {
     private Map<Class,Module> modules = new HashMap<Class,Module>();
 
     /**
-     * Location of the messengerHome directory. All configuration files should be
+     * Location of the home directory. All configuration files should be
      * located here.
      */
     private File messengerHome;
@@ -161,6 +162,9 @@ public class XMPPServer {
     }
 
     private void initialize() throws FileNotFoundException {
+        // Set the name of the config file
+        JiveGlobals.setConfigName("jive-messenger.xml");
+
         locateMessenger();
 
         name = JiveGlobals.getProperty("xmpp.domain");
@@ -463,7 +467,7 @@ public class XMPPServer {
      */
     private void locateMessenger() throws FileNotFoundException {
         String jiveConfigName = "conf" + File.separator + "jive-messenger.xml";
-        // First, try to load it jiveHome as a system property.
+        // First, try to load it messengerHome as a system property.
         if (messengerHome == null) {
             String homeProperty = System.getProperty("messengerHome");
             try {
@@ -476,8 +480,8 @@ public class XMPPServer {
             }
         }
 
-        // If we still don't have messengerHome, let's assume this is standalone
-        // and just look for messengerHome in a standard sub-dir location and verify
+        // If we still don't have home, let's assume this is standalone
+        // and just look for home in a standard sub-dir location and verify
         // by looking for the config file
         if (messengerHome == null) {
             try {
@@ -489,7 +493,7 @@ public class XMPPServer {
             }
         }
 
-        // If messengerHome is still null, no outside process has set it and
+        // If home is still null, no outside process has set it and
         // we have to attempt to load the value from messenger_init.xml,
         // which must be in the classpath.
         if (messengerHome == null) {
@@ -511,7 +515,7 @@ public class XMPPServer {
                 }
             }
             catch (Exception e) {
-                System.err.println("Error loading messenger_init.xml to find messengerHome.");
+                System.err.println("Error loading messenger_init.xml to find home.");
                 e.printStackTrace();
             }
             finally {
@@ -524,11 +528,11 @@ public class XMPPServer {
         }
 
         if (messengerHome == null) {
-            System.err.println("Could not locate messengerHome");
+            System.err.println("Could not locate home");
             throw new FileNotFoundException();
         }
         else {
-            JiveGlobals.messengerHome = messengerHome.toString();
+            JiveGlobals.home = messengerHome.toString();
         }
     }
 

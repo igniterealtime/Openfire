@@ -11,15 +11,15 @@
 
 package org.jivesoftware.database;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.JiveGlobals;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * An implementation of ConnectionProvider that utilizes a JDBC 2.0 DataSource

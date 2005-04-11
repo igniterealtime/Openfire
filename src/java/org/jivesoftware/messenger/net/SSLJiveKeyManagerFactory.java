@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.net;
 
 import com.sun.net.ssl.KeyManager;
 import com.sun.net.ssl.KeyManagerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -38,7 +39,7 @@ public class SSLJiveKeyManagerFactory {
     /**
      * Creates a KeyManager list which is null if the storeType is null, or
      * is a standard KeyManager that uses a KeyStore of type storeType,
-     * located at 'keystore' location under messengerHome, and uses 'keypass' as
+     * located at 'keystore' location under home, and uses 'keypass' as
      * the password for the keystore password and key password. The default
      * Jive keystore contains a self-signed X509 certificate pair under the
      * alias '127.0.0.1' in a Java KeyStore (JKS) with initial password 'changeit'.
@@ -47,7 +48,7 @@ public class SSLJiveKeyManagerFactory {
      * the Jive XMPP server security documentation for more information.
      *
      * @param storeType The type of keystore (e.g. "JKS") to use or null to indicate no keystore should be used
-     * @param keystore  The relative location of the keystore under messengerHome
+     * @param keystore  The relative location of the keystore under home
      * @param keypass   The password for the keystore and key
      * @return An array of relevant KeyManagers (may be null indicating a default KeyManager should be created)
      * @throws NoSuchAlgorithmException  If the keystore type doesn't exist (not provided or configured with your JVM)

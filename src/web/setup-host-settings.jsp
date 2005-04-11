@@ -5,7 +5,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
                  java.util.HashMap,
                  java.net.InetAddress"

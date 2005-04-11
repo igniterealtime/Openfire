@@ -19,6 +19,7 @@ import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.net.SocketReadThread;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.io.IOException;
 import java.net.InetAddress;

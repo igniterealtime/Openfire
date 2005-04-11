@@ -9,38 +9,35 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.util;
 
-import org.jivesoftware.util.*;
+import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
 
+import javax.naming.InitialContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.*;
 
-import org.dom4j.Document;
-import org.dom4j.io.SAXReader;
-
-import javax.naming.InitialContext;
-
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
  * by core Jive classes.
  * <p/>
- * The location of the messengerHome directory should be specified one of
+ * The location of the home directory should be specified one of
  * three ways:
  * <ol>
- * <li>Set a Java system property named <tt>messengerHome</tt> with the full path to your
- * messengerHome directory.
+ * <li>Set a Java system property named <tt>home</tt> with the full path to your
+ * home directory.
  * <li>Indicate its value in the <tt>messenger_init.xml</tt> file. This
  * is a simple xml file that should look something like:<br>
- * <tt><messengerHome>c:\JiveMessenger</messengerHome></tt> (Windows) <br>
+ * <tt><home>c:\JiveMessenger</home></tt> (Windows) <br>
  * or <br>
- * <tt><messengerHome>/var/JiveMessenger</messengerHome></tt> (Unix) <p>
+ * <tt><home>/var/JiveMessenger</home></tt> (Unix) <p>
  * <p/>
  * The file must be in your classpath so that it can be loaded by Java's classloader.
- * <li>Use another class in your VM to set the <tt>JiveGlobals.messengerHome</tt> variable.
+ * <li>Use another class in your VM to set the <tt>JiveGlobals.home</tt> variable.
  * This must be done before the rest of Jive starts up, for example: in a servlet that
  * is set to run as soon as the appserver starts up.
  * </ol>
@@ -50,13 +47,13 @@ import javax.naming.InitialContext;
  */
 public class JiveGlobals {
 
-    private static String JIVE_CONFIG_FILENAME = "jive-messenger.xml";
+    private static String JIVE_CONFIG_FILENAME = null;
 
     /**
      * Location of the jiveHome directory. All configuration files should be
      * located here.
      */
-    public static String messengerHome = null;
+    public static String home = null;
 
     public static boolean failedLoading = false;
 
@@ -210,41 +207,20 @@ public class JiveGlobals {
     }
 
     /**
-     * Returns the location of the <code>messengerHome</code> directory.
+     * Returns the location of the <code>home</code> directory.
      *
-     * @return the location of the messengerHome dir.
+     * @return the location of the home dir.
      */
-    public static String getMessengerHome() {
-        if (messengerHome == null) {
+    public static String getHomeDirectory() {
+        if (home == null) {
             loadSetupProperties();
         }
-        return messengerHome;
+        return home;
     }
 
     /**
-     * Sets the location of the <code>messengerHome</code> directory. This method
-     * is only intended to be used during setup and should <b>not</b> set called
-     * in normal Messenger operations.
-     */
-    public static void setMessengerHome(String mHome) {
-        properties = null;
-        xmlProperties = null;
-        failedLoading = false;
-        messengerHome = mHome;
-        locale = null;
-        timeZone = null;
-        dateFormat = null;
-        dateTimeFormat = null;
-
-        loadSetupProperties();
-        System.err.println("Warning - messengerHome is being reset to " + mHome +
-                "! Resetting the messengerHome is a normal part of the setup process, " +
-                "however it should not occur during the normal operations of Jive Messenger.");
-    }
-
-    /**
-     * Returns a local property. Local properties are stored in the file
-     * <tt>jive-messenger.xml</tt> that exists in the <tt>jiveMessenger/conf</tt> directory.
+     * Returns a local property. Local properties are stored in the file defined in
+     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -263,7 +239,7 @@ public class JiveGlobals {
             loadSetupProperties();
         }
 
-        // messengerHome not loaded?
+        // home not loaded?
         if (xmlProperties == null) {
             return null;
         }
@@ -272,8 +248,8 @@ public class JiveGlobals {
     }
 
     /**
-     * Returns a local property. Local properties are stored in the file
-     * <tt>jive-messenger.xml</tt> that exists in the <tt>jiveMessenger/conf</tt> directory.
+     * Returns a local property. Local properties are stored in the file defined in
+     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -295,7 +271,7 @@ public class JiveGlobals {
             loadSetupProperties();
         }
 
-        // messengerHome not loaded?
+        // home not loaded?
         if (xmlProperties == null) {
             return null;
         }
@@ -308,8 +284,8 @@ public class JiveGlobals {
     }
 
     /**
-     * Returns an integer value local property. Local properties are stored in the file
-     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * Returns an integer value local property. Local properties are stored in the file defined in
+     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -341,8 +317,8 @@ public class JiveGlobals {
 
     /**
      * Sets a local property. If the property doesn't already exists, a new
-     * one will be created. Local properties are stored in the file
-     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * one will be created. Local properties are stored in the file defined in
+     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -369,8 +345,8 @@ public class JiveGlobals {
 
     /**
      * Sets multiple local properties at once. If a property doesn't already exists, a new
-     * one will be created. Local properties are stored in the file
-     * <tt>jive_forums.xml</tt> that exists in the <tt>jiveHome</tt> directory.
+     * one will be created. Local properties are stored in the file defined in
+     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -400,8 +376,8 @@ public class JiveGlobals {
      * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
      * <tt>C</tt> (the value of <tt>C.D</tt> would not be returned using this method).<p>
      *
-     * Local properties are stored in the file <tt>jive_forums.xml</tt> that exists
-     * in the <tt>jiveHome</tt> directory. Properties are always specified as "foo.bar.prop",
+     * Local properties are stored in the file defined in <tt>JIVE_CONFIG_FILENAME</tt> that exists
+     * in the <tt>home</tt> directory. Properties are always specified as "foo.bar.prop",
      * which would map to the following entry in the XML file:
      * <pre>
      * &lt;foo&gt;
@@ -670,6 +646,19 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns the name of the local config file name.
+     *
+     * @return the name of the config file.
+     */
+     static String getConfigName() {
+         if (JIVE_CONFIG_FILENAME == null) {
+             throw new IllegalStateException("Need to set the configuration filename to use " +
+                     "before sending this message");
+         };
+        return JIVE_CONFIG_FILENAME;
+     }
+
+    /**
      * Returns true if in setup mode.
      *
      * @return true if in setup mode.
@@ -680,7 +669,7 @@ public class JiveGlobals {
 
     /**
      * Loads properties if necessary. Property loading must be done lazily so
-     * that we give outside classes a chance to set <tt>messengerHome</tt>.
+     * that we give outside classes a chance to set <tt>home</tt>.
      */
     private synchronized static void loadSetupProperties() {
         if (failedLoading) {
@@ -690,27 +679,27 @@ public class JiveGlobals {
             // If jiveHome is still null, no outside process has set it and
             // we have to attempt to load the value from jive_init.xml,
             // which must be in the classpath.
-            if (messengerHome == null) {
-                messengerHome = new InitPropLoader().getMessengerHome();
+            if (home == null) {
+                home = new InitPropLoader().getHome();
             }
             // If that failed, try loading it from JNDI
-            if (messengerHome == null) {
+            if (home == null) {
                 try {
                     InitialContext context = new InitialContext();
-                    messengerHome = (String)context.lookup("java:comp/env/messengerHome");
+                    home = (String)context.lookup("java:comp/env/home");
                 }
                 catch (Exception e) { }
             }
             // Finally, try to load it jiveHome as a system property.
-            if (messengerHome == null) {
-                messengerHome = System.getProperty("messengerHome");
+            if (home == null) {
+                home = System.getProperty("home");
             }
 
-            if(messengerHome == null){
+            if(home == null){
                 try {
-                    messengerHome = new File("..").getCanonicalPath();
-                    if(!new File(messengerHome, "conf/jive-messenger.xml").exists()){
-                        messengerHome = null;
+                    home = new File("..").getCanonicalPath();
+                    if(!new File(home, "conf/" + getConfigName()).exists()){
+                        home = null;
                     }
                 }
                 catch (IOException e) {
@@ -718,11 +707,11 @@ public class JiveGlobals {
                 }
             }
 
-             if(messengerHome == null){
+             if(home == null){
                 try {
-                    messengerHome = new File("").getCanonicalPath();
-                    if(!new File(messengerHome, "conf/jive-messenger.xml").exists()){
-                        messengerHome = null;
+                    home = new File("").getCanonicalPath();
+                    if(!new File(home, "conf/" + getConfigName()).exists()){
+                        home = null;
                     }
                 }
                 catch (IOException e) {
@@ -730,20 +719,20 @@ public class JiveGlobals {
                 }
             }
 
-            // If still null, finding messengerHome failed.
-            if (messengerHome == null) {
+            // If still null, finding home failed.
+            if (home == null) {
                 failedLoading = true;
                 StringBuilder msg = new StringBuilder();
-                msg.append("Critical Error! The messengerHome directory could not be loaded, \n");
+                msg.append("Critical Error! The home directory could not be loaded, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
-                msg.append("You must set messengerHome in one of four ways:\n");
-                msg.append("    1) Set a servlet init parameter named messengerHome.\n");
+                msg.append("You must set home in one of four ways:\n");
+                msg.append("    1) Set a servlet init parameter named home.\n");
                 msg.append("    2) Add a messenger_init.xml file to your classpath, which points \n ");
-                msg.append("       to messengerHome. Normally, this file will be in WEB-INF/classes.\n");
-                msg.append("    3) Set the JNDI value \"java:comp/env/messengerHome\" with a String \n");
-                msg.append("       that points to your messengerHome directory. \n");
-                msg.append("    4) Set the Java system property \"messengerHome\".\n\n");
-                msg.append("Further instructions for setting messengerHome can be found in the \n");
+                msg.append("       to home. Normally, this file will be in WEB-INF/classes.\n");
+                msg.append("    3) Set the JNDI value \"java:comp/env/home\" with a String \n");
+                msg.append("       that points to your home directory. \n");
+                msg.append("    4) Set the Java system property \"home\".\n\n");
+                msg.append("Further instructions for setting home can be found in the \n");
                 msg.append("installation documentation.");
                 System.err.println(msg.toString());
                 return;
@@ -751,19 +740,19 @@ public class JiveGlobals {
             // Create a manager with the full path to the xml config file.
             try {
                 // Do a permission check on the jiveHome directory:
-                File mh = new File(messengerHome);
+                File mh = new File(home);
                 if (!mh.exists()) {
-                    Log.error("Error - the specified messengerHome directory does not exist (" + messengerHome + ")");
+                    Log.error("Error - the specified home directory does not exist (" + home + ")");
                 }
                 else {
                     if (!mh.canRead() || !mh.canWrite()) {
                         Log.error("Error - the user running this Jive application can not read and write to the "
-                                + "specified jiveHome directory (" + messengerHome + "). Please grant the executing user "
+                                + "specified jiveHome directory (" + home + "). Please grant the executing user "
                                 + "read and write perms.");
                     }
                 }
-                xmlProperties = new XMLProperties(messengerHome + File.separator + "conf" +
-                        File.separator + JIVE_CONFIG_FILENAME);
+                xmlProperties = new XMLProperties(home + File.separator + "conf" +
+                        File.separator + getConfigName());
             }
             catch (IOException ioe) {
                 Log.error(ioe);
@@ -775,40 +764,40 @@ public class JiveGlobals {
 }
 
 /**
- * A very small class to load the messenger_init.properties file. The class is
+ * A very small class to load the file defined in JiveGlobals.JIVE_CONFIG_FILENAME. The class is
  * needed since loading files from the classpath in a static context often
  * fails.
  */
 class InitPropLoader {
 
-    public String getMessengerHome() {
-        String messengerHome = null;
+    public String getHome() {
+        String home = null;
         InputStream in = null;
         try {
-            in = getClass().getResourceAsStream("/messenger_init.xml");
+            in = getClass().getResourceAsStream("/" + JiveGlobals.getConfigName());
             if (in != null) {
                 SAXReader reader = new SAXReader();
                 Document doc = reader.read(in);
-                messengerHome = doc.getRootElement().getText();
+                home = doc.getRootElement().getText();
             }
         }
         catch (Exception e) {
-            Log.error("Error loading messenger_init.xml to find messengerHome.", e);
+            Log.error("Error loading messenger_init.xml to find home.", e);
         }
         finally {
             try { if (in != null) { in.close(); } }
             catch (Exception e) { }
         }
-        if (messengerHome != null) {
-            messengerHome = messengerHome.trim();
+        if (home != null) {
+            home = home.trim();
             // Remove trailing slashes.
-            while (messengerHome.endsWith("/") || messengerHome.endsWith("\\")) {
-                messengerHome = messengerHome.substring(0, messengerHome.length() - 1);
+            while (home.endsWith("/") || home.endsWith("\\")) {
+                home = home.substring(0, home.length() - 1);
             }
         }
-        if ("".equals(messengerHome)) {
-            messengerHome = null;
+        if ("".equals(home)) {
+            home = null;
         }
-        return messengerHome;
+        return home;
     }
 }

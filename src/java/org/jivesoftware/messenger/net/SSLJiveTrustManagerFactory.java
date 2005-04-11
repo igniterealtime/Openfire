@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.net;
 
 import com.sun.net.ssl.TrustManager;
 import com.sun.net.ssl.TrustManagerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -39,7 +40,7 @@ public class SSLJiveTrustManagerFactory {
     /**
      * Creates a TrustManager list which is null if the storeType is null, or
      * is a standard TrustManager that uses a KeyStore of type storeType,
-     * located at 'keystore' location under messengerHome, and uses 'keypass' as
+     * located at 'keystore' location under home, and uses 'keypass' as
      * the password for the keystore password and key password (note that
      * trust managers typically don't need a key password as public keys
      * are stored in the clear and can be obtained without a key password).
@@ -47,7 +48,7 @@ public class SSLJiveTrustManagerFactory {
      * as it is not needed (the server does not require client authentication).
      *
      * @param storeType  The type of keystore (e.g. "JKS") to use or null to indicate no keystore should be used
-     * @param truststore The relative location of the keystore under messengerHome
+     * @param truststore The relative location of the keystore under home
      * @param trustpass  The password for the keystore and key
      * @return An array of relevant KeyManagers (may be null indicating a default KeyManager should be created)
      * @throws NoSuchAlgorithmException If the keystore type doesn't exist (not provided or configured with your JVM)

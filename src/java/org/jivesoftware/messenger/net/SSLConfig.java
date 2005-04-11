@@ -11,8 +11,9 @@
 
 package org.jivesoftware.messenger.net;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.JiveGlobals;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,7 +47,7 @@ public class SSLConfig {
         // Get the keystore location. The default location is security/keystore
         keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
                 "resources" + File.separator + "security" + File.separator + "keystore");
-        keyStoreLocation = JiveGlobals.getMessengerHome() + File.separator + keyStoreLocation;
+        keyStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + keyStoreLocation;
 
         // Get the keystore password. The default password is "changeit".
         keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
@@ -55,7 +56,7 @@ public class SSLConfig {
         // Get the truststore location; default at security/truststore
         trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
                 "resources" + File.separator + "security" + File.separator + "truststore");
-        trustStoreLocation = JiveGlobals.getMessengerHome() + File.separator + trustStoreLocation;
+        trustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + trustStoreLocation;
 
         // Get the truststore passwprd; default is "changeit".
         trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");

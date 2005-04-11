@@ -8,7 +8,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.JiveGlobals,
+                 org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
                  java.util.Iterator,
                  org.jivesoftware.messenger.ConnectionManager,

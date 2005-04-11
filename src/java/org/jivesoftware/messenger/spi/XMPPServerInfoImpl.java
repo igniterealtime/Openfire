@@ -13,7 +13,7 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.util.Version;
 import org.jivesoftware.messenger.XMPPServerInfo;
-import org.jivesoftware.messenger.JiveGlobals;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Date;
 import java.util.Iterator;

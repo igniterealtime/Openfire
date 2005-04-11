@@ -11,16 +11,21 @@
 
 package org.jivesoftware.messenger.ldap;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import java.util.Hashtable;
-import java.net.URLEncoder;
-import javax.naming.*;
-import javax.naming.ldap.LdapContext;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
-import javax.naming.directory.*;
+import javax.naming.ldap.LdapContext;
+import java.net.URLEncoder;
+import java.util.Hashtable;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method

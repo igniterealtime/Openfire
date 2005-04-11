@@ -11,18 +11,14 @@
 
 package org.jivesoftware.messenger.user;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.event.UserEventDispatcher;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.*;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Manages users, including loading, creating and deleting.

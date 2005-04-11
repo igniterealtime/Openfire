@@ -192,7 +192,9 @@ public class SocketReadThread extends Thread {
                     session.process(reply);
                     continue;
                 }
-                packet.setFrom(session.getAddress());
+                // Notify the session that a new packet has been received. This could be useful
+                // for client sessions for setting the real sender of the packet and avoid spoofing
+                session.packetReceived(packet);
                 try {
                     // Invoke the interceptors before we process the read packet
                     InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -228,7 +230,9 @@ public class SocketReadThread extends Thread {
                     session.process(reply);
                     continue;
                 }
-                packet.setFrom(session.getAddress());
+                // Notify the session that a new packet has been received. This could be useful
+                // for client sessions for setting the real sender of the packet and avoid spoofing
+                session.packetReceived(packet);
                 try {
                     // Invoke the interceptors before we process the read packet
                     InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -271,7 +275,9 @@ public class SocketReadThread extends Thread {
                     session.process(reply);
                     continue;
                 }
-                packet.setFrom(session.getAddress());
+                // Notify the session that a new packet has been received. This could be useful
+                // for client sessions for setting the real sender of the packet and avoid spoofing
+                session.packetReceived(packet);
                 try {
                     // Invoke the interceptors before we process the read packet
                     InterceptorManager.getInstance().invokeInterceptors(packet, session, true,

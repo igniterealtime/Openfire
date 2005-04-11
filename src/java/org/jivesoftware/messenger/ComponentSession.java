@@ -19,6 +19,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.dom4j.io.XPPPacketReader;
 import org.dom4j.Element;
 import org.xmlpull.v1.XmlPullParser;
@@ -55,6 +56,13 @@ public class ComponentSession extends Session {
         XmlPullParser xpp = reader.getXPPParser();
         Session session;
         String domain = xpp.getAttributeValue("", "to");
+
+        // Get the requested subdomain
+        String subdomain = domain;
+        int index = domain.indexOf(serverName);
+        if (index > -1) {
+            subdomain = domain.substring(0, index -1);
+        }
 
         Writer writer = connection.getWriter();
         // Default answer header in case of an error
@@ -96,8 +104,8 @@ public class ComponentSession extends Session {
             connection.close();
             return null;
         }
-        // Check that the requested domain is not already in use
-        if (InternalComponentManager.getInstance().getComponent(domain) != null) {
+        // Check that the requested subdomain is not already in use
+        if (InternalComponentManager.getInstance().getComponent(subdomain) != null) {
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
@@ -113,8 +121,7 @@ public class ComponentSession extends Session {
         // Create a ComponentSession for the external component
         session = SessionManager.getInstance().createComponentSession(connection);
         // Set the bind address as the address of the session
-        session.setAddress(new JID(null,
-                domain + "." + XMPPServer.getInstance().getServerInfo().getName(), null));
+        session.setAddress(new JID(null, domain , null));
 
         try {
             // Build the start packet response
@@ -160,9 +167,7 @@ public class ComponentSession extends Session {
                 writer.flush();
                 // Bind the domain to this component
                 ExternalComponent component = ((ComponentSession) session).getExternalComponent();
-                InternalComponentManager.getInstance().addComponent(domain, component);
-                // Set the service name to the component
-                component.setServiceName(domain);
+                InternalComponentManager.getInstance().addComponent(subdomain, component);
                 return session;
             }
         }
@@ -200,8 +205,6 @@ public class ComponentSession extends Session {
      */
     public class ExternalComponent implements Component {
 
-        private String serviceName;
-
         public void processPacket(Packet packet) {
             if (conn != null && !conn.isClosed()) {
                 try {
@@ -227,17 +230,9 @@ public class ComponentSession extends Session {
 
         public void shutdown() {
         }
+    }
 
-        public JID getAddress() {
-            return ComponentSession.this.getAddress();
-        }
-
-        public String getServiceName() {
-            return serviceName;
-        }
-
-        void setServiceName(String serviceName) {
-            this.serviceName = serviceName;
-        }
+    public void packetReceived(Packet packet) {
+        //Do nothing
     }
 }

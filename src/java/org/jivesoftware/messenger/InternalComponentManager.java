@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
@@ -21,6 +20,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,6 +80,8 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
                 new RoutableComponent(componentJID, component));
 
+        component.initialize(componentJID, this);
+
         // Check for potential interested users.
         checkPresences();
         // Send a disco#info request to the new component. If the component provides information
@@ -117,6 +119,14 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
 
     public void setProperty(String name, String value) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public String getServerName() {
+        return serverDomain;
+    }
+
+    public String getHomeDirectory() {
+        return JiveGlobals.getHomeDirectory();
     }
 
     public boolean isExternalMode() {
@@ -179,11 +189,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * Retrieves the <code>Component</code> which is mapped
      * to the specified JID.
      *
-     * @param jid the jid mapped to the component.
+     * @param componentJID the jid mapped to the component.
      * @return the component with the specified id.
      */
-    public Component getComponent(String jid) {
-        jid = new JID(jid).toBareJID();
+    public Component getComponent(JID componentJID) {
+        String jid = componentJID.toBareJID();
         if (components.containsKey(jid)) {
             return components.get(jid);
         }
@@ -196,6 +206,17 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             }
         }
         return components.get(jid);
+    }
+
+    /**
+     * Retrieves the <code>Component</code> which is mapped
+     * to the specified JID.
+     *
+     * @param jid the jid mapped to the component.
+     * @return the component with the specified id.
+     */
+    public Component getComponent(String jid) {
+        return getComponent(new JID(jid));
     }
 
     /**

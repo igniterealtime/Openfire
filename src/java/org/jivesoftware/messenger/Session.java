@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 import java.util.Date;
 
@@ -208,4 +209,12 @@ public abstract class Session implements RoutableChannelHandler {
     public long getNumServerPackets() {
         return serverPacketCount;
     }
+
+    /**
+     * Notification message that a packet has been received from this session. Client sessions
+     * will probably want to set the FROM attribute to avoid spoofing.
+     *
+     * @param packet the received packet by this session.
+     */
+    public abstract void packetReceived(Packet packet);
 }

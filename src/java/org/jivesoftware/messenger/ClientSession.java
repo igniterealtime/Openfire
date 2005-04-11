@@ -379,4 +379,8 @@ public class ClientSession extends Session {
             }
         }
     }
+
+    public void packetReceived(Packet packet) {
+        packet.setFrom(getAddress());
+    }
 }

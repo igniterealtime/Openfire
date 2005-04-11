@@ -8,6 +8,6 @@
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
-    <version>1.1</version>
+    <version>1.2</version>
     <minMessengerVersion>2.1.2</minMessengerVersion>
 </plugin>

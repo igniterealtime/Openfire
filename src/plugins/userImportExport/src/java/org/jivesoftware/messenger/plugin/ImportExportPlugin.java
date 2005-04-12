@@ -18,7 +18,6 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
@@ -29,6 +28,7 @@ import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProvider;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
@@ -292,6 +292,6 @@ public class ImportExportPlugin implements Plugin {
     }
     
     public static String exportDirectory() {
-        return JiveGlobals.getMessengerHome() + File.separator + "export";
+        return JiveGlobals.getHomeDirectory() + File.separator + "export";
     }
 }

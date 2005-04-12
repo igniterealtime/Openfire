@@ -814,9 +814,11 @@
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*" />
             </copy>
 
-            <!-- Copy the plugin.xml file to the target dir, code below assumes it's there -->
+            <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar" />
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" file="@{pluginsrc}/@{plugin}/plugin.xml" />
+			<copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false">
+                <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html" />
+            </copy>
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"

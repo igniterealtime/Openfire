@@ -109,7 +109,8 @@ public class SearchPlugin implements Component, Plugin {
         componentManager = ComponentManagerFactory.getComponentManager();
         try {
             componentManager.addComponent(SERVICE_NAME, this);
-        } catch (Exception e) {
+        }
+		catch (Exception e) {
             componentManager.getLog().error(e);
         }
 
@@ -122,6 +123,12 @@ public class SearchPlugin implements Component, Plugin {
             XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
             searchForm.setTitle("User Search");
             searchForm.addInstruction(instructions);
+			
+			XFormFieldImpl field = new XFormFieldImpl("search");
+            field.setType(FormField.TYPE_TEXT_SINGLE);			
+            field.setLabel("Search");
+            field.setRequired(false);
+            searchForm.addField(field);
             
             Iterator iter = searchFields.iterator();
             while (iter.hasNext()) {
@@ -130,8 +137,9 @@ public class SearchPlugin implements Component, Plugin {
                 //non-data form
                 probeResult.addElement(searchField.toLowerCase());
 
-                XFormFieldImpl field = new XFormFieldImpl(searchField);
-                field.setType(FormField.TYPE_TEXT_SINGLE);
+                field = new XFormFieldImpl(searchField);
+                field.setType(FormField.TYPE_BOOLEAN);
+				field.addValue("1");
                 field.setLabel(searchField);
                 field.setRequired(false);
                 searchForm.addField(field);
@@ -277,9 +285,7 @@ public class SearchPlugin implements Component, Plugin {
     
     /**
      * nick, first, last, email fields have been hardcoded to support Miranda which does not
-     * follow the JEP-0055 spec by requesting a list of searchable fields. If/when Miranda
-     * is updated to follow the spect the hardcoded field checks can be removed and replaced
-     * with the commented code below.
+     * make a query to discover which fields are available to be searched
      */
     private  Hashtable<String, String> extractSearchQuery(Element incomingForm) {
         Hashtable<String, String> searchList = new Hashtable<String, String>();
@@ -309,32 +315,32 @@ public class SearchPlugin implements Component, Plugin {
             if (email != null) {
                 searchList.put("Email", email.getTextTrim());
             }
-            
-            /*
-            Iterator iter = searchFields.iterator();
-            while (iter.hasNext()) {
-                String field = (String) iter.next();
-                Element e = incomingForm.element(field);
-                if (field != null) {
-                    searchList.put(field, e.getTextTrim());
-                }
-            }
-            */
         }
         else {
+			List<String> searchFields = new ArrayList<String>();
+			String search = "";
+			
             Iterator fields = form.elementIterator("field");
             while (fields.hasNext()) {
                 Element searchField = (Element) fields.next();
-
-                Iterator iter = searchField.elementIterator("value");
-                while (iter.hasNext()) {
-                    Element queryField = (Element) iter.next();
-                    String query = queryField.getTextTrim();
-                    searchList.put(searchField.attributeValue("var"), query);
-                }
+				
+				String field = searchField.attributeValue("var");
+				String value = searchField.element("value").getTextTrim();
+				if (field.equals("search")) {
+					search = value;
+				}
+				else if (value.equals("1")) {
+					searchFields.add(field);
+				}
             }
+			
+			Iterator iter = searchFields.iterator();
+			while (iter.hasNext()) {
+				String field = (String) iter.next();
+				searchList.put(field, search);
+			}
         }
-        
+		
         return searchList;
     }
     

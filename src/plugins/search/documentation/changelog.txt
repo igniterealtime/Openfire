@@ -1,3 +1,8 @@
+version 1.0.6
+---------------
+* changed the ui to use a single text field with multiple checkboxes to specify which fields are to be searched (thanks jfroehlich)
+
+
 version 1.0.5
 ---------------
 * Added basic support for non-data form searches to support the Miranda (thanks Baron Ng) 

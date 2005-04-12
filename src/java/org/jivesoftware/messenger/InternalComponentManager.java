@@ -75,12 +75,12 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         components.put(subdomain, component);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
+        // Initialize the new component
+        component.initialize(componentJID, this);
 
         // Add the route to the new service provided by the component
         XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
                 new RoutableComponent(componentJID, component));
-
-        component.initialize(componentJID, this);
 
         // Check for potential interested users.
         checkPresences();

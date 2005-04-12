@@ -10,7 +10,6 @@ package org.jivesoftware.messenger.plugin;
 import java.io.File;
 import java.util.Map;
 
-import org.jivesoftware.messenger.JiveGlobals;
 import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.SessionNotFoundException;
 import org.jivesoftware.messenger.XMPPServer;
@@ -19,6 +18,7 @@ import org.jivesoftware.messenger.container.PluginManager;
 import org.jivesoftware.messenger.event.UserEventDispatcher;
 import org.jivesoftware.messenger.event.UserEventListener;
 import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;

@@ -100,11 +100,12 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     }
 
     public void initialize(JID jid, ComponentManager componentManager) {
+    }
 
+    public void start() {
     }
 
     public void shutdown() {
-
     }
 
     // Component Interface

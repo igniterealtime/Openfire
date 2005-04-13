@@ -151,7 +151,10 @@ public class SearchPlugin implements Component, Plugin {
     
     public void initialize(JID jid, ComponentManager componentManager) {
     }
-    
+
+    public void start() {
+    }
+
     public void destroyPlugin() {
         pluginManager = null;
         try {

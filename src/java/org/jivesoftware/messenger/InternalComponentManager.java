@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -71,16 +72,26 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         }
     }
 
-    public void addComponent(String subdomain, Component component) {
+    public void addComponent(String subdomain, Component component) throws ComponentException {
         components.put(subdomain, component);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
-        // Initialize the new component
-        component.initialize(componentJID, this);
 
         // Add the route to the new service provided by the component
         XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
                 new RoutableComponent(componentJID, component));
+
+        // Initialize the new component
+        try {
+            component.initialize(componentJID, this);
+            component.start();
+        }
+        catch (ComponentException e) {
+            // Remove the route
+            XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
+            // Rethrow the exception
+            throw e;
+        }
 
         // Check for potential interested users.
         checkPresences();

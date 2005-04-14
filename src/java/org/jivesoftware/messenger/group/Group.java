@@ -267,32 +267,58 @@ public class Group implements Cacheable {
             catch (Exception e) {
                 throw new IllegalArgumentException("Invalid user.", e);
             }
+            // Find out if the user was already a group user
+            boolean alreadyGroupUser = false;
             if (adminCollection) {
-                if (members.contains(username)) {
-                    throw new IllegalArgumentException("The user is already a member of the group");
-                }
+                alreadyGroupUser = members.contains(username);
             }
             else {
-                if (administrators.contains(username)) {
-                    throw new IllegalArgumentException("The user is already an admin of the group");
-                }
+                alreadyGroupUser = administrators.contains(username);
             }
             if (users.add(username)) {
-                // Add the group user to the backend store.
-                provider.addMember(name, username, adminCollection);
+                if (alreadyGroupUser) {
+                    // Update the group user privileges in the backend store.
+                    provider.updateMember(name, username, adminCollection);
+                }
+                else {
+                    // Add the group user to the backend store.
+                    provider.addMember(name, username, adminCollection);
+                }
 
                 // Fire event.
                 if (adminCollection) {
                     Map params = new HashMap();
                     params.put("admin", username);
+                    if (alreadyGroupUser) {
+                        GroupEventDispatcher.dispatchEvent(Group.this,
+                                    GroupEventDispatcher.EventType.member_removed, params);
+                    }
                     GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.admin_added, params);
                 }
                 else {
                     Map params = new HashMap();
                     params.put("member", username);
+                    if (alreadyGroupUser) {
+                        GroupEventDispatcher.dispatchEvent(Group.this,
+                                    GroupEventDispatcher.EventType.admin_removed, params);
+                    }
                     GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.member_added, params);
+                }
+                // If the user was a member that became an admin or vice versa then remove the
+                // user from the other collection
+                if (alreadyGroupUser) {
+                    if (adminCollection) {
+                        if (members.contains(username)) {
+                            members.remove(username);
+                        }
+                    }
+                    else {
+                        if (administrators.contains(username)) {
+                            administrators.remove(username);
+                        }
+                    }
                 }
                 return true;
             }

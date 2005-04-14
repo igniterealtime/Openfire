@@ -115,7 +115,6 @@
             boolean isAlreadyAdmin = group.getAdmins().contains(newAdmin);
             if (!isAlreadyAdmin) {
                 // Add new admin
-                group.getMembers().remove(newAdmin);
                 group.getAdmins().add(newAdmin);
             }
         }
@@ -130,7 +129,6 @@
         Iterator i = removeList.iterator();
         while (i.hasNext()) {
             String m = (String) i.next();
-            group.getAdmins().remove(m);
             group.getMembers().add(m);
         }
         // Get admin list and compare it the admin posted list.

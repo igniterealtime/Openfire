@@ -306,6 +306,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
     public void memberAdded(Group group, Map params) {
         String addedUser = (String) params.get("member");
+        // Do nothing if the user was an admin that became a member
+        if (group.getAdmins().contains(addedUser)) {
+            return;
+        }
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 addSharedGroupToRoster(visibleGroup, addedUser);
@@ -318,6 +322,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
     public void memberRemoved(Group group, Map params) {
         String deletedUser = (String) params.get("member");
+        // Do nothing if the user is still an admin
+        if (group.getAdmins().contains(deletedUser)) {
+            return;
+        }
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 removeSharedGroupFromRoster(visibleGroup, deletedUser);
@@ -330,6 +338,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
     public void adminAdded(Group group, Map params) {
         String addedUser = (String) params.get("admin");
+        // Do nothing if the user was a member that became an admin
+        if (group.getMembers().contains(addedUser)) {
+            return;
+        }
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 addSharedGroupToRoster(visibleGroup, addedUser);
@@ -342,6 +354,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
     public void adminRemoved(Group group, Map params) {
         String deletedUser = (String) params.get("admin");
+        // Do nothing if the user is still a member
+        if (group.getMembers().contains(deletedUser)) {
+            return;
+        }
         // Do nothing if the group is not being shown in group members' rosters
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {

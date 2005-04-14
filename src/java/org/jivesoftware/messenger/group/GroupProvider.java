@@ -133,6 +133,18 @@ public interface GroupProvider {
             throws UnsupportedOperationException;
 
     /**
+     * Updates the privileges of a user in a group.
+     *
+     * @param groupName the group where the change happened
+     * @param username the username to of the user with new privileges
+     * @param administrator True if the member is an administrator of the group
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation.
+     */
+    void updateMember(String groupName, String username, boolean administrator)
+            throws UnsupportedOperationException;
+
+    /**
      * Deletes a user from a group (optional operation).
      *
      * @param groupName the group name.

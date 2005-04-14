@@ -57,6 +57,8 @@ public class DefaultGroupProvider implements GroupProvider {
         "DELETE FROM jiveGroupUser WHERE groupName=? AND username=?";
     private static final String ADD_USER =
         "INSERT INTO jiveGroupUser (groupName, username, administrator) VALUES (?, ?, ?)";
+    private static final String UPDATE_USER =
+        "UPDATE jiveGroupUser SET administrator=? WHERE groupName=? AND username=?";
     private static final String USER_GROUPS =
         "SELECT groupName FROM jiveGroupUser WHERE username=?";
     private static final String ALL_GROUPS = "SELECT groupName FROM jiveGroup ORDER BY groupName";
@@ -349,6 +351,28 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.setString(1, groupName);
             pstmt.setString(2, username);
             pstmt.setInt(3, administrator ? 1 : 0);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    public void updateMember(String groupName, String username, boolean administrator) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_USER);
+            pstmt.setInt(1, administrator ? 1 : 0);
+            pstmt.setString(2, groupName);
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {

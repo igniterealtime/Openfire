@@ -178,6 +178,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 throw new IllegalArgumentException("Invalid resource: " + resource);
             }
         }
+        else {
+            // Answer a not_acceptable error since a resource was not supplied
+            response = IQ.createResultIQ(packet);
+            response.setChildElement(packet.getChildElement().createCopy());
+            response.setError(PacketError.Condition.not_acceptable);
+        }
 
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection

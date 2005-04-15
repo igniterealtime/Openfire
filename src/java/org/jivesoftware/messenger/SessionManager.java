@@ -11,33 +11,24 @@
 
 package org.jivesoftware.messenger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -134,7 +125,7 @@ public class SessionManager extends BasicModule {
      * and priority).
      */
     private class SessionMap {
-        private Map<String,ClientSession> resources = new HashMap<String,ClientSession>();
+        private Map<String,ClientSession> resources = new ConcurrentHashMap<String,ClientSession>();
         private LinkedList priorityList = new LinkedList();
 
         /**
@@ -263,7 +254,7 @@ public class SessionManager extends BasicModule {
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
             for (Session session : resources.values()) {
                 packet.setTo(session.getAddress());
-                session.getConnection().deliver(packet);
+                session.process(packet);
             }
         }
 
@@ -442,13 +433,13 @@ public class SessionManager extends BasicModule {
                     if (session.getPresence().isAvailable()) {
                         presence = userSession.getPresence().createCopy();
                         presence.setTo(session.getAddress());
-                        session.getConnection().deliver(presence);
+                        session.process(presence);
                     }
                     // Send the presence of the session whose presence has changed to this other
                     // user's session
                     presence = session.getPresence().createCopy();
                     presence.setTo(userSession.getAddress());
-                    userSession.getConnection().deliver(presence);
+                    userSession.process(presence);
                 }
             }
         }
@@ -925,7 +916,7 @@ public class SessionManager extends BasicModule {
         }
 
         for (Session session : anonymousSessions.values()) {
-            session.getConnection().deliver(packet);
+            session.process(packet);
         }
     }
 
@@ -1119,7 +1110,7 @@ public class SessionManager extends BasicModule {
                 userBroadcast(address.getNode(), packet);
             }
             else {
-                getSession(address).getConnection().deliver(packet);
+                getSession(address).process(packet);
             }
         }
         catch (Exception e) {

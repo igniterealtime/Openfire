@@ -93,7 +93,7 @@ public class SocketConnection implements Connection {
             }
         }
         catch (Exception e) {
-            Log.error("Closing no longer valid connection", e);
+            Log.warn("Closing no longer valid connection", e);
             close();
         }
         return !isClosed();
@@ -235,8 +235,11 @@ public class SocketConnection implements Connection {
                         xmlSerializer.flush();
                     }
                     catch (IOException e) {
-                        Log.error(e);
+                        Log.warn(e);
                         close();
+                        // Retry sending the packet again. Most probably if the packet is a
+                        // Message it will be stored offline
+                        deliverer.deliver(packet);
                     }
                 }
                 // Invoke the interceptors after we have sent the packet

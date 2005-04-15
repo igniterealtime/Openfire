@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.interceptor;
 
 import org.jivesoftware.messenger.Session;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
 import java.util.*;
@@ -171,7 +172,16 @@ public class InterceptorManager {
             throws PacketRejectedException {
         // Invoke the global interceptors for this packet
         for (PacketInterceptor interceptor : globalInterceptors) {
-            interceptor.interceptPacket(packet, session, read, processed);
+            try {
+                interceptor.interceptPacket(packet, session, read, processed);
+            }
+            catch (PacketRejectedException e) {
+                // Throw this exception since we don't really want to catch it
+                throw e;
+            }
+            catch (Exception e) {
+                Log.error("Error in interceptor", e);
+            }
         }
         // Invoke the interceptors that are related to the address of the session
         String username = session.getAddress().getNode();
@@ -179,7 +189,16 @@ public class InterceptorManager {
             Collection<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
             if (userInterceptors != null && !userInterceptors.isEmpty()) {
                 for (PacketInterceptor interceptor : userInterceptors) {
-                    interceptor.interceptPacket(packet, session, read, processed);
+                    try {
+                        interceptor.interceptPacket(packet, session, read, processed);
+                    }
+                    catch (PacketRejectedException e) {
+                        // Throw this exception since we don't really want to catch it
+                        throw e;
+                    }
+                    catch (Exception e) {
+                        Log.error("Error in interceptor", e);
+                    }
                 }
             }
         }

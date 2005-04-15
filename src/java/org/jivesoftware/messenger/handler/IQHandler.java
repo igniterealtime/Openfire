@@ -58,7 +58,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
                     response.setError(PacketError.Condition.not_authorized);
                     Session session = sessionManager.getSession(iq.getFrom());
                     if (!session.getConnection().isClosed()) {
-                        session.getConnection().deliver(response);
+                        session.process(response);
                     }
                 }
                 catch (Exception de) {

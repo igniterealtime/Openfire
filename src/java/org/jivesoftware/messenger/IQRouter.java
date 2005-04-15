@@ -192,7 +192,7 @@ public class IQRouter extends BasicModule {
                         }
                         Session session = sessionManager.getSession(packet.getFrom());
                         if (session != null) {
-                            session.getConnection().deliver(reply);
+                            session.process(reply);
                         }
                         else {
                             Log.warn("Packet could not be delivered " + packet);
@@ -213,7 +213,7 @@ public class IQRouter extends BasicModule {
                 if (XMPPServer.getInstance().isLocal(recipientJID)) {
                     Session session = sessionManager.getBestRoute(recipientJID);
                     if (session != null) {
-                        session.getConnection().deliver(packet);
+                        session.process(packet);
                         handlerFound = true;
                     }
                     else {
@@ -238,7 +238,7 @@ public class IQRouter extends BasicModule {
                         IQ reply = IQ.createResultIQ(packet);
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.service_unavailable);
-                        session.getConnection().deliver(reply);
+                        session.process(reply);
                     }
                 }
             }

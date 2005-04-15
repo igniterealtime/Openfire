@@ -374,8 +374,6 @@ public class ClientSession extends Session {
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                // TODO: Should attempt to do something with the packet
-                conn.close();
             }
         }
     }

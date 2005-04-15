@@ -108,7 +108,7 @@ public class OfflineMessageStrategy extends BasicModule {
             Message errorResponse = message.createCopy();
             errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
                     PacketError.Type.continue_processing));
-            session.getConnection().deliver(errorResponse);
+            session.process(errorResponse);
         }
         catch (Exception e) {
             Log.error(e);

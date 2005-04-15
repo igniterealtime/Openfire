@@ -157,7 +157,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             // Send the response directly since we want to be sure that we are sending it back
             // to the correct session. Any other session of the same user but with different
             // resource is incorrect.
-            session.getConnection().deliver(response);
+            session.process(response);
         }
         catch (Exception e) {
             Log.error("Error handling authentication IQ packet", e);

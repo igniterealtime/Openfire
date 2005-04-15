@@ -213,7 +213,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         GroupManager.getInstance().deleteUser(user);
 
                         reply = IQ.createResultIQ(packet);
-                        session.getConnection().deliver(reply);
+                        session.process(reply);
                         // Close the user's connection
                         session.getConnection().close();
                         // The reply has been sent so clean up the variable
@@ -340,7 +340,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
         if (reply != null) {
             // why is this done here instead of letting the iq handler do it?
-            session.getConnection().deliver(reply);
+            session.process(reply);
         }
         return null;
     }

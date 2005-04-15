@@ -191,10 +191,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             Roster roster = rosterManager.getRoster(username);
             for (RosterItem item : roster.getRosterItems()) {
                 if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
-                    session.getConnection().deliver(createSubscribePresence(item.getJid(), true));
+                    session.process(createSubscribePresence(item.getJid(), true));
                 }
                 else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
-                    session.getConnection().deliver(createSubscribePresence(item.getJid(), false));
+                    session.process(createSubscribePresence(item.getJid(), false));
                 }
                 if (item.getSubStatus() == RosterItem.SUB_TO
                         || item.getSubStatus() == RosterItem.SUB_BOTH) {
@@ -204,7 +204,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // deliver offline messages if any
             Collection<Message> messages = messageStore.getMessages(username);
             for (Message message : messages) {
-                session.getConnection().deliver(message);
+                session.process(message);
             }
         }
     }

@@ -801,13 +801,22 @@ public class Roster implements Cacheable {
             // Get the RosterItem for the *local* user to remove
             RosterItem item = getRosterItem(jid);
             int groupSize = item.getSharedGroups().size() + item.getInvisibleSharedGroups().size();
-            if (item.isOnlyShared() && groupSize == 1) {
+            if (item.isOnlyShared() && groupSize == 1 &&
+                    // Do not delete the item if deletedUser belongs to a public group since the
+                    // subcription status will change
+                    !(deletedGroup.isUser(deletedUser) &&
+                    rosterManager.isGroupPublic(deletedGroup))) {
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(jid, false);
             }
             else {
-                item.removeSharedGroup(deletedGroup);
+                // Remove the shared group from the item if deletedUser does not belong to a
+                // public group
+                if (!(deletedGroup.isUser(deletedUser) &&
+                        rosterManager.isGroupPublic(deletedGroup))) {
+                    item.removeSharedGroup(deletedGroup);
+                }
                 // Remove all invalid shared groups from the roster item
                 for (Group group : groups) {
                     if (!rosterManager.isGroupVisible(group, getUsername())) {

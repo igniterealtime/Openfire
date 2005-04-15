@@ -468,6 +468,21 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     }
 
     /**
+     * Returns true if a given group is visible to any user. That means, if any user can
+     * see the group in his roster.
+     *
+     * @param group the group to check if the user can see.
+     * @return true if a given group is visible by any user.
+     */
+    boolean isGroupPublic(Group group) {
+        String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if ("everybody".equals(showInRoster)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns true if a given group is visible to a given user. That means, if the user can
      * see the group in his roster.
      *

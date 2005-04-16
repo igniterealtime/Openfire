@@ -42,23 +42,13 @@
     User user = webManager.getUserManager().getUser(username);
 
     // Handle a save
-    Map errors = new HashMap();
     if (save) {
-        // do validation
-        if (name == null) {
-            errors.put("name","name");
-        }
-        if (email == null) {
-            errors.put("email","email");
-        }
-        if (errors.size() == 0) {
-            user.setEmail(email);
-            user.setName(name);
+        user.setEmail(email);
+        user.setName(name);
 
-            // Changes good, so redirect
-            response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
-            return;
-        }
+        // Changes good, so redirect
+        response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
+        return;
     }
 %>
 
@@ -119,14 +109,6 @@
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
                  value="<%= user.getName() %>">
-
-                <%  if (errors.get("name") != null) { %>
-
-                    <span class="jive-error-text">
-                    <fmt:message key="user.edit.form.enter_name" />
-                    </span>
-
-                <%  } %>
             </td>
         </tr>
         <tr>
@@ -136,14 +118,6 @@
             <td>
                 <input type="text" size="30" maxlength="150" name="email"
                  value="<%= ((user.getEmail()!=null) ? user.getEmail() : "") %>">
-
-                <%  if (errors.get("email") != null) { %>
-
-                    <span class="jive-error-text">
-                    <fmt:message key="user.edit.form.enter_mail" />
-                    </span>
-
-                <%  } %>
             </td>
         </tr>
     </tbody>

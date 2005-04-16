@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 /**
  * Implements a network front end with a dedicated thread reading
@@ -57,22 +56,18 @@ public class SocketAcceptThread extends Thread {
 
     private ConnectionManager connManager;
 
-    public SocketAcceptThread(ConnectionManager connManager) {
+    public SocketAcceptThread(ConnectionManager connManager) throws IOException {
         super("Socket Listener");
         this.connManager = connManager;
         port = JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
         String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");
         bindInterface = null;
         if (interfaceName != null) {
-            try {
-                if (interfaceName.trim().length() > 0) {
-                    bindInterface = InetAddress.getByName(interfaceName);
-                }
-            }
-            catch (UnknownHostException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            if (interfaceName.trim().length() > 0) {
+                bindInterface = InetAddress.getByName(interfaceName);
             }
         }
+        serverSocket = new ServerSocket(port, -1, bindInterface);
     }
 
     /**
@@ -108,30 +103,25 @@ public class SocketAcceptThread extends Thread {
      * call getting sockets and handing them to the SocketManager.
      */
     public void run() {
-        try {
-            serverSocket = new ServerSocket(port, -1, bindInterface);
-            while (notTerminated) {
-                try {
-                    Socket sock = serverSocket.accept();
-                    if (sock != null) {
-                        Log.debug("Connect " + sock.toString());
-                        connManager.addSocket(sock, false);
-                    }
-                }
-                catch (IOException ie) {
-                    if (notTerminated) {
-                        Log.error(LocaleUtils.getLocalizedString("admin.error.accept"),
-                                ie);
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.accept"), e);
+        while (notTerminated) {
+            try {
+                Socket sock = serverSocket.accept();
+                if (sock != null) {
+                    Log.debug("Connect " + sock.toString());
+                    connManager.addSocket(sock, false);
                 }
             }
+            catch (IOException ie) {
+                if (notTerminated) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error.accept"),
+                            ie);
+                }
+            }
+            catch (Exception e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error.accept"), e);
+            }
         }
-        catch (IOException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-        }
+
         try {
             ServerSocket sSock = serverSocket;
             serverSocket = null;

@@ -172,6 +172,7 @@ public class AdminConsolePlugin implements Plugin {
             }
         }
         catch (Exception e) {
+            System.err.println("Error starting admin console: " + e.getMessage()); 
             Log.error("Trouble initializing admin console", e);
         }
     }

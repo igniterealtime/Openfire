@@ -65,7 +65,26 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 localIPAddress = "Unknown";
             }
         }
+        // Start plain socket unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
+            try {
+                socketThread = new SocketAcceptThread(this);
+                ports.add(new ServerPort(socketThread.getPort(),
+                        serverName, localIPAddress, false, null));
+                socketThread.setDaemon(true);
+                socketThread.start();
 
+                List params = new ArrayList();
+                params.add(Integer.toString(socketThread.getPort()));
+                Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
+            }
+            catch (Exception e) {
+                System.err.println("Error starting XMPP listener on port " +
+                        JiveGlobals.getIntProperty("xmpp.socket.plain.port", SocketAcceptThread.DEFAULT_PORT) +
+                        ": " + e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
         // Start SSL unless it's been disabled.
         if (JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true)) {
             try {
@@ -84,20 +103,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }
             catch (Exception e) {
+                System.err.println("Error starting SSL XMPP listener on port " +
+                        JiveGlobals.getIntProperty("xmpp.socket.ssl.port", SSLSocketAcceptThread.DEFAULT_PORT) +
+                        ": " + e.getMessage());
                 Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
             }
-        }
-        // Start plain socket unless it's been disabled.
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
-            socketThread = new SocketAcceptThread(this);
-            ports.add(new ServerPort(socketThread.getPort(),
-                    serverName, localIPAddress, false, null));
-            socketThread.setDaemon(true);
-            socketThread.start();
-
-            List params = new ArrayList();
-            params.add(Integer.toString(socketThread.getPort()));
-            Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
         }
     }
 

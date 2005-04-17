@@ -726,9 +726,8 @@ public class JiveGlobals {
                 msg.append("Critical Error! The home directory could not be loaded, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
                 msg.append("You must set home in one of four ways:\n");
-                msg.append("    1) Set a servlet init parameter named home.\n");
-                msg.append("    2) Add a messenger_init.xml file to your classpath, which points \n ");
-                msg.append("       to home. Normally, this file will be in WEB-INF/classes.\n");
+                msg.append("    1) Add a messenger_init.xml file to your classpath, which points \n ");
+                msg.append("       to home.\n");
                 msg.append("    3) Set the JNDI value \"java:comp/env/home\" with a String \n");
                 msg.append("       that points to your home directory. \n");
                 msg.append("    4) Set the Java system property \"home\".\n\n");
@@ -746,9 +745,9 @@ public class JiveGlobals {
                 }
                 else {
                     if (!mh.canRead() || !mh.canWrite()) {
-                        Log.error("Error - the user running this Jive application can not read and write to the "
-                                + "specified jiveHome directory (" + home + "). Please grant the executing user "
-                                + "read and write perms.");
+                        Log.error("Error - the user running this application can not read " +
+                                "and write to the specified home directory (" + home + "). " +
+                                "Please grant the executing user read and write permissions.");
                     }
                 }
                 xmlProperties = new XMLProperties(home + File.separator + "conf" +
@@ -774,7 +773,7 @@ class InitPropLoader {
         String home = null;
         InputStream in = null;
         try {
-            in = getClass().getResourceAsStream("/" + JiveGlobals.getConfigName());
+            in = getClass().getResourceAsStream("/messenger_init.xml");
             if (in != null) {
                 SAXReader reader = new SAXReader();
                 Document doc = reader.read(in);

@@ -33,8 +33,10 @@ import java.io.FileNotFoundException;
  */
 public class Launcher {
 
+    private String appName;
     private Process messengerd;
-    private String configFile = JiveGlobals.getHomeDirectory() + File.separator + "conf" + File.separator + "jive-messenger.xml";
+    private String configFile = JiveGlobals.getHomeDirectory() + File.separator + "conf" +
+            File.separator + "jive-messenger.xml";
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
@@ -56,7 +58,13 @@ public class Launcher {
             e.printStackTrace();
         }
 
-        String title = "Jive Messenger";
+        if (System.getProperty("app.name") != null) {
+            appName = System.getProperty("app.name");
+        }
+        else {
+            appName = "Jive Messenger";
+        }
+
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
                 String fileName = file.getName();
@@ -66,7 +74,7 @@ public class Launcher {
             }
         };
 
-        frame.setTitle(title);
+        frame.setTitle(appName);
 
         ImageIcon splash = null;
         JLabel splashLabel = null;
@@ -112,7 +120,7 @@ public class Launcher {
         mainPanel.add(toolbar, BorderLayout.SOUTH);
 
         // create the main menu of the system tray icon
-        JPopupMenu menu = new JPopupMenu("Messenger Menu");
+        JPopupMenu menu = new JPopupMenu(appName + " Menu");
 
         final JMenuItem showMenuItem = new JMenuItem("Hide");
         showMenuItem.setActionCommand("Hide/Show");
@@ -226,7 +234,7 @@ public class Launcher {
         showMenuItem.addActionListener(actionListener);
 
         // Set the system tray icon with the menu
-        trayIcon = new TrayIcon(offIcon, "Jive Messenger", menu);
+        trayIcon = new TrayIcon(offIcon, appName, menu);
         trayIcon.setIconAutoSize(true);
         trayIcon.addActionListener(actionListener);
 
@@ -267,9 +275,14 @@ public class Launcher {
 
     private synchronized void startApplication() {
         if (messengerd == null) {
+            File appDir = new File("").getAbsoluteFile();
+            // See if the app.dir property is set. If so, use it to find the executable.
+            if (System.getProperty("app.dir") != null) {
+                appDir = new File(System.getProperty("app.dir"));
+            }
             try {
-                File windowsExe = new File(new File("").getAbsoluteFile(), "messengerd.exe");
-                File unixExe = new File(new File("").getAbsoluteFile(), "messengerd");
+                File windowsExe = new File(appDir, "messengerd.exe");
+                File unixExe = new File(appDir, "messengerd");
                 if (windowsExe.exists()) {
                     messengerd = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
@@ -283,7 +296,7 @@ public class Launcher {
             catch (Exception e) {
                 // Try one more time using the jar and hope java is on the path
                 try {
-                    File libDir = new File("../lib").getAbsoluteFile();
+                    File libDir = new File(appDir.getParentFile(), "lib").getAbsoluteFile();
                     messengerd = Runtime.getRuntime().exec(new String[]{
                         "java", "-jar", new File(libDir, "startup.jar").toString()
                     });
@@ -291,7 +304,7 @@ public class Launcher {
                 catch (Exception ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(null,
-                            "Launcher could not start,\nJive Messenger",
+                            "Launcher could not start,\n" + appName,
                             "File not found", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -370,4 +383,3 @@ public class Launcher {
         dialog.setVisible(true);
     }
 }
-

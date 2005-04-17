@@ -34,9 +34,9 @@ import java.io.FileNotFoundException;
 public class Launcher {
 
     private String appName;
+    private File binDir;
     private Process messengerd;
-    private String configFile = JiveGlobals.getHomeDirectory() + File.separator + "conf" +
-            File.separator + "jive-messenger.xml";
+    private String configFile;
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
@@ -64,6 +64,15 @@ public class Launcher {
         else {
             appName = "Jive Messenger";
         }
+
+        binDir = new File("").getAbsoluteFile();
+        // See if the app.dir property is set. If so, use it to find the executable.
+        if (System.getProperty("app.dir") != null) {
+            binDir = new File(System.getProperty("app.dir"));
+        }
+
+        configFile = new File(new File(binDir.getParent(), "conf"),
+                "jive-messenger.xml").getAbsolutePath();
 
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
@@ -275,14 +284,9 @@ public class Launcher {
 
     private synchronized void startApplication() {
         if (messengerd == null) {
-            File appDir = new File("").getAbsoluteFile();
-            // See if the app.dir property is set. If so, use it to find the executable.
-            if (System.getProperty("app.dir") != null) {
-                appDir = new File(System.getProperty("app.dir"));
-            }
             try {
-                File windowsExe = new File(appDir, "messengerd.exe");
-                File unixExe = new File(appDir, "messengerd");
+                File windowsExe = new File(binDir, "messengerd.exe");
+                File unixExe = new File(binDir, "messengerd");
                 if (windowsExe.exists()) {
                     messengerd = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
@@ -296,7 +300,7 @@ public class Launcher {
             catch (Exception e) {
                 // Try one more time using the jar and hope java is on the path
                 try {
-                    File libDir = new File(appDir.getParentFile(), "lib").getAbsoluteFile();
+                    File libDir = new File(binDir.getParentFile(), "lib").getAbsoluteFile();
                     messengerd = Runtime.getRuntime().exec(new String[]{
                         "java", "-jar", new File(libDir, "startup.jar").toString()
                     });

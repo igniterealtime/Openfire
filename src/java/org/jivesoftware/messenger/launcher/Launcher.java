@@ -17,14 +17,42 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.jivesoftware.util.XMLProperties;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.UIManager;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Graphical launcher for Jive Messenger.
@@ -43,6 +71,11 @@ public class Launcher {
     private ImageIcon onIcon;
     private TrayIcon trayIcon;
     private JFrame frame;
+    private JPanel cardPanel = new JPanel();
+    private CardLayout cardLayout = new CardLayout();
+
+    private JTextPane pane;
+    private boolean freshStart = true;
 
     /**
      * Creates a new Launcher object.
@@ -86,12 +119,15 @@ public class Launcher {
         frame.setTitle(appName);
 
         ImageIcon splash = null;
+        JPanel mainPanel = new JPanel();
         JLabel splashLabel = null;
+
+        cardPanel.setLayout(cardLayout);
 
         // Set the icon.
         try {
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
-            splashLabel = new JLabel("", splash, JLabel.LEFT);
+            splashLabel = new JLabel("", splash, JLabel.CENTER);
 
             onIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_on-16x16.gif"));
             offIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_off-16x16.gif"));
@@ -100,8 +136,9 @@ public class Launcher {
         catch (Exception e) {
         }
 
-        JPanel mainPanel = new JPanel();
+
         mainPanel.setLayout(new BorderLayout());
+        cardPanel.setBackground(Color.white);
 
         // Add buttons
         final JButton startButton = new JButton("Start");
@@ -122,10 +159,7 @@ public class Launcher {
         toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
         toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
 
-        if (splashLabel != null) {
-            mainPanel.add(splashLabel, BorderLayout.CENTER);
-        }
-
+        mainPanel.add(cardPanel, BorderLayout.CENTER);
         mainPanel.add(toolbar, BorderLayout.SOUTH);
 
         // create the main menu of the system tray icon
@@ -163,14 +197,18 @@ public class Launcher {
                 if ("Start".equals(e.getActionCommand())) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     // Adjust button and menu items.
-                    startApplication();
                     startButton.setEnabled(false);
                     stopButton.setEnabled(true);
                     startMenuItem.setEnabled(false);
                     stopMenuItem.setEnabled(true);
+
+                    // Startup Application
+                    startApplication();
+
                     // Change to the "on" icon.
                     frame.setIconImage(onIcon.getImage());
                     trayIcon.setIcon(onIcon);
+
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
                         public void run() {
@@ -188,7 +226,6 @@ public class Launcher {
                             }
                         }
                     };
-
                     thread.start();
                 }
                 else if ("Stop".equals(e.getActionCommand())) {
@@ -262,14 +299,44 @@ public class Launcher {
             }
         });
 
-        frame.getContentPane().add(mainPanel);
+        cardPanel.add("main", splashLabel);
+        frame.getContentPane().add(mainPanel, BorderLayout.CENTER);
         frame.pack();
-        // frame.setSize(539,418);
+
+        frame.setSize(400, 300);
         frame.setResizable(false);
 
         GraphicUtils.centerWindowOnScreen(frame);
 
         frame.setVisible(true);
+
+        // Setup command area
+        final ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("splash2.gif"));
+        pane = new JTextPane() {
+            public void paintComponent(Graphics g) {
+                final Dimension size = pane.getSize();
+
+                int x = (size.width - icon.getIconWidth()) / 2;
+                int y = (size.height - icon.getIconHeight()) / 2;
+                //  Approach 1: Dispaly image at at full size
+                g.setColor(Color.white);
+                g.fillRect(0, 0, size.width, size.height);
+                g.drawImage(icon.getImage(), x, y, null);
+
+
+                setOpaque(false);
+                super.paintComponent(g);
+            }
+        };
+
+        pane.setEditable(false);
+
+        final JPanel bevelPanel = new JPanel();
+        bevelPanel.setBackground(Color.white);
+        bevelPanel.setLayout(new BorderLayout());
+        bevelPanel.setBorder(BorderFactory.createLoweredBevelBorder());
+        bevelPanel.add(new JScrollPane(pane), BorderLayout.CENTER);
+        cardPanel.add("running", bevelPanel);
 
         // Start the app.
         startButton.doClick();
@@ -312,6 +379,77 @@ public class Launcher {
                             "File not found", JOptionPane.ERROR_MESSAGE);
                 }
             }
+
+            final SimpleAttributeSet styles = new SimpleAttributeSet();
+            SwingWorker inputWorker = new SwingWorker() {
+                public Object construct() {
+                    if (messengerd != null) {
+                        try {
+                            // Get the input stream and read from it
+                            InputStream in = messengerd.getInputStream();
+                            int c;
+                            while ((c = in.read()) != -1) {
+                                try {
+                                    StyleConstants.setFontFamily(styles, "courier new");
+                                    pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
+                                }
+                                catch (BadLocationException e) {
+                                }
+                            }
+                            in.close();
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    return "ok";
+                }
+            };
+            inputWorker.start();
+
+
+            SwingWorker errorWorker = new SwingWorker() {
+                public Object construct() {
+                    if (messengerd != null) {
+                        try {
+                            // Get the input stream and read from it
+                            InputStream in = messengerd.getErrorStream();
+                            int c;
+                            while ((c = in.read()) != -1) {
+                                try {
+                                    StyleConstants.setForeground(styles, Color.red);
+                                    pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
+                                }
+                                catch (BadLocationException e) {
+                                }
+                            }
+                            in.close();
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    return "ok";
+                }
+            };
+            errorWorker.start();
+
+            if (freshStart) {
+                try {
+                    Thread.sleep(1000);
+                    cardLayout.show(cardPanel, "running");
+                }
+                catch (Exception ex) {
+
+                }
+                freshStart = false;
+            }
+            else {
+                 // Clear Text
+                pane.setText("");
+                cardLayout.show(cardPanel, "running");
+            }
+
         }
     }
 
@@ -320,6 +458,7 @@ public class Launcher {
             try {
                 messengerd.destroy();
                 messengerd.waitFor();
+                cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {
                 e.printStackTrace();

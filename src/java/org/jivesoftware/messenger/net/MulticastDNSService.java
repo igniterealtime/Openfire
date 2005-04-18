@@ -42,12 +42,7 @@ public class MulticastDNSService extends BasicModule {
     }
 
     public void initialize(XMPPServer server) {
-        try {
-            jmdns = new JmDNS();
-        }
-        catch (IOException ioe) {
-            Log.error(ioe);
-        }
+       
     }
 
     public void start() throws IllegalStateException {
@@ -64,6 +59,9 @@ public class MulticastDNSService extends BasicModule {
                         }
                     }
                     try {
+                        if (jmdns == null) {
+                            jmdns = new JmDNS();
+                        }
                         if (portNum != -1) {
                             String serverName = AdminConsole.getAppName();
                             serviceInfo = new ServiceInfo("_xmpp-client._tcp.local.",

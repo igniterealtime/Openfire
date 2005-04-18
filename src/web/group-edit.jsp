@@ -11,7 +11,6 @@
 
 <%@ page import="java.text.DateFormat,
                  java.util.*,
-                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.admin.*,
                  org.xmpp.packet.JID,
                  org.jivesoftware.messenger.group.GroupManager,
@@ -22,7 +21,7 @@
                  org.jivesoftware.messenger.user.UserNotFoundException,
                  org.jivesoftware.stringprep.Stringprep,
                  java.io.UnsupportedEncodingException,
-                 org.jivesoftware.util.LocaleUtils"
+                 org.jivesoftware.util.*"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
@@ -46,9 +45,6 @@
     boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
     String newName = ParamUtils.getParameter(request, "newName");
     String newDescription = ParamUtils.getParameter(request, "newDescription");
-    String newShowInRosterType = ParamUtils.getParameter(request, "newShow");
-    boolean newShowInRoster = "onlyGroup".equals(newShowInRosterType) || "everybody".equals(newShowInRosterType);
-    String  newDisplayName = ParamUtils.getParameter(request, "newDisplay");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
@@ -68,8 +64,8 @@
     }
 
     if (newName != null && newName.length() > 0) {
-        if (newShowInRoster && (newDisplayName == null || newDisplayName.length() == 0)) {
-            errors.put("display", "");
+        if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0)) {
+            errors.put("groupDisplayName", "");
         }
         if (errors.isEmpty()) {
             group.setName(newName);
@@ -103,6 +99,7 @@
         else {
             // Continue editing since there are some errors
             edit = true;
+            update = false;
         }
     }
 
@@ -151,11 +148,11 @@
                     count++;
                 }
                 catch (IllegalArgumentException unfe) {
-                  errorBuf.append("<br>"+username + " is not a registered user.");
+                  errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.inexistent_user", JiveGlobals.getLocale(), Arrays.asList(username)));
                 }
             }
             else {
-                errorBuf.append("<br>"+username+" is already in group.");
+                errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.already_user", JiveGlobals.getLocale(), Arrays.asList(username)));
             }
         }
         if (count > 0) {
@@ -352,6 +349,12 @@
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
                              onclick="this.form.enableRosterGroups[1].checked=true;">
+
+                            <%  if (errors.get("groupDisplayName") != null) { %>
+
+                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
+
+                            <%  } %>
                         </td>
                     </tr>
                 </tbody>
@@ -363,7 +366,7 @@
                         <td width="1%" nowrap>
                             <input type="radio" name="showGroup" value="everybody" id="rb002"
                              onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
+                             <%= ("everybody".equals(showGroup) || "nobody".equals(showGroup) ? "checked" : "") %>>
                         </td>
                         <td width="99%">
                             <label for="rb002"><fmt:message key="group.edit.show_groups_in_all_user" /></label>

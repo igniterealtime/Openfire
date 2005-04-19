@@ -194,6 +194,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String name) {
+        // A component may send his disco#info many times and we only want to have one item
+        // for the component so remove any element under the requested jid
+        removeComponentItem(jid);
+
         // Create a new element based on the provided DiscoItem
         Element element = DocumentHelper.createElement("item");
         element.addAttribute("jid", jid);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.1.4">
   <directoryPresets config="" />
-  <application name="%APP_NAME%" distributionSourceDir="" applicationId="6886-9911-0474-3571" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
@@ -20,6 +20,7 @@
       <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
       <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
       <variable name="FILE_PREFIX" value="" />
+      <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
     </variables>
   </application>
   <files>

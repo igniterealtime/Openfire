@@ -386,7 +386,7 @@
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
         <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" />
         <copy file="${web.dir}/WEB-INF/web.xml"
-                toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+                toFile="${webapp.dest.dir}/WEB-INF/web-new.xml"
                 overwrite="true">
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
                 <filter token="JSPC-SERVLETS" value="${servlet-xml}" />
@@ -772,6 +772,9 @@
         <attribute name="plugin" />
         <attribute name="pluginsrc" />
         <sequential>
+
+            <echo message="\n\nBuilding @{plugin}...\n\n" />
+
             <!-- For each plugin, copile code, make a jar and copy resources. -->
             <mkdir dir="${plugin.dev.dest.dir}" />
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}" />
@@ -874,30 +877,31 @@
                     <available property="plugin.@{plugin}.webxml.available"
                             type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" />
 
-                    <echo>
-                        plugin: @{plugin}
-                        plugin.@{plugin}.webxml.available: ${plugin.@{plugin}.webxml.available}
-                    </echo>
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" />
 
                     <if>
                         <equals arg1="${plugin.@{plugin}.webxml.available}" arg2="true" />
                         <then>
 
-                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
-                                <copy path="/web-app/servlet" buffer="foobar" />
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                                <copy path="//web-app/servlet[last()]" buffer="foobar" />
                             </xmltask>
-                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <insert path="//web-app/servlet[last()]" buffer="foobar" position="after" />
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                                <insert path="/web-app/servlet" buffer="foobar" position="after" />
                             </xmltask>
 
-                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
-                                <copy path="/web-app/servlet-mapping" buffer="foobar2" />
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
+                                <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2" />
                             </xmltask>
-                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <insert path="//web-app/servlet-mapping[last()]" buffer="foobar2" position="after" />
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                                <insert path="/web-app/servlet-mapping" buffer="foobar2" position="after" />
                             </xmltask>
 
                         </then>
+                        <else>
+                            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"
+                                file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" />
+                        </else>
                     </if>
 
                     <!-- Compile java classes -->
@@ -929,6 +933,7 @@
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar" />
+                    <include name="web/WEB-INF/web.xml" />
                 </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}/src">
                     <include name="web/**/*.*" />
@@ -939,11 +944,11 @@
                     <exclude name="java/**/*.java" />
                 </fileset>
             </copy>
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/web" failonerror="false">
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">
-                    <include name="web.xml" />
-                </fileset>
-            </copy>
+<!--            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/web" failonerror="false">-->
+<!--                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">-->
+<!--                    <include name="web.xml" />-->
+<!--                </fileset>-->
+<!--            </copy>-->
 
             <!-- Jar the plugin -->
             <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">

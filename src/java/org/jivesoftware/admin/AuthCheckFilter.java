@@ -30,15 +30,12 @@ import java.util.ArrayList;
 public class AuthCheckFilter implements Filter {
 
     private ServletContext context;
-    private String loginPage;
+    private String defaultLoginPage;
     private List<String> excludes;
 
     public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
-        loginPage = config.getInitParameter("loginPage");
-        if (loginPage == null) {
-            loginPage = "login.jsp";
-        }
+        defaultLoginPage = config.getInitParameter("defaultLoginPage");
         String excludesProp = config.getInitParameter("excludes");
         if (excludesProp != null) {
             StringTokenizer tokenizer = new StringTokenizer(excludesProp, ",");
@@ -55,6 +52,11 @@ public class AuthCheckFilter implements Filter {
     {
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
+        // Reset the defaultLoginPage variable
+        String loginPage = defaultLoginPage;
+        if (loginPage == null) {
+            loginPage = request.getContextPath() + "/login.jsp";
+        }
         // Get the page we're on:
         String url = request.getRequestURL().toString();
         // See if it's contained in the exclude list. If so, skip filter execution
@@ -69,7 +71,7 @@ public class AuthCheckFilter implements Filter {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
             if (manager.getUser() == null) {
-                response.sendRedirect(getRedirectURL(request,null));
+                response.sendRedirect(getRedirectURL(request, loginPage, null));
                 return;
             }
         }
@@ -79,14 +81,12 @@ public class AuthCheckFilter implements Filter {
     public void destroy() {
     }
 
-    private String getRedirectURL(HttpServletRequest request, String optionalParams) {
+    private String getRedirectURL(HttpServletRequest request, String loginPage,
+            String optionalParams)
+    {
         StringBuilder buf = new StringBuilder();
         try {
-            StringBuffer rURL = request.getRequestURL();
-            int pos = rURL.lastIndexOf("/");
-            if ((pos+1) <= rURL.length()) {
-                buf.append(rURL.substring(pos+1, rURL.length()));
-            }
+            buf.append(request.getRequestURI());
             String qs = request.getQueryString();
             if (qs != null) {
                 buf.append("?").append(qs);

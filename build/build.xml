@@ -386,7 +386,7 @@
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
         <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" />
         <copy file="${web.dir}/WEB-INF/web.xml"
-                toFile="${webapp.dest.dir}/WEB-INF/web-new.xml"
+                toFile="${webapp.dest.dir}/WEB-INF/web.xml"
                 overwrite="true">
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
                 <filter token="JSPC-SERVLETS" value="${servlet-xml}" />
@@ -944,11 +944,6 @@
                     <exclude name="java/**/*.java" />
                 </fileset>
             </copy>
-<!--            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/web" failonerror="false">-->
-<!--                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc">-->
-<!--                    <include name="web.xml" />-->
-<!--                </fileset>-->
-<!--            </copy>-->
 
             <!-- Jar the plugin -->
             <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">

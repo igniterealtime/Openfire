@@ -2,7 +2,7 @@
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.messenger.user.*,
-				 org.jivesoftware.messenger.plugin.RegistrationNotificationPlugin,                 
+				 org.jivesoftware.messenger.plugin.RegistrationPlugin,
                  org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
@@ -20,7 +20,7 @@
     boolean notificationEnabled = ParamUtils.getBooleanParameter(request, "notificationenabled");
     String contactName = ParamUtils.getParameter(request, "contactname");
 
-	RegistrationNotificationPlugin plugin = (RegistrationNotificationPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("registrationnotification");
+	RegistrationPlugin plugin = (RegistrationPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("registrationnotification");
 
     Map errors = new HashMap();
     if (save) {

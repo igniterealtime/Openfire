@@ -2,7 +2,7 @@
 
 <plugin>
     <class>org.jivesoftware.messenger.plugin.RegistrationPlugin</class>
-    <name>Registration Notification Plugin</name>
+    <name>Registration Plugin</name>
     <description>Adds the ability to allow an specified user to be notified whenever a new user attempts to register with the server.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
@@ -10,10 +10,10 @@
 	
 	<adminconsole>		
 		<tab id="tab-users">
-			<sidebar id="registration-notification-props-form" name="Registration Notification">
-				<item id="registration-notification-props-form" name="Notification Properties"
-						url="registration-notification-props-form.jsp"
-						description="User Registration Notification" />
+			<sidebar id="sidebar-users">
+				<item id="registration-props-form" name="Registration Properties"
+						url="registration-props-form.jsp"
+						description="User Registration" />
 			</sidebar>
         </tab>
     </adminconsole>

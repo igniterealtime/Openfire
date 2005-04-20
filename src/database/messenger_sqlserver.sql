@@ -144,14 +144,14 @@ CREATE INDEX mucRoom_roomID_idx on mucRoom(roomID);
 
 CREATE TABLE mucAffiliation (
   roomID              INT            NOT NULL,
-  jid                 NVARCHAR(1024) NOT NULL,
+  jid                 NVARCHAR(424) NOT NULL,
   affiliation         INT            NOT NULL,
   CONSTRAINT mucAffiliation__pk PRIMARY KEY (roomID,jid)
 );
 
 CREATE TABLE mucMember (
   roomID              INT            NOT NULL,
-  jid                 NVARCHAR(1024) NOT NULL,
+  jid                 NVARCHAR(424) NOT NULL,
   nickname            NVARCHAR(255)  NULL,
   firstName           NVARCHAR(100)  NULL,
   lastName            NVARCHAR(100)  NULL,

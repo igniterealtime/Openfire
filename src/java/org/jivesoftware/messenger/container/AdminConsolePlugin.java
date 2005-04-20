@@ -91,7 +91,7 @@ public class AdminConsolePlugin implements Plugin {
             boolean plainStarted = false;
             // Setting this property to a not null value will imply that the Jetty server will only
             // accept connect requests to that IP address
-            interfaceName = JiveGlobals.getXMLProperty("adminConsole.inteface");
+            interfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
             port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
             InetAddrPort address = new InetAddrPort(interfaceName, port);
             if (port > 0) {

@@ -406,9 +406,6 @@ public class SessionManager extends BasicModule {
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous (? - shouldn't happen)
             }
-            catch (UnauthorizedException e) {
-                // Do nothing
-            }
         }
     }
 
@@ -420,7 +417,7 @@ public class SessionManager extends BasicModule {
      *        the notification.
      */
     private void broadcastPresenceToOtherResource(ClientSession session)
-            throws UserNotFoundException, UnauthorizedException {
+            throws UserNotFoundException {
         Presence presence = null;
         Collection<ClientSession> availableSession;
         SessionMap sessionMap = sessions.get(session.getUsername());
@@ -499,9 +496,6 @@ public class SessionManager extends BasicModule {
             }
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing
             }
         }
     }
@@ -664,7 +658,7 @@ public class SessionManager extends BasicModule {
         // Initially Check preAuthenticated Sessions
         session = preAuthenticatedSessions.get(buf.toString());
         if(session != null){
-            return (ClientSession)session;
+            return session;
         }
 
         if (resource == null) {
@@ -681,9 +675,6 @@ public class SessionManager extends BasicModule {
                     session = sessionMap.getSession(resource);
                 }
             }
-        }
-        if (session == null) {
-            return null;
         }
         return session;
     }
@@ -1093,15 +1084,11 @@ public class SessionManager extends BasicModule {
 
 
     public void sendServerMessage(String subject, String body) {
-        try {
-            sendServerMessage(null, subject, body);
-        }
-        catch (SessionNotFoundException e) {
-        }
+        sendServerMessage(null, subject, body);
     }
 
-    public void sendServerMessage(JID address, String subject, String body) throws SessionNotFoundException {
-        Packet packet = createServerMessage(subject, body);
+    public void sendServerMessage(JID address, String subject, String body) {
+        Message packet = createServerMessage(subject, body);
         try {
             if (address == null || address.getNode() == null || address.getNode().length() < 1) {
                 broadcast(packet);
@@ -1110,14 +1097,14 @@ public class SessionManager extends BasicModule {
                 userBroadcast(address.getNode(), packet);
             }
             else {
-                getSession(address).process(packet);
+                router.route(packet);
             }
         }
-        catch (Exception e) {
+        catch (UnauthorizedException e) {
         }
     }
 
-    private Packet createServerMessage(String subject, String body) {
+    private Message createServerMessage(String subject, String body) {
         Message message = new Message();
         message.setFrom(serverAddress);
         if (subject != null) {

@@ -255,6 +255,7 @@ public class User implements Cacheable {
         size += CacheSizes.sizeOfObject();              // overhead of object
         size += CacheSizes.sizeOfLong();                // id
         size += CacheSizes.sizeOfString(username);      // username
+        size += CacheSizes.sizeOfString(name);          // name
         size += CacheSizes.sizeOfString(email);         // email
         size += CacheSizes.sizeOfDate() * 2;            // creationDate and modificationDate
         size += CacheSizes.sizeOfMap(properties);       // properties
@@ -365,7 +366,7 @@ public class User implements Cacheable {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, name);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 properties.put(rs.getString(1), rs.getString(2));
@@ -389,7 +390,7 @@ public class User implements Cacheable {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, name);
+            pstmt.setString(1, username);
             pstmt.setString(2, propName);
             pstmt.setString(3, propValue);
             pstmt.executeUpdate();
@@ -413,7 +414,7 @@ public class User implements Cacheable {
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
             pstmt.setString(1, propValue);
             pstmt.setString(2, propName);
-            pstmt.setString(3, name);
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -433,7 +434,7 @@ public class User implements Cacheable {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, name);
+            pstmt.setString(1, username);
             pstmt.setString(2, propName);
             pstmt.executeUpdate();
         }

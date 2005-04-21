@@ -12,8 +12,8 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
@@ -27,9 +27,10 @@ public class OfflineMessageStrategy extends BasicModule {
 
     private static int quota = 100*1024; // Default to 100 K.
     private static Type type = Type.store_and_bounce;
-    private SessionManager sessionManager;
 
     private OfflineMessageStore messageStore;
+    private JID serverAddress;
+    private PacketRouter router;
 
     public OfflineMessageStrategy() {
         super("Offline Message Strategy");
@@ -58,35 +59,29 @@ public class OfflineMessageStrategy extends BasicModule {
 
     public void storeOffline(Message message) {
         if (message != null) {
-            Session senderSession = sessionManager.getSession(message.getFrom());
-            if (senderSession == null) {
+            // Do nothing if the message was sent to the server itself or to an anonymous user
+            if (message.getTo() == null || serverAddress.equals(message.getTo()) ||
+                    message.getTo().getNode() == null) {
                 return;
             }
-            JID sender = senderSession.getAddress();
 
-            // server messages and anonymous messages can be silently dropped
-            if (sender == null || sender.getNode() == null) {
-                // silently drop the server message
+            if (type == Type.bounce) {
+                bounce(message);
             }
-            else {
-                if (type == Type.bounce) {
-                    bounce(message);
-                }
-                else if (type == Type.store) {
+            else if (type == Type.store) {
+                store(message);
+            }
+            else if (type == Type.store_and_bounce) {
+                if (underQuota(message)) {
                     store(message);
                 }
-                else if (type == Type.store_and_bounce) {
-                    if (underQuota(message)) {
-                        store(message);
-                    }
-                    else {
-                        bounce(message);
-                    }
+                else {
+                    bounce(message);
                 }
-                else if (type == Type.store_and_drop) {
-                    if (underQuota(message)) {
-                        store(message);
-                    }
+            }
+            else if (type == Type.store_and_drop) {
+                if (underQuota(message)) {
+                    store(message);
                 }
             }
         }
@@ -101,14 +96,19 @@ public class OfflineMessageStrategy extends BasicModule {
     }
 
     private void bounce(Message message) {
-        // Generate a rejection response to the sender
+        // Do nothing if the sender was the server itself
+        if (message.getFrom() == null) {
+            return;
+        }
         try {
-            Session session = sessionManager.getSession(message.getFrom());
-
+            // Generate a rejection response to the sender
             Message errorResponse = message.createCopy();
             errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
                     PacketError.Type.continue_processing));
-            session.process(errorResponse);
+            errorResponse.setFrom(message.getTo());
+            errorResponse.setTo(message.getFrom());
+            // Send the response
+            router.route(errorResponse);
         }
         catch (Exception e) {
             Log.error(e);
@@ -118,7 +118,8 @@ public class OfflineMessageStrategy extends BasicModule {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         messageStore = server.getOfflineMessageStore();
-        sessionManager = server.getSessionManager();
+        router = server.getPacketRouter();
+        serverAddress = new JID(server.getServerInfo().getName());
 
         String quota = JiveGlobals.getProperty("xmpp.offline.quota");
         if (quota != null && quota.length() > 0) {

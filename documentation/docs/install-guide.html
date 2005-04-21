@@ -155,7 +155,16 @@ stop the service.</p>
 
 <p>Note: the graphical launcher is not compatible with the Windows service
 at this time. If you install the service, you should use service controls
-as described above to control the server rather than the graphical launcher.</p> 
+as described above to control the server rather than the graphical launcher.</p>
+
+<h3>Custom Parameters</h3>
+
+<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime environment of Jive Messenger. You can do this by creating vmoptions files in the bin/ directory of your Jive Messenger installation. For the Windows service, you'd create a new text file called messenger-service.exe.vmoptions. Each parameter to the VM should be on a new line of the file. For example, to set the minimum and max VM heap size to 256 MB, you'd use:
+
+<pre>-Xms256m
+-Xmx256m</pre>
+
+To create parameters for the normal launcher, create a file called messengerd.exe.vmoptions (since the messenger.exe launcher invokes the messengerd.exe executable to actually start the server).
 
 <h2><a name="unix">Running Jive Messenger in Linux/Unix</a></h2>
 

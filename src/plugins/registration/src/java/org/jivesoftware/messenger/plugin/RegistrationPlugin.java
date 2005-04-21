@@ -7,10 +7,7 @@
 
 package org.jivesoftware.messenger.plugin;
 
-import java.io.File;
-import java.util.Map;
-
-import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.MessageRouter;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
@@ -19,22 +16,29 @@ import org.jivesoftware.messenger.event.UserEventListener;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+
+import java.io.File;
+import java.util.Map;
 
 public class RegistrationPlugin implements Plugin {
     private PluginManager pluginManager;
-    private SessionManager sessionManager;
     private RegistrationUserEventListener listener = new RegistrationUserEventListener();
     
     private static String serverName;
+    private JID serverAddress;
+    private MessageRouter router;
+
     private boolean registrationNotificationEnabled;
     private boolean registrationWelcomeEnabled;
     private String contact;
     
     public RegistrationPlugin() {
-        sessionManager = SessionManager.getInstance();
         serverName = XMPPServer.getInstance().getServerInfo().getName();
-        
+        serverAddress = new JID(serverName);
+        router = XMPPServer.getInstance().getMessageRouter();
+
         registrationNotificationEnabled = JiveGlobals.getBooleanProperty("registration.notification.enabled", false);
         setRegistrationNotificationEnabled(registrationNotificationEnabled);
         
@@ -72,10 +76,11 @@ public class RegistrationPlugin implements Plugin {
     public void destroyPlugin() {
         UserEventDispatcher.removeListener(listener);
         pluginManager = null;
-        sessionManager = null;
+        router = null;
     }
     
     public void setRegistrationNotificationEnabled(boolean enable) {
+        registrationNotificationEnabled = enable;
         JiveGlobals.setProperty("registration.notification.enabled", enable ? "true" : "false");
     }
     
@@ -93,6 +98,7 @@ public class RegistrationPlugin implements Plugin {
     }
     
     public void setRegistrationWelcomeEnabled(boolean enable) {
+        registrationWelcomeEnabled = enable;
         JiveGlobals.setProperty("registration.welcome.enabled", enable ? "true" : "false");
     }
     
@@ -110,18 +116,26 @@ public class RegistrationPlugin implements Plugin {
     
     private void sendRegistrationNotificatonMessage(User user) {
         String msg = " A new user with the username of '" + user.getUsername() + "' just registered";
-        
-        sessionManager.sendServerMessage(new JID(getContact() + "@" + serverName),
-                "Registration Notification",
-                msg);
+        router.route(createServerMessage(getContact() + "@" + serverName,
+                "Registration Notification", msg));
     }
     
     private void sendWelcomeMessage(User user) {
-        sessionManager.sendServerMessage(new JID(user.getUsername() + "@" + serverName),
-                "Welcome",
-                getWelcomeMessage());
+        router.route(createServerMessage(user.getUsername() + "@" + serverName, "Welcome",
+                getWelcomeMessage()));
     }
     
+    private Message createServerMessage(String to, String subject, String body) {
+        Message message = new Message();
+        message.setTo(to);
+        message.setFrom(serverAddress);
+        if (subject != null) {
+            message.setSubject(subject);
+        }
+        message.setBody(body);
+        return message;
+    }
+
     //TODO JM-170
     //TODO add the ability for the admin to monitor when users are deleted?
     private class RegistrationUserEventListener implements UserEventListener {

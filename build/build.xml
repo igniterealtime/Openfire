@@ -884,17 +884,17 @@
                         <then>
 
                             <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <copy path="//web-app/servlet[last()]" buffer="foobar" />
+                                <copy path="//web-app/servlet" buffer="foobar" />
                             </xmltask>
                             <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
-                                <insert path="/web-app/servlet" buffer="foobar" position="after" />
+                                <insert path="/web-app/servlet[last()]" buffer="foobar" position="after" />
                             </xmltask>
 
                             <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2" />
+                                <copy path="//web-app/servlet-mapping" buffer="foobar2" />
                             </xmltask>
                             <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
-                                <insert path="/web-app/servlet-mapping" buffer="foobar2" position="after" />
+                                <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2" position="after" />
                             </xmltask>
 
                         </then>

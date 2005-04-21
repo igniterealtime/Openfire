@@ -187,26 +187,27 @@ public interface MUCRoom {
 
     /**
      * Joins the room using the given nickname.
-     * 
-     * @param nickname The nickname the user wants to use in the chatroom.
-     * @param password The password provided by the user to enter the chatroom or null if none.
+     *
+     * @param nickname       The nickname the user wants to use in the chatroom.
+     * @param password       The password provided by the user to enter the chatroom or null if none.
      * @param historyRequest The amount of history that the user request or null meaning default.
-     * @param user The user joining.
-     * @param presence The presence sent by the user to join the room.
+     * @param user           The user joining.
+     * @param presence       The presence sent by the user to join the room.
      * @return The role created for the user.
-     * @throws UnauthorizedException If the user doesn't have permision to join the room.
-     * @throws UserAlreadyExistsException If the nickname is already taken.
-     * @throws RoomLockedException If the user is trying to join a locked room.
-     * @throws ForbiddenException If the user is an outcast.
+     * @throws UnauthorizedException         If the user doesn't have permision to join the room.
+     * @throws UserAlreadyExistsException    If the nickname is already taken.
+     * @throws RoomLockedException           If the user is trying to join a locked room.
+     * @throws ForbiddenException            If the user is an outcast.
      * @throws RegistrationRequiredException If the user is not a member of a members-only room.
-     * @throws NotAllowedException If the user is has exceded the max number of occupants.
-     * @throws ConflictException If another user attempts to join the room with a nickname reserved
-     *             by the first user.
+     * @throws ConflictException             If another user attempts to join the room with a
+     *                                       nickname reserved by the first user.
+     * @throws ServiceUnavailableException   If the user cannot join the room since the max number
+     *                                       of users has been reached.
      */
     MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, MUCUser user,
             Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
-            NotAllowedException, ConflictException;
+            ConflictException, ServiceUnavailableException;
 
     /**
      * Remove a member from the chat room.

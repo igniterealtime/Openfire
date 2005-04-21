@@ -390,13 +390,13 @@ public class MUCRoomImpl implements MUCRoom {
     public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
             MUCUser user, Presence presence) throws UnauthorizedException,
             UserAlreadyExistsException, RoomLockedException, ForbiddenException,
-            RegistrationRequiredException, NotAllowedException, ConflictException {
+            RegistrationRequiredException, ConflictException, ServiceUnavailableException {
         MUCRoleImpl joinRole = null;
         lock.writeLock().lock();
         try {
-            // If the room has a limit of max user then check if the limit was reached
+            // If the room has a limit of max user then check if the limit has been reached
             if (isDestroyed || (getMaxUsers() > 0 && getOccupantsCount() >= getMaxUsers())) {
-                throw new NotAllowedException();
+                throw new ServiceUnavailableException();
             }
             boolean isOwner = owners.contains(user.getAddress().toBareJID());
             // If the room is locked and this user is not an owner raise a RoomLocked exception

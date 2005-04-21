@@ -378,8 +378,8 @@ public class MUCUserImpl implements MUCUser {
                         catch (UnauthorizedException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_authorized);
                         }
-                        catch (NotAllowedException e) {
-                            sendErrorPacket(packet, PacketError.Condition.not_allowed);
+                        catch (ServiceUnavailableException e) {
+                            sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                         catch (UserAlreadyExistsException e) {
                             sendErrorPacket(packet, PacketError.Condition.conflict);

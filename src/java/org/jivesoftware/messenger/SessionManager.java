@@ -1083,10 +1083,28 @@ public class SessionManager extends BasicModule {
     }
 
 
+    /**
+     * Sends a message with a given subject and body to all the active user sessions in the server.
+     *
+     * @param subject the subject to broadcast.
+     * @param body    the body to broadcast.
+     */
     public void sendServerMessage(String subject, String body) {
         sendServerMessage(null, subject, body);
     }
 
+    /**
+     * Sends a message with a given subject and body to one or more user sessions related to the
+     * specified address. If address is null or the address's node is null then the message will be
+     * sent to all the user sessions. But if the address includes a node but no resource then
+     * the message will be sent to all the user sessions of the requeted user (defined by the node).
+     * Finally, if the address is a full JID then the message will be sent to the session associated
+     * to the full JID. If no session is found then the message is not sent.
+     *
+     * @param address the address that defines the sessions that will receive the message.
+     * @param subject the subject to broadcast.
+     * @param body    the body to broadcast.
+     */
     public void sendServerMessage(JID address, String subject, String body) {
         Message packet = createServerMessage(subject, body);
         try {
@@ -1097,7 +1115,10 @@ public class SessionManager extends BasicModule {
                 userBroadcast(address.getNode(), packet);
             }
             else {
-                router.route(packet);
+                ClientSession session = getSession(address);
+                if (session != null) {
+                    session.process(packet);
+                }
             }
         }
         catch (UnauthorizedException e) {

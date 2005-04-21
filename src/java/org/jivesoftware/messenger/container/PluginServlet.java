@@ -114,7 +114,7 @@ public class PluginServlet extends HttpServlet {
         }
         // Find the name of the plugin directory given that the webXML file
         // lives in plugins/[pluginName]/web/web.xml
-        String pluginName = webXML.getParentFile().getParentFile().getName();
+        String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
         try {
             // Make the reader non-validating so that it doesn't try to resolve external
             // DTD's. Trying to resolve external DTD's can break on some firewall configurations.

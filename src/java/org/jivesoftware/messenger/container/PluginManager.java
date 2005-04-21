@@ -181,7 +181,7 @@ public class PluginManager {
                 pluginDirs.put(plugin, pluginDir);
                 classloaders.put(plugin, pluginLoader);
                 // Load any JSP's defined by the plugin.
-                File webXML = new File(pluginDir, "web" + File.separator + "web.xml");
+                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" + File.separator + "web.xml");
                 if (webXML.exists()) {
                     PluginServlet.registerServlets(this, plugin, webXML);
                 }

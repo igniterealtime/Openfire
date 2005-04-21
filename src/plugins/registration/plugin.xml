@@ -3,7 +3,7 @@
 <plugin>
     <class>org.jivesoftware.messenger.plugin.RegistrationPlugin</class>
     <name>Registration Plugin</name>
-    <description>Adds the ability to allow an specified user to be notified whenever a new user attempts to register with the server.</description>
+    <description>Allows admins to configure various actions whenever a new user creates an account.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
     <minServerVersion>2.1.3</minServerVersion>

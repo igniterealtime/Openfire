@@ -883,17 +883,15 @@
                         <equals arg1="${plugin.@{plugin}.webxml.available}" arg2="true" />
                         <then>
 
-                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <copy path="//web-app/servlet" buffer="foobar" />
+                            <!-- Copy the servlet and servlet-mapping elements from the original web.xml to a temp buffer.
+                                 Note: The original web.xml can only contain one servlet and servlet-mapping -->
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
+                                <copy path="//web-app/servlet[last()]" buffer="foobar" />
+                                <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2" />
                             </xmltask>
-                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                            <!-- Add the copied servlet and servlet-mapping elements to the generated web.xml -->
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
                                 <insert path="/web-app/servlet[last()]" buffer="foobar" position="after" />
-                            </xmltask>
-
-                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml">
-                                <copy path="//web-app/servlet-mapping" buffer="foobar2" />
-                            </xmltask>
-                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
                                 <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2" position="after" />
                             </xmltask>
 

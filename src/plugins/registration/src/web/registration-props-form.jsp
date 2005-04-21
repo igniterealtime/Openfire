@@ -119,11 +119,11 @@ Use the form below to edit user registration settings.<br>
 <form action="registration-props-form.jsp?save" method="post">
 
 <fieldset>
-    <legend>Registraion Notification</legend>
+    <legend>Registration Notification</legend>
     <div>
     
     <p>
-    Enable this feature to have the contact person notificatied whenever a new user registers.
+    Enable this feature to have the contact person notified whenever a new user registers.
     </p>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">

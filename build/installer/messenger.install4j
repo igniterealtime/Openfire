@@ -21,6 +21,8 @@
       <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
       <variable name="FILE_PREFIX" value="" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
+      <variable name="UNIX_INSTALL_DIR" value="jive_messenger" />
+      <variable name="WINDOWS_INSTALL_DIR" value="Jive Messenger" />
     </variables>
   </application>
   <files>
@@ -156,7 +158,7 @@
     <customScreens />
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="%APP_NAME% Server" allLaunchers="false" includedJRE="windows-x86-1.5.0_02_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME% Server" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_02_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
       <selectedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -174,16 +176,12 @@
         <entry name="Readme" target="README.html" icon="" />
       </additionalStartMenuEntries>
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/jive_%PRODUCT_NAME%" allLaunchers="false" includedJRE="linux-x86-1.5.0_02" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_02" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>
       <messageSet language="English" />
-      <exclude>
-        <entry location="bin/extra" launcher="false" />
-        <entry location="bin/messenger.bat" launcher="false" />
-        <entry location="bin/messenger.sh" launcher="false" />
-      </exclude>
+      <exclude />
       <variables />
       <customScriptLines />
     </linuxRPM>

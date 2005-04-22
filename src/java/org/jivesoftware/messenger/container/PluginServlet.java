@@ -62,7 +62,9 @@ public class PluginServlet extends HttpServlet {
         servletConfig = config;
     }
 
-    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException
+    {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -220,18 +222,18 @@ public class PluginServlet extends HttpServlet {
     }
 
     /**
-     * Handles a request for a Servlet. If one is found, request handling is passed to it. If no
-     * servlet is found, a 404 error is returned.
+     * Handles a request for a Servlet. If one is found, request handling is passed to it.
+     * If no servlet is found, a 404 error is returned.
      *
      * @param pathInfo the extra path info.
-     * @param request  the request object.
+     * @param request the request object.
      * @param response the response object.
-     * @throws ServletException if a servlet exception occurs while handling the
-     *                          request.
-     * @throws IOException      if an IOException occurs while handling the request.
+     * @throws ServletException if a servlet exception occurs while handling the request.
+     * @throws IOException if an IOException occurs while handling the request.
      */
     private void handleServlet(String pathInfo, HttpServletRequest request,
-                               HttpServletResponse response) throws ServletException, IOException {
+            HttpServletResponse response) throws ServletException, IOException
+    {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
         HttpServlet servlet = servlets.get(jspURL);

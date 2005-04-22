@@ -106,6 +106,9 @@
     <property name="installer.app_name" value="Jive Messenger" />
     <property name="installer.app_short_name" value="jive_messenger" />
     <property name="installer.product_name" value="messenger" />
+    <property name="installer.application_id" value="6886-9911-0474-3571"/>
+    <property name="installer.unix_install_dir" value="jive_messenger"/>
+    <property name="installer.windows_install_dir" value="Jive Messenger"/>
     <property name="installer.publisher" value="Jive Software" />
     <property name="installer.publisher_url" value="www.jivesoftware.org" />
     <property name="installer.file_prefix" value="${installer.app_short_name}" />
@@ -233,6 +236,7 @@
         <mkdir dir="${target.i18n.dir}" />
         <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
             tofile="${target.i18n.dir}/${i18n.basename}.properties" />
+
     </target>
 
     <!-- jar =================================================================================== -->
@@ -734,6 +738,9 @@
             <variable name="PUBLISHER_URL" value="${installer.publisher_url}" />
             <variable name="FILE_PREFIX" value="${installer.app_short_name}" />
             <variable name="RELEASE_ROOT_PATH" value="${installer.release_root_path}" />
+            <variable name="APPLICATION_ID" value="${installer.application_id}" />
+            <variable name="UNIX_INSTALL_DIR" value="${installer.unix_install_dir}" />
+            <variable name="WINDOWS_INSTALL_DIR" value="${installer.windows_install_dir}" />
         </install4j>
 
     </target>

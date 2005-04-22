@@ -39,7 +39,7 @@
   <launchers>
     <launcher name="Jive Messenger" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
       <executable name="%PRODUCT_NAME%-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="%APP_NAME%" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Server" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME%" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>

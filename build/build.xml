@@ -97,6 +97,7 @@
     <property name="anttools.src.dir" value="${src.dir}/tools" />
     <property name="anttools.target.dir" value="${target.dir}/tools" />
     <property name="copy.dbscripts" value="true" />
+    <property name="whack.src" value="${target.dir}/whack" />
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j" />
     <property name="installer.src" value="${basedir}/build/installer" />
@@ -201,6 +202,11 @@
                 <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}_${version.extra}" />
             </else>
         </if>
+
+        <!-- Extract the source from the whack jar -->
+        <unjar src="${lib.merge.dir}/whack.jar" dest="${whack.src}">
+            <patternset includes="org/xmpp/packet/*.java" />
+        </unjar>
     </target>
 
     <!-- compile =============================================================================== -->
@@ -321,15 +327,19 @@
         <antcall target="-javadoc-impl" />
 
         </target><target name="-javadoc-impl" unless="no.javadoc">
+
         <!-- Run javadoc over all source code -->
         <javadoc
-            sourcepath="${src.java.dir}"
-            packagenames="org.jivesoftware.*"
+            packagenames="org.jivesoftware.*, org.xmpp.*"
             destdir="${javadoc.dest.dir}"
             windowtitle="Jive Messenger ${version} Javadoc"
             overview="${src.java.dir}/overview.html"
             failonerror="yes"
         >
+            <sourcepath>
+                <path location="${src.java.dir}" />
+                <path location="${whack.src}" />
+            </sourcepath>
             <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Jive Messenger ${version} Javadoc</font>]]></doctitle>
             <header><![CDATA[<b>Jive Messenger ${version} Javadoc</b>]]></header>
             <bottom><![CDATA[<i>Copyright &copy; 1999-2004 Jive Software.</i>]]></bottom>
@@ -616,6 +626,11 @@
         <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}">
                 <exclude name="database/upgrade/**/*.*" />
+            </fileset>
+        </copy>
+        <copy todir="${release.src.out.dir}/src/java">
+            <fileset dir="${whack.src}">
+                <exclude name="org/xmpp/packet.*.java" />
             </fileset>
         </copy>
         <!-- Weird.. have to delete the "empty" upgrade dir -->

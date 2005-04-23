@@ -605,10 +605,12 @@ public class MUCRoomImpl implements MUCRoom {
         }
 
         try {
-            // Inform the rest of the room occupants that the user has left the room
             Presence presence = leaveRole.getPresence().createCopy();
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
+            // Inform the leaving user that he/she has left the room
+            leaveRole.send(presence);
+            // Inform the rest of the room occupants that the user has left the room
             broadcastPresence(presence);
         }
         catch (Exception e) {

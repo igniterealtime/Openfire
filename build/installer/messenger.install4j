@@ -198,9 +198,23 @@
       <variables />
       <customScriptLines />
     </unixArchive>
+    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="%APP_SHORT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false">
+      <selectedLaunchers>
+        <launcher id="2" />
+        <launcher id="12" />
+        <launcher id="15" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/extra" launcher="false" />
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
+      </exclude>
+      <variables />
+    </win32Archive>
   </mediaSets>
   <buildIds buildAll="true">
-    <mediaSet refId="18" />
+    <mediaSet refId="31" />
   </buildIds>
 </install4j>
 

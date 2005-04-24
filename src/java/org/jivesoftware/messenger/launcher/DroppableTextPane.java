@@ -3,7 +3,7 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2005 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,31 +11,31 @@
 
 package org.jivesoftware.messenger.launcher;
 
-import javax.swing.JFrame;
-
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
+import javax.swing.*;
 import java.awt.dnd.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.util.List;
+import java.util.Iterator;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 
 /**
- * A droppable frame allows for DnD of file objects from the OS onto the actual
- * frame via <code>File</code>.
+ * A droppable text pane allows for DnD of file objects from the OS onto the actual
+ * pane via <code>File</code>.
+ *
+ * @author Matt Tucker
  */
-public class DroppableFrame extends JFrame implements DropTargetListener, DragSourceListener,
-        DragGestureListener
+public abstract class DroppableTextPane extends JTextPane implements DropTargetListener,
+        DragSourceListener, DragGestureListener
  {
-
     private DragSource dragSource = DragSource.getDefaultDragSource();
 
     /**
-     * Creates a droppable rame.
+     * Creates a droppable text pane.
      */
-    public DroppableFrame() {
+    public DroppableTextPane() {
         new DropTarget(this, this);
         dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }

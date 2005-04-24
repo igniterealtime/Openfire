@@ -243,46 +243,46 @@ public class WebManager extends WebBean {
     }
 
     /**
-         * Copies the contents at <CODE>src</CODE> to <CODE>dst</CODE>.
-         */
-        public static void copy(URL src, File dst) throws IOException {
-            InputStream in = null;
-            OutputStream out = null;
+     * Copies the contents at <CODE>src</CODE> to <CODE>dst</CODE>.
+     */
+    public static void copy(URL src, File dst) throws IOException {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = src.openStream();
+            out = new FileOutputStream(dst);
+            dst.mkdirs();
+            copy(in, out);
+        }
+        finally {
             try {
-                in = src.openStream();
-                out = new FileOutputStream(dst);
-                dst.mkdirs();
-                copy(in, out);
-            }
-            finally {
-                try {
-                    if (in != null) in.close();
-                }
-                catch (IOException e) {
-                }
-                try {
-                    if (out != null) out.close();
-                }
-                catch (IOException e) {
+                if (in != null) {
+                    in.close();
                 }
             }
+            catch (IOException e) { }
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            }
+            catch (IOException e) { }
         }
+    }
 
-        /**
-         * Common code for copy routines.  By convention, the streams are
-         * closed in the same method in which they were opened.  Thus,
-         * this method does not close the streams when the copying is done.
-         */
-        private static void copy(InputStream in, OutputStream out)
-                throws IOException {
-            final byte[] buffer = new byte[4096];
-            while (true) {
-                final int bytesRead = in.read(buffer);
-                if (bytesRead < 0) {
-                    break;
-                }
-                out.write(buffer, 0, bytesRead);
+    /**
+     * Common code for copy routines.  By convention, the streams are
+     * closed in the same method in which they were opened.  Thus,
+     * this method does not close the streams when the copying is done.
+     */
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[4096];
+        while (true) {
+            int bytesRead = in.read(buffer);
+            if (bytesRead < 0) {
+                break;
             }
+            out.write(buffer, 0, bytesRead);
         }
-
+    }
 }

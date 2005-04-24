@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.launcher;
 
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.jivesoftware.util.XMLProperties;
 
@@ -135,7 +134,6 @@ public class Launcher {
         }
         catch (Exception e) {
         }
-
 
         mainPanel.setLayout(new BorderLayout());
         cardPanel.setBackground(Color.white);
@@ -312,7 +310,7 @@ public class Launcher {
 
         // Setup command area
         final ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("splash2.gif"));
-        pane = new JTextPane() {
+        pane = new DroppableTextPane() {
             public void paintComponent(Graphics g) {
                 final Dimension size = pane.getSize();
 
@@ -326,6 +324,13 @@ public class Launcher {
 
                 setOpaque(false);
                 super.paintComponent(g);
+            }
+
+            public void fileDropped(File file) {
+                String fileName = file.getName();
+                if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
+                    installPlugin(file);
+                }
             }
         };
 
@@ -391,7 +396,8 @@ public class Launcher {
                             while ((c = in.read()) != -1) {
                                 try {
                                     StyleConstants.setFontFamily(styles, "courier new");
-                                    pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
+                                    pane.getDocument().insertString(pane.getDocument().getLength(),
+                                            "" + (char)c, styles);
                                 }
                                 catch (BadLocationException e) {
                                 }
@@ -492,7 +498,7 @@ public class Launcher {
 
         final SwingWorker installerThread = new SwingWorker() {
             public Object construct() {
-                File pluginsDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+                File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
 

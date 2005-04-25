@@ -73,7 +73,6 @@ public class IQvCardHandler extends IQHandler {
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = null;
         try {
-            JID recipient = packet.getTo();
             IQ.Type type = packet.getType();
             if (type.equals(IQ.Type.set)) {
                 User user = userManager.getUser(packet.getFrom().getNode());
@@ -86,6 +85,12 @@ public class IQvCardHandler extends IQHandler {
                 result = IQ.createResultIQ(packet);
             }
             else if (type.equals(IQ.Type.get)) {
+                JID recipient = packet.getTo();
+                // If no TO was specified then get the vCard of the sender of the packet
+                if (recipient == null) {
+                    recipient = packet.getFrom();
+                }
+
                 result = IQ.createResultIQ(packet);
 
                 Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));

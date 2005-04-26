@@ -22,11 +22,18 @@ import org.xmpp.packet.Packet;
 import java.io.File;
 import java.util.Map;
 
+/**
+ * Registration plugin.
+ *
+ * TODO: document plugin property names here.
+ *
+ * @author Ryan Graham.
+ */
 public class RegistrationPlugin implements Plugin {
-    private PluginManager pluginManager;
+
     private RegistrationUserEventListener listener = new RegistrationUserEventListener();
     
-    private static String serverName;
+    private String serverName;
     private JID serverAddress;
     private MessageRouter router;
 
@@ -39,10 +46,12 @@ public class RegistrationPlugin implements Plugin {
         serverAddress = new JID(serverName);
         router = XMPPServer.getInstance().getMessageRouter();
 
-        registrationNotificationEnabled = JiveGlobals.getBooleanProperty("registration.notification.enabled", false);
+        registrationNotificationEnabled = JiveGlobals.getBooleanProperty(
+                "registration.notification.enabled", false);
         setRegistrationNotificationEnabled(registrationNotificationEnabled);
         
-        registrationWelcomeEnabled = JiveGlobals.getBooleanProperty("registration.welcome.enabled", false);
+        registrationWelcomeEnabled = JiveGlobals.getBooleanProperty(
+                "registration.welcome.enabled", false);
         setRegistrationNotificationEnabled(registrationWelcomeEnabled);
         
         contact = JiveGlobals.getProperty("registration.notification.contact", "admin");
@@ -50,32 +59,15 @@ public class RegistrationPlugin implements Plugin {
         UserEventDispatcher.addListener(listener);
     }
 
-    public String getName() {
-        return pluginManager.getName(this);
-    }
-
-    public String getDescription() {
-        return pluginManager.getDescription(this);
-    }
-
-    public String getAuthor() {
-        return pluginManager.getAuthor(this);
-    }
-
-    public String getVersion() {
-        return pluginManager.getVersion(this);
-    }
-    
     public void processPacket(Packet packet) {
     }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        pluginManager = manager;
     }
 
     public void destroyPlugin() {
         UserEventDispatcher.removeListener(listener);
-        pluginManager = null;
+        listener = null;
         router = null;
     }
     

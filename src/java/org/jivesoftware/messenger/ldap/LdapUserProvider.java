@@ -15,6 +15,7 @@ import org.jivesoftware.messenger.user.*;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
@@ -61,6 +62,8 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public User loadUser(String username) throws UserNotFoundException {
+        // Un-escape username.
+        username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);
@@ -153,10 +156,10 @@ public class LdapUserProvider implements UserProvider {
             NamingEnumeration answer = ctx.search("", filter, constraints);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
-                usernames.add(
-                    (String)((SearchResult)answer.next()).getAttributes().get(
-                    manager.getUsernameField()).get()
-                );
+                String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                        manager.getUsernameField()).get();
+                // Escape username and add to results.
+                usernames.add(JID.escapeNode(username));
             }
         }
         catch (Exception e) {
@@ -207,11 +210,11 @@ public class LdapUserProvider implements UserProvider {
                     "ldap.clientSideSorting")).booleanValue())
             {
                 while (answer.hasMoreElements()) {
-                // Get the next userID.
-                usernames.add(
-                    (String)((SearchResult)answer.next()).getAttributes().get(
-                    manager.getUsernameField()).get()
-                );
+                    // Get the next userID.
+                    String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                            manager.getUsernameField()).get();
+                    // Escape username and add to results.
+                    usernames.add(JID.escapeNode(username));
                 }
                 Collections.sort(usernames);
                 usernames = usernames.subList(startIndex, startIndex+numResults);
@@ -230,10 +233,10 @@ public class LdapUserProvider implements UserProvider {
                 for (int i = 0; i < numResults; i++) {
                     if (answer.hasMoreElements()) {
                         // Get the next userID.
-                        usernames.add(
-                            (String)((SearchResult)answer.next()).getAttributes().get(
-                            manager.getUsernameField()).get()
-                        );
+                        String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                                manager.getUsernameField()).get();
+                        // Escape username and add to results.
+                        usernames.add(JID.escapeNode(username));
                     }
                     else {
                         break;
@@ -323,10 +326,10 @@ public class LdapUserProvider implements UserProvider {
             NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
-                usernames.add(
-                    (String)((SearchResult)answer.next()).getAttributes().get(
-                    manager.getUsernameField()).get()
-                );
+                String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                        manager.getUsernameField()).get();
+                // Escape username and add to results.
+                usernames.add(JID.escapeNode(username));
             }
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty(
@@ -398,10 +401,10 @@ public class LdapUserProvider implements UserProvider {
             for (int i = 0; i < numResults; i++) {
                 if (answer.hasMoreElements()) {
                     // Get the next userID.
-                    usernames.add(
-                        (String)((SearchResult)answer.next()).getAttributes().get(
-                        manager.getUsernameField()).get()
-                    );
+                    String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                            manager.getUsernameField()).get();
+                    // Escape username and add to results.
+                    usernames.add(JID.escapeNode(username));
                 }
                 else {
                     break;

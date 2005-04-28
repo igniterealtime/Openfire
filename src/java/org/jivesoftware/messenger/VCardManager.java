@@ -108,8 +108,10 @@ public class VCardManager {
             properties = loadPropertiesFromDb(username);
             vcardCache.put(username, properties);
         }
-        properties.remove(name);
-        deletePropertyFromDb(username, name);
+        if (properties.remove(name) != null) {
+            // Delete the property from the DB if it was present in memory
+            deletePropertyFromDb(username, name);
+        }
     }
 
     /**

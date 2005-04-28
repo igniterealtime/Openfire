@@ -139,6 +139,10 @@ public class IQvCardHandler extends IQHandler {
                     VCardManager.getInstance().setVCardProperty(user.getUsername(),
                             createName(nameStack), value);
                 }
+                else {
+                    VCardManager.getInstance().deleteVCardProperty(user.getUsername(),
+                            createName(nameStack));
+                }
             }
             readVCard(child, nameStack, user);
             nameStack.remove(nameStack.size() - 1);

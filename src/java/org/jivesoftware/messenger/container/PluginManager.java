@@ -1,21 +1,12 @@
 /**
-
  * $RCSfile$
-
  * $Revision$
-
  * $Date$
-
  *
-
  * Copyright (C) 2004 Jive Software. All rights reserved.
-
  *
-
  * This software is published under the terms of the GNU Public License (GPL),
-
  * a copy of which is included in this distribution.
-
  */
 
 package org.jivesoftware.messenger.container;
@@ -181,7 +172,8 @@ public class PluginManager {
                 pluginDirs.put(plugin, pluginDir);
                 classloaders.put(plugin, pluginLoader);
                 // Load any JSP's defined by the plugin.
-                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" + File.separator + "web.xml");
+                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
+                        File.separator + "web.xml");
                 if (webXML.exists()) {
                     PluginServlet.registerServlets(this, plugin, webXML);
                 }
@@ -236,8 +228,8 @@ public class PluginManager {
         if (plugin == null) {
             return;
         }
-        File webXML = new File(pluginDirectory + File.separator + pluginName +
-                File.separator + "web" + File.separator + "web.xml");
+        File webXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
+                        File.separator + "web.xml");
         if (webXML.exists()) {
             AdminConsole.removeModel(pluginName);
             PluginServlet.unregisterServlets(webXML);

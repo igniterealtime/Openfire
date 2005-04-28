@@ -19,7 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages sequences of unique ID's that get stored in the database. Database support for sequences
@@ -47,18 +47,20 @@ public class SequenceManager {
 
     private static final String LOAD_ID =
             "SELECT id FROM jiveID WHERE idType=?";
+
     private static final String UPDATE_ID =
             "UPDATE jiveID SET id=? WHERE idType=? AND id=?";
 
+    private static final String VERIFY_TYPE = "SELECT 1 FROM jiveID WHERE idType = ?";
+
     // Statically startup a sequence manager for each of the sequence counters.
-    private static Map<Integer,Object> managers;
+    private static Map<Integer,SequenceManager> managers = new ConcurrentHashMap<Integer,SequenceManager>();
 
     static {
-        managers = new HashMap<Integer,Object>();
         new SequenceManager(JiveConstants.ROSTER, 5);
         new SequenceManager(JiveConstants.OFFLINE, 1);
         new SequenceManager(JiveConstants.MUC_ROOM, 1);
-}
+    }
 
     /**
      * Returns the next ID of the specified type.
@@ -68,10 +70,38 @@ public class SequenceManager {
      */
     public static long nextID(int type) {
         if (managers.containsKey(type)) {
-            return ((SequenceManager)managers.get(type)).nextUniqueID();
+            return managers.get(type).nextUniqueID();
         }
         else {
+            // Verify type is valid from the db, if so create an instance for the type
+            // And return the next unique id
+            if(isValidType(type)) {
+                SequenceManager manager = new SequenceManager(type, 1);
+                return manager.nextUniqueID();
+            }
+
             throw new IllegalArgumentException("Invalid type");
+        }
+    }
+
+    /**
+     * Used to set the blocksize of a given SequenceManager. If no SequenceManager has been registered
+     * for the type we will verify the type is valid and then create a new sequence manager for it.
+     *
+     * @param type the type of unique id
+     * @param blockSize how many blocks of ids we should 
+     */
+    public static void setBlockSize(int type, int blockSize) {
+        if (managers.containsKey(type)) {
+            managers.get(type).blockSize = blockSize;
+        }
+        else {
+            // Verify type is valid from the db, if so create an instance for the type
+            if(isValidType(type)) {
+                new SequenceManager(type, blockSize);
+            } else {
+                throw new IllegalArgumentException("Invalid type");
+            }
         }
     }
 
@@ -183,4 +213,41 @@ public class SequenceManager {
             getNextBlock(count - 1);
         }
     }
+
+
+    /**
+     * Checks to seed if the jiveID type listed is valid
+     *
+     * @param type jiveID type to check
+     * @return true if it is valid
+     */
+    private static boolean isValidType(int type) {
+
+        boolean isValid = false;
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(VERIFY_TYPE);
+            pstmt.setInt(1, type);
+
+            ResultSet rs = pstmt.executeQuery();
+            if(rs.next()) {
+                isValid = true;
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+
+        return isValid;
+    }
+
 }

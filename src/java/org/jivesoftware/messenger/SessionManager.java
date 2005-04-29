@@ -135,9 +135,9 @@ public class SessionManager extends BasicModule {
          */
         void addSession(ClientSession session) {
             String resource = session.getAddress().getResource();
-            resources.put(resource, session);
             Presence presence = session.getPresence();
             int priority = presence == null ? 0 : presence.getPriority();
+            resources.put(resource, session);
             sortSession(resource, priority);
         }
 
@@ -148,19 +148,20 @@ public class SessionManager extends BasicModule {
          * @param priority The priority to use for sorting
          */
         private void sortSession(String resource, int priority) {
-
-            if (priorityList.size() > 0) {
-                Iterator iter = priorityList.iterator();
-                for (int i = 0; iter.hasNext(); i++) {
-                    ClientSession sess = resources.get(iter.next());
-                    if (sess.getPresence().getPriority() <= priority) {
-                        priorityList.add(i, resource);
-                        break;
+            synchronized (priorityList) {
+                if (priorityList.size() > 0) {
+                    Iterator iter = priorityList.iterator();
+                    for (int i = 0; iter.hasNext(); i++) {
+                        ClientSession sess = resources.get(iter.next());
+                        if (sess != null && sess.getPresence().getPriority() <= priority) {
+                            priorityList.add(i, resource);
+                            break;
+                        }
                     }
                 }
-            }
-            if (!priorityList.contains(resource)) {
-                priorityList.addLast(resource);
+                if (!priorityList.contains(resource)) {
+                    priorityList.addLast(resource);
+                }
             }
         }
 
@@ -173,8 +174,10 @@ public class SessionManager extends BasicModule {
         public void changePriority(JID sender, int priority) {
             String resource = sender.getResource();
             if (resources.containsKey(resource)) {
-                priorityList.remove(resource);
-                sortSession(resource, priority);
+                synchronized (priorityList) {
+                    priorityList.remove(resource);
+                    sortSession(resource, priority);
+                }
             }
         }
 
@@ -186,7 +189,9 @@ public class SessionManager extends BasicModule {
         void removeSession(Session session) {
             String resource = session.getAddress().getResource();
             resources.remove(resource);
-            priorityList.remove(resource);
+            synchronized (priorityList) {
+                priorityList.remove(resource);
+            }
         }
 
         /**
@@ -227,10 +232,12 @@ public class SessionManager extends BasicModule {
                 return resources.get(priorityList.getFirst());
             }
             else {
-                for (int i=0; i < priorityList.size(); i++) {
-                    ClientSession s = resources.get(priorityList.get(i));
-                    if (s.getPresence().isAvailable()) {
-                        return s;
+                synchronized (priorityList) {
+                    for (int i=0; i < priorityList.size(); i++) {
+                        ClientSession s = resources.get(priorityList.get(i));
+                        if (s != null && s.getPresence().isAvailable()) {
+                            return s;
+                        }
                     }
                 }
                 return null;

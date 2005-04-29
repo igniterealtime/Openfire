@@ -28,6 +28,7 @@ import org.jivesoftware.stringprep.StringprepException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.StreamError;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -197,6 +198,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
                     Connection conn = oldSession.getConnection();
                     if (conn != null) {
+                        // Send a stream:error before closing the connection
+                        StreamError error = new StreamError(StreamError.Condition.conflict);
+                        conn.getWriter().write(error.toXML());
                         conn.close();
                     }
                 }

@@ -347,12 +347,13 @@ public class User implements Cacheable {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    deleteProperty((String)current.getKey());
+                    String key = (String)current.getKey();
+                    deleteProperty(key);
                     iter.remove();
                     // Fire event.
                     Map params = new HashMap();
                     params.put("type", "propertyDeleted");
-                    params.put("propertyKey", current.getKey());
+                    params.put("propertyKey", key);
                     UserEventDispatcher.dispatchEvent(User.this,
                         UserEventDispatcher.EventType.user_modified, params);
                 }

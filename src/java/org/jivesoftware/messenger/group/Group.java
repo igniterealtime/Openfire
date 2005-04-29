@@ -391,12 +391,13 @@ public class Group implements Cacheable {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    deleteProperty((String)current.getKey());
+                    String key = (String)current.getKey();
+                    deleteProperty(key);
                     iter.remove();
                     // Fire event.
                     Map params = new HashMap();
                     params.put("type", "propertyDeleted");
-                    params.put("propertyKey", current.getKey());
+                    params.put("propertyKey", key);
                     GroupEventDispatcher.dispatchEvent(Group.this,
                         GroupEventDispatcher.EventType.group_modified, params);
                 }

@@ -11,15 +11,19 @@
 
 package org.jivesoftware.messenger.disco;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
@@ -245,7 +249,30 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     private DiscoItemsProvider getServerItemsProvider() {
         DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
             public Iterator<Element> getItems(String name, String node, JID senderJID) {
-                return serverItems.iterator();
+                if (name == null) {
+                    return serverItems.iterator();
+                }
+                else {
+                    List<Element> answer = new ArrayList<Element>();
+                    try {
+                        User user = UserManager.getInstance().getUser(name);
+                        RosterItem item = user.getRoster().getRosterItem(senderJID);
+                        // If the requesting entity is subscribed to the account's presence then
+                        // answer the user's "available resources"
+                        if (item.getSubStatus() == RosterItem.SUB_FROM ||
+                                item.getSubStatus() == RosterItem.SUB_BOTH) {
+                            for (Session session : SessionManager.getInstance().getSessions(name)) {
+                                Element element = DocumentHelper.createElement("item");
+                                element.addAttribute("jid", session.getAddress().toString());
+                                answer.add(element);
+                            }
+                        }
+                        return answer.iterator();
+                    }
+                    catch (UserNotFoundException e) {
+                        return answer.iterator();
+                    }
+                }
             }
         };
         return discoItemsProvider;

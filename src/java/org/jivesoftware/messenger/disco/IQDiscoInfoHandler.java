@@ -13,6 +13,8 @@ package org.jivesoftware.messenger.disco;
 
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import java.util.ArrayList;
@@ -52,10 +54,20 @@ public class IQDiscoInfoHandler extends IQHandler {
     private List serverFeatures = new ArrayList();
     private IQHandlerInfo info;
 
+    private List userIdentities = new ArrayList();
+    private List userFeatures = new ArrayList();
+
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
         serverFeatures.add("http://jabber.org/protocol/disco#info");
+        // Initialize the user identity and features collections (optimization to avoid creating
+        // the same objects for each response)
+        Element userIdentity = DocumentHelper.createElement("identity");
+        userIdentity.addAttribute("category", "account");
+        userIdentity.addAttribute("type", "registered");
+        userIdentities.add(userIdentity);
+        userFeatures.add("http://jabber.org/protocol/disco#info");
     }
 
     public IQHandlerInfo getInfo() {
@@ -199,26 +211,48 @@ public class IQDiscoInfoHandler extends IQHandler {
             ArrayList features = new ArrayList();
 
             public Iterator getIdentities(String name, String node, JID senderJID) {
-                synchronized (identities) {
-                    if (identities.isEmpty()) {
-                        Element identity = DocumentHelper.createElement("identity");
-                        identity.addAttribute("category", "services");
-                        identity.addAttribute("name", "Messenger Server");
-                        identity.addAttribute("type", "jabber");
+                if (name == null) {
+                    // Answer identity of the server
+                    synchronized (identities) {
+                        if (identities.isEmpty()) {
+                            Element identity = DocumentHelper.createElement("identity");
+                            identity.addAttribute("category", "services");
+                            identity.addAttribute("name", "Messenger Server");
+                            identity.addAttribute("type", "jabber");
 
-                        identities.add(identity);
+                            identities.add(identity);
+                        }
                     }
+                    return identities.iterator();
                 }
-                return identities.iterator();
+                else {
+                    // Answer identity of a registered user.
+                    // Note: We know that this user exists because #hasInfo returned true
+                    return userIdentities.iterator();
+                }
             }
 
             public Iterator getFeatures(String name, String node, JID senderJID) {
-                return serverFeatures.iterator();
+                if (name == null) {
+                    // Answer features of the server
+                    return serverFeatures.iterator();
+                }
+                else {
+                    // Answer features of the user
+                    return userFeatures.iterator();
+                }
             }
 
-            public boolean hasInfo(String name, String node, JID senderJID)
-                    throws UnauthorizedException {
-                return name == null && node == null;
+            public boolean hasInfo(String name, String node, JID senderJID) {
+                try {
+                    // True if it is an info request of the server or of a registered user. We
+                    // now support disco of user's bare JIDs
+                    return node == null &&
+                            (name == null || UserManager.getInstance().getUser(name) != null);
+                }
+                catch (UserNotFoundException e) {
+                    return false;
+                }
             }
 
             public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {

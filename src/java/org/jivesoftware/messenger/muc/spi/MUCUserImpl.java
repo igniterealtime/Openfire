@@ -139,6 +139,10 @@ public class MUCUserImpl implements MUCUser {
      * @param packet The packet to route.
      */
     public void process(Message packet) {
+        // Ignore messages of type ERROR sent to a room 
+        if (Message.Type.error == packet.getType()) {
+            return;
+        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();

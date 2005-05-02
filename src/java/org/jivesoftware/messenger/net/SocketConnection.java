@@ -205,7 +205,8 @@ public class SocketConnection implements Connection {
                 }
             }
             catch (Exception e) {
-                // Do nothing
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                        + "\n" + this.toString(), e);
             }
             try {
                 socket.close();
@@ -235,7 +236,8 @@ public class SocketConnection implements Connection {
                         xmlSerializer.flush();
                     }
                     catch (IOException e) {
-                        Log.warn(e);
+                        Log.warn(LocaleUtils.getLocalizedString("admin.error.close")
+                        + "\n" + this.toString(), e);
                         close();
                         // Retry sending the packet again. Most probably if the packet is a
                         // Message it will be stored offline
@@ -264,5 +266,9 @@ public class SocketConnection implements Connection {
                 listener.onConnectionClose(listeners.get(listener));
             }
         }
+    }
+
+    public String toString() {
+        return super.toString() + " socket: " + socket + " session: " + session;
     }
 }

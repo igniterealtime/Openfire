@@ -1015,17 +1015,21 @@ public class SessionManager extends BasicModule {
         public void onConnectionClose(Object handback) {
             try {
                 ClientSession session = (ClientSession)handback;
-                if (session.getPresence().isAvailable()) {
-                    // Send an unavailable presence to the user's subscribers
-                    // Note: This gives us a chance to send an unavailable presence to the
-                    // entities that the user sent directed presences
-                    Presence presence = new Presence();
-                    presence.setType(Presence.Type.unavailable);
-                    presence.setFrom(session.getAddress());
-                    presenceHandler.process(presence);
+                try {
+                    if (session.getPresence().isAvailable()) {
+                        // Send an unavailable presence to the user's subscribers
+                        // Note: This gives us a chance to send an unavailable presence to the
+                        // entities that the user sent directed presences
+                        Presence presence = new Presence();
+                        presence.setType(Presence.Type.unavailable);
+                        presence.setFrom(session.getAddress());
+                        presenceHandler.process(presence);
+                    }
                 }
-                // Remove the session
-                removeSession(session);
+                finally {
+                    // Remove the session
+                    removeSession(session);
+                }
             }
             catch (Exception e) {
                 // Can't do anything about this problem...

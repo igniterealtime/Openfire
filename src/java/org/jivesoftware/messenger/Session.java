@@ -217,4 +217,8 @@ public abstract class Session implements RoutableChannelHandler {
      * @param packet the received packet by this session.
      */
     public abstract void packetReceived(Packet packet);
+
+    public String toString() {
+        return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
+    }
 }

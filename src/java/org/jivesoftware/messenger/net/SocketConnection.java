@@ -187,34 +187,40 @@ public class SocketConnection implements Connection {
         this.flashClient = flashClient;
     }
 
-    public synchronized void close() {
-        if (!isClosed()) {
-            try {
-                if (session != null) {
-                    session.setStatus(Session.STATUS_CLOSED);
-                }
-                synchronized (writer) {
-                    try {
-                        writer.write("</stream:stream>");
-                        if (flashClient) {
-                            writer.write('\0');
-                        }
-                        xmlSerializer.flush();
+    public void close() {
+        boolean wasClosed = false;
+        synchronized (this) {
+            if (!isClosed()) {
+                try {
+                    if (session != null) {
+                        session.setStatus(Session.STATUS_CLOSED);
                     }
-                    catch (IOException e) {}
+                    synchronized (writer) {
+                        try {
+                            writer.write("</stream:stream>");
+                            if (flashClient) {
+                                writer.write('\0');
+                            }
+                            xmlSerializer.flush();
+                        }
+                        catch (IOException e) {}
+                    }
                 }
+                catch (Exception e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                            + "\n" + this.toString(), e);
+                }
+                try {
+                    socket.close();
+                }
+                catch (Exception e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                            + "\n" + this.toString(), e);
+                }
+                wasClosed = true;
             }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                        + "\n" + this.toString(), e);
-            }
-            try {
-                socket.close();
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                        + "\n" + this.toString(), e);
-            }
+        }
+        if (wasClosed) {
             notifyCloseListeners();
         }
     }
@@ -227,6 +233,7 @@ public class SocketConnection implements Connection {
             try {
                 // Invoke the interceptors before we send the packet
                 InterceptorManager.getInstance().invokeInterceptors(packet, session, false, false);
+                boolean errorDelivering = false;
                 synchronized (writer) {
                     try {
                         xmlSerializer.write(packet.getElement());
@@ -236,17 +243,22 @@ public class SocketConnection implements Connection {
                         xmlSerializer.flush();
                     }
                     catch (IOException e) {
-                        Log.warn(LocaleUtils.getLocalizedString("admin.error.close")
+                        Log.debug(LocaleUtils.getLocalizedString("admin.error.close")
                         + "\n" + this.toString(), e);
-                        close();
-                        // Retry sending the packet again. Most probably if the packet is a
-                        // Message it will be stored offline
-                        deliverer.deliver(packet);
+                        errorDelivering = true;
                     }
                 }
-                // Invoke the interceptors after we have sent the packet
-                InterceptorManager.getInstance().invokeInterceptors(packet, session, false, true);
-                session.incrementServerPacketCount();
+                if (errorDelivering) {
+                    close();
+                    // Retry sending the packet again. Most probably if the packet is a
+                    // Message it will be stored offline
+                    deliverer.deliver(packet);
+                }
+                else {
+                    // Invoke the interceptors after we have sent the packet
+                    InterceptorManager.getInstance().invokeInterceptors(packet, session, false, true);
+                    session.incrementServerPacketCount();
+                }
             }
             catch (PacketRejectedException e) {
                 // An interceptor rejected the packet so do nothing

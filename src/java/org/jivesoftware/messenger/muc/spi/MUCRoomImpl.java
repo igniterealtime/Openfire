@@ -1538,7 +1538,7 @@ public class MUCRoomImpl implements MUCRoom {
                                 LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
                     }
                     catch (NotAllowedException e) {
-                        e.printStackTrace();
+                        Log.error(e);
                     }
                 }
             }

@@ -112,11 +112,9 @@
                 return;
             }
             catch (GroupAlreadyExistsException e) {
-                e.printStackTrace();
                 errors.put("groupAlreadyExists", "");
             }
             catch (Exception e) {
-                e.printStackTrace();
                 errors.put("general", "");
                 Log.error(e);
             }

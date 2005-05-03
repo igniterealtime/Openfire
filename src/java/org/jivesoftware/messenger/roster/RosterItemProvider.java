@@ -340,7 +340,7 @@ public class RosterItemProvider {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException e) {
-                    e.printStackTrace();
+                    Log.error(e);
                 }
             }
         }

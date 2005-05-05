@@ -18,6 +18,7 @@ import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
@@ -339,7 +340,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // ensures that if the user sends several presences to the same handler
                     // we will have only one entry in the Map
                     map = new WeakHashMap<ChannelHandler, Set<String>>();
-                    map.put(handler, new HashSet<String>());
+                    map.put(handler, new ConcurrentHashSet<String>());
                     directedPresences.put(update.getFrom().toString(), map);
                 }
                 if (Presence.Type.unavailable.equals(update.getType())) {
@@ -366,7 +367,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // presence sent by the user. This handler will be used to send
                     // the unavailable presence when the user goes offline
                     if (map.get(handler) == null) {
-                        map.put(handler, new HashSet<String>());
+                        map.put(handler, new ConcurrentHashSet<String>());
                     }
                     map.get(handler).add(jid);
                 }

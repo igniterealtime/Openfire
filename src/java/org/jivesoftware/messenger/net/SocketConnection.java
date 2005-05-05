@@ -243,8 +243,7 @@ public class SocketConnection implements Connection {
                         xmlSerializer.flush();
                     }
                     catch (IOException e) {
-                        Log.debug(LocaleUtils.getLocalizedString("admin.error.close")
-                        + "\n" + this.toString(), e);
+                        Log.debug("Error delivering packet" + "\n" + this.toString(), e);
                         errorDelivering = true;
                     }
                 }

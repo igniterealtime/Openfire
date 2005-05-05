@@ -332,29 +332,30 @@ public class Group implements Cacheable {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
+            Map eventParams = new HashMap();
             Object answer;
-            if (properties.containsKey(key)) {
-                String originalValue = properties.get(key);
-                answer = properties.put((String)key, (String)value);
-                updateProperty((String)key, (String)value);
-                // Fire event.
-                Map params = new HashMap();
-                params.put("type", "propertyModified");
-                params.put("propertyKey", key);
-                params.put("originalValue", originalValue);
-                GroupEventDispatcher.dispatchEvent(Group.this,
-                        GroupEventDispatcher.EventType.group_modified, params);
+            String keyString = (String) key;
+            synchronized (keyString.intern()) {
+                if (properties.containsKey(key)) {
+                    String originalValue = properties.get(key);
+                    answer = properties.put(keyString, (String)value);
+                    updateProperty(keyString, (String)value);
+                    // Configure event.
+                    eventParams.put("type", "propertyModified");
+                    eventParams.put("propertyKey", key);
+                    eventParams.put("originalValue", originalValue);
+                }
+                else {
+                    answer = properties.put(keyString, (String)value);
+                    insertProperty(keyString, (String)value);
+                    // Configure event.
+                    eventParams.put("type", "propertyAdded");
+                    eventParams.put("propertyKey", key);
+                }
             }
-            else {
-                answer = properties.put((String)key, (String)value);
-                insertProperty((String)key, (String)value);
-                // Fire event.
-                Map params = new HashMap();
-                params.put("type", "propertyAdded");
-                params.put("propertyKey", key);
-                GroupEventDispatcher.dispatchEvent(Group.this,
-                        GroupEventDispatcher.EventType.group_modified, params);
-            }
+            // Fire event.
+            GroupEventDispatcher.dispatchEvent(Group.this,
+                    GroupEventDispatcher.EventType.group_modified, eventParams);
             return answer;
         }
 

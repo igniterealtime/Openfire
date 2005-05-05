@@ -543,7 +543,7 @@ public class SessionManager extends BasicModule {
      */
     public Session getBestRoute(JID recipient) {
         // Return null if the JID belongs to a foreign server
-        if (!serverName.equals(recipient.getDomain())) {
+        if (serverName == null || !serverName.equals(recipient.getDomain())) {
              return null;
         }
         ClientSession session = null;
@@ -1147,6 +1147,7 @@ public class SessionManager extends BasicModule {
     }
 
     public void stop() {
+        Log.debug("Stopping server");
         serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
             sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));

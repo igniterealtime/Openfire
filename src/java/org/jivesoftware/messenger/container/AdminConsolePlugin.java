@@ -145,24 +145,27 @@ public class AdminConsolePlugin implements Plugin {
 
             jetty.start();
 
+            String warning = LocaleUtils.getLocalizedString("admin.console.warning");
+            String listening = LocaleUtils.getLocalizedString("admin.console.listening");
+
             if (!plainStarted && !secureStarted) {
-                Log.info("Warning: admin console not started due to configuration settings.");
-                System.out.println("Warning: admin console not started due to configuration settings.");
+                Log.info(warning);
+                System.out.println(warning);
             }
             else if (!plainStarted && secureStarted) {
-                Log.info("Admin console listening at https://" +
+                Log.info(listening + " https://" +
                         XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
-                System.out.println("Admin console listening at https://" +
+                System.out.println(listening + " https://" +
                         XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
             }
             else if (!secureStarted && plainStarted) {
-                Log.info("Admin console listening at http://" +
+                Log.info(listening + " http://" +
                         XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
-                System.out.println("Admin console listening at http://" +
+                System.out.println(listening + " http://" +
                         XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
             }
             else {
-                String msg = "Admin console listening at:\n" +
+                String msg = listening + ":\n" +
                         "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
                         port + "\n" +
                         "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +

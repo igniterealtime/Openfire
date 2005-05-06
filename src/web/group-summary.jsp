@@ -68,10 +68,10 @@
 <%  } %>
 
 <p>
-<fmt:message key="group.summary.total_group" /> <%= webManager.getGroupManager().getGroupCount() %>,
+<fmt:message key="group.summary.total_group" /> <%= webManager.getGroupManager().getGroupCount() %>
 <%  if (numPages > 1) { %>
 
-    <fmt:message key="group.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>,
+    , <fmt:message key="group.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
 <%  } %>
 </p>

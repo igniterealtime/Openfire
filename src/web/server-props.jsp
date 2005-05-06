@@ -220,7 +220,7 @@
     </tr>
     <tr>
         <td class="c1">
-             SSL Port:
+             <fmt:message key="server.props.ssl_port />
         </td>
         <td class="c2">
             <input type="text" name="sslPort" value="<%= (sslPort > 0 ? String.valueOf(sslPort) : "") %>"

@@ -223,7 +223,7 @@
                     <input type="password" name="password" size="15" maxlength="50" id="p01">
                 </td>
                 <td align="center">
-                    <input type="submit" value="&nbsp; Login &nbsp;">
+                    <input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;">
                 </td>
             </tr>
             <tr valign="top">

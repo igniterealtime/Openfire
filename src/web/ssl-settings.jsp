@@ -301,7 +301,7 @@
         <tr>
             <td colspan="2">
                 <br>
-                <input type="submit" name="install" value="<fmt:message key="ssl.settings.add_certificate" />e">
+                <input type="submit" name="install" value="<fmt:message key="ssl.settings.add_certificate" />">
             </td>
         </tr>
     </tbody>

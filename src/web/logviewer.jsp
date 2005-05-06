@@ -28,6 +28,8 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%!
+    static final String NONE = LocaleUtils.getLocalizedString("logviewer.none");
+
     static final String ERROR = "error";
     static final String INFO = "info";
     static final String WARN = "warn";
@@ -39,7 +41,7 @@
 
     static final String[] LINES = {"50","100","250","500"};
 
-    static final String[] REFRESHES = {"None","10","30","60","90"};
+    static final String[] REFRESHES = {NONE,"10","30","60","90"};
 
     private static HashMap parseCookie(Cookie cookie) {
         if (cookie == null || cookie.getValue() == null) {
@@ -204,7 +206,7 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<%  if (refreshParam != null && !"None".equals(refreshParam)) { %>
+<%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
 
     <meta http-equiv="refresh" content="<%= refresh %>">
 
@@ -410,7 +412,7 @@ IFRAME {
                             </td>
                             <td width="1%">
                                 <input type="hidden" name="wasDebugEnabled" value="<%= debugEnabled %>">
-                                <input type="submit" name="" value="Update">
+                                <input type="submit" name="" value="<fmt:message key="global.save_changes" />">
                             </td>
                             <td width="94%">&nbsp;</td>
                         </tr>
@@ -431,7 +433,7 @@ IFRAME {
 <br>
 
 <span class="jive-description" style="color:#666;">
-Log dir: <%= JiveGlobals.getHomeDirectory() %><%= File.separator %>logs
+<fmt:message key="logviewer.log_dir" />: <%= JiveGlobals.getHomeDirectory() %><%= File.separator %>logs
 </span>
 
 <br><br>

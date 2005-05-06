@@ -17,7 +17,8 @@
                  java.util.HashMap,
                  java.util.Map,
                  org.jivesoftware.admin.*,
-                 java.text.DecimalFormat"
+                 java.text.DecimalFormat,
+                 java.text.NumberFormat"
     errorPage="error.jsp"
 %>
 
@@ -74,12 +75,12 @@
                 if (storeStrategy != ALWAYS_STORE && storeStrategy != STORE_AND_BOUNCE
                         && storeStrategy != STORE_AND_DROP)
                 {
-                    errors.put("general","Please choose a valid storage policy.");
+                    errors.put("general", LocaleUtils.getLocalizedString("offline.messages.choose_policy"));
                 }
                 else {
                     // Validate the store size limit:
                     if (quota <= 0) {
-                        errors.put("quota","Please enter a store size greater than 0 bytes.");
+                        errors.put("quota", LocaleUtils.getLocalizedString("offline.messages.enter_store_size"));
                     }
                 }
             }
@@ -206,7 +207,7 @@
                  <%= ((strategy==BOUNCE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Bounce</b></label> - <fmt:message key="offline.messages.never_back" />
+                <label for="rb01"><b><fmt:message key="offline.messages.bounce_option" /></b></label> - <fmt:message key="offline.messages.never_back" />
             </td>
         </tr>
         <tr valign="top">
@@ -215,7 +216,7 @@
                  <%= ((strategy==DROP) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Drop</b></label> - <fmt:message key="offline.messages.never_store" />
+                <label for="rb02"><b><fmt:message key="offline.messages.drop_option" /></b></label> - <fmt:message key="offline.messages.never_store" />
             </td>
         </tr>
         <tr valign="top" class="">
@@ -224,7 +225,7 @@
                  <%= ((strategy==STORE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b>Store</b></label> - <fmt:message key="offline.messages.storage_messenger" />
+                <label for="rb03"><b><fmt:message key="offline.messages.store_option" /></b></label> - <fmt:message key="offline.messages.storage_messenger" />
             </td>
         </tr>
         <tr valign="top">

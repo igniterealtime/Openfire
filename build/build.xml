@@ -123,7 +123,7 @@
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar" />
         <fileset dir="${lib.merge.dir}" includes="*.jar" />
-        <fileset dir="${lib.dist.dir}" includes="servlet.jar" />
+        <fileset dir="${lib.dist.dir}" includes="servlet.jar, mail.jar, activation.jar" />
     </path>
 
     <path id="compile.dependencies">

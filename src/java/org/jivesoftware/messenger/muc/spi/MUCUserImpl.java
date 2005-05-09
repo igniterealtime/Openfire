@@ -372,7 +372,7 @@ public class MUCUserImpl implements MUCUser {
                                     historyRequest,
                                     this,
                                     packet.createCopy());
-                            roles.put(group, role);
+                            roles.put(group.toLowerCase(), role);
                             // If the client that created the room is non-MUC compliant then
                             // unlock the room thus creating an "instant" room
                             if (mucInfo == null && room.isLocked() && !room.isManuallyLocked()) {

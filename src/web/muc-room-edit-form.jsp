@@ -23,7 +23,9 @@
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.LocaleUtils"
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.stringprep.Stringprep,
+                 org.jivesoftware.stringprep.StringprepException"
     errorPage="error.jsp"
 %>
 
@@ -99,6 +101,16 @@
                 errors.put("roomName","roomName");
             }
             else {
+                // Check that the room name is a valid node
+                try {
+                    roomName = Stringprep.nodeprep(roomName);
+                }
+                catch (StringprepException e) {
+                    errors.put("roomName","roomName");
+                }
+            }
+
+            if (errors.size() == 0) {
                 // Check that the requested room ID is available
                 room = webManager.getMultiUserChatServer().getChatRoom(roomName);
                 if (room != null) {
@@ -293,7 +305,42 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<%  if (success || addsuccess) { %>
+<%  if (!errors.isEmpty()) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon-label">
+
+            <% if (errors.get("roomconfig_roomname") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint_name" />
+            <% } else if (errors.get("roomconfig_roomdesc") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint_description" />
+            <% } else if (errors.get("roomconfig_maxusers") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint_max_room" />
+            <% } else if (errors.get("roomconfig_roomsecret2") != null) { %>
+                <fmt:message key="muc.room.edit.form.new_password" />
+            <% } else if (errors.get("roomconfig_whois") != null) { %>
+                <fmt:message key="muc.room.edit.form.role" />
+            <% } else if (errors.get("roomName") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint" />
+            <% } else if (errors.get("room_already_exists") != null) { %>
+                <fmt:message key="muc.room.edit.form.error_created_id" />
+            <% } else if (errors.get("not_enough_permissions") != null) { %>
+                <fmt:message key="muc.room.edit.form.error_created_privileges" />
+            <% } else if (errors.get("room_topic") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint_subject" />
+            <% } %>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%  } else if (success || addsuccess) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -344,28 +391,6 @@
     <p><fmt:message key="muc.room.edit.form.change_room" /></p>
 <%  } else { %>
     <p><fmt:message key="muc.room.edit.form.persistent_room" /></p>
-
-    <% if (errors.containsKey("room_already_exists") || errors.containsKey("not_enough_permissions")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-        <td class="jive-icon-label">
-        <%  if (errors.containsKey("room_already_exists")) { %>
-
-        <fmt:message key="muc.room.edit.form.error_created_id" />
-
-        <%  } else if (errors.containsKey("not_enough_permissions")) { %>
-
-        <fmt:message key="muc.room.edit.form.error_created_privileges" />
-
-        <%  } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-    <%  } %>
-
 <%  } %>
 <form action="muc-room-edit-form.jsp">
 <% if (!create) { %>
@@ -381,51 +406,23 @@
                 <% if (create) { %>
                 <tr>
                     <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
-                    <td><input type="text" name="roomName" value="<%= roomName != null ? roomName : ""%>">
-                    <%  if (errors.get("roomName") != null) { %>
-
-                        <span class="jive-error-text">
-                        <fmt:message key="muc.room.edit.form.valid_hint" />
-                        </span>
-
-                    <%  } %>
+                    <td><input type="text" name="roomName" value="<%= roomName != null ? roomName : ""%>"> @<%= webManager.getMultiUserChatServer().getServiceDomain()%>
                     </td>
                 </tr>
                 <% } %>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.room_name" />:</td>
                     <td><input type="text" name="roomconfig_roomname" value="<%= (naturalName == null ? "" : naturalName) %>">
-                    <%  if (errors.get("roomconfig_roomname") != null) { %>
-
-                        <span class="jive-error-text">
-                        <fmt:message key="muc.room.edit.form.valid_hint_name" />
-                        </span>
-
-                    <%  } %>
                     </td>
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.description" />:</td>
                     <td><input name="roomconfig_roomdesc" value="<%= (description == null ? "" : description) %>" type="text" size="40">
-                    <%  if (errors.get("roomconfig_roomdesc") != null) { %>
-
-                        <span class="jive-error-text">
-                        <fmt:message key="muc.room.edit.form.valid_hint_description" />
-                        </span>
-
-                    <%  } %>
                     </td>
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.topic" />:</td>
                     <td><input name="room_topic" value="<%= (roomSubject == null ? "" : roomSubject) %>" type="text" size="40">
-                    <%  if (errors.get("room_topic") != null) { %>
-
-                        <span class="jive-error-text">
-                        <fmt:message key="muc.room.edit.form.valid_hint_subject" />
-                        </span>
-
-                    <%  } %>
                     </td>
                 </tr>
                  <tr>
@@ -438,13 +435,6 @@
                             <option value="50" <% if ("50".equals(maxUsers)) out.write("selected");%>>50</option>
                             <option value="0" <% if ("0".equals(maxUsers)) out.write("selected");%>><fmt:message key="muc.room.edit.form.none" /></option>
                         </select>
-                        <%  if (errors.get("roomconfig_maxusers") != null) { %>
-
-                            <span class="jive-error-text">
-                            <fmt:message key="muc.room.edit.form.valid_hint_max_room" />
-                            </span>
-
-                        <%  } %>
                     </td>
                 </tr>
                  <tr>
@@ -465,13 +455,6 @@
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.confirm_password" />:</td>
                     <td><input type="password" name="roomconfig_roomsecret2" <% if(confirmPassword != null) { %> value="<%= confirmPassword %>" <% } %>>
-                        <%  if (errors.get("roomconfig_roomsecret2") != null) { %>
-
-                            <span class="jive-error-text">
-                            <fmt:message key="muc.room.edit.form.new_password" />
-                            </span>
-
-                        <%  } %>
                     </td>
                 </tr>
                  <tr>
@@ -480,13 +463,6 @@
                             <option value="moderator" <% if ("moderator".equals(whois)) out.write("selected");%>><fmt:message key="muc.room.edit.form.moderator" /></option>
                             <option value="anyone" <% if ("anyone".equals(whois)) out.write("selected");%>><fmt:message key="muc.room.edit.form.anyone" /></option>
                         </select>
-                        <%  if (errors.get("roomconfig_whois") != null) { %>
-
-                            <span class="jive-error-text">
-                            <fmt:message key="muc.room.edit.form.role" />
-                            </span>
-
-                        <%  } %>
                     </td>
                  </tr>
          </tbody>

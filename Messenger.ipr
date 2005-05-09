@@ -233,6 +233,8 @@
         <root url="jar://$PROJECT_DIR$/build/lib/merge/jdic.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/xpp3.jar!/" />
         <root url="jar://$PROJECT_DIR$/build/lib/merge/jmdns.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/dist/mail.jar!/" />
+        <root url="jar://$PROJECT_DIR$/build/lib/dist/activation.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

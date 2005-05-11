@@ -208,7 +208,7 @@
 
         <!-- Extract the source from the whack jar -->
         <unjar src="${lib.merge.dir}/whack.jar" dest="${whack.src}">
-            <patternset includes="org/xmpp/packet/*.java" />
+            <patternset includes="org/xmpp/**/*.java" />
         </unjar>
     </target>
 

@@ -795,8 +795,6 @@
         <attribute name="pluginsrc" />
         <sequential>
 
-            <echo message="\n\nBuilding @{plugin}...\n\n" />
-
             <!-- For each plugin, copile code, make a jar and copy resources. -->
             <mkdir dir="${plugin.dev.dest.dir}" />
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}" />
@@ -837,6 +835,12 @@
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false">
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*" />
+            </copy>
+
+            <!-- Copy anything in the plugin's lib dir to the target lib dir -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false">
+                <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml" />
+                <mapper type="glob" from="web.xml" to="web-custom.xml" />
             </copy>
 
             <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
@@ -954,6 +958,10 @@
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar" />
                     <include name="web/WEB-INF/web.xml" />
+                    <include name="web/WEB-INF/web-custom.xml" />
+                </fileset>
+                <fileset dir="@{pluginsrc}/@{plugin}">
+                    <include name="classes/**/*.*" />
                 </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}/src">
                     <include name="web/**/*.*" />

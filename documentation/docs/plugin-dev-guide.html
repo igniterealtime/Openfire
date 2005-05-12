@@ -23,7 +23,7 @@ developer's guide for creating plugins.
 
 <p>
 Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. When a plugin
-is deployed as a JAR file, it is automatically expanded into a directory. The files in a
+is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
 plugin directory are as follows:
 </p>
 
@@ -34,7 +34,9 @@ plugin directory are as follows:
  |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
  |- lib/           &lt;- Libraries (JAR files) your plugin needs
  |- web            &lt;- Resources for Admin Console integration.
-     |- web.xml
+     |- WEB-INF/
+         |- web.xml           &lt;- Generated web.xml containing compiled JSP entries.
+         |- web-custom.xml    &lt;- User-defined web.xml for custom servlets.
      |- images/
 </pre>
 </fieldset>
@@ -211,7 +213,7 @@ looks for plugin development directories in the following format:
          |- *.jsp      &lt;- JSPs your plugin uses for the admin console
          |- images/    &lt;- Any images your JSP pages need (optional)
          |- WEB-INF
-             |- web.xml    &lt;- optional file where custom servlets can be registered
+             |- web.xml    &lt;- Optional file where custom servlets can be registered
 </pre>
 </fieldset>
 

@@ -208,7 +208,7 @@
                 } else if (show == Presence.Show.xa) {
             %>
 
-                <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Extended Away">
+                <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Extended Away">
                 <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%

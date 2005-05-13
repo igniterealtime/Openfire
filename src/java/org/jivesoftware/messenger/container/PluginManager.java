@@ -177,6 +177,12 @@ public class PluginManager {
                 if (webXML.exists()) {
                     PluginServlet.registerServlets(this, plugin, webXML);
                 }
+                // Load any custom-defined servlets.
+                File customWebXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
+                        File.separator + "web-custom.xml");
+                if (customWebXML.exists()) {
+                    PluginServlet.registerServlets(this, plugin, customWebXML);
+                }
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
@@ -233,6 +239,11 @@ public class PluginManager {
         if (webXML.exists()) {
             AdminConsole.removeModel(pluginName);
             PluginServlet.unregisterServlets(webXML);
+        }
+        File customWebXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
+                        File.separator + "web-custom.xml");
+        if (customWebXML.exists()) {
+            PluginServlet.unregisterServlets(customWebXML);
         }
 
         PluginClassLoader classLoader = classloaders.get(plugin);

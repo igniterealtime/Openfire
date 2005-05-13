@@ -70,7 +70,7 @@
           <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.messenger.launcher.Launcher" vmParameters="&quot;-Dapp.home=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false">
+      <java mainClass="org.jivesoftware.messenger.launcher.Launcher" vmParameters="&quot;-Dapp.home=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="" allowBetaVM="false">
         <searchSequence>
           <registry />
           <envVar name="JAVA_HOME" />

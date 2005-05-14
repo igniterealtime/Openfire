@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -208,11 +207,10 @@ public class XMPPServer {
             pluginManager.start();
 
             // Log that the server has been started
-            DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
-                    DateFormat.MEDIUM);
+
             List params = new ArrayList();
             params.add(version.getVersionString());
-            params.add(formatter.format(new Date()));
+            params.add(JiveGlobals.formatDateTime(new Date()));
             String startupBanner = LocaleUtils.getLocalizedString("startup.name", params);
             Log.info(startupBanner);
             System.out.println(startupBanner);

@@ -56,9 +56,6 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)sessionCount/(double)range);
     int curPage = (start/range) + 1;
-
-    // Date dateFormatter for all dates on this page:
-    DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT);
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -178,7 +175,7 @@
 
 <br>
 <p>
-<fmt:message key="session.summary.last_update" />: <%= dateFormatter.format(new Date()) %>
+<fmt:message key="session.summary.last_update" />: <%= JiveGlobals.formatDateTime(new Date()) %>
 </p>
 
 <jsp:include page="bottom.jsp" flush="true" />

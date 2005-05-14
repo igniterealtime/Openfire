@@ -59,9 +59,6 @@
     }
 
     PresenceManager presenceManager = webManager.getPresenceManager();
-
-    // Date formatter for dates
-    DateFormat formatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -202,7 +199,7 @@
             <fmt:message key="user.properties.registered" />:
         </td>
         <td>
-            <%= formatter.format(user.getCreationDate()) %>
+            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
     </tr>
 </tbody>

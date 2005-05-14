@@ -81,9 +81,6 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)userCount/(double)range);
     int curPage = (start/range) + 1;
-
-    // Formatter for dates
-    DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
 %>
 
 <p>
@@ -247,7 +244,7 @@
             <%= user.getName() %> &nbsp;
         </td>
         <td width="26%">
-            <%= dateFormatter.format(user.getCreationDate()) %>
+            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"

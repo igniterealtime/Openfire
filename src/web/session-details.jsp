@@ -63,9 +63,6 @@
         sessions = sessionManager.getSessions(address.getNode());
     }
 
-    // Date dateFormatter for all dates on this page:
-    DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT);
-
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
@@ -224,32 +221,32 @@
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="session.details.session_created" />:
+            <fmt:message key="session.details.session_created" />
         </td>
         <td>
-            <%= dateFormatter.format(currentSess.getCreationDate()) %>
+            <%= JiveGlobals.formatDateTime(currentSess.getCreationDate()) %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="session.details.last_active" />:
+            <fmt:message key="session.details.last_active" />
         </td>
         <td>
-            <%= dateFormatter.format(currentSess.getLastActiveDate()) %>
+            <%= JiveGlobals.formatDateTime(currentSess.getLastActiveDate()) %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="session.details.statistics" />:
+            <fmt:message key="session.details.statistics" />
         </td>
         <td>
-            <fmt:message key="session.details.received" />:
+            <fmt:message key="session.details.received" />
             <%= numFormatter.format(currentSess.getNumClientPackets()) %>/<%= numFormatter.format(currentSess.getNumServerPackets()) %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="session.details.hostname" />:
+            <fmt:message key="session.details.hostname" />
         </td>
         <td>
             <%= currentSess.getConnection().getInetAddress().getHostAddress() %>
@@ -326,7 +323,7 @@
 <%--    <input type="submit" name="message" value="Message this Session">--%>
 <%----%>
 <%--<%  } %>--%>
-<input type="submit" name="back" value="Back to Summary">
+<input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">   
 </center>
 </form>
 

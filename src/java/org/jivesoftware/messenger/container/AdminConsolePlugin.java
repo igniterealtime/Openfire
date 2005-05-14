@@ -53,22 +53,6 @@ public class AdminConsolePlugin implements Plugin {
     public AdminConsolePlugin() {
     }
 
-    public String getName() {
-        return "Admin Console";
-    }
-
-    public String getDescription() {
-        return "Web-based admin console for Jive Messenger.";
-    }
-
-    public String getAuthor() {
-        return "Jive Software";
-    }
-
-    public String getVersion() {
-        return "2.0";
-    }
-
     public void initializePlugin(PluginManager manager, File pluginDir) {
         try {
             // Configure logging to a file, creating log dir if needed

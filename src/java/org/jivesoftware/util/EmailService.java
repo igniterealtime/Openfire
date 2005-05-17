@@ -96,8 +96,6 @@ public class EmailService {
         password = JiveGlobals.getProperty("mail.smtp.password");
         sslEnabled = JiveGlobals.getBooleanProperty("mail.smtp.ssl");
         debugEnabled = JiveGlobals.getBooleanProperty("mail.debug");
-
-        createSession();
     }
 
     /**
@@ -108,6 +106,9 @@ public class EmailService {
      * @return A new JavaMail message.
      */
     public MimeMessage createMimeMessage() {
+        if (session == null) {
+            createSession();
+        }
         return new MimeMessage(session);
     }
 
@@ -253,75 +254,170 @@ public class EmailService {
     }
 
     /**
-     * Sets the SMTP host (eg mail.example.com). The host is null by
-     * default, but must be set before gateway exports can execute.
+     * Sends a collection of email messages. This method differs from
+     * {@link #sendMessages(Collection<MimeMessage>)} in that messages are sent
+     * before this method returns rather than queueing the messages to be sent later.
      *
-     * @param host The SMTP host.
+     * @param messages
+     * @throws MessagingException
+     */
+    public void sendMessagesImmediately(Collection<MimeMessage> messages)
+            throws MessagingException
+    {
+        EmailTask task = new EmailTask(messages);
+        task.sendMessages();
+    }
+
+    /**
+     * Returns the SMTP host (e.g. mail.example.com). The host is <tt>null</tt> by
+     * default, but must be set before email can be sent.
+     *
+     * @return the SMTP host.
+     */
+    public String getHost() {
+        return host;
+    }
+
+    /**
+     * Sets the SMTP host (e.g. mail.example.com). The host is <tt>null</tt> by
+     * default, but must be set before email can be sent.
+     *
+     * @param host the SMTP host.
      */
     public void setHost(String host) {
         this.host = host;
-        createSession();
+        JiveGlobals.setProperty("mail.smtp.host", host);
+        session = null;
+    }
+
+    /**
+     * Returns the port number used when connecting to the SMTP server. The default port is 25.
+     *
+     * @return the SMTP port.
+     */
+    public int getPort() {
+        return port;
     }
 
     /**
      * Sets the port number that will be used when connecting to the SMTP
      * server. The default is 25, the standard SMTP port number.
      *
-     * @param port The SMTP port number.
+     * @param port the SMTP port number.
      */
     public void setPort(int port) {
         this.port = port;
-        createSession();
+        JiveGlobals.setProperty("mail.smtp.port", Integer.toString(port));
+        session = null;
+    }
+
+    /**
+     * Returns the username used to connect to the SMTP server. If the username
+     * is <tt>null</tt>, no username will be used when connecting to the server.
+     *
+     * @return the username used to connect to the SMTP server, or <tt>null</tt> if
+     *      there is no username.
+     */
+    public String getUsername() {
+        return username;
     }
 
     /**
      * Sets the username that will be used when connecting to the SMTP
-     * server. The default is null, or no username.
+     * server. The default is <tt>null</tt>, or no username.
      *
-     * @param username The SMTP username.
+     * @param username the SMTP username.
      */
     public void setUsername(String username) {
         this.username = username;
-        createSession();
+        if (username == null) {
+            JiveGlobals.deleteProperty("mail.smtp.username");
+        }
+        else {
+            JiveGlobals.setProperty("mail.smtp.username", username);
+        }
+        session = null;
     }
 
     /**
-     * Sets the username that will be used when connecting to the SMTP
-     * server. The default is null, or no username.
+     * Returns the password used to connect to the SMTP server. If the password
+     * is <tt>null</tt>, no password will be used when connecting to the server.
      *
-     * @param password The SMTP password.
+     * @return the password used to connect to the SMTP server, or <tt>null</tt> if
+     *      there is no password.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Sets the password that will be used when connecting to the SMTP
+     * server. The default is <tt>null</tt>, or no password.
+     *
+     * @param password the SMTP password.
      */
     public void setPassword(String password) {
         this.password = password;
-        createSession();
+        if (password == null) {
+            JiveGlobals.deleteProperty("mail.smtp.password");
+        }
+        else {
+            JiveGlobals.setProperty("mail.smtp.password", password);
+        }
+        session = null;
     }
 
     /**
-     * Toggles SMTP transport layer debugging on or off. Debug information is
+     * Returns true if SMTP debugging is enabled. Debug information is
+     * written to <tt>System.out</tt> by the underlying JavaMail provider.
+     *
+     * @return true if SMTP debugging is enabled.
+     */
+    public boolean isDebugEnabled() {
+        return debugEnabled;
+    }
+
+    /**
+     * Enables or disables SMTP transport layer debugging. Debug information is
      * written to <tt>System.out</tt> by the underlying JavaMail provider.
      *
      * @param debugEnabled true if SMTP debugging should be enabled.
      */
     public void setDebugEnabled(boolean debugEnabled) {
         this.debugEnabled = debugEnabled;
-        createSession();
+        JiveGlobals.setProperty("mail.debug", Boolean.toString(debugEnabled));
+        session = null;
     }
 
     /**
-     * Sets whether this gateway is configured for SSL connections
-     * to the SMTP server or not.
+     * Returns true if SSL is enabled for SMTP connections.
+     *
+     * @return true if SSL is enabled.
+     */
+    public boolean isSSLEnabled() {
+        return sslEnabled;
+    }
+
+    /**
+     * Sets whether the SMTP connection is configured to use SSL or not.
+     * Typically, the port should be 465 when using SSL with SMTP.
      *
      * @param sslEnabled true if ssl should be enabled, false otherwise.
      */
     public void setSSLEnabled(boolean sslEnabled) {
         this.sslEnabled = sslEnabled;
-        createSession();
+        JiveGlobals.setProperty("mail.smtp.ssl", Boolean.toString(sslEnabled));
+        session = null;
     }
 
     /**
      * Creates a Javamail session.
      */
-    private void createSession() {
+    private synchronized void createSession() {
+        if (host == null) {
+            throw new IllegalArgumentException("Host cannot be null.");
+        }
+
         Properties mailProps = new Properties();
         mailProps.setProperty("mail.smtp.host", host);
         mailProps.setProperty("mail.smtp.port", String.valueOf(port));
@@ -359,9 +455,21 @@ public class EmailService {
         }
 
         public void run() {
+            try {
+                sendMessages();
+            }
+            catch (MessagingException me) {
+                Log.error(me);
+            }
+        }
+
+        public void sendMessages() throws MessagingException {
             Transport transport = null;
             try {
                 URLName url = new URLName("smtp", host, port, "", username, password);
+                if (session == null) {
+                    createSession();
+                }
                 transport = new com.sun.mail.smtp.SMTPTransport(session, url);
                 transport.connect(host, port, username, password);
                 for (MimeMessage message : messages) {
@@ -378,9 +486,6 @@ public class EmailService {
                         Log.error(sfe);
                     }
                 }
-            }
-            catch (MessagingException me) {
-                Log.error(me);
             }
             finally {
                 if (transport != null) {

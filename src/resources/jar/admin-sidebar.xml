@@ -42,6 +42,11 @@
 			<item id="plugin-settings" name="${sidebar.plugin-settings}"
                     url="plugin-admin.jsp"
                     description="${sidebar.plugin-settings.descr}" />
+
+            <!-- Email -->
+			<item id="system-email" name="${sidebar.server-email}"
+                    url="system-email.jsp"
+                    description="${sidebar.server-email.descr}" />
         </sidebar>
 
         <!-- Server Settings -->

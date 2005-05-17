@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
@@ -31,7 +32,9 @@ import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -54,13 +57,15 @@ import org.xmpp.packet.Packet;
  * 
  * @author Ryan Graham 
  */
-public class SearchPlugin implements Component, Plugin {
+public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     private XMPPServer server;
     private UserManager userManager;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
 
-    private static final String SERVICE_NAME = "search";
+    private String serviceName;
+    private boolean serviceEnabled;
+    
     private static String serverName;
 
     private static String instructions = "The following fields are available for search. "
@@ -71,6 +76,9 @@ public class SearchPlugin implements Component, Plugin {
     private Collection<String> searchFields;
 
     public SearchPlugin() {
+        serviceName = JiveGlobals.getProperty("plugin.search.serviceName", "search");
+        serviceEnabled = JiveGlobals.getBooleanProperty("plugin.broadcast.serviceEnabled", true);
+        
         server = XMPPServer.getInstance();
         serverName = server.getServerInfo().getName();
         // See if the installed provider supports searching. If not, workaround
@@ -94,21 +102,13 @@ public class SearchPlugin implements Component, Plugin {
     public String getDescription() {
         return pluginManager.getDescription(this);
     }
-
-    public String getAuthor() {
-        return pluginManager.getAuthor(this);
-    }
-
-    public String getVersion() {
-        return pluginManager.getVersion(this);
-    }
     
     public void initializePlugin(PluginManager manager, File pluginDirectory) {        
         pluginManager = manager;
         
         componentManager = ComponentManagerFactory.getComponentManager();
         try {
-            componentManager.addComponent(SERVICE_NAME, this);
+            componentManager.addComponent(serviceName, this);
         }
 		catch (Exception e) {
             componentManager.getLog().error(e);
@@ -124,16 +124,18 @@ public class SearchPlugin implements Component, Plugin {
             searchForm.setTitle("User Search");
             searchForm.addInstruction(instructions);
 			
-			XFormFieldImpl field = new XFormFieldImpl("search");
+            XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
+            field.setType(FormField.TYPE_HIDDEN);
+            field.addValue("jabber:iq:search");
+            searchForm.addField(field);
+            
+			field = new XFormFieldImpl("search");
             field.setType(FormField.TYPE_TEXT_SINGLE);			
             field.setLabel("Search");
             field.setRequired(false);
             searchForm.addField(field);
             
-            Iterator iter = searchFields.iterator();
-            while (iter.hasNext()) {
-                String searchField = (String) iter.next();
-                
+            for (String searchField : searchFields) {
                 //non-data form
                 probeResult.addElement(searchField.toLowerCase());
 
@@ -158,7 +160,7 @@ public class SearchPlugin implements Component, Plugin {
     public void destroyPlugin() {
         pluginManager = null;
         try {
-            componentManager.removeComponent(SERVICE_NAME);
+            componentManager.removeComponent(serviceName);
             componentManager = null;
         }
         catch (Exception e) {
@@ -226,15 +228,32 @@ public class SearchPlugin implements Component, Plugin {
     }
 
     private IQ handleIQ(IQ packet) {
+        if (!serviceEnabled) {
+            return replyDisabled(packet);
+        }
+        
         if (IQ.Type.get.equals(packet.getType())) {
             return processGetPacket(packet);
-
         }
         else if (IQ.Type.set.equals(packet.getType())) {
             return processSetPacket(packet);
         }
 
         return null;
+    }
+    
+    private IQ replyDisabled(IQ packet) {
+        Element reply = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
+        XDataFormImpl unavailableForm = new XDataFormImpl(DataForm.TYPE_CANCEL);
+        unavailableForm.setTitle("User Search");
+        unavailableForm.addInstruction("This service is unavailable.");
+        reply.add(unavailableForm.asXMLElement());
+        
+        IQ replyPacket = IQ.createResultIQ(packet);
+        replyPacket.setChildElement("query", "jabber:iq:search");
+        replyPacket.setChildElement(reply.createCopy());
+
+        return replyPacket;
     }
 
     private IQ processGetPacket(IQ packet) {
@@ -257,31 +276,29 @@ public class SearchPlugin implements Component, Plugin {
             String field = (String) searchIter.nextElement();
             String query = (String) searchList.get(field);
             
-            Iterator foundIter = null;
+            Collection<User> foundUsers = new ArrayList<User>();
             if (userManager != null) {
                 if (query.length() > 0 && !query.equals("jabber:iq:search")) {
-                    foundIter = userManager.findUsers(new HashSet<String>(
-                            Arrays.asList((field))), query).iterator();
+                    foundUsers.addAll(userManager.findUsers(new HashSet<String>(
+                            Arrays.asList((field))), query));
                 }
             }
             else {
-                foundIter = findUsers(field, query).iterator();
+                foundUsers.addAll(findUsers(field, query));
             }
             
             // Filter out all duplicate users.
-            if (foundIter != null) {
-                while (foundIter.hasNext()) {
-                    User user = (User) foundIter.next();
-                    if (!users.contains(user)) {
-                        users.add(user);
-                    }
+            for (User user : foundUsers) {
+                if (!users.contains(user)) {
+                    users.add(user);
                 }
             }
         }
         
         if (isDataFormQuery) {
             return replyDataFormResult(users, packet);
-        } else {
+        }
+        else {
             return replyNonDataFormResult(users, packet);
         }
     }
@@ -337,9 +354,7 @@ public class SearchPlugin implements Component, Plugin {
 				}
             }
 			
-			Iterator iter = searchFields.iterator();
-			while (iter.hasNext()) {
-				String field = (String) iter.next();
+			for (String field : searchFields) {
 				searchList.put(field, search);
 			}
         }
@@ -347,10 +362,14 @@ public class SearchPlugin implements Component, Plugin {
         return searchList;
     }
     
-    private IQ replyDataFormResult(List users, IQ packet) {
+    private IQ replyDataFormResult(List<User> users, IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
         
-        XFormFieldImpl field = new XFormFieldImpl("jid");
+        XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
+        field.setType(FormField.TYPE_HIDDEN);
+        searchResults.addField(field);
+        
+        field = new XFormFieldImpl("jid");
         field.setLabel("JID");
         searchResults.addReportedField(field);
 
@@ -360,9 +379,7 @@ public class SearchPlugin implements Component, Plugin {
             searchResults.addReportedField(field);
         }
 
-        Iterator userIter = users.iterator();
-        while (userIter.hasNext()) {
-            User user = (User) userIter.next();
+        for (User user : users) {
             String username = user.getUsername();
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
@@ -395,13 +412,11 @@ public class SearchPlugin implements Component, Plugin {
         return replyPacket;
     }
 
-    private IQ replyNonDataFormResult(List users, IQ packet) {
+    private IQ replyNonDataFormResult(List<User> users, IQ packet) {
         Element replyQuery = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
         String serverName = XMPPServer.getInstance().getServerInfo().getName();
-        Iterator userIter = users.iterator();
-        while (userIter.hasNext()) {
-            User user = (User) userIter.next();
-
+        
+        for (User user : users) {
             Element item = DocumentHelper.createElement("item");
             Attribute jib = DocumentHelper.createAttribute(item, "jid", user.getUsername() + "@" + serverName);
             item.add(jib);
@@ -417,6 +432,77 @@ public class SearchPlugin implements Component, Plugin {
         replyPacket.setChildElement(replyQuery);
         
         return replyPacket;
+    }
+    
+    public String getServiceName() {
+        return serviceName;
+    }
+    
+    public void setServiceName(String name) {
+        changeServiceName(name);
+        JiveGlobals.setProperty("plugin.search.serviceName", name);
+    }
+    
+    public boolean getServiceEnabled() {
+        return serviceEnabled;
+    }
+    
+    public void setServiceEnabled(boolean enabled) {
+        serviceEnabled = enabled;
+        JiveGlobals.setProperty("plugin.search.serviceEnabled", enabled ? "true" : "false");
+    }
+    
+    public void propertySet(String property, Map params) {
+        if (property.equals("plugin.search.serviceEnabled")) {
+            this.serviceEnabled = Boolean.parseBoolean((String)params.get("value"));
+        }
+        else if (property.equals("plugin.search.serviceName")) {
+            changeServiceName((String)params.get("value"));
+        }
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        if (property.equals("plugin.search.serviceEnabled")) {
+            this.serviceEnabled = true;
+        }
+        else if (property.equals("plugin.search.serviceName")) {
+            changeServiceName("search");
+        }
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+        // not used  
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+        // not used       
+    }
+    
+    private void changeServiceName(String serviceName) {
+        if (serviceName == null) {
+            throw new NullPointerException("Service name cannot be null");
+        }
+        
+        if (this.serviceName.equals(serviceName)) {
+            return;
+        }
+
+        // Re-register the service.
+        try {
+            componentManager.removeComponent(this.serviceName);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
+        
+        try {
+            componentManager.addComponent(serviceName, this);
+        }
+        catch (Exception e) {
+            componentManager.getLog().error(e);
+        }
+        
+        this.serviceName = serviceName;
     }
 
     /**
@@ -447,9 +533,8 @@ public class SearchPlugin implements Component, Plugin {
 
         int index = query.indexOf("*");
         if (index == -1) {
-            Iterator users = userManager.getUsers().iterator();
-            while (users.hasNext()) {
-                User user = (User) users.next();
+            Collection<User> users = userManager.getUsers();
+            for (User user : users) {
                 if (field.equals("Username")) {
                     try {
                         foundUsers.add(userManager.getUser(query));
@@ -475,10 +560,8 @@ public class SearchPlugin implements Component, Plugin {
         }
         else {
             String prefix = query.substring(0, index);
-            Iterator users = userManager.getUsers().iterator();
-            while (users.hasNext()) {
-                User user = (User) users.next();
-
+            Collection<User> users = userManager.getUsers();
+            for (User user : users) {
                 String userInfo = "";
                 if (field.equals("Username")) {
                     userInfo = user.getUsername();

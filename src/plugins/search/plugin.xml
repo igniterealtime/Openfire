@@ -5,6 +5,23 @@
     <name>Search Plugin</name>
     <description>Provides support for Jabber Search (JEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.0.6</version>
-    <minServerVersion>2.1.2</minServerVersion>
+    <version>1.1</version>
+    <minServerVersion>2.1.3</minServerVersion>
+	
+	<adminconsole>		
+		<tab id="tab-server">
+			<sidebar id="sidebar-server-settings">
+				<item id="search-props-edit-form" name="Search Search Properties"
+					url="search-props-edit-form.jsp"
+					description="Edit search service properties" />
+			</sidebar>
+        </tab>
+		<tab id="tab-users">
+			<sidebar id="sidebar-users">
+				<item id="advance-user-search" name="Advance User Search"
+					url="advance-user-search.jsp"
+					description="Advanced user search" />
+			</sidebar>
+        </tab>
+    </adminconsole>
 </plugin>

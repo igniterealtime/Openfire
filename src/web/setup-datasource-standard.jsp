@@ -31,7 +31,7 @@
     String username = ParamUtils.getParameter(request,"username",true);
     String password = ParamUtils.getParameter(request,"password",true);
     int minConnections = ParamUtils.getIntParameter(request,"minConnections",-1);
-    int maxConnections = ParamUtils.getIntParameter(request,"minConnections",-1);
+    int maxConnections = ParamUtils.getIntParameter(request,"maxConnections",-1);
     double connectionTimeout = ParamUtils.getDoubleParameter(request,"connectionTimeout",0.0);
 
     boolean doContinue = request.getParameter("continue") != null;
@@ -50,7 +50,7 @@
                 loadClass(driver);
             }
             catch (Throwable t) {
-                errors.put("driver","Unable to load specified JDBC driver. Please verify the " +
+                errors.put("driver","Unable to load the specified JDBC driver. Please verify the " +
                         "name of the driver is correct and that the driver is in the classpath " +
                         "of this server (usually the 'lib' directory). If you add a driver to " +
                         "your classpath you will neeed to restart the server.");
@@ -59,11 +59,11 @@
         if (serverURL == null) {
             errors.put("serverURL", "Please enter a valid JDBC URL.");
         }
-        if (minConnections < 0) {
-            errors.put("minConnections","Please enter a valid minimum number of connections.");
+        if (minConnections < 3) {
+            errors.put("minConnections","The minimum connection pool size is three connections.");
         }
-        if (maxConnections < 0) {
-            errors.put("maxConnections","Please enter a valid maximum number of connections.");
+        if (maxConnections < minConnections) {
+            errors.put("maxConnections","The maximum number of connections cannot be less than the minimum.");
         }
         if (connectionTimeout <= 0.0) {
             errors.put("connectionTimeout","Please enter a valid connection timeout value.");

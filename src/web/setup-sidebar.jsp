@@ -26,7 +26,10 @@
 
     String[] items = {step1, step2, step3, step4};
     String[] names = {
-        "Language Selection", "Server Settings", "Datasource Settings", "Admin Account"
+        LocaleUtils.getLocalizedString("setup.sidebar.language"),
+        LocaleUtils.getLocalizedString("setup.sidebar.settings"),
+        LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
+        LocaleUtils.getLocalizedString("setup.sidebar.admin")
     };
     String[] links = {
         "setup-index.jsp",

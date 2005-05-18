@@ -52,7 +52,7 @@ import javax.mail.internet.*;
  *
  * This class is configured with a set of Jive properties:<ul>
  *      <li><tt>mail.smtp.host</tt> -- the host name of your mail server, i.e.
- *          mail.yourhost.com
+ *          mail.yourhost.com. The default value is "localhost".
  *      <li><tt>mail.smtp.port</tt> -- an optional property to change the smtp
  *          port used from the default of 25.
  *      <li><tt>mail.smtp.username</tt> -- an optional property to change the
@@ -90,7 +90,7 @@ public class EmailService {
         executor = new ThreadPoolExecutor(0, 5, 60,
             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-        host = JiveGlobals.getProperty("mail.smtp.host");
+        host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
         port = JiveGlobals.getIntProperty("mail.smtp.port", 25);
         username = JiveGlobals.getProperty("mail.smtp.username");
         password = JiveGlobals.getProperty("mail.smtp.password");
@@ -269,8 +269,7 @@ public class EmailService {
     }
 
     /**
-     * Returns the SMTP host (e.g. mail.example.com). The host is <tt>null</tt> by
-     * default, but must be set before email can be sent.
+     * Returns the SMTP host (e.g. mail.example.com). The default value is "localhost".
      *
      * @return the SMTP host.
      */
@@ -279,8 +278,7 @@ public class EmailService {
     }
 
     /**
-     * Sets the SMTP host (e.g. mail.example.com). The host is <tt>null</tt> by
-     * default, but must be set before email can be sent.
+     * Sets the SMTP host (e.g. mail.example.com). The default value is "localhost".
      *
      * @param host the SMTP host.
      */
@@ -291,7 +289,8 @@ public class EmailService {
     }
 
     /**
-     * Returns the port number used when connecting to the SMTP server. The default port is 25.
+     * Returns the port number used when connecting to the SMTP server. The default
+     * port is 25.
      *
      * @return the SMTP port.
      */
@@ -306,6 +305,9 @@ public class EmailService {
      * @param port the SMTP port number.
      */
     public void setPort(int port) {
+        if (port < 0) {
+            throw new IllegalArgumentException("Invalid port value: " + port);
+        }
         this.port = port;
         JiveGlobals.setProperty("mail.smtp.port", Integer.toString(port));
         session = null;

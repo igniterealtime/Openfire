@@ -87,7 +87,7 @@ public class EmailService {
      * Constructs a new EmailService instance.
      */
     private EmailService() {
-        executor = new ThreadPoolExecutor(0, 5, 60,
+        executor = new ThreadPoolExecutor(1, 5, 60,
             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
         host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
@@ -138,7 +138,7 @@ public class EmailService {
         if (messages.size() == 0) {
             return;
         }
-        executor.submit(new EmailTask(messages));
+        executor.execute(new EmailTask(messages));
     }
 
     /**

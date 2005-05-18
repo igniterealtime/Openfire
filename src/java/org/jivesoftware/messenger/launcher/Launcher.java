@@ -98,9 +98,9 @@ public class Launcher {
         }
 
         binDir = new File("").getAbsoluteFile();
-        // See if the app.dir property is set. If so, use it to find the executable.
-        if (System.getProperty("app.dir") != null) {
-            binDir = new File(System.getProperty("app.dir"));
+        // See if the appdir property is set. If so, use it to find the executable.
+        if (System.getProperty("appdir") != null) {
+            binDir = new File(System.getProperty("appdir"));
         }
 
         configFile = new File(new File(binDir.getParent(), "conf"),

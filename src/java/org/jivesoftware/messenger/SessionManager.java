@@ -398,6 +398,9 @@ public class SessionManager extends BasicModule {
             Session defaultSession = null;
             try {
                 SessionMap sessionMap = sessions.get(session.getUsername());
+                if (sessionMap == null) {
+                    Log.warn("No SessionMap found for session" + "\n" + session);
+                }
                 // Update the order of the sessions based on the new presence of this session
                 sessionMap.sessionAvailable(session);
                 defaultSession = sessionMap.getDefaultSession(true);

@@ -93,7 +93,7 @@ public class SocketConnection implements Connection {
             }
         }
         catch (Exception e) {
-            Log.warn("Closing no longer valid connection", e);
+            Log.warn("Closing no longer valid connection" + "\n" + this.toString(), e);
             close();
         }
         return !isClosed();

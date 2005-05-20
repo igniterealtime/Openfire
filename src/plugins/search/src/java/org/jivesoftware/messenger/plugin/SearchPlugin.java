@@ -34,6 +34,7 @@ import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
@@ -113,6 +114,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 		catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        PropertyEventDispatcher.addListener(this);
 
         if (probeResult == null) {
             probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
@@ -158,6 +160,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     }
 
     public void destroyPlugin() {
+        PropertyEventDispatcher.removeListener(this);
         pluginManager = null;
         try {
             componentManager.removeComponent(serviceName);

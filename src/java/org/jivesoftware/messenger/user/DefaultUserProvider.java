@@ -177,6 +177,7 @@ public class DefaultUserProvider implements UserProvider {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
+            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);

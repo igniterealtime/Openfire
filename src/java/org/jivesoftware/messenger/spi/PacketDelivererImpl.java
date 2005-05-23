@@ -29,7 +29,7 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
     /**
      * The handler that does the actual delivery (could be a channel instead)
      */
-    protected ChannelHandler deliverHandler;
+    protected SocketPacketWriteHandler deliverHandler;
 
     private OfflineMessageStrategy messageStrategy;
     private SessionManager sessionManager;
@@ -72,7 +72,9 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
 
     public void start() throws IllegalStateException {
         super.start();
-        deliverHandler = new SocketPacketWriteHandler(sessionManager, messageStrategy);
+        deliverHandler =
+                new SocketPacketWriteHandler(sessionManager,
+                        XMPPServer.getInstance().getRoutingTable(), messageStrategy);
     }
 
     public void stop() {

@@ -30,38 +30,47 @@ public class SocketPacketWriteHandler implements ChannelHandler {
 
     private SessionManager sessionManager;
     private OfflineMessageStrategy messageStrategy;
+    private String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    private RoutingTable routingTable;
 
-    public SocketPacketWriteHandler(SessionManager sessionManager, OfflineMessageStrategy messageStrategy) {
+    public SocketPacketWriteHandler(SessionManager sessionManager, RoutingTable routingTable,
+            OfflineMessageStrategy messageStrategy) {
         this.sessionManager = sessionManager;
         this.messageStrategy = messageStrategy;
+        this.routingTable = routingTable;
     }
 
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();
+            // Check if the target domain belongs to a remote server
+            if (recipient != null && !recipient.getDomain().contains(serverName)) {
+                try {
+                    // Locate the route to the remote server and ask it to process the packet
+                    routingTable.getRoute(recipient).process(packet);
+                }
+                catch (NoSuchRouteException e) {
+                    // No root was found so either drop or store the packet
+                    handleUnprocessedPacket(packet);
+                }
+                return;
+            }
+            // The target domain belongs to the local server
             if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
+                // no TO was found so send back the packet to the sender
                 Session senderSession = sessionManager.getSession(packet.getFrom());
                 if (senderSession != null && !senderSession.getConnection().isClosed()) {
                     senderSession.getConnection().deliver(packet);
                 }
                 else {
+                    // The sender is no longer available so drop the packet
                     dropPacket(packet);
                 }
             }
             else {
                 Session session = sessionManager.getBestRoute(recipient);
                 if (session == null) {
-                    if (packet instanceof Message) {
-                        messageStrategy.storeOffline((Message)packet);
-                    }
-                    else if (packet instanceof Presence) {
-                        // presence packets are dropped silently
-                        //dropPacket(packet);
-                    }
-                    else {
-                        // IQ packets are logged but dropped
-                        dropPacket(packet);
-                    }
+                    handleUnprocessedPacket(packet);
                 }
                 else {
                     try {
@@ -75,6 +84,20 @@ public class SocketPacketWriteHandler implements ChannelHandler {
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.deliver") + "\n" + packet.toString(), e);
+        }
+    }
+
+    private void handleUnprocessedPacket(Packet packet) {
+        if (packet instanceof Message) {
+            messageStrategy.storeOffline((Message)packet);
+        }
+        else if (packet instanceof Presence) {
+            // presence packets are dropped silently
+            //dropPacket(packet);
+        }
+        else {
+            // IQ packets are logged but dropped
+            dropPacket(packet);
         }
     }
 

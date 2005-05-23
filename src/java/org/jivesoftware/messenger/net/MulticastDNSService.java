@@ -54,7 +54,7 @@ public class MulticastDNSService extends BasicModule {
                     int portNum = -1;
                     while (ports.hasNext()) {
                         ServerPort port = (ServerPort)ports.next();
-                        if (!port.isSecure()) {
+                        if (port.isClientPort() && !port.isSecure()) {
                             portNum = port.getPort();
                         }
                     }

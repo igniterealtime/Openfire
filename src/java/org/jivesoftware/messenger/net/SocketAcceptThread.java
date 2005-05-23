@@ -12,7 +12,7 @@
 package org.jivesoftware.messenger.net;
 
 import org.jivesoftware.messenger.ConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.messenger.ServerPort;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 
@@ -30,14 +30,24 @@ import java.net.Socket;
 public class SocketAcceptThread extends Thread {
 
     /**
-     * The default XMPP port.
+     * The default XMPP port for clients.
      */
     public static final int DEFAULT_PORT = 5222;
 
     /**
-     * The port for this server socket.
+     * The default XMPP port for external components.
      */
-    private int port;
+    public static final int DEFAULT_COMPONENT_PORT = 10015;
+
+    /**
+     * The default XMPP port for server2server communication.
+     */
+    public static final int DEFAULT_SERVER_PORT = 5269;
+
+    /**
+     * Holds information about the port on which the server will listen for connections.
+     */
+    private ServerPort serverPort;
 
     /**
      * Interface to bind to.
@@ -56,18 +66,19 @@ public class SocketAcceptThread extends Thread {
 
     private ConnectionManager connManager;
 
-    public SocketAcceptThread(ConnectionManager connManager) throws IOException {
+    public SocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
+            throws IOException {
         super("Socket Listener");
         this.connManager = connManager;
-        port = JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
-        String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");
+        this.serverPort = serverPort;
+        String interfaceName = serverPort.getInterfaceName();
         bindInterface = null;
         if (interfaceName != null) {
             if (interfaceName.trim().length() > 0) {
                 bindInterface = InetAddress.getByName(interfaceName);
             }
         }
-        serverSocket = new ServerSocket(port, -1, bindInterface);
+        serverSocket = new ServerSocket(serverPort.getPort(), -1, bindInterface);
     }
 
     /**
@@ -76,7 +87,7 @@ public class SocketAcceptThread extends Thread {
      * @return the port the socket is bound to.
      */
     public int getPort() {
-        return port;
+        return serverPort.getPort();
     }
 
     /**
@@ -108,7 +119,7 @@ public class SocketAcceptThread extends Thread {
                 Socket sock = serverSocket.accept();
                 if (sock != null) {
                     Log.debug("Connect " + sock.toString());
-                    connManager.addSocket(sock, false);
+                    connManager.addSocket(sock, false, serverPort);
                 }
             }
             catch (IOException ie) {

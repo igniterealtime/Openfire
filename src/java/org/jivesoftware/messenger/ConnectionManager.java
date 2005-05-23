@@ -35,6 +35,9 @@ public interface ConnectionManager {
      *
      * @param socket the socket to add to this manager for management.
      * @param isSecure true if the connection is secure.
+     * @param serverPort holds information about the port on which the server is listening for
+     *        connections.
      */
-    public void addSocket(Socket socket, boolean isSecure) throws XmlPullParserException;
+    public void addSocket(Socket socket, boolean isSecure, ServerPort serverPort)
+            throws XmlPullParserException;
 }

@@ -234,8 +234,4 @@ public class ComponentSession extends Session {
         public void shutdown() {
         }
     }
-
-    public void packetReceived(Packet packet) {
-        //Do nothing
-    }
 }

@@ -378,10 +378,6 @@ public class ClientSession extends Session {
         }
     }
 
-    public void packetReceived(Packet packet) {
-        packet.setFrom(getAddress());
-    }
-
     public String toString() {
         return super.toString() + " presence: " + presence;
     }

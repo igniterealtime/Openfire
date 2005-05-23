@@ -63,7 +63,7 @@ public class OutgoingServerSession extends Session {
      * The Server Dialback method is currently the only implemented method for server-to-server
      * authentication. This implies that the remote server will ask the Authoritative Server
      * to verify the domain to authenticate. Most probably this server will act as the
-     * Authoritative Server. See {@link IncomingServerSession) for more information.
+     * Authoritative Server. See {@link IncomingServerSession} for more information.
      *
      * @param domain the local domain to authenticate with the remote server.
      * @param hostname the hostname of the remote server.

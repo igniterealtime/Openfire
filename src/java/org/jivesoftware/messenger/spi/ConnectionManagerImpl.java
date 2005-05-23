@@ -13,10 +13,7 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.net.SSLSocketAcceptThread;
-import org.jivesoftware.messenger.net.SocketAcceptThread;
-import org.jivesoftware.messenger.net.SocketConnection;
-import org.jivesoftware.messenger.net.SocketReadThread;
+import org.jivesoftware.messenger.net.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
@@ -33,6 +30,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private SocketAcceptThread socketThread;
     private SSLSocketAcceptThread sslSocketThread;
+    private SocketAcceptThread componentSocketThread;
+    private SocketAcceptThread serverSocketThread;
     private ArrayList<ServerPort> ports;
 
     private SessionManager sessionManager;
@@ -43,7 +42,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
-        ports = new ArrayList<ServerPort>(2);
+        ports = new ArrayList<ServerPort>(4);
     }
 
     private void createSocket() {
@@ -65,12 +64,77 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 localIPAddress = "Unknown";
             }
         }
-        // Start plain socket unless it's been disabled.
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
+        // Start the port listener for s2s communication
+        startServerListener(localIPAddress);
+        // Start the port listener for external components
+        startComponentListener(localIPAddress);
+        // Start the port listener for clients
+        startClientListeners(localIPAddress);
+    }
+
+    private void startServerListener(String localIPAddress) {
+        // Start servers socket unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.server.socket.active", true)) {
+            int port = JiveGlobals.getIntProperty("xmpp.server.socket.port",
+                    SocketAcceptThread.DEFAULT_SERVER_PORT);
+            String interfaceName = JiveGlobals.getProperty("xmpp.server.socket.interface");
+            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+                    false, null, ServerPort.Type.server);
             try {
-                socketThread = new SocketAcceptThread(this);
-                ports.add(new ServerPort(socketThread.getPort(),
-                        serverName, localIPAddress, false, null));
+                serverSocketThread = new SocketAcceptThread(this, serverPort);
+                ports.add(serverPort);
+                serverSocketThread.setDaemon(true);
+                serverSocketThread.start();
+
+                List params = new ArrayList();
+                params.add(Integer.toString(serverSocketThread.getPort()));
+                Log.info(LocaleUtils.getLocalizedString("startup.server", params));
+            }
+            catch (Exception e) {
+                System.err.println("Error starting server listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
+    }
+
+    private void startComponentListener(String localIPAddress) {
+        // Start components socket unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.component.socket.active", true)) {
+            int port = JiveGlobals.getIntProperty("xmpp.component.socket.port",
+                    SocketAcceptThread.DEFAULT_COMPONENT_PORT);
+            String interfaceName = JiveGlobals.getProperty("xmpp.component.socket.interface");
+            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+                    false, null, ServerPort.Type.component);
+            try {
+                componentSocketThread = new SocketAcceptThread(this, serverPort);
+                ports.add(serverPort);
+                componentSocketThread.setDaemon(true);
+                componentSocketThread.start();
+
+                List params = new ArrayList();
+                params.add(Integer.toString(componentSocketThread.getPort()));
+                Log.info(LocaleUtils.getLocalizedString("startup.component", params));
+            }
+            catch (Exception e) {
+                System.err.println("Error starting component listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
+    }
+
+    private void startClientListeners(String localIPAddress) {
+        // Start clients plain socket unless it's been disabled.
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.plain.active", true)) {
+            int port = JiveGlobals.getIntProperty("xmpp.socket.plain.port",
+                    SocketAcceptThread.DEFAULT_PORT);
+            String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");
+            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+                    false, null, ServerPort.Type.client);
+            try {
+                socketThread = new SocketAcceptThread(this, serverPort);
+                ports.add(serverPort);
                 socketThread.setDaemon(true);
                 socketThread.start();
 
@@ -79,22 +143,25 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
             }
             catch (Exception e) {
-                System.err.println("Error starting XMPP listener on port " +
-                        JiveGlobals.getIntProperty("xmpp.socket.plain.port", SocketAcceptThread.DEFAULT_PORT) +
-                        ": " + e.getMessage());
+                System.err.println("Error starting XMPP listener on port " + port + ": " +
+                        e.getMessage());
                 Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
             }
         }
-        // Start SSL unless it's been disabled.
+        // Start clients SSL unless it's been disabled.
         if (JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true)) {
+            int port = JiveGlobals.getIntProperty("xmpp.socket.ssl.port",
+                    SSLSocketAcceptThread.DEFAULT_PORT);
+            String interfaceName = JiveGlobals.getProperty("xmpp.socket.ssl.interface");
+            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
+            if ("".equals(algorithm) || algorithm == null) {
+                algorithm = "TLS";
+            }
+            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+                    true, algorithm, ServerPort.Type.client);
             try {
-                sslSocketThread = new SSLSocketAcceptThread(this);
-                String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
-                if ("".equals(algorithm) || algorithm == null) {
-                    algorithm = "TLS";
-                }
-                ports.add(new ServerPort(sslSocketThread.getPort(), serverName,
-                        localIPAddress, true, algorithm));
+                sslSocketThread = new SSLSocketAcceptThread(this, serverPort);
+                ports.add(serverPort);
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
 
@@ -103,9 +170,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }
             catch (Exception e) {
-                System.err.println("Error starting SSL XMPP listener on port " +
-                        JiveGlobals.getIntProperty("xmpp.socket.ssl.port", SSLSocketAcceptThread.DEFAULT_PORT) +
-                        ": " + e.getMessage());
+                System.err.println("Error starting SSL XMPP listener on port " + port + ": " +
+                        e.getMessage());
                 Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
             }
         }
@@ -115,13 +181,27 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return ports.iterator();
     }
 
-    public void addSocket(Socket sock, boolean isSecure)  {
+    public void addSocket(Socket sock, boolean isSecure, ServerPort serverPort)  {
         try {
             // the order of these calls is critical (stupid huh?)
             SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            SocketReadThread reader = new SocketReadThread(router, serverName, sock, conn);
-            reader.setDaemon(true);
-            reader.start();
+            SocketReader reader = null;
+            String threadName = null;
+            if (serverPort.isClientPort()) {
+                reader = new ClientSocketReader(router, serverName, sock, conn);
+                threadName = "Client SR";
+            }
+            else if (serverPort.isComponentPort()) {
+                reader = new ComponentSocketReader(router, serverName, sock, conn);
+                threadName = "Component SR";
+            }
+            else {
+                reader = new ServerSocketReader(router, serverName, sock, conn);
+                threadName = "Server SR";
+            }
+            Thread thread = new Thread(reader, threadName);
+            thread.setDaemon(true);
+            thread.start();
         }
         catch (IOException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -161,6 +241,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (sslSocketThread != null) {
             sslSocketThread.shutdown();
             sslSocketThread = null;
+        }
+        if (componentSocketThread != null) {
+            componentSocketThread.shutdown();
+            componentSocketThread = null;
+        }
+        if (serverSocketThread != null) {
+            serverSocketThread.shutdown();
+            serverSocketThread = null;
         }
         serverName = null;
     }

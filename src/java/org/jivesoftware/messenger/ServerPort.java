@@ -24,20 +24,24 @@ import java.util.ArrayList;
 public class ServerPort {
 
     private int port;
+    private String interfaceName;
     private ArrayList names;
     private String address;
     private boolean secure;
     private String algorithm;
+    private Type type;
 
-    public ServerPort(int port, String name, String address, boolean isSecure,
-            String algorithm)
+    public ServerPort(int port, String interfaceName, String name, String address,
+            boolean isSecure, String algorithm, Type type)
     {
         this.port = port;
+        this.interfaceName = interfaceName;
         this.names = new ArrayList(1);
         this.names.add(name);
         this.address = address;
         this.secure = isSecure;
         this.algorithm = algorithm;
+        this.type = type;
     }
 
     /**
@@ -47,6 +51,10 @@ public class ServerPort {
      */
     public int getPort() {
         return port;
+    }
+
+    public String getInterfaceName() {
+        return interfaceName;
     }
 
     /**
@@ -86,5 +94,40 @@ public class ServerPort {
      */
     public String getSecurityType() {
         return algorithm;
+    }
+
+    /**
+     * Returns true if other servers can connect to this port for s2s communication.
+     *
+     * @return true if other servers can connect to this port for s2s communication.
+     */
+    public boolean isServerPort() {
+        return type == Type.server;
+    }
+
+    /**
+     * Returns true if clients can connect to this port.
+     *
+     * @return true if clients can connect to this port.
+     */
+    public boolean isClientPort() {
+        return type == Type.client;
+    }
+
+    /**
+     * Returns true if external components can connect to this port.
+     *
+     * @return true if external components can connect to this port.
+     */
+    public boolean isComponentPort() {
+        return type == Type.component;
+    }
+
+    public static enum Type {
+        client,
+
+        server,
+
+        component;
     }
 }

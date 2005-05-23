@@ -15,6 +15,8 @@ import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
+import org.jivesoftware.messenger.server.IncomingServerSession;
+import org.jivesoftware.messenger.server.OutgoingServerSession;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -51,6 +53,8 @@ public class SessionManager extends BasicModule {
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
+    private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
+    private OutgoingServerSessionListener outgoingServerListener = new OutgoingServerSessionListener();
 
     /**
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map
@@ -77,6 +81,22 @@ public class SessionManager extends BasicModule {
      * this Map will keep the component's session.
      */
     private List<ComponentSession> componentsSessions = new CopyOnWriteArrayList<ComponentSession>();
+
+    /**
+     * The sessions contained in this Map are server sessions originated by a remote server. These
+     * sessions can only receive packets from the remote server but are not capable of sending
+     * packets to the remote server. Sessions will be added to this collecion only after they were
+     * authenticated. The key of the Map is the hostname of the remote server.
+     */
+    private Map<String, IncomingServerSession> incomingServerSessions = new ConcurrentHashMap<String, IncomingServerSession>();
+
+    /**
+     * The sessions contained in this Map are server sessions originated from this server to remote
+     * servers. These sessions can only send packets to the remote server but are not capable of
+     * receiving packets from the remote server. Sessions will be added to this collecion only
+     * after they were authenticated. The key of the Map is the hostname of the remote server.
+     */
+    private Map<String, OutgoingServerSession> outgoingServerSessions = new ConcurrentHashMap<String, OutgoingServerSession>();
 
     /**
      * <p>Session manager must maintain the routing table as sessions are added and
@@ -317,6 +337,15 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns a randomly created ID to be used in a stream element.
+     *
+     * @return a randomly created ID to be used in a stream element.
+     */
+    public StreamID nextStreamID() {
+        return streamIDFactory.createStreamID();
+    }
+
+    /**
      * Creates a new <tt>ClientSession</tt>.
      *
      * @param conn the connection to create the session from.
@@ -327,11 +356,11 @@ public class SessionManager extends BasicModule {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        StreamID id = streamIDFactory.createStreamID();
+        StreamID id = nextStreamID();
         ClientSession session = new ClientSession(serverName, conn, id);
         conn.init(session);
         // Register to receive close notification on this session so we can
-        // remove its route from the sessions set and also send an unavailable presence if it wasn't
+        // remove  and also send an unavailable presence if it wasn't
         // sent before
         conn.registerCloseListener(clientSessionListener, session);
 
@@ -344,7 +373,7 @@ public class SessionManager extends BasicModule {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        StreamID id = streamIDFactory.createStreamID();
+        StreamID id = nextStreamID();
         ComponentSession session = new ComponentSession(serverName, conn, id);
         conn.init(session);
         // Register to receive close notification on this session so we can
@@ -354,6 +383,91 @@ public class SessionManager extends BasicModule {
         // Add to component session.
         componentsSessions.add(session);
         return session;
+    }
+
+    /**
+     * Creates a session for a remote server. The session should be created only after the
+     * remote server has been authenticated either using "server dialback" or SASL.
+     *
+     * @param conn the connection to the remote server.
+     * @param id the stream ID used in the stream element when authenticating the server.
+     * @return the newly created {@link IncomingServerSession}.
+     * @throws UnauthorizedException if the local server has not been initialized yet.
+     */
+    public IncomingServerSession createIncomingServerSession(Connection conn, StreamID id)
+            throws UnauthorizedException {
+        if (serverName == null) {
+            throw new UnauthorizedException("Server not initialized");
+        }
+        IncomingServerSession session = new IncomingServerSession(serverName, conn, id);
+        conn.init(session);
+        // Register to receive close notification on this session so we can
+        // remove its route from the sessions set
+        conn.registerCloseListener(incomingServerListener, session);
+
+        return session;
+    }
+
+    /**
+     * Notification message that a new OutgoingServerSession has been created. Register a listener
+     * that will react when the connection gets closed.
+     *
+     * @param session the newly created OutgoingServerSession.
+     */
+    public void outgoingServerSessionCreated(OutgoingServerSession session) {
+        // Register to receive close notification on this session so we can
+        // remove its route from the sessions set
+        session.getConnection().registerCloseListener(outgoingServerListener, session);
+    }
+
+    /**
+     * Registers that a server session originated by a remote server is hosting a given hostname.
+     * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
+     * the same IncomingServerSession may be associated with many keys.
+     *
+     * @param hostname the hostname that is being served by the remote server.
+     * @param session the incoming server session to the remote server.
+     */
+    public void registerIncomingServerSession(String hostname, IncomingServerSession session) {
+        incomingServerSessions.put(hostname, session);
+    }
+
+    /**
+     * Unregisters that a server session originated by a remote server is hosting a given hostname.
+     * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
+     * the same IncomingServerSession may be associated with many keys.
+     *
+     * @param hostname the hostname that is being served by the remote server.
+     */
+    public void unregisterIncomingServerSession(String hostname) {
+        incomingServerSessions.remove(hostname);
+    }
+
+    /**
+     * Registers that a server session originated by this server has been established to
+     * a remote server named hostname. This session will only be used for sending packets
+     * to the remote server and cannot receive packets. The {@link OutgoingServerSession}
+     * may have one or more domains, subdomains or virtual hosts authenticated with the
+     * remote server.
+     *
+     * @param hostname the hostname that is being served by the remote server.
+     * @param session the outgoing server session to the remote server.
+     */
+    public void registerOutgoingServerSession(String hostname, OutgoingServerSession session) {
+        outgoingServerSessions.put(hostname, session);
+    }
+
+    /**
+     * Unregisters the server session that was originated by this server to a remote server
+     * named hostname. This session was only being used for sending packets
+     * to the remote server and not for receiving packets. The {@link OutgoingServerSession}
+     * may have one or more domains, subdomains or virtual hosts authenticated with the
+     * remote server.
+     *
+     * @param hostname the hostname that the session was connected with.
+     */
+    public void unregisterOutgoingServerSession(String hostname) {
+        outgoingServerSessions.remove(hostname);
     }
 
     /**
@@ -782,6 +896,30 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns a session that was originated by a remote server. IncomingServerSession can only
+     * receive packets from the remote server but are not capable of sending packets to the remote
+     * server.
+     *
+     * @param hostname the name of the remote server.
+     * @return a session that was originated by a remote server.
+     */
+    public IncomingServerSession getIncomingServerSession(String hostname) {
+        return incomingServerSessions.get(hostname);
+    }
+
+    /**
+     * Returns a session that was originated from this server to a remote server.
+     * OutgoingServerSession an only send packets to the remote server but are not capable of
+     * receiving packets from the remote server.
+     *
+     * @param hostname the name of the remote server.
+     * @return a session that was originated from this server to a remote server.
+     */
+    public OutgoingServerSession getOutgoingServerSession(String hostname) {
+        return outgoingServerSessions.get(hostname);
+    }
+
+    /**
      * <p>Determines if the given date is before the min date, or after the max date.</p>
      * <p>The check is complicated somewhat by the fact that min can be null indicating
      * no earlier date, and max can be null indicating no upper limit.</p>
@@ -1048,18 +1186,52 @@ public class SessionManager extends BasicModule {
          * @param handback The session that just closed
          */
         public void onConnectionClose(Object handback) {
+            ComponentSession session = (ComponentSession)handback;
             try {
-                ComponentSession session = (ComponentSession)handback;
                 // Unbind the domain for this external component
                 String domain = session.getAddress().getDomain();
                 String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
                 InternalComponentManager.getInstance().removeComponent(subdomain);
-                // Remove the session
-                componentsSessions.remove(session);
             }
             catch (Exception e) {
                 // Can't do anything about this problem...
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
+            }
+            finally {
+                // Remove the session
+                componentsSessions.remove(session);
+            }
+        }
+    }
+
+    private class IncomingServerSessionListener implements ConnectionCloseListener {
+        /**
+         * Handle a session that just closed.
+         *
+         * @param handback The session that just closed
+         */
+        public void onConnectionClose(Object handback) {
+            IncomingServerSession session = (IncomingServerSession)handback;
+            // Remove all the hostnames that were registered for this server session
+            for (String hostname : session.getValidatedDomains()) {
+                unregisterIncomingServerSession(hostname);
+            }
+        }
+    }
+
+    private class OutgoingServerSessionListener implements ConnectionCloseListener {
+        /**
+         * Handle a session that just closed.
+         *
+         * @param handback The session that just closed
+         */
+        public void onConnectionClose(Object handback) {
+            OutgoingServerSession session = (OutgoingServerSession)handback;
+            // Remove all the hostnames that were registered for this server session
+            for (String hostname : session.getHostnames()) {
+                unregisterOutgoingServerSession(hostname);
+                // Remove the route to the session using the hostname
+                XMPPServer.getInstance().getRoutingTable().removeRoute(new JID(hostname));
             }
         }
     }

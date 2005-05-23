@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.server.OutgoingServerSession;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -42,6 +43,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      * locks access to the routing tale
      */
     private ReadWriteLock routeLock = new ReentrantReadWriteLock();
+    private String serverName;
 
     public RoutingTableImpl() {
         super("Routing table");
@@ -80,6 +82,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         RoutableChannelHandler route = null;
         String nodeJID = node.getNode() == null ? "" : node.getNode();
         String resourceJID = node.getResource() == null ? "" : node.getResource();
+
+        // Check if the address belongs to a remote server
+        if (!node.getDomain().contains(serverName)) {
+            // Authenticate this hostname with the remote server so that the remote server can
+            // accept packets from this server.
+            OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
+        }
 
         routeLock.readLock().lock();
         try {
@@ -252,5 +261,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             routeLock.writeLock().unlock();
         }
         return route;
+    }
+
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        serverName = server.getServerInfo().getName();
     }
 }

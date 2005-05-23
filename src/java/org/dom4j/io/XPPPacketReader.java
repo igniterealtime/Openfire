@@ -313,34 +313,38 @@ public class XPPPacketReader {
                     return document;
                 }
                 case XmlPullParser.START_TAG: {
-                        QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
-                        Element newElement = null;
-                        if ("jabber:client".equals(qname.getNamespaceURI())) {
-                            newElement = df.createElement(pp.getName());
-                        }
-                        else {
-                            newElement = df.createElement(qname);
-                        }
-                       // Element newElement = DocumentHelper.createElement(pp.getName());
-                        int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
-                        int nsEnd = pp.getNamespaceCount(pp.getDepth());
-                        for (int i = nsStart; i < nsEnd; i++)
-                            if (pp.getNamespacePrefix(i) != null)
-                                newElement.addNamespace(pp.getNamespacePrefix(i), pp.getNamespaceUri(i));
-                        for (int i = 0; i < pp.getAttributeCount(); i++) {
-                            QName qa = (pp.getAttributePrefix(i) == null) ? df.createQName(pp.getAttributeName(i)) : df.createQName(pp.getAttributeName(i), pp.getAttributePrefix(i), pp.getAttributeNamespace(i));
-                            newElement.addAttribute(qa, pp.getAttributeValue(i));
-                        }
-                        if (parent != null) {
-                            parent.add(newElement);
-                        }
-                        else {
-                            document.add(newElement);
-                        }
-                        parent = newElement;
-                        count++;
-                        break;
+                    QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
+                    Element newElement = null;
+                    // Do not include the namespace if this is the start tag of a new packet
+                    // This avoids including "jabber:client", "jabber:server" or
+                    // "jabber:component:accept"
+                    if ("jabber:client".equals(qname.getNamespaceURI()) ||
+                            "jabber:server".equals(qname.getNamespaceURI()) ||
+                            "jabber:component:accept".equals(qname.getNamespaceURI())) {
+                        newElement = df.createElement(pp.getName());
                     }
+                    else {
+                        newElement = df.createElement(qname);
+                    }
+                    int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
+                    int nsEnd = pp.getNamespaceCount(pp.getDepth());
+                    for (int i = nsStart; i < nsEnd; i++)
+                        if (pp.getNamespacePrefix(i) != null)
+                            newElement.addNamespace(pp.getNamespacePrefix(i), pp.getNamespaceUri(i));
+                    for (int i = 0; i < pp.getAttributeCount(); i++) {
+                        QName qa = (pp.getAttributePrefix(i) == null) ? df.createQName(pp.getAttributeName(i)) : df.createQName(pp.getAttributeName(i), pp.getAttributePrefix(i), pp.getAttributeNamespace(i));
+                        newElement.addAttribute(qa, pp.getAttributeValue(i));
+                    }
+                    if (parent != null) {
+                        parent.add(newElement);
+                    }
+                    else {
+                        document.add(newElement);
+                    }
+                    parent = newElement;
+                    count++;
+                    break;
+                }
                 case XmlPullParser.END_TAG: {
                     if (parent != null) {
                         parent = parent.getParent();

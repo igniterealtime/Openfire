@@ -1,0 +1,576 @@
+/**
+ * $RCSfile$
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2004 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
+package org.jivesoftware.messenger.server;
+
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.XPPPacketReader;
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.AuthFactory;
+import org.jivesoftware.messenger.net.DNSUtil;
+import org.jivesoftware.messenger.net.SocketConnection;
+import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
+
+import javax.net.SocketFactory;
+import java.io.*;
+import java.net.Socket;
+
+/**
+ * Implementation of the Server Dialback method as defined by the RFC3920.
+ *
+ * The dialback method follows the following logic to validate the remote server:
+ * <ol>
+ *  <li>The Originating Server establishes a connection to the Receiving Server.</li>
+ *  <li>The Originating Server sends a 'key' value over the connection to the Receiving
+ *  Server.</li>
+ *  <li>The Receiving Server establishes a connection to the Authoritative Server.</li>
+ *  <li>The Receiving Server sends the same 'key' value to the Authoritative Server.</li>
+ *  <li>The Authoritative Server replies that key is valid or invalid.</li>
+ *  <li>The Receiving Server informs the Originating Server whether it is authenticated or
+ *  not.</li>
+ * </ol>
+ *
+ * @author Gaston Dombiak
+ */
+class ServerDialback {
+    /**
+     * The utf-8 charset for decoding and encoding Jabber packet streams.
+     */
+    protected static String CHARSET = "UTF-8";
+    /**
+     * Secret key to be used for encoding and decoding keys used for authentication.
+     */
+    private static final String secretKey = StringUtils.randomString(10);
+
+    private Connection connection;
+    private String serverName;
+    private SessionManager sessionManager = SessionManager.getInstance();
+
+    /**
+     * Creates a new instance that will be used for creating {@link IncomingServerSession},
+     * validating subsequent domains or authenticatig new domains. Use
+     * {@link #createIncomingSession(org.dom4j.io.XPPPacketReader)} for creating a new server
+     * session used for receiving packets from the remote server. Use
+     * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.messenger.StreamID)} for
+     * validating subsequent domains and use
+     * {@link #authenticateDomain(org.dom4j.io.XPPPacketReader, String, String, String)} for
+     * registering new domains that are allowed to send packets to the remote server.<p>
+     *
+     * For validating domains a new TCP connection will be established to the Authoritative Server.
+     * The Authoritative Server may be the same Originating Server or some other machine in the
+     * Originating Server's network. Once the remote domain gets validated the Originating Server
+     * will be allowed for sending packets to this server. However, this server will need to
+     * validate its domain/s with the Originating Server if this server needs to send packets to
+     * the Originating Server. Another TCP connection will be established for validation this
+     * server domain/s and for sending packets to the Originating Server.
+     *
+     * @param connection the connection created by the remote server.
+     * @param serverName the name of the local server.
+     */
+    ServerDialback(Connection connection, String serverName) {
+        this.connection = connection;
+        this.serverName = serverName;
+    }
+
+    ServerDialback() {
+    }
+
+    /**
+     * Creates a new connection from the Originating Server to the Receiving Server for
+     * authenticating the specified domain.
+     *
+     * @param domain domain of the Originating Server to authenticate with the Receiving Server.
+     * @param hostname IP address or hostname of the Receiving Server.
+     * @param port port of the Receiving Server.
+     * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
+     */
+    public OutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
+        // TODO Check if the hostname is in the blacklist
+        try {
+            // Establish a TCP connection to the Receiving Server
+            Log.debug("OS - Trying to connect to " + hostname + ":" + port);
+            Socket socket = SocketFactory.getDefault().createSocket(hostname, port);
+            Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
+            connection =
+                    new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
+                            false);
+            // Get a writer for sending the open stream tag
+            // Send to the Receiving Server a stream header
+            StringBuilder stream = new StringBuilder();
+            stream.append("<stream:stream");
+            stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            stream.append(" xmlns=\"jabber:server\"");
+            stream.append(" xmlns:db=\"jabber:server:dialback\">");
+            connection.deliverRawText(stream.toString());
+            stream = null;
+
+            XPPPacketReader reader = new XPPPacketReader();
+            reader.setXPPFactory(XmlPullParserFactory.newInstance());
+            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
+                    CHARSET));
+            // Get the answer from the Receiving Server
+            XmlPullParser xpp = reader.getXPPParser();
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+            if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+                String id = xpp.getAttributeValue("", "id");
+                if (authenticateDomain(reader, domain, hostname, id)) {
+                    // Domain was validated so create a new OutgoingServerSession
+                    StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                    OutgoingServerSession session = new OutgoingServerSession(domain, connection,
+                            reader, streamID);
+                    connection.init(session);
+                    // Set the hostname as the address of the session
+                    session.setAddress(new JID(null, hostname, null));
+                    return session;
+                }
+                else {
+                    // Close the connection
+                    connection.close();
+                }
+            }
+            else {
+                Log.debug("OS - Invalid namespace in packet: " + xpp.getText());
+                // Send an invalid-namespace stream error condition in the response
+                StreamError error = new StreamError(StreamError.Condition.invalid_namespace);
+                StringBuilder sb = new StringBuilder();
+                sb.append(error.toXML());
+                connection.deliverRawText(sb.toString());
+                // Close the connection
+                connection.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error connecting to the remote server", e);
+            // Close the connection
+            if (connection != null) {
+                connection.close();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Authenticates the Originating Server domain with the Receiving Server. Once the domain has
+     * been authenticated the Receiving Server will start accepting packets from the Originating
+     * Server.<p>
+     *
+     * The Receiving Server will connect to the Authoritative Server to verify the dialback key.
+     * Most probably the Originating Server machine will be the Authoritative Server too.
+     *
+     * @param reader the reader to use for reading the answer from the Receiving Server.
+     * @param domain the domain to authenticate.
+     * @param hostname the hostname of the remote server (i.e. Receiving Server).
+     * @param id the stream id to be used for creating the dialback key.
+     * @return true if the Receiving Server authenticated the domain with the Authoritative Server.
+     * @throws XmlPullParserException if a parsing error occured while reading the answer from
+     *         the Receiving Server.
+     * @throws IOException if an input/output error occured while sending/receiving packets to/from
+     *         the Receiving Server.
+     * @throws DocumentException if a parsing error occured while reading the answer from
+     *         the Receiving Server.
+     */
+    public boolean authenticateDomain(XPPPacketReader reader, String domain, String hostname,
+            String id) throws XmlPullParserException, IOException, DocumentException {
+        String key = AuthFactory.createDigest(id, secretKey);
+        Log.debug("OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
+                domain);
+
+        synchronized (reader) {
+            // Send a dialback key to the Receiving Server
+            StringBuilder sb = new StringBuilder();
+            sb.append("<db:result");
+            sb.append(" from=\"" + domain + "\"");
+            sb.append(" to=\"" + hostname + "\">");
+            sb.append(key);
+            sb.append("</db:result>");
+            connection.deliverRawText(sb.toString());
+            sb = null;
+
+            // Process the answer from the Receiving Server
+            Element doc = reader.parseDocument().getRootElement();
+            if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                boolean success = "valid".equals(doc.attributeValue("type"));
+                Log.debug("OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
+                        hostname +
+                        " id: " +
+                        id +
+                        " for domain: " +
+                        domain);
+                return success;
+            }
+            else {
+                Log.debug("OS - Unexpected answer in validation from: " + hostname + " id: " + id +
+                        " for domain: " +
+                        domain +
+                        " answer:" +
+                        doc.asXML());
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Returns a new {@link IncomingServerSession} with a domain validated by the Authoritative
+     * Server. New domains may be added to the returned IncomingServerSession after they have
+     * been validated. See
+     * {@link IncomingServerSession#validateSubsequentDomain(org.dom4j.Element)}. The remote
+     * server will be able to send packets through this session whose domains were previously
+     * validated.<p>
+     *
+     * When acting as an Authoritative Server this method will verify the requested key
+     * and will return null since the underlying TCP connection will be closed after sending the
+     * response to the Receiving Server.<p>
+     *
+     * @param reader reader of DOM documents on the connection to the remote server.
+     * @return an IncomingServerSession that was previously validated against the remote server.
+     * @throws IOException if an I/O error occurs while communicating with the remote server.
+     * @throws XmlPullParserException if an error occurs while parsing XML packets.
+     */
+    public IncomingServerSession createIncomingSession(XPPPacketReader reader) throws IOException,
+            XmlPullParserException {
+        XmlPullParser xpp = reader.getXPPParser();
+        StringBuilder sb;
+        StreamError error;
+        if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+
+            StreamID streamID = sessionManager.nextStreamID();
+
+            sb = new StringBuilder();
+            sb.append("<stream:stream");
+            sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            sb.append(" xmlns=\"jabber:server\" xmlns:db=\"jabber:server:dialback\"");
+            sb.append(" id=\"");
+            sb.append(streamID.toString());
+            sb.append("\">");
+            connection.deliverRawText(sb.toString());
+
+            try {
+                Element doc = reader.parseDocument().getRootElement();
+                if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                    if (validateRemoteDomain(doc, streamID)) {
+                        String hostname = doc.attributeValue("from");
+                        // Create a server Session for the remote server
+                        IncomingServerSession session = sessionManager.
+                                createIncomingServerSession(connection, streamID);
+                        // Set the first validated domain as the address of the session
+                        session.setAddress(new JID(null, hostname, null));
+                        // Add the validated domain as a valid domain
+                        session.addValidatedDomain(hostname);
+                        return session;
+                    }
+                }
+                else if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
+                    // When acting as an Authoritative Server the Receiving Server will send a
+                    // db:verify packet for verifying a key that was previously sent by this
+                    // server when acting as the Originating Server
+                    String verifyFROM = doc.attributeValue("from");
+                    String verifyTO = doc.attributeValue("to");
+                    String key = doc.getTextTrim();
+                    String id = doc.attributeValue("id");
+                    Log.debug("AS - Verifying key for host: " + verifyFROM + " id: " + id);
+
+                    // TODO If the value of the 'to' address does not match a recognized hostname,
+                    // then generate a <host-unknown/> stream error condition
+                    // TODO If the value of the 'from' address does not match the hostname
+                    // represented by the Receiving Server when opening the TCP connection, then
+                    // generate an <invalid-from/> stream error condition
+
+                    // Verify the received key
+                    // Created the expected key based on the received ID value and the shared secret
+                    String expectedKey = AuthFactory.createDigest(id, secretKey);
+                    boolean verified = expectedKey.equals(key);
+
+                    // Send the result of the key verification
+                    sb = new StringBuilder();
+                    sb.append("<db:verify");
+                    sb.append(" from=\"" + verifyTO + "\"");
+                    sb.append(" to=\"" + verifyFROM + "\"");
+                    sb.append(" type=\"");
+                    sb.append(verified ? "valid" : "invalid");
+                    sb.append("\" id=\"" + id + "\"/>");
+                    connection.deliverRawText(sb.toString());
+                    Log.debug("AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
+                            verifyFROM +
+                            " id: " +
+                            id);
+                    // Close the underlying connection
+                    connection.close();
+                    Log.debug("AS - Connection closed for host: " + verifyFROM + " id: " + id);
+                    sb = null;
+                    return null;
+                }
+                else {
+                    // The remote server sent an invalid/unknown packet
+                    error = new StreamError(StreamError.Condition.invalid_xml);
+                    sb = new StringBuilder();
+                    sb.append(error.toXML());
+                    connection.deliverRawText(sb.toString());
+                    // Close the underlying connection
+                    connection.close();
+                    return null;
+                }
+            }
+            catch (Exception e) {
+                Log.error("An error occured while creating a server session", e);
+                // Close the underlying connection
+                connection.close();
+                return null;
+            }
+
+        }
+        else {
+            // Include the invalid-namespace stream error condition in the response
+            error = new StreamError(StreamError.Condition.invalid_namespace);
+            sb = new StringBuilder();
+            sb.append(error.toXML());
+            connection.deliverRawText(sb.toString());
+            // Close the underlying connection
+            connection.close();
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns true if the domain requested by the remote server was validated by the Authoritative
+     * Server. To validate the domain a new TCP connection will be established to the
+     * Authoritative Server. The Authoritative Server may be the same Originating Server or
+     * some other machine in the Originating Server's network.<p>
+     *
+     * If the domain was not valid or some error occured while validating the domain then the
+     * underlying TCP connection will be closed.
+     *
+     * @param doc the request for validating the new domain.
+     * @param streamID the stream id generated by this server for the Originating Server.
+     * @return true if the requested domain is valid.
+     */
+    public boolean validateRemoteDomain(Element doc, StreamID streamID) {
+        StreamError error;
+        StringBuilder sb;
+        String recipient = doc.attributeValue("to");
+        String hostname = doc.attributeValue("from");
+        Log.debug("RS - Received dialback key from host: " + hostname + " to: " + recipient);
+        if (!serverName.equals(recipient)) {
+            // address does not match a recognized hostname
+            error = new StreamError(StreamError.Condition.host_unknown);
+            sb = new StringBuilder();
+            sb.append(error.toXML());
+            connection.deliverRawText(sb.toString());
+            // Close the underlying connection
+            connection.close();
+            Log.debug("RS - Error, hostname not recognized: " + recipient);
+            return false;
+        }
+        else {
+            if (sessionManager.getIncomingServerSession(hostname) != null) {
+                // Remote server already has a IncomingServerSession created
+                error = new StreamError(StreamError.Condition.not_authorized);
+                sb = new StringBuilder();
+                sb.append(error.toXML());
+                connection.deliverRawText(sb.toString());
+                // Close the underlying connection
+                connection.close();
+                Log.debug("RS - Error, incoming connection already exists from: " + hostname);
+                return false;
+            }
+            else {
+                String key = doc.getTextTrim();
+
+                DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
+
+                try {
+                    boolean valid = verifyKey(key, streamID.toString(), hostname,
+                            address.getHost(), address.getPort());
+
+                    Log.debug("RS - Sending key verification result to OS: " + hostname);
+                    sb = new StringBuilder();
+                    sb.append("<db:result");
+                    sb.append(" from=\"" + serverName + "\"");
+                    sb.append(" to=\"" + hostname + "\"");
+                    sb.append(" type=\"");
+                    sb.append(valid ? "valid" : "invalid");
+                    sb.append("\"/>");
+                    connection.deliverRawText(sb.toString());
+
+                    if (!valid) {
+                        // Close the underlying connection
+                        connection.close();
+                    }
+                    return valid;
+                }
+                catch (Exception e) {
+                    Log.warn("Error verifying key", e);
+                    // Send a <remote-connection-failed/> stream error condition
+                    // and terminate both the XML stream and the underlying
+                    // TCP connection
+                    error =
+                            new StreamError(StreamError.Condition.remote_connection_failed);
+                    sb = new StringBuilder();
+                    sb.append(error.toXML());
+                    connection.deliverRawText(sb.toString());
+                    // Close the underlying connection
+                    connection.close();
+                    return false;
+                }
+            }
+        }
+    }
+
+    /**
+     * Verifies the key with the Authoritative Server.
+     */
+    private boolean verifyKey(String key, String streamID, String hostname, String host, int port)
+            throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+        // TODO Check if the hostname is in the blacklist
+        XmlPullParserFactory factory = null;
+        XPPPacketReader reader = null;
+        Writer writer = null;
+        StreamError error;
+        // Establish a TCP connection back to the domain name asserted by the Originating Server
+        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
+        Socket socket = SocketFactory.getDefault().createSocket(host, port);
+        Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successfull");
+        try {
+            factory = XmlPullParserFactory.newInstance();
+            reader = new XPPPacketReader();
+            reader.setXPPFactory(factory);
+
+            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
+                    CHARSET));
+            // Get a writer for sending the open stream tag
+            writer =
+                    new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(),
+                            CHARSET));
+            // Send the Authoritative Server a stream header
+            StringBuilder stream = new StringBuilder();
+            stream.append("<stream:stream");
+            stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            stream.append(" xmlns=\"jabber:server\"");
+            stream.append(" xmlns:db=\"jabber:server:dialback\">");
+            writer.write(stream.toString());
+            writer.flush();
+            stream = null;
+
+            // Get the answer from the Authoritative Server
+            XmlPullParser xpp = reader.getXPPParser();
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+            if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+                Log.debug("RS - Asking AS to verify dialback key for id" + streamID);
+                // Request for verification of the key
+                StringBuilder sb = new StringBuilder();
+                sb.append("<db:verify");
+                sb.append(" from=\"" + serverName + "\"");
+                sb.append(" to=\"" + hostname + "\"");
+                sb.append(" id=\"" + streamID + "\">");
+                sb.append(key);
+                sb.append("</db:verify>");
+                writer.write(sb.toString());
+                writer.flush();
+                sb = null;
+
+                try {
+                    Element doc = reader.parseDocument().getRootElement();
+                    if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
+                        if (!streamID.equals(doc.attributeValue("id"))) {
+                            // Include the invalid-id stream error condition in the response
+                            error = new StreamError(StreamError.Condition.invalid_id);
+                            sb = new StringBuilder();
+                            sb.append(error.toXML());
+                            writer.write(sb.toString());
+                            writer.flush();
+                            // Thrown an error so <remote-connection-failed/> stream error
+                            // condition is sent to the Originating Server
+                            throw new RemoteConnectionFailedException("Invalid ID");
+                        }
+                        else if (!serverName.equals(doc.attributeValue("to"))) {
+                            // Include the host-unknown stream error condition in the response
+                            error = new StreamError(StreamError.Condition.host_unknown);
+                            sb = new StringBuilder();
+                            sb.append(error.toXML());
+                            writer.write(sb.toString());
+                            writer.flush();
+                            // Thrown an error so <remote-connection-failed/> stream error
+                            // condition is sent to the Originating Server
+                            throw new RemoteConnectionFailedException("Host unknown");
+                        }
+                        else if (!hostname.equals(doc.attributeValue("from"))) {
+                            // Include the invalid-from stream error condition in the response
+                            error = new StreamError(StreamError.Condition.invalid_from);
+                            sb = new StringBuilder();
+                            sb.append(error.toXML());
+                            writer.write(sb.toString());
+                            writer.flush();
+                            // Thrown an error so <remote-connection-failed/> stream error
+                            // condition is sent to the Originating Server
+                            throw new RemoteConnectionFailedException("Invalid From");
+                        }
+                        else {
+                            boolean valid = "valid".equals(doc.attributeValue("type"));
+                            Log.debug("RS - Key was " + (valid ? "" : "NOT ") +
+                                    "VERIFIED by the Authoritative Server for: " +
+                                    hostname);
+                            return valid;
+                        }
+                    }
+                    else {
+                        Log.debug("db:verify answer was: " + doc.asXML());
+                    }
+                }
+                catch (DocumentException e) {
+                    Log.error("An error occured connecting to the Authoritative Server", e);
+                    // Thrown an error so <remote-connection-failed/> stream error condition is
+                    // sent to the Originating Server
+                    throw new RemoteConnectionFailedException("Error connecting to the Authoritative Server");
+                }
+
+            }
+            else {
+                // Include the invalid-namespace stream error condition in the response
+                error = new StreamError(StreamError.Condition.invalid_namespace);
+                StringBuilder sb = new StringBuilder();
+                sb.append(error.toXML());
+                writer.write(sb.toString());
+                writer.flush();
+                // Thrown an error so <remote-connection-failed/> stream error condition is
+                // sent to the Originating Server
+                throw new RemoteConnectionFailedException("Invalid namespace");
+            }
+        }
+        finally {
+            try {
+                Log.debug("RS - Closing connection to Authoritative Server: " + hostname);
+                // Close the stream
+                StringBuilder sb = new StringBuilder();
+                sb.append("</stream:stream>");
+                writer.write(sb.toString());
+                writer.flush();
+                // Close the TCP connection
+                socket.close();
+            }
+            catch (IOException ioe) {
+            }
+        }
+        return false;
+    }
+}
+

@@ -233,7 +233,6 @@ public class XMPPServer {
         loadModule(RosterManager.class.getName());
         loadModule(PrivateStorage.class.getName());
         // Load core modules
-        loadModule(ConnectionManagerImpl.class.getName());
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
         loadModule(PacketRouter.class.getName());
@@ -259,6 +258,9 @@ public class XMPPServer {
         loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
+        // Load this module always last since we don't want to start listening for clients
+        // before the rest of the modules have been started
+        loadModule(ConnectionManagerImpl.class.getName());
     }
 
     /**

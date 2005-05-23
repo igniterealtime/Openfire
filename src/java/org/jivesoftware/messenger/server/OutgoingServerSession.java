@@ -110,6 +110,8 @@ public class OutgoingServerSession extends Session {
                             session.addHostname(hostname);
                             // Add the validated domain as an authenticated domain
                             session.addAuthenticatedDomain(domain);
+                            // Notify the SessionManager that a new session has been created
+                            sessionManager.outgoingServerSessionCreated(session);
                             return true;
                         }
                         else {

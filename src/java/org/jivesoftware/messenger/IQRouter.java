@@ -142,12 +142,12 @@ public class IQRouter extends BasicModule {
     private void handle(IQ packet) {
         JID recipientJID = packet.getTo();
         try {
-            // Check for registered components and/or services
+            // Check for registered components, services or remote servers
             if (recipientJID != null) {
                 try {
                     RoutableChannelHandler serviceRoute = routingTable.getRoute(recipientJID);
                     if (!(serviceRoute instanceof ClientSession)) {
-                        // A component/service was found that can handle the Packet
+                        // A component/service/remote server was found that can handle the Packet
                         serviceRoute.process(packet);
                         return;
                     }

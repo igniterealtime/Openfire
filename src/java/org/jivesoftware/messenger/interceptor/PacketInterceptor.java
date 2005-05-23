@@ -16,7 +16,7 @@ import org.xmpp.packet.Packet;
 
 /**
  * A packet interceptor encapsulates an action that is invoked on a packet immediately
- * before or after it was received by a SocketReadThread and also when the packet is about to
+ * before or after it was received by a SocketReader and also when the packet is about to
  * be sent in SocketConnection. These types of actions fall into two broad categories:<ul>
  *      <li> Interceptors that reject the packet by throwing an exception (only when the packet
  *            has not been processed yet).

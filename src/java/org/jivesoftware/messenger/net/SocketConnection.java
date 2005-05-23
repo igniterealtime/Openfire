@@ -39,14 +39,14 @@ import java.util.Iterator;
  */
 public class SocketConnection implements Connection {
 
-    private Map listeners = new HashMap();
-
-    private Socket socket;
-
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.
      */
-    private String charset = "UTF-8";
+    public static final String CHARSET = "UTF-8";
+
+    private Map listeners = new HashMap();
+
+    private Socket socket;
 
     private Writer writer;
 
@@ -77,7 +77,7 @@ public class SocketConnection implements Connection {
 
         this.secure = isSecure;
         this.socket = socket;
-        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), charset));
+        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
         xmlSerializer = new XMLWriter(writer);
     }
@@ -261,6 +261,28 @@ public class SocketConnection implements Connection {
             }
             catch (PacketRejectedException e) {
                 // An interceptor rejected the packet so do nothing
+            }
+        }
+    }
+
+    public void deliverRawText(String text) {
+        if (!isClosed()) {
+            boolean errorDelivering = false;
+            synchronized (writer) {
+                try {
+                    writer.write(text);
+                    if (flashClient) {
+                        writer.write('\0');
+                    }
+                    writer.flush();
+                }
+                catch (IOException e) {
+                    Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
+                    errorDelivering = true;
+                }
+            }
+            if (errorDelivering) {
+                close();
             }
         }
     }

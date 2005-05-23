@@ -127,6 +127,19 @@ public interface Connection {
     public void deliver(Packet packet) throws UnauthorizedException;
 
     /**
+     * Delivers raw text to this connection. This is a very low level way for sending
+     * XML stanzas to the client. This method should not be used unless you have very
+     * good reasons for not using {@link #deliver(org.xmpp.packet.Packet)}.<p>
+     *
+     * This method avoids having to get the writer of this connection and mess directly
+     * with the writer. Therefore, this method ensures a correct delivery of the stanza
+     * even if other threads were sending data concurrently.
+     *
+     * @param text the XML stanzas represented kept in a String.
+     */
+    public void deliverRawText(String text);
+
+    /**
      * Returns true if the connected client is a flash client. Flash clients need
      * to receive a special character (i.e. \0) at the end of each xml packet. Flash
      * clients may send the character \0 in incoming packets and may start a connection

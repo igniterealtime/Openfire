@@ -58,6 +58,17 @@ class ServerDialback {
      */
     private static final String secretKey = StringUtils.randomString(10);
 
+    private static XmlPullParserFactory FACTORY = null;
+
+    static {
+        try {
+            FACTORY = XmlPullParserFactory.newInstance();
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+    }
+
     private Connection connection;
     private String serverName;
     private SessionManager sessionManager = SessionManager.getInstance();
@@ -440,7 +451,6 @@ class ServerDialback {
     private boolean verifyKey(String key, String streamID, String hostname, String host, int port)
             throws IOException, XmlPullParserException, RemoteConnectionFailedException {
         // TODO Check if the hostname is in the blacklist
-        XmlPullParserFactory factory = null;
         XPPPacketReader reader = null;
         Writer writer = null;
         StreamError error;
@@ -449,9 +459,8 @@ class ServerDialback {
         Socket socket = SocketFactory.getDefault().createSocket(host, port);
         Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successfull");
         try {
-            factory = XmlPullParserFactory.newInstance();
             reader = new XPPPacketReader();
-            reader.setXPPFactory(factory);
+            reader.setXPPFactory(FACTORY);
 
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
                     CHARSET));

@@ -23,7 +23,12 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +68,7 @@ public class PluginServlet extends HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
-    {
+            throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -83,7 +87,7 @@ public class PluginServlet extends HttpServlet {
                     return;
                 }
                 // Handle servlet requests.
-                else if (servlets.containsKey(pathInfo.substring(1).toLowerCase())) {
+                else if (getServlet(pathInfo) != null) {
                     handleServlet(pathInfo, request, response);
                 }
                 // Anything else results in a 404.
@@ -226,17 +230,15 @@ public class PluginServlet extends HttpServlet {
      * If no servlet is found, a 404 error is returned.
      *
      * @param pathInfo the extra path info.
-     * @param request the request object.
+     * @param request  the request object.
      * @param response the response object.
      * @throws ServletException if a servlet exception occurs while handling the request.
-     * @throws IOException if an IOException occurs while handling the request.
+     * @throws IOException      if an IOException occurs while handling the request.
      */
     private void handleServlet(String pathInfo, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, IOException
-    {
+                               HttpServletResponse response) throws ServletException, IOException {
         // Strip the starting "/" from the path to find the JSP URL.
-        String jspURL = pathInfo.substring(1);
-        HttpServlet servlet = servlets.get(jspURL);
+        HttpServlet servlet = getServlet(pathInfo);
         if (servlet != null) {
             servlet.service(request, response);
             return;
@@ -245,6 +247,32 @@ public class PluginServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
+    }
+
+    /**
+     * Returns the correct servlet with mapping checks.
+     *
+     * @param pathInfo the pathinfo to map to the servlet.
+     * @return the mapped servlet, or null if no servlet was found.
+     */
+    private HttpServlet getServlet(String pathInfo) {
+        pathInfo = pathInfo.substring(1).toLowerCase();
+        
+        HttpServlet servlet = servlets.get(pathInfo);
+        if (servlet == null) {
+            for (String key : servlets.keySet()) {
+                int index = key.indexOf("/*");
+                String searchkey = key;
+                if (index != -1) {
+                    searchkey = key.substring(0, index);
+                }
+                if (searchkey.startsWith(pathInfo) || pathInfo.startsWith(searchkey)) {
+                    servlet = servlets.get(key);
+                    break;
+                }
+            }
+        }
+        return servlet;
     }
 
     /**

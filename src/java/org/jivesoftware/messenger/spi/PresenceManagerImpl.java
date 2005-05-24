@@ -11,20 +11,28 @@
 
 package org.jivesoftware.messenger.spi;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.roster.Roster;
+import org.jivesoftware.messenger.roster.RosterItem;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 import org.xmpp.component.Component;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -77,16 +85,60 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         return presence;
     }
 
-    public Collection<Presence> getPresences(User user) {
-        if (user == null) {
+    public Collection<Presence> getPresences(String username) {
+        if (username == null) {
             return null;
         }
         List<Presence> presences = new ArrayList<Presence>();
 
-        for (ClientSession session : sessionManager.getSessions(user.getUsername())) {
+        for (ClientSession session : sessionManager.getSessions(username)) {
             presences.add(session.getPresence());
         }
         return Collections.unmodifiableCollection(presences);
+    }
+
+    public void handleProbe(Presence packet) throws UnauthorizedException {
+        String username = packet.getTo().getNode();
+        // Check for a cached roster:
+        Roster roster = (Roster)CacheManager.getCache("username2roster").get(username);
+        if (roster == null) {
+            synchronized(username.intern()) {
+                roster = (Roster)CacheManager.getCache("username2roster").get(username);
+                if (roster == null) {
+                    // Not in cache so load a new one:
+                    roster = new Roster(username);
+                    CacheManager.getCache("username2roster").put(username, roster);
+                }
+            }
+        }
+        try {
+            RosterItem item = roster.getRosterItem(packet.getFrom());
+            if (item.getSubStatus() == RosterItem.SUB_FROM
+                    || item.getSubStatus() == RosterItem.SUB_BOTH) {
+                probePresence(packet.getFrom(),  packet.getTo());
+            }
+            else {
+                PacketError.Condition error = PacketError.Condition.not_authorized;
+                if ((item.getSubStatus() == RosterItem.SUB_NONE &&
+                        item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) ||
+                        (item.getSubStatus() == RosterItem.SUB_TO &&
+                        item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE)) {
+                    error = PacketError.Condition.forbidden;
+                }
+                Presence presenceToSend = new Presence();
+                presenceToSend.setError(error);
+                presenceToSend.setTo(packet.getFrom());
+                presenceToSend.setFrom(packet.getTo());
+                deliverer.deliver(presenceToSend);
+            }
+        }
+        catch (UserNotFoundException e) {
+            Presence presenceToSend = new Presence();
+            presenceToSend.setError(PacketError.Condition.forbidden);
+            presenceToSend.setTo(packet.getFrom());
+            presenceToSend.setFrom(packet.getTo());
+            deliverer.deliver(presenceToSend);
+        }
     }
 
     public void probePresence(JID prober, JID probee) {
@@ -155,7 +207,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 String serverDomain = server.getServerInfo().getName();
                 // Check if the probee may be hosted by this server
                 if (!probee.getDomain().contains(serverDomain)) {
-                    // TODO Implete when s2s is implemented
+                    // Send the probe presence to the remote server
+                    Presence probePresence = new Presence();
+                    probePresence.setType(Presence.Type.probe);
+                    probePresence.setFrom(prober);
+                    probePresence.setTo(probee.toBareJID());
+                    // Send the probe presence
+                    deliverer.deliver(probePresence);
                 }
                 else {
                     // The probee may be related to a component that has not yet been connected so

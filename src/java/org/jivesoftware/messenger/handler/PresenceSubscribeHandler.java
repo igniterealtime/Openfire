@@ -11,18 +11,19 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.roster.Roster;
 import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.user.*;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Packet;
+import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -76,6 +77,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private RoutingTable routingTable;
     private XMPPServer localServer;
     private PacketDeliverer deliverer;
+    private PresenceManager presenceManager;
 
     public PresenceSubscribeHandler() {
         super("Presence subscription handler");
@@ -102,6 +104,12 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 // then the packet will be delivered based on its recipient and sender.
                 ChannelHandler handler = routingTable.getRoute(recipientJID);
                 handler.process(presence.createCopy());
+
+                if (getRoster(recipientJID) == null && type == Presence.Type.subscribed) {
+                    // Send the presence of the local user to the remote user. The remote user
+                    // subscribed to the presence of the local user and the local user accepted
+                    presenceManager.probePresence(recipientJID, senderJID);
+                }
             }
             catch (NoSuchRouteException e) {
                 deliverer.deliver(presence.createCopy());
@@ -378,5 +386,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         localServer = server;
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
+        presenceManager = server.getPresenceManager();
     }
 }

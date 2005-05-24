@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 
@@ -58,10 +59,10 @@ public interface PresenceManager {
     /**
      * Returns all presences for the user, or <tt>null</tt> if the user is unavailable.
      *
-     * @param user the user.
+     * @param username the name of the user.
      * @return the Presence packets for all the users's connected sessions.
      */
-    public Collection<Presence> getPresences(User user);
+    public Collection<Presence> getPresences(String username);
 
     /**
      * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
@@ -91,4 +92,14 @@ public interface PresenceManager {
      *        database.
      */
     public void deleteLastUnavailablePresence(String username);
+
+    /**
+     * Handle a presence probe sent by a remote server. The logic to apply is the following: If
+     * the remote user is not in the local user's roster with a subscription state of "From", or
+     * "Both", then return a presence stanza of type "error" in response to the presence probe.
+     * Otherwise, answer the presence of the local user sessions or the last unavailable presence.
+     *
+     * @param packet the received probe presence from a remote server.
+     */
+    void handleProbe(Presence packet) throws UnauthorizedException;
 }

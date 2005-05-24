@@ -35,6 +35,7 @@ public class PresenceRouter extends BasicModule {
     private RoutingTable routingTable;
     private PresenceUpdateHandler updateHandler;
     private PresenceSubscribeHandler subscribeHandler;
+    private PresenceManager presenceManager;
     private SessionManager sessionManager;
 
     /**
@@ -101,6 +102,10 @@ public class PresenceRouter extends BasicModule {
             {
                 subscribeHandler.process(packet);
             }
+            else if (Presence.Type.probe == type) {
+                // Handle a presence probe sent by a remote server
+                presenceManager.handleProbe(packet);
+            }
             else {
                 // It's an unknown or ERROR type, just deliver it because there's nothing else to do with it
                 routingTable.getRoute(recipientJID).process(packet);
@@ -127,6 +132,7 @@ public class PresenceRouter extends BasicModule {
         routingTable = server.getRoutingTable();
         updateHandler = server.getPresenceUpdateHandler();
         subscribeHandler = server.getPresenceSubscribeHandler();
+        presenceManager = server.getPresenceManager();
         sessionManager = server.getSessionManager();
     }
 }

@@ -68,7 +68,7 @@ public class SocketAcceptThread extends Thread {
 
     public SocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
             throws IOException {
-        super("Socket Listener");
+        super("Socket Listener at port " + serverPort.getPort());
         this.connManager = connManager;
         this.serverPort = serverPort;
         String interfaceName = serverPort.getInterfaceName();

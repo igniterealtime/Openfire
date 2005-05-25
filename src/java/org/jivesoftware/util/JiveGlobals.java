@@ -637,7 +637,7 @@ public class JiveGlobals {
 
    /**
     * Allows the name of the local config file name to be changed. The
-    * default is "jive_startup.xml".
+    * default is "jive-messenger.xml".
     *
     * @param configName the name of the config file.
     */
@@ -650,13 +650,12 @@ public class JiveGlobals {
      *
      * @return the name of the config file.
      */
-     static String getConfigName() {
-         if (JIVE_CONFIG_FILENAME == null) {
-             throw new IllegalStateException("Need to set the configuration filename to use " +
-                     "before sending this message");
-         };
+    static String getConfigName() {
+        if (JIVE_CONFIG_FILENAME == null) {
+            JIVE_CONFIG_FILENAME = "jive-messenger.xml";
+        };
         return JIVE_CONFIG_FILENAME;
-     }
+    }
 
     /**
      * Returns true if in setup mode.

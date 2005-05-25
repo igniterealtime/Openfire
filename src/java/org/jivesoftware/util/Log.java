@@ -27,6 +27,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * Simple wrapper to the incorporated LogKit to log under a single logging name.
@@ -133,6 +136,10 @@ public class Log {
         createLogger(infoPattern, logNameInfo, maxInfoSize, infoLog, Priority.INFO);
         createLogger(warnPattern, logNameWarn, maxWarnSize, warnLog, Priority.WARN);
         createLogger(errorPattern, logNameError, maxErrorSize, errorLog, Priority.ERROR);
+
+        // set up the ties into jdk logging
+        Handler jdkLogHandler = new JiveLogHandler();
+        java.util.logging.Logger.getLogger("").addHandler(jdkLogHandler);
     }
 
     private static void createLogger(String pattern, String logName, long maxLogSize,
@@ -406,4 +413,66 @@ public class Log {
             System.err.print("\n");
         }
     }
+
+    private static final class JiveLogHandler extends Handler {
+
+        public void publish(LogRecord record) {
+
+            Level level = record.getLevel();
+            Throwable throwable = record.getThrown();
+
+
+            if (Level.SEVERE.equals(level)) {
+
+                if (throwable != null) {
+                    Log.error(record.getMessage(), throwable);
+                }
+                else {
+                    Log.error(record.getMessage());
+                }
+
+            }
+            else if (Level.WARNING.equals(level)) {
+
+                if (throwable != null) {
+                    Log.warn(record.getMessage(), throwable);
+                }
+                else {
+                    Log.warn(record.getMessage());
+                }
+
+
+            }
+            else if (Level.INFO.equals(level)) {
+
+                if (throwable != null) {
+                    Log.info(record.getMessage(), throwable);
+                }
+                else {
+                    Log.info(record.getMessage());
+                }
+
+            }
+            else {
+                // else FINE,FINER,FINEST
+
+                if (throwable != null) {
+                    Log.debug(record.getMessage(), throwable);
+                }
+                else {
+                    Log.debug(record.getMessage());
+                }
+
+            }
+        }
+
+        public void flush() {
+            // do nothing
+        }
+
+        public void close() throws SecurityException {
+            // do nothing
+        }
+    }
+
 }

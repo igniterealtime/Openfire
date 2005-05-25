@@ -172,6 +172,73 @@ public class DbConnectionManager {
     }
 
     /**
+     * Closes a prepared statement and database connection (returning the connection to
+     * the connection pool). This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     * Connection con = null;
+     * PrepatedStatment pstmt = null;
+     * try {
+     *     con = ConnectionManager.getConnection();
+     *     pstmt = con.prepareStatement("select * from blah");
+     *     ....
+     * }
+     * catch (SQLException sqle) {
+     *     Log.error(sqle);
+     * }
+     * finally {
+     *     DbConnectionManager.closeConnection(pstmt, con);
+     * }</pre>
+     *
+     * @param pstmt the prepated statement.
+     * @param con the connection.
+     */
+    public static void closeConnection(PreparedStatement pstmt, Connection con) {
+        try {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        closeConnection(con);
+    }
+
+    /**
+     * Closes a database connection (returning the connection to the connection pool). Any
+     * statements associated with the connection should be closed before calling this method.
+     * This method should be called within the finally section of your database logic, as
+     * in the following example:
+     *
+     * <pre>
+     * Connection con = null;
+     * try {
+     *     con = ConnectionManager.getConnection();
+     *     ....
+     * }
+     * catch (SQLException sqle) {
+     *     Log.error(sqle);
+     * }
+     * finally {
+     *     DbConnectionManager.closeConnection(con);
+     * }</pre>
+     *
+     * @param con the connection.
+     */
+    public static void closeConnection(Connection con) {
+        try {
+            if (con != null) {
+                con.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+    /**
      * Creates a scroll insensitive Statement if the JDBC driver supports it, or a normal
      * Statement otherwise.
      *

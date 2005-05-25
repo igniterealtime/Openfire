@@ -117,6 +117,8 @@ class ServerDialback {
             // Establish a TCP connection to the Receiving Server
             Log.debug("OS - Trying to connect to " + hostname + ":" + port);
             Socket socket = SocketFactory.getDefault().createSocket(hostname, port);
+            // Set a read timeout of 60 seconds during the dialback operation. Then reset to 0.
+            socket.setSoTimeout(60000);
             Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
@@ -143,6 +145,8 @@ class ServerDialback {
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
                 String id = xpp.getAttributeValue("", "id");
                 if (authenticateDomain(reader, domain, hostname, id)) {
+                    // Reset the read timeout to infinite.
+                    socket.setSoTimeout(0);
                     // Domain was validated so create a new OutgoingServerSession
                     StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
                     OutgoingServerSession session = new OutgoingServerSession(domain, connection,
@@ -457,6 +461,8 @@ class ServerDialback {
         // Establish a TCP connection back to the domain name asserted by the Originating Server
         Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
         Socket socket = SocketFactory.getDefault().createSocket(host, port);
+        // Set a read timeout of 60 seconds.
+        socket.setSoTimeout(60000);
         Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successfull");
         try {
             reader = new XPPPacketReader();

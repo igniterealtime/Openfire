@@ -106,7 +106,9 @@ public class SequenceManager {
         JiveID id = o.getClass().getAnnotation(JiveID.class);
 
         if(id == null) {
-            throw new IllegalArgumentException("Annotation JiveID must be defined in the class");
+            Log.error("Annotation JiveID must be defined in the class "+o.getClass());
+            throw new IllegalArgumentException(
+                    "Annotation JiveID must be defined in the class "+o.getClass());
         }
 
         return nextID(id.value());

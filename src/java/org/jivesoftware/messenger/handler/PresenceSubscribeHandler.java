@@ -110,6 +110,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // subscribed to the presence of the local user and the local user accepted
                     presenceManager.probePresence(recipientJID, senderJID);
                 }
+                else if (getRoster(recipientJID) == null && type == Presence.Type.unsubscribed) {
+                    // Send unavailable presence from all of the local user's available resources
+                    // to the remote user
+                    presenceManager.sendUnavailableFromSessions(recipientJID, senderJID);
+                }
             }
             catch (NoSuchRouteException e) {
                 deliverer.deliver(presence.createCopy());
@@ -249,7 +254,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subsTable.put(Presence.Type.subscribed, new Change(RosterItem.RECV_NONE, null, null));
         // Owner asking to unsubscribe to item
         // This makes no sense (there is no subscription to unsubscribe from)
-        subsTable.put(Presence.Type.unsubscribe, new Change(null, null, null));
+        subsTable.put(Presence.Type.unsubscribe, new Change(null, RosterItem.SUB_NONE, null));
         // Item has subscription from owner revoked
         // Immediately transition to NONE state
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, RosterItem.SUB_NONE, null));
@@ -263,7 +268,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subrTable.put(Presence.Type.subscribed, new Change(null, RosterItem.SUB_BOTH, RosterItem.ASK_NONE));
         // Item wishes to unsubscribe from owner
         // This is the normal mechanism of removing subscription
-        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_UNSUBSCRIBE, null, null));
+        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_UNSUBSCRIBE, RosterItem.SUB_NONE, null));
         // Owner has subscription to item revoked
         // Valid response if owner requested subscription and item is denying request
         subrTable.put(Presence.Type.unsubscribed, new Change(null, null, RosterItem.ASK_NONE));
@@ -282,7 +287,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subsTable.put(Presence.Type.subscribed, new Change(RosterItem.RECV_NONE, RosterItem.SUB_BOTH, null));
         // Owner asking to unsubscribe to item
         // Normal method of removing subscription
-        subsTable.put(Presence.Type.unsubscribe, new Change(null, null, RosterItem.ASK_UNSUBSCRIBE));
+        subsTable.put(Presence.Type.unsubscribe, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_UNSUBSCRIBE));
         // Item has subscription from owner revoked
         // No subscription to unsub, makes sense if denying subscription request or for
         // situations where the original unsubscribed got lost
@@ -295,7 +300,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subrTable.put(Presence.Type.subscribed, new Change(null, null, RosterItem.ASK_NONE));
         // Item wishes to unsubscribe from owner
         // There is no subscription. May be trying to cancel earlier subscribe request.
-        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_NONE, null, null));
+        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_NONE, RosterItem.SUB_NONE, null));
         // Owner has subscription to item revoked
         // Setting subscription to none
         subrTable.put(Presence.Type.unsubscribed, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_NONE));
@@ -315,7 +320,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subsTable.put(Presence.Type.subscribed, new Change(RosterItem.RECV_NONE, null, null));
         // Owner asking to unsubscribe to item
         // Set flags
-        subsTable.put(Presence.Type.unsubscribe, new Change(null, null, RosterItem.ASK_UNSUBSCRIBE));
+        subsTable.put(Presence.Type.unsubscribe, new Change(null, RosterItem.SUB_FROM, RosterItem.ASK_UNSUBSCRIBE));
         // Item has subscription from owner revoked
         // Immediately transition them to TO state
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, RosterItem.SUB_TO, null));
@@ -329,7 +334,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         subrTable.put(Presence.Type.subscribed, new Change(null, null, RosterItem.ASK_NONE));
         // Item wishes to unsubscribe from owner
         // This is the normal mechanism of removing subscription
-        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_UNSUBSCRIBE, null, null));
+        subrTable.put(Presence.Type.unsubscribe, new Change(RosterItem.RECV_UNSUBSCRIBE, RosterItem.SUB_TO, null));
         // Owner has subscription to item revoked
         // Immediately downgrade state to FROM
         subrTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, RosterItem.SUB_FROM, RosterItem.ASK_NONE));

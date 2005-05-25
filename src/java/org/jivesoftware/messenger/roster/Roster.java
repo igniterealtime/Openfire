@@ -48,7 +48,7 @@ public class Roster implements Cacheable {
     private RosterItemProvider rosterItemProvider;
     private String username;
     private SessionManager sessionManager;
-    private XMPPServer server;
+    private XMPPServer server = XMPPServer.getInstance();
     private RoutingTable routingTable;
     private PresenceManager presenceManager;
     /**
@@ -303,10 +303,9 @@ public class Roster implements Cacheable {
             rosterItemProvider.updateItem(username, item);
         }
         // broadcast roster update
-        if (!(item.getSubStatus() == RosterItem.SUB_NONE
-                && item.getAskStatus() == RosterItem.ASK_NONE)) {
+        //if (item.getAskStatus() != RosterItem.ASK_NONE) {
             broadcast(item, true);
-        }
+        //}
         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
             probePresence(item.getJid());
         }
@@ -327,7 +326,7 @@ public class Roster implements Cacheable {
             throw new SharedGroupException("Cannot remove contact that belongs to a shared group");
         }
 
-        /*RosterItem.SubType subType = itemToRemove.getSubStatus();
+        RosterItem.SubType subType = itemToRemove.getSubStatus();
         // Cancel any existing presence subscription between the user and the contact
         if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
             Presence presence = new Presence();
@@ -343,7 +342,7 @@ public class Roster implements Cacheable {
             presence.setTo(itemToRemove.getJid());
             presence.setType(Presence.Type.unsubscribed);
             server.getPacketRouter().route(presence);
-        }*/
+        }
         // If removing the user was successful, remove the user from the subscriber list:
         RosterItem item = rosterItems.remove(user.toBareJID());
         if (item != null) {
@@ -359,14 +358,14 @@ public class Roster implements Cacheable {
             roster.setType(IQ.Type.set);
             roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
             broadcast(roster);
-            /*// Send unavailable presence from all of the user's available resources to the contact
+            // Send unavailable presence from all of the user's available resources to the contact
             for (ClientSession session : sessionManager.getSessions(username)) {
                 Presence presence = new Presence();
                 presence.setFrom(session.getAddress());
                 presence.setTo(item.getJid());
                 presence.setType(Presence.Type.unavailable);
                 server.getPacketRouter().route(presence);
-            }*/
+            }
         }
         return item;
 
@@ -403,10 +402,9 @@ public class Roster implements Cacheable {
             for (Group sharedGroup : item.getSharedGroups()) {
                 groups.add(sharedGroup.getProperties().get("sharedRoster.displayName"));
             }
-            if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                    item.getAskStatus() != RosterItem.ASK_NONE) {
+            //if (item.getAskStatus() != RosterItem.ASK_NONE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
-            }
+            //}
         }
         return roster;
     }
@@ -485,9 +483,6 @@ public class Roster implements Cacheable {
     }
 
     private void broadcast(org.xmpp.packet.Roster roster) {
-        if (server == null) {
-            server = XMPPServer.getInstance();
-        }
         JID recipient = server.createJID(username, null);
         roster.setTo(recipient);
         if (sessionManager == null) {

@@ -19,9 +19,11 @@ import org.dom4j.Element;
 import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
 import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.database.JiveID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
@@ -34,6 +36,7 @@ import org.xmpp.packet.Packet;
  *
  * @author Gaston Dombiak
  */
+@JiveID(JiveConstants.MUC_ROOM)
 public interface MUCRoom {
 
     /**

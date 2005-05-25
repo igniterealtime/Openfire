@@ -22,6 +22,8 @@ import org.jivesoftware.messenger.group.Group;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.database.JiveID;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -38,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Gaston Dombiak
  */
+@JiveID(JiveConstants.ROSTER)
 public class Roster implements Cacheable {
 
     /**

@@ -85,6 +85,34 @@ public class SequenceManager {
     }
 
     /**
+     * Method for objects that have defined the annotation {@link JiveID} in their class.
+     *
+     * The annotation JiveID should contain the id type for the object (the same number you would
+     * use to call nextID(int type))
+     *
+     * Example class definition:
+     *
+     * <code>
+     * \@JiveID(10)
+     * public class MyClass {
+     *
+     * }
+     * </code>
+     *
+     * @param o object that has annotation JiveID
+     * @return the next int
+     */
+    public static long nextID(Object o) {
+        JiveID id = o.getClass().getAnnotation(JiveID.class);
+
+        if(id == null) {
+            throw new IllegalArgumentException("Annotation JiveID must be defined in the class");
+        }
+
+        return nextID(id.value());
+    }
+
+    /**
      * Used to set the blocksize of a given SequenceManager. If no SequenceManager has been registered
      * for the type we will verify the type is valid and then create a new sequence manager for it.
      *

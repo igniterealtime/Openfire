@@ -172,6 +172,10 @@ public class SessionManager extends BasicModule {
          * @param priority The new priority for the session
          */
         public void changePriority(JID sender, int priority) {
+            if (sender.getNode() == null) {
+                // Do nothing if the session belongs to an anonymous user
+                return;
+            }
             String resource = sender.getResource();
             if (resources.containsKey(resource)) {
                 synchronized (priorityList) {

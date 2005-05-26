@@ -11,7 +11,7 @@
 	<adminconsole>		
 		<tab id="tab-server">
 			<sidebar id="sidebar-server-settings">
-				<item id="search-props-edit-form" name="Search Search Properties"
+				<item id="search-props-edit-form" name="Search Properties"
 					url="search-props-edit-form.jsp"
 					description="Edit search service properties" />
 			</sidebar>

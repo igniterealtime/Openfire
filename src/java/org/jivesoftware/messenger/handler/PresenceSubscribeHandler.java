@@ -186,23 +186,34 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private boolean manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
             throws UserAlreadyExistsException, SharedGroupException
     {
-        boolean modified = false;
+        RosterItem item = null;
+        RosterItem.AskType oldAsk = null;
+        RosterItem.SubType oldSub = null;
+        RosterItem.RecvType oldRecv = null;
         try {
-            RosterItem item;
             if (roster.isRosterItem(target)) {
                 item = roster.getRosterItem(target);
             }
             else {
                 item = roster.createRosterItem(target);
             }
-            modified = updateState(item, type, isSending);
-            roster.updateRosterItem(item);
+            // Get a snapshot of the item state
+            oldAsk = item.getAskStatus();
+            oldSub = item.getSubStatus();
+            oldRecv = item.getRecvStatus();
+            // Update the item state based in the received presence type
+            updateState(item, type, isSending);
+            // Update the roster IF the item state has changed
+            if (oldAsk != item.getAskStatus() || oldSub != item.getSubStatus() ||
+                    oldRecv != item.getRecvStatus()) {
+                roster.updateRosterItem(item);
+            }
         }
         catch (UserNotFoundException e) {
             // Should be there because we just checked that it's an item
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
-        return modified;
+        return oldSub != item.getSubStatus();
     }
 
     /**
@@ -385,9 +396,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param item      The item to be updated
      * @param action    The new state change request
      * @param isSending True if the roster owner of the item is sending the new state change request
-     * @return true if the subscription state has changed.
      */
-    private static boolean updateState(RosterItem item, Presence.Type action, boolean isSending) {
+    private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
         Map srTable = (Map)stateTable.get(item.getSubStatus());
         Map changeTable = (Map)srTable.get(isSending ? "send" : "recv");
         Change change = (Change)changeTable.get(action);
@@ -402,7 +412,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
             item.setRecvStatus(change.newRecv);
         }
-        return modified;
     }
 
     public void initialize(XMPPServer server) {

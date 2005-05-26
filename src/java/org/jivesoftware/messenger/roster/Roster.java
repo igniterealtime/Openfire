@@ -309,9 +309,9 @@ public class Roster implements Cacheable {
         //if (item.getAskStatus() != RosterItem.ASK_NONE) {
             broadcast(item, true);
         //}
-        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
+        /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
             probePresence(item.getJid());
-        }
+        }*/
     }
 
     /**
@@ -361,14 +361,6 @@ public class Roster implements Cacheable {
             roster.setType(IQ.Type.set);
             roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
             broadcast(roster);
-            // Send unavailable presence from all of the user's available resources to the contact
-            for (ClientSession session : sessionManager.getSessions(username)) {
-                Presence presence = new Presence();
-                presence.setFrom(session.getAddress());
-                presence.setTo(item.getJid());
-                presence.setType(Presence.Type.unavailable);
-                server.getPacketRouter().route(presence);
-            }
         }
         return item;
 

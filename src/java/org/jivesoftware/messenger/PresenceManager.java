@@ -101,5 +101,16 @@ public interface PresenceManager {
      *
      * @param packet the received probe presence from a remote server.
      */
-    void handleProbe(Presence packet) throws UnauthorizedException;
+    public void handleProbe(Presence packet) throws UnauthorizedException;
+
+    /**
+     * Sends unavailable presence from all of the user's available resources to the remote user.
+     * When a remote user unsubscribes from the presence of a local user then the server should
+     * send to the remote user unavailable presence from all of the local user's available
+     * resources.
+     *
+     * @param recipientJID JID of the remote user that will receive the unavailable presences.
+     * @param userJID JID of the local user.
+     */
+    public void sendUnavailableFromSessions(JID recipientJID, JID userJID);
 }

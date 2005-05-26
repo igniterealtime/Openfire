@@ -89,28 +89,40 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             JID senderJID = presence.getFrom();
             JID recipientJID = presence.getTo();
             Presence.Type type = presence.getType();
-            Roster roster = getRoster(senderJID);
             try {
-                if (roster != null) {
-                    manageSub(recipientJID, true, type, roster);
+                Roster senderRoster = getRoster(senderJID);
+                boolean senderSubChanged = false;
+                if (senderRoster != null) {
+                    senderSubChanged = manageSub(recipientJID, true, type, senderRoster);
                 }
-                roster = getRoster(recipientJID);
-                if (roster != null) {
-                    manageSub(senderJID, false, type, roster);
+                Roster recipientRoster = getRoster(recipientJID);
+                boolean recipientSubChanged = false;
+                if (recipientRoster != null) {
+                    recipientSubChanged = manageSub(senderJID, false, type, recipientRoster);
                 }
-                // Try to obtain a handler for the packet based on the routes. If the handler is
-                // a module, the module will be able to handle the packet. If the handler is a
-                // Session the packet will be routed to the client. If a route cannot be found
-                // then the packet will be delivered based on its recipient and sender.
-                ChannelHandler handler = routingTable.getRoute(recipientJID);
-                handler.process(presence.createCopy());
 
-                if (getRoster(recipientJID) == null && type == Presence.Type.subscribed) {
-                    // Send the presence of the local user to the remote user. The remote user
-                    // subscribed to the presence of the local user and the local user accepted
-                    presenceManager.probePresence(recipientJID, senderJID);
+                // Do not forward the packet to the recipient if the presence is of type subscribed
+                // and the recipient user has not changed its subscription state.
+                if (!(type == Presence.Type.subscribed && recipientRoster != null &&
+                        !recipientSubChanged)) {
+                    // Try to obtain a handler for the packet based on the routes. If the handler is
+                    // a module, the module will be able to handle the packet. If the handler is a
+                    // Session the packet will be routed to the client. If a route cannot be found
+                    // then the packet will be delivered based on its recipient and sender.
+                    ChannelHandler handler = routingTable.getRoute(recipientJID);
+                    Presence presenteToSend = presence.createCopy();
+                    // Stamp the presence with the user's bare JID as the 'from' address
+                    presenteToSend.setFrom(senderJID.toBareJID());
+                    handler.process(presenteToSend);
+
+                    if (type == Presence.Type.subscribed) {
+                        // Send the presence of the local user to the remote user. The remote user
+                        // subscribed to the presence of the local user and the local user accepted
+                        presenceManager.probePresence(recipientJID, senderJID);
+                    }
                 }
-                else if (getRoster(recipientJID) == null && type == Presence.Type.unsubscribed) {
+
+                if (type == Presence.Type.unsubscribed) {
                     // Send unavailable presence from all of the local user's available resources
                     // to the remote user
                     presenceManager.sendUnavailableFromSessions(recipientJID, senderJID);
@@ -169,10 +181,12 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param target    The roster target's jid (the item's jid to be changed)
      * @param isSending True if the request is being sent by the owner
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
+     * @return true if the subscription state has changed.
      */
-    private void manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
+    private boolean manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
             throws UserAlreadyExistsException, SharedGroupException
     {
+        boolean modified = false;
         try {
             RosterItem item;
             if (roster.isRosterItem(target)) {
@@ -181,13 +195,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             else {
                 item = roster.createRosterItem(target);
             }
-            updateState(item, type, isSending);
+            modified = updateState(item, type, isSending);
             roster.updateRosterItem(item);
         }
         catch (UserNotFoundException e) {
             // Should be there because we just checked that it's an item
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+        return modified;
     }
 
     /**
@@ -370,20 +385,24 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param item      The item to be updated
      * @param action    The new state change request
      * @param isSending True if the roster owner of the item is sending the new state change request
+     * @return true if the subscription state has changed.
      */
-    private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
+    private static boolean updateState(RosterItem item, Presence.Type action, boolean isSending) {
         Map srTable = (Map)stateTable.get(item.getSubStatus());
         Map changeTable = (Map)srTable.get(isSending ? "send" : "recv");
         Change change = (Change)changeTable.get(action);
-        if (change.newAsk != null) {
+        boolean modified = false;
+        if (change.newAsk != null && change.newAsk != item.getAskStatus()) {
             item.setAskStatus(change.newAsk);
         }
-        if (change.newSub != null) {
+        if (change.newSub != null && change.newSub != item.getSubStatus()) {
             item.setSubStatus(change.newSub);
+            modified = true;
         }
-        if (change.newRecv != null) {
+        if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
             item.setRecvStatus(change.newRecv);
         }
+        return modified;
     }
 
     public void initialize(XMPPServer server) {

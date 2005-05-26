@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4" relativePaths="true" type="JAVA_MODULE">
+  <component name="ModuleRootManager" />
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/target/plugins-dev" />
+    <exclude-output />
+    <exclude-exploded />
+    <content url="file://$MODULE_DIR$/src/plugins">
+      <sourceFolder url="file://$MODULE_DIR$/src/plugins/broadcast/src/java" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="Messenger" />
+    <orderEntry type="library" name="Messenger" level="project" />
+    <orderEntryProperties />
+  </component>
+</module>
+

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.messenger.plugin.ImportExportPlugin</class>
+
+	<name>User Import Export</name>
+    <description>Allows the importing and exporting of Messenger user data.</description>
+    <author>Ryan Graham</author>
+    <version>1.0</version>
+    <minServerVersion>2.1.3</minServerVersion>
+
+    <adminconsole>
+        <tab id="tab-users">
+			<sidebar id="user-import-export" name="Import &amp; Export">
+				<item id="import-export-selection" name="User Import &amp; Export"
+					url="import-export-selection.jsp"
+					description="Allows the importing and exporting of Messenger user data." />			   
+            </sidebar>
+        </tab>
+    </adminconsole>
+</plugin>

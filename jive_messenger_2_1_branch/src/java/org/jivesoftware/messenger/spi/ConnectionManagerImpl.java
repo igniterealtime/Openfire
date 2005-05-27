@@ -150,6 +150,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         isStarted = true;
         serverName = server.getServerInfo().getName();
         createSocket();
+        SocketSendingTracker.getInstance().start();
     }
 
     public void stop() {
@@ -162,6 +163,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             sslSocketThread.shutdown();
             sslSocketThread = null;
         }
+        SocketSendingTracker.getInstance().shutdown();
         serverName = null;
     }
 }

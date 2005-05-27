@@ -88,6 +88,8 @@ public class SocketConnection implements Connection {
         }
         try {
             synchronized (writer) {
+                // Register that we started sending data on the connection
+                SocketSendingTracker.getInstance().socketStartedSending(socket);
                 writer.write(" ");
                 writer.flush();
             }
@@ -95,6 +97,10 @@ public class SocketConnection implements Connection {
         catch (Exception e) {
             Log.warn("Closing no longer valid connection" + "\n" + this.toString(), e);
             close();
+        }
+        finally {
+            // Register that we finished sending data on the connection
+            SocketSendingTracker.getInstance().socketFinishedSending(socket);
         }
         return !isClosed();
     }
@@ -197,6 +203,8 @@ public class SocketConnection implements Connection {
                     }
                     synchronized (writer) {
                         try {
+                            // Register that we started sending data on the connection
+                            SocketSendingTracker.getInstance().socketStartedSending(socket);
                             writer.write("</stream:stream>");
                             if (flashClient) {
                                 writer.write('\0');
@@ -204,6 +212,10 @@ public class SocketConnection implements Connection {
                             xmlSerializer.flush();
                         }
                         catch (IOException e) {}
+                        finally {
+                            // Register that we finished sending data on the connection
+                            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+                        }
                     }
                 }
                 catch (Exception e) {
@@ -236,6 +248,8 @@ public class SocketConnection implements Connection {
                 boolean errorDelivering = false;
                 synchronized (writer) {
                     try {
+                        // Register that we started sending data on the connection
+                        SocketSendingTracker.getInstance().socketStartedSending(socket);
                         xmlSerializer.write(packet.getElement());
                         if (flashClient) {
                             writer.write('\0');
@@ -245,6 +259,10 @@ public class SocketConnection implements Connection {
                     catch (IOException e) {
                         Log.debug("Error delivering packet" + "\n" + this.toString(), e);
                         errorDelivering = true;
+                    }
+                    finally {
+                        // Register that we finished sending data on the connection
+                        SocketSendingTracker.getInstance().socketFinishedSending(socket);
                     }
                 }
                 if (errorDelivering) {
@@ -270,6 +288,8 @@ public class SocketConnection implements Connection {
             boolean errorDelivering = false;
             synchronized (writer) {
                 try {
+                    // Register that we started sending data on the connection
+                    SocketSendingTracker.getInstance().socketStartedSending(socket);
                     writer.write(text);
                     if (flashClient) {
                         writer.write('\0');
@@ -279,6 +299,10 @@ public class SocketConnection implements Connection {
                 catch (IOException e) {
                     Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
                     errorDelivering = true;
+                }
+                finally {
+                    // Register that we finished sending data on the connection
+                    SocketSendingTracker.getInstance().socketFinishedSending(socket);
                 }
             }
             if (errorDelivering) {

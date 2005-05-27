@@ -139,6 +139,7 @@ public class Log {
 
         // set up the ties into jdk logging
         Handler jdkLogHandler = new JiveLogHandler();
+        jdkLogHandler.setLevel(Level.ALL);
         java.util.logging.Logger.getLogger("").addHandler(jdkLogHandler);
     }
 

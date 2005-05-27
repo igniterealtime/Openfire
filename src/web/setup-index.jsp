@@ -67,7 +67,7 @@
 
 <form action="setup-index.jsp" name="sform">
 
-<b>Choose Language</b>
+<b><fmt:message key="setup.index.choose_lang" /></b>
 
 <%  boolean usingPreset = false;
     Locale[] locales = Locale.getAvailableLocales();
@@ -145,7 +145,7 @@
 <hr size="0">
 
 <div align="right">
-<input type="submit" name="save" value=" Continue ">
+<input type="submit" name="save" value=" <fmt:message key="global.continue" /> ">
 </div>
 </form>
 

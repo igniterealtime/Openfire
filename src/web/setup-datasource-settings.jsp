@@ -137,7 +137,7 @@
 
 <hr size="0">
 
-<div align="right"><input type="submit" value=" Continue "></div>
+<div align="right"><input type="submit" value=" <fmt:message key="global.continue" /> "></div>
 
 </form>
 

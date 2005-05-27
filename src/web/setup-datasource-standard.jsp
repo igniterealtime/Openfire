@@ -211,7 +211,7 @@ function checkSubmit() {
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td colspan="2">
-        Database Driver Presets:
+        <fmt:message key="setup.datasource.standard.label" />:
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
             <%  for (int i=0; i<presets.size(); i++) {
@@ -372,7 +372,7 @@ function checkSubmit() {
 <hr size="0">
 
 <div align="right">
-    <input type="submit" name="continue" value=" Continue ">
+    <input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
     <br>
     <fmt:message key="setup.datasource.standard.note" />
 </div>

@@ -174,7 +174,7 @@ LABEL { font-weight : normal; }
 <hr size="0">
 
 <div align="right">
-<input type="submit" name="continue" value=" Continue ">
+<input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
 </div>
 </form>
 

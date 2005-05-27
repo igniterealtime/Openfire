@@ -222,8 +222,8 @@ function checkClick() {
 <hr size="0">
 
 <div align="right">
-    <input type="submit" name="continue" value=" Continue ">
-    <input type="submit" name="doSkip" value="Skip This Step">
+    <input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
+    <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />">
 </div>
 
 </form>

@@ -51,7 +51,7 @@
 <%  
     String title = "Search Service Properties";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "search-props-edit-form.jsp"));
     pageinfo.setPageID("search-props-edit-form");
 %>

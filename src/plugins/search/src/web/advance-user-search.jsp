@@ -40,7 +40,7 @@
 <%
     String title = "Advance User Search";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "advance-user-search.jsp"));
     pageinfo.setPageID("advance-user-search");
 %>

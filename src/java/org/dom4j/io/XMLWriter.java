@@ -5,9 +5,11 @@ import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.*;
 import org.dom4j.tree.NamespaceStack;
 import org.dom4j.*;
+import org.jivesoftware.messenger.net.SocketSendingTracker;
 
 import java.io.*;
 import java.util.*;
+import java.net.Socket;
 
 /**
  * Replacement class of the original XMLWriter.java (version: 1.77) since the original is still
@@ -78,39 +80,46 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      */
     private int maximumAllowedCharacter;
 
+    private Socket socket;
+
 
     public XMLWriter(Writer writer) {
         this( writer, DEFAULT_FORMAT );
     }
 
-    public XMLWriter(Writer writer, OutputFormat format) {
+    public XMLWriter(Writer writer, Socket socket) {
+        this( writer, DEFAULT_FORMAT );
+        this.socket = socket;
+    }
+
+    private XMLWriter(Writer writer, OutputFormat format) {
         this.writer = writer;
         this.format = format;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    public XMLWriter() {
+    private XMLWriter() {
         this.format = DEFAULT_FORMAT;
         this.writer = new BufferedWriter( new OutputStreamWriter( System.out ) );
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    public XMLWriter(OutputStream out) throws UnsupportedEncodingException {
+    private XMLWriter(OutputStream out) throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    public XMLWriter(OutputStream out, OutputFormat format) throws UnsupportedEncodingException {
+    private XMLWriter(OutputStream out, OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    public XMLWriter(OutputFormat format) throws UnsupportedEncodingException {
+    private XMLWriter(OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter( System.out, format.getEncoding() );
         this.autoFlush = true;
@@ -187,7 +196,20 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     /** Flushes the underlying Writer */
     public void flush() throws IOException {
-        writer.flush();
+        if (socket == null) {
+            writer.flush();
+        }
+        else {
+            // Register that we have started sending data
+            SocketSendingTracker.getInstance().socketStartedSending(socket);
+            try {
+                writer.flush();
+            }
+            finally {
+                // Register that we have finished sending data
+                SocketSendingTracker.getInstance().socketFinishedSending(socket);
+            }
+        }
     }
 
     /** Closes the underlying Writer */
@@ -224,7 +246,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      * after this method returns.</p>
      *
      * @param doc <code>Document</code> to format.
-     * @throws <code>IOException</code> - if there's any problem writing.
+     * @throws IOException - if there's any problem writing.
      **/
     public void write(Document doc) throws IOException {
         writeDeclaration();

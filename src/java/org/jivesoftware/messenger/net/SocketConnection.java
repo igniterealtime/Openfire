@@ -79,7 +79,7 @@ public class SocketConnection implements Connection {
         this.socket = socket;
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
-        xmlSerializer = new XMLWriter(writer);
+        xmlSerializer = new XMLWriter(writer, socket);
     }
 
     public boolean validate() {
@@ -209,7 +209,7 @@ public class SocketConnection implements Connection {
                             if (flashClient) {
                                 writer.write('\0');
                             }
-                            xmlSerializer.flush();
+                            writer.flush();
                         }
                         catch (IOException e) {}
                         finally {
@@ -248,8 +248,6 @@ public class SocketConnection implements Connection {
                 boolean errorDelivering = false;
                 synchronized (writer) {
                     try {
-                        // Register that we started sending data on the connection
-                        SocketSendingTracker.getInstance().socketStartedSending(socket);
                         xmlSerializer.write(packet.getElement());
                         if (flashClient) {
                             writer.write('\0');
@@ -259,10 +257,6 @@ public class SocketConnection implements Connection {
                     catch (IOException e) {
                         Log.debug("Error delivering packet" + "\n" + this.toString(), e);
                         errorDelivering = true;
-                    }
-                    finally {
-                        // Register that we finished sending data on the connection
-                        SocketSendingTracker.getInstance().socketFinishedSending(socket);
                     }
                 }
                 if (errorDelivering) {

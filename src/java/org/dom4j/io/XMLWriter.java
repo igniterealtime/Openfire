@@ -92,34 +92,34 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         this.socket = socket;
     }
 
-    private XMLWriter(Writer writer, OutputFormat format) {
+    public XMLWriter(Writer writer, OutputFormat format) {
         this.writer = writer;
         this.format = format;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    private XMLWriter() {
+    public XMLWriter() {
         this.format = DEFAULT_FORMAT;
         this.writer = new BufferedWriter( new OutputStreamWriter( System.out ) );
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    private XMLWriter(OutputStream out) throws UnsupportedEncodingException {
+    public XMLWriter(OutputStream out) throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    private XMLWriter(OutputStream out, OutputFormat format) throws UnsupportedEncodingException {
+    public XMLWriter(OutputStream out, OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    private XMLWriter(OutputFormat format) throws UnsupportedEncodingException {
+    public XMLWriter(OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter( System.out, format.getEncoding() );
         this.autoFlush = true;

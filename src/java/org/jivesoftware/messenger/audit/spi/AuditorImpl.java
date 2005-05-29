@@ -13,7 +13,7 @@ package org.jivesoftware.messenger.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.dom4j.io.XMLWriter;
+import org.jivesoftware.util.XMLWriter;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
@@ -37,7 +37,7 @@ public class AuditorImpl implements Auditor {
     private AuditManager auditManager;
     private File currentAuditFile;
     private Writer writer;
-    private XMLWriter xmlWriter;
+    private org.jivesoftware.util.XMLWriter xmlWriter;
     private int maxSize;
     private long maxCount;
     private int logTimeout;
@@ -169,7 +169,7 @@ public class AuditorImpl implements Auditor {
 
         writer = new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8");
         writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
-        xmlWriter = new XMLWriter(writer);
+        xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
     }
 
     /**

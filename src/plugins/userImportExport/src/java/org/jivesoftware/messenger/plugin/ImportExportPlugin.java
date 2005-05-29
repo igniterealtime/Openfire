@@ -17,7 +17,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
+import org.jivesoftware.util.XMLWriter;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;

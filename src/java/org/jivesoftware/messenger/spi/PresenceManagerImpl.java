@@ -231,7 +231,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
         if (userJID.getNode() != null && !"".equals(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
-                Presence presencePacket = session.getPresence().createCopy();
+                Presence presencePacket = new Presence();
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
                 presencePacket.setTo(recipientJID);

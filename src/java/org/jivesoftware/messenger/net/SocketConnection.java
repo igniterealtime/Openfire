@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.dom4j.io.XMLWriter;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
@@ -26,9 +25,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -54,7 +53,7 @@ public class SocketConnection implements Connection {
 
     private Session session;
     private boolean secure;
-    private XMLWriter xmlSerializer;
+    private org.jivesoftware.util.XMLWriter xmlSerializer;
     private boolean flashClient = false;
     private int majorVersion = 1;
     private int minorVersion = 0;
@@ -79,7 +78,7 @@ public class SocketConnection implements Connection {
         this.socket = socket;
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
-        xmlSerializer = new XMLWriter(writer, socket);
+        xmlSerializer = new XMLSocketWriter(writer, socket);
     }
 
     public boolean validate() {

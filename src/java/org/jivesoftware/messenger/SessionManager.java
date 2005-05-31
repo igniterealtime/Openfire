@@ -1047,6 +1047,37 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns a collection with the established sessions from external components.
+     *
+     * @return a collection with the established sessions from external components.
+     */
+    public Collection<ComponentSession> getComponentSessions() {
+        return Collections.unmodifiableCollection(componentsSessions);
+    }
+
+    /**
+     * Returns a collection with the hostnames of the remote servers that currently have an
+     * incoming server connection to this server.
+     *
+     * @return a collection with the hostnames of the remote servers that currently have an
+     *         incoming server connection to this server.
+     */
+    public Collection<String> getIncomingServers() {
+        return Collections.unmodifiableCollection(incomingServerSessions.keySet());
+    }
+
+    /**
+     * Returns a collection with the hostnames of the remote servers that currently may receive
+     * packets sent from this server.
+     *
+     * @return a collection with the hostnames of the remote servers that currently may receive
+     *         packets sent from this server.
+     */
+    public Collection<String> getOutgoingServers() {
+        return Collections.unmodifiableCollection(outgoingServerSessions.keySet());
+    }
+
+    /**
      * Broadcasts the given data to all connected sessions. Excellent
      * for server administration messages.
      *

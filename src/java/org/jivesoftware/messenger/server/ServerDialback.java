@@ -173,7 +173,7 @@ class ServerDialback {
             }
         }
         catch (Exception e) {
-            Log.error("Error connecting to the remote server", e);
+            Log.error("Error connecting to the remote server: " + hostname, e);
             // Close the connection
             if (connection != null) {
                 connection.close();

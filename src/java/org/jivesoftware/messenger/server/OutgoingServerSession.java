@@ -149,6 +149,7 @@ public class OutgoingServerSession extends Session {
         if (conn != null && !conn.isClosed()) {
             try {
                 conn.deliver(packet);
+                incrementServerPacketCount();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

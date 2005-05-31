@@ -203,6 +203,9 @@ public class MUCRoleImpl implements MUCRole {
     }
 
     public void send(Packet packet) {
+        if (packet == null) {
+            return;
+        }
         packet.setTo(user.getAddress());
         router.route(packet);
     }

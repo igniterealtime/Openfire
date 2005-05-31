@@ -64,6 +64,7 @@ public class JiveGlobals {
     private static TimeZone timeZone = null;
     private static DateFormat dateFormat = null;
     private static DateFormat dateTimeFormat = null;
+    private static DateFormat timeFormat = null;
 
     /**
      * Returns the global Locale used by Jive. A locale specifies language
@@ -120,9 +121,11 @@ public class JiveGlobals {
         setXMLProperty("locale", locale.toString());
 
         // Reset the date formatter objects
+        timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT, locale);
         dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
         dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
                 DateFormat.MEDIUM, locale);
+        timeFormat.setTimeZone(timeZone);
         dateFormat.setTimeZone(timeZone);
         dateTimeFormat.setTimeZone(timeZone);
     }
@@ -157,9 +160,31 @@ public class JiveGlobals {
      */
     public static void setTimeZone(TimeZone newTimeZone) {
         timeZone = newTimeZone;
+        timeFormat.setTimeZone(timeZone);
         dateFormat.setTimeZone(timeZone);
         dateTimeFormat.setTimeZone(timeZone);
         setProperty("locale.timeZone", timeZone.getID());
+    }
+
+    /**
+     * Formats a Date object to return a time using the global locale.
+     *
+     * @param date the Date to format.
+     * @return a String representing the time.
+     */
+    public static String formatTime(Date date) {
+        if (timeFormat == null) {
+            if (properties != null) {
+                timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT, getLocale());
+                timeFormat.setTimeZone(getTimeZone());
+            }
+            else {
+                DateFormat instance = DateFormat.getTimeInstance(DateFormat.SHORT, getLocale());
+                instance.setTimeZone(getTimeZone());
+                return instance.format(date);
+            }
+        }
+        return timeFormat.format(date);
     }
 
     /**

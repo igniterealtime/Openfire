@@ -123,6 +123,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     }
 
     public Iterator getRoutes(JID node) {
+        // Check if the address belongs to a remote server
+        if (!node.getDomain().contains(serverName)) {
+            // Authenticate this hostname with the remote server so that the remote server can
+            // accept packets from this server.
+            OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
+        }
+
         LinkedList list = null;
         routeLock.readLock().lock();
         try {

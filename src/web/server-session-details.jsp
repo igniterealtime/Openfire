@@ -122,13 +122,13 @@
         <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.statistics" /></th>
+        <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
         <td><%= inSession.getStreamID()%></td>
         <td align="center"><%= (System.currentTimeMillis() - inSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getCreationDate()) : JiveGlobals.formatDateTime(inSession.getCreationDate()) %></td>
         <td align="center"><%= (System.currentTimeMillis() - inSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getLastActiveDate()) : JiveGlobals.formatDateTime(inSession.getLastActiveDate()) %></td>
-        <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %>/<%= numFormatter.format(inSession.getNumServerPackets()) %></td>
+        <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
     </tr>
     </table>
     </div>
@@ -146,13 +146,13 @@
         <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.statistics" /></th>
+        <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
         <td><%= outSession.getStreamID()%></td>
         <td align="center"><%= (System.currentTimeMillis() - outSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getCreationDate()) : JiveGlobals.formatDateTime(outSession.getCreationDate()) %></td>
         <td align="center"><%= (System.currentTimeMillis() - outSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getLastActiveDate()) : JiveGlobals.formatDateTime(outSession.getLastActiveDate()) %></td>
-        <td align="center"><%= numFormatter.format(outSession.getNumClientPackets()) %>/<%= numFormatter.format(outSession.getNumServerPackets()) %></td>
+        <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
     </table>
     </div>

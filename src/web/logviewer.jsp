@@ -28,7 +28,7 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%!
-    static final String NONE = LocaleUtils.getLocalizedString("logviewer.none");
+    static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
     static final String ERROR = "error";
     static final String INFO = "info";
@@ -374,7 +374,7 @@ IFRAME {
                     </table>
                     </div>
                 </td>
-                <td nowrap><fmt:message key="logviewer.refresh" /></td>
+                <td nowrap><fmt:message key="global.refresh" />:</td>
                 <td nowrap>
                     <select size="1" name="refresh" onchange="this.form.submit();">
                     <%  for (int j=0; j<REFRESHES.length; j++) {
@@ -384,7 +384,7 @@ IFRAME {
 
                     <%  } %>
                     </select>
-                    (<fmt:message key="logviewer.seconds" />)
+                    (<fmt:message key="global.seconds" />)
                 </td>
             </tr>
 

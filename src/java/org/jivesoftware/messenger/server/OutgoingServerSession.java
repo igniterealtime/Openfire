@@ -70,6 +70,10 @@ public class OutgoingServerSession extends Session {
      * @return True if the domain was authenticated by the remote server.
      */
     public static boolean authenticateDomain(String domain, String hostname) {
+        if (hostname == null || hostname.length() == 0) {
+            // Do nothing if the target hostname is empty or null
+            return false;
+        }
         try {
             // TODO Check if the remote hostname is in the blacklist
             // TODO Keep a list of ports to connect to for each hostname or use the default

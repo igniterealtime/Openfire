@@ -113,10 +113,14 @@ class ServerDialback {
      */
     public OutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
         // TODO Check if the hostname is in the blacklist
+        String realHostname = null;
         try {
             // Establish a TCP connection to the Receiving Server
             Log.debug("OS - Trying to connect to " + hostname + ":" + port);
-            Socket socket = SocketFactory.getDefault().createSocket(hostname, port);
+            // Get the real hostname to connect to using DNS lookup of the specified hostname
+            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
+            realHostname = address.getHost();
+            Socket socket = SocketFactory.getDefault().createSocket(realHostname, port);
             // Set a read timeout of 60 seconds during the dialback operation. Then reset to 0.
             socket.setSoTimeout(60000);
             Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
@@ -173,7 +177,10 @@ class ServerDialback {
             }
         }
         catch (Exception e) {
-            Log.error("Error connecting to the remote server: " + hostname, e);
+            Log.error("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
+                    realHostname +
+                    ")",
+                    e);
             // Close the connection
             if (connection != null) {
                 connection.close();

@@ -21,12 +21,22 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%!
+    static final String NONE = LocaleUtils.getLocalizedString("global.none");
+
+    final int DEFAULT_RANGE = 15;
+    final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
+
+    static final String[] REFRESHES = {NONE,"10","30","60","90"};
+%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",15);
+    int range = ParamUtils.getIntParameter(request,"range",DEFAULT_RANGE);
+    int refresh = ParamUtils.getIntParameter(request,"refresh",10);
+    String refreshParam = ParamUtils.getParameter(request,"refresh");
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String jid = ParamUtils.getParameter(request,"jid");
 
@@ -69,6 +79,12 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
+<%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
+
+    <meta http-equiv="refresh" content="<%= refresh %>">
+
+<%  } %>
+
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
     <p class="jive-success-text">
@@ -77,34 +93,65 @@
 
 <%  } %>
 
-<fmt:message key="session.summary.active" />: <b><%= sessionCount %></b>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tbody>
+<form action="session-summary.jsp" method="get">
+    <tr valign="top">
+        <td width="99%">
+            <fmt:message key="session.summary.active" />: <b><%= sessionCount %></b>
 
-<%  if (numPages > 1) { %>
+            <%  if (numPages > 1) { %>
 
-    - <fmt:message key="session.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>
+                - <fmt:message key="session.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
-<%  } %>
-</p>
+            <%  } %>
 
-<%  if (numPages > 1) { %>
+            <%  if (numPages > 1) { %>
 
-    <p>
-    <fmt:message key="session.summary.page" />:
-    [
-    <%  for (int i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="session-summary.jsp?start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
+                <p>
+                <fmt:message key="session.summary.page" />:
+                [
+                <%  for (int i=0; i<numPages; i++) {
+                        String sep = ((i+1)<numPages) ? " " : "";
+                        boolean isCurrent = (i+1) == curPage;
+                %>
+                    <a href="session-summary.jsp?start=<%= (i*range) %>"
+                     class="<%= ((isCurrent) ? "jive-current" : "") %>"
+                     ><%= (i+1) %></a><%= sep %>
 
-    <%  } %>
-    ]
-    </p>
+                <%  } %>
+                ]
 
-<%  } %>
+            <%  } %>
+            - <fmt:message key="session.summary.sessions_per_page" />:
+            <select size="1" name="range" onchange="this.form.submit();">
 
+                <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+
+                    <option value="<%= RANGE_PRESETS[i] %>"<%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+
+                <%  } %>
+
+            </select>
+        </td>
+        <td width="1%" nowrap>
+            <fmt:message key="global.refresh" />:
+            <select size="1" name="refresh" onchange="this.form.submit();">
+            <%  for (int j=0; j<REFRESHES.length; j++) {
+                    String selected = REFRESHES[j].equals(refreshParam)?" selected":"";
+            %>
+                <option value="<%= REFRESHES[j] %>"<%= selected %>><%= REFRESHES[j] %>
+
+            <%  } %>
+            </select>
+            (<fmt:message key="global.seconds" />)
+
+        </td>
+    </tr>
+</form>
+</tbody>
+</table>
+<br>
 <p>
 <fmt:message key="session.summary.info" />
 </p>

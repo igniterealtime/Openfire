@@ -82,7 +82,7 @@ public class ServerSocketReader extends SocketReader {
             });
         }
         catch (PacketRejectedException e) {
-            // Do nothing
+            Log.debug("IQ rejected: " + packet.toXML(), e);
         }
     }
 
@@ -107,7 +107,7 @@ public class ServerSocketReader extends SocketReader {
             });
         }
         catch (PacketRejectedException e) {
-            // Do nothing
+            Log.debug("Presence rejected: " + packet.toXML(), e);
         }
     }
 
@@ -132,7 +132,7 @@ public class ServerSocketReader extends SocketReader {
             });
         }
         catch (PacketRejectedException e) {
-            // Do nothing
+            Log.debug("Message rejected: " + packet.toXML(), e);
         }
     }
 

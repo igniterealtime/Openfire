@@ -82,6 +82,9 @@ public class PluginServlet extends HttpServlet {
             try {
                 // Handle JSP requests.
                 if (pathInfo.endsWith(".jsp")) {
+                    if(handleJspDocument(pathInfo, request, response)){
+                        return;
+                    }
                     handleJSP(pathInfo , request , response);
                     return;
                 }
@@ -350,6 +353,7 @@ public class PluginServlet extends HttpServlet {
      * @param pathInfo the extra path info.
      * @param request  the request object.
      * @param response the response object.
+     * @return true if this page was handled successfully.
      */
     private boolean handleJspDocument(String pathInfo , HttpServletRequest request ,
                                       HttpServletResponse response) {
@@ -363,16 +367,23 @@ public class PluginServlet extends HttpServlet {
             Plugin plugin = pluginManager.getPlugin(pluginName);
             File pluginDirectory = pluginManager.getPluginDirectory(plugin);
 
-            File compiledServletsDirectory = new File(pluginDirectory , "classes");
-            compiledServletsDirectory.mkdirs();
+            File compilationDir = new File(pluginDirectory , "classes");
+            compilationDir.mkdirs();
 
             String jsp = jspURL.substring(fileSeperator + 1);
+
+            int indexOfLastSlash = jsp.lastIndexOf("/");
+            String relativeDir = "";
+            if(indexOfLastSlash != -1){
+                relativeDir =  jsp.substring(0, indexOfLastSlash);
+                relativeDir = relativeDir.replaceAll("//", ".") + '.';
+            }
 
             File jspFile = new File(pluginDirectory + "/web" , jsp);
             String filename = jspFile.getName();
             int indexOfPeriod = filename.indexOf(".");
             if (indexOfPeriod != -1) {
-                filename = StringUtils.randomString(10);
+                filename = "dev"+StringUtils.randomString(4);
             }
 
             JspC jspc = new JspC();
@@ -380,7 +391,7 @@ public class PluginServlet extends HttpServlet {
                 return false;
             }
             jspc.setJspFiles(jspFile.getAbsolutePath());
-            jspc.setOutputDir(compiledServletsDirectory.getAbsolutePath());
+            jspc.setOutputDir(compilationDir.getAbsolutePath());
             jspc.setClassName(filename);
             jspc.setCompile(true);
 
@@ -389,7 +400,7 @@ public class PluginServlet extends HttpServlet {
                 jspc.execute();
 
                 try {
-                    Object servletInstance = pluginManager.loadClass("org.apache.jsp." + filename , plugin).newInstance();
+                    Object servletInstance = pluginManager.loadClass("org.apache.jsp." + relativeDir + filename , plugin).newInstance();
                     HttpServlet servlet = (HttpServlet) servletInstance;
                     servlet.init(servletConfig);
                     servlet.service(request , response);
@@ -401,6 +412,8 @@ public class PluginServlet extends HttpServlet {
 
             }
             catch (JasperException e) {
+                System.out.println(e.getLocalizedMessage());
+
                 e.printStackTrace();
             }
         }
@@ -413,7 +426,7 @@ public class PluginServlet extends HttpServlet {
      * @param plugin the plugin the jspc will handle.
      * @return the classpath needed to compile a single jsp in a plugin.
      */
-    private String getClasspathForPlugin(Plugin plugin) {
+    private static String getClasspathForPlugin(Plugin plugin) {
         StringBuilder builder = new StringBuilder();
 
         File pluginDirectory = pluginManager.getPluginDirectory(plugin);
@@ -423,7 +436,7 @@ public class PluginServlet extends HttpServlet {
         File[] libs = libDirectory.listFiles();
         for (int i = 0;i < libs.length;i++) {
             File libFile = libs[i];
-            builder.append(libFile.getAbsolutePath() + ";");
+            builder.append(libFile.getAbsolutePath() + ';');
         }
 
         File messengerRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();

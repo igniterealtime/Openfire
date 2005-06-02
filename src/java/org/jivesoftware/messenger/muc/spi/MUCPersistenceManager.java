@@ -199,12 +199,16 @@ public class MUCPersistenceManager {
             pstmt.setLong(2, room.getID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
+                String senderJID = rs.getString(1);
+                String nickname = rs.getString(2);
                 Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
+                String subject = rs.getString(4);
+                String body = rs.getString(5);
                 // Recreate the history only for the rooms that have the conversation logging
                 // enabled
                 if (room.isLogEnabled()) {
-                    room.getRoomHistory().addOldMessage(rs.getString(1), rs.getString(2), sentDate,
-                            rs.getString(4), rs.getString(5));
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
+                            body);
                 }
             }
             rs.close();
@@ -466,13 +470,17 @@ public class MUCPersistenceManager {
                 if (room == null) {
                     continue;
                 }
+                String senderJID = rs.getString(2);
+                String nickname = rs.getString(3);
                 Date sentDate = new Date(Long.parseLong(rs.getString(4).trim()));
+                String subject = rs.getString(5);
+                String body = rs.getString(6);
                 try {
                     // Recreate the history only for the rooms that have the conversation logging
                     // enabled
                     if (room.isLogEnabled()) {
-                        room.getRoomHistory().addOldMessage(rs.getString(2), rs.getString(3),
-                                sentDate, rs.getString(5), rs.getString(6));
+                        room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
+                                body);
                     }
                 }
                 catch (Exception e) {
@@ -497,9 +505,10 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ALL_AFFILIATIONS);
             rs = pstmt.executeQuery();
             while (rs.next()) {
+                long roomID = rs.getLong(1);
                 String jid = rs.getString(2);
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
-                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
+                room = (MUCRoomImpl) rooms.get(roomID);
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;

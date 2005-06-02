@@ -24,9 +24,9 @@ import java.util.List;
  * ClassLoader for plugins. It searches the plugin directory for classes
  * and JAR files, then constructs a class loader for the resources found.
  * Resources are loaded as follows:<ul>
- *
- *      <li>Any JAR files in the <tt>lib</tt> will be added to the classpath.
- *      <li>Any files in the classes directory will be added to the classpath.
+ * <p/>
+ * <li>Any JAR files in the <tt>lib</tt> will be added to the classpath.
+ * <li>Any files in the classes directory will be added to the classpath.
  * </ul>
  *
  * @author Derek DeMoro
@@ -34,18 +34,19 @@ import java.util.List;
 class PluginClassLoader {
 
     private URLClassLoader classLoader;
+    private final List list = new ArrayList();
+
 
     /**
      * Constructs a plugin loader for the given plugin directory.
      *
      * @param pluginDir the plugin directory.
-     * @throws java.lang.SecurityException if the created class loader violates
-     *      existing security constraints.
+     * @throws java.lang.SecurityException    if the created class loader violates
+     *                                        existing security constraints.
      * @throws java.net.MalformedURLException if a located resource name cannot be
-     *      properly converted to a URL.
+     *                                        properly converted to a URL.
      */
     public PluginClassLoader(File pluginDir) throws MalformedURLException, SecurityException {
-        final List list = new ArrayList();
         File classesDir = new File(pluginDir, "classes");
         if (classesDir.exists()) {
             list.add(classesDir.toURL());
@@ -63,6 +64,13 @@ class PluginClassLoader {
                 }
             }
         }
+    }
+
+    public void addURL(URL url) {
+        list.add(url);
+    }
+
+    public void initialize(){
         Iterator urls = list.iterator();
         URL[] urlArray = new URL[list.size()];
         for (int i = 0; urls.hasNext(); i++) {
@@ -79,11 +87,10 @@ class PluginClassLoader {
      * @throws ClassNotFoundException if the class could not be loaded by this class loader.
      * @throws IllegalAccessException if the class constructor was private or protected.
      * @throws InstantiationException if the class could not be instantiated (initialization error).
-     * @throws SecurityException if the custom class loader not allowed.
+     * @throws SecurityException      if the custom class loader not allowed.
      */
     public Class loadClass(String name) throws ClassNotFoundException, IllegalAccessException,
-            InstantiationException, SecurityException
-    {
+            InstantiationException, SecurityException {
         return classLoader.loadClass(name);
     }
 

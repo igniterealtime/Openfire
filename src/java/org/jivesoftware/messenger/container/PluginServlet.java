@@ -11,14 +11,14 @@
 
 package org.jivesoftware.messenger.container;
 
+import org.apache.jasper.JasperException;
+import org.apache.jasper.JspC;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.apache.jasper.JasperException;
-import org.apache.jasper.JspC;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -56,14 +56,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PluginServlet extends HttpServlet {
 
-    private static Map<String , HttpServlet> servlets;
+    private static Map<String, HttpServlet> servlets;
     private static File pluginDirectory;
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
     static {
-        servlets = new ConcurrentHashMap<String , HttpServlet>();
-        pluginDirectory = new File(JiveGlobals.getHomeDirectory() , "plugins");
+        servlets = new ConcurrentHashMap<String, HttpServlet>();
+        pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
     }
 
     public void init(ServletConfig config) throws ServletException {
@@ -71,8 +71,8 @@ public class PluginServlet extends HttpServlet {
         servletConfig = config;
     }
 
-    public void service(HttpServletRequest request , HttpServletResponse response)
-        throws ServletException , IOException {
+    public void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -82,20 +82,20 @@ public class PluginServlet extends HttpServlet {
             try {
                 // Handle JSP requests.
                 if (pathInfo.endsWith(".jsp")) {
-                    if(handleJspDocument(pathInfo, request, response)){
+                    if (handleJspDocument(pathInfo, request, response)) {
                         return;
                     }
-                    handleJSP(pathInfo , request , response);
+                    handleJSP(pathInfo, request, response);
                     return;
                 }
                 // Handle image requests.
                 else if (pathInfo.endsWith(".gif") || pathInfo.endsWith(".png")) {
-                    handleImage(pathInfo , response);
+                    handleImage(pathInfo, response);
                     return;
                 }
                 // Handle servlet requests.
                 else if (getServlet(pathInfo) != null) {
-                    handleServlet(pathInfo , request , response);
+                    handleServlet(pathInfo, request, response);
                 }
                 // Anything else results in a 404.
                 else {
@@ -119,11 +119,11 @@ public class PluginServlet extends HttpServlet {
      * @param webXML  the web.xml file containing JSP page names to servlet class file
      *                mappings.
      */
-    public static void registerServlets(PluginManager manager , Plugin plugin , File webXML) {
+    public static void registerServlets(PluginManager manager, Plugin plugin, File webXML) {
         pluginManager = manager;
         if (!webXML.exists()) {
             Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +
-                " does not exist.");
+                    " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -133,22 +133,22 @@ public class PluginServlet extends HttpServlet {
             // Make the reader non-validating so that it doesn't try to resolve external
             // DTD's. Trying to resolve external DTD's can break on some firewall configurations.
             SAXReader saxReader = new SAXReader(false);
-            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd" ,
-                false);
+            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                    false);
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
             List classes = doc.selectNodes("//servlet");
-            Map<String , Class> classMap = new HashMap<String , Class>();
-            for (int i = 0;i < classes.size();i++) {
-                Element servletElement = (Element) classes.get(i);
+            Map<String, Class> classMap = new HashMap<String, Class>();
+            for (int i = 0; i < classes.size(); i++) {
+                Element servletElement = (Element)classes.get(i);
                 String name = servletElement.element("servlet-name").getTextTrim();
                 String className = servletElement.element("servlet-class").getTextTrim();
-                classMap.put(name , manager.loadClass(className , plugin));
+                classMap.put(name, manager.loadClass(className, plugin));
             }
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");
-            for (int i = 0;i < names.size();i++) {
-                Element nameElement = (Element) names.get(i);
+            for (int i = 0; i < names.size(); i++) {
+                Element nameElement = (Element)names.get(i);
                 String name = nameElement.element("servlet-name").getTextTrim();
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Register the servlet for the URL.
@@ -156,8 +156,8 @@ public class PluginServlet extends HttpServlet {
                 Object instance = servletClass.newInstance();
                 if (instance instanceof HttpServlet) {
                     // Initialize the servlet then add it to the map..
-                    ((HttpServlet) instance).init(servletConfig);
-                    servlets.put(pluginName + url , (HttpServlet) instance);
+                    ((HttpServlet)instance).init(servletConfig);
+                    servlets.put(pluginName + url, (HttpServlet)instance);
                 }
                 else {
                     Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
@@ -178,7 +178,7 @@ public class PluginServlet extends HttpServlet {
     public static void unregisterServlets(File webXML) {
         if (!webXML.exists()) {
             Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() +
-                " does not exist.");
+                    " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -186,13 +186,13 @@ public class PluginServlet extends HttpServlet {
         String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
         try {
             SAXReader saxReader = new SAXReader(false);
-            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd" ,
-                false);
+            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                    false);
             Document doc = saxReader.read(webXML);
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");
-            for (int i = 0;i < names.size();i++) {
-                Element nameElement = (Element) names.get(i);
+            for (int i = 0; i < names.size(); i++) {
+                Element nameElement = (Element)names.get(i);
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
                 HttpServlet servlet = servlets.get(pluginName + url);
@@ -218,15 +218,15 @@ public class PluginServlet extends HttpServlet {
      *                          request.
      * @throws IOException      if an IOException occurs while handling the request.
      */
-    private void handleJSP(String pathInfo , HttpServletRequest request ,
-                           HttpServletResponse response) throws ServletException , IOException {
+    private void handleJSP(String pathInfo, HttpServletRequest request,
+                           HttpServletResponse response) throws ServletException, IOException {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
 
         HttpServlet servlet = servlets.get(jspURL);
         if (servlet != null) {
-            servlet.service(request , response);
+            servlet.service(request, response);
             return;
         }
         else {
@@ -245,12 +245,12 @@ public class PluginServlet extends HttpServlet {
      * @throws ServletException if a servlet exception occurs while handling the request.
      * @throws IOException      if an IOException occurs while handling the request.
      */
-    private void handleServlet(String pathInfo , HttpServletRequest request ,
-                               HttpServletResponse response) throws ServletException , IOException {
+    private void handleServlet(String pathInfo, HttpServletRequest request,
+                               HttpServletResponse response) throws ServletException, IOException {
         // Strip the starting "/" from the path to find the JSP URL.
         HttpServlet servlet = getServlet(pathInfo);
         if (servlet != null) {
-            servlet.service(request , response);
+            servlet.service(request, response);
             return;
         }
         else {
@@ -274,7 +274,7 @@ public class PluginServlet extends HttpServlet {
                 int index = key.indexOf("/*");
                 String searchkey = key;
                 if (index != -1) {
-                    searchkey = key.substring(0 , index);
+                    searchkey = key.substring(0, index);
                 }
                 if (searchkey.startsWith(pathInfo) || pathInfo.startsWith(searchkey)) {
                     servlet = servlets.get(key);
@@ -292,15 +292,15 @@ public class PluginServlet extends HttpServlet {
      * @param response the response object.
      * @throws IOException if an IOException occurs while handling the request.
      */
-    private void handleImage(String pathInfo , HttpServletResponse response) throws IOException {
+    private void handleImage(String pathInfo, HttpServletResponse response) throws IOException {
         String[] parts = pathInfo.split("/");
         // Image request must be in correct format.
         if (parts.length != 4) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        File image = new File(pluginDirectory , parts[1] + File.separator + "web" +
-            File.separator + "images" + File.separator + parts[3]);
+        File image = new File(pluginDirectory, parts[1] + File.separator + "web" +
+                File.separator + "images" + File.separator + parts[3]);
         if (!image.exists()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -311,7 +311,7 @@ public class PluginServlet extends HttpServlet {
             if (pathInfo.endsWith(".png")) {
                 contentType = "image/png";
             }
-            response.setHeader("Content-disposition" , "filename=\"" + image + "\";");
+            response.setHeader("Content-disposition", "filename=\"" + image + "\";");
             response.setContentType(contentType);
             // Write out the image to the user.
             InputStream in = null;
@@ -321,13 +321,13 @@ public class PluginServlet extends HttpServlet {
                 out = response.getOutputStream();
 
                 // Set the size of the file.
-                response.setContentLength((int) image.length());
+                response.setContentLength((int)image.length());
 
                 // Use a 1K buffer.
                 byte[] buf = new byte[1024];
                 int len;
                 while ((len = in.read(buf)) != -1) {
-                    out.write(buf , 0 , len);
+                    out.write(buf, 0, len);
                 }
             }
             finally {
@@ -345,7 +345,7 @@ public class PluginServlet extends HttpServlet {
         }
     }
 
-      /**
+    /**
      * Handles a request for a JSP page. It checks to see if the jsp page exists in
      * the current plugin. If one is found, request handling is passed to it. If no
      * jsp page  is found, we return false to allow for other handlers.
@@ -355,7 +355,7 @@ public class PluginServlet extends HttpServlet {
      * @param response the response object.
      * @return true if this page was handled successfully.
      */
-    private boolean handleJspDocument(String pathInfo , HttpServletRequest request ,
+    private boolean handleJspDocument(String pathInfo, HttpServletRequest request,
                                       HttpServletResponse response) {
 
         String jspURL = pathInfo.substring(1);
@@ -363,26 +363,26 @@ public class PluginServlet extends HttpServlet {
         // Handle pre-existing pages and fail over to pre-compiled pages.
         int fileSeperator = jspURL.indexOf("/");
         if (fileSeperator != -1) {
-            String pluginName = jspURL.substring(0 , fileSeperator);
+            String pluginName = jspURL.substring(0, fileSeperator);
             Plugin plugin = pluginManager.getPlugin(pluginName);
 
             PluginDevEnvironment environment = pluginManager.getDevEnvironment(plugin);
             File webDir = environment.getWebRoot();
-            if(webDir == null || !webDir.exists()){
+            if (webDir == null || !webDir.exists()) {
                 return false;
             }
 
             File pluginDirectory = pluginManager.getPluginDirectory(plugin);
 
-            File compilationDir = new File(pluginDirectory , "classes");
+            File compilationDir = new File(pluginDirectory, "classes");
             compilationDir.mkdirs();
 
             String jsp = jspURL.substring(fileSeperator + 1);
 
             int indexOfLastSlash = jsp.lastIndexOf("/");
             String relativeDir = "";
-            if(indexOfLastSlash != -1){
-                relativeDir =  jsp.substring(0, indexOfLastSlash);
+            if (indexOfLastSlash != -1) {
+                relativeDir = jsp.substring(0, indexOfLastSlash);
                 relativeDir = relativeDir.replaceAll("//", ".") + '.';
             }
 
@@ -390,7 +390,7 @@ public class PluginServlet extends HttpServlet {
             String filename = jspFile.getName();
             int indexOfPeriod = filename.indexOf(".");
             if (indexOfPeriod != -1) {
-                filename = "dev"+StringUtils.randomString(4);
+                filename = "dev" + StringUtils.randomString(4);
             }
 
             JspC jspc = new JspC();
@@ -412,10 +412,10 @@ public class PluginServlet extends HttpServlet {
                 jspc.execute();
 
                 try {
-                    Object servletInstance = pluginManager.loadClass("org.apache.jsp." + relativeDir + filename , plugin).newInstance();
-                    HttpServlet servlet = (HttpServlet) servletInstance;
+                    Object servletInstance = pluginManager.loadClass("org.apache.jsp." + relativeDir + filename, plugin).newInstance();
+                    HttpServlet servlet = (HttpServlet)servletInstance;
                     servlet.init(servletConfig);
-                    servlet.service(request , response);
+                    servlet.service(request, response);
                     return true;
                 }
                 catch (Exception e) {
@@ -443,21 +443,24 @@ public class PluginServlet extends HttpServlet {
 
         File pluginDirectory = pluginManager.getPluginDirectory(plugin);
 
+        PluginDevEnvironment env = pluginManager.getDevEnvironment(plugin);
+
         // Load all jars from lib
-        File libDirectory = new File(pluginDirectory , "lib");
+        File libDirectory = new File(pluginDirectory, "lib");
         File[] libs = libDirectory.listFiles();
-        for (int i = 0;i < libs.length;i++) {
+        for (int i = 0; i < libs.length; i++) {
             File libFile = libs[i];
             builder.append(libFile.getAbsolutePath() + ';');
         }
 
         File messengerRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
-        File messengerLib = new File(messengerRoot , "target//lib");
+        File messengerLib = new File(messengerRoot, "target//lib");
 
         builder.append(messengerLib.getAbsolutePath() + "//servlet.jar;");
         builder.append(messengerLib.getAbsolutePath() + "//messenger.jar;");
         builder.append(messengerLib.getAbsolutePath() + "//jasper-compiler.jar;");
         builder.append(messengerLib.getAbsolutePath() + "//jasper-runtime.jar;");
+        builder.append(env.getClassesDir().getAbsolutePath() + ";");
 
         return builder.toString();
     }

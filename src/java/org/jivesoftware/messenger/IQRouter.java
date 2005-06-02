@@ -243,7 +243,7 @@ public class IQRouter extends BasicModule {
                 }
                 // If a route to the target address was not found then try to answer a
                 // service_unavailable error code to the sender of the IQ packet
-                if (!handlerFound) {
+                if (!handlerFound && IQ.Type.result != packet.getType()) {
                     IQ reply = IQ.createResultIQ(packet);
                     reply.setChildElement(packet.getChildElement().createCopy());
                     reply.setError(PacketError.Condition.service_unavailable);

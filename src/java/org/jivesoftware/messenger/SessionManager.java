@@ -754,7 +754,9 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns the session responsible for this JID data.
+     * Returns the session responsible for this JID data. The returned Session may have never sent
+     * an available presence (thus not have a route) or could be a Session that hasn't
+     * authenticated yet (i.e. preAuthenticatedSessions). 
      *
      * @param username the username of the JID.
      * @param domain the username of the JID.

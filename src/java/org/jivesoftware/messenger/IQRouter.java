@@ -190,12 +190,23 @@ public class IQRouter extends BasicModule {
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.service_unavailable);
                         }
-                        Session session = sessionManager.getSession(packet.getFrom());
-                        if (session != null) {
-                            session.process(reply);
+
+                        try {
+                            // Locate a route to the sender of the IQ and ask it to process
+                            // the packet. Use the routingTable so that routes to remote servers
+                            // may be found
+                            routingTable.getRoute(packet.getFrom()).process(packet);
                         }
-                        else {
-                            Log.warn("Packet could not be delivered " + packet);
+                        catch (NoSuchRouteException e) {
+                            // No root was found so try looking for local sessions that have never
+                            // sent an available presence or haven't authenticated yet
+                            Session session = sessionManager.getSession(packet.getFrom());
+                            if (session != null) {
+                                session.process(reply);
+                            }
+                            else {
+                                Log.warn("Packet could not be delivered " + packet);
+                            }
                         }
                     }
                     else {
@@ -233,12 +244,25 @@ public class IQRouter extends BasicModule {
                 // If a route to the target address was not found then try to answer a
                 // service_unavailable error code to the sender of the IQ packet
                 if (!handlerFound) {
-                    Session session = sessionManager.getSession(packet.getFrom());
-                    if (session != null) {
-                        IQ reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.service_unavailable);
-                        session.process(reply);
+                    IQ reply = IQ.createResultIQ(packet);
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.service_unavailable);
+                    try {
+                        // Locate a route to the sender of the IQ and ask it to process
+                        // the packet. Use the routingTable so that routes to remote servers
+                        // may be found
+                        routingTable.getRoute(packet.getFrom()).process(reply);
+                    }
+                    catch (NoSuchRouteException e) {
+                        // No root was found so try looking for local sessions that have never
+                        // sent an available presence or haven't authenticated yet
+                        Session session = sessionManager.getSession(packet.getFrom());
+                        if (session != null) {
+                            session.process(reply);
+                        }
+                        else {
+                            Log.warn("Packet could not be delivered " + reply);
+                        }
                     }
                 }
             }

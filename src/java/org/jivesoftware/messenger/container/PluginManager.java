@@ -36,23 +36,24 @@ import java.util.zip.ZipFile;
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
  * new plugins, and they are dynamically loaded.<p>
- * 
+ * <p/>
  * An instance of this class can be obtained using:
- *
+ * <p/>
  * <tt>XMPPServer.getInstance().getPluginManager()</tt>
  *
+ * @author Matt Tucker
  * @see Plugin
  * @see org.jivesoftware.messenger.XMPPServer#getPluginManager()
- * @author Matt Tucker
  */
 public class PluginManager {
 
     private File pluginDirectory;
-    private Map<String,Plugin> plugins;
-    private Map<Plugin,PluginClassLoader> classloaders;
-    private Map<Plugin,File> pluginDirs;
+    private Map<String , Plugin> plugins;
+    private Map<Plugin , PluginClassLoader> classloaders;
+    private Map<Plugin , File> pluginDirs;
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
+    private Map<Plugin , PluginDevEnvironment> pluginDevelopment;
 
     /**
      * Constructs a new plugin manager.
@@ -61,9 +62,10 @@ public class PluginManager {
      */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
-        plugins = new HashMap<String,Plugin>();
-        pluginDirs = new HashMap<Plugin,File>();
-        classloaders = new HashMap<Plugin,PluginClassLoader>();
+        plugins = new HashMap<String , Plugin>();
+        pluginDirs = new HashMap<Plugin , File>();
+        classloaders = new HashMap<Plugin , PluginClassLoader>();
+        pluginDevelopment = new HashMap<Plugin , PluginDevEnvironment>();
     }
 
     /**
@@ -71,7 +73,7 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
-        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 10, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(new PluginMonitor() , 0 , 10 , TimeUnit.SECONDS);
     }
 
     /**
@@ -125,12 +127,12 @@ public class PluginManager {
     /**
      * Loads a plug-in module into the container. Loading consists of the
      * following steps:<ul>
-     *
-     *      <li>Add all jars in the <tt>lib</tt> dir (if it exists) to the class loader</li>
-     *      <li>Add all files in <tt>classes</tt> dir (if it exists) to the class loader</li>
-     *      <li>Locate and load <tt>module.xml</tt> into the context</li>
-     *      <li>For each jive.module entry, load the given class as a module and start it</li>
-     *
+     * <p/>
+     * <li>Add all jars in the <tt>lib</tt> dir (if it exists) to the class loader</li>
+     * <li>Add all files in <tt>classes</tt> dir (if it exists) to the class loader</li>
+     * <li>Locate and load <tt>module.xml</tt> into the context</li>
+     * <li>For each jive.module entry, load the given class as a module and start it</li>
+     * <p/>
      * </ul>
      *
      * @param pluginDir the plugin directory.
@@ -143,22 +145,23 @@ public class PluginManager {
         Log.debug("Loading plugin " + pluginDir.getName());
         Plugin plugin = null;
         try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
+            File pluginConfig = new File(pluginDir , "plugin.xml");
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
                 Document pluginXML = saxReader.read(pluginConfig);
                 // See if the plugin specifies a version of Jive Messenger
                 // required to run.
-                Element minServerVersion = (Element)pluginXML.selectSingleNode(
-                        "/plugin/minServerVersion");
+                Element minServerVersion = (Element) pluginXML.selectSingleNode("/plugin/minServerVersion");
+
+
                 if (minServerVersion != null) {
                     String requiredVersion = minServerVersion.getTextTrim();
                     Version version = XMPPServer.getInstance().getServerInfo().getVersion();
                     String hasVersion = version.getMajor() + "." + version.getMinor() + "." +
-                            version.getMicro();
+                        version.getMicro();
                     if (hasVersion.compareTo(requiredVersion) < 0) {
                         String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
-                                "server version " + requiredVersion;
+                            "server version " + requiredVersion;
                         Log.warn(msg);
                         System.out.println(msg);
                         return;
@@ -166,45 +169,66 @@ public class PluginManager {
                 }
                 PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
-                plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
-                plugin.initializePlugin(this, pluginDir);
-                plugins.put(pluginDir.getName(), plugin);
-                pluginDirs.put(plugin, pluginDir);
-                classloaders.put(plugin, pluginLoader);
+                plugin = (Plugin) pluginLoader.loadClass(className).newInstance();
+                plugin.initializePlugin(this , pluginDir);
+                plugins.put(pluginDir.getName() , plugin);
+                pluginDirs.put(plugin , pluginDir);
+                classloaders.put(plugin , pluginLoader);
                 // Load any JSP's defined by the plugin.
-                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web.xml");
+                File webXML = new File(pluginDir , "web" + File.separator + "WEB-INF" +
+                    File.separator + "web.xml");
                 if (webXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, webXML);
+                    PluginServlet.registerServlets(this , plugin , webXML);
                 }
                 // Load any custom-defined servlets.
-                File customWebXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web-custom.xml");
+                File customWebXML = new File(pluginDir , "web" + File.separator + "WEB-INF" +
+                    File.separator + "web-custom.xml");
                 if (customWebXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, customWebXML);
+                    PluginServlet.registerServlets(this , plugin , customWebXML);
                 }
+
+                Element developmentNode = (Element) pluginXML.selectSingleNode("/plugin/development");
+                if (developmentNode != null) {
+                    Element webRoot = (Element) developmentNode.selectSingleNode("/plugin/development/webRoot");
+                    Element classesDir = (Element) developmentNode.selectSingleNode("/plugin/development/classesDir");
+
+                    PluginDevEnvironment dev = new PluginDevEnvironment();
+
+                    String wrd = webRoot.getTextTrim();
+                    File webRootDir = new File(wrd);
+                    if (webRootDir.exists()) {
+                        dev.setWebRoot(webRootDir);
+                    }
+
+                    String cd = classesDir.getTextTrim();
+                    File classes = new File(cd);
+                    if (classes.exists()) {
+                        dev.setClassesDir(classes);
+                    }
+
+                    pluginDevelopment.put(plugin , dev);
+                }
+
                 // If there a <adminconsole> section defined, register it.
-                Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
+                Element adminElement = (Element) pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
                     // If global images are specified, override their URL.
-                    Element imageEl = (Element)adminElement.selectSingleNode(
-                            "/plugin/adminconsole/global/logo-image");
+                    Element imageEl = (Element) adminElement.selectSingleNode("/plugin/adminconsole/global/logo-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
                     }
-                    imageEl = (Element)adminElement.selectSingleNode(
-                            "/plugin/adminconsole/global/login-image");
+                    imageEl = (Element) adminElement.selectSingleNode("/plugin/adminconsole/global/login-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
                     }
                     // Modify all the URL's in the XML so that they are passed through
                     // the plugin servlet correctly.
                     List urls = adminElement.selectNodes("//@url");
-                    for (int i=0; i<urls.size(); i++) {
-                        Attribute attr = (Attribute)urls.get(i);
+                    for (int i = 0;i < urls.size();i++) {
+                        Attribute attr = (Attribute) urls.get(i);
                         attr.setValue("plugins/" + pluginDir.getName() + "/" + attr.getValue());
                     }
-                    AdminConsole.addModel(pluginDir.getName(), adminElement);
+                    AdminConsole.addModel(pluginDir.getName() , adminElement);
                 }
             }
             else {
@@ -212,7 +236,7 @@ public class PluginManager {
             }
         }
         catch (Exception e) {
-            Log.error("Error loading plugin", e);
+            Log.error("Error loading plugin" , e);
         }
     }
 
@@ -223,7 +247,7 @@ public class PluginManager {
      * the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR
      * still exists after this method is called, the plugin will be started again the next
      * time the plugin monitor process runs. This is useful for "restarting" plugins.<p>
-     *
+     * <p/>
      * This method is called automatically when a plugin's JAR file is deleted.
      *
      * @param pluginName the name of the plugin to unload.
@@ -234,14 +258,14 @@ public class PluginManager {
         if (plugin == null) {
             return;
         }
-        File webXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web.xml");
+        File webXML = new File(pluginDirectory , "web" + File.separator + "WEB-INF" +
+            File.separator + "web.xml");
         if (webXML.exists()) {
             AdminConsole.removeModel(pluginName);
             PluginServlet.unregisterServlets(webXML);
         }
-        File customWebXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web-custom.xml");
+        File customWebXML = new File(pluginDirectory , "web" + File.separator + "WEB-INF" +
+            File.separator + "web-custom.xml");
         if (customWebXML.exists()) {
             PluginServlet.unregisterServlets(customWebXML);
         }
@@ -254,9 +278,8 @@ public class PluginManager {
         classloaders.remove(plugin);
     }
 
-    public Class loadClass(String className, Plugin plugin) throws ClassNotFoundException,
-            IllegalAccessException, InstantiationException
-    {
+    public Class loadClass(String className , Plugin plugin) throws ClassNotFoundException ,
+        IllegalAccessException , InstantiationException {
         PluginClassLoader loader = classloaders.get(plugin);
         return loader.loadClass(className);
     }
@@ -270,7 +293,7 @@ public class PluginManager {
      * @return the plugin's name.
      */
     public String getName(Plugin plugin) {
-        String name = getElementValue(plugin, "/plugin/name");
+        String name = getElementValue(plugin , "/plugin/name");
         if (name != null) {
             return name;
         }
@@ -287,7 +310,7 @@ public class PluginManager {
      * @return the plugin's description.
      */
     public String getDescription(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/description");
+        return getElementValue(plugin , "/plugin/description");
     }
 
     /**
@@ -298,7 +321,7 @@ public class PluginManager {
      * @return the plugin's author.
      */
     public String getAuthor(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/author");
+        return getElementValue(plugin , "/plugin/author");
     }
 
     /**
@@ -309,7 +332,7 @@ public class PluginManager {
      * @return the plugin's version.
      */
     public String getVersion(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/version");
+        return getElementValue(plugin , "/plugin/version");
     }
 
     /**
@@ -317,20 +340,20 @@ public class PluginManager {
      * a Plugin's plugin.xml file.
      *
      * @param plugin the plugin.
-     * @param xpath the xpath expression.
+     * @param xpath  the xpath expression.
      * @return the value of the element selected by the xpath expression.
      */
-    private String getElementValue(Plugin plugin, String xpath) {
+    private String getElementValue(Plugin plugin , String xpath) {
         File pluginDir = pluginDirs.get(plugin);
         if (pluginDir == null) {
             return null;
         }
         try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
+            File pluginConfig = new File(pluginDir , "plugin.xml");
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
                 Document pluginXML = saxReader.read(pluginConfig);
-                Element element = (Element)pluginXML.selectSingleNode(xpath);
+                Element element = (Element) pluginXML.selectSingleNode(xpath);
                 if (element != null) {
                     return element.getTextTrim();
                 }
@@ -351,22 +374,21 @@ public class PluginManager {
 
         public void run() {
             try {
-                File [] jars = pluginDirectory.listFiles(new FileFilter() {
+                File[] jars = pluginDirectory.listFiles(new FileFilter() {
                     public boolean accept(File pathname) {
                         String fileName = pathname.getName().toLowerCase();
                         return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
                     }
                 });
 
-                for (int i=0; i<jars.length; i++) {
+                for (int i = 0;i < jars.length;i++) {
                     File jarFile = jars[i];
-                    String pluginName = jarFile.getName().substring(
-                            0, jarFile.getName().length()-4).toLowerCase();
+                    String pluginName = jarFile.getName().substring(0 , jarFile.getName().length() - 4).toLowerCase();
                     // See if the JAR has already been exploded.
-                    File dir = new File(pluginDirectory, pluginName);
+                    File dir = new File(pluginDirectory , pluginName);
                     // If the JAR hasn't been exploded, do so.
                     if (!dir.exists()) {
-                        unzipPlugin(pluginName, jarFile, dir);
+                        unzipPlugin(pluginName , jarFile , dir);
                     }
                     // See if the JAR is newer than the directory. If so, the plugin
                     // needs to be unloaded and then reloaded.
@@ -376,15 +398,15 @@ public class PluginManager {
                         System.gc();
                         while (!deleteDir(dir)) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
-                                    "Will attempt again momentarily.");
+                                "Will attempt again momentarily.");
                             Thread.sleep(5000);
                         }
                         // Now unzip the plugin.
-                        unzipPlugin(pluginName, jarFile, dir);
+                        unzipPlugin(pluginName , jarFile , dir);
                     }
                 }
 
-                File [] dirs = pluginDirectory.listFiles(new FileFilter() {
+                File[] dirs = pluginDirectory.listFiles(new FileFilter() {
                     public boolean accept(File pathname) {
                         return pathname.isDirectory();
                     }
@@ -392,19 +414,20 @@ public class PluginManager {
 
                 // Sort the list of directories so that the "admin" plugin is always
                 // first in the list.
-                Arrays.sort(dirs, new Comparator<File>() {
-                    public int compare(File file1, File file2) {
+                Arrays.sort(dirs , new Comparator<File>() {
+                    public int compare(File file1 , File file2) {
                         if (file1.getName().equals("admin")) {
                             return -1;
                         }
                         else if (file2.getName().equals("admin")) {
                             return 1;
                         }
-                        else return file1.compareTo(file2);
+                        else
+                            return file1.compareTo(file2);
                     }
                 });
 
-                for (int i=0; i<dirs.length; i++) {
+                for (int i = 0;i < dirs.length;i++) {
                     File dirFile = dirs[i];
                     // If the plugin hasn't already been started, start it.
                     if (!plugins.containsKey(dirFile.getName())) {
@@ -422,7 +445,7 @@ public class PluginManager {
                         if (pluginName.equals("admin")) {
                             continue;
                         }
-                        File file = new File(pluginDirectory, pluginName + ".jar");
+                        File file = new File(pluginDirectory , pluginName + ".jar");
                         if (!file.exists()) {
                             toDelete.add(pluginName);
                         }
@@ -430,9 +453,9 @@ public class PluginManager {
                     for (String pluginName : toDelete) {
                         unloadPlugin(pluginName);
                         System.gc();
-                        while (!deleteDir(new File(pluginDirectory, pluginName))) {
+                        while (!deleteDir(new File(pluginDirectory , pluginName))) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
-                                    "Will attempt again momentarily.");
+                                "Will attempt again momentarily.");
                             Thread.sleep(5000);
                         }
                     }
@@ -448,10 +471,10 @@ public class PluginManager {
          * isn't a plugin, this method will do nothing.
          *
          * @param pluginName the name of the plugin.
-         * @param file the JAR file
-         * @param dir the directory to extract the plugin to.
+         * @param file       the JAR file
+         * @param dir        the directory to extract the plugin to.
          */
-        private void unzipPlugin(String pluginName, File file, File dir) {
+        private void unzipPlugin(String pluginName , File file , File dir) {
             try {
                 ZipFile zipFile = new JarFile(file);
                 // Ensure that this JAR is a plugin.
@@ -460,9 +483,9 @@ public class PluginManager {
                 }
                 dir.mkdir();
                 Log.debug("Extracting plugin: " + pluginName);
-                for (Enumeration e=zipFile.entries(); e.hasMoreElements(); ) {
-                    JarEntry entry = (JarEntry)e.nextElement();
-                    File entryFile = new File(dir, entry.getName());
+                for (Enumeration e = zipFile.entries();e.hasMoreElements();) {
+                    JarEntry entry = (JarEntry) e.nextElement();
+                    File entryFile = new File(dir , entry.getName());
                     // Ignore any manifest.mf entries.
                     if (entry.getName().toLowerCase().endsWith("manifest.mf")) {
                         continue;
@@ -471,10 +494,10 @@ public class PluginManager {
                         entryFile.getParentFile().mkdirs();
                         FileOutputStream out = new FileOutputStream(entryFile);
                         InputStream zin = zipFile.getInputStream(entry);
-                        byte [] b = new byte[512];
+                        byte[] b = new byte[512];
                         int len = 0;
-                        while ( (len=zin.read(b))!= -1 ) {
-                            out.write(b,0,len);
+                        while ((len = zin.read(b)) != -1) {
+                            out.write(b , 0 , len);
                         }
                         out.flush();
                         out.close();
@@ -492,11 +515,11 @@ public class PluginManager {
         /**
          * Deletes a directory.
          */
-         public boolean deleteDir(File dir) {
+        public boolean deleteDir(File dir) {
             if (dir.isDirectory()) {
                 String[] children = dir.list();
-                for (int i=0; i<children.length; i++) {
-                    boolean success = deleteDir(new File(dir, children[i]));
+                for (int i = 0;i < children.length;i++) {
+                    boolean success = deleteDir(new File(dir , children[i]));
                     if (!success) {
                         return false;
                     }
@@ -504,5 +527,9 @@ public class PluginManager {
             }
             return dir.delete();
         }
+    }
+
+    public PluginDevEnvironment getDevEnvironment(Plugin plugin) {
+        return pluginDevelopment.get(plugin);
     }
 }

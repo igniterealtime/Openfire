@@ -365,6 +365,13 @@ public class PluginServlet extends HttpServlet {
         if (fileSeperator != -1) {
             String pluginName = jspURL.substring(0 , fileSeperator);
             Plugin plugin = pluginManager.getPlugin(pluginName);
+
+            PluginDevEnvironment environment = pluginManager.getDevEnvironment(plugin);
+            File webDir = environment.getWebRoot();
+            if(webDir == null || !webDir.exists()){
+                return false;
+            }
+
             File pluginDirectory = pluginManager.getPluginDirectory(plugin);
 
             File compilationDir = new File(pluginDirectory , "classes");
@@ -379,7 +386,7 @@ public class PluginServlet extends HttpServlet {
                 relativeDir = relativeDir.replaceAll("//", ".") + '.';
             }
 
-            File jspFile = new File(pluginDirectory + "/web" , jsp);
+            File jspFile = new File(webDir, jsp);
             String filename = jspFile.getName();
             int indexOfPeriod = filename.indexOf(".");
             if (indexOfPeriod != -1) {
@@ -390,7 +397,12 @@ public class PluginServlet extends HttpServlet {
             if (!jspFile.exists()) {
                 return false;
             }
-            jspc.setJspFiles(jspFile.getAbsolutePath());
+            try {
+                jspc.setJspFiles(jspFile.getCanonicalPath());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
             jspc.setOutputDir(compilationDir.getAbsolutePath());
             jspc.setClassName(filename);
             jspc.setCompile(true);

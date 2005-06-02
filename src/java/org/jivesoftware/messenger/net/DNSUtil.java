@@ -83,7 +83,7 @@ public class DNSUtil {
         if (host.endsWith(".")) {
             host = host.substring(0, host.length()-1);
         }
-        return new HostAddress(domain, port);
+        return new HostAddress(host, port);
     }
 
     /**

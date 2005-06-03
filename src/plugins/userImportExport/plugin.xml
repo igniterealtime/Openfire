@@ -7,7 +7,7 @@
     <description>Allows the importing and exporting of Messenger user data.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
-    <minServerVersion>2.1.3</minServerVersion>
+    <minServerVersion>2.1.4</minServerVersion>
 
     <adminconsole>
         <tab id="tab-users">

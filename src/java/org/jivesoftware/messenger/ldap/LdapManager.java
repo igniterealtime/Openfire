@@ -42,7 +42,7 @@ import java.util.Hashtable;
  *      <li>ldap.searchFilter -- the filter used to load the list of users. The
  *              default value is in the form "([usernameField]={0})" where [usernameField]
  *              is the value of ldap.usernameField.
- *      <li>ldap.ldapDebugEnabled</li>
+ *      <li>ldap.debugEnabled</li>
  *      <li>ldap.sslEnabled</li>
  *      <li>ldap.autoFollowReferrals</li>
  *      <li>ldap.initialContextFactory --  if this value is not specified,
@@ -127,7 +127,7 @@ public class LdapManager {
         }
         this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
         this.ldapDebugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.ldapDebugEnabled")).booleanValue();
+                "ldap.debugEnabled")).booleanValue();
         this.sslEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
                 "ldap.sslEnabled")).booleanValue();
         this.followReferrals = Boolean.valueOf(JiveGlobals.getXMLProperty(
@@ -260,12 +260,15 @@ public class LdapManager {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
-                env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
+                env.put("java.naming.ldap.factory.socket",
+                        "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
             env.put(Context.SECURITY_AUTHENTICATION, "simple");
             env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
             env.put(Context.SECURITY_CREDENTIALS, password);
+            // Specify timeout to be 10 seconds
+            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);
             }
@@ -295,6 +298,8 @@ public class LdapManager {
                     env.put(Context.SECURITY_AUTHENTICATION, "simple");
                     env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                     env.put(Context.SECURITY_CREDENTIALS, password);
+                    // Specify timeout to be 10 seconds
+                    env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }
@@ -404,7 +409,8 @@ public class LdapManager {
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration answer = ctx.search("", searchFilter, new String[] {username}, constraints);
+            NamingEnumeration answer = ctx.search("", searchFilter, new String[] {username},
+                    constraints);
 
             if (debug) {
                 Log.debug("... search finished");

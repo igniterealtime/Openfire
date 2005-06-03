@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>User Import/Export Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>User Import/Export Plugin Readme</h1>
+
+<h2>Overview</h2>
+<p>The user import/export plugin provides a way to import and export Jive Messenger 
+user data via the Admin Console. The user data consists of jid (aka "username"), 
+name, email address, password and roster list (aka "buddy list"). This plugin also 
+can aid in the migration of users from other Jabber/XMPP based systems to Jive 
+Messenger.</p>
+
+<h2>Installation</h2>
+<p>Copy the userImportExport.jar into the plugins directory of your Jive Messenger 
+installation. The plugin will then be automatically deployed. To upgrade to a new 
+version, copy the new userImportExport.jar file over the existing file.</p>
+
+<h2>Configuration</h2>
+<p>Presently, there is nothing that can be configured for the user import/export plugin.</p>
+
+<h2>Using the Plugin</h2>
+<p> The plugin is accessed via the "User Import & Export" sidebar item located under 
+the "Users/Groups" tab in the Admin Console. Note: if you are using LDAP as your user 
+data source the following message will appear: "Sorry, because you are using LDAP as 
+your user store this plugin will not work with your Messenger installation."
+<li>Importing - Select the "Import User Data" option from the user import/export 
+selection page. On the import page, notice that the plugin will look for user data 
+import files in the MESSENGER_HOME/export directory. In the "Import File Name" field, 
+enter the name of the file you want import from and then click on the "Import" button. 
+If the plugin is successful in importing all user data, you will be presented with the 
+message: "All users added successfully" If the plugin was not successful in importing 
+all user data you, will receive a message indicating what might have gone wrong. If 
+during the import process, the plugin detects that you are trying to import a user 
+that already exists in the system, it will not import that user or any roster 
+information.</li>
+<li>Exporting - Select the "Export User Data" option from the user import/export 
+selection page. On the export page, notice that the plugin will export user data to 
+the MESSENGER_HOME/export directory. In the "Export File Name" field, enter the name 
+of the file you want export to and then click on the "Export" button. Note: the plugin
+will automatically append an ".xml" extension to the file name if it is not already 
+present.</li>
+<li>Migration - To import user data from another instant messenger system using the 
+plugin, the import file must conform to the messenger-user-schema.xsd.xml schema file 
+(located in the classes directory). When importing a user data file the plugin will 
+first validate the file against the schema file." If the  plugin cannot validate the 
+import file the user data will not be imported.</li>
+</p>
+</body>
+</html>

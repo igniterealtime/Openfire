@@ -1,19 +1,17 @@
 <%@ page import="java.io.IOException,
 				 java.net.MalformedURLException,
 				 java.util.*,
-				 org.dom4j.DocumentException,			 
+				 org.dom4j.DocumentException,
 				 org.jivesoftware.admin.AdminPageBean,
 				 org.jivesoftware.messenger.plugin.ImportExportPlugin,
 				 org.jivesoftware.messenger.XMPPServer,
 				 org.jivesoftware.util.ParamUtils"
 %>
 
-<%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
+<% admin.init(request, response, session, application, out); 
 
-<% 
     boolean importUsers = request.getParameter("importUsers") != null;
     boolean success = request.getParameter("success") != null;
     
@@ -25,7 +23,6 @@
 		String file = ParamUtils.getParameter(request, "importFile");
 		if ((file == null)  || (file.length() <= 0)) {
 			errors.put("badFile", "badFile");
-        
         }
         else {
 			try {

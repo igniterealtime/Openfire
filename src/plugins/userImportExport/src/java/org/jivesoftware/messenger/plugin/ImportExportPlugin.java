@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +18,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.XMLWriter;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
@@ -30,10 +30,19 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.XMLWriter;
 import org.xmpp.packet.JID;
 
+/**
+ * The user import/export plugin provides a way to import and export Jive Messenger 
+ * user data via the Admin Console. The user data consists of jid (aka "username"), 
+ * name, email address, password and roster list (aka "buddy list"). This plugin also 
+ * can aid in the migration of users from other Jabber/XMPP based systems to Jive 
+ * Messenger.
+ * 
+ * @author Ryan Graham
+ */
 public class ImportExportPlugin implements Plugin {
-	private XMPPServer server;
 	private UserManager userManager;
     private PluginManager pluginManager;
     private static UserProvider provider;
@@ -41,27 +50,10 @@ public class ImportExportPlugin implements Plugin {
     private static String serverName;    
     
     public ImportExportPlugin() {
-    	server = XMPPServer.getInstance();
-        userManager = server.getUserManager();
-        provider = userManager.getUserProvider();
+        userManager = XMPPServer.getInstance().getUserManager();
+        provider = UserManager.getUserProvider();
         
-        serverName = server.getServerInfo().getName();
-    }
-
-    public String getName() {
-        return pluginManager.getName(this);
-    }
-
-    public String getDescription() {
-        return pluginManager.getDescription(this);
-    }
-
-    public String getAuthor() {
-        return pluginManager.getAuthor(this);
-    }
-
-    public String getVersion() {
-        return pluginManager.getVersion(this);
+        serverName = XMPPServer.getInstance().getServerInfo().getName();
     }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
@@ -69,7 +61,6 @@ public class ImportExportPlugin implements Plugin {
     }
 
     public void destroyPlugin() {
-        server = null;
         userManager = null;
         pluginManager = null;
         provider = null;
@@ -77,6 +68,10 @@ public class ImportExportPlugin implements Plugin {
     
     public boolean isUserProviderReadOnly() {
         return provider.isReadOnly();
+    }
+    
+    public static String exportDirectory() {
+        return JiveGlobals.getHomeDirectory() + File.separator + "export";
     }
     
     public boolean exportUserData(String file) throws IOException {
@@ -110,8 +105,7 @@ public class ImportExportPlugin implements Plugin {
         String importFilePath = exportDirectory() + File.separator + file;        
         
         try {
-            UserSchemaValidator validator = new UserSchemaValidator(importFilePath, "messenger-user-schema.xsd.xml");
-            return validator.validate();
+            return new UserSchemaValidator(importFilePath, "messenger-user-schema.xsd.xml").validate();
         }
         catch (Exception e) {
             Log.error(e);
@@ -131,10 +125,8 @@ public class ImportExportPlugin implements Plugin {
         Document document = DocumentHelper.createDocument();
         Element root = document.addElement("JiveMessenger");
 
-        Iterator users = userManager.getUsers().iterator();
-		while (users.hasNext()) {
-			User user = (User) users.next();
-			
+        Collection<User> users = userManager.getUsers();
+		for (User user : users) {			
 			Element userElement = root.addElement("User");
             String userName = user.getUsername();
 			userElement.addElement("Jid").addText(userName);
@@ -155,10 +147,8 @@ public class ImportExportPlugin implements Plugin {
 			userElement.addElement("ModifiedDate").addText(String.valueOf(user.getModificationDate().getTime()));
 			
 			Element rosterElement = userElement.addElement("Roster");
-			Iterator roster = user.getRoster().getRosterItems().iterator();
-			while (roster.hasNext()) {
-				RosterItem ri = (RosterItem) roster.next();
-				
+			Collection<RosterItem> roster = user.getRoster().getRosterItems();
+			for (RosterItem ri : roster) {
 				Element itemElement = rosterElement.addElement("Item");
 				itemElement.addAttribute("jid", removeDoman(ri.getJid()));
 				itemElement.addAttribute("askstatus", String.valueOf(ri.getAskStatus().getValue()));
@@ -167,9 +157,8 @@ public class ImportExportPlugin implements Plugin {
 				itemElement.addAttribute("name", ri.getNickname());
 				
 				Element groupElement = itemElement.addElement("Group");
-				Iterator groups = ri.getGroups().iterator();
-				while (groups.hasNext()) {
-					String group = (String) groups.next();
+				List<String> groups = ri.getGroups();
+				for (String group : groups) {
 					groupElement.addText(group);
 				}
 			}
@@ -289,9 +278,5 @@ public class ImportExportPlugin implements Plugin {
         }
         
         return null;
-    }
-    
-    public static String exportDirectory() {
-        return JiveGlobals.getHomeDirectory() + File.separator + "export";
     }
 }

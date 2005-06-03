@@ -5,7 +5,7 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%  // Title of this page and breadcrumbs
-    String title = "Import Export Selection";
+    String title = "Import/Export Selection";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "import-export-selection.jsp"));
@@ -20,7 +20,7 @@
 
 <% if (plugin.isUserProviderReadOnly()) { %>
 
-	Sorry, this feature does not work with your Messenger configuration (LDAP).
+	Sorry, because you are using LDAP as your user store this plugin will not work with your Messenger installation.
 
 <% } else { %>
 

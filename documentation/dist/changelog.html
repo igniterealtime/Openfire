@@ -67,20 +67,54 @@
 <div class="header">
 Jive Messenger Changelog
 </div>
+ 
+<p>
+<b>2.1.4</b> -- June 2, 2005
+<p>
 
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-230'>JM-230</a>] - Added support for JID escaping, which helps with LDAP. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-273'>JM-273</a>] - Added email service.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-280'>JM-280</a>] - Added support for discovering information about a user's bare JID address.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-287'>JM-287</a>] - Added French translation of the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-289'>JM-289</a>] - Added auto-refresh option to the session page. <b>(2 votes)</b></li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-268'>JM-268</a>] - Improved drag and drop support in the launcher.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-269'>JM-269</a>] - Drag and drop installation of plugins was broken.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-270'>JM-270</a>] - Setting vCard data could fail.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-271'>JM-271</a>] - Fixed bug where adding a packet interceptor would cause IndexOutOfBoundsException</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-275'>JM-275</a>] - vCard properties can now be deleted.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-276'>JM-276</a>] - Fixed concurreny problem when user connected from more than one resource.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-277'>JM-277</a>] - Fixed concurreny problem managing properies of users and groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-278'>JM-278</a>] - The server now sends a stream:error conflict when a resource conflict exists.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-279'>JM-279</a>] - Sending a room invitation to an offline was closing the inviter's connection.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-282'>JM-282</a>] - Closing many connections concurrently could produce a deadlock in some circumstances.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-283'>JM-283</a>] - Group chat room creation now prevents invalid room IDs.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-284'>JM-284</a>] - Fixed concurreny problem managing directed presences.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-286'>JM-286</a>] - Fixed some words that were still hardcoded in English in the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-290'>JM-290</a>] - Invalid JIDs were not always being detected</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-293'>JM-293</a>] - The setup tool now enforces a min database connection pool size.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-297'>JM-297</a>] - Added logic to detect and forcibly shut down dead sockets.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-299'>JM-299</a>] - Fixed error loading room history when using MS-SQL.</li>
+</ul>
+ 
 <p>
 <b>2.1.3</b> -- April 22, 2005
 <p>
 
 <h2>New Features</h2>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-151'>JM-151</a>] - Added servlet support to plugins <b>(1 vote)</b>.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-151'>JM-151</a>] - Added servlet support to plugins. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-196'>JM-196</a>] - Added support for drag and drop installation of plugins into the launcher.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-198'>JM-198</a>] - Java VM information and memory usage is now shown in the admin console.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-200'>JM-200</a>] - Addressed several bottlenecks in the server, increasing performance by several hundred percent.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-202'>JM-202</a>] - Improved performance by replacing StringBuffer with StringBuilder.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-203'>JM-203</a>] - Optimized login and authentication process.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-207'>JM-207</a>] - Added an "open permissions" mode to the broadcast plugin <b>(1 vote).</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-207'>JM-207</a>] - Added an "open permissions" mode to the broadcast plugin. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-209'>JM-209</a>] - Admin console ports can now be disabled.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-218'>JM-218</a>] - Added support for packet interceptors to the core API.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-223'>JM-223</a>] - The embedded http server can now filter the addresses allowed to connect.</li>
@@ -95,7 +129,7 @@ Jive Messenger Changelog
     
 <h2>Bug Fixes</h2>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-189'>JM-189</a>] - LDAP users were able to log in with no password in some cases <b>(2 votes)</b>.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-189'>JM-189</a>] - LDAP users were able to log in with no password in some cases. <b>(2 votes)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-197'>JM-197</a>] - Some words in the admin tool weren't internationalized.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-205'>JM-205</a>] - User editing did not honor optional status of name/email fields.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-208'>JM-208</a>] - The redhat-postinstall.sh script had an extra 's'.</li>

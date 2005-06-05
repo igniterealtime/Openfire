@@ -84,7 +84,7 @@
                    String line;
                    while ((line = in.readLine()) != null) {
 %>
-                        <%= line + "\n" %>
+                        <%= line %>
 <%
 
                    }

@@ -8,6 +8,7 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.messenger.container;
 
 import java.io.File;
@@ -25,6 +26,7 @@ public class PluginDevEnvironment {
     /**
      * Returns the document root of a plugins web development
      * application.
+     *
      * @return the document root of a plugin.
      */
     public File getWebRoot() {

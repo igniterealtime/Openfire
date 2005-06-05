@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.messenger.plugin.RegistrationPlugin</class>
-    <name>Registration Plugin</name>
-    <description>Allows admins to configure various actions whenever a new user creates an account.</description>
+    <name>Registration</name>
+    <description>Performs various actions whenever a new user account is created.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
     <minServerVersion>2.1.3</minServerVersion>

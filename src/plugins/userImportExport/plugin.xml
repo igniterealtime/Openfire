@@ -4,7 +4,7 @@
     <class>org.jivesoftware.messenger.plugin.ImportExportPlugin</class>
 
 	<name>User Import Export</name>
-    <description>Allows the importing and exporting of Messenger user data.</description>
+    <description>Enables import and export of user data.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
     <minServerVersion>2.1.4</minServerVersion>

@@ -67,6 +67,7 @@ public class RegistrationPlugin implements Plugin {
 
     public void destroyPlugin() {
         UserEventDispatcher.removeListener(listener);
+        serverAddress = null;
         listener = null;
         router = null;
     }

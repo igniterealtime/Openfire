@@ -146,7 +146,7 @@ public class PluginServlet extends HttpServlet {
                 Element servletElement = (Element)classes.get(i);
                 String name = servletElement.element("servlet-name").getTextTrim();
                 String className = servletElement.element("servlet-class").getTextTrim();
-                classMap.put(name, manager.loadClass(className, plugin));
+                classMap.put(name, manager.loadClass(plugin, className));
             }
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");
@@ -420,8 +420,8 @@ public class PluginServlet extends HttpServlet {
                 jspc.execute();
 
                 try {
-                    Object servletInstance = pluginManager.loadClass("org.apache.jsp." +
-                            relativeDir + filename, plugin).newInstance();
+                    Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
+                            relativeDir + filename).newInstance();
                     HttpServlet servlet = (HttpServlet)servletInstance;
                     servlet.init(servletConfig);
                     servlet.service(request, response);

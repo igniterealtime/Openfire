@@ -19,7 +19,8 @@
 				 org.jivesoftware.messenger.container.PluginManager,
 				 org.jivesoftware.util.*,
                  org.jivesoftware.messenger.container.Plugin,
-                 java.util.*"
+                 java.util.*,
+                 java.net.URLEncoder"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -31,6 +32,8 @@
 <%
 	String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
 	String refreshPlugin = ParamUtils.getParameter(request, "refreshplugin");
+    boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
+    boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
 
 	final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
@@ -67,6 +70,67 @@
 			}
 		}		
 	}
+%>
+
+<% if (showReadme) {
+       String pluginName = ParamUtils.getParameter(request, "plugin");
+       Plugin plugin = pluginManager.getPlugin(pluginName);
+       if (plugin != null) {
+           File readme = new File(pluginManager.getPluginDirectory(plugin), "readme.html");
+           if (readme.exists()) {
+               BufferedReader in = null;
+               try {
+                   in = new BufferedReader(new FileReader(readme));
+                   String line;
+                   while ((line = in.readLine()) != null) {
+%>
+                        <%= line + "\n" %>
+<%
+
+                   }
+               }
+               catch (IOException ioe) {
+                   ioe.printStackTrace();
+               }
+               finally {
+                   if (in != null) {
+                       try { in.close(); } catch (Exception e) { }
+                   }
+               }
+           }
+       }
+       return;
+   }
+%>
+<% if (showChangelog) {
+       String pluginName = ParamUtils.getParameter(request, "plugin");
+       Plugin plugin = pluginManager.getPlugin(pluginName);
+       if (plugin != null) {
+           File changelog = new File(pluginManager.getPluginDirectory(plugin), "changelog.html");
+           if (changelog.exists()) {
+               BufferedReader in = null;
+               try {
+                   in = new BufferedReader(new FileReader(changelog));
+                   String line;
+                   while ((line = in.readLine()) != null) {
+%>
+                        <%= line + "\n" %>
+<%
+
+                   }
+               }
+               catch (IOException ioe) {
+
+               }
+               finally {
+                   if (in != null) {
+                       try { in.close(); } catch (Exception e) { }
+                   }
+               }
+           }
+       }
+       return;
+    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -174,6 +238,19 @@
 	        </td>
 	        <td width="20%" nowrap>
 	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
+                <%
+                    File pluginDir = pluginManager.getPluginDirectory(plugin);
+                    boolean readmeExists = new File(pluginDir, "readme.html").exists();
+                    boolean changelogExists = new File(pluginDir, "changelog.html").exists();
+                %>
+                <% if (readmeExists) { %>
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
+                ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+                <% } %>
+                <% if (changelogExists) { %>
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
+                ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                <% } %>
 	        </td>
 	        <td width="60%">
 	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;

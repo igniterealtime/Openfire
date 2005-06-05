@@ -233,11 +233,13 @@ public class PluginManager {
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
                     // If global images are specified, override their URL.
-                    Element imageEl = (Element)adminElement.selectSingleNode("/plugin/adminconsole/global/logo-image");
+                    Element imageEl = (Element)adminElement.selectSingleNode(
+                            "/plugin/adminconsole/global/logo-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
                     }
-                    imageEl = (Element)adminElement.selectSingleNode("/plugin/adminconsole/global/login-image");
+                    imageEl = (Element)adminElement.selectSingleNode(
+                            "/plugin/adminconsole/global/login-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
                     }
@@ -298,10 +300,33 @@ public class PluginManager {
         classloaders.remove(plugin);
     }
 
-    public Class loadClass(String className, Plugin plugin) throws ClassNotFoundException,
-            IllegalAccessException, InstantiationException {
+    /**
+     * Loads a class from the classloader of a plugin.
+     *
+     * @param plugin the plugin.
+     * @param className the name of the class to load.
+     * @return the class.
+     * @throws ClassNotFoundException if the class was not found.
+     * @throws IllegalAccessException if not allowed to access the class.
+     * @throws InstantiationException if the class could not be created.
+     */
+    public Class loadClass(Plugin plugin, String className) throws ClassNotFoundException,
+            IllegalAccessException, InstantiationException
+    {
         PluginClassLoader loader = classloaders.get(plugin);
         return loader.loadClass(className);
+    }
+
+    /**
+     * Returns a plugin's dev environment if development mode is enabled for
+     * the plugin.
+     *
+     * @param plugin the plugin.
+     * @return the plugin dev environment, or <tt>null</tt> if development
+     *      mode is not enabled for the plugin.
+     */
+    public PluginDevEnvironment getDevEnvironment(Plugin plugin) {
+        return pluginDevelopment.get(plugin);
     }
 
     /**
@@ -403,7 +428,8 @@ public class PluginManager {
 
                 for (int i = 0; i < jars.length; i++) {
                     File jarFile = jars[i];
-                    String pluginName = jarFile.getName().substring(0, jarFile.getName().length() - 4).toLowerCase();
+                    String pluginName = jarFile.getName().substring(0,
+                            jarFile.getName().length() - 4).toLowerCase();
                     // See if the JAR has already been exploded.
                     File dir = new File(pluginDirectory, pluginName);
                     // If the JAR hasn't been exploded, do so.
@@ -547,9 +573,5 @@ public class PluginManager {
             }
             return dir.delete();
         }
-    }
-
-    public PluginDevEnvironment getDevEnvironment(Plugin plugin) {
-        return pluginDevelopment.get(plugin);
     }
 }

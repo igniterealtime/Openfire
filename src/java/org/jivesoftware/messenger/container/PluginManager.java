@@ -99,6 +99,7 @@ public class PluginManager {
         plugins.clear();
         pluginDirs.clear();
         classloaders.clear();
+        pluginDevelopment.clear();
     }
 
     /**
@@ -176,11 +177,16 @@ public class PluginManager {
                     }
                 }
                 PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
+
+                // Check to see if development mode is turned on for the plugin. If it is,
+                // configure dev mode.
                 Element developmentNode = (Element)pluginXML.selectSingleNode("/plugin/development");
                 PluginDevEnvironment dev = null;
                 if (developmentNode != null) {
-                    Element webRoot = (Element)developmentNode.selectSingleNode("/plugin/development/webRoot");
-                    Element classesDir = (Element)developmentNode.selectSingleNode("/plugin/development/classesDir");
+                    Element webRoot = (Element)developmentNode.selectSingleNode(
+                            "/plugin/development/webRoot");
+                    Element classesDir = (Element)developmentNode.selectSingleNode(
+                            "/plugin/development/classesDir");
 
                     dev = new PluginDevEnvironment();
 
@@ -197,6 +203,7 @@ public class PluginManager {
                         pluginLoader.addURL(classes.getAbsoluteFile().toURL());
                     }
                 }
+
                 pluginLoader.initialize();
 
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
@@ -221,7 +228,6 @@ public class PluginManager {
                 if (dev != null) {
                     pluginDevelopment.put(plugin, dev);
                 }
-
 
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");

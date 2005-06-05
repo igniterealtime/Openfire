@@ -391,6 +391,9 @@ public class DefaultUserProvider implements UserProvider {
         if (!getSearchFields().containsAll(fields)) {
             throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
         }
+        if (query == null || "".equals(query)) {
+            return Collections.emptyList();
+        }
         // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
         // Therefore, we do a best approximiation by replacing '*' with '%' and then
         // surrounding the whole query with two '%'. This will return more data than desired,
@@ -452,6 +455,9 @@ public class DefaultUserProvider implements UserProvider {
         }
         if (!getSearchFields().containsAll(fields)) {
             throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        }
+        if (query == null || "".equals(query)) {
+            return Collections.emptyList();
         }
         // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
         // Therefore, we do a best approximiation by replacing '*' with '%' and then

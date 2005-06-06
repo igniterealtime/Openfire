@@ -119,6 +119,15 @@ public class OutgoingServerSession extends Session {
                             return true;
                         }
                         else {
+                            // Check if hostname is a subdomain of an existing outgoing session
+                            for (String otherHost : sessionManager.getOutgoingServers()) {
+                                if (hostname.contains(otherHost)) {
+                                    session = sessionManager.getOutgoingServerSession(otherHost);
+                                    // Add the new hostname to the found session
+                                    session.addHostname(hostname);
+                                    return true;
+                                }
+                            }
                             return false;
                         }
                     }

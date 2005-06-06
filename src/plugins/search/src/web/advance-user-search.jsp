@@ -11,13 +11,13 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
-<%   webManager.init(request, response, session, application, out); %>
+<%  webManager.init(request, response, session, application, out);
 
-<%  
     String criteria = ParamUtils.getParameter(request, "criteria");
     
     UserManager userManager = webManager.getUserManager();
     Set<String> searchFields = userManager.getSearchFields();
+    List<String> selectedFields = new ArrayList<String>();
 
 	List<User> users = new ArrayList<User>();
 
@@ -25,6 +25,7 @@
 		
 		boolean searchValue = ParamUtils.getBooleanParameter(request, searchField, false);
 		if (searchValue) {
+			selectedFields.add(searchField);
     		Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
     		
     		// Filter out all duplicate users.
@@ -72,7 +73,15 @@
     	<tr class="c1">
 	        <td width="1%" nowrap><%=searchField %>:</td>
 	        <td class="c2">
-	          <input type="checkbox" checked="checked" name="<%=searchField %>"/>
+	        <% if (criteria == null) { %>
+	        
+	          	<input type="checkbox" checked name="<%=searchField %>"/>
+	        
+	        <% } else { %>
+	        
+	        		<input type="checkbox" <%=selectedFields.contains(searchField) ? "checked" : "" %> name="<%=searchField %>"/>
+	        
+	        <% } %>
 	        </td>
 	     </tr>
 	 <%

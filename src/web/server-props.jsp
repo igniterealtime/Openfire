@@ -174,7 +174,7 @@
         </td>
         <td class="c2">
             <input type="text" name="serverName" value="<%= (serverName != null) ? serverName : "" %>"
-             size="30" maxlength="40">
+             size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>
                 <span class="jive-error-text">

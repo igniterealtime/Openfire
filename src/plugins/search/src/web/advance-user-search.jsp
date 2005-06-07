@@ -14,6 +14,7 @@
 <%  webManager.init(request, response, session, application, out);
 
     String criteria = ParamUtils.getParameter(request, "criteria");
+    boolean moreOptions = ParamUtils.getBooleanParameter(request, "moreOptions", false);
     
     UserManager userManager = webManager.getUserManager();
     Set<String> searchFields = userManager.getSearchFields();
@@ -24,11 +25,11 @@
 	for (String searchField : searchFields) {
 		
 		boolean searchValue = ParamUtils.getBooleanParameter(request, searchField, false);
-		if (searchValue) {
+		if (!moreOptions || searchValue) {
 			selectedFields.add(searchField);
-    		Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
+			Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
     		
-    		// Filter out all duplicate users.
+			// Filter out all duplicate users.
             for (User user : foundUsers) {
                 if (!users.contains(user)) {
                     users.add(user);
@@ -52,48 +53,53 @@
 
 <form name="f" action="advance-user-search.jsp">
   <input type="hidden" name="search" value="true"/>
+  <input type="hidden" name="moreOptions" value="<%=moreOptions %>"/>
   <fieldset>
     <legend>Search for User</legend>
     <div>
-    <p>
-    The following fields are available for search. Wildcard (*) characters are allowed as part the of query.
-    </p>
-    <table cellpadding="3" cellspacing="1" border="0" width="600">
-    
-    	<tr class="c1">
-	        <td width="1%" nowrap>Search:</td>
-	        <td class="c2">
-	          <input type="text" name="criteria" value="<%= (criteria != null ? criteria : "") %>" size="30" maxlength="75"/>
+    <table cellpadding="3" cellspacing="1" border="0" width="600">    
+		<tr class="c1">
+	        <td width="1%" colspan="2" nowrap>
+	        	Search:
+	          	&nbsp;<input type="text" name="criteria" value="<%=(criteria != null ? criteria : "") %>" size="30" maxlength="75"/>
+	          	&nbsp;<input type="submit" name="search" value="Search"/>
 	        </td>
-	     </tr>
-    
-    <%
-	for (String searchField : searchFields) {
-    %>	
-    	<tr class="c1">
-	        <td width="1%" nowrap><%=searchField %>:</td>
-	        <td class="c2">
-	        <% if (criteria == null) { %>
-	        
-	          	<input type="checkbox" checked name="<%=searchField %>"/>
-	        
-	        <% } else { %>
-	        
-	        		<input type="checkbox" <%=selectedFields.contains(searchField) ? "checked" : "" %> name="<%=searchField %>"/>
-	        
-	        <% } %>
-	        </td>
-	     </tr>
-	 <%
-	 }
-     %>
-     <tr><td colspan="2" nowrap><input type="submit" name="search" value="Search"/></td>
-     </tr>
+		</tr>
+		<% if (moreOptions) { %>
+			<tr class="c1">
+		        <td width="1%" colspan="2" nowrap>Wildcard (*) characters are allowed as part the of query. The following fields are available for searching:</td>
+			</tr>
+			
+			<% for (String searchField : searchFields) { %>
+	    	<tr class="c1">
+		        <td width="1%" nowrap><%=searchField %>:</td>
+		        <td class="c2">
+		        <% if (criteria == null) { %>
+		          	<input type="checkbox" checked name="<%=searchField %>"/>
+		        
+		        <% } else { %>
+					<input type="checkbox" <%=selectedFields.contains(searchField) ? "checked" : "" %> name="<%=searchField %>"/>
+		        
+		        <% } %>
+		        </td>
+			</tr>
+		<% } %>
+			<tr>
+				<td nowrap>&raquo;&nbsp;<a href="advance-user-search.jsp?moreOptions=false">Less Options</a></td>
+			</tr>
+		<% } else { %>
+			<tr>
+				<td nowrap>&raquo;&nbsp;<a href="advance-user-search.jsp?moreOptions=true">More Options</a></td>
+	     	</tr>
+	    <% } %>
     </table>
   </fieldset>
 </form>	
 
 <% if (criteria != null) { %>
+<p>
+Users Found: <%=users.size() %>
+</p>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -111,7 +117,6 @@
 <tbody>
 
 	<% if (users.isEmpty()) { %>
-	
 	 	<tr>
 	        <td align="center" colspan="7">No users found.</td>
 	    </tr>
@@ -124,7 +129,6 @@
 	    for (User user : users) {
 	        i++;
 	%>
-	
 	    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
 	            <%= i %>
@@ -175,7 +179,6 @@
 	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
 	        </td>
 	    </tr>
-	    
 <%
 		}
     }

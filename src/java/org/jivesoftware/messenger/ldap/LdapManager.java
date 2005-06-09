@@ -267,8 +267,11 @@ public class LdapManager {
             env.put(Context.SECURITY_AUTHENTICATION, "simple");
             env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
             env.put(Context.SECURITY_CREDENTIALS, password);
-            // Specify timeout to be 10 seconds
-            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+            // Specify timeout to be 10 seconds, only on non SSL since SSL connections
+            // break with a teimout.
+            if (!sslEnabled) {
+                env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+            }
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);
             }
@@ -298,8 +301,11 @@ public class LdapManager {
                     env.put(Context.SECURITY_AUTHENTICATION, "simple");
                     env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                     env.put(Context.SECURITY_CREDENTIALS, password);
-                    // Specify timeout to be 10 seconds
-                    env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                    // Specify timeout to be 10 seconds, only on non SSL since SSL connections
+                    // break with a teimout.
+                    if (!sslEnabled) {
+                        env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                    }
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }

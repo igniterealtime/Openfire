@@ -21,6 +21,7 @@ import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -45,6 +46,10 @@ import java.net.Socket;
  *  <li>The Receiving Server informs the Originating Server whether it is authenticated or
  *  not.</li>
  * </ol>
+ *
+ * By default a timeout of 60 seconds will be used for reading packets from remote servers. Use
+ * the property <b>xmpp.server.read.timeout</b> to change that value. The value should be in
+ * milliseconds.
  *
  * @author Gaston Dombiak
  */
@@ -122,7 +127,7 @@ class ServerDialback {
             realHostname = address.getHost();
             Socket socket = SocketFactory.getDefault().createSocket(realHostname, port);
             // Set a read timeout of 60 seconds during the dialback operation. Then reset to 0.
-            socket.setSoTimeout(60000);
+            socket.setSoTimeout(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000));
             Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
@@ -469,7 +474,7 @@ class ServerDialback {
         Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
         Socket socket = SocketFactory.getDefault().createSocket(host, port);
         // Set a read timeout of 60 seconds.
-        socket.setSoTimeout(60000);
+        socket.setSoTimeout(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000));
         Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successfull");
         try {
             reader = new XPPPacketReader();

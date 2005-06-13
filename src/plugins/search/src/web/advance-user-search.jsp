@@ -29,7 +29,7 @@
 			selectedFields.add(searchField);
 			Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
     		
-			// Filter out all duplicate users.
+			//filter out duplicate users
             for (User user : foundUsers) {
                 if (!users.contains(user)) {
                     users.add(user);
@@ -55,14 +55,14 @@
   <input type="hidden" name="search" value="true"/>
   <input type="hidden" name="moreOptions" value="<%=moreOptions %>"/>
   <fieldset>
-    <legend>Search for User</legend>
+    <legend><fmt:message key="user.search.search_user" /></legend>
     <div>
     <table cellpadding="3" cellspacing="1" border="0" width="600">    
 		<tr class="c1">
 	        <td width="1%" colspan="2" nowrap>
 	        	Search:
 	          	&nbsp;<input type="text" name="criteria" value="<%=(criteria != null ? criteria : "") %>" size="30" maxlength="75"/>
-	          	&nbsp;<input type="submit" name="search" value="Search"/>
+	          	&nbsp;<input type="submit" name="search" value="<fmt:message key="user.search.search" />"/>
 	        </td>
 		</tr>
 		<% if (moreOptions) { %>
@@ -106,19 +106,19 @@ Users Found: <%=users.size() %>
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap>Online</th>
-        <th nowrap>Username</th>
-        <th nowrap>Name</th>
-        <th nowrap>Email</th>
-        <th nowrap>Edit</th>
-        <th nowrap>Delete</th>
+        <th nowrap><fmt:message key="session.details.online" /></th>
+        <th nowrap><fmt:message key="user.create.username" /></th>
+        <th nowrap><fmt:message key="user.create.name" /></th>
+        <th nowrap><fmt:message key="user.summary.created" /></th>
+        <th nowrap><fmt:message key="user.summary.edit" /></th>
+        <th nowrap><fmt:message key="user.summary.delete" /></th>
     </tr>
 </thead>
 <tbody>
 
 	<% if (users.isEmpty()) { %>
 	 	<tr>
-	        <td align="center" colspan="7">No users found.</td>
+	        <td align="center" colspan="7"><fmt:message key="user.summary.not_user" /></td>
 	    </tr>
 	    
 	<% 
@@ -189,5 +189,9 @@ Users Found: <%=users.size() %>
 </div>
 
 <% } %>
+
+<script language="JavaScript" type="text/javascript">
+document.f.criteria.focus();
+</script>
 
 <jsp:include page="bottom.jsp" flush="true"/>

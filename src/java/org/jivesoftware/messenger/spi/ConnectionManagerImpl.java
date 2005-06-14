@@ -13,10 +13,7 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.net.SSLSocketAcceptThread;
-import org.jivesoftware.messenger.net.SocketAcceptThread;
-import org.jivesoftware.messenger.net.SocketConnection;
-import org.jivesoftware.messenger.net.SocketReadThread;
+import org.jivesoftware.messenger.net.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
@@ -150,6 +147,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         isStarted = true;
         serverName = server.getServerInfo().getName();
         createSocket();
+        SocketSendingTracker.getInstance().start();
     }
 
     public void stop() {
@@ -162,6 +160,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             sslSocketThread.shutdown();
             sslSocketThread = null;
         }
+        SocketSendingTracker.getInstance().shutdown();
         serverName = null;
     }
 }

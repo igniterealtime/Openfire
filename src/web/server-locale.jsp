@@ -144,14 +144,23 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
                      id="loc06" />
+                </td>
+                <td colspan="2">
+                    <label for="loc06">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc07" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
                 </td>
                 <td>
-                    <label for="loc06">Simplified Chinese (zh_CN)</label>
+                    <label for="loc07">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

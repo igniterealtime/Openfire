@@ -107,6 +107,17 @@ public class SessionManager extends BasicModule {
     private StreamIDFactory streamIDFactory;
 
     /**
+     * Timer that will clean up dead or inactive sessions. Currently only outgoing server sessions
+     * will be analyzed.
+     */
+    private Timer timer = new Timer("Sessions cleanup");
+
+    /**
+     * Task that closes idle outgoing server sessions.
+     */
+    private ServerCleanupTask serverCleanupTask;
+
+    /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      *
      * @return the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
@@ -1298,6 +1309,10 @@ public class SessionManager extends BasicModule {
                 JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
             }
         }
+        // Run through the outgoing server sessions every 5 minutes after a 5 minutes server
+        // startup delay (default values)
+        serverCleanupTask = new ServerCleanupTask();
+        timer.schedule(serverCleanupTask, getServerSessionTimeout(), getServerSessionTimeout());
     }
 
 
@@ -1355,6 +1370,7 @@ public class SessionManager extends BasicModule {
 
     public void stop() {
         Log.debug("Stopping server");
+        timer.cancel();
         serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
             sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
@@ -1369,6 +1385,78 @@ public class SessionManager extends BasicModule {
             }
         }
         catch (Exception e) {
+        }
+    }
+
+    /******************************************************
+     * Clean up code
+     *****************************************************/
+    /**
+     * Sets the number of milliseconds to elapse between clearing of idle outgoing server sessions.
+     *
+     * @param timeout the number of milliseconds to elapse between clearings.
+     */
+    public void setServerSessionTimeout(int timeout) {
+        if (getServerSessionTimeout() == timeout) {
+            return;
+        }
+        // Cancel the existing task because the timeout has changed
+        if (serverCleanupTask != null) {
+            serverCleanupTask.cancel();
+        }
+        // Create a new task and schedule it with the new timeout
+        serverCleanupTask = new ServerCleanupTask();
+        timer.schedule(serverCleanupTask, getServerSessionTimeout(), getServerSessionTimeout());
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.session.server.timeout", Integer.toString(timeout));
+    }
+
+    /**
+     * Returns the number of milliseconds to elapse between clearing of idle outgoing server
+     * sessions.
+     *
+     * @return the number of milliseconds to elapse between clearing of idle outgoing server
+     * sessions.
+     */
+    public int getServerSessionTimeout() {
+        return JiveGlobals.getIntProperty("xmpp.session.server.timeout", 5 * 60 * 1000);
+    }
+
+    public void setServerSessionIdleTime(int idleTime) {
+        if (getServerSessionIdleTime() == idleTime) {
+            return;
+        }
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.session.server.idle", Integer.toString(idleTime));
+    }
+
+    public int getServerSessionIdleTime() {
+        return JiveGlobals.getIntProperty("xmpp.session.server.idle", 30 * 60 * 1000);
+    }
+
+    /**
+     * Task that closes the idle outgoing server sessions.
+     */
+    private class ServerCleanupTask extends TimerTask {
+        /**
+         * Close outgoing server sessions that have been idle for a long time.
+         */
+        public void run() {
+            // Do nothing if this feature is disabled
+            if (getServerSessionIdleTime() == -1) {
+                return;
+            }
+            final long deadline = System.currentTimeMillis() - getServerSessionIdleTime();
+            for (OutgoingServerSession session : outgoingServerSessions.values()) {
+                try {
+                    if (session.getLastActiveDate().getTime() < deadline) {
+                        session.getConnection().close();
+                    }
+                }
+                catch (Throwable e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
         }
     }
 }

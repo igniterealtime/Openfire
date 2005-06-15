@@ -14,9 +14,9 @@ package org.jivesoftware.util;
 import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.mail.Address;
 import javax.mail.*;
@@ -87,8 +87,8 @@ public class EmailService {
      * Constructs a new EmailService instance.
      */
     private EmailService() {
-        executor = new ThreadPoolExecutor(1, 5, 60,
-            TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        executor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60,
+            TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
 
         host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
         port = JiveGlobals.getIntProperty("mail.smtp.port", 25);

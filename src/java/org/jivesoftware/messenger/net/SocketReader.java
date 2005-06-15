@@ -226,8 +226,9 @@ public abstract class SocketReader implements Runnable {
             }
             else {
                 if (!processUnknowPacket(doc)) {
-                    throw new XmlPullParserException(LocaleUtils.getLocalizedString(
-                            "admin.error.packet.tag") + tag);
+                    Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
+                            doc.asXML());
+                    open = false;
                 }
             }
         }

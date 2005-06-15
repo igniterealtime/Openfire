@@ -359,7 +359,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         // A service may receive presences for many JIDs so in this case we
                         // just need to remove the jid that has received a directed
                         // unavailable presence
-                        map.get(handler).remove(jid);
+                        Set<String> jids = map.get(handler);
+                        if (jids != null) {
+                            jids.remove(jid);
+                        }
+
                     }
                 }
                 else {

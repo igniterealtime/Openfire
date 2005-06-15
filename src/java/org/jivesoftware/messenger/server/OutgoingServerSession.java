@@ -24,6 +24,7 @@ import org.xmpp.packet.Packet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.regex.Pattern;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -48,6 +49,11 @@ import java.util.Collections;
  */
 public class OutgoingServerSession extends Session {
 
+    /**
+     * Regular expression to ensure that the hostname contains letters.
+     */
+    private static Pattern pattern = Pattern.compile("[a-zA-Z]");
+
     private Collection<String> authenticatedDomains = new ArrayList<String>();
     private Collection<String> hostnames = new ArrayList<String>();
     private XPPPacketReader reader;
@@ -70,8 +76,8 @@ public class OutgoingServerSession extends Session {
      * @return True if the domain was authenticated by the remote server.
      */
     public static boolean authenticateDomain(String domain, String hostname) {
-        if (hostname == null || hostname.length() == 0) {
-            // Do nothing if the target hostname is empty or null
+        if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
+            // Do nothing if the target hostname is empty, null or contains whitespaces
             return false;
         }
         try {
@@ -119,6 +125,10 @@ public class OutgoingServerSession extends Session {
                             return true;
                         }
                         else {
+                            // Ensure that the hostname is not an IP address (i.e. contains chars)
+                            if (!pattern.matcher(hostname).find()) {
+                                return false;
+                            }
                             // Check if hostname is a subdomain of an existing outgoing session
                             for (String otherHost : sessionManager.getOutgoingServers()) {
                                 if (hostname.contains(otherHost)) {
@@ -126,6 +136,33 @@ public class OutgoingServerSession extends Session {
                                     // Add the new hostname to the found session
                                     session.addHostname(hostname);
                                     return true;
+                                }
+                            }
+                            // Try to establish a connection to candidate hostnames. Iterate on the
+                            // substring after the . and try to establish a connection. If a
+                            // connection is established then the same session will be used for
+                            // sending packets to the "candidate hostname" as well as for the
+                            // requested hostname (i.e. the subdomain of the candidate hostname)
+                            // This trick is useful when remote servers haven't registered in their
+                            // DNSs an entry for their subdomains
+                            int index = hostname.indexOf('.');
+                            while (index > -1 && index < hostname.length()) {
+                                String newHostname = hostname.substring(index + 1);
+                                session =
+                                        new ServerDialback().createOutgoingSession(domain, newHostname, port);
+                                if (session != null) {
+                                    // Add the new hostname to the list of names that the server may have
+                                    session.addHostname(hostname);
+                                    // Add the validated domain as an authenticated domain
+                                    session.addAuthenticatedDomain(domain);
+                                    // Notify the SessionManager that a new session has been created
+                                    sessionManager.outgoingServerSessionCreated(session);
+                                    // Add the new hostname to the found session
+                                    session.addHostname(newHostname);
+                                    return true;
+                                }
+                                else {
+                                    index = hostname.indexOf('.', index + 1);
                                 }
                             }
                             return false;
@@ -162,7 +199,6 @@ public class OutgoingServerSession extends Session {
         if (conn != null && !conn.isClosed()) {
             try {
                 conn.deliver(packet);
-                incrementServerPacketCount();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

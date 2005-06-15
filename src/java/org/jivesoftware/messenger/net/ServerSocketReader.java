@@ -151,6 +151,12 @@ public class ServerSocketReader extends SocketReader {
             }
             return true;
         }
+        else if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
+            // The Receiving Server is reusing an existing connection for sending the
+            // Authoritative Server a request for verification of a key
+            ((IncomingServerSession) session).verifyReceivedKey(doc);
+            return true;
+        }
         return false;
     }
 

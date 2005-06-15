@@ -14,31 +14,40 @@
 <% 
     boolean exportUsers = request.getParameter("exportUsers") != null;
     boolean success = request.getParameter("success") != null;
+
+    boolean exportToFile = ParamUtils.getBooleanParameter(request, "exporttofile", false);
     
     ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
+
+    String exportText = null;
     
     Map errors = new HashMap();
     if (exportUsers) {
-		String file = ParamUtils.getParameter(request, "exportFile");
-		if ((file == null)  || (file.length() <= 0)) {
-			errors.put("missingFile","missingFile");
-        
+        if (exportToFile) {
+			String file = ParamUtils.getParameter(request, "exportFile");
+			if ((file == null)  || (file.length() <= 0)) {
+				errors.put("missingFile","missingFile");
+	        
+	        }
+	        else {
+		        try {
+		        	//todo this could take some, redirect to a progress page?
+					if (plugin.exportUsersToFile(file)) {
+						response.sendRedirect("export-user-data.jsp?success=true");
+						return;
+					}
+					else {
+						errors.put("fileNotCreated","fileNotCreated");
+					}       				
+				}
+				catch (IOException e) {
+	               	errors.put("IOException","IOException");               	
+		        }		
+	       	}
         }
         else {
-	        try {
-	        	//todo this could take some, redirect to a progress page?
-				if (plugin.exportUserData(file)) {
-					response.sendRedirect("export-user-data.jsp?success=true");
-					return;
-				}
-				else {
-					errors.put("fileNotCreated","fileNotCreated");
-				}       				
-			}
-			catch (IOException e) {
-               	errors.put("IOException","IOException");               	
-	        }		
-       	}
+        	exportText = plugin.exportUsersToString();
+        }
     }
 %>
 
@@ -47,7 +56,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Export User Data";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "../../index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "export-user-data.jsp"));
     pageinfo.setPageID("import-export-selection");
 %>
@@ -91,30 +100,49 @@
 <% } %>
 
 <form action="export-user-data.jsp?exportUsers" method="post">
-<div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-	<thead>
-	    <tr>
-	        <th>Export Properties</th>
-	    </tr>
-	</thead>
-    <tr class="jive-even">
-        <td style="border-right:1px #ccc solid;">Export Location:</td>
-    </tr>
-    <tr class="jive-odd">
-        <td style="border-right:1px #ccc solid;"><%= plugin.exportDirectory() %></td>     
-    </tr>
-    <tr class="jive-even">
-        <td style="border-right:1px #ccc solid;">Export File Name:</td>
-    </tr>
-    <tr class="jive-odd">
-        <td style="border-right:1px #ccc solid;">
-        	<input type="text" size="30" maxlength="150" name="exportFile">
-        </td>        
-    </tr>
-</table>
-</div>
 
+<fieldset>
+    <legend>Export Options</legend>
+	<div>
+	
+	<table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+            	<input type="radio" name="exporttofile" value="true" selected id="rb01">
+            </td>
+            <td width="99%">
+                <label for="rb01"><b>To File</b></label> - Save user data to the specified file location.
+            </td>
+            <tr>
+	            <td width="1%">&nbsp;</td>
+		        <td width="99%">
+		        	<%= plugin.exportDirectory() %>
+		        </td>
+	        </tr>
+	        <tr>
+		        <td width="1%">&nbsp;</td>
+		        <td width="99%">Export File Name:&nbsp;<input type="text" size="30" maxlength="150" name="exportFile"></td>
+		    </tr>
+        </tr>
+        <tr>
+            <td width="1%">
+            	<input type="radio" name="exporttofile" value="false" id="rb02">
+            </td>
+            <td width="99%">
+                <label for="rb02"><b>To Screen</b></label> - Dispaly user data in the text area below.
+            </td>            
+        </tr>
+        <tr>
+        	<td width="1%">&nbsp;</td>
+	        <td width="99%">
+	        	<textarea cols="80" rows="20" wrap=off><%=(exportText == null) ? "" : exportText %></textarea>
+	        </td>
+        </tr>
+    </tbody>
+    </table>
+	</div>
+</fieldset>
 <br><br>
 
 <input type="submit" value="Export">

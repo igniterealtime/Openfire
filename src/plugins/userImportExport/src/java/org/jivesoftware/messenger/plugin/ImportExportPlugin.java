@@ -3,6 +3,7 @@ package org.jivesoftware.messenger.plugin;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,13 +48,34 @@ public class ImportExportPlugin implements Plugin {
     private PluginManager pluginManager;
     private static UserProvider provider;
     
-    private static String serverName;    
+    private static String serverName;
+    private static String exportDirectory;
     
     public ImportExportPlugin() {
         userManager = XMPPServer.getInstance().getUserManager();
         provider = UserManager.getUserProvider();
         
         serverName = XMPPServer.getInstance().getServerInfo().getName();
+        
+        
+    	if (exportDirectory == null) {
+            if (JiveGlobals.getHomeDirectory() != null) {
+                File messengerHome = new File(JiveGlobals.getHomeDirectory());
+                if (messengerHome.exists() && messengerHome.canWrite()) {
+                	exportDirectory = (new File(messengerHome, "export")).toString();
+                }
+            }
+        }
+    	
+    	if (!exportDirectory.endsWith(File.separator)) {
+    		exportDirectory = exportDirectory + File.separator;
+        }
+
+        // Make sure the export directory exists. If not, make it:
+        File exportDir = new File(exportDirectory);
+        if (!exportDir.exists()) {
+            exportDir.mkdir();
+        }
     }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
@@ -64,6 +86,8 @@ public class ImportExportPlugin implements Plugin {
         userManager = null;
         pluginManager = null;
         provider = null;
+        serverName = null;
+        exportDirectory = null;
     }
     
     public boolean isUserProviderReadOnly() {
@@ -71,38 +95,51 @@ public class ImportExportPlugin implements Plugin {
     }
     
     public static String exportDirectory() {
-        return JiveGlobals.getHomeDirectory() + File.separator + "export";
+        return exportDirectory;
     }
     
-    public boolean exportUserData(String file) throws IOException {
-        if (!createExportDirectory()) {
-            return false;
-        }        
-        
-        if (!file.endsWith(".xml")) {
+    public boolean exportUsersToFile(String file) throws IOException {    	
+    	if (!file.endsWith(".xml")) {
             file += ".xml";
         }
-        String exportFilePath = exportDirectory() + File.separator + file;
+    	String exportFilePath = exportDirectory + file;
         
-        XMLWriter writer = new XMLWriter(new FileWriter(exportFilePath), OutputFormat.createPrettyPrint());
-        writer.write(exportUsers());
-        writer.close();
+        XMLWriter writer = null;
+        try {
+	        writer = new XMLWriter(new FileWriter(exportFilePath), OutputFormat.createPrettyPrint());
+	        writer.write(exportUsers());
+        } catch (IOException ioe) {
+        	Log.error(ioe);
+        	throw ioe;
+        } finally {        
+        	if (writer != null) {
+        		writer.close();
+        	}
+        }
         
         return true;
     }
     
-    private boolean createExportDirectory() {
-        boolean isDirReady = true;
-        
-        if (!(new File(exportDirectory())).exists()) {
-            isDirReady = (new File(exportDirectory())).mkdirs();
+    public String exportUsersToString() throws IOException {
+    	StringWriter stringWriter = new StringWriter();
+    	XMLWriter writer = null;
+        try {
+	        writer = new XMLWriter(stringWriter, OutputFormat.createPrettyPrint());
+	        writer.write(exportUsers());
+        } catch (IOException ioe) {
+        	Log.error(ioe);
+        	throw ioe;
+        } finally {        
+        	if (writer != null) {
+        		writer.close();
+        	}
         }
         
-        return isDirReady;
+        return stringWriter.toString();
     }
     
     public boolean validateImportFile(String file) {
-        String importFilePath = exportDirectory() + File.separator + file;        
+        String importFilePath = exportDirectory + file;        
         
         try {
             return new UserSchemaValidator(importFilePath, "messenger-user-schema.xsd.xml").validate();
@@ -114,7 +151,7 @@ public class ImportExportPlugin implements Plugin {
     }
     
     public List importUserData(String file) throws MalformedURLException, DocumentException {
-        String importFilePath = exportDirectory() + File.separator + file;
+        String importFilePath = exportDirectory + File.separator + file;
         
         SAXReader reader = new SAXReader();
 		Document document = reader.read(new File(importFilePath).toURL());
@@ -129,9 +166,20 @@ public class ImportExportPlugin implements Plugin {
 		for (User user : users) {			
 			Element userElement = root.addElement("User");
             String userName = user.getUsername();
-			userElement.addElement("Jid").addText(userName);
+//            if (userName != null) {
+//            	try {
+//					userName = URLEncoder.encode(userName, "UTF-8");
+//				} catch (UnsupportedEncodingException e) {
+//					Log.error(e);
+//					userName = "";
+//				}
+//            } else {
+//            	userName = "";
+//            }
+            userElement.addElement("Jid").addText(userName);            
+			
 			try {
-                userElement.addElement("Password").addText(provider.getPassword(userName));
+                userElement.addElement("Password").addText(provider.getPassword(user.getUsername()));
             }
             catch (UserNotFoundException e) {
                 //this should never happen
@@ -139,7 +187,19 @@ public class ImportExportPlugin implements Plugin {
                 userElement.addElement("Password").addText(userName);                
             }
 			userElement.addElement("Email").addText(user.getEmail() == null ? "" : user.getEmail());
-			userElement.addElement("Name").addText(user.getName() == null ? "" : user.getName());
+			
+			String name = user.getName();
+//			if (name != null) {
+//				try {
+//					name = URLEncoder.encode(name, "UTF-8");
+//				} catch (UnsupportedEncodingException e) {					
+//					Log.error(e);
+//					name = "";
+//				}
+//			} else {
+//				name = "";
+//			}
+			userElement.addElement("Name").addText(name == null ? "" : name);
 			
             //creation and modified datte are not used as part of the import process but are exported
             //for historical purposes, should they be formatted differently?

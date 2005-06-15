@@ -55,7 +55,7 @@
 <%  // Title of this page and breadcrumbs
     String title = "Import User Data";
     pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "index.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "../../index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "import-user-data.jsp"));
     pageinfo.setPageID("import-export-selection");
 %>

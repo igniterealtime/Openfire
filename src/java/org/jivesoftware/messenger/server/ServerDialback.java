@@ -31,6 +31,7 @@ import org.xmpp.packet.StreamError;
 import javax.net.SocketFactory;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -77,6 +78,7 @@ class ServerDialback {
     private Connection connection;
     private String serverName;
     private SessionManager sessionManager = SessionManager.getInstance();
+    private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     /**
      * Creates a new instance that will be used for creating {@link IncomingServerSession},
@@ -232,23 +234,34 @@ class ServerDialback {
             sb = null;
 
             // Process the answer from the Receiving Server
-            Element doc = reader.parseDocument().getRootElement();
-            if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
-                boolean success = "valid".equals(doc.attributeValue("type"));
-                Log.debug("OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
-                        hostname +
+            try {
+                Element doc = reader.parseDocument().getRootElement();
+                if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                    boolean success = "valid".equals(doc.attributeValue("type"));
+                    Log.debug("OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
+                            hostname +
+                            " id: " +
+                            id +
+                            " for domain: " +
+                            domain);
+                    return success;
+                }
+                else {
+                    Log.debug("OS - Unexpected answer in validation from: " + hostname + " id: " +
+                            id +
+                            " for domain: " +
+                            domain +
+                            " answer:" +
+                            doc.asXML());
+                    return false;
+                }
+            }
+            catch (SocketTimeoutException e) {
+                Log.debug("OS - Time out waiting for answer in validation from: " + hostname +
                         " id: " +
                         id +
                         " for domain: " +
                         domain);
-                return success;
-            }
-            else {
-                Log.debug("OS - Unexpected answer in validation from: " + hostname + " id: " + id +
-                        " for domain: " +
-                        domain +
-                        " answer:" +
-                        doc.asXML());
                 return false;
             }
         }
@@ -308,38 +321,11 @@ class ServerDialback {
                     // When acting as an Authoritative Server the Receiving Server will send a
                     // db:verify packet for verifying a key that was previously sent by this
                     // server when acting as the Originating Server
-                    String verifyFROM = doc.attributeValue("from");
-                    String verifyTO = doc.attributeValue("to");
-                    String key = doc.getTextTrim();
-                    String id = doc.attributeValue("id");
-                    Log.debug("AS - Verifying key for host: " + verifyFROM + " id: " + id);
-
-                    // TODO If the value of the 'to' address does not match a recognized hostname,
-                    // then generate a <host-unknown/> stream error condition
-                    // TODO If the value of the 'from' address does not match the hostname
-                    // represented by the Receiving Server when opening the TCP connection, then
-                    // generate an <invalid-from/> stream error condition
-
-                    // Verify the received key
-                    // Created the expected key based on the received ID value and the shared secret
-                    String expectedKey = AuthFactory.createDigest(id, secretKey);
-                    boolean verified = expectedKey.equals(key);
-
-                    // Send the result of the key verification
-                    sb = new StringBuilder();
-                    sb.append("<db:verify");
-                    sb.append(" from=\"" + verifyTO + "\"");
-                    sb.append(" to=\"" + verifyFROM + "\"");
-                    sb.append(" type=\"");
-                    sb.append(verified ? "valid" : "invalid");
-                    sb.append("\" id=\"" + id + "\"/>");
-                    connection.deliverRawText(sb.toString());
-                    Log.debug("AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
-                            verifyFROM +
-                            " id: " +
-                            id);
+                    verifyReceivedKey(doc, connection);
                     // Close the underlying connection
                     connection.close();
+                    String verifyFROM = doc.attributeValue("from");
+                    String id = doc.attributeValue("id");
                     Log.debug("AS - Connection closed for host: " + verifyFROM + " id: " + id);
                     sb = null;
                     return null;
@@ -395,7 +381,8 @@ class ServerDialback {
         String recipient = doc.attributeValue("to");
         String hostname = doc.attributeValue("from");
         Log.debug("RS - Received dialback key from host: " + hostname + " to: " + recipient);
-        if (!serverName.equals(recipient)) {
+        boolean host_unknown = isHostUnknown(recipient);
+        if (host_unknown) {
             // address does not match a recognized hostname
             error = new StreamError(StreamError.Condition.host_unknown);
             sb = new StringBuilder();
@@ -424,13 +411,13 @@ class ServerDialback {
                 DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
 
                 try {
-                    boolean valid = verifyKey(key, streamID.toString(), hostname,
+                    boolean valid = verifyKey(key, streamID.toString(), recipient, hostname,
                             address.getHost(), address.getPort());
 
                     Log.debug("RS - Sending key verification result to OS: " + hostname);
                     sb = new StringBuilder();
                     sb.append("<db:result");
-                    sb.append(" from=\"" + serverName + "\"");
+                    sb.append(" from=\"" + recipient + "\"");
                     sb.append(" to=\"" + hostname + "\"");
                     sb.append(" type=\"");
                     sb.append(valid ? "valid" : "invalid");
@@ -461,11 +448,29 @@ class ServerDialback {
         }
     }
 
+    private boolean isHostUnknown(String recipient) {
+        boolean host_unknown = !serverName.equals(recipient);
+        // If the recipient does not match the serverName then check if it matches a subdomain. This
+        // trick is useful when subdomains of this server are registered in the DNS so remote
+        // servers may establish connections directly to a subdomain of this server
+        if (host_unknown && recipient.contains(serverName)) {
+            try {
+                routingTable.getRoute(new JID(recipient));
+                host_unknown = false;
+            }
+            catch (NoSuchRouteException e) {
+                host_unknown = true;
+            }
+        }
+        return host_unknown;
+    }
+
     /**
      * Verifies the key with the Authoritative Server.
      */
-    private boolean verifyKey(String key, String streamID, String hostname, String host, int port)
-            throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private boolean verifyKey(String key, String streamID, String recipient, String hostname,
+            String host, int port) throws IOException, XmlPullParserException,
+            RemoteConnectionFailedException {
         // TODO Check if the hostname is in the blacklist
         XPPPacketReader reader = null;
         Writer writer = null;
@@ -506,7 +511,7 @@ class ServerDialback {
                 // Request for verification of the key
                 StringBuilder sb = new StringBuilder();
                 sb.append("<db:verify");
-                sb.append(" from=\"" + serverName + "\"");
+                sb.append(" from=\"" + recipient + "\"");
                 sb.append(" to=\"" + hostname + "\"");
                 sb.append(" id=\"" + streamID + "\">");
                 sb.append(key);
@@ -529,7 +534,7 @@ class ServerDialback {
                             // condition is sent to the Originating Server
                             throw new RemoteConnectionFailedException("Invalid ID");
                         }
-                        else if (!serverName.equals(doc.attributeValue("to"))) {
+                        else if (isHostUnknown(doc.attributeValue("to"))) {
                             // Include the host-unknown stream error condition in the response
                             error = new StreamError(StreamError.Condition.host_unknown);
                             sb = new StringBuilder();
@@ -598,6 +603,50 @@ class ServerDialback {
             }
         }
         return false;
+    }
+
+    /**
+     * Verifies the key sent by a Receiving Server. This server will be acting as the
+     * Authoritative Server when executing this method. The remote server may have established
+     * a new connection to the Authoritative Server (i.e. this server) for verifying the key
+     * or it may be reusing an existing incoming connection.
+     *
+     * @param doc the Element that contains the key to verify.
+     * @param connection the connection to use for sending the verification result
+     * @return true if the key was verified.
+     */
+    public static boolean verifyReceivedKey(Element doc, Connection connection) {
+        String verifyFROM = doc.attributeValue("from");
+        String verifyTO = doc.attributeValue("to");
+        String key = doc.getTextTrim();
+        String id = doc.attributeValue("id");
+        Log.debug("AS - Verifying key for host: " + verifyFROM + " id: " + id);
+
+        // TODO If the value of the 'to' address does not match a recognized hostname,
+        // then generate a <host-unknown/> stream error condition
+        // TODO If the value of the 'from' address does not match the hostname
+        // represented by the Receiving Server when opening the TCP connection, then
+        // generate an <invalid-from/> stream error condition
+
+        // Verify the received key
+        // Created the expected key based on the received ID value and the shared secret
+        String expectedKey = AuthFactory.createDigest(id, secretKey);
+        boolean verified = expectedKey.equals(key);
+
+        // Send the result of the key verification
+        StringBuilder sb = new StringBuilder();
+        sb.append("<db:verify");
+        sb.append(" from=\"" + verifyTO + "\"");
+        sb.append(" to=\"" + verifyFROM + "\"");
+        sb.append(" type=\"");
+        sb.append(verified ? "valid" : "invalid");
+        sb.append("\" id=\"" + id + "\"/>");
+        connection.deliverRawText(sb.toString());
+        Log.debug("AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
+                verifyFROM +
+                " id: " +
+                id);
+        return verified;
     }
 }
 

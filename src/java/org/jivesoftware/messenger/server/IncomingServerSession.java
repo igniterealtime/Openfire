@@ -171,4 +171,15 @@ public class IncomingServerSession extends Session {
         // Unregister the validated domain for this server session in SessionManager
         SessionManager.getInstance().unregisterIncomingServerSession(domain);
     }
+
+    /**
+     * Verifies the received key sent by the remote server. This server is trying to generate
+     * an outgoing connection to the remote server and the remote server is reusing an incoming
+     * connection for validating the key.
+     *
+     * @param doc the received Element that contains the key to verify.
+     */
+    public void verifyReceivedKey(Element doc) {
+        ServerDialback.verifyReceivedKey(doc, getConnection());
+    }
 }

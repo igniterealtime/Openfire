@@ -11,7 +11,6 @@
 
 package org.jivesoftware.messenger.server;
 
-import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.net.SocketAcceptThread;
@@ -56,7 +55,7 @@ public class OutgoingServerSession extends Session {
 
     private Collection<String> authenticatedDomains = new ArrayList<String>();
     private Collection<String> hostnames = new ArrayList<String>();
-    private XPPPacketReader reader;
+    private OutgoingServerSocketReader socketReader;
 
     /**
      * Creates a new outgoing connection to the specified hostname if no one exists. The port of
@@ -176,7 +175,7 @@ public class OutgoingServerSession extends Session {
             }
             // A session already exists so authenticate the domain using that session
             ServerDialback method = new ServerDialback(session.getConnection(), domain);
-            if (method.authenticateDomain(session.reader, domain, hostname,
+            if (method.authenticateDomain(session.socketReader, domain, hostname,
                     session.getStreamID().getID())) {
                 // Add the validated domain as an authenticated domain
                 session.addAuthenticatedDomain(domain);
@@ -189,10 +188,11 @@ public class OutgoingServerSession extends Session {
         return false;
     }
 
-    OutgoingServerSession(String serverName, Connection connection, XPPPacketReader reader,
-            StreamID streamID) {
+    OutgoingServerSession(String serverName, Connection connection,
+            OutgoingServerSocketReader socketReader, StreamID streamID) {
         super(serverName, connection, streamID);
-        this.reader = reader;
+        this.socketReader = socketReader;
+        socketReader.setSession(this);
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {

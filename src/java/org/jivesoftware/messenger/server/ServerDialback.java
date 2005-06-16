@@ -19,9 +19,9 @@ import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.net.DNSUtil;
 import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -31,7 +31,7 @@ import org.xmpp.packet.StreamError;
 import javax.net.SocketFactory;
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -87,7 +87,7 @@ class ServerDialback {
      * session used for receiving packets from the remote server. Use
      * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.messenger.StreamID)} for
      * validating subsequent domains and use
-     * {@link #authenticateDomain(org.dom4j.io.XPPPacketReader, String, String, String)} for
+     * {@link #authenticateDomain(OutgoingServerSocketReader, String, String, String)} for
      * registering new domains that are allowed to send packets to the remote server.<p>
      *
      * For validating domains a new TCP connection will be established to the Authoritative Server.
@@ -128,8 +128,6 @@ class ServerDialback {
             DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
             realHostname = address.getHost();
             Socket socket = SocketFactory.getDefault().createSocket(realHostname, port);
-            // Set a read timeout of 60 seconds during the dialback operation. Then reset to 0.
-            socket.setSoTimeout(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000));
             Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
@@ -155,13 +153,12 @@ class ServerDialback {
             }
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
                 String id = xpp.getAttributeValue("", "id");
-                if (authenticateDomain(reader, domain, hostname, id)) {
-                    // Reset the read timeout to infinite.
-                    socket.setSoTimeout(0);
+                OutgoingServerSocketReader socketReader = new OutgoingServerSocketReader(reader);
+                if (authenticateDomain(socketReader, domain, hostname, id)) {
                     // Domain was validated so create a new OutgoingServerSession
                     StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
                     OutgoingServerSession session = new OutgoingServerSession(domain, connection,
-                            reader, streamID);
+                            socketReader, streamID);
                     connection.init(session);
                     // Set the hostname as the address of the session
                     session.setAddress(new JID(null, hostname, null));
@@ -204,25 +201,19 @@ class ServerDialback {
      * The Receiving Server will connect to the Authoritative Server to verify the dialback key.
      * Most probably the Originating Server machine will be the Authoritative Server too.
      *
-     * @param reader the reader to use for reading the answer from the Receiving Server.
+     * @param socketReader the reader to use for reading the answer from the Receiving Server.
      * @param domain the domain to authenticate.
      * @param hostname the hostname of the remote server (i.e. Receiving Server).
      * @param id the stream id to be used for creating the dialback key.
      * @return true if the Receiving Server authenticated the domain with the Authoritative Server.
-     * @throws XmlPullParserException if a parsing error occured while reading the answer from
-     *         the Receiving Server.
-     * @throws IOException if an input/output error occured while sending/receiving packets to/from
-     *         the Receiving Server.
-     * @throws DocumentException if a parsing error occured while reading the answer from
-     *         the Receiving Server.
      */
-    public boolean authenticateDomain(XPPPacketReader reader, String domain, String hostname,
-            String id) throws XmlPullParserException, IOException, DocumentException {
+    public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String domain,
+            String hostname, String id) {
         String key = AuthFactory.createDigest(id, secretKey);
         Log.debug("OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
                 domain);
 
-        synchronized (reader) {
+        synchronized (socketReader) {
             // Send a dialback key to the Receiving Server
             StringBuilder sb = new StringBuilder();
             sb.append("<db:result");
@@ -235,8 +226,17 @@ class ServerDialback {
 
             // Process the answer from the Receiving Server
             try {
-                Element doc = reader.parseDocument().getRootElement();
-                if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                Element doc = socketReader.getElement(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000),
+                        TimeUnit.MILLISECONDS);
+                if (doc == null) {
+                    Log.debug("OS - Time out waiting for answer in validation from: " + hostname +
+                            " id: " +
+                            id +
+                            " for domain: " +
+                            domain);
+                    return false;
+                }
+                else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     boolean success = "valid".equals(doc.attributeValue("type"));
                     Log.debug("OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
                             hostname +
@@ -256,12 +256,12 @@ class ServerDialback {
                     return false;
                 }
             }
-            catch (SocketTimeoutException e) {
-                Log.debug("OS - Time out waiting for answer in validation from: " + hostname +
+            catch (InterruptedException e) {
+                Log.debug("OS - Validation FAILED from: " + hostname +
                         " id: " +
                         id +
                         " for domain: " +
-                        domain);
+                        domain, e);
                 return false;
             }
         }

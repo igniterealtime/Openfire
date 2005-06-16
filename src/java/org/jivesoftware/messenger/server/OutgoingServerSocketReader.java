@@ -13,7 +13,6 @@ package org.jivesoftware.messenger.server;
 
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
-import org.jivesoftware.messenger.Session;
 import org.jivesoftware.util.Log;
 
 import java.util.concurrent.BlockingQueue;

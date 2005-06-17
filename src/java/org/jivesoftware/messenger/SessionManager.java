@@ -113,7 +113,7 @@ public class SessionManager extends BasicModule {
     private Timer timer = new Timer("Sessions cleanup");
 
     /**
-     * Task that closes idle outgoing server sessions.
+     * Task that closes idle server sessions.
      */
     private ServerCleanupTask serverCleanupTask;
 
@@ -1309,7 +1309,7 @@ public class SessionManager extends BasicModule {
                 JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
             }
         }
-        // Run through the outgoing server sessions every 5 minutes after a 5 minutes server
+        // Run through the server sessions every 5 minutes after a 5 minutes server
         // startup delay (default values)
         serverCleanupTask = new ServerCleanupTask();
         timer.schedule(serverCleanupTask, getServerSessionTimeout(), getServerSessionTimeout());
@@ -1392,7 +1392,7 @@ public class SessionManager extends BasicModule {
      * Clean up code
      *****************************************************/
     /**
-     * Sets the number of milliseconds to elapse between clearing of idle outgoing server sessions.
+     * Sets the number of milliseconds to elapse between clearing of idle server sessions.
      *
      * @param timeout the number of milliseconds to elapse between clearings.
      */
@@ -1412,11 +1412,9 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns the number of milliseconds to elapse between clearing of idle outgoing server
-     * sessions.
+     * Returns the number of milliseconds to elapse between clearing of idle server sessions.
      *
-     * @return the number of milliseconds to elapse between clearing of idle outgoing server
-     * sessions.
+     * @return the number of milliseconds to elapse between clearing of idle server sessions.
      */
     public int getServerSessionTimeout() {
         return JiveGlobals.getIntProperty("xmpp.session.server.timeout", 5 * 60 * 1000);
@@ -1435,7 +1433,7 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Task that closes the idle outgoing server sessions.
+     * Task that closes the idle server sessions.
      */
     private class ServerCleanupTask extends TimerTask {
         /**
@@ -1447,7 +1445,19 @@ public class SessionManager extends BasicModule {
                 return;
             }
             final long deadline = System.currentTimeMillis() - getServerSessionIdleTime();
+            // Check outgoing server sessions
             for (OutgoingServerSession session : outgoingServerSessions.values()) {
+                try {
+                    if (session.getLastActiveDate().getTime() < deadline) {
+                        session.getConnection().close();
+                    }
+                }
+                catch (Throwable e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
+            // Check incoming server sessions
+            for (IncomingServerSession session : incomingServerSessions.values()) {
                 try {
                     if (session.getLastActiveDate().getTime() < deadline) {
                         session.getConnection().close();

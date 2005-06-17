@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.util.Log;
 
+import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -98,8 +99,26 @@ public class OutgoingServerSocketReader {
                             elements.add(doc);
                         }
                     }
+                    catch (SocketException e) {
+                        String message = "Finishing Outgoing Server Reader. ";
+                        if (session != null) {
+                            message = message + "Closing session: " + session.toString();
+                        }
+                        else {
+                            message = message + "No session to close.";
+                        }
+                        Log.debug(message, e);
+                        closeSession();
+                    }
                     catch (Exception e) {
-                        Log.error(e);
+                        String message = "Finishing Outgoing Server Reader. ";
+                        if (session != null) {
+                            message = message + "Closing session: " + session.toString();
+                        }
+                        else {
+                            message = message + "No session to close.";
+                        }
+                        Log.error(message, e);
                         closeSession();
                     }
                 }

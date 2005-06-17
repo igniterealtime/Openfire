@@ -171,6 +171,8 @@ public class ServerSocketReader extends SocketReader {
      */
     private void packetReceived(Packet packet) throws PacketRejectedException {
         if (packet.getTo() == null || packet.getFrom() == null) {
+            Log.debug("Closing IncomingServerSession due to packet with no TO or FROM: " +
+                    packet.toXML());
             // Send a stream error saying that the packet includes no TO or FROM
             StreamError error = new StreamError(StreamError.Condition.improper_addressing);
             connection.deliverRawText(error.toXML());
@@ -180,6 +182,8 @@ public class ServerSocketReader extends SocketReader {
             throw new PacketRejectedException("Packet with no TO or FROM attributes");
         }
         else if (!((IncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
+            Log.debug("Closing IncomingServerSession due to packet with invalid domain: " +
+                    packet.toXML());
             // Send a stream error saying that the packet includes an invalid FROM
             StreamError error = new StreamError(StreamError.Condition.invalid_from);
             connection.deliverRawText(error.toXML());

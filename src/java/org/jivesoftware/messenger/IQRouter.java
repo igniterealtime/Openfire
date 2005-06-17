@@ -195,7 +195,7 @@ public class IQRouter extends BasicModule {
                             // Locate a route to the sender of the IQ and ask it to process
                             // the packet. Use the routingTable so that routes to remote servers
                             // may be found
-                            routingTable.getRoute(packet.getFrom()).process(packet);
+                            routingTable.getRoute(packet.getFrom()).process(reply);
                         }
                         catch (NoSuchRouteException e) {
                             // No root was found so try looking for local sessions that have never

@@ -15,7 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.util.Log;
 
-import java.net.SocketException;
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +99,7 @@ public class OutgoingServerSocketReader {
                             elements.add(doc);
                         }
                     }
-                    catch (SocketException e) {
+                    catch (IOException e) {
                         String message = "Finishing Outgoing Server Reader. ";
                         if (session != null) {
                             message = message + "Closing session: " + session.toString();

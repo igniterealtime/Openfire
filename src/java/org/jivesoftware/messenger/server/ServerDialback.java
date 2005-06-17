@@ -31,6 +31,7 @@ import org.xmpp.packet.StreamError;
 import javax.net.SocketFactory;
 import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -180,8 +181,19 @@ class ServerDialback {
                 connection.close();
             }
         }
+        catch (UnknownHostException e) {
+            Log.debug("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
+                    realHostname +
+                    ")",
+                    e);
+            // Close the connection
+            if (connection != null) {
+                connection.close();
+            }
+        }
         catch (Exception e) {
-            Log.error("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
+            Log.error("Error creating outgoing session to remote server: " + hostname +
+                    "(DNS lookup: " +
                     realHostname +
                     ")",
                     e);

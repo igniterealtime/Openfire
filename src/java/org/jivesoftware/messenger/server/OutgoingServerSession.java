@@ -147,6 +147,10 @@ public class OutgoingServerSession extends Session {
                             int index = hostname.indexOf('.');
                             while (index > -1 && index < hostname.length()) {
                                 String newHostname = hostname.substring(index + 1);
+                                if ("com".equals(newHostname) || "net".equals(newHostname) ||
+                                        "org".equals(newHostname) || "gov".equals(newHostname)) {
+                                    return false;
+                                }
                                 session =
                                         new ServerDialback().createOutgoingSession(domain, newHostname, port);
                                 if (session != null) {

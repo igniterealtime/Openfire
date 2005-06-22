@@ -78,7 +78,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
     public SearchPlugin() {
         serviceName = JiveGlobals.getProperty("plugin.search.serviceName", "search");
-        serviceEnabled = JiveGlobals.getBooleanProperty("plugin.broadcast.serviceEnabled", true);
+        serviceEnabled = JiveGlobals.getBooleanProperty("plugin.search.serviceEnabled", true);
         
         server = XMPPServer.getInstance();
         serverName = server.getServerInfo().getName();

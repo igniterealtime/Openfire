@@ -114,6 +114,19 @@ CREATE TABLE jiveVersion (
   minorVersion  INTEGER  NOT NULL
 );
 
+CREATE TABLE jiveExtComponentConf (
+  subdomain             NVARCHAR(255)    NOT NULL,
+  secret                NVARCHAR(255),
+  permission            NVARCHAR(10)     NOT NULL,
+  CONSTRAINT jiveExtComponentConf_pk PRIMARY KEY (subdomain)
+);
+
+CREATE TABLE jiveRemoteServerConf (
+  domain                NVARCHAR(255)    NOT NULL,
+  remotePort            INTEGER,
+  permission            NVARCHAR(10)     NOT NULL,
+  CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
+);
 
 /* MUC Tables */
 

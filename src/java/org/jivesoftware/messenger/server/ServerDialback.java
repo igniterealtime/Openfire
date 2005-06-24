@@ -120,7 +120,6 @@ class ServerDialback {
      * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
      */
     public OutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
-        // TODO Check if the hostname is in the blacklist
         String realHostname = null;
         try {
             // Establish a TCP connection to the Receiving Server
@@ -393,8 +392,20 @@ class ServerDialback {
         String recipient = doc.attributeValue("to");
         String hostname = doc.attributeValue("from");
         Log.debug("RS - Received dialback key from host: " + hostname + " to: " + recipient);
-        boolean host_unknown = isHostUnknown(recipient);
-        if (host_unknown) {
+        if (!RemoteServerManager.canAccess(hostname)) {
+            // Remote server is not allowed to establish a connection to this server
+            error = new StreamError(StreamError.Condition.host_unknown);
+            sb = new StringBuilder();
+            sb.append(error.toXML());
+            connection.deliverRawText(sb.toString());
+            // Close the underlying connection
+            connection.close();
+            Log.debug("RS - Error, hostname is not allowed to establish a connection to " +
+                    "this server: " +
+                    recipient);
+            return false;
+        }
+        else if (isHostUnknown(recipient)) {
             // address does not match a recognized hostname
             error = new StreamError(StreamError.Condition.host_unknown);
             sb = new StringBuilder();
@@ -483,7 +494,6 @@ class ServerDialback {
     private boolean verifyKey(String key, String streamID, String recipient, String hostname,
             String host, int port) throws IOException, XmlPullParserException,
             RemoteConnectionFailedException {
-        // TODO Check if the hostname is in the blacklist
         XPPPacketReader reader = null;
         Writer writer = null;
         StreamError error;

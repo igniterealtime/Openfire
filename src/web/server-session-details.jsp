@@ -51,7 +51,7 @@
     String title = LocaleUtils.getLocalizedString("server.session.details.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-session-details.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-session-details.jsp?hostname=" + hostname));
     pageinfo.setPageID("server-session-summary");
 %>
 <jsp:include page="top.jsp" flush="true" />

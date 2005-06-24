@@ -202,7 +202,7 @@
         <th nowrap><fmt:message key="plugin.admin.version" /></th>
         <th nowrap><fmt:message key="plugin.admin.author" /></th>
         <th nowrap><fmt:message key="plugin.admin.restart" /></th>
-        <th nowrap><fmt:message key="plugin.admin.delete" /></th>
+        <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -266,7 +266,7 @@
 	        </td>
 	        <td width="1%" align="center" style="border-right:1px #ccc solid;">
 	            <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
-	             title="<fmt:message key="plugin.admin.click_delete" />"
+	             title="<fmt:message key="global.click_delete" />"
 	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
 	        </td>
 	    </tr>

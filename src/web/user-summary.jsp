@@ -186,7 +186,7 @@
         <th nowrap><fmt:message key="user.create.name" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
         <th nowrap><fmt:message key="user.summary.edit" /></th>
-        <th nowrap><fmt:message key="user.summary.delete" /></th>
+        <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -248,12 +248,12 @@
         </td>
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-             title="<fmt:message key="user.summary.click_edit" />"
+             title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-             title="<fmt:message key="user.summary.click_delete" />"
+             title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>
     </tr>

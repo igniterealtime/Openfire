@@ -193,7 +193,7 @@
     <thead>
         <tr>
             <th colspan="2"><fmt:message key="muc.room.affiliations.user" /></th>
-            <th width="1%"><fmt:message key="muc.room.affiliations.delete" /></th>
+            <th width="1%"><fmt:message key="global.delete" /></th>
         </tr>
     </thead>
     <tbody>
@@ -219,7 +219,7 @@
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=owner"
-                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
@@ -247,7 +247,7 @@
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=admin"
-                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
@@ -277,7 +277,7 @@
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=member"
-                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>
@@ -305,7 +305,7 @@
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= roomName %>&userJID=<%= user %>&delete=true&affiliation=outcast"
-                     title="<fmt:message key="muc.room.affiliations.click_delete" />"
+                     title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
                 </td>

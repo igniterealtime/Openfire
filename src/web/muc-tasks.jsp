@@ -191,7 +191,7 @@
                      <input type="text" name="idletime" size="5" maxlength="5"
                          onclick="this.form.kickEnabled[1].checked=true;"
                          value="<%= mucServer.getUserIdleTime() == -1 ? 30 : mucServer.getUserIdleTime() / 1000 / 60 %>">
-                     <fmt:message key="muc.tasks.minutes" />
+                     <fmt:message key="global.minutes" />.
             </td>
         </tr>
     </tbody>

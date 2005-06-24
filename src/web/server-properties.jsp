@@ -231,7 +231,7 @@ function dodelete(propName) {
         <th nowrap><fmt:message key="server.properties.name" /></th>
         <th nowrap><fmt:message key="server.properties.value" /></th>
         <th style="text-align:center;"><fmt:message key="server.properties.edit" /></th>
-        <th style="text-align:center;"><fmt:message key="server.properties.delete" /></th>
+        <th style="text-align:center;"><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
 <tbody>

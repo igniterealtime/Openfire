@@ -102,14 +102,14 @@
 
             <%  if (numPages > 1) { %>
 
-                - <fmt:message key="session.summary.showing" /> <%= (start+1) %>-<%= (start+range) %>
+                - <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
             <%  } %>
 
             <%  if (numPages > 1) { %>
 
                 <p>
-                <fmt:message key="session.summary.page" />:
+                <fmt:message key="global.pages" />:
                 [
                 <%  for (int i=0; i<numPages; i++) {
                         String sep = ((i+1)<numPages) ? " " : "";
@@ -204,7 +204,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="session.summary.page" />:
+    <fmt:message key="global.pages" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";

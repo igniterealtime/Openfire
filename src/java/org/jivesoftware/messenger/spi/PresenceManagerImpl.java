@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.spi;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.roster.Roster;

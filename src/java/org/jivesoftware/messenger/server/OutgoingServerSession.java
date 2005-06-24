@@ -13,8 +13,6 @@ package org.jivesoftware.messenger.server;
 
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.net.SocketAcceptThread;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -80,9 +78,10 @@ public class OutgoingServerSession extends Session {
             return false;
         }
         try {
-            // TODO Check if the remote hostname is in the blacklist
-            // TODO Keep a list of ports to connect to for each hostname or use the default
-            // if none was defined
+            // Check if the remote hostname is in the blacklist
+            if (!RemoteServerManager.canAccess(hostname)) {
+                return false;
+            }
 
             // Check if a session already exists to the desired hostname (i.e. remote server). If
             // no one exists then create a new session. The same session will be used for the same
@@ -106,8 +105,7 @@ public class OutgoingServerSession extends Session {
                 }
             }
             if (session == null) {
-                int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort",
-                        SocketAcceptThread.DEFAULT_SERVER_PORT);
+                int port = RemoteServerManager.getPortForServer(hostname);
                 // No session was found to the remote server so make sure that only one is created
                 synchronized (hostname.intern()) {
                     session = sessionManager.getOutgoingServerSession(hostname);

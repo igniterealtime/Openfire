@@ -20,6 +20,8 @@ import org.jivesoftware.messenger.server.OutgoingServerSession;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.component.ComponentSession;
+import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -1064,6 +1066,21 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns the session of the component whose domain matches the specified domain.
+     *
+     * @param domain the domain of the component session to look for.
+     * @return the session of the component whose domain matches the specified domain.
+     */
+    public ComponentSession getComponentSession(String domain) {
+        for (ComponentSession session : componentsSessions) {
+            if (domain.equals(session.getAddress().getDomain())) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns a collection with the hostnames of the remote servers that currently have an
      * incoming server connection to this server.
      *
@@ -1408,7 +1425,7 @@ public class SessionManager extends BasicModule {
         serverCleanupTask = new ServerCleanupTask();
         timer.schedule(serverCleanupTask, getServerSessionTimeout(), getServerSessionTimeout());
         // Set the new property value
-        JiveGlobals.setProperty("xmpp.session.server.timeout", Integer.toString(timeout));
+        JiveGlobals.setProperty("xmpp.server.session.timeout", Integer.toString(timeout));
     }
 
     /**
@@ -1417,7 +1434,7 @@ public class SessionManager extends BasicModule {
      * @return the number of milliseconds to elapse between clearing of idle server sessions.
      */
     public int getServerSessionTimeout() {
-        return JiveGlobals.getIntProperty("xmpp.session.server.timeout", 5 * 60 * 1000);
+        return JiveGlobals.getIntProperty("xmpp.server.session.timeout", 5 * 60 * 1000);
     }
 
     public void setServerSessionIdleTime(int idleTime) {
@@ -1425,11 +1442,11 @@ public class SessionManager extends BasicModule {
             return;
         }
         // Set the new property value
-        JiveGlobals.setProperty("xmpp.session.server.idle", Integer.toString(idleTime));
+        JiveGlobals.setProperty("xmpp.server.session.idle", Integer.toString(idleTime));
     }
 
     public int getServerSessionIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.session.server.idle", 30 * 60 * 1000);
+        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 30 * 60 * 1000);
     }
 
     /**

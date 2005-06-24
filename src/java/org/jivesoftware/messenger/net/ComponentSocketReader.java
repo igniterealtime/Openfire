@@ -12,7 +12,7 @@
 package org.jivesoftware.messenger.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.ComponentSession;
+import org.jivesoftware.messenger.component.ComponentSession;
 import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmlpull.v1.XmlPullParserException;

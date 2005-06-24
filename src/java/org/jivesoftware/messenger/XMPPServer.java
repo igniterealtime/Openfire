@@ -28,6 +28,7 @@ import org.jivesoftware.messenger.spi.*;
 import org.jivesoftware.messenger.container.Module;
 import org.jivesoftware.messenger.container.PluginManager;
 import org.jivesoftware.messenger.net.MulticastDNSService;
+import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;

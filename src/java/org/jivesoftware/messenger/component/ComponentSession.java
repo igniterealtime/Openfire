@@ -8,25 +8,25 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.messenger;
+package org.jivesoftware.messenger.component;
 
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.StreamError;
-import org.xmpp.component.*;
-import org.xmpp.component.ComponentManager;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.auth.AuthFactory;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.dom4j.io.XPPPacketReader;
 import org.dom4j.Element;
+import org.dom4j.io.XPPPacketReader;
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.auth.AuthFactory;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.component.Component;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
 
-import java.io.Writer;
 import java.io.IOException;
+import java.io.Writer;
 
 /**
  * Represents a session between the server and a component.
@@ -57,6 +57,8 @@ public class ComponentSession extends Session {
         Session session;
         String domain = xpp.getAttributeValue("", "to");
 
+        Log.debug("[ExComp] Starting registration of new external component for domain: " + domain);
+
         // Get the requested subdomain
         String subdomain = domain;
         int index = domain.indexOf(serverName);
@@ -78,6 +80,7 @@ public class ComponentSession extends Session {
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
+            Log.debug("[ExComp] Domain not specified in stanza: " + xpp.getText());
             // Include the bad-format in the response
             StreamError error = new StreamError(StreamError.Condition.bad_format);
             sb.append(error.toXML());
@@ -88,12 +91,22 @@ public class ComponentSession extends Session {
             connection.close();
             return null;
         }
+        // Check that an external component for the specified subdomain may connect to this server
+        if (!ExternalComponentManager.canAccess(subdomain)) {
+            Log.debug("[ExComp] Component is not allowed to connect with subdomain: " + subdomain);
+            StreamError error = new StreamError(StreamError.Condition.host_unknown);
+            sb.append(error.toXML());
+            sb.append("</stream:stream>");
+            writer.write(sb.toString());
+            writer.flush();
+            // Close the underlying connection
+            connection.close();
+            return null;
+        }
         // Check that a secret key was configured in the server
-        // TODO Configure the secret key in the Admin Console
-        String secretKey = JiveGlobals.getProperty("component.external.secretKey");
+        String secretKey = ExternalComponentManager.getSecretForComponent(subdomain);
         if (secretKey == null) {
-            Log.error("Setup for external components is incomplete. Property " +
-                    "component.external.secretKey does not exist.");
+            Log.debug("[ExComp] A shared secret for the component was not found.");
             // Include the internal-server-error in the response
             StreamError error = new StreamError(StreamError.Condition.internal_server_error);
             sb.append(error.toXML());
@@ -106,6 +119,7 @@ public class ComponentSession extends Session {
         }
         // Check that the requested subdomain is not already in use
         if (InternalComponentManager.getInstance().getComponent(subdomain) != null) {
+            Log.debug("[ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
@@ -124,6 +138,9 @@ public class ComponentSession extends Session {
         session.setAddress(new JID(null, domain , null));
 
         try {
+            Log.debug("[ExComp] Send stream header with ID: " + session.getStreamID() +
+                    " for component with domain: " +
+                    domain);
             // Build the start packet response
             sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
@@ -146,6 +163,7 @@ public class ComponentSession extends Session {
                     secretKey);
             // Check that the provided handshake (secret key + sessionID) is correct
             if (!anticipatedDigest.equalsIgnoreCase(digest)) {
+                Log.debug("[ExComp] Incorrect handshake for component with domain: " + domain);
                 //  The credentials supplied by the initiator are not valid (answer an error
                 // and close the connection)
                 sb = new StringBuilder();
@@ -167,7 +185,10 @@ public class ComponentSession extends Session {
                 writer.flush();
                 // Bind the domain to this component
                 ExternalComponent component = ((ComponentSession) session).getExternalComponent();
+                component.setSubdomain(subdomain);
                 InternalComponentManager.getInstance().addComponent(subdomain, component);
+                Log.debug("[ExComp] External component was registered SUCCESSFULLY with domain: " +
+                        domain);
                 return session;
             }
         }
@@ -205,6 +226,11 @@ public class ComponentSession extends Session {
      */
     public class ExternalComponent implements Component {
 
+        private String name;
+        private String type;
+        private String category;
+        private String subdomain;
+
         public void processPacket(Packet packet) {
             if (conn != null && !conn.isClosed()) {
                 try {
@@ -218,11 +244,39 @@ public class ComponentSession extends Session {
         }
 
         public String getName() {
-            return null;
+            return name;
         }
 
         public String getDescription() {
-            return null;
+            return category + " - " + type;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public String getSubdomain() {
+            return subdomain;
+        }
+
+        public void setSubdomain(String subdomain) {
+            this.subdomain = subdomain;
         }
 
         public void initialize(JID jid, ComponentManager componentManager) {

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.messenger.component;
 
 import org.dom4j.Element;
 import org.xmpp.component.Component;
@@ -22,6 +22,11 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.messenger.component.ComponentSession;
+import org.jivesoftware.messenger.RoutableChannelHandler;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.PacketException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -300,9 +305,17 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                 }
                 if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                     // Add a disco item to the server for the component that supports disco
+                    Element identity = childElement.element("identity");
                     XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
                             .toBareJID(),
-                            childElement.element("identity").attributeValue("name"));
+                            identity.attributeValue("name"));
+                    if (component instanceof ComponentSession.ExternalComponent) {
+                        ComponentSession.ExternalComponent externalComponent =
+                                (ComponentSession.ExternalComponent) component;
+                        externalComponent.setName(identity.attributeValue("name"));
+                        externalComponent.setType(identity.attributeValue("type"));
+                        externalComponent.setCategory(identity.attributeValue("category"));
+                    }
                 }
             }
         }

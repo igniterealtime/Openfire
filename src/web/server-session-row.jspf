@@ -3,7 +3,8 @@
                  java.net.URLEncoder,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.JiveGlobals,
-                 java.util.Date"%>
+                 java.util.Date,
+                 java.util.Calendar"%>
  <%--
   -	$RCSfile$
   -	$Revision$
@@ -54,14 +55,23 @@
             creationDate = inSession.getCreationDate().before(outSession.getCreationDate()) ? inSession.getCreationDate() : outSession.getCreationDate();
             lastActiveDate = inSession.getLastActiveDate().after(outSession.getLastActiveDate()) ? inSession.getLastActiveDate() : outSession.getLastActiveDate();
         }
-        long now = System.currentTimeMillis();
+        Calendar creationCal = Calendar.getInstance();
+        creationCal.setTime(creationDate);
+
+        Calendar lastActiveCal = Calendar.getInstance();
+        lastActiveCal.setTime(lastActiveDate);
+
+        Calendar nowCal = Calendar.getInstance();
+
+        boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+        boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
     %>
 
     <td align="center" width="20%" nowrap>
-        <%= (now - creationDate.getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
+        <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
     </td>
     <td align="center" width="20%" nowrap>
-        <%= (now - lastActiveDate.getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
+        <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">

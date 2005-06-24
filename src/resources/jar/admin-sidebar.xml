@@ -52,6 +52,16 @@
         <!-- Server Settings -->
         <sidebar id="sidebar-server-settings" name="${sidebar.sidebar-server-settings}">
 
+            <!-- Server to server -->
+            <item id="server2server-settings" name="${sidebar.server2server-settings}"
+                    url="server2server-settings.jsp"
+                    description="${sidebar.server2server-settings.descr}" />
+
+            <!-- External components -->
+            <item id="external-components-settings" name="${sidebar.external-components-settings}"
+                    url="external-components-settings.jsp"
+                    description="${sidebar.external-components-settings.descr}" />
+
             <!-- Registration &amp; Login -->
             <item id="server-reg-and-login" name="${sidebar.server-reg-and-login}"
                     url="reg-settings.jsp"

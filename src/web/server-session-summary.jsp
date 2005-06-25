@@ -141,7 +141,10 @@
 </p>
 
 <p>
-<fmt:message key="server.session.summary.info" />
+<fmt:message key="server.session.summary.info">
+    <fmt:param value="<%= "<a href='server2server-settings.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
 </p>
 
 <div class="jive-table">

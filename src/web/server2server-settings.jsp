@@ -161,7 +161,10 @@
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-<fmt:message key="server2server.settings.info" />
+<fmt:message key="server2server.settings.info">
+    <fmt:param value="<%= "<a href='server-session-summary.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
 </p>
 
 <%  if (!errors.isEmpty()) { %>

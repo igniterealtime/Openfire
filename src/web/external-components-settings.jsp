@@ -158,7 +158,10 @@
 %>
 
 <p>
-<fmt:message key="component.settings.info" />
+<fmt:message key="component.settings.info">
+    <fmt:param value="<%= "<a href='component-session-summary.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
 </p>
 
 <%  if (!errors.isEmpty()) { %>

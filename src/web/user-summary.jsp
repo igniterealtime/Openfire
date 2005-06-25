@@ -115,7 +115,7 @@
 
 <%  if (numPages > 1) { %>
 
-    <fmt:message key="user.summary.showing" />
+    <fmt:message key="global.showing" />
     <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range) %>,
 
 <%  } %>
@@ -137,7 +137,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="user.summary.pages" />:
+    <fmt:message key="global.pages" />:
     [
     <%  int num = 15 + curPage;
         int s = curPage-1;
@@ -268,7 +268,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="user.summary.pages" />:
+    <fmt:message key="global.pages" />:
     [
     <%  int num = 15 + curPage;
         int s = curPage-1;

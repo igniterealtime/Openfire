@@ -78,7 +78,7 @@
 <fmt:message key="muc.room.summary.total_room" />: <%= roomsCount %>,
 <%  if (numPages > 1) { %>
 
-    <fmt:message key="muc.room.summary.showing" /> <%= (start+1) %>-<%= (maxRoomIndex) %>,
+    <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (maxRoomIndex) %>,
 
 <%  } %>
 <fmt:message key="muc.room.summary.sorted_id" />
@@ -87,7 +87,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="muc.room.summary.page" />:
+    <fmt:message key="global.pages" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -182,7 +182,7 @@
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="muc.room.summary.page" />:
+    <fmt:message key="global.pages" />:
     [
     <%  for (i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";

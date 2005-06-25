@@ -97,12 +97,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         session.setInitialized(true);
                     }
                 }
-                // Delete the last unavailable presence of this user since the user is now
-                // available. Only perform this operation if this is an available presence sent to
-                // THE SERVER and the presence belongs to a local user.
-                if (presence.getTo() == null && localServer.isLocal(presence.getFrom())) {
-                    presenceManager.deleteLastUnavailablePresence(presence.getFrom().getNode());
-                }
+                // Notify the presence manager that the user is now available. The manager may
+                // remove the last presence status sent by the user when he went offline.
+                presenceManager.userAvailable(presence);
             }
             else if (Presence.Type.unavailable == type) {
                 broadcastUpdate(presence.createCopy());
@@ -110,15 +107,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 if (session != null) {
                     session.setPresence(presence);
                 }
-                // Save the last unavailable presence of this user if the presence contains any
-                // child element such as <status>. Only perform this operation if this is an
-                // unavailable presence sent to THE SERVER and the presence belongs to a local user.
-                if (presence.getTo() == null && localServer.isLocal(presence.getFrom())) {
-                    if (!presence.getElement().elements().isEmpty()) {
-                        presenceManager.saveLastUnavailablePresence(presence.getFrom().getNode(),
-                                presence);
-                    }
-                }
+                // Notify the presence manager that the user is now unavailable. The manager may
+                // save the last presence status sent by the user and keep track when the user
+                // went offline.
+                presenceManager.userUnavailable(presence);
             }
             else {
                 presence = presence.createCopy();

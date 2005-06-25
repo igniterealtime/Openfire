@@ -13,6 +13,7 @@ package org.jivesoftware.messenger.spi;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
+import org.dom4j.DocumentException;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -42,7 +43,8 @@ import java.util.List;
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
 
-    private static final String lastPresenceProp = "lastUnavailablePresence";
+    private static final String LAST_PRESENCE_PROP = "lastUnavailablePresence";
+    private static final String LAST_ACTIVITY_PROP = "lastActivity";
 
     private SessionManager sessionManager;
     private XMPPServer server;
@@ -96,6 +98,81 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             presences.add(session.getPresence());
         }
         return Collections.unmodifiableCollection(presences);
+    }
+
+    public String getLastPresenceStatus(User user) {
+        String answer = null;
+        String presenceXML = user.getProperties().get(LAST_PRESENCE_PROP);
+        if (presenceXML != null) {
+            try {
+                // Parse the element
+                Document element = DocumentHelper.parseText(presenceXML);
+                answer = element.getRootElement().elementTextTrim("status");
+            }
+            catch (DocumentException e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+        return answer;
+    }
+
+    public long getLastActivity(User user) {
+        long answer = -1;
+        String offline = user.getProperties().get(LAST_ACTIVITY_PROP);
+        if (offline != null) {
+            try {
+                answer = (System.currentTimeMillis() - Long.parseLong(offline)) / 1000;
+            }
+            catch (NumberFormatException e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+        return answer;
+    }
+
+    public void userAvailable(Presence presence) {
+        // Delete the last unavailable presence of this user since the user is now
+        // available. Only perform this operation if this is an available presence sent to
+        // THE SERVER and the presence belongs to a local user.
+        if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
+            String username = presence.getFrom().getNode();
+            if (username == null) {
+                // Ignore anonymous users
+                return;
+            }
+            try {
+                User probeeUser = UserManager.getInstance().getUser(username);
+                probeeUser.getProperties().remove(LAST_PRESENCE_PROP);
+            }
+            catch (UserNotFoundException e) {
+            }
+        }
+    }
+
+    public void userUnavailable(Presence presence) {
+        // Only save the last presence status and keep track of the time when the user went
+        // offline if this is an unavailable presence sent to THE SERVER and the presence belongs
+        // to a local user.
+        if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
+            String username = presence.getFrom().getNode();
+            if (username == null) {
+                // Ignore anonymous users
+                return;
+            }
+            try {
+                User probeeUser = UserManager.getInstance().getUser(username);
+                if (!presence.getElement().elements().isEmpty()) {
+                    // Save the last unavailable presence of this user if the presence contains any
+                    // child element such as <status>
+                    probeeUser.getProperties().put(LAST_PRESENCE_PROP, presence.toXML());
+                }
+                // Keep track of the time when the user went offline
+                probeeUser.getProperties().put(LAST_ACTIVITY_PROP,
+                        String.valueOf(System.currentTimeMillis()));
+            }
+            catch (UserNotFoundException e) {
+            }
+        }
     }
 
     public void handleProbe(Presence packet) throws UnauthorizedException {
@@ -157,7 +234,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         // prober
                         try {
                             User probeeUser = UserManager.getInstance().getUser(probee.getNode());
-                            String presenceXML = probeeUser.getProperties().get(lastPresenceProp);
+                            String presenceXML = probeeUser.getProperties().get(LAST_PRESENCE_PROP);
                             if (presenceXML != null) {
                                 try {
                                     // Parse the element
@@ -243,30 +320,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                 }
             }
-        }
-    }
-
-    public void deleteLastUnavailablePresence(String username) {
-        if (username == null) {
-            return;
-        }
-        try {
-            User probeeUser = UserManager.getInstance().getUser(username);
-            probeeUser.getProperties().remove(lastPresenceProp);
-        }
-        catch (UserNotFoundException e) {
-        }
-    }
-
-    public void saveLastUnavailablePresence(String username, Presence presence) {
-        if (username == null) {
-            return;
-        }
-        try {
-            User probeeUser = UserManager.getInstance().getUser(username);
-            probeeUser.getProperties().put(lastPresenceProp, presence.toXML());
-        }
-        catch (UserNotFoundException e) {
         }
     }
 

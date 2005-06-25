@@ -31,7 +31,7 @@ import org.xmpp.packet.PacketError;
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
     protected PacketDeliverer deliverer;
-    private SessionManager sessionManager;
+    protected SessionManager sessionManager;
 
     /**
      * Create a basic module with the given name.

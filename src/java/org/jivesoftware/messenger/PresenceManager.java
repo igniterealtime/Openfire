@@ -73,27 +73,6 @@ public interface PresenceManager {
     public void probePresence(JID prober, JID probee);
 
     /**
-     * Saves the last unavailable presence of the user so that future presence probes may answer
-     * this presence which may contain valuable information. If a last unavailable presence does
-     * not exist for a contact then no unavailable presence will be sent to the owner of the
-     * contact.
-     *
-     * @param username the name of the user whose last presence is going to be saved to the
-     *        database.
-     * @param presence the last unavailable presence to save to the database for this user.
-     */
-    public void saveLastUnavailablePresence(String username, Presence presence);
-
-    /**
-     * Deletes the last unavailable presence of a user. This may be necessary if the user has
-     * become available.
-     *
-     * @param username the name of the user whose last presence is going to be delete from the
-     *        database.
-     */
-    public void deleteLastUnavailablePresence(String username);
-
-    /**
      * Handle a presence probe sent by a remote server. The logic to apply is the following: If
      * the remote user is not in the local user's roster with a subscription state of "From", or
      * "Both", then return a presence stanza of type "error" in response to the presence probe.
@@ -113,4 +92,38 @@ public interface PresenceManager {
      * @param userJID JID of the local user.
      */
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID);
+
+    /**
+     * Notification message saying that the sender of the given presence just became available.
+     *
+     * @param presence the presence sent by the available user.
+     */
+    public void userAvailable(Presence presence);
+
+    /**
+     * Notification message saying that the sender of the given presence just became unavailable.
+     *
+     * @param presence the presence sent by the unavailable user.
+     */
+    public void userUnavailable(Presence presence);
+
+    /**
+     * Returns the status sent by the user in his last unavailable presence or <tt>null</tt> if the
+     * user is online or never set such information.
+     *
+     * @param user the user to return his last status information
+     * @return the status sent by the user in his last unavailable presence or <tt>null</tt> if the
+     *         user is online or never set such information.
+     */
+    public String getLastPresenceStatus(User user);
+
+    /**
+     * Returns the number of milliseconds since the user went offline or -1 if such information
+     * is not available or if the user is online.
+     *
+     * @param user the user to return his information.
+     * @return the number of milliseconds since the user went offline or -1 if such information
+     *         is not available or if the user is online.
+     */
+    public long getLastActivity(User user);
 }

@@ -253,6 +253,7 @@ public class XMPPServer {
         loadModule(IQTimeHandler.class.getName());
         loadModule(IQvCardHandler.class.getName());
         loadModule(IQVersionHandler.class.getName());
+        loadModule(IQLastActivityHandler.class.getName());
         loadModule(PresenceSubscribeHandler.class.getName());
         loadModule(PresenceUpdateHandler.class.getName());
         loadModule(IQDiscoInfoHandler.class.getName());

@@ -130,7 +130,10 @@
 </p>
 
 <p>
-<fmt:message key="component.session.summary.info" />
+<fmt:message key="component.session.summary.info">
+    <fmt:param value="<%= "<a href='external-components-settings.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
 </p>
 
 <div class="jive-table">
@@ -178,6 +181,21 @@
             <%= componentSession.getExternalComponent().getCategory() %>
         </td>
         <td align="center" width="10%" nowrap>
+            <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
+                if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/msn.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+                else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/aim.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+                else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/yahoo.gif" width="22" height="16" border="0">&nbsp;
+             <% }
+                else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/icq.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+            }
+            %>
             <%= componentSession.getExternalComponent().getType() %>
         </td>
         <%  Date creationDate = componentSession.getCreationDate();

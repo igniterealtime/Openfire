@@ -284,6 +284,10 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public void process(IQ packet) {
+        // Ignore IQs of type ERROR sent to a room 
+        if (IQ.Type.error == packet.getType()) {
+            return;
+        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
@@ -335,6 +339,10 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public void process(Presence packet) {
+        // Ignore presences of type ERROR sent to a room
+        if (Presence.Type.error == packet.getType()) {
+            return;
+        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();

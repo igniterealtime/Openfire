@@ -105,7 +105,7 @@ public class MessageRouter extends BasicModule {
     /**
      * Forwards the received message to the list of users defined in the property
      * <b>xmpp.forward.admins</b>. The property may include bare JIDs or just usernames separated
-     * by commas or black spaces. When using bare JIDs the target user may belong to a remote
+     * by commas or white spaces. When using bare JIDs the target user may belong to a remote
      * server.<p>
      *
      * If the property <b>xmpp.forward.admins</b> was not defined then the message will be sent

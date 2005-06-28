@@ -394,8 +394,20 @@ public class Roster implements Cacheable {
                     .getName());
             // Set the groups to broadcast (include personal and shared groups)
             List<String> groups = new ArrayList<String>(item.getGroups());
+            if (groups.contains(null)) {
+                Log.warn("A group is null in roster item: " + item.getJid() + " of user: " +
+                        getUsername());
+            }
             for (Group sharedGroup : item.getSharedGroups()) {
-                groups.add(sharedGroup.getProperties().get("sharedRoster.displayName"));
+                String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+                if (displayName != null) {
+                    groups.add(displayName);
+                }
+                else {
+                    // Do not add the shared group if it does not have a displayName. 
+                    Log.warn("Found shared group: " + sharedGroup.getName() +
+                            " with no displayName");
+                }
             }
             //if (item.getAskStatus() != RosterItem.ASK_NONE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);

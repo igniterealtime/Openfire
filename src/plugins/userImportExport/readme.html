@@ -72,11 +72,14 @@ during the import process, the plugin detects that you are trying to import a us
 that already exists in the system, it will not import that user or any roster 
 information.</li>
 <li>Exporting - Select the "Export User Data" option from the user import/export 
-selection page. On the export page, notice that the plugin will export user data to 
-the MESSENGER_HOME/export directory. In the "Export File Name" field, enter the name 
-of the file you want export to and then click on the "Export" button. Note: the plugin
-will automatically append an ".xml" extension to the file name if it is not already 
-present.</li>
+selection page. User data can be exported either to a file or directly to the screen.
+To export to a file, select the "To File" radio button. Notice that the plugin will 
+export user data to the MESSENGER_HOME/export directory. In the "Export File Name" 
+field, enter the name of the file you want export to and then click on the "Export" 
+button. Note: the plugin will automatically append an ".xml" extension to the file 
+name if it is not already present. To export to the screen, select the "To Screen"
+radio button and then click on the "Export" file. The user data will be placed in
+the provided text area.</li>
 <li>Migration - To import user data from another instant messenger system using the 
 plugin, the import file must conform to the messenger-user-schema.xsd.xml schema file 
 (located in the classes directory). When importing a user data file the plugin will 

@@ -25,7 +25,7 @@ public class UserSchemaValidator {
     private Document doc;
     private String schema;
     
-    public UserSchemaValidator(String usersFile, String schemaFile) throws MalformedURLException, DocumentException {
+    UserSchemaValidator(String usersFile, String schemaFile) throws MalformedURLException, DocumentException {
         URL usersURL = new File(usersFile).toURL();       
         URL schemaURL = this.getClass().getClassLoader().getResource(schemaFile);        
         
@@ -34,7 +34,7 @@ public class UserSchemaValidator {
         schema = schemaURL.toExternalForm();
     }
 
-    public boolean validate() {
+    boolean validate() {
         try {
             SAXParserFactory saxFactory = SAXParserFactory.newInstance();
             saxFactory.setNamespaceAware(true);

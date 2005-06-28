@@ -97,7 +97,7 @@
     </div>
     <br>
 
-<% } else if ("true".equals(request.getParameter("success"))) { %>
+<% } else if (ParamUtils.getBooleanParameter(request, "success")) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">

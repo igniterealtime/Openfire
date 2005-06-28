@@ -6,28 +6,27 @@
 				 org.jivesoftware.util.ParamUtils"
 %>
 
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
+<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% 
+	admin.init(request, response, session, application, out);
+
     boolean exportUsers = request.getParameter("exportUsers") != null;
     boolean success = request.getParameter("success") != null;
-
-    boolean exportToFile = ParamUtils.getBooleanParameter(request, "exporttofile", false);
+    boolean exportToFile = ParamUtils.getBooleanParameter(request, "exporttofile", true);
     
-    ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
+    ImportExportPlugin plugin = (ImportExportPlugin) admin.getXMPPServer().getPluginManager().getPlugin("userimportexport");
 
-    String exportText = null;
+    String exportText = "";
     
     Map errors = new HashMap();
     if (exportUsers) {
         if (exportToFile) {
 			String file = ParamUtils.getParameter(request, "exportFile");
 			if ((file == null)  || (file.length() <= 0)) {
-				errors.put("missingFile","missingFile");
-	        
+				errors.put("missingFile","missingFile");	        
 	        }
 	        else {
 		        try {
@@ -46,7 +45,12 @@
 	       	}
         }
         else {
-        	exportText = plugin.exportUsersToString();
+            try {
+        		exportText = plugin.exportUsersToString();
+            }
+			catch (IOException e) {
+               	errors.put("IOException","IOException");               	
+	        }
         }
     }
 %>
@@ -83,7 +87,7 @@
     </div>
     <br>
 
-<% } else if ("true".equals(request.getParameter("success"))) { %>
+<% } else if (ParamUtils.getBooleanParameter(request, "success")) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -109,7 +113,7 @@
     <tbody>
         <tr>
             <td width="1%">
-            	<input type="radio" name="exporttofile" value="true" selected id="rb01">
+            	<input type="radio" name="exporttofile" value="true" <%= exportToFile ? "checked" : "" %> id="rb01">
             </td>
             <td width="99%">
                 <label for="rb01"><b>To File</b></label> - Save user data to the specified file location.
@@ -127,16 +131,16 @@
         </tr>
         <tr>
             <td width="1%">
-            	<input type="radio" name="exporttofile" value="false" id="rb02">
+            	<input type="radio" name="exporttofile" value="false" <%= !exportToFile ? "checked" : "" %> id="rb02">
             </td>
             <td width="99%">
-                <label for="rb02"><b>To Screen</b></label> - Dispaly user data in the text area below.
+                <label for="rb02"><b>To Screen</b></label> - Display user data in the text area below.
             </td>            
         </tr>
         <tr>
         	<td width="1%">&nbsp;</td>
 	        <td width="99%">
-	        	<textarea cols="80" rows="20" wrap=off><%=(exportText == null) ? "" : exportText %></textarea>
+	        	<textarea cols="80" rows="20" wrap=off><%=exportText %></textarea>
 	        </td>
         </tr>
     </tbody>

@@ -265,6 +265,15 @@ public abstract class SocketReader implements Runnable {
             reply.setFrom(packet.getTo());
             reply.setError(PacketError.Condition.not_allowed);
             session.process(reply);
+            // Check if a message notifying the rejection should be sent
+            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                // A message for the rejection will be sent to the sender of the rejected packet
+                Message notification = new Message();
+                notification.setTo(session.getAddress());
+                notification.setFrom(packet.getTo());
+                notification.setBody(e.getRejectionMessage());
+                session.process(notification);
+            }
         }
     }
 
@@ -298,6 +307,15 @@ public abstract class SocketReader implements Runnable {
             reply.setFrom(packet.getTo());
             reply.setError(PacketError.Condition.not_allowed);
             session.process(reply);
+            // Check if a message notifying the rejection should be sent
+            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                // A message for the rejection will be sent to the sender of the rejected packet
+                Message notification = new Message();
+                notification.setTo(session.getAddress());
+                notification.setFrom(packet.getTo());
+                notification.setBody(e.getRejectionMessage());
+                session.process(notification);
+            }
         }
     }
 
@@ -324,13 +342,18 @@ public abstract class SocketReader implements Runnable {
             session.incrementClientPacketCount();
         }
         catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            Message reply = new Message();
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
+            // An interceptor rejected this packet
+            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                // A message for the rejection will be sent to the sender of the rejected packet
+                Message reply = new Message();
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setType(packet.getType());
+                reply.setThread(packet.getThread());
+                reply.setBody(e.getRejectionMessage());
+                session.process(reply);
+            }
         }
     }
 

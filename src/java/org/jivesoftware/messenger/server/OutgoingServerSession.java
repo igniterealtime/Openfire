@@ -146,7 +146,9 @@ public class OutgoingServerSession extends Session {
                             while (index > -1 && index < hostname.length()) {
                                 String newHostname = hostname.substring(index + 1);
                                 if ("com".equals(newHostname) || "net".equals(newHostname) ||
-                                        "org".equals(newHostname) || "gov".equals(newHostname)) {
+                                        "org".equals(newHostname) ||
+                                        "gov".equals(newHostname) ||
+                                        "edu".equals(newHostname)) {
                                     return false;
                                 }
                                 session =

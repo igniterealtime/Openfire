@@ -22,20 +22,22 @@
 
 	List<User> users = new ArrayList<User>();
 
-	for (String searchField : searchFields) {
-		
-		boolean searchValue = ParamUtils.getBooleanParameter(request, searchField, false);
-		if (!moreOptions || searchValue) {
-			selectedFields.add(searchField);
-			Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
-    		
-			//filter out duplicate users
-            for (User user : foundUsers) {
-                if (!users.contains(user)) {
-                    users.add(user);
-                }
-            }
-    	}
+	if (criteria != null) {
+		for (String searchField : searchFields) {
+			
+			boolean searchValue = ParamUtils.getBooleanParameter(request, searchField, false);
+			if (!moreOptions || searchValue) {
+				selectedFields.add(searchField);
+				Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
+	    		
+				//filter out duplicate users
+	            for (User user : foundUsers) {
+	                if (!users.contains(user)) {
+	                    users.add(user);
+	                }
+	            }
+	    		}
+		}
 	}
 %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>

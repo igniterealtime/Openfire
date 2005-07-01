@@ -5,7 +5,7 @@
 # upgrades from Messenger 2.1.x to 2.2.0
 
 # Update jiveVersion to JM 2.2
-UPDATE jiveVersion SET majorVersion=2, minorVersion=2
+UPDATE jiveVersion SET majorVersion=2, minorVersion=2;
 
 # jiveExtComponentConf: Create new table
 CREATE TABLE jiveExtComponentConf (

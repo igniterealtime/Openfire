@@ -46,7 +46,7 @@ public class DbConnectionManager {
     /**
      * Database schema minor version.
      */
-    private static final int CURRENT_MINOR_VERSION = 1;
+    private static final int CURRENT_MINOR_VERSION = 2;
 
     private static ConnectionProvider connectionProvider;
     private static Object providerLock = new Object();

@@ -103,6 +103,21 @@
             <fmt:message key="component.session.label.type" />:
         </td>
         <td>
+            <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
+                if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/msn.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+                else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/aim.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+                else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/yahoo.gif" width="22" height="16" border="0">&nbsp;
+             <% }
+                else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/icq.gif" width="16" height="16" border="0">&nbsp;
+             <% }
+            }
+            %>
             <%= componentSession.getExternalComponent().getType() %>
         </td>
     </tr>

@@ -9,16 +9,15 @@
 <h1>Jive Messenger SSL Guide</h1>
 <h2>Introduction</h2>
 <p>
-This document outlines how to configure your SSL setup. Jive
-Messenger's SSL support is built using the standard Java security
-SSL implementation (javax.net.ssl.SSLServerSocket). Java security
-allows implementations of the JVM flexibility in how security is implemented.
-Unfortunately, the flexibility means there is no definitive mechanism
-for configuring SSL security on all JVMs. You must consult the
-documentation for your JVM in creating a valid keystore and truststore
-and populating those with the SSL certificates needed for your
-deployment. In this document, we will describe how use the standard JDK
-1.5 tools to accomplish these tasks.
+This document outlines how to customize the SSL support in Jive Messenger.
+<font color="red"><b>Important note:</b></font>
+because Jive Messenger ships with self-signed certificates, most users can
+use the default configration and do not need to change the SSL environment. You should only
+attempt to change the SSL settings if it's required for your deployment.</p>
+
+<p>Jive Messenger's SSL support is built using the standard Java security
+SSL implementation (javax.net.ssl.SSLServerSocket). In this document, we will
+describe how use the standard JDK 1.5 tools to accomplish these tasks.
 </p>
 <h2>Background</h2>
 <p>

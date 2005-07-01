@@ -63,8 +63,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  *
  * @author Iain Shigeoka
- *
- * todo Support probe packets (only needed with s2s)
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler {
 

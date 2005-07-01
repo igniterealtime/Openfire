@@ -105,6 +105,31 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 // and the recipient user has not changed its subscription state.
                 if (!(type == Presence.Type.subscribed && recipientRoster != null &&
                         !recipientSubChanged)) {
+
+                    // If the user is already subscribed to the *local* user's presence then do not 
+                    // forward the subscription request and instead send an auto-reply on behalf
+                    // of the user
+                    if (type == Presence.Type.subscribe && recipientRoster != null &&
+                        !recipientSubChanged) {
+                        try {
+                            RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID)
+                                    .getSubStatus();
+                            if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
+                                // auto-reply by sending a presence stanza of type "subscribed"
+                                // to the contact on behalf of the user
+                                Presence reply = new Presence();
+                                reply.setTo(senderJID);
+                                reply.setFrom(recipientJID);
+                                reply.setType(Presence.Type.subscribed);
+                                deliverer.deliver(reply);
+                                return;
+                            }
+                        }
+                        catch (UserNotFoundException e) {
+                            // Weird case: Roster item does not exist. Should never happen
+                        }
+                    }
+
                     // Try to obtain a handler for the packet based on the routes. If the handler is
                     // a module, the module will be able to handle the packet. If the handler is a
                     // Session the packet will be routed to the client. If a route cannot be found

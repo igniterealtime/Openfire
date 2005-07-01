@@ -104,6 +104,7 @@
     <property name="anttools.target.dir" value="${target.dir}/tools"/>
     <property name="copy.dbscripts" value="true"/>
     <property name="whack.src" value="${target.dir}/whack"/>
+    <property name="overwrite" value="true"/>
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
@@ -330,7 +331,8 @@
     </target>
 
     <!-- run =================================================================================== -->
-    <target name="run" depends="jar" description="Starts Messenger inline to the build process.">
+    <target name="run"  description="Starts Messenger inline to the build process.">
+        <echo>Ensure that you have run ant jar!</echo>
         <condition property="run.debug" value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
             <isset property="debug"/>
         </condition>
@@ -847,6 +849,9 @@
         </for>
 
     </target>
+    <target name="plugin" description="build one plugin">
+        <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
+    </target>
 
     <!-- buildplugin (MACRO) =================================================================== -->
     <macrodef name="buildplugin">
@@ -892,19 +897,19 @@
             </if>
 
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false" overwrite="${overwrite}" >
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
             </copy>
 
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false" overwrite="${overwrite}"  >
                 <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>
                 <mapper type="glob" from="web.xml" to="web-custom.xml"/>
             </copy>
 
             <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false" overwrite="${overwrite}" >
                 <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html"/>
             </copy>
 
@@ -924,7 +929,7 @@
                     <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir. We'll
                          not fail on an error since the web dir might not exist.
                     -->
-                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web">
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web" overwrite="${overwrite}">
                         <fileset dir="@{pluginsrc}/@{plugin}/src/web">
                             <exclude name="WEB-INF/web.xml"/>
                         </fileset>
@@ -983,7 +988,7 @@
                         </then>
                         <else>
                             <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"
-                                file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"/>
+                                file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" overwrite="${overwrite}"/>
                         </else>
                     </if>
 
@@ -1005,7 +1010,7 @@
                     </javac>
 
                     <!-- Make a jar of compiled jsp classes -->
-                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar" >
                         <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" includes="**/*.class"/>
                     </jar>
 
@@ -1013,7 +1018,7 @@
             </if>
 
             <!-- Copy everything else to Messenger's plugin dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar">
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true" >
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar"/>
                     <include name="web/WEB-INF/web.xml"/>

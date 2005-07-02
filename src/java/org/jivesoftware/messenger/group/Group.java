@@ -53,7 +53,9 @@ public class Group implements Cacheable {
     private Collection<String> administrators;
 
     /**
-     * Constructs a new group.
+     * Constructs a new group. Note: this constructor is intended for implementors of the
+     * {@link GroupProvider} interface. To create a new group, use the
+     * {@link GroupManager#createGroup(String)} method. 
      *
      * @param provider the group provider.
      * @param name the name.
@@ -61,7 +63,7 @@ public class Group implements Cacheable {
      * @param members a Collection of the group members.
      * @param administrators a Collection of the group administrators.
      */
-    protected Group(GroupProvider provider, String name, String description,
+    public Group(GroupProvider provider, String name, String description,
             Collection<String> members, Collection<String> administrators)
     {
         this.provider = provider;
@@ -332,6 +334,9 @@ public class Group implements Cacheable {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
+            if (key == null || value == null) {
+                throw new NullPointerException();
+            }
             Map eventParams = new HashMap();
             Object answer;
             String keyString = (String) key;

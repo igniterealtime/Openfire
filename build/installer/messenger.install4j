@@ -9,8 +9,8 @@
     </searchSequence>
     <variables>
       <variable name="VERSION_MAJOR" value="2" />
-      <variable name="VERSION_MINOR" value="1" />
-      <variable name="VERSION_REVISION" value="2" />
+      <variable name="VERSION_MINOR" value="2" />
+      <variable name="VERSION_REVISION" value="0" />
       <variable name="APP_NAME" value="Jive Messenger" />
       <variable name="APP_SHORT_NAME" value="jive_messenger" />
       <variable name="PRODUCT_NAME" value="messenger" />
@@ -158,7 +158,7 @@
     <customScreens />
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_02_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_04_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
       <selectedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -176,7 +176,7 @@
         <entry name="Readme" target="README.html" icon="" />
       </additionalStartMenuEntries>
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_02" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_04" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>

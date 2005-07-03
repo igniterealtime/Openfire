@@ -340,6 +340,8 @@ public class DbConnectionManager {
                 }
                 catch (Exception e) {
                     Log.error("Database upgrade failed. Please manually upgrade your database.", e);
+                    System.out.println("Database upgrade failed. Please manually upgrade your " +
+                            "database.");
                 }
             }
             catch (Exception e) {
@@ -688,18 +690,24 @@ public class DbConnectionManager {
             try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        if (minorVersion == CURRENT_MINOR_VERSION) {
+        if (majorVersion == CURRENT_MAJOR_VERSION && minorVersion == CURRENT_MINOR_VERSION) {
             return false;
         }
         // The database is an old version that needs to be upgraded.
         Log.info("Found old database schema (" + majorVersion + "." + minorVersion + "). " +
                 "Upgrading to latest schema.");
+        System.out.println("Found old database schema (" + majorVersion + "." +
+                minorVersion + "). " + "Upgrading to latest schema.");
         if (databaseType == DatabaseType.unknown) {
             Log.info("Warning: database type unknown. You must manually upgrade your database.");
+            System.out.println("Warning: database type unknown. You must manually upgrade your " +
+                    "database.");
             return false;
         }
         else if (databaseType == DatabaseType.interbase) {
             Log.info("Warning: automatic upgrades of Interbase are not supported. You " +
+                    "must manually upgrade your database.");
+            System.out.println("Warning: automatic upgrades of Interbase are not supported. You " +
                     "must manually upgrade your database.");
             return false;
         }
@@ -748,6 +756,8 @@ public class DbConnectionManager {
                 }
             }
         }
+        Log.info("Database upgraded successfully.");
+        System.out.println("Database upgraded successfully.");
         return true;
     }
 

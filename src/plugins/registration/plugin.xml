@@ -6,6 +6,7 @@
     <description>Performs various actions whenever a new user account is created.</description>
     <author>Ryan Graham</author>
     <version>1.0</version>
+    <date>04/21/2005</date>
     <minServerVersion>2.1.3</minServerVersion>
 	
 	<adminconsole>		

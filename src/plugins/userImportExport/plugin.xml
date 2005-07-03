@@ -7,6 +7,7 @@
     <description>Enables import and export of user data.</description>
     <author>Ryan Graham</author>
     <version>1.0.1</version>
+    <date>06/30/2005</date>
     <minServerVersion>2.1.4</minServerVersion>
 
     <adminconsole>

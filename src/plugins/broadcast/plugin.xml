@@ -9,5 +9,7 @@
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
     <version>1.2</version>
+    <date>04/11/2005</date>
+    <url>http://www.jivesoftware.org</url>
     <minMessengerVersion>2.1.2</minMessengerVersion>
 </plugin>

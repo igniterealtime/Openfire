@@ -34,6 +34,7 @@
 	String refreshPlugin = ParamUtils.getParameter(request, "refreshplugin");
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
+    boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
 
 	final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
@@ -123,6 +124,41 @@
                finally {
                    if (in != null) {
                        try { in.close(); } catch (Exception e) { }
+                   }
+               }
+           }
+       }
+       return;
+    }
+%>
+<% if (showIcon) {
+       String pluginName = ParamUtils.getParameter(request, "plugin");
+       Plugin plugin = pluginManager.getPlugin(pluginName);
+       if (plugin != null) {
+           File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
+           if (icon.exists()) {
+               response.setContentType("image/gif");
+               InputStream in = null;
+               OutputStream ost = null;
+               try {
+                   in = new FileInputStream(icon);
+                   ost = response.getOutputStream();
+
+                   byte[] buf = new byte[1024];
+                   int len;
+                   while ((len = in.read(buf)) >= 0) {
+                      ost.write(buf,0,len);
+                   }
+               }
+               catch (IOException ioe) {
+
+               }
+               finally {
+                   if (in != null) {
+                       try { in.close(); } catch (Exception e) { }
+                   }
+                   if (ost != null) {
+                       try { ost.close(); } catch (Exception e) { }
                    }
                }
            }
@@ -228,19 +264,28 @@
             String pluginDescription = pluginManager.getDescription(plugin);
             String pluginAuthor = pluginManager.getAuthor(plugin);
             String pluginVersion = pluginManager.getVersion(plugin);
+            File pluginDir = pluginManager.getPluginDirectory(plugin);
+            File logo = new File(pluginDir, "logo_small.gif");
 %>
 
 	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
-	            <%= count %>
+                <% if (logo.exists()) { %>
+                <img src="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true" width="16" height="16" alt="Plugin">
+                <% } else { %>
+	            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+                <% } %>
 	        </td>
 	        <td width="20%" nowrap>
+                <table border=0 cellpadding=0><tr>
+                <td nowrap>
 	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
                 <%
-                    File pluginDir = pluginManager.getPluginDirectory(plugin);
+
                     boolean readmeExists = new File(pluginDir, "readme.html").exists();
                     boolean changelogExists = new File(pluginDir, "changelog.html").exists();
                 %>
+                </td><td nowrap>
                 <% if (readmeExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
@@ -249,6 +294,7 @@
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
                 <% } %>
+                </td></tr></table>
 	        </td>
 	        <td width="60%">
 	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;

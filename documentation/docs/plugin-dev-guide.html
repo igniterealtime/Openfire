@@ -30,13 +30,17 @@ plugin directory are as follows:
 <fieldset>
     <legend>Plugin Structure</legend>
 <pre>myplugin/
- |- plugin.xml     &lt;- Plugin definition file
- |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
- |- lib/           &lt;- Libraries (JAR files) your plugin needs
- |- web            &lt;- Resources for Admin Console integration.
+ |- plugin.xml      &lt;- Plugin definition file
+ |- readme.html     &lt;- Optional readme file for plugin, which will be displayed to end users
+ |- changelog.html  &lt;- Optional changelog file for plugin, which will be displayed to end users
+ |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin
+ |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin
+ |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
+ |- lib/            &lt;- Libraries (JAR files) your plugin needs
+ |- web             &lt;- Resources for Admin Console integration, if any
      |- WEB-INF/
-         |- web.xml           &lt;- Generated web.xml containing compiled JSP entries.
-         |- web-custom.xml    &lt;- User-defined web.xml for custom servlets.
+         |- web.xml           &lt;- Generated web.xml containing compiled JSP entries
+         |- web-custom.xml    &lt;- Optional user-defined web.xml for custom servlets
      |- images/
 </pre>
 </fieldset>
@@ -62,7 +66,9 @@ file might look like the following:
     &lt;description&gt;This is an example plugin.&lt;/description&gt;
     &lt;author&gt;Jive Software&lt;/author&gt;
     &lt;version&gt;1.0&lt;/version&gt;
-    &lt;minServerVersion&gt;2.1.2&lt;/minServerVersion&gt;
+    &lt;date&gt;07/15/2005&lt;/date&gt;
+    &lt;url&gt;http://www.jivesoftware.org/pluginX&lt;/url&gt;
+    &lt;minServerVersion&gt;2.2.0&lt;/minServerVersion&gt;
 
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
     &lt;adminconsole&gt;
@@ -78,11 +84,23 @@ file might look like the following:
     <li>name -- the name of the plugin.</li>
     <li>description -- the description of the plugin.</li>
     <li>author -- the author of the plugin.</li>
-    <li>version -- the version of the pluginn.</li>
+    <li>version -- the version of the plugin.</li>
+    <li>date -- the date the plugin was released. The date must be in the form MM/DD/YYYY, such
+          as 07/15/2005.</li>
+    <li>url -- a URL where additional information about the plugin is available.</li>
     <li>minServerVersion -- the minimum version of Jive Messenger required
           to run the plugin (supported by Jive Messenger 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
 </ul></p>
+
+Several additional files can be present in the plugin to provide additional information to
+end-users (all placed in the main plugin directory):
+<ul>
+    <li><tt>readme.html</tt> -- Optional readme file for plugin, which will be displayed to end users.</li>
+    <li><tt>changelog.html</tt> -- Optional changelog file for plugin, which will be displayed to end users.</li>
+    <li><tt>icon_small.gif</tt> -- Optional small (16x16) icon associated with the plugin.</li>
+    <li><tt>icon_large.gif</tt> -- Optional large (32x32) icon associated with the plugin.</li>
+</ul>
 
 <p>Your plugin class must be implement the
 <tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
@@ -201,11 +219,15 @@ looks for plugin development directories in the following format:
 <fieldset>
     <legend>Plugin Structure</legend>
 <pre>myplugin/
- |- plugin.xml     &lt;- Plugin definition file
- |- classes/       &lt;- Resources your plugin needs (i.e., a properties file)
- |- lib/           &lt;- Libraries your plugin needs
+ |- plugin.xml      &lt;- Plugin definition file
+ |- readme.html     &lt;- Optional readme file for plugin
+ |- changelog.html  &lt;- Optional changelog file for plugin
+ |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin
+ |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin
+ |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
+ |- lib/            &lt;- Libraries your plugin needs
  |- src/
-     |- java       &lt;- Java source code for your plugin
+     |- java        &lt;- Java source code for your plugin
      |   |- com
      |       |- mycompany
      |           |- *.java
@@ -246,7 +268,7 @@ points that are the most common:
  for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the
  example above); sub-domains are only used for routing within the XMPP server.
 
-   <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
+    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
   namespace. The following code snippet demonstrates how to register an IQHandler:
 
   <pre>
@@ -255,7 +277,11 @@ points that are the most common:
   iqRouter.addHandler(myHandler);
   </pre>
 
-   <li>You can store persistent plugin settings as Jive Messenger properties using the
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/interceptor/PacketInterceptor.html">
+    PacketInterceptor</a> to receive all packets being sent through the system and
+    optionally reject them. For example, an interceptor could reject all messages that contained
+    profanity or flag them for review by an administrator.</li>
+    <li>You can store persistent plugin settings as Jive Messenger properties using the
     JiveGlobals.getProperty(String) and JiveGlobals.setProperty(String, String) methods. Make
     your plugin a property listener to listen for changes to its properties by implementing the
     <tt>org.jivesoftware.messenger.event.PropertyEventListener</tt> method.

@@ -280,13 +280,13 @@ public class PluginManager {
         if (plugin == null) {
             return;
         }
-        File webXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
+        File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
                 File.separator + "web.xml");
         if (webXML.exists()) {
             AdminConsole.removeModel(pluginName);
             PluginServlet.unregisterServlets(webXML);
         }
-        File customWebXML = new File(pluginDirectory, "web" + File.separator + "WEB-INF" +
+        File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
                 File.separator + "web-custom.xml");
         if (customWebXML.exists()) {
             PluginServlet.unregisterServlets(customWebXML);

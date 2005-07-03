@@ -91,6 +91,15 @@ public class SocketAcceptThread extends Thread {
     }
 
     /**
+     * Returns information about the port on which the server is listening for connections.
+     *
+     * @return information about the port on which the server is listening for connections.
+     */
+    public ServerPort getServerPort() {
+        return serverPort;
+    }
+
+    /**
      * Unblock the thread and force it to terminate.
      */
     public void shutdown() {

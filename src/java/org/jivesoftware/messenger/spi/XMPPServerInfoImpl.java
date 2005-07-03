@@ -13,10 +13,12 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.util.Version;
 import org.jivesoftware.messenger.XMPPServerInfo;
+import org.jivesoftware.messenger.ConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Collections;
 
 /**
  * Implements the server info for a basic server. Optimization opportunities
@@ -30,7 +32,7 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     private Date stopDate;
     private String name;
     private Version ver;
-    private Iterator ports;
+    private ConnectionManager connectionManager;
 
     /**
      * Simple constructor
@@ -41,16 +43,16 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
      *      it hasn't been started).
      * @param stopDate the server's last stop time (can be null indicating it
      *      is running or hasn't been started).
-     * @param portIter the portIter active on the server.
+     * @param connectionManager the object that keeps track of the active ports.
      */
     public XMPPServerInfoImpl(String serverName, Version version, Date startDate, Date stopDate,
-            Iterator portIter)
+            ConnectionManager connectionManager)
     {
         this.name = serverName;
         this.ver = version;
         this.startDate = startDate;
         this.stopDate = stopDate;
-        this.ports = portIter;
+        this.connectionManager = connectionManager;
     }
 
     public Version getVersion() {
@@ -80,6 +82,11 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     }
 
     public Iterator getServerPorts() {
-        return ports;
+        if (connectionManager == null) {
+            return Collections.EMPTY_LIST.iterator();
+        }
+        else {
+            return connectionManager.getPorts();
+        }
     }
 }

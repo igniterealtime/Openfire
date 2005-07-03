@@ -19,7 +19,8 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.messenger.server.RemoteServerManager,
-                 org.jivesoftware.messenger.server.RemoteServerConfiguration"
+                 org.jivesoftware.messenger.server.RemoteServerConfiguration,
+                 org.jivesoftware.messenger.component.ExternalComponentManager"
     errorPage="error.jsp"
 %>
 
@@ -27,6 +28,9 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
+    boolean update = request.getParameter("update") != null;
+    boolean s2sEnabled = ParamUtils.getBooleanParameter(request,"s2sEnabled");
+    int port = ParamUtils.getIntParameter(request,"port", 0);
     boolean closeEnabled = ParamUtils.getBooleanParameter(request,"closeEnabled");
     String idletime = ParamUtils.getParameter(request,"idletime");
     boolean closeSettings = request.getParameter("closeSettings") != null;
@@ -45,8 +49,29 @@
 
     // Get muc server
     SessionManager sessionManager = admin.getSessionManager();
+    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
     Map errors = new HashMap();
+    if (update) {
+        // Validate params
+        if (s2sEnabled) {
+            if (port <= 0) {
+                errors.put("port","");
+            }
+        }
+        // If no errors, continue:
+        if (errors.isEmpty()) {
+            if (!s2sEnabled) {
+                connectionManager.enableServerListener(false);
+            }
+            else {
+                connectionManager.enableServerListener(true);
+                connectionManager.setServerListenerPort(port);
+            }
+            updateSucess = true;
+        }
+    }
+
     // Handle an update of the kicking task settings
     if (closeSettings) {
        if (!closeEnabled) {
@@ -131,11 +156,16 @@
 
     // Set page vars
     if (errors.size() == 0) {
+        s2sEnabled = connectionManager.isServerListenerEnabled();
+        port = connectionManager.getServerListenerPort();
         permissionFilter = RemoteServerManager.getPermissionPolicy().toString();
         domain = "";
         remotePort = "0";
     }
     else {
+        if (port == 0) {
+            port = connectionManager.getServerListenerPort();
+        }
         if (permissionFilter == null) {
             permissionFilter = RemoteServerManager.getPermissionPolicy().toString();
         }
@@ -217,6 +247,65 @@
 
 <%  } %>
 
+<form action="server2server-settings.jsp" method="post">
+
+<fieldset>
+    <legend><fmt:message key="server2server.settings.enabled.legend" /></legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input type="radio" name="s2sEnabled" value="false" id="rb01"
+                 <%= (!s2sEnabled ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb01">
+                <b><fmt:message key="server2server.settings.label_disable" /></b> - <fmt:message key="server2server.settings.label_disable_info" />
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input type="radio" name="s2sEnabled" value="true" id="rb02"
+                 <%= (s2sEnabled ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb02">
+                <b><fmt:message key="server2server.settings.label_enable" /></b> - <fmt:message key="server2server.settings.label_enable_info" />
+                </label>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td width="1%" nowrap>
+                &nbsp;
+            </td>
+            <td width="99%">
+                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <fmt:message key="server2server.settings.port" />
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="15" maxlength="50" name="port"
+                         value="<%= port %>">
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+<br>
+
+<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+
+</form>
+
+<br>
+
 <form action="server2server-settings.jsp?closeSettings" method="post">
 
 <fieldset>
@@ -226,20 +315,20 @@
     <tbody>
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="closeEnabled" value="false" id="rb01"
+                <input type="radio" name="closeEnabled" value="false" id="rb03"
                  <%= ((admin.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><fmt:message key="server2server.settings.never_close" /></label>
+                <label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
             </td>
         </tr>
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="closeEnabled" value="true" id="rb02"
+                <input type="radio" name="closeEnabled" value="true" id="rb04"
                  <%= ((admin.getSessionManager().getServerSessionIdleTime() > -1) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                    <label for="rb02"><fmt:message key="server2server.settings.close_session" /></label>
+                    <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
                      <input type="text" name="idletime" size="5" maxlength="5"
                          onclick="this.form.closeEnabled[1].checked=true;"
                          value="<%= admin.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : admin.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
@@ -268,22 +357,22 @@
 
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.blacklist %>" id="rb01"
+                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.blacklist %>" id="rb05"
                  <%= (RemoteServerManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01">
+                <label for="rb05">
                 <b><fmt:message key="server2server.settings.anyone" /></b> - <fmt:message key="server2server.settings.anyone_info" />
                 </label>
             </td>
         </tr>
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.whitelist %>" id="rb02"
+                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.whitelist %>" id="rb06"
                  <%= (RemoteServerManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02">
+                <label for="rb06">
                 <b><fmt:message key="server2server.settings.whitelist" /></b> - <fmt:message key="server2server.settings.whitelist_info" />
                 </label>
             </td>

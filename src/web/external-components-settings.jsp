@@ -57,6 +57,7 @@
     boolean deleteSuccess = false;
 
     String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
 
     // Update the session kick policy if requested
@@ -74,11 +75,11 @@
         // If no errors, continue:
         if (errors.isEmpty()) {
             if (!componentEnabled) {
-                JiveGlobals.setProperty("xmpp.component.socket.active", "false");
+                connectionManager.enableComponentListener(false);
             }
             else {
-                JiveGlobals.setProperty("xmpp.component.socket.active", "true");
-                JiveGlobals.setProperty("xmpp.component.socket.port", String.valueOf(port));
+                connectionManager.enableComponentListener(true);
+                connectionManager.setComponentListenerPort(port);
                 ExternalComponentManager.setDefaultSecret(defaultSecret);
             }
             updateSucess = true;
@@ -131,8 +132,8 @@
 
     // Set page vars
     if (errors.size() == 0) {
-        componentEnabled = JiveGlobals.getBooleanProperty("xmpp.component.socket.active", true);
-        port = JiveGlobals.getIntProperty("xmpp.component.socket.port", SocketAcceptThread.DEFAULT_COMPONENT_PORT);
+        componentEnabled = connectionManager.isComponentListenerEnabled();
+        port = connectionManager.getComponentListenerPort();
         defaultSecret = ExternalComponentManager.getDefaultSecret();
         permissionFilter = ExternalComponentManager.getPermissionPolicy().toString();
         subdomain = "";
@@ -140,7 +141,7 @@
     }
     else {
         if (port == 0) {
-            port = JiveGlobals.getIntProperty("xmpp.component.socket.port", SocketAcceptThread.DEFAULT_COMPONENT_PORT);
+            port = connectionManager.getComponentListenerPort();
         }
         if (defaultSecret == null) {
             defaultSecret = ExternalComponentManager.getDefaultSecret();
@@ -291,22 +292,22 @@
 
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.blacklist %>" id="rb01"
+                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.blacklist %>" id="rb03"
                  <%= (ExternalComponentManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01">
+                <label for="rb03">
                 <b><fmt:message key="component.settings.anyone" /></b> - <fmt:message key="component.settings.anyone_info" />
                 </label>
             </td>
         </tr>
         <tr valign="middle">
             <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.whitelist %>" id="rb02"
+                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.whitelist %>" id="rb04"
                  <%= (ExternalComponentManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02">
+                <label for="rb04">
                 <b><fmt:message key="component.settings.whitelist" /></b> - <fmt:message key="component.settings.whitelist_info" />
                 </label>
             </td>

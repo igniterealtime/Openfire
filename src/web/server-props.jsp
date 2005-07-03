@@ -18,7 +18,8 @@
                  java.net.InetAddress,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.net.SSLSocketAcceptThread,
-                 org.jivesoftware.messenger.net.SocketAcceptThread"
+                 org.jivesoftware.messenger.net.SocketAcceptThread,
+                 org.jivesoftware.messenger.ConnectionManager"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -62,6 +63,7 @@
     }
 
     XMPPServer server = admin.getXMPPServer();
+    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     Map errors = new HashMap();
     if (save) {
         if (serverName == null) {
@@ -96,25 +98,40 @@
             }
         }
         if (errors.size() == 0) {
-            server.getServerInfo().setName(serverName);
-            JiveGlobals.setProperty("xmpp.socket.plain.port", String.valueOf(port));
-            JiveGlobals.setProperty("xmpp.socket.ssl.active", String.valueOf(sslEnabled));
-            JiveGlobals.setProperty("xmpp.socket.ssl.port", String.valueOf(sslPort));
-            JiveGlobals.setProperty("xmpp.component.socket.port", String.valueOf(componentPort));
-            JiveGlobals.setProperty("xmpp.server.socket.port", String.valueOf(serverPort));
-            JiveGlobals.setXMLProperty("adminConsole.port", String.valueOf(embeddedPort));
-            JiveGlobals.setXMLProperty("adminConsole.securePort", String.valueOf(embeddedSecurePort));
-            response.sendRedirect("server-props.jsp?success=true");
+            boolean needRestart = false;
+            if (!serverName.equals(server.getServerInfo().getName())) {
+                server.getServerInfo().setName(serverName);
+                needRestart = true;
+            }
+            connectionManager.setClientListenerPort(port);
+            connectionManager.enableClientSSLListener(sslEnabled);
+            connectionManager.setClientSSLListenerPort(sslPort);
+            connectionManager.setComponentListenerPort(componentPort);
+            connectionManager.setServerListenerPort(serverPort);
+            if (!String.valueOf(embeddedPort).equals(JiveGlobals.getXMLProperty("adminConsole.port"))) {
+                JiveGlobals.setXMLProperty("adminConsole.port", String.valueOf(embeddedPort));
+                needRestart = true;
+            }
+            if (!String.valueOf(embeddedSecurePort).equals(JiveGlobals.getXMLProperty("adminConsole.securePort"))) {
+                JiveGlobals.setXMLProperty("adminConsole.securePort", String.valueOf(embeddedSecurePort));
+                needRestart = true;
+            }
+            if (needRestart) {
+                response.sendRedirect("server-props.jsp?success=true&restart=true");
+            }
+            else {
+                response.sendRedirect("server-props.jsp?success=true");
+            }
             return;
         }
     }
     else {
         serverName = server.getServerInfo().getName();
-        sslEnabled = "true".equals(JiveGlobals.getProperty("xmpp.socket.ssl.active"));
-        try { port = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.plain.port", String.valueOf(SocketAcceptThread.DEFAULT_PORT))); } catch (Exception ignored) {}
-        try { sslPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.socket.ssl.port", String.valueOf(SSLSocketAcceptThread.DEFAULT_PORT))); } catch (Exception ignored) {}
-        try { componentPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.component.socket.port", String.valueOf(SocketAcceptThread.DEFAULT_COMPONENT_PORT))); } catch (Exception ignored) {}
-        try { serverPort = Integer.parseInt(JiveGlobals.getProperty("xmpp.server.socket.port", String.valueOf(SocketAcceptThread.DEFAULT_SERVER_PORT))); } catch (Exception ignored) {}
+        sslEnabled = connectionManager.isClientSSLListenerEnabled();
+        port = connectionManager.getClientListenerPort();
+        sslPort = connectionManager.getClientSSLListenerPort();
+        componentPort = connectionManager.getComponentListenerPort();
+        serverPort = connectionManager.getServerListenerPort();
         try { embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port")); } catch (Exception ignored) {}
         try { embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort")); } catch (Exception ignored) {}
     }
@@ -148,7 +165,11 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        <fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
+        <%  if ("true".equals(request.getParameter("restart"))) { %>
+            <fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
+        <%  } else { %>
+            <fmt:message key="server.props.update.norestart" />.
+        <%  } %>
         </td></tr>
     </tbody>
     </table>

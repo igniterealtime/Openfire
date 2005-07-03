@@ -123,17 +123,10 @@ public class XMPPServer {
      * @return the server information current at the time of the method call.
      */
     public XMPPServerInfo getServerInfo() {
-        Iterator ports;
-        if (getConnectionManager() == null) {
-            ports = Collections.EMPTY_LIST.iterator();
-        }
-        else {
-            ports = getConnectionManager().getPorts();
-        }
         if (!initialized) {
             throw new IllegalStateException("Not initialized yet");
         }
-        return new XMPPServerInfoImpl(name, version, startDate, stopDate, ports);
+        return new XMPPServerInfoImpl(name, version, startDate, stopDate, getConnectionManager());
     }
 
     /**

@@ -4,7 +4,9 @@
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.JiveGlobals,
                  java.util.Date,
-                 java.util.Calendar"%>
+                 java.util.Calendar,
+                 javax.swing.*,
+                 java.net.URL"%>
  <%--
   -	$RCSfile$
   -	$Revision$
@@ -22,7 +24,21 @@
 <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
     <td width="1%" nowrap><%= count %></td>
     <td width="47%" nowrap>
-        <a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= host %></a>
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+            <%  Object content = null;
+                try {
+                    content = new  URL("http://"+host+"/favicon.ico").openConnection().getContent();
+                }
+                catch (Exception e) {}
+                if (content != null) { %>
+                    <td width="1%" ><img src="http://<%=host%>/favicon.ico" width="16" height="16"></td>
+                <% } else { %>
+                    <td width="1%" ><img src="images/server_16x16.gif" width="16" height="16"></td>
+                <% } %>
+            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= host %></a></td>
+            </tr>
+        </table>
     </td>
     <% if (inSession != null && outSession == null) { %>
         <td width="1%">

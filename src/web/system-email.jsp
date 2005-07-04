@@ -121,9 +121,10 @@
 
 <form action="system-email.jsp" name="f" method="post">
 
-<b><fmt:message key="system.email.name" /></b>
+<fieldset>
+    <legend><fmt:message key="system.email.name" /></legend>
+    <div>
 
-<ul>
     <table cellpadding="3" cellspacing="0" border="0">
     <tr>
         <td width="1%" nowrap>
@@ -197,7 +198,8 @@
     </tr>
 
     </table>
-</ul>
+    </div>
+</fieldset>
 
 <br>
 

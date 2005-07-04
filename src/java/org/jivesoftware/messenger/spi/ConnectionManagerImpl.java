@@ -314,7 +314,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public boolean isComponentListenerEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.component.socket.active", true);
+        return JiveGlobals.getBooleanProperty("xmpp.component.socket.active", false);
     }
 
     public void enableServerListener(boolean enabled) {

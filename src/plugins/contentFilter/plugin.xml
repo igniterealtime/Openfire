@@ -9,6 +9,7 @@
     <description>Scans message packets for defined patterns</description>
     <author>Conor Hayes</author>
     <version>1.0</version>
+    <date>07/02/2005</date>
     <minServerVersion>2.2.0</minServerVersion>
     
     <!-- UI extension -->

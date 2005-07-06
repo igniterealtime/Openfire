@@ -140,6 +140,7 @@ CREATE TABLE mucRoom (
   rolesToBroadcast    TINYINT       NOT NULL,
   useReservedNick     TINYINT       NOT NULL,
   canChangeNick       TINYINT       NOT NULL,
+  canRegister         TINYINT       NOT NULL,
   PRIMARY KEY (name),
   INDEX mucRoom_roomid_idx (roomID)
 );

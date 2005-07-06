@@ -154,6 +154,7 @@ CREATE TABLE mucRoom (
   rolesToBroadcast    INTEGER       NOT NULL,
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
+  canRegister         INTEGER       NOT NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );
 

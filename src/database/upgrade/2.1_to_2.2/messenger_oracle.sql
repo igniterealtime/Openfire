@@ -31,6 +31,7 @@ CREATE TABLE mucRoomProp (
   CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
-REM // mucRoom: Add new columns: "useReservedNick" and "canChangeNick".
+REM // mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegister".
 ALTER TABLE mucRoom ADD useReservedNick     INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD canChangeNick       INTEGER       NOT NULL;
+ALTER TABLE mucRoom ADD canRegister         INTEGER       NOT NULL;

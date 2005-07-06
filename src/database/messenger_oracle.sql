@@ -144,6 +144,8 @@ CREATE TABLE mucRoom(
   logEnabled          INTEGER       NOT NULL,
   subject             VARCHAR2(100) NULL,
   rolesToBroadcast    INTEGER       NOT NULL,
+  useReservedNick     INTEGER       NOT NULL,
+  canChangeNick       INTEGER       NOT NULL,
   CONSTRAINT mucRoom_pk PRIMARY KEY (name)
 );
 CREATE INDEX mucRoom_roomid_idx ON mucRoom (roomID);

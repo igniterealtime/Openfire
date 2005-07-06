@@ -30,3 +30,7 @@ CREATE TABLE mucRoomProp (
   propValue             VARCHAR2(1024)  NOT NULL,
   CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
 );
+
+REM // mucRoom: Add new columns: "useReservedNick" and "canChangeNick".
+ALTER TABLE mucRoom ADD useReservedNick     INTEGER       NOT NULL;
+ALTER TABLE mucRoom ADD canChangeNick       INTEGER       NOT NULL;

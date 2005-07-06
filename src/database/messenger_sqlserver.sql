@@ -150,6 +150,8 @@ CREATE TABLE mucRoom (
   logEnabled          INT           NOT NULL,
   subject             NVARCHAR(100) NULL,
   rolesToBroadcast    INT           NOT NULL,
+  useReservedNick     INT           NOT NULL,
+  canChangeNick       INT           NOT NULL,
   CONSTRAINT mucRoom__pk PRIMARY KEY (name)
 );
 

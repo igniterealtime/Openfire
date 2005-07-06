@@ -50,7 +50,11 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#jiveVCard">jiveVCard</a> </li>
   <li><a href="#jiveProperty">jiveProperty</a><br>
   </li>
+  <li><a href="#jiveExtComponentConf">jiveExtComponentConf</a> </li>
+  <li><a href="#jiveRemoteServerConf">jiveRemoteServerConf</a><br>
+  </li>
   <li><a href="#mucRoom">mucRoom</a> </li>
+  <li><a href="#mucRoomProp">mucRoomProp</a> </li>
   <li><a href="#mucAffiliation">mucAffiliation</a> </li>
   <li><a href="#mucMember">mucMember</a> </li>
   <li><a href="#mucConversationLog">mucConversationLog</a> </li>
@@ -575,6 +579,78 @@ roster)</th>
 <br>
 <br>
 <br>
+<a name="jiveExtComponentConf"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveExtComponentConf (external components configuration)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>subdomain</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Subdomain of the external component (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>secret</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Shared secret key of the external component</td>
+    </tr>
+    <tr>
+      <td>permission</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Permission that indicates if the component is allowed to connect to the server</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveRemoteServerConf"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveRemoteServerConf (remote servers configuration)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>domain</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Domain of the external component (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>remotePort</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Port of the remote server to connect to</td>
+    </tr>
+    <tr>
+      <td>permission</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Permission that indicates if the remote server is allowed to connect to the server</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
 <a name="mucRoom"></a>
 <table class="dbtable">
   <tbody>
@@ -694,6 +770,54 @@ roster)</th>
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Binary representation of the roles to broadcast</td>
+    </tr>
+    <tr>
+      <td>useReservedNick</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether users can only join the room using their reserved nicknames</td>
+    </tr>
+    <tr>
+      <td>canChangeNick</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether occupants can change their nicknames in the room</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="mucRoomProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">mucRoomProp (name-value associations for a Groupchat room)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Property Value</td>
     </tr>
   </tbody>
 </table>

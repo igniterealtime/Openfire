@@ -154,6 +154,13 @@ CREATE TABLE mucRoom (
 
 CREATE INDEX mucRoom_roomid_idx ON mucRoom (roomID);
 
+CREATE TABLE mucRoomProp (
+  roomID                INTEGER         NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  propValue             VARCHAR(2000)   NOT NULL,
+  CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
+);
+
 CREATE TABLE mucAffiliation (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,

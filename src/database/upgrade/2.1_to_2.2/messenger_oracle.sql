@@ -22,3 +22,11 @@ CREATE TABLE jiveRemoteServerConf (
   permission            VARCHAR2(10)     NOT NULL,
   CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
 );
+
+REM // mucRoomProp: Create new table
+CREATE TABLE mucRoomProp (
+  roomID                INT             NOT NULL,
+  name                  VARCHAR2(100)   NOT NULL,
+  propValue             VARCHAR2(1024)  NOT NULL,
+  CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
+);

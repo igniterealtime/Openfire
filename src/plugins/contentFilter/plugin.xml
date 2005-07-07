@@ -5,7 +5,7 @@
     <class>org.jivesoftware.messenger.plugin.ContentFilterPlugin</class>
     
     <!-- Plugin meta-data -->
-    <name>ContentFilter</name>
+    <name>Content Filter</name>
     <description>Scans message packets for defined patterns</description>
     <author>Conor Hayes</author>
     <version>1.0</version>

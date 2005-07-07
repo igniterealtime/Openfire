@@ -273,25 +273,7 @@
             <td width="99%">
                 <label for="rb02">
                 <b><fmt:message key="server2server.settings.label_enable" /></b> - <fmt:message key="server2server.settings.label_enable_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                &nbsp;
-            </td>
-            <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="server2server.settings.port" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="port"
-                         value="<%= port %>">
-                    </td>
-                </tr>
-                </table>
+                </label>  <input type="text" size="5" maxlength="10" name="port" value="<%= port %>">
             </td>
         </tr>
     </tbody>
@@ -429,21 +411,12 @@
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <form action="server2server-settings.jsp" method="post">
     <tr>
-        <td nowrap width="1%">
+        <td nowrap>
             <fmt:message key="server2server.settings.domain" />
-        </td>
-        <td>
             <input type="text" size="40" name="domain" value="<%= serverAllowed ?  domain : "" %>"/>
-        </td>
-        <td nowrap width="1%">
+            &nbsp;
             <fmt:message key="server2server.settings.remotePort" />
-        </td>
-        <td>
-            <input type="text" size="40" name="remotePort"value="<%= serverAllowed ?  remotePort : "5269" %>"/>
-        </td>
-    </tr>
-    <tr align="center">
-        <td colspan="4">
+            <input type="text" size="5" name="remotePort"value="<%= serverAllowed ?  remotePort : "5269" %>"/>
             <input type="submit" name="serverAllowed" value="<fmt:message key="server2server.settings.allow" />">
         </td>
     </tr>
@@ -457,9 +430,12 @@
 
 <fieldset>
     <legend><fmt:message key="server2server.settings.disallowed" /></legend>
-    <p><fmt:message key="server2server.settings.disallowed.info" /></p>
     <div>
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
+    <fmt:message key="server2server.settings.disallowed.info" />
+    </td></tr></table>
+    <p>
+    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
             <th width="1%">&nbsp;</th>

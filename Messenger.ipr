@@ -212,33 +212,6 @@
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
   <component name="libraryTable">
-    <library name="Messenger">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/mysql.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/jetty.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/commons-logging.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/dom4j.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/postgres.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/hsqldb.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/junit.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/jasper-compiler.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/jasper-runtime.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/commons-el.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/servlet.jar!/" />
-        <root url="file://$PROJECT_DIR$/src/resources/jar" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/jaxen.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/standard.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/jstl.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/whack.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/jdic.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/xpp3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/merge/jmdns.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/mail.jar!/" />
-        <root url="jar://$PROJECT_DIR$/build/lib/dist/activation.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
     <library name="Ant">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/build/lib/ant.jar!/" />

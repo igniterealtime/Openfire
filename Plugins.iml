@@ -14,7 +14,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Messenger" />
-    <orderEntry type="library" name="Messenger" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

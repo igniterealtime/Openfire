@@ -221,7 +221,7 @@ public interface UserProvider {
             int numResults) throws UnsupportedOperationException;
 
     /**
-     * Returns true if the UserProvider is read-only. When read-only, that means that
+     * Returns true if this UserProvider is read-only. When read-only,
      * users can not be created, deleted, or modified.
      *
      * @return true if the user provider is read-only.

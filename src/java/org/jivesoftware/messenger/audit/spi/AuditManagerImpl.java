@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Implementation of the AuditManager interface.
+ */
 public class AuditManagerImpl extends BasicModule implements AuditManager {
 
     private boolean enabled;

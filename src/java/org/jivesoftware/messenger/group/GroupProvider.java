@@ -153,4 +153,12 @@ public interface GroupProvider {
      *      support the operation.
      */
     void deleteMember(String groupName, String username) throws UnsupportedOperationException;
+
+    /**
+     * Returns true if this GroupProvider is read-only. When read-only,
+     * groups can not be created, deleted, or modified.
+     *
+     * @return true if the user provider is read-only.
+     */
+    public boolean isReadOnly();
 }

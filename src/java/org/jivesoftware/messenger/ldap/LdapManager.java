@@ -42,6 +42,11 @@ import java.util.Hashtable;
  *      <li>ldap.searchFilter -- the filter used to load the list of users. The
  *              default value is in the form "([usernameField]={0})" where [usernameField]
  *              is the value of ldap.usernameField.
+ *      <li>ldap.groupNameField</li>
+ *      <li>ldap.groupMemberField</li>
+ *      <li>ldap.groupDescriptionField</li>
+ *      <li>ldap.posixEnabled</li>
+ *      <li>ldap.groupSearchFilter</li>
  *      <li>ldap.debugEnabled</li>
  *      <li>ldap.sslEnabled</li>
  *      <li>ldap.autoFollowReferrals</li>
@@ -68,6 +73,12 @@ public class LdapManager {
     private boolean followReferrals = false;
     private boolean connectionPoolEnabled = true;
     private String searchFilter = null;
+
+    private String groupNameField = "cn";
+    private String groupMemberField = "member";
+    private String groupDescriptionField = "description";
+    private boolean posixEnabled = false;
+    private String groupSearchFilter = null;
 
     private static LdapManager instance = new LdapManager();
 
@@ -119,6 +130,24 @@ public class LdapManager {
             StringBuilder filter = new StringBuilder();
             filter.append("(").append(usernameField).append("={0})");
             this.searchFilter = filter.toString();
+        }
+        if (JiveGlobals.getXMLProperty("ldap.groupNameField") != null) {
+            this.groupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField");
+        }
+        if (JiveGlobals.getXMLProperty("ldap.groupMemberField") != null) {
+            this.groupMemberField = JiveGlobals.getXMLProperty("ldap.groupMemberField");
+        }
+        if (JiveGlobals.getXMLProperty("ldap.groupDescriptionField") != null) {
+            this.groupDescriptionField = JiveGlobals.getXMLProperty("ldap.groupDescriptionField");
+        }
+        if (JiveGlobals.getXMLProperty("ldap.posixEnabled") != null) {
+            this.posixEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.posixEnabled"));
+        }
+        if (JiveGlobals.getXMLProperty("ldap.groupSearchFilter") != null) {
+            this.groupSearchFilter = JiveGlobals.getXMLProperty("ldap.groupSearchFilter");
+        }
+        else {
+            this.groupSearchFilter = "("+groupMemberField+"={0})";
         }
 
         this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
@@ -765,5 +794,110 @@ public class LdapManager {
             this.searchFilter = searchFilter;
     		JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
     	}
+    }
+
+    /**
+     * Returns the field name used for groups.
+     * Value of groupNameField defaults to "cn".
+     *
+     * @return the field used for groups.
+     */
+    public String getGroupNameField() {
+        return groupNameField;
+    }
+
+    /**
+     * Sets the field name used for groups.
+     *
+     * @param groupNameField the field used for groups.
+     */
+    public void setGroupNameField(String groupNameField) {
+        this.groupNameField = groupNameField;
+        JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
+    }
+
+    /**
+     * Return the field used to list members within a group.
+     * Value of groupMemberField defaults to "member".
+     *
+     * @return the field used to list members within a group.
+     */
+    public String getGroupMemberField() {
+        return groupMemberField;
+    }
+
+    /**
+     * Sets the field used to list members within a group.
+     * Value of groupMemberField defaults to "member".
+     *
+     * @param the field used to list members within a group.
+     */
+    public void setGroupmemberField(String groupMemberField) {
+        this.groupMemberField = groupMemberField;
+        JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
+    }
+
+    /**
+     * Return the field used to describe a group.
+     * Value of groupDescriptionField defaults to "description".
+     *
+     * @return the field used to describe a group.
+     */
+    public String getGroupDescriptionField() {
+        return groupDescriptionField;
+    }
+
+    /**
+     * Sets the field used to describe a group.
+     * Value of groupDescriptionField defaults to "description".
+     *
+     * @param the field used to describe a group.
+     */
+    public void setGroupDescriptionField(String groupDescriptionField) {
+        this.groupDescriptionField = groupDescriptionField;
+        JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
+    }
+
+    /**
+     * Return the field used to tell if ldap server is posix.
+     * Value of posixEnabled defaults to false.
+     *
+     * @return the field used to tell if ldap server is posix.
+     */
+    public boolean getPosixEnabled() {
+        return posixEnabled;
+    }
+
+    /**
+     * Sets the field used to tell if ldap server is posix.
+     * Value of posixEnabled defaults to false.
+     *
+     * @param the field used to tell if ldap server is posix.
+     */
+    public void setPosixEnabled(boolean posixEnabled) {
+        this.posixEnabled = posixEnabled;
+        Boolean b = new Boolean(posixEnabled);
+        JiveGlobals.setXMLProperty("ldap.posixEnabled", b.toString());
+    }
+
+    /**
+     * Return the field used as the search filter when searching for groups.
+     * Value of groupSearchFilter defaults "(groupMemberField=*)".
+     *
+     * @return the field used as the search filter when searching for groups.
+     */
+    public String getGroupSearchFilter() {
+        return groupSearchFilter;
+    }
+
+    /**
+     * Sets the field used as the search filter when searching for groups.
+     * Value of groupSearchFilter defaults "(groupMemberField=*)".
+     *
+     * @param the field used as the search filter when searching for groups.
+     */
+    public void setGroupSearchFilter(String groupSearchFilter) {
+        this.groupSearchFilter = groupSearchFilter;
+        JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
     }
 }

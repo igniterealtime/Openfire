@@ -407,6 +407,10 @@ public class DefaultGroupProvider implements GroupProvider {
         }
     }
 
+    public boolean isReadOnly() {
+        return false;
+    }
+
     private Collection<String> getMembers(String groupName, boolean adminsOnly) {
         List<String> members = new ArrayList<String>();
         Connection con = null;

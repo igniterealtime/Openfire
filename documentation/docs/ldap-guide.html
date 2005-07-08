@@ -27,13 +27,11 @@ By default, Jive Messenger stores all user data in a database and performs
 authentication using database lookups. The LDAP module replaces that 
 functionality and allows Jive Messenger to:
 <ul>
-<li>
-Use a LDAP server to authenticate a user's identity.
-</li>
-<li>
-Load user profile information from a LDAP directory.
-</li>
+    <li>Use a LDAP server to authenticate a user's identity.</li>
+    <li>Load user profile information from a LDAP directory.</li>
+    <li>Load group information from an LDAP directory.</li>
 </ul>
+
 <b>Note:</b> Jive Messenger treats the LDAP directory as read-only.
 </p>
 <p>
@@ -59,17 +57,22 @@ Restart Jive Messenger.
 <h3>Editing the Config File</h3>
 <p>
 Open the configuration file <tt>conf/jive-messenger.xml</tt> from your Jive Messenger installation in your favorite
-editor and add or change the following settings. Properties flagged with (<font color="red"><b>*</b></font>) must be set, 
-all other properties are optional:
+editor and add or change the following settings. Properties flagged with (<font color="red"><b>*</b></font>) 
+must be set.  Properties flagged with (<font color="red"><b>**</b></font>) must be set in order to enable LDAP group 
+support, all other properties are optional:
 </p>
 <ul>
-<li><font color="red"><b>*</b></font> provider.user.className -- set the value to "org.jivesoftware.messenger.ldap.LdapUserProvider".</li>
-<li><font color="red"><b>*</b></font> provider.auth.className -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
-<li><font color="red"><b>*</b></font> ldap.host -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
+<li>provider.user.className <font color="red"><b>*</b></font> -- set the value to "org.jivesoftware.messenger.ldap.LdapUserProvider".</li>
+<li>provider.auth.className <font color="red"><b>*</b></font>  -- set the value to "org.jivesoftware.messenger.ldap.LdapAuthProvider".</li>
+<li>provider.group.className <font color="red"><b>**</b></font> -- set the value to "org.jivesoftware.messenger.ldap.LdapGroupProvider".</li>
+<li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or machine.example.com, etc.</li>
 <li>ldap.port -- LDAP server port number. If this property is not set, the default value is 389.</li>
-<li><font color="red"><b>*</b></font> ldap.baseDN -- the starting DN that searches for users will performed with. The entire   subtree under the base DN will be searched for user accounts.
+<li>ldap.baseDN <font color="red"><b>*</b></font> -- the starting DN that searches for users will performed with. 
+The entire subtree under the base DN will be searched for user accounts.
 </li>
-<li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the alternate base DN will be used for authentication and loading single users, but will not be used to display a list of users (due to technical limitations).
+<li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the alternate base DN 
+will be used for authentication and loading single users, but will not be used to display a list of users 
+(due to technical limitations).
 <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be performed
     with this account. The admin must be able to perform searches and load user records. The user does
     not need to be able to make changes to the directory, as Jive Messenger treats the directory as read-only.
@@ -100,6 +103,17 @@ all other properties are optional:
 		possibly at another server or several servers. 
 <li>ldap.connectionPoolEnabled -- a value of "false" disables LDAP connection pooling. If this
 		property is not set, the default value is "true".
+<li>ldap.groupNameField -- the field name that the groupname lookups will be performed on. If this property is not set,
+    the default value is <tt>cn</tt></li>
+<li>ldap.groupMemberField -- the field name that holds the members in a group. If this property is not set,
+    the default value is <tt>member</tt></li>
+<li>ldap.groupDescriptionField -- the field name that holds the description a group. If this property is not set,
+    the default value is <tt>description</tt></li>
+<li>ldap.posixEnabled -- a value of "true" means that users are stored within the group by their user name alone.
+    A value of "false" means that users are stored by their entire DN within the group. If this property is not set,
+    the default value is <tt>false</tt></li>
+<li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this property is not set,
+    the default value is <tt>("ldap.groupNameField"={0})</tt></li>
 </ul>
 <p>
 Below is a sample config file section:
@@ -124,6 +138,9 @@ Below is a sample config file section:
         &lt;auth&gt;
             &lt;className&gt;org.jivesoftware.messenger.ldap.LdapAuthProvider&lt;/className&gt;
         &lt;/auth&gt;
+        &lt;group&gt;
+            &lt;className&gt;org.jivesoftware.messenger.ldap.LdapGroupProvider&lt;/className&gt;
+        &lt;/group&gt;
     &lt;/provider&gt;
 ...
 &lt;/jive&gt;

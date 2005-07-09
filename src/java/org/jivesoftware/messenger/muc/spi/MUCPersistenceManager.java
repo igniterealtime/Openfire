@@ -72,8 +72,9 @@ public class MUCPersistenceManager {
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
-        "membersOnly, canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast)" +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "membersOnly, canInvite, password, canDiscoverJID, logEnabled, subject, " +
+        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?," +
+            "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -340,6 +341,10 @@ public class MUCPersistenceManager {
                 pstmt.setInt(17, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setString(18, room.getSubject());
                 pstmt.setInt(19, marshallRolesToBroadcast(room));
+                // TODO Replace with real values when functionality gets implemented
+                pstmt.setInt(20, 0);
+                pstmt.setInt(21, 1);
+                pstmt.setInt(22, 1);
                 pstmt.executeUpdate();
             }
         }

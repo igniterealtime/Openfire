@@ -27,7 +27,6 @@
 <%!
     final int DEFAULT_RANGE = 15;
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
-    final String USER_RANGE_PROP = "admin.userlist.range";
 %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -46,30 +45,10 @@
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",DEFAULT_RANGE);
-    boolean setRange = request.getParameter("range") != null;
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("user-summary", DEFAULT_RANGE));
 
-    if (setRange) {
-        User user = webManager.getUser();
-        if (user != null) {
-            if (range == DEFAULT_RANGE) {
-                user.getProperties().remove(USER_RANGE_PROP);
-            }
-            else {
-                user.getProperties().put(USER_RANGE_PROP, String.valueOf(range));
-            }
-        }
-    }
-
-    // Adjust the range based on the user's settings
-    if (webManager.getUser() != null) {
-        User user = webManager.getUser();
-        try {
-            range = Integer.parseInt(user.getProperties().get(USER_RANGE_PROP));
-        }
-        catch (Exception e) {
-            user.getProperties().remove(USER_RANGE_PROP);
-        }
+    if (request.getParameter("range") != null) {
+        webManager.setRowsPerPage("user-summary", range);
     }
 
     // Get the user manager

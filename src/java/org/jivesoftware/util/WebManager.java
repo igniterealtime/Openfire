@@ -11,26 +11,19 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.AuthToken;
+import org.jivesoftware.messenger.group.GroupManager;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.roster.RosterManager;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.PrivateStorage;
-import org.jivesoftware.messenger.PresenceManager;
-import org.jivesoftware.messenger.SessionManager;
-import org.jivesoftware.messenger.XMPPServerInfo;
-import org.jivesoftware.messenger.group.GroupManager;
 
+import java.io.*;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.net.URL;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
+import java.util.StringTokenizer;
 
 /**
  * A utility bean for Messenger admin console pages.
@@ -283,6 +276,77 @@ public class WebManager extends WebBean {
                 break;
             }
             out.write(buffer, 0, bytesRead);
+        }
+    }
+
+    /**
+     * Returns the number of rows per page for the specified page for the current logged user.
+     * The rows per page value is stored as a user property. The same property is being used for
+     * different pages. The encoding format is the following "pageName1=value,pageName2=value".
+     *
+     * @param pageName     the name of the page to look up its stored value.
+     * @param defaultValue the default value to return if no user value was found.
+     * @return the number of rows per page for the specified page for the current logged user.
+     */
+    public int getRowsPerPage(String pageName, int defaultValue) {
+        User user = getUser();
+        if (user != null) {
+            String values = user.getProperties().get("console.rows_per_page");
+            if (values != null) {
+                StringTokenizer tokens = new StringTokenizer(values, ",=");
+                while (tokens.hasMoreTokens()) {
+                    String page = tokens.nextToken().trim();
+                    String rows = tokens.nextToken().trim();
+                    if  (pageName.equals(page)) {
+                        try {
+                            return Integer.parseInt(rows);
+                        }
+                        catch (NumberFormatException e) {
+                            return defaultValue;
+                        }
+                    }
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Sets the new number of rows per page for the specified page for the current logged user.
+     * The rows per page value is stored as a user property. The same property is being used for
+     * different pages. The encoding format is the following "pageName1=value,pageName2=value".
+     *
+     * @param pageName the name of the page to stored its new value.
+     * @param newValue the new rows per page value.
+     */
+    public void setRowsPerPage(String pageName, int newValue) {
+        String toStore = pageName + "=" + newValue;
+        User user = getUser();
+        if (user != null) {
+            String values = user.getProperties().get("console.rows_per_page");
+            if (values != null) {
+                if (values.contains(toStore)) {
+                    // The new value for the page was already stored so do nothing
+                    return;
+                }
+                else {
+                    if (values.contains(pageName)) {
+                        // Replace an old value for the page with the new value
+                        int oldValue = getRowsPerPage(pageName, -1);
+                        String toRemove = pageName + "=" + oldValue;
+                        user.getProperties().put("console.rows_per_page",
+                                values.replace(toRemove, toStore));
+                    }
+                    else {
+                        // Append the new page-value
+                        user.getProperties().put("console.rows_per_page", values + "," + toStore);
+                    }
+                }
+            }
+            else if (values == null) {
+                // Store the new page-value as a new user property
+                user.getProperties().put("console.rows_per_page", toStore);
+            }
         }
     }
 }

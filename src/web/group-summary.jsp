@@ -38,7 +38,11 @@
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",15);
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("group-summary", 15));
+
+    if (request.getParameter("range") != null) {
+        webManager.setRowsPerPage("group-summary", range);
+    }
 
     // Get the user manager
     int groupCount = webManager.getGroupManager().getGroupCount();

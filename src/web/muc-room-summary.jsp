@@ -36,7 +36,11 @@
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",15);
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("muc-room-summary", 15));
+
+    if (request.getParameter("range") != null) {
+        webManager.setRowsPerPage("muc-room-summary", range);
+    }
 
     // Get the rooms in the server
     List<MUCRoom> rooms = webManager.getMultiUserChatServer().getChatRooms();

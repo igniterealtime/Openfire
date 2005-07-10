@@ -34,11 +34,15 @@
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",DEFAULT_RANGE);
+    int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("session-summary", DEFAULT_RANGE));
     int refresh = ParamUtils.getIntParameter(request,"refresh",10);
     String refreshParam = ParamUtils.getParameter(request,"refresh");
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String jid = ParamUtils.getParameter(request,"jid");
+
+    if (request.getParameter("range") != null) {
+        admin.setRowsPerPage("session-summary", range);
+    }
 
     // Get the user manager
     SessionManager sessionManager = admin.getSessionManager();

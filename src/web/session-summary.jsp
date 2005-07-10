@@ -14,7 +14,6 @@
                  org.jivesoftware.messenger.*,
                  java.util.Date,
                  org.jivesoftware.admin.*,
-                 java.text.DateFormat,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
@@ -27,7 +26,8 @@
     final int DEFAULT_RANGE = 15;
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
 
-    static final String[] REFRESHES = {NONE,"10","30","60","90"};
+    static final int[] REFRESHES = {0, 10, 30, 60, 90};
+    static final String[] REFRESHES_LABELS = {NONE,"10","30","60","90"};
 %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
@@ -35,13 +35,16 @@
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("session-summary", DEFAULT_RANGE));
-    int refresh = ParamUtils.getIntParameter(request,"refresh",10);
-    String refreshParam = ParamUtils.getParameter(request,"refresh");
+    int refresh = ParamUtils.getIntParameter(request,"refresh",admin.getRefreshValue("session-summary", 0));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String jid = ParamUtils.getParameter(request,"jid");
 
     if (request.getParameter("range") != null) {
         admin.setRowsPerPage("session-summary", range);
+    }
+
+    if (request.getParameter("refresh") != null) {
+        admin.setRefreshValue("session-summary", refresh);
     }
 
     // Get the user manager
@@ -83,7 +86,7 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
+<%  if (refresh > 0) { %>
 
     <meta http-equiv="refresh" content="<%= refresh %>">
 
@@ -142,9 +145,9 @@
             <fmt:message key="global.refresh" />:
             <select size="1" name="refresh" onchange="this.form.submit();">
             <%  for (int j=0; j<REFRESHES.length; j++) {
-                    String selected = REFRESHES[j].equals(refreshParam)?" selected":"";
+                    String selected = REFRESHES[j] == refresh ? " selected" : "";
             %>
-                <option value="<%= REFRESHES[j] %>"<%= selected %>><%= REFRESHES[j] %>
+                <option value="<%= REFRESHES[j] %>"<%= selected %>><%= REFRESHES_LABELS[j] %>
 
             <%  } %>
             </select>

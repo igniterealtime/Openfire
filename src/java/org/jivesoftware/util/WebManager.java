@@ -289,9 +289,53 @@ public class WebManager extends WebBean {
      * @return the number of rows per page for the specified page for the current logged user.
      */
     public int getRowsPerPage(String pageName, int defaultValue) {
+        return getPageProperty(pageName, "console.rows_per_page", defaultValue);
+    }
+
+    /**
+     * Sets the new number of rows per page for the specified page for the current logged user.
+     * The rows per page value is stored as a user property. The same property is being used for
+     * different pages. The encoding format is the following "pageName1=value,pageName2=value".
+     *
+     * @param pageName the name of the page to stored its new value.
+     * @param newValue the new rows per page value.
+     */
+    public void setRowsPerPage(String pageName, int newValue) {
+        setPageProperty(pageName, "console.rows_per_page", newValue);
+    }
+
+    /**
+     * Returns the number of seconds between each page refresh for the specified page for the
+     * current logged user. The value is stored as a user property. The same property is being
+     * used for different pages. The encoding format is the following
+     * "pageName1=value,pageName2=value".
+     *
+     * @param pageName     the name of the page to look up its stored value.
+     * @param defaultValue the default value to return if no user value was found.
+     * @return the number of seconds between each page refresh for the specified page for
+     *         the current logged user.
+     */
+    public int getRefreshValue(String pageName, int defaultValue) {
+        return getPageProperty(pageName, "console.refresh", defaultValue);
+    }
+
+    /**
+     * Sets the number of seconds between each page refresh for the specified page for the
+     * current logged user. The value is stored as a user property. The same property is being
+     * used for different pages. The encoding format is the following
+     * "pageName1=value,pageName2=value".
+     *
+     * @param pageName the name of the page to stored its new value.
+     * @param newValue the new number of seconds between each page refresh.
+     */
+    public void setRefreshValue(String pageName, int newValue) {
+        setPageProperty(pageName, "console.refresh", newValue);
+    }
+
+    private int getPageProperty(String pageName, String property, int defaultValue) {
         User user = getUser();
         if (user != null) {
-            String values = user.getProperties().get("console.rows_per_page");
+            String values = user.getProperties().get(property);
             if (values != null) {
                 StringTokenizer tokens = new StringTokenizer(values, ",=");
                 while (tokens.hasMoreTokens()) {
@@ -311,19 +355,11 @@ public class WebManager extends WebBean {
         return defaultValue;
     }
 
-    /**
-     * Sets the new number of rows per page for the specified page for the current logged user.
-     * The rows per page value is stored as a user property. The same property is being used for
-     * different pages. The encoding format is the following "pageName1=value,pageName2=value".
-     *
-     * @param pageName the name of the page to stored its new value.
-     * @param newValue the new rows per page value.
-     */
-    public void setRowsPerPage(String pageName, int newValue) {
+    public void setPageProperty(String pageName, String property, int newValue) {
         String toStore = pageName + "=" + newValue;
         User user = getUser();
         if (user != null) {
-            String values = user.getProperties().get("console.rows_per_page");
+            String values = user.getProperties().get(property);
             if (values != null) {
                 if (values.contains(toStore)) {
                     // The new value for the page was already stored so do nothing
@@ -332,20 +368,19 @@ public class WebManager extends WebBean {
                 else {
                     if (values.contains(pageName)) {
                         // Replace an old value for the page with the new value
-                        int oldValue = getRowsPerPage(pageName, -1);
+                        int oldValue = getPageProperty(pageName, property, -1);
                         String toRemove = pageName + "=" + oldValue;
-                        user.getProperties().put("console.rows_per_page",
-                                values.replace(toRemove, toStore));
+                        user.getProperties().put(property, values.replace(toRemove, toStore));
                     }
                     else {
                         // Append the new page-value
-                        user.getProperties().put("console.rows_per_page", values + "," + toStore);
+                        user.getProperties().put(property, values + "," + toStore);
                     }
                 }
             }
             else if (values == null) {
                 // Store the new page-value as a new user property
-                user.getProperties().put("console.rows_per_page", toStore);
+                user.getProperties().put(property, toStore);
             }
         }
     }

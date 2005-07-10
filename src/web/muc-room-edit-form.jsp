@@ -17,15 +17,14 @@
                  org.jivesoftware.messenger.forms.spi.*,
                  org.jivesoftware.messenger.forms.*,
                  org.dom4j.Element,
-                 org.dom4j.DocumentHelper,
-                 org.dom4j.QName,
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.stringprep.StringprepException"
+                 org.jivesoftware.stringprep.StringprepException,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -242,10 +241,10 @@
             // Changes good, so redirect
             String params = "";
             if (create) {
-                params = "addsuccess=true&roomName=" + roomName;
+                params = "addsuccess=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
             }
             else {
-                params = "success=true&roomName=" + roomName;
+                params = "success=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
             }
             response.sendRedirect("muc-room-edit-form.jsp?" + params);
             return;
@@ -285,6 +284,7 @@
     }
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+    roomName = roomName == null ? "" : roomName;
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -297,10 +297,10 @@
         pageinfo.setPageID("muc-room-create");
     }
     else {
-        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+roomName));
+        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+URLEncoder.encode(roomName, "UTF-8")));
         pageinfo.setSubPageID("muc-room-edit-form");
     }
-    pageinfo.setExtraParams("roomName="+roomName+"&create="+create);
+    pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create);
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
@@ -406,7 +406,7 @@
                 <% if (create) { %>
                 <tr>
                     <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
-                    <td><input type="text" name="roomName" value="<%= roomName != null ? roomName : ""%>"> @<%= webManager.getMultiUserChatServer().getServiceDomain()%>
+                    <td><input type="text" name="roomName" value="<%= roomName %>"> @<%= webManager.getMultiUserChatServer().getServiceDomain()%>
                     </td>
                 </tr>
                 <% } %>

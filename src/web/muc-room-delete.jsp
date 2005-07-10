@@ -11,7 +11,8 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.muc.MUCRoom"
+                 org.jivesoftware.messenger.muc.MUCRoom,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -54,16 +55,16 @@
     String title = LocaleUtils.getLocalizedString("muc.room.delete.title");
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-delete.jsp?roomName="+roomName));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-delete.jsp?roomName="+URLEncoder.encode(roomName, "UTF-8")));
     pageinfo.setSubPageID("muc-room-delete");
-    pageinfo.setExtraParams("roomName="+roomName);
+    pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8"));
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
 <fmt:message key="muc.room.delete.info" />
-<b><a href="muc-room-edit-form.jsp?roomName=<%= room.getName() %>"><%= room.getName() %></a></b>
+<b><a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"><%= room.getName() %></a></b>
 <fmt:message key="muc.room.delete.detail" />
 </p>
 

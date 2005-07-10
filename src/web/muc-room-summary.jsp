@@ -14,7 +14,8 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MUCRoom,
-                 java.util.*"
+                 java.util.*,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -165,12 +166,12 @@
             <%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %>
         </td>
         <td width="1%" align="center">
-            <a href="muc-room-edit-form.jsp?roomName=<%= room.getName() %>"
+            <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="muc-room-delete.jsp?roomName=<%= room.getName() %>"
+            <a href="muc-room-delete.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
         </td>

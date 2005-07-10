@@ -34,8 +34,6 @@
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
-<c:set var="success" value="false" />
-
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean inbandEnabled = ParamUtils.getBooleanParameter(request,"inbandEnabled");
@@ -48,9 +46,6 @@
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         authHandler.setAllowAnonymous(anonLogin);
-%>
-<c:set var="success" value="true" />
-<%
     }
 
     // Reset the value of page vars:
@@ -64,7 +59,7 @@
 
 <form action="reg-settings.jsp">
 
-<c:if test="success" >
+<% if (save) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -77,7 +72,7 @@
     </table>
     </div><br>
 
-</c:if>
+<% } %>
 
 <fieldset>
     <legend><fmt:message key="reg.settings.inband_account" /></legend>
@@ -93,8 +88,8 @@
                  <%= ((inbandEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b><fmt:message key="reg.settings.enable" /></b></label> - 
-                <fmt:message key="reg.settings.auto_create_user" />
+                <label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -
+                <fmt:message key="reg.settings.auto_create_user" /></label>
             </td>
         </tr>
         <tr>
@@ -103,7 +98,7 @@
                  <%= ((!inbandEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b><fmt:message key="reg.settings.disable" /></b></label> - <fmt:message key="reg.settings.not_auto_create" />
+                <label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label>
             </td>
         </tr>
     </tbody>
@@ -127,7 +122,7 @@
              <%= ((anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b></label> - <fmt:message key="reg.settings.anyone_login" />
+                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label>
             </td>
         </tr>
         <tr>
@@ -136,7 +131,7 @@
              <%= ((!anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b></label> - <fmt:message key="reg.settings.only_registered_login" />
+                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label>
             </td>
         </tr>
     </tbody>

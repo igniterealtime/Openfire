@@ -350,7 +350,7 @@ public class XPPPacketReader {
                         parent = parent.getParent();
                     }
                     count--;
-                    if (count == 0) {
+                    if (count < 1) {
                         return document;
                     }
                     break;

@@ -206,11 +206,13 @@ public interface MUCRoom {
      *                                       nickname reserved by the first user.
      * @throws ServiceUnavailableException   If the user cannot join the room since the max number
      *                                       of users has been reached.
+     * @throws NotAcceptableException       If the registered user is trying to join with a
+     *                                      nickname different than the reserved nickname.
      */
     MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, MUCUser user,
             Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
-            ConflictException, ServiceUnavailableException;
+            ConflictException, ServiceUnavailableException, NotAcceptableException;
 
     /**
      * Remove a member from the chat room.
@@ -668,6 +670,67 @@ public interface MUCRoom {
      * @param logEnabled boolean that specified if the room's conversation must be logged.
      */
     public void setLogEnabled(boolean logEnabled);
+
+    /**
+     * Returns true if registered users can only join the room using their registered nickname. By
+     * default, registered users can join the room using any nickname. A not_acceptable error
+     * will be returned if the user tries to join the room with a nickname different than the
+     * reserved nickname.
+     *
+     * @return true if registered users can only join the room using their registered nickname.
+     */
+    public boolean isLoginRestrictedToNickname();
+
+    /**
+     * Sets if registered users can only join the room using their registered nickname. A
+     * not_acceptable error will be returned if the user tries to join the room with a nickname
+     * different than the reserved nickname.
+     *
+     * @param restricted if registered users can only join the room using their registered nickname.
+     */
+    public void setLoginRestrictedToNickname(boolean restricted);
+
+    /**
+     * Returns true if room occupants are allowed to change their nicknames in the room. By
+     * default, occupants are allowed to change their nicknames. A not_acceptable error will be
+     * returned if an occupant tries to change his nickname and this feature is not enabled.<p>
+     *
+     * Notice that this feature is not supported by the MUC spec so answering a not_acceptable
+     * error may break some cliens.
+     *
+     * @return true if room occupants are allowed to change their nicknames in the room.
+     */
+    public boolean canChangeNickname();
+
+    /**
+     * Sets if room occupants are allowed to change their nicknames in the room. By default,
+     * occupants are allowed to change their nicknames. A not_acceptable error will be returned if
+     * an occupant tries to change his nickname and this feature is not enabled.<p>
+     *
+     * Notice that this feature is not supported by the MUC spec so answering a not_acceptable
+     * error may break some cliens. 
+     *
+     * @param canChange if room occupants are allowed to change their nicknames in the room.
+     */
+    public void setChangeNickname(boolean canChange);
+
+    /**
+     * Returns true if users are allowed to register with the room. By default, room registration
+     * is enabled. A not_allowed error will be returned if a user tries to register with the room
+     * and this feature is disabled.
+     *
+     * @return true if users are allowed to register with the room.
+     */
+    public boolean isRegistrationEnabled();
+
+    /**
+     * Sets if users are allowed to register with the room. By default, room registration
+     * is enabled. A not_allowed error will be returned if a user tries to register with the room
+     * and this feature is disabled.
+     *
+     * @param registrationEnabled if users are allowed to register with the room.
+     */
+    public void setRegistrationEnabled(boolean registrationEnabled);
 
     /**
      * Returns the maximum number of occupants that can be simultaneously in the room. If the number

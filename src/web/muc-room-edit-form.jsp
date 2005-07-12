@@ -55,6 +55,9 @@
     String allowInvites = ParamUtils.getParameter(request, "roomconfig_allowinvites");
     String changeSubject = ParamUtils.getParameter(request, "roomconfig_changesubject");
     String enableLog = ParamUtils.getParameter(request, "roomconfig_enablelogging");
+    String reservedNick = ParamUtils.getParameter(request, "roomconfig_reservednick");
+    String canChangeNick = ParamUtils.getParameter(request, "roomconfig_canchangenick");
+    String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String roomSubject = ParamUtils.getParameter(request, "room_topic");
 
     // Handle a cancel
@@ -207,6 +210,18 @@
             field.addValue((enableLog == null) ? "0": "1");
             dataForm.addField(field);
 
+            field = new XFormFieldImpl("x-muc#roomconfig_reservednick");
+            field.addValue((reservedNick == null) ? "0": "1");
+            dataForm.addField(field);
+
+            field = new XFormFieldImpl("x-muc#roomconfig_canchangenick");
+            field.addValue((canChangeNick == null) ? "0": "1");
+            dataForm.addField(field);
+
+            field = new XFormFieldImpl("x-muc#roomconfig_registration");
+            field.addValue((registrationEnabled == null) ? "0": "1");
+            dataForm.addField(field);
+
             // Keep the existing list of admins
             field = new XFormFieldImpl("muc#roomconfig_roomadmins");
             for (String jid : room.getAdmins()) {
@@ -280,6 +295,9 @@
             allowInvites = Boolean.toString(room.canOccupantsInvite());
             changeSubject = Boolean.toString(room.canOccupantsChangeSubject());
             enableLog = Boolean.toString(room.isLogEnabled());
+            reservedNick = Boolean.toString(room.isLoginRestrictedToNickname());
+            canChangeNick = Boolean.toString(room.canChangeNickname());
+            registrationEnabled = Boolean.toString(room.isRegistrationEnabled());
         }
     }
     // Formatter for dates
@@ -491,6 +509,18 @@
             <tr>
                 <td><input type="checkbox" name="roomconfig_changesubject" value="true" id="changesubject" <% if ("true".equals(changeSubject)) out.write("checked");%>>
                     <LABEL FOR="changesubject"><fmt:message key="muc.room.edit.form.change_subject" /></LABEL></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" name="roomconfig_reservednick" value="true" id="reservednick" <% if ("true".equals(reservedNick)) out.write("checked");%>>
+                    <LABEL FOR="reservednick"><fmt:message key="muc.room.edit.form.reservednick" /></LABEL></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" name="roomconfig_canchangenick" value="true" id="canchangenick" <% if ("true".equals(canChangeNick)) out.write("checked");%>>
+                    <LABEL FOR="canchangenick"><fmt:message key="muc.room.edit.form.canchangenick" /></LABEL></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" name="roomconfig_registration" value="true" id="registration" <% if ("true".equals(registrationEnabled)) out.write("checked");%>>
+                    <LABEL FOR="registration"><fmt:message key="muc.room.edit.form.registration" /></LABEL></td>
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" <% if ("true".equals(enableLog)) out.write("checked");%>>

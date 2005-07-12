@@ -473,6 +473,27 @@ public class IQOwnerHandler {
                 room.setLogEnabled(("1".equals(booleanValue) ? true : false));
             }
 
+            field = completedForm.getField("x-muc#roomconfig_reservednick");
+            if (field != null) {
+                values = field.getValues();
+                booleanValue = (values.hasNext() ? values.next() : "1");
+                room.setLoginRestrictedToNickname(("1".equals(booleanValue) ? true : false));
+            }
+
+            field = completedForm.getField("x-muc#roomconfig_canchangenick");
+            if (field != null) {
+                values = field.getValues();
+                booleanValue = (values.hasNext() ? values.next() : "1");
+                room.setChangeNickname(("1".equals(booleanValue) ? true : false));
+            }
+
+            field = completedForm.getField("x-muc#roomconfig_registration");
+            if (field != null) {
+                values = field.getValues();
+                booleanValue = (values.hasNext() ? values.next() : "1");
+                room.setRegistrationEnabled(("1".equals(booleanValue) ? true : false));
+            }
+
             // Update the modification date to reflect the last time when the room's configuration
             // was modified
             room.setModificationDate(new Date());
@@ -584,6 +605,18 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_enablelogging");
             field.clearValues();
             field.addValue((room.isLogEnabled() ? "1" : "0"));
+
+            field = configurationForm.getField("x-muc#roomconfig_reservednick");
+            field.clearValues();
+            field.addValue((room.isLoginRestrictedToNickname() ? "1" : "0"));
+
+            field = configurationForm.getField("x-muc#roomconfig_canchangenick");
+            field.clearValues();
+            field.addValue((room.canChangeNickname() ? "1" : "0"));
+
+            field = configurationForm.getField("x-muc#roomconfig_registration");
+            field.clearValues();
+            field.addValue((room.isRegistrationEnabled() ? "1" : "0"));
 
             field = configurationForm.getField("muc#roomconfig_roomadmins");
             field.clearValues();
@@ -712,6 +745,21 @@ public class IQOwnerHandler {
         field = new XFormFieldImpl("muc#roomconfig_enablelogging");
         field.setType(FormField.TYPE_BOOLEAN);
         field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"));
+        configurationForm.addField(field);
+
+        field = new XFormFieldImpl("x-muc#roomconfig_reservednick");
+        field.setType(FormField.TYPE_BOOLEAN);
+        field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick"));
+        configurationForm.addField(field);
+
+        field = new XFormFieldImpl("x-muc#roomconfig_canchangenick");
+        field.setType(FormField.TYPE_BOOLEAN);
+        field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick"));
+        configurationForm.addField(field);
+
+        field = new XFormFieldImpl("x-muc#roomconfig_registration");
+        field.setType(FormField.TYPE_BOOLEAN);
+        field.setLabel(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"));
         configurationForm.addField(field);
 
         field = new XFormFieldImpl();

@@ -43,8 +43,8 @@ public class MUCPersistenceManager {
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
-        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
-        "FROM mucRoom WHERE name=?";
+        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
+        "canChangeNick, canRegister FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM mucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
@@ -55,7 +55,8 @@ public class MUCPersistenceManager {
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast " +
+        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "useReservedNick, canChangeNick, canRegister " +
         "FROM mucRoom WHERE emptyDate IS NULL or emptyDate > ?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT roomID,jid,affiliation FROM mucAffiliation";
@@ -67,8 +68,8 @@ public class MUCPersistenceManager {
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
-        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=? " +
-        "WHERE roomID=?";
+        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
+        "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
@@ -189,6 +190,9 @@ public class MUCPersistenceManager {
                 rolesToBroadcast.add("visitor");
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
+            room.setLoginRestrictedToNickname(rs.getInt(19) == 1 ? true : false);
+            room.setChangeNickname(rs.getInt(20) == 1 ? true : false);
+            room.setRegistrationEnabled(rs.getInt(21) == 1 ? true : false);
             room.setPersistent(true);
             rs.close();
             pstmt.close();
@@ -311,7 +315,10 @@ public class MUCPersistenceManager {
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setInt(13, marshallRolesToBroadcast(room));
-                pstmt.setLong(14, room.getID());
+                pstmt.setInt(14, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(15, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(16, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setLong(17, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -341,10 +348,9 @@ public class MUCPersistenceManager {
                 pstmt.setInt(17, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setString(18, room.getSubject());
                 pstmt.setInt(19, marshallRolesToBroadcast(room));
-                // TODO Replace with real values when functionality gets implemented
-                pstmt.setInt(20, 0);
-                pstmt.setInt(21, 1);
-                pstmt.setInt(22, 1);
+                pstmt.setInt(20, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(21, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(22, (room.isRegistrationEnabled() ? 1 : 0));
                 pstmt.executeUpdate();
             }
         }
@@ -457,6 +463,9 @@ public class MUCPersistenceManager {
                     rolesToBroadcast.add("visitor");
                 }
                 room.setRolesToBroadcastPresence(rolesToBroadcast);
+                room.setLoginRestrictedToNickname(rs.getInt(20) == 1 ? true : false);
+                room.setChangeNickname(rs.getInt(21) == 1 ? true : false);
+                room.setRegistrationEnabled(rs.getInt(22) == 1 ? true : false);
                 room.setPersistent(true);
                 rooms.put(room.getID(), room);
             }

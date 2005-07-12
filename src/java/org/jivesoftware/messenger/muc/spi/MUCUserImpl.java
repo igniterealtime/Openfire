@@ -408,6 +408,9 @@ public class MUCUserImpl implements MUCUser {
                         catch (ConflictException e) {
                             sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
+                        catch (NotAcceptableException e) {
+                            sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                        }
                     }
                     else {
                         // TODO: send error message to user (can't send presence to group you
@@ -457,8 +460,12 @@ public class MUCUserImpl implements MUCUser {
                                 // Occupant has changed his nickname. Send two presences
                                 // to each room occupant
 
+                                // Check if occupants are allowed to change their nicknames
+                                if (!role.getChatRoom().canChangeNickname()) {
+                                    sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                                }
                                 // Answer a conflic error if the new nickname is taken
-                                if (role.getChatRoom().hasOccupant(resource)) {
+                                else if (role.getChatRoom().hasOccupant(resource)) {
                                     sendErrorPacket(packet, PacketError.Condition.conflict);
                                 }
                                 else {

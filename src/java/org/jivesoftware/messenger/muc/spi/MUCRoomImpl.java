@@ -201,6 +201,24 @@ public class MUCRoomImpl implements MUCRoom {
     private boolean logEnabled = false;
 
     /**
+     * Enables the logging of the conversation. The conversation in the room will be saved to the
+     * database.
+     */
+    private boolean loginRestrictedToNickname = false;
+
+    /**
+     * Enables the logging of the conversation. The conversation in the room will be saved to the
+     * database.
+     */
+    private boolean canChangeNickname = true;
+
+    /**
+     * Enables the logging of the conversation. The conversation in the room will be saved to the
+     * database.
+     */
+    private boolean registrationEnabled = true;
+
+    /**
      * Internal component that handles IQ packets sent by the room owners.
      */
     private IQOwnerHandler iqOwnerHandler;
@@ -390,7 +408,8 @@ public class MUCRoomImpl implements MUCRoom {
     public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
             MUCUser user, Presence presence) throws UnauthorizedException,
             UserAlreadyExistsException, RoomLockedException, ForbiddenException,
-            RegistrationRequiredException, ConflictException, ServiceUnavailableException {
+            RegistrationRequiredException, ConflictException, ServiceUnavailableException,
+            NotAcceptableException {
         MUCRoleImpl joinRole = null;
         lock.writeLock().lock();
         try {
@@ -421,6 +440,12 @@ public class MUCRoomImpl implements MUCRoom {
             if (members.containsValue(nickname)) {
                 if (!nickname.equals(members.get(user.getAddress().toBareJID()))) {
                     throw new ConflictException();
+                }
+            }
+            if (isLoginRestrictedToNickname()) {
+                String reservedNickname = members.get(user.getAddress().toBareJID());
+                if (reservedNickname != null && !nickname.equals(reservedNickname)) {
+                    throw new NotAcceptableException();
                 }
             }
 
@@ -1553,6 +1578,30 @@ public class MUCRoomImpl implements MUCRoom {
 
     public void setLogEnabled(boolean logEnabled) {
         this.logEnabled = logEnabled;
+    }
+
+    public void setLoginRestrictedToNickname(boolean restricted) {
+        this.loginRestrictedToNickname = restricted;
+    }
+
+    public boolean isLoginRestrictedToNickname() {
+        return loginRestrictedToNickname;
+    }
+
+    public void setChangeNickname(boolean canChange) {
+        this.canChangeNickname = canChange;
+    }
+
+    public boolean canChangeNickname() {
+        return canChangeNickname;
+    }
+
+    public void setRegistrationEnabled(boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
+    }
+
+    public boolean isRegistrationEnabled() {
+        return registrationEnabled;
     }
 
     public int getMaxUsers() {

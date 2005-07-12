@@ -114,6 +114,13 @@ class IQMUCRegisterHandler {
             reply.setError(PacketError.Condition.item_not_found);
             return reply;
         }
+        else if (!room.isRegistrationEnabled()) {
+            // The room does not accept users to register
+            reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.not_allowed);
+            return reply;
+        }
 
         if (IQ.Type.get == packet.getType()) {
             reply = IQ.createResultIQ(packet);

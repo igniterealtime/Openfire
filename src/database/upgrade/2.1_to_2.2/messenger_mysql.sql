@@ -36,3 +36,4 @@ ALTER TABLE mucRoom ADD COLUMN useReservedNick     TINYINT       NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canChangeNick       TINYINT       NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canRegister         TINYINT       NOT NULL;
 
+UPDATE mucRoom set useReservedNick=0, canChangeNick=1, canRegister=1;

@@ -35,3 +35,5 @@ REM // mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegi
 ALTER TABLE mucRoom ADD useReservedNick     INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD canChangeNick       INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD canRegister         INTEGER       NOT NULL;
+
+UPDATE mucRoom set useReservedNick=0, canChangeNick=1, canRegister=1;

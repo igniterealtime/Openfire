@@ -32,6 +32,6 @@ CREATE TABLE mucRoomProp (
 );
 
 // mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegister".
-ALTER TABLE mucRoom ADD COLUMN useReservedNick     INTEGER       NOT NULL;
-ALTER TABLE mucRoom ADD COLUMN canChangeNick       INTEGER       NOT NULL;
-ALTER TABLE mucRoom ADD COLUMN canRegister         INTEGER       NOT NULL;
+ALTER TABLE mucRoom ADD COLUMN useReservedNick     INTEGER       DEFAULT 0 NOT NULL;
+ALTER TABLE mucRoom ADD COLUMN canChangeNick       INTEGER       DEFAULT 1 NOT NULL;
+ALTER TABLE mucRoom ADD COLUMN canRegister         INTEGER       DEFAULT 1 NOT NULL;

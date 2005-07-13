@@ -35,3 +35,5 @@ CREATE TABLE mucRoomProp (
 ALTER TABLE mucRoom ADD COLUMN useReservedNick     INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canChangeNick       INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canRegister         INTEGER       NOT NULL;
+
+UPDATE mucRoom set useReservedNick=0, canChangeNick=1, canRegister=1;

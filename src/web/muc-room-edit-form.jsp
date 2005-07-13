@@ -276,6 +276,8 @@
             publicRoom = "true";
             // Rooms created from the admin console are always persistent
             persistentRoom = "true";
+            canChangeNick = "true";
+            registrationEnabled = "true";
         }
         else {
             naturalName = room.getNaturalLanguageName();

@@ -134,10 +134,6 @@ public abstract class SocketReader implements Runnable {
             if (session != null) {
                 Log.debug("Logging off " + session.getAddress() + " on " + connection);
                 try {
-                    // Allow everything to settle down after a disconnect
-                    // e.g. presence updates to avoid sending double
-                    // presence unavailable's
-                    Thread.sleep(3000);
                     session.getConnection().close();
                 }
                 catch (Exception e) {

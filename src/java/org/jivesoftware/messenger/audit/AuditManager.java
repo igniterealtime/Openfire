@@ -107,6 +107,20 @@ public interface AuditManager {
     void setLogTimeout(int logTimeout);
 
     /**
+     * Returns the absolute path to the directory where the audit log files will be saved.
+     *
+     * @return the absolute path to the directory where the audit log files will be saved.
+     */
+    String getLogDir();
+
+    /**
+     * Sets the absolute path to the directory where the audit log files will be saved.
+     *
+     * @param logDir the absolute path to the directory where the audit log files will be saved.
+     */
+    void setLogDir(String logDir);
+
+    /**
      * <p>Determines if the server will audit all message packets.</p>
      * <p>This is a speed optimization and convenience for logging all message packets
      * rather than using an XPath expression.</p>

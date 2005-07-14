@@ -21,6 +21,7 @@ import org.jivesoftware.messenger.interceptor.PacketInterceptor;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +41,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private int maxSize;
     private int maxCount;
     private int logTimeout;
+    private String logDir;
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_FILE_COUNT = 10;
     private static final int DEFAULT_LOG_TIMEOUT = 120000;
@@ -90,6 +92,16 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         this.logTimeout = logTimeout;
         auditor.setLogTimeout(logTimeout);
         JiveGlobals.setProperty("xmpp.audit.logtimeout", Integer.toString(logTimeout));
+    }
+
+    public String getLogDir() {
+        return logDir;
+    }
+
+    public void setLogDir(String logDir) {
+        this.logDir = logDir;
+        auditor.setLogDir(logDir);
+        JiveGlobals.setProperty("xmpp.audit.logdir", logDir);
     }
 
     public int getMaxFileCount() {
@@ -150,7 +162,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
 
     private void saveXPath() {
         String[] filters = new String[xpath.size()];
-        filters = (String[])xpath.toArray(filters);
+        filters = (String[]) xpath.toArray(filters);
         // TODO: save XPath values!
     }
 
@@ -177,9 +189,12 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         maxSize = JiveGlobals.getIntProperty("xmpp.audit.maxsize", MAX_FILE_SIZE);
         maxCount = JiveGlobals.getIntProperty("xmpp.audit.maxcount", MAX_FILE_COUNT);
         logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
+        logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
+                File.separator + "logs");
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxSize, maxCount);
         auditor.setLogTimeout(logTimeout);
+        auditor.setLogDir(logDir);
 
         interceptor = new AuditorInterceptor();
         if (enabled) {

@@ -13,11 +13,9 @@ package org.jivesoftware.messenger.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.util.XMLWriter;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -42,6 +40,10 @@ public class AuditorImpl implements Auditor {
     private long maxCount;
     private int logTimeout;
     private boolean closed = false;
+    /**
+     * Directoty (absolute path) where the audit files will be saved.
+     */
+    private String logDir;
 
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
@@ -130,6 +132,10 @@ public class AuditorImpl implements Auditor {
 
     }
 
+    public void setLogDir(String logDir) {
+        this.logDir = logDir;
+    }
+
     public int getQueuedPacketsNumber() {
         return logQueue.size();
     }
@@ -139,8 +145,7 @@ public class AuditorImpl implements Auditor {
         int i;
         // Find the next available log file name
         for (i = 0; maxCount < 1 || i < maxCount; i++) {
-            currentAuditFile = new File(JiveGlobals.getHomeDirectory() + File.separator + "logs",
-                    "jive.audit-" + i + ".log");
+            currentAuditFile = new File(logDir, "jive.audit-" + i + ".log");
             if (!currentAuditFile.exists()) {
                 break;
             }
@@ -159,11 +164,9 @@ public class AuditorImpl implements Auditor {
             // Rotate the files
             for (i--; i >= 0; i--) {
                 String previousName = "jive.audit-" + i + ".log";
-                File previousFile = new File(JiveGlobals.getHomeDirectory() + File.separator + "logs",
-                        previousName);
+                File previousFile = new File(logDir, previousName);
                 previousFile.renameTo(currentAuditFile);
-                currentAuditFile = new File(JiveGlobals.getHomeDirectory() + File.separator + "logs",
-                        previousName);
+                currentAuditFile = new File(logDir, previousName);
             }
         }
 

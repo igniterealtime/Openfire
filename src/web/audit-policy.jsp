@@ -12,7 +12,8 @@
 <%@ page import="org.jivesoftware.messenger.audit.AuditManager,
                    org.jivesoftware.admin.*,
                    org.jivesoftware.util.*,
-                   java.util.*"
+                   java.util.*,
+                 java.io.File"
     errorPage="error.jsp"
 %>
 
@@ -44,6 +45,7 @@
     String maxCount = ParamUtils.getParameter(request,"maxCount");
     String maxSize = ParamUtils.getParameter(request,"maxSize");
     String logTimeout = ParamUtils.getParameter(request,"logTimeout");
+    String logDir = ParamUtils.getParameter(request,"logDir");
 
     // Get an audit manager:
     AuditManager auditManager = admin.getXMPPServer().getAuditManager();
@@ -78,6 +80,17 @@
         } catch (Exception e){
             errors.put("logTimeout","logTimeout");
         }
+        if (logDir == null || logDir.trim().length() == 0) {
+            errors.put("logDir","logDir");
+        }
+        else {
+            if (new File(logDir).isDirectory()) {
+                auditManager.setLogDir(logDir);
+            }
+            else {
+                errors.put("logDir","logDir");
+            }
+        }
         // All done, redirect
         if (errors.size() == 0){
         %>
@@ -107,6 +120,7 @@
         maxCount = Integer.toString(auditManager.getMaxFileCount());
         maxSize = Integer.toString(auditManager.getMaxFileSize());
         logTimeout = Integer.toString(auditManager.getLogTimeout() / 1000);
+        logDir = auditManager.getLogDir();
     }
 %>
 
@@ -150,6 +164,24 @@
             </td>
             <td width="99%">
                 <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <fmt:message key="audit.policy.log_directory" />
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="30" maxlength="150" name="logDir"
+                         value="<%= ((logDir != null) ? logDir : "") %>">
+
+                    <%  if (errors.get("logDir") != null) { %>
+
+                        <span class="jive-error-text">
+                        <fmt:message key="audit.policy.valid_log_directory" />
+                        </span>
+
+                    <%  } %>
+
+                    </td>
+                </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
                         <fmt:message key="audit.policy.maxfile_size" />

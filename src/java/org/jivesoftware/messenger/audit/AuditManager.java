@@ -11,6 +11,7 @@
 
 package org.jivesoftware.messenger.audit;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -221,5 +222,20 @@ public interface AuditManager {
      * @return An iterator of all XPath expressions the audit manager is using
      */
     Iterator getXPathFilters();
-    
+
+    /**
+     * Sets the list of usernames that won't be audited. Packets sent or received by any of
+     * these users will be ignored by the auditor.
+     *
+     * @param usernames the list of usernames that won't be audited.
+     */
+    void setIgnoreList(Collection<String> usernames);
+
+    /**
+     * Returns the list of usernames that won't be audited. Packets sent or received by any of
+     * these users will be ignored by the auditor.
+     *
+     * @return the list of usernames that won't be audited.
+     */
+    Collection<String> getIgnoreList();
 }

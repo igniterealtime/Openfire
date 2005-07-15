@@ -13,7 +13,11 @@
                    org.jivesoftware.admin.*,
                    org.jivesoftware.util.*,
                    java.util.*,
-                 java.io.File"
+                 java.io.File,
+                 org.xmpp.component.ComponentManagerFactory,
+                 org.xmpp.packet.JID,
+                 java.util.LinkedList,
+                 org.jivesoftware.messenger.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
 
@@ -32,6 +36,11 @@
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
+<script language="JavaScript" type="text/javascript">
+function openWin(el) {
+    var win = window.open('user-browser.jsp?formName=f&elName=ignore','newWin','width=500,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
+}
+</script>
 
 <%   // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -46,6 +55,8 @@
     String maxSize = ParamUtils.getParameter(request,"maxSize");
     String logTimeout = ParamUtils.getParameter(request,"logTimeout");
     String logDir = ParamUtils.getParameter(request,"logDir");
+    String ignore = ParamUtils.getParameter(request,"ignore");
+
 
     // Get an audit manager:
     AuditManager auditManager = admin.getXMPPServer().getAuditManager();
@@ -91,8 +102,37 @@
                 errors.put("logDir","logDir");
             }
         }
-        // All done, redirect
         if (errors.size() == 0){
+            if (ignore == null){
+                // remove all ignored users
+                auditManager.setIgnoreList(new ArrayList<String>());
+            }
+            else {
+                // Set the new ignore list
+                Collection<String> newIgnoreList = new HashSet<String>(ignore.length());
+                StringTokenizer tokenizer = new StringTokenizer(ignore, ", \t\n\r\f");
+                while (tokenizer.hasMoreTokens()) {
+                    String tok = tokenizer.nextToken();
+                    String username = tok;
+                    if (tok.contains("@")) {
+                        if (tok.contains("@" + admin.getServerInfo().getName())) {
+                           username = new JID(tok).getNode();
+                        }
+                        else {
+                            // Skip this JID since it belongs to a remote server
+                            continue;
+                        }
+                    }
+                    try {
+                        admin.getUserManager().getUser(username);
+                        newIgnoreList.add(username);
+                    }
+                    catch (UserNotFoundException e){
+                    }
+                }
+                auditManager.setIgnoreList(newIgnoreList);
+            }
+        // All done, redirect
         %>
 
     <div class="jive-success">
@@ -121,6 +161,16 @@
         maxSize = Integer.toString(auditManager.getMaxFileSize());
         logTimeout = Integer.toString(auditManager.getLogTimeout() / 1000);
         logDir = auditManager.getLogDir();
+        StringBuilder ignoreList = new StringBuilder();
+        for (String username : auditManager.getIgnoreList()) {
+            if (ignoreList.length() == 0) {
+                ignoreList.append(username);
+            }
+            else {
+                ignoreList.append(", ").append(username);
+            }
+        }
+        ignore = ignoreList.toString();
     }
 %>
 
@@ -129,7 +179,7 @@
 <fmt:message key="audit.policy.title_info" />
 </p>
 
-<form action="audit-policy.jsp">
+<form action="audit-policy.jsp" name="f">
 
 <fieldset>
     <legend><fmt:message key="audit.policy.policytitle" /></legend>
@@ -279,6 +329,30 @@
                                 </label>
                             </td>
                         </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <fmt:message key="audit.policy.ignore" />
+                    </td>
+                    <td width="99%">
+                        <table>
+                            <td>
+                            <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
+                            <%  if (errors.get("ignore") != null) { %>
+
+                                <span class="jive-error-text">
+                                <fmt:message key="audit.policy.validignore" />
+                                </span>
+
+                            <%  } %>
+                            </td>
+                             <td nowrap valign="top">
+                                <a href="#" onclick="openWin(document.f.ignore);return false;"
+                                 title="Click to browse available users..."
+                                 ><img src="images/user.gif" border="0"/> Browse Users</a>
+                            </td>
                         </table>
                     </td>
                 </tr>

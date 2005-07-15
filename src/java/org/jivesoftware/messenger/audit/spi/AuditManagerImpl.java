@@ -20,11 +20,10 @@ import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketInterceptor;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.JID;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementation of the AuditManager interface.
@@ -42,6 +41,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private int maxCount;
     private int logTimeout;
     private String logDir;
+    private Collection<String> ignoreList = new ArrayList<String>();
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_FILE_COUNT = 10;
     private static final int DEFAULT_LOG_TIMEOUT = 120000;
@@ -170,6 +170,28 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         return xpath.iterator();
     }
 
+    public void setIgnoreList(Collection<String> usernames) {
+        if (ignoreList.equals(usernames)) {
+            return;
+        }
+        ignoreList = usernames;
+        // Encode the collection
+        StringBuilder ignoreString = new StringBuilder();
+        for (String username : ignoreList) {
+            if (ignoreString.length() == 0) {
+                ignoreString.append(username);
+            }
+            else {
+                ignoreString.append(",").append(username);
+            }
+        }
+        JiveGlobals.setProperty("xmpp.audit.ignore", ignoreString.toString());
+    }
+
+    public Collection<String> getIgnoreList() {
+        return Collections.unmodifiableCollection(ignoreList);
+    }
+
     // #########################################################################
     // Basic module methods
     // #########################################################################
@@ -191,6 +213,14 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
         logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
                 File.separator + "logs");
+        String ignoreString = JiveGlobals.getProperty("xmpp.audit.ignore", "");
+        // Decode the ignore list
+        StringTokenizer tokenizer = new StringTokenizer(ignoreString, ", ");
+        while (tokenizer.hasMoreTokens()) {
+            String username = tokenizer.nextToken();
+            ignoreList.add(username);
+        }
+
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxSize, maxCount);
         auditor.setLogTimeout(logTimeout);
@@ -212,7 +242,13 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
 
         public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
             if (!processed) {
-                auditor.audit(packet, session);
+                // Ignore packets sent or received by users that are present in the ignore list
+                JID from = packet.getFrom();
+                JID to = packet.getTo();
+                if ((from == null || !ignoreList.contains(from.getNode())) &&
+                        (to == null || !ignoreList.contains(to.getNode()))) {
+                    auditor.audit(packet, session);
+                }
             }
         }
     }

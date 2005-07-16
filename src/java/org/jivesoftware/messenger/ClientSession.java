@@ -19,15 +19,21 @@ import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
 import org.dom4j.io.XPPPacketReader;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.Writer;
 import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 /**
  * Represents a session between the server and a client.
@@ -47,6 +53,15 @@ public class ClientSession extends Session {
     private static final int MINOR_VERSION = 0;
 
     /**
+     * Keep the list of IP address that are allowed to connect to the server. If the list is
+     * empty then anyone is allowed to connect to the server.<p>
+     *
+     * Note: Key = IP address or IP range; Value = empty string. A hash map is being used for
+     * performance reasons.
+     */
+    private static Map<String,String> allowedIPs = new HashMap<String,String>();
+
+    /**
      * The authentication token for this session.
      */
     protected AuthToken authToken;
@@ -59,6 +74,16 @@ public class ClientSession extends Session {
     private Presence presence = null;
 
     private int conflictCount = 0;
+
+    static {
+        // Fill out the allowedIPs with the system property
+        String allowed = JiveGlobals.getProperty("xmpp.client.login.allowed", "");
+        StringTokenizer tokens = new StringTokenizer(allowed, ", ");
+        while (tokens.hasMoreTokens()) {
+            String address = tokens.nextToken().trim();
+            allowedIPs.put(address, "");
+        }
+    }
 
     /**
      * Returns a newly created session between the server and a client. The session will
@@ -91,6 +116,32 @@ public class ClientSession extends Session {
         {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString(
                     "admin.error.bad-namespace"));
+        }
+
+        if (!allowedIPs.isEmpty()) {
+            // The server is using a whitelist so check that the IP address of the client
+            // is authorized to connect to the server
+            if (!allowedIPs.containsKey(connection.getInetAddress().getHostAddress())) {
+                byte[] address = connection.getInetAddress().getAddress();
+                String range1 = address[0] + "." + address[1] + "." + address[2] + ".*";
+                String range2 = address[0] + "." + address[1] + ".*.*";
+                String range3 = address[0] + ".*.*.*";
+                if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
+                        !allowedIPs.containsKey(range3)) {
+                    // Client cannot connect from this IP address so end the stream and
+                    // TCP connection
+                    Log.debug("Closed connection to client attempting to connect from: " +
+                            connection.getInetAddress().getHostAddress());
+                    // Include the not-authorized error in the response
+                    StreamError error = new StreamError(StreamError.Condition.not_authorized);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(error.toXML());
+                    connection.deliverRawText(sb.toString());
+                    // Close the underlying connection
+                    connection.close();
+                    return null;
+                }
+            }
         }
 
         // Default language is English ("en").
@@ -209,6 +260,41 @@ public class ClientSession extends Session {
         }
 
         return session;
+    }
+
+    /**
+     * Returns the list of IP address that are allowed to connect to the server. If the list is
+     * empty then anyone is allowed to connect to the server.
+     *
+     * @return the list of IP address that are allowed to connect to the server.
+     */
+    public static Map<String, String> getAllowedIPs() {
+        return allowedIPs;
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server. If the list is
+     * empty then anyone is allowed to connect to the server.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server.
+     */
+    public static void setAllowedIPs(Map<String, String> allowed) {
+        allowedIPs = allowed;
+        if (allowedIPs.isEmpty()) {
+            JiveGlobals.deleteProperty("xmpp.client.login.allowed");
+        }
+        else {
+            // Iterate through the elements in the map.
+            StringBuilder buf = new StringBuilder();
+            Iterator<String> iter = allowedIPs.keySet().iterator();
+            if (iter.hasNext()) {
+                buf.append(iter.next());
+            }
+            while (iter.hasNext()) {
+                buf.append(", ").append((String)iter.next());
+            }
+            JiveGlobals.setProperty("xmpp.client.login.allowed", buf.toString());
+        }
     }
 
     /**

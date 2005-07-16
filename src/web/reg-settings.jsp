@@ -9,11 +9,12 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.handler.IQRegisterHandler,
+<%@ page import="org.jivesoftware.messenger.handler.IQRegisterHandler,
                  org.jivesoftware.messenger.handler.IQAuthHandler,
                  org.jivesoftware.admin.AdminPageBean,
-                 org.jivesoftware.util.LocaleUtils"
+                 java.util.*,
+                 org.jivesoftware.messenger.ClientSession,
+                 org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
 
@@ -39,6 +40,7 @@
     boolean inbandEnabled = ParamUtils.getBooleanParameter(request,"inbandEnabled");
     boolean canChangePassword = ParamUtils.getBooleanParameter(request,"canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request,"anonLogin");
+    String allowedIPs = request.getParameter("allowedIPs");
 
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = new IQRegisterHandler();
@@ -48,12 +50,31 @@
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
         authHandler.setAllowAnonymous(anonLogin);
+
+        // Build a Map with the allowed IP addresses
+        Map<String,String> newMap = new HashMap<String,String>();
+        StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
+        while (tokens.hasMoreTokens()) {
+            String address = tokens.nextToken().trim();
+            newMap.put(address, "");
+        }
+        ClientSession.setAllowedIPs(newMap);
     }
 
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
     anonLogin = authHandler.isAllowAnonymous();
+    // Encode the allowed IP addresses
+    StringBuilder buf = new StringBuilder();
+    Iterator<String> iter = ClientSession.getAllowedIPs().keySet().iterator();
+    if (iter.hasNext()) {
+        buf.append(iter.next());
+    }
+    while (iter.hasNext()) {
+        buf.append(", ").append((String)iter.next());
+    }
+    allowedIPs = buf.toString();
 %>
 
 <p>
@@ -168,6 +189,26 @@
             </td>
             <td width="99%">
                 <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
+<br>
+
+<fieldset>
+    <legend><fmt:message key="reg.settings.allowed_ips" /></legend>
+    <div>
+    <p>
+    <fmt:message key="reg.settings.allowed_ips_info" />
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td>
+                <textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedIPs != null) ? allowedIPs : "") %></textarea>
             </td>
         </tr>
     </tbody>

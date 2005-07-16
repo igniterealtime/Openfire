@@ -63,7 +63,8 @@ import java.util.Iterator;
  */
 public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvider {
 
-    private static boolean enabled;
+    private static boolean registrationEnabled;
+    private static boolean canChangePassword;
     private static Element probeResult;
 
     private UserManager userManager;
@@ -133,7 +134,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             probeResult.add(registrationForm.asXMLElement());
         }
         // See if in-band registration should be enabled (default is true).
-        enabled = JiveGlobals.getBooleanProperty("register.inband", true);
+        registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
+        // See if users can change their passwords (default is true).
+        canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
     }
 
     public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
@@ -151,76 +154,86 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             reply.setError(PacketError.Condition.internal_server_error);
             return reply;
         }
-        // If inband registration is not allowed, return an error.
-        if (!enabled) {
-            reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.forbidden);
-        }
-        else if (IQ.Type.get.equals(packet.getType())) {
-            reply = IQ.createResultIQ(packet);
-            if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                try {
-                    User user = userManager.getUser(session.getUsername());
-                    Element currentRegistration = probeResult.createCopy();
-                    currentRegistration.addElement("registered");
-                    currentRegistration.element("username").setText(user.getUsername());
-                    currentRegistration.element("password").setText("");
-                    currentRegistration.element("email").setText(user.getEmail());
-                    currentRegistration.element("name").setText(user.getName());
-
-                    Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                    Iterator fields = form.elementIterator("field");
-                    Element field;
-                    while (fields.hasNext()) {
-                        field = (Element) fields.next();
-                        if ("username".equals(field.attributeValue("var"))) {
-                            field.addElement("value").addText(user.getUsername());
-                        }
-                        else if ("name".equals(field.attributeValue("var"))) {
-                            field.addElement("value").addText(user.getName());
-                        }
-                        else if ("email".equals(field.attributeValue("var"))) {
-                            field.addElement("value").addText(user.getEmail());
-                        }
-                    }
-                    reply.setChildElement(currentRegistration);
-                }
-                catch (UserNotFoundException e) {
-                    reply.setChildElement(probeResult.createCopy());
-                }
+        if (IQ.Type.get.equals(packet.getType())) {
+            // If inband registration is not allowed, return an error.
+            if (!registrationEnabled) {
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.forbidden);
             }
             else {
-                // This is a workaround. Since we don't want to have an incorrect TO attribute
-                // value we need to clean up the TO attribute. The TO attribute will contain an
-                // incorrect value since we are setting a fake JID until the user actually
-                // authenticates with the server.
-                reply.setTo((JID) null);
-                reply.setChildElement(probeResult.createCopy());
+                reply = IQ.createResultIQ(packet);
+                if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                    try {
+                        User user = userManager.getUser(session.getUsername());
+                        Element currentRegistration = probeResult.createCopy();
+                        currentRegistration.addElement("registered");
+                        currentRegistration.element("username").setText(user.getUsername());
+                        currentRegistration.element("password").setText("");
+                        currentRegistration.element("email").setText(user.getEmail());
+                        currentRegistration.element("name").setText(user.getName());
+
+                        Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
+                        Iterator fields = form.elementIterator("field");
+                        Element field;
+                        while (fields.hasNext()) {
+                            field = (Element) fields.next();
+                            if ("username".equals(field.attributeValue("var"))) {
+                                field.addElement("value").addText(user.getUsername());
+                            }
+                            else if ("name".equals(field.attributeValue("var"))) {
+                                field.addElement("value").addText(user.getName());
+                            }
+                            else if ("email".equals(field.attributeValue("var"))) {
+                                field.addElement("value").addText(user.getEmail());
+                            }
+                        }
+                        reply.setChildElement(currentRegistration);
+                    }
+                    catch (UserNotFoundException e) {
+                        reply.setChildElement(probeResult.createCopy());
+                    }
+                }
+                else {
+                    // This is a workaround. Since we don't want to have an incorrect TO attribute
+                    // value we need to clean up the TO attribute. The TO attribute will contain an
+                    // incorrect value since we are setting a fake JID until the user actually
+                    // authenticates with the server.
+                    reply.setTo((JID) null);
+                    reply.setChildElement(probeResult.createCopy());
+                }
             }
         }
         else if (IQ.Type.set.equals(packet.getType())) {
             try {
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
-                    if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                        User user = userManager.getUser(session.getUsername());
-                        // Delete the user
-                        userManager.deleteUser(user);
-                        // Delete the roster of the user
-                        rosterManager.deleteRoster(session.getAddress());
-                        // Delete the user from all the Groups
-                        GroupManager.getInstance().deleteUser(user);
-
+                    // If inband registration is not allowed, return an error.
+                    if (!registrationEnabled) {
                         reply = IQ.createResultIQ(packet);
-                        session.process(reply);
-                        // Close the user's connection
-                        session.getConnection().close();
-                        // The reply has been sent so clean up the variable
-                        reply = null;
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.forbidden);
                     }
                     else {
-                        throw new UnauthorizedException();
+                        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                            User user = userManager.getUser(session.getUsername());
+                            // Delete the user
+                            userManager.deleteUser(user);
+                            // Delete the roster of the user
+                            rosterManager.deleteRoster(session.getAddress());
+                            // Delete the user from all the Groups
+                            GroupManager.getInstance().deleteUser(user);
+
+                            reply = IQ.createResultIQ(packet);
+                            session.process(reply);
+                            // Close the user's connection
+                            session.getConnection().close();
+                            // The reply has been sent so clean up the variable
+                            reply = null;
+                        }
+                        else {
+                            throw new UnauthorizedException();
+                        }
                     }
                 }
                 else {
@@ -271,34 +284,70 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         email = " ";
                     }
 
-                    // Inform the entity of failed registration if some required information was
-                    // not provided
-                    if (password == null || password.trim().length() == 0) {
-                        reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.not_acceptable);
-                        return reply;
-                    }
-
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                        User user = userManager.getUser(session.getUsername());
-                        if (user != null) {
-                            if (user.getUsername().equalsIgnoreCase(username)) {
-                                user.setPassword(password);
-                                user.setEmail(email);
-                                newUser = user;
-                            }
-                            else {
-                                // An admin can create new accounts when logged in.
-                                newUser = userManager.createUser(username, password, null, email);
-                            }
+                        // Flag that indicates if the user is *only* changing his password
+                        boolean onlyPassword = false;
+                        if (iqElement.elements().size() == 2 &&
+                                iqElement.element("username") != null &&
+                                iqElement.element("password") != null) {
+                            onlyPassword = true;
+                        }
+                        // If users are not allowed to change their password, return an error.
+                        if (password != null && !canChangePassword) {
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.forbidden);
+                            return reply;
+                        }
+                        // If inband registration is not allowed, return an error.
+                        else if (!onlyPassword && !registrationEnabled) {
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.forbidden);
+                            return reply;
                         }
                         else {
-                            throw new UnauthorizedException();
+                            User user = userManager.getUser(session.getUsername());
+                            if (user != null) {
+                                if (user.getUsername().equalsIgnoreCase(username)) {
+                                    if (password != null && password.trim().length() > 0) {
+                                        user.setPassword(password);
+                                    }
+                                    if (!onlyPassword) {
+                                        user.setEmail(email);
+                                    }
+                                    newUser = user;
+                                }
+                                else {
+                                    // An admin can create new accounts when logged in.
+                                    newUser = userManager.createUser(username, password, null, email);
+                                }
+                            }
+                            else {
+                                throw new UnauthorizedException();
+                            }
                         }
                     }
                     else {
-                        newUser = userManager.createUser(username, password, null, email);
+                        // If inband registration is not allowed, return an error.
+                        if (!registrationEnabled) {
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.forbidden);
+                            return reply;
+                        }
+                        // Inform the entity of failed registration if some required
+                        // information was not provided
+                        else if (password == null || password.trim().length() == 0) {
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.not_acceptable);
+                            return reply;
+                        }
+                        else {
+                            // Create the new account
+                            newUser = userManager.createUser(username, password, null, email);
+                        }
                     }
                     // Set and save the extra user info (e.g. full name, etc.)
                     if (newUser != null && name != null) {
@@ -346,14 +395,23 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     }
 
     public boolean isInbandRegEnabled() {
-        return enabled;
+        return registrationEnabled;
     }
 
     public void setInbandRegEnabled(boolean allowed) {
-        enabled = allowed;
-        JiveGlobals.setProperty("register.inband", enabled ? "true" : "false");
+        registrationEnabled = allowed;
+        JiveGlobals.setProperty("register.inband", registrationEnabled ? "true" : "false");
     }
-    
+
+    public boolean canChangePassword() {
+        return canChangePassword;
+    }
+
+    public void setCanChangePassword(boolean allowed) {
+        canChangePassword = allowed;
+        JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
+    }
+
     public IQHandlerInfo getInfo() {
         return info;
     }

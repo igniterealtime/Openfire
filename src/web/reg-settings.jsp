@@ -37,6 +37,7 @@
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean inbandEnabled = ParamUtils.getBooleanParameter(request,"inbandEnabled");
+    boolean canChangePassword = ParamUtils.getBooleanParameter(request,"canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request,"anonLogin");
 
     // Get an IQRegisterHandler:
@@ -45,11 +46,13 @@
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
+        regHandler.setCanChangePassword(canChangePassword);
         authHandler.setAllowAnonymous(anonLogin);
     }
 
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
+    canChangePassword = regHandler.canChangePassword();
     anonLogin = authHandler.isAllowAnonymous();
 %>
 
@@ -106,7 +109,40 @@
     </div>
 </fieldset>
 
-<br><br>
+<br>
+
+<fieldset>
+    <legend><fmt:message key="reg.settings.change_password" /></legend>
+    <div>
+    <p>
+    <fmt:message key="reg.settings.change_password_info" />
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="canChangePassword" value="true" id="rb03"
+             <%= ((canChangePassword) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label>
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="canChangePassword" value="false" id="rb04"
+             <%= ((!canChangePassword) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
+<br>
 
 <fieldset>
     <legend><fmt:message key="reg.settings.anonymous_login" /></legend>

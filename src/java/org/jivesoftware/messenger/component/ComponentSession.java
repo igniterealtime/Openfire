@@ -84,7 +84,6 @@ public class ComponentSession extends Session {
             // Include the bad-format in the response
             StreamError error = new StreamError(StreamError.Condition.bad_format);
             sb.append(error.toXML());
-            sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
             // Close the underlying connection
@@ -96,7 +95,6 @@ public class ComponentSession extends Session {
             Log.debug("[ExComp] Component is not allowed to connect with subdomain: " + subdomain);
             StreamError error = new StreamError(StreamError.Condition.host_unknown);
             sb.append(error.toXML());
-            sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
             // Close the underlying connection
@@ -110,7 +108,6 @@ public class ComponentSession extends Session {
             // Include the internal-server-error in the response
             StreamError error = new StreamError(StreamError.Condition.internal_server_error);
             sb.append(error.toXML());
-            sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
             // Close the underlying connection
@@ -124,7 +121,6 @@ public class ComponentSession extends Session {
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
             sb.append(error.toXML());
-            sb.append("</stream:stream>");
             writer.write(sb.toString());
             writer.flush();
             // Close the underlying connection
@@ -170,7 +166,6 @@ public class ComponentSession extends Session {
                 // Include the conflict error in the response
                 StreamError error = new StreamError(StreamError.Condition.not_authorized);
                 sb.append(error.toXML());
-                sb.append("</stream:stream>");
                 writer.write(sb.toString());
                 writer.flush();
                 // Close the underlying connection

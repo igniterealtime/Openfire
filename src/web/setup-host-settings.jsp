@@ -8,7 +8,8 @@
                  org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
                  java.util.HashMap,
-                 java.net.InetAddress"
+                 java.net.InetAddress,
+                 org.jivesoftware.messenger.XMPPServer"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -31,8 +32,14 @@
         if (domain == null) {
             errors.put("domain","domain");
         }
-        if (embeddedPort < 0) {
-            errors.put("embeddedPort","embeddedPort");
+        if (XMPPServer.getInstance().isStandAlone()) {
+            if (embeddedPort < 0) {
+                errors.put("embeddedPort","embeddedPort");
+            }
+        }
+        else {
+            embeddedPort = -1;
+            securePort = -1;
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
@@ -109,6 +116,7 @@ LABEL { font-weight : normal; }
         </span>
     </td>
 </tr>
+<% if (XMPPServer.getInstance().isStandAlone()){ %>
 <tr valign="top">
     <td width="1%" nowrap>
         <fmt:message key="setup.host.settings.port" />
@@ -149,6 +157,7 @@ LABEL { font-weight : normal; }
         </span>
     </td>
 </tr>
+<% } %>
 <tr valign="middle">
     <td width="1%" nowrap>
         <fmt:message key="setup.host.settings.ssl" />

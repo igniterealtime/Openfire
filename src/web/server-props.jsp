@@ -81,20 +81,26 @@
         if (serverPort < 1) {
             errors.put("serverPort","");
         }
-        if (embeddedPort < 1) {
-            errors.put("embeddedPort","");
+        if (XMPPServer.getInstance().isStandAlone()) {
+            if (embeddedPort < 1) {
+                errors.put("embeddedPort","");
+            }
+            if (embeddedSecurePort < 1) {
+                errors.put("embeddedSecurePort","");
+            }
+            if (embeddedPort > 0 && embeddedSecurePort > 0) {
+                if (embeddedPort == embeddedSecurePort) {
+                    errors.put("embeddedPortsEqual","");
+                }
+            }
         }
-        if (embeddedSecurePort < 1) {
-            errors.put("embeddedSecurePort","");
+        else {
+            embeddedPort = -1;
+            embeddedSecurePort = -1;
         }
         if (port > 0 && sslPort > 0) {
             if (port == sslPort) {
                 errors.put("portsEqual","");
-            }
-        }
-        if (embeddedPort > 0 && embeddedSecurePort > 0) {
-            if (embeddedPort == embeddedSecurePort) {
-                errors.put("embeddedPortsEqual","");
             }
         }
         if (errors.size() == 0) {
@@ -304,6 +310,7 @@
             <%  } %>
         </td>
     </tr>
+<% if (XMPPServer.getInstance().isStandAlone()){ %>
     <tr>
         <td class="c1">
             <fmt:message key="server.props.admin_port" />
@@ -343,6 +350,7 @@
             <%  } %>
         </td>
     </tr>
+<% } %>
 </tbody>
 <tfoot>
     <tr>

@@ -12,7 +12,8 @@
                  java.util.Map,
                  java.util.Iterator,
                  org.jivesoftware.messenger.ConnectionManager,
-                 org.jivesoftware.database.DbConnectionManager"
+                 org.jivesoftware.database.DbConnectionManager,
+                 org.jivesoftware.messenger.XMPPServer"
 %>
 
 <%
@@ -55,10 +56,18 @@
     </li>
     <li>
         <%
-            String server = request.getServerName();
-            String port = JiveGlobals.getXMLProperty("adminConsole.port");
+            String url = null;
+            if (XMPPServer.getInstance().isStandAlone()) {
+                String server = request.getServerName();
+                String port = JiveGlobals.getXMLProperty("adminConsole.port");
+                url = "http://" + server + ":" + port + "/login.jsp?username=admin";
+            }
+            else {
+                url = request.getRequestURL().toString();
+                url = url.replace("setup-finished.jsp", "login.jsp?username=admin");
+            }
         %>
-        <a href="http://<%= server %>:<%= port %>/login.jsp?username=admin"><fmt:message key="setup.finished.login" /></a>.
+            <a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>.
     </li>
 </ol>
 

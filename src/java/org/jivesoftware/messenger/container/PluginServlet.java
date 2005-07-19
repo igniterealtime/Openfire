@@ -19,6 +19,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.xml.sax.SAXException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -26,12 +27,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,8 +132,13 @@ public class PluginServlet extends HttpServlet {
             // Make the reader non-validating so that it doesn't try to resolve external
             // DTD's. Trying to resolve external DTD's can break on some firewall configurations.
             SAXReader saxReader = new SAXReader(false);
-            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
+            try {
+                saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                        false);
+            }
+            catch (SAXException e) {
+                Log.warn("Error setting SAXReader feature", e);
+            }
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
             List classes = doc.selectNodes("//servlet");

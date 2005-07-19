@@ -88,6 +88,11 @@ public class OfflineMessageStore extends BasicModule {
         if (username == null) {
             return;
         }
+        else if (!XMPPServer.getInstance().getServerInfo().getName().equals(message.getTo()
+                .getDomain())) {
+            // Do not store messages sent to users of remote servers
+            return;
+        }
 
         long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
 

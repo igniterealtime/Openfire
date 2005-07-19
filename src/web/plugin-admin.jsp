@@ -137,6 +137,9 @@
        if (plugin != null) {
            File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
            if (icon.exists()) {
+               // Clear any empty line added by the JSP declaration. This is required to show
+               // the image in resin!!!!!
+               response.reset();
                response.setContentType("image/gif");
                InputStream in = null;
                OutputStream ost = null;
@@ -149,6 +152,7 @@
                    while ((len = in.read(buf)) >= 0) {
                       ost.write(buf,0,len);
                    }
+                   ost.flush();
                }
                catch (IOException ioe) {
 

@@ -364,7 +364,7 @@
             webxml="${war.dest.dir}/build/web.xml"
             excludes="*.jsp*,WEB-INF/web.xml.startup.servlet">
             <patternset refid="web.sources"/>
-            <lib dir="${jar.dest.dir}" excludes="jasper*.jar, servlet.jar, startup.jar"/>
+            <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
         </war>
         <!-- Create a Messenger home -->
         <copy todir="${war.dest.dir}/messengerHome">

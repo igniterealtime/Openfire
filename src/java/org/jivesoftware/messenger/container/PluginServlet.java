@@ -55,13 +55,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PluginServlet extends HttpServlet {
 
     private static Map<String, HttpServlet> servlets;
-    private static File pluginDirectory;
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
     static {
         servlets = new ConcurrentHashMap<String, HttpServlet>();
-        pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
     }
 
     public void init(ServletConfig config) throws ServletException {
@@ -303,6 +301,7 @@ public class PluginServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
+        File pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File image = new File(pluginDirectory, parts[1] + File.separator + "web" +
                 File.separator + "images" + File.separator + parts[3]);
         if (!image.exists()) {

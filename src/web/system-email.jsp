@@ -59,6 +59,8 @@
         service.setSSLEnabled(ssl);
 
         if (errors.size() == 0) {
+            // Set property to specify email is configured
+            JiveGlobals.setProperty("mail.configured", "true");
             response.sendRedirect("system-email.jsp?success=true");
         }
     }

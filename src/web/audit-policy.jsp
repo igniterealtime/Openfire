@@ -350,8 +350,8 @@ function openWin(el) {
                             </td>
                              <td nowrap valign="top">
                                 <a href="#" onclick="openWin(document.f.ignore);return false;"
-                                 title="Click to browse available users..."
-                                 ><img src="images/user.gif" border="0"/> Browse Users</a>
+                                 title="<fmt:message key="user.browser.browse_users_desc" />"
+                                 ><img src="images/user.gif" border="0"/> <fmt:message key="user.browser.browse_users" /></a>
                             </td>
                         </table>
                     </td>

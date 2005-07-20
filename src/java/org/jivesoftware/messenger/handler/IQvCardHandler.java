@@ -11,19 +11,18 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.*;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.messenger.IQHandlerInfo;
+import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Collection;
-
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.jivesoftware.messenger.vcard.VCardManager;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -75,14 +74,19 @@ public class IQvCardHandler extends IQHandler {
         try {
             IQ.Type type = packet.getType();
             if (type.equals(IQ.Type.set)) {
+                result = IQ.createResultIQ(packet);
                 User user = userManager.getUser(packet.getFrom().getNode());
                 // Proper format
                 Element vcard = packet.getChildElement();
                 if (vcard != null) {
-                    List nameStack = new ArrayList(5);
-                    readVCard(vcard, nameStack, user);
+                    try {
+                        VCardManager.getInstance().setVCard(user.getUsername(), vcard);
+                    }
+                    catch (Exception e) {
+                        Log.error(e);
+                        result.setError(PacketError.Condition.internal_server_error);
+                    }
                 }
-                result = IQ.createResultIQ(packet);
             }
             else if (type.equals(IQ.Type.get)) {
                 JID recipient = packet.getTo();
@@ -99,11 +103,9 @@ public class IQvCardHandler extends IQHandler {
                 if (recipient != null && recipient.getNode() != null) {
                     User user = userManager.getUser(recipient.getNode());
                     VCardManager vManager = VCardManager.getInstance();
-                    Collection<String> names = vManager.getVCardPropertyNames(user.getUsername());
-                    for (String name : names) {
-                        String path = name.replace(':', '/');
-                        Element node = DocumentHelper.makeElement(vcard, path);
-                        node.setText(vManager.getVCardProperty(user.getUsername(), name));
+                    Element userVCard = vManager.getVCard(user.getUsername());
+                    if (userVCard != null) {
+                        result.setChildElement(userVCard);
                     }
                 }
             }
@@ -119,52 +121,6 @@ public class IQvCardHandler extends IQHandler {
             result.setError(PacketError.Condition.item_not_found);
         }
         return result;
-    }
-
-    /**
-     * We need to build names from heirarchical position in the DOM tree.
-     *
-     * @param element   The element to interrogate for text nodes
-     * @param nameStack The current name of the vcard property (list as a stack)
-     * @param user      the user getting their vcard set
-     */
-    private void readVCard(Element element, List nameStack, User user) throws UnauthorizedException {
-        Iterator children = element.elementIterator();
-        while (children.hasNext()) {
-            Element child = (Element)children.next();
-            nameStack.add(child.getName());
-            String value = child.getTextTrim();
-            if (value != null) {
-                if (!"".equals(value)) {
-                    VCardManager.getInstance().setVCardProperty(user.getUsername(),
-                            createName(nameStack), value);
-                }
-                else {
-                    VCardManager.getInstance().deleteVCardProperty(user.getUsername(),
-                            createName(nameStack));
-                }
-            }
-            readVCard(child, nameStack, user);
-            nameStack.remove(nameStack.size() - 1);
-        }
-    }
-
-    /**
-     * Generate a name for the given name stack values
-     *
-     * @param nameStack
-     * @return The name concatenating the values with the ':' character
-     */
-    private String createName(List nameStack) {
-        StringBuilder buf = new StringBuilder();
-        Iterator iter = nameStack.iterator();
-        while (iter.hasNext()) {
-            if (buf.length() > 0) {
-                buf.append(':');
-            }
-            buf.append(iter.next());
-        }
-        return buf.toString();
     }
 
     public void initialize(XMPPServer server) {

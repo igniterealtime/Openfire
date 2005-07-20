@@ -35,3 +35,11 @@ CREATE TABLE mucRoomProp (
 ALTER TABLE mucRoom ADD COLUMN useReservedNick     INTEGER       DEFAULT 0 NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canChangeNick       INTEGER       DEFAULT 1 NOT NULL;
 ALTER TABLE mucRoom ADD COLUMN canRegister         INTEGER       DEFAULT 1 NOT NULL;
+
+// jiveVCard: Recreate table from scratch
+DROP TABLE jiveVCard;
+CREATE TABLE jiveVCard (
+  username              VARCHAR(32)     NOT NULL,
+  value                 LONGVARCHAR     NOT NULL,
+  CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
+);

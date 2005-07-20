@@ -65,9 +65,8 @@ CREATE INDEX jiveRoGrps_rid_idx ON jiveRosterGroups (rosterID ASC);
 
 CREATE TABLE jiveVCard (
   username              VARCHAR(32)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveVCard_pk PRIMARY KEY (username, name)
+  value                 LONG VARCHAR    NOT NULL,
+  CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
 );
 
 

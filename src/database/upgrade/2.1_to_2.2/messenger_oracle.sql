@@ -37,3 +37,11 @@ ALTER TABLE mucRoom ADD canChangeNick       INTEGER       NOT NULL;
 ALTER TABLE mucRoom ADD canRegister         INTEGER       NOT NULL;
 
 UPDATE mucRoom set useReservedNick=0, canChangeNick=1, canRegister=1;
+
+REM // jiveVCard: Recreate table from scratch
+DROP TABLE jiveVCard;
+CREATE TABLE jiveVCard (
+  username              VARCHAR2(32)    NOT NULL,
+  value                 LONG            NOT NULL,
+  CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
+);

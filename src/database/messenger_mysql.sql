@@ -79,9 +79,8 @@ CREATE TABLE jiveRosterGroups (
 
 CREATE TABLE jiveVCard (
   username              VARCHAR(32)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             TEXT            NOT NULL,
-  PRIMARY KEY (username, name)
+  value                 TEXT            NOT NULL,
+  PRIMARY KEY (username)
 );
 
 CREATE TABLE jiveID (

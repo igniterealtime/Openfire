@@ -66,9 +66,8 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 CREATE TABLE jiveVCard (
   username              VARCHAR2(32)    NOT NULL,
-  name                  VARCHAR2(100)   NOT NULL,
-  propValue             VARCHAR2(4000)  NOT NULL,
-  CONSTRAINT JiveVCard_pk PRIMARY KEY (username, name)
+  value                 LONG            NOT NULL,
+  CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
 );
 
 CREATE TABLE jiveGroup (

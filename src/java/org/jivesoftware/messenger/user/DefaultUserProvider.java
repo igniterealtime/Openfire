@@ -12,9 +12,10 @@
 package org.jivesoftware.messenger.user;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.vcard.VCardManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.LocaleUtils;
 
 import java.sql.*;
 import java.util.*;
@@ -40,8 +41,6 @@ public class DefaultUserProvider implements UserProvider {
             "VALUES (?,?,?,?,?,?)";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM jiveUserProp WHERE username=?";
-    private static final String DELETE_VCARD_PROPS =
-            "DELETE FROM jiveVCard WHERE username=?";
     private static final String DELETE_USER =
             "DELETE FROM jiveUser WHERE username=?";
     private static final String UPDATE_NAME =
@@ -146,10 +145,10 @@ public class DefaultUserProvider implements UserProvider {
             pstmt.execute();
             pstmt.close();
             // Delete all of the users's vcard properties
-            pstmt = con.prepareStatement(DELETE_VCARD_PROPS);
-            pstmt.setString(1, username);
-            pstmt.execute();
-            pstmt.close();
+            try {
+                VCardManager.getInstance().deleteVCard(username);
+            }
+            catch (UnsupportedOperationException e) {}
             // Delete the actual user entry
             pstmt = con.prepareStatement(DELETE_USER);
             pstmt.setString(1, username);

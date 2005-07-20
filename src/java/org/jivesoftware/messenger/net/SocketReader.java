@@ -186,7 +186,7 @@ public abstract class SocketReader implements Runnable {
                 try {
                     packet = new Presence(doc);
                 }
-                catch(IllegalArgumentException e) {
+                catch (IllegalArgumentException e) {
                     // The original packet contains a malformed JID so answer an error
                     Presence reply = new Presence();
                     reply.setID(doc.attributeValue("id"));
@@ -195,6 +195,15 @@ public abstract class SocketReader implements Runnable {
                     reply.setError(PacketError.Condition.jid_malformed);
                     session.process(reply);
                     continue;
+                }
+                try {
+                    packet.getType();
+                }
+                catch (IllegalArgumentException e) {
+                    Log.warn("Invalid presence type", e);
+                    // The presence packet contains an invalid presence type so replace it with
+                    // an available presence type
+                    packet.setType(null);
                 }
                 processPresence(packet);
             }

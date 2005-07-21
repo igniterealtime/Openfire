@@ -95,12 +95,15 @@ However, if the request does not include the <b>notavailable</b> parameter then 
 image for user offline will be used. Therefore, each request <b>MUST</b> include the
 <b>notavailable</b> parameter.<p>
 
-<b>Examples of URL<b>
+<b>Examples of URL</b><br>
 This example is requesting images and is using a single parameter for all the images:
 http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&img=http://localhost:9090/images/${presence}.gif
 <p>
 This example is requesting images and is sending a parameter for each possible presence type:
 http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&offline=http://localhost:9090/images/user-red-16x16.gif&available=http://www.jivesoftware.com:9090/images/user-yellow-16x16.gif
+<p>
+This example is requesting presence information in XML format:
+http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&type=xml
 
 </body>
 </html>

@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
@@ -81,6 +82,17 @@ public interface PresenceManager {
      * @param packet the received probe presence from a remote server.
      */
     public void handleProbe(Presence packet) throws UnauthorizedException;
+
+    /**
+     * Returns true if the the prober is allowed to see the presence of the probee.
+     *
+     * @param prober the user that is trying to probe the presence of another user.
+     * @param probee the username of the uset that is being probed.
+     * @return true if the the prober is allowed to see the presence of the probee.
+     * @throws UserNotFoundException If the probee does not exist in the local server or the prober
+     *         is not present in the roster of the probee.
+     */
+    public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException;
 
     /**
      * Sends unavailable presence from all of the user's available resources to the remote user.

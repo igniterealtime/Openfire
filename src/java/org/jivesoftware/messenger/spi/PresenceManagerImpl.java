@@ -219,6 +219,29 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
+    public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException {
+        // Check that the probee is a valid user
+        UserManager.getInstance().getUser(probee);
+        // Check for a cached roster:
+        Roster roster = (Roster)CacheManager.getCache("username2roster").get(probee);
+        if (roster == null) {
+            synchronized(probee.intern()) {
+                roster = (Roster)CacheManager.getCache("username2roster").get(probee);
+                if (roster == null) {
+                    // Not in cache so load a new one:
+                    roster = new Roster(probee);
+                    CacheManager.getCache("username2roster").put(probee, roster);
+                }
+            }
+        }
+        RosterItem item = roster.getRosterItem(prober);
+        if (item.getSubStatus() == RosterItem.SUB_FROM
+                || item.getSubStatus() == RosterItem.SUB_BOTH) {
+            return true;
+        }
+        return false;
+    }
+
     public void probePresence(JID prober, JID probee) {
         try {
             Component component = getPresenceComponent(probee);

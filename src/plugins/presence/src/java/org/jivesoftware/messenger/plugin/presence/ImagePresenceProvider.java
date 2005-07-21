@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * <ul>
  *  <li>Use a single parameter in the URL - Use the <b>images</b> parameter that will include a
- *      ${presence} token. The ${presence} token would be filtered and would be replaced with
+ *      --IMAGE-- token. The --IMAGE-- token would be filtered and would be replaced with
  *      codes like "dnd", "offline", "away", etc.</li>
  *  <li>Use a parameter for each possible presence type - Possible parameters are: <b>offline</b>,
  *      <b>available</b>, <b>away</b>, <b>chat</b>, <b>dnd</b>, <b>xa</b>. If the parameter was
@@ -93,7 +93,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
             writeImageContent(request.getParameter(presenceType), defaultImage, response);
         }
         else if (images != null) {
-            writeImageContent(images.replace("${presence}", presenceType), defaultImage, response);
+            writeImageContent(images.replace("--IMAGE--", presenceType), defaultImage, response);
         }
         else {
             writeImageContent(null, defaultImage, response);

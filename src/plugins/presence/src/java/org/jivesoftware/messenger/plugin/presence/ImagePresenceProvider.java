@@ -30,7 +30,7 @@ import java.util.Map;
  * images. There are many ways to specify the images to use.
  *
  * <ul>
- *  <li>Use a single parameter in the URL - Use the <b>img</b> parameter that will include a
+ *  <li>Use a single parameter in the URL - Use the <b>images</b> parameter that will include a
  *      ${presence} token. The ${presence} token would be filtered and would be replaced with
  *      codes like "dnd", "offline", "away", etc.</li>
  *  <li>Use a parameter for each possible presence type - Possible parameters are: <b>offline</b>,
@@ -41,10 +41,10 @@ import java.util.Map;
  * </ul>
  *
  * If the required user was not found or the user making the request is not allowed to see the
- * user presence then the image specified in the <b>notavailable</b> parameter will be used.
- * However, if the request does not include the <b>notavailable</b> parameter then the default
+ * user presence then the image specified in the <b>notallowed</b> parameter will be used.
+ * However, if the request does not include the <b>notallowed</b> parameter then the default
  * image for user offline will be used. Therefore, each request <b>MUST</b> include the
- * <b>notavailable</b> parameter.
+ * <b>notallowed</b> parameter.
  *
  * @author Gaston Dombiak
  *
@@ -83,14 +83,14 @@ class ImagePresenceProvider extends PresenceInfoProvider {
 
     public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        writeImageContent(request.getParameter("notavailable"), servlet.offline, response);
+        writeImageContent(request.getParameter("notallowed"), servlet.offline, response);
     }
 
     private void writeImageContent(HttpServletRequest request, HttpServletResponse response,
             String presenceType, byte[] defaultImage) throws IOException {
-        String img = request.getParameter("img");
-        if (img != null) {
-            writeImageContent(img.replace("${presence}", presenceType), defaultImage, response);
+        String images = request.getParameter("images");
+        if (images != null) {
+            writeImageContent(images.replace("${presence}", presenceType), defaultImage, response);
         }
         else if (request.getParameter(presenceType) != null) {
             writeImageContent(request.getParameter(presenceType), defaultImage, response);

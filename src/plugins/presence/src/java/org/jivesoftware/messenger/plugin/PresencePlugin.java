@@ -78,9 +78,9 @@ public class PresencePlugin implements Plugin {
     }
 
     /**
-     * Returns the presence of the requested user. If presences are not public then the user
-     * presence will be returned if and only if the sender of the request is subscribed to the
-     * user presence.
+     * Returns the presence of the requested user or <tt>null</tt> if the user is offline. If
+     * presences are not public then the user presence will be returned if and only if the sender
+     * of the request is subscribed to the user presence.
      *
      * @param sender the bare JID of the user making the request.
      * @param username the username of the user whose presence is being probed.

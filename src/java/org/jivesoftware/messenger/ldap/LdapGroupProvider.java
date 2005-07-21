@@ -41,7 +41,7 @@ public class LdapGroupProvider implements GroupProvider
 {
 
     private LdapManager manager;
-    private UserProvider userProvider;
+    private UserManager userManager;
     private int groupCount;
     private long expiresStamp;
 
@@ -52,7 +52,7 @@ public class LdapGroupProvider implements GroupProvider
      */
     public LdapGroupProvider() {
         manager = LdapManager.getInstance();
-        userProvider = UserManager.getUserProvider();
+        userManager = UserManager.getInstance();
         groupCount = -1;
         expiresStamp = System.currentTimeMillis();
     }
@@ -343,7 +343,12 @@ public class LdapGroupProvider implements GroupProvider
           }
 
           // Search for the dn based on the groupname.
-          answer = ctx.search("",searchFilter,new SearchControls());
+          SearchControls searchControls = new SearchControls();
+          String returnedAtts[]= { manager.getNameField(), 
+                                   manager.getGroupDescriptionField(), 
+                                   manager.getGroupMemberField() };
+          searchControls.setReturningAttributes(returnedAtts);
+          answer = ctx.search("",searchFilter,searchControls);
 
           if (manager.isDebugEnabled()) {
              Log.debug("... search finished");
@@ -359,12 +364,10 @@ public class LdapGroupProvider implements GroupProvider
 
        while (answer.hasMoreElements())
        {
-          String groupName = "";
+          String name = "";
           try
           {
              Attributes a = (((SearchResult)answer.next()).getAttributes());
-             String name = ((String)((a.get(manager.getNameField())).get()));
-             groupName = name;
              String description;
              try
              {
@@ -390,17 +393,15 @@ public class LdapGroupProvider implements GroupProvider
                     if (a1 != null)
                        userName = (String)a1.get();
                 }
-                if (userName != null)
-                {    
-                    try
-                    {
-                        members.add(JID.escapeNode(userName));
-                    }
-                    catch (Exception e)
-                    {
-                        if (manager.isDebugEnabled())
-                            Log.debug("Error loading user: "+userName,e);
-                    }
+                try
+                {
+                    User user = userManager.getUser(userName);
+                    members.add(user.getUsername());
+                }
+                catch (UserNotFoundException e)
+                {
+                    if (manager.isDebugEnabled())
+                       Log.debug("User not found: "+userName);
                 }
              }
              Group g = new Group(this,name,description,members,new ArrayList<String>());
@@ -409,7 +410,7 @@ public class LdapGroupProvider implements GroupProvider
           catch (Exception e)
           {
              if (manager.isDebugEnabled())
-                Log.debug("Error while populating group, "+groupName+".",e);
+                Log.debug("Error while populating group, "+name+".",e);
           }
        }
        if (manager.isDebugEnabled())

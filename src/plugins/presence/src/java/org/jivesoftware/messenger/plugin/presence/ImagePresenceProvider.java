@@ -89,11 +89,11 @@ class ImagePresenceProvider extends PresenceInfoProvider {
     private void writeImageContent(HttpServletRequest request, HttpServletResponse response,
             String presenceType, byte[] defaultImage) throws IOException {
         String images = request.getParameter("images");
-        if (images != null) {
-            writeImageContent(images.replace("${presence}", presenceType), defaultImage, response);
-        }
-        else if (request.getParameter(presenceType) != null) {
+        if (request.getParameter(presenceType) != null) {
             writeImageContent(request.getParameter(presenceType), defaultImage, response);
+        }
+        else if (images != null) {
+            writeImageContent(images.replace("${presence}", presenceType), defaultImage, response);
         }
         else {
             writeImageContent(null, defaultImage, response);

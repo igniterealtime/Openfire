@@ -51,11 +51,11 @@ import java.util.Map;
  */
 class ImagePresenceProvider extends PresenceInfoProvider {
 
-    private PresenceServlet servlet;
+    private PresenceStatusServlet servlet;
     private Map<String, byte[]> imageCache = new HashMap<String, byte[]>();
     private Map<String, String> imageTypeCache = new HashMap<String, String>();
 
-    public ImagePresenceProvider(PresenceServlet servlet) {
+    public ImagePresenceProvider(PresenceStatusServlet servlet) {
         this.servlet = servlet;
     }
 

@@ -3,14 +3,14 @@
 <web-app>
     <!-- Servlets -->
     <servlet>
-        <servlet-name>PresenceServlet</servlet-name>
-        <servlet-class>org.jivesoftware.messenger.plugin.presence.PresenceServlet</servlet-class>
+        <servlet-name>PresenceStatusServlet</servlet-name>
+        <servlet-class>org.jivesoftware.messenger.plugin.presence.PresenceStatusServlet</servlet-class>
     </servlet>
 
     <!-- Servlet mappings -->
     <servlet-mapping>
-        <servlet-name>PresenceServlet</servlet-name>
-        <url-pattern>/presence</url-pattern>
+        <servlet-name>PresenceStatusServlet</servlet-name>
+        <url-pattern>/status</url-pattern>
     </servlet-mapping>
 
 </web-app>

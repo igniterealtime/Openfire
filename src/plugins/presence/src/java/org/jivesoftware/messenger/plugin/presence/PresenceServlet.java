@@ -98,6 +98,18 @@ public class PresenceServlet extends HttpServlet {
                 // TODO Do something
             }
         }
+        catch (IllegalArgumentException e) {
+            if ("img".equals(type)) {
+                imageProvider.sendUserNotFound(request, response);
+            }
+            else if ("xml".equals(type)) {
+                xmlProvider.sendUserNotFound(request, response);
+            }
+            else {
+                Log.warn("The presence servlet received an invalid request of type: " + type);
+                // TODO Do something
+            }
+        }
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

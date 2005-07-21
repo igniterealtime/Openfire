@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.messenger.plugin.PresencePlugin</class>
+    <name>Presence Servlet</name>
+    <description>Exposes users presences through HTTP</description>
+    <author>Jive Software</author>
+    <version>1.0</version>
+    <date>07/20/2005</date>
+    <minServerVersion>2.2.0</minServerVersion>
+	
+	<adminconsole>		
+		<tab id="tab-server">
+			<sidebar id="sidebar-server-settings">
+				<item id="presence-servlet" name="Presence Servlet"
+					url="presence-servlet.jsp"
+					description="Click to manage servlet that exposes presence information" />
+			</sidebar>
+        </tab>
+    </adminconsole>
+</plugin>

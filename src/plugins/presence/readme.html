@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Presence Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Presence Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The presence plugin includes a servlet that provides presence information of the users in the server.
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy presence.jar into the plugins directory of your Jive Messenger installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+presence.jar file over the existing file.</p>
+
+<h2>Configuration</h2>
+
+The presence plugin can be configured via Jive Messenger Administration Console. Use the configuration
+page to set if the presence information is visible to anyone or only to authorized users.
+
+<h2>Using the Plugin</h2>
+
+In order to get presence information of a user you should send HTTP requests to the servlet. The servlet
+address should be [hostname]/plugins/presence/presence. Since the servlet may return different
+types of content, the HTTP request should include a <b>type</b> parameter. Possible values are
+<b>img</b> to get images that represent the user availability status or <b>xml</b> to get an XML stanza
+with the presence of the user. If the <b>type</b> parameter is missing then an image format is assumed.<p>
+
+Other parameters are:
+<ul>
+    <li><b>sender</b> - bare JID of the user sending the request. This parameter is
+    optional if anyone may get presence information.</li>
+    <li><b>username</b> - username of the user whose presence is being probed. This parameter is
+    mandatory.</li>
+</ul>
+
+When using an image content type it is possible to configure the images to get depending on the user
+presence status. Moreover, there are many ways to specify the images to use:
+
+<ul>
+ <li>Use a single parameter for all the images - Use the <b>img</b> parameter that will include a
+     ${presence} token. The ${presence} token would be filtered and would be replaced with
+     codes like "dnd", "offline", "away", etc.</li>
+ <li>Use a parameter for each possible presence type - Possible parameters are: <b>offline</b>,
+     <b>available</b>, <b>away</b>, <b>chat</b>, <b>dnd</b>, <b>xa</b>. If the parameter was
+     not passed then the default image will be used.</li>
+ <li>Do not pass any parameter - When no parameter was passed default images will be used.</li>
+</ul>
+
+If the required user was not found or the user making the request is not allowed to see the
+user presence then the image specified in the <b>notavailable</b> parameter will be used.
+However, if the request does not include the <b>notavailable</b> parameter then the default
+image for user offline will be used. Therefore, each request <b>MUST</b> include the
+<b>notavailable</b> parameter.<p>
+
+<b>Examples of URL<b>
+This example is requesting images and is using a single parameter for all the images:
+http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&img=http://localhost:9090/images/${presence}.gif
+<p>
+This example is requesting images and is sending a parameter for each possible presence type:
+http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&offline=http://localhost:9090/images/user-red-16x16.gif&available=http://www.jivesoftware.com:9090/images/user-yellow-16x16.gif
+
+</body>
+</html>

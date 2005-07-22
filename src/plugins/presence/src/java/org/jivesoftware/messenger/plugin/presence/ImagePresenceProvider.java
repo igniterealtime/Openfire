@@ -34,17 +34,16 @@ import java.util.Map;
  *      --IMAGE-- token. The --IMAGE-- token would be filtered and would be replaced with
  *      codes like "dnd", "offline", "away", etc.</li>
  *  <li>Use a parameter for each possible presence type - Possible parameters are: <b>offline</b>,
- *      <b>available</b>, <b>away</b>, <b>chat</b>, <b>dnd</b>, <b>xa</b>. If the parameter was
- *      not passed then the default image will be used.</li>
+ *      <b>available</b>, <b>away</b>, <b>chat</b>, <b>dnd</b>, <b>xa</b> and <b>forbidden</b>. If
+ *      the parameter was not passed then the default image will be used.</li>
  *  <li>Do not pass any parameter - When no parameter was passed the default images will be
  *      used.</li>
  * </ul>
  *
  * If the required user was not found or the user making the request is not allowed to see the
- * user presence then the image specified in the <b>notallowed</b> parameter will be used.
- * However, if the request does not include the <b>notallowed</b> parameter then the default
- * image for user offline will be used. Therefore, each request <b>MUST</b> include the
- * <b>notallowed</b> parameter.
+ * user presence then the image specified in the <b>forbidden</b> parameter will be used.
+ * However, if the request does not include the <b>forbidden</b> parameter then the default
+ * image for user offline will be used.
  *
  * @author Gaston Dombiak
  *
@@ -83,7 +82,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
 
     public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        writeImageContent(request.getParameter("notallowed"), servlet.offline, response);
+        writeImageContent(request, response, "forbidden", servlet.offline);
     }
 
     private void writeImageContent(HttpServletRequest request, HttpServletResponse response,

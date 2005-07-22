@@ -68,7 +68,7 @@ public class PresenceStatusServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String sender = request.getParameter("sender");
+        String sender = request.getParameter("req_jid");
         String jid = request.getParameter("jid");
         String type = request.getParameter("type");
         type = type == null ? "image" : type;

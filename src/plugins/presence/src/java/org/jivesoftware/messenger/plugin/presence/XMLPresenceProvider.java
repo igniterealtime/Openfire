@@ -38,18 +38,18 @@ class XMLPresenceProvider extends PresenceInfoProvider {
         PrintWriter out = response.getWriter();
         if (presence == null) {
             // Recreate the unavailable presence with the last known status
-            String username = request.getParameter("username");
+            JID targetJID = new JID(request.getParameter("jid"));
             presence = new Presence(Presence.Type.unavailable);
             XMPPServer server = XMPPServer.getInstance();
             try {
-                User user = server.getUserManager().getUser(username);
+                User user = server.getUserManager().getUser(targetJID.getNode());
                 String status = server.getPresenceManager().getLastPresenceStatus(user);
                 if (status != null) {
                     presence.setStatus(status);
                 }
             }
             catch (UserNotFoundException e) {}
-            presence.setFrom(server.createJID(username, null));
+            presence.setFrom(targetJID);
         }
         out.println(presence.toXML());
         out.flush();
@@ -62,20 +62,14 @@ class XMLPresenceProvider extends PresenceInfoProvider {
         // Send a forbidden presence
         Presence presence = new Presence();
         presence.setError(PacketError.Condition.forbidden);
-        String username = request.getParameter("username");
-        if (username != null) {
-            try {
-                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
-            }
-            catch (Exception e) {}
+        try {
+            presence.setFrom(new JID(request.getParameter("jid")));
         }
-        String sender = request.getParameter("sender");
-        if (sender != null) {
-            try {
-                presence.setTo(new JID(sender));
-            }
-            catch (Exception e) {}
+        catch (Exception e) {}
+        try {
+            presence.setTo(new JID(request.getParameter("req_jid")));
         }
+        catch (Exception e) {}
         out.println(presence.toXML());
         out.flush();
     }

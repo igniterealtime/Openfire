@@ -13,9 +13,11 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
+
 import java.io.IOException;
 import java.sql.*;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Database connection pool.
@@ -276,6 +278,25 @@ public class ConnectionPool implements Runnable {
                             if (lastOpen < i) {
                                 lastOpen = i;
                             }
+
+
+                            // if the jive property "database.defaultProvider.checkOpenConnections"
+                            // is true check open connections to make sure they haven't been open
+                            // for more than XX seconds (600 by default)
+                            if ("true".equals(JiveGlobals.getXMLProperty("database.defaultProvider.checkOpenConnections"))
+                                    && !wrappers[i].hasLoggedException)
+                            {
+                                int timeout = 600;
+                                try { timeout = Integer.parseInt(JiveGlobals.getXMLProperty("database.defaultProvider.openConnectionTimeLimit")); }
+                                catch (Exception e) { /* ignore */ }
+
+                                if (time - wrappers[i].lockTime > timeout * 1000) {
+                                    wrappers[i].hasLoggedException = true;
+                                    Log.warn("Connection has been held open for too long: ",
+                                            wrappers[i].exception);
+                                }
+                            }
+
                             continue;
                         }
                         wrappers[i].checkedout = true;
@@ -370,6 +391,10 @@ public class ConnectionPool implements Runnable {
                     wrapper.setConnection(cons[i]);
                     wrapper.checkedout = true;
                     wrapper.lockTime = System.currentTimeMillis();
+                    if ("true".equals(JiveGlobals.getXMLProperty("database.defaultProvider.checkOpenConnections"))) {
+                        wrapper.exception = new Exception();
+                        wrapper.hasLoggedException = false;
+                    }
 
                     return wrapper;
                 }
@@ -441,6 +466,9 @@ public class ConnectionPool implements Runnable {
 
             // create the wrapper object and mark it as checked out
             ConnectionWrapper wrapper = new ConnectionWrapper(con, this);
+            if ("true".equals(JiveGlobals.getXMLProperty("database.defaultProvider.checkOpenConnections"))) {
+                wrapper.exception = new Exception();
+            }
 
             synchronized (conCountLock) {
                 cons[index] = con;
@@ -454,4 +482,5 @@ public class ConnectionPool implements Runnable {
             throw new SQLException(e.getMessage());
         }
     }
+
 }

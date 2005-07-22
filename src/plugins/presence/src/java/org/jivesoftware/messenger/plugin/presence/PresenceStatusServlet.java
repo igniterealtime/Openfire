@@ -30,10 +30,10 @@ import java.io.InputStream;
 /**
  * Servlet that provides information about the presence status of the users in the system.
  * The information may be provided in XML format or in graphical mode. Use the <b>type</b>
- * parameter to specify the type of information to get. Possible values are <b>img</b> and
+ * parameter to specify the type of information to get. Possible values are <b>image</b> and
  * <b>xml</b>. If no type was defined then an image representation is assumed.<p>
  * <p/>
- * The request <b>MUST</b> include the <b>username</b> parameter. This parameter will be used
+ * The request <b>MUST</b> include the <b>jid</b> parameter. This parameter will be used
  * to locate the local user in the server. If this parameter is missing from the request then
  * an error will be logged and nothing will be returned.
  *
@@ -69,13 +69,13 @@ public class PresenceStatusServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String sender = request.getParameter("sender");
-        String username = request.getParameter("username");
+        String jid = request.getParameter("jid");
         String type = request.getParameter("type");
-        type = type == null ? "img" : type;
+        type = type == null ? "image" : type;
 
         try {
-            Presence presence = plugin.getUserPresence(sender, username);
-            if ("img".equals(type)) {
+            Presence presence = plugin.getPresence(sender, jid);
+            if ("image".equals(type)) {
                 imageProvider.sendInfo(request, response, presence);
             }
             else if ("xml".equals(type)) {
@@ -87,7 +87,7 @@ public class PresenceStatusServlet extends HttpServlet {
             }
         }
         catch (UserNotFoundException e) {
-            if ("img".equals(type)) {
+            if ("image".equals(type)) {
                 imageProvider.sendUserNotFound(request, response);
             }
             else if ("xml".equals(type)) {
@@ -99,7 +99,7 @@ public class PresenceStatusServlet extends HttpServlet {
             }
         }
         catch (IllegalArgumentException e) {
-            if ("img".equals(type)) {
+            if ("image".equals(type)) {
                 imageProvider.sendUserNotFound(request, response);
             }
             else if ("xml".equals(type)) {

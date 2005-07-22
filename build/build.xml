@@ -853,6 +853,10 @@
 
     </target>
     <target name="plugin" description="build one plugin">
+        <delete dir="${plugin.dev.dest.dir}/${plugin}"/>
+        <delete file="${plugin.dev.dest.dir}/${plugin}.jar"/>
+        <delete dir="${plugin.dest.dir}/${plugin}"/>
+        <delete file="${plugin.dest.dir}/${plugin}.jar"/>
         <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
     </target>
 

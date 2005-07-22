@@ -43,11 +43,13 @@ public class PresencePlugin implements Plugin {
 
     private UserManager userManager;
     private PresenceManager presenceManager;
+    private String hostname;
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         XMPPServer server = XMPPServer.getInstance();
         userManager = server.getUserManager();
         presenceManager = server.getPresenceManager();
+        hostname = server.getServerInfo().getName();
     }
 
     public void destroyPlugin() {
@@ -83,22 +85,36 @@ public class PresencePlugin implements Plugin {
      * of the request is subscribed to the user presence.
      *
      * @param sender the bare JID of the user making the request.
-     * @param username the username of the user whose presence is being probed.
+     * @param jid the bare JID of the entity whose presence is being probed.
      * @return the presence of the requested user.
      * @throws UserNotFoundException If presences are not public and the sender is null or the
      *         sender cannot probe the presence of the requested user. Or if the requested user
      *         does not exist in the local server.
      */
-    public Presence getUserPresence(String sender, String username) throws UserNotFoundException {
+    public Presence getPresence(String sender, String jid) throws UserNotFoundException {
+        JID targetJID = new JID(jid);
+        // Check that the sender is not requesting information of a remote server entity
+        if (targetJID.getDomain() == null || !targetJID.getDomain().contains(hostname)) {
+            throw new UserNotFoundException("Domain does not matches local server domain");
+        }
+        if (!hostname.equals(targetJID.getDomain())) {
+            // Sender is requesting information about component presence
+            // TODO Implement this
+            throw new UserNotFoundException("Presence of components not supported yet!");
+        }
+        if (targetJID.getNode() == null) {
+            // Sender is requesting presence information of an anonymous user
+            throw new UserNotFoundException("Username is null");
+        }
         if (!isPresencePublic()) {
             if (sender == null) {
                 throw new UserNotFoundException("Sender is null");
             }
-            else if (!presenceManager.canProbePresence(new JID(sender), username)) {
+            else if (!presenceManager.canProbePresence(new JID(sender), targetJID.getNode())) {
                 throw new UserNotFoundException("Sender is not allowed to probe this user");
             }
         }
-        User user = userManager.getUser(username);
+        User user = userManager.getUser(targetJID.getNode());
         return presenceManager.getPresence(user);
     }
 }

@@ -35,6 +35,17 @@
             font-family : courier new;
             font-size : 100%;
         }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
     </style>
 </head>
 <body>
@@ -46,7 +57,9 @@ Presence Plugin Readme
 <h2>Overview</h2>
 
 <p>
-The presence plugin includes a servlet that provides presence information of the users in the server.
+The presence plugin is a service that provides simple presence information over HTTP. 
+It can be used to display an online status icon for a user on a web page or to
+poll for presence information from a web service.
 </p>
 
 <h2>Installation</h2>
@@ -57,53 +70,98 @@ presence.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
-The presence plugin can be configured via Jive Messenger Administration Console. Use the configuration
-page to set if the presence information is visible to anyone or only to authorized users.
+The presence plugin can be configured via the Jive Messenger Admin Console. 
+Use the configuration page to specify whether presence information should be available 
+to anyone or restricted to authorized users (users which have presence subscriptions).
 
 <h2>Using the Plugin</h2>
 
-In order to get presence information of a user you should send HTTP requests to the servlet. The servlet
-address should be [hostname]/plugins/presence/presence. Since the servlet may return different
-types of content, the HTTP request should include a <b>type</b> parameter. Possible values are
-<b>img</b> to get images that represent the user availability status or <b>xml</b> to get an XML stanza
-with the presence of the user. If the <b>type</b> parameter is missing then an image format is assumed.<p>
+To get presence information for a user, submit HTTP requests to the presence 
+service. The service address is [hostname]/plugins/presence/status. For example,
+if your server name is "example.com", the URL is http://example.com/plugins/presence/status.<p>
 
-Other parameters are:
+The following parameters can be passed into the request:<p>
+
+<div id="datatable">
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+<tr>
+    <th colspan=2>Name</th><th>Description</th>
+</tr>
+<tr>
+    <td class="name">jid</td><td>Required</td><td>The bare JID (address) of the user to get presence 
+    information for (e.g. "jsmith@example.com"). The address must be on the same 
+    server that the presence service is deployed on.</td>
+</tr>
+<tr>
+    <td class="name">req_jid</td><td>Optional</td><td>The bare JID (address) of the user 
+    requesting presence information. This parameter may be required in order
+    to have permission to get presence information. For example, the presence
+    service can be configured to only allow presence requests from users that 
+    have a presence subscription to the requested jid.</td>
+</tr>
+<tr>
+    <td class="name">type</td><td>Optional</td><td>The type of response to return. Valid values
+    are <b>image</b> or <b>xml</b>. If this parameter is not specified, the 
+    default value is <b>image</b>, which will display an image representing the
+    user's presence. If <b>xml</b> is specified, an XML representation of the
+    user's presence will be returned.</td>
+</tr>
+<tr>
+    <td class="name">images</td><td>Optional</td><td>The presence service includes a default
+    set of images that will be returned for a user's presence. You can specify
+    a custom set of images using this parameter. The value should be the URL
+    to the images and should include an <b>--IMAGE--</b> token. For example:
+    "http://www.example.com/images/--IMAGE--.gif". The token will be dynamically
+    replaced with one of the following values depending on the presence status:
+    <b>available</b>, <b>chat</b>, <b>away</b>, <b>xa</b>, <b>dnd</b>, 
+    <b>offline</b>, or <b>forbidden</b>.
+    </td>
+</tr>
+<tr>
+    <td class="name">[image_type]</td><td>Optional</td><td>Instead of specifying a single
+    location for all custom presence images, you can override each image location
+    directly. The parameter name should be one of the following values:
+    <b>available</b>, <b>chat</b>, <b>away</b>, <b>xa</b>, <b>dnd</b>, 
+    <b>offline</b>, or <b>forbidden</b>. The parameter value should be
+    the full URL of the image, such as "http://www.example.com/images/dnd.png".
+    These parameters can be used in combination with the "images" parameter to
+    specify a base location for custom images but then to override specific 
+    images with different locations.</td>
+</tr>
+</table><p>
+
+
+<p><b>Sample HTML</b><p>
+
+The following example is the simplest form of calling the service to display 
+default presence images. The server name and user must be customized for your deployment:
+
 <ul>
-    <li><b>sender</b> - bare JID of the user sending the request. This parameter is
-    optional if anyone may get presence information.</li>
-    <li><b>username</b> - username of the user whose presence is being probed. This parameter is
-    mandatory.</li>
+<form>
+<textarea cols=65 rows=3 wrap=virtual><img src="http://example.com:9090/plugins/presence/status?username=jsmith" border="0">
+</textarea>
+</form>
 </ul>
 
-When using an image content type it is possible to configure the images to get depending on the user
-presence status. Moreover, there are many ways to specify the images to use:
+This example requests a user's presence by the user "jsmith" and specifies 
+custom images that should be used to display the user's presence:
 
 <ul>
- <li>Use a single parameter for all the images - Use the <b>img</b> parameter that will include a
-     ${presence} token. The ${presence} token would be filtered and would be replaced with
-     codes like "dnd", "offline", "away", etc.</li>
- <li>Use a parameter for each possible presence type - Possible parameters are: <b>offline</b>,
-     <b>available</b>, <b>away</b>, <b>chat</b>, <b>dnd</b>, <b>xa</b>. If the parameter was
-     not passed then the default image will be used.</li>
- <li>Do not pass any parameter - When no parameter was passed default images will be used.</li>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+<img src="http://example.com:9090/plugins/presence/status?username=mary&sender=jsmith@example.com&images=http://www.example.com/images/--IMAGE--.gif" border=0>
+</textarea>
+</form>
 </ul>
 
-If the required user was not found or the user making the request is not allowed to see the
-user presence then the image specified in the <b>notavailable</b> parameter will be used.
-However, if the request does not include the <b>notavailable</b> parameter then the default
-image for user offline will be used. Therefore, each request <b>MUST</b> include the
-<b>notavailable</b> parameter.<p>
+This example requests the presence of a user in XML format:
 
-<b>Examples of URL</b><br>
-This example is requesting images and is using a single parameter for all the images:
-http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&img=http://localhost:9090/images/${presence}.gif
-<p>
-This example is requesting images and is sending a parameter for each possible presence type:
-http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&notavailable=http://localhost:9090/images/unknown.gif&offline=http://localhost:9090/images/user-red-16x16.gif&available=http://www.jivesoftware.com:9090/images/user-yellow-16x16.gif
-<p>
-This example is requesting presence information in XML format:
-http://localhost:9090/plugins/presence/presence?username=admin&sender=user2@localhost&type=xml
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>http://example.com:9090/plugins/presence/status?username=jsmith&type=xml
+</textarea>
+</form>
+</ul>
 
 </body>
 </html>

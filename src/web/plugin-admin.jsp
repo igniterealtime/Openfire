@@ -237,7 +237,7 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap><fmt:message key="plugin.admin.name" /></th>
+        <th nowrap colspan="2"><fmt:message key="plugin.admin.name" /></th>
         <th nowrap><fmt:message key="plugin.admin.description" /></th>
         <th nowrap><fmt:message key="plugin.admin.version" /></th>
         <th nowrap><fmt:message key="plugin.admin.author" /></th>
@@ -252,7 +252,7 @@
     if (plugins.size() == 1) {
 %>
     <tr>
-        <td align="center" colspan="7"><fmt:message key="plugin.admin.no_plugin" /></td>
+        <td align="center" colspan="8"><fmt:message key="plugin.admin.no_plugin" /></td>
     </tr>
 <%
     }
@@ -281,15 +281,14 @@
                 <% } %>
 	        </td>
 	        <td width="20%" nowrap>
-                <table border=0 cellpadding=0><tr>
-                <td nowrap>
 	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
                 <%
 
                     boolean readmeExists = new File(pluginDir, "readme.html").exists();
                     boolean changelogExists = new File(pluginDir, "changelog.html").exists();
                 %>
-                </td><td nowrap>
+                </td>
+            <td nowrap>
                 <% if (readmeExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
@@ -298,8 +297,7 @@
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
                 <% } %>
-                </td></tr></table>
-	        </td>
+            </td>
 	        <td width="60%">
 	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;
 	        </td>

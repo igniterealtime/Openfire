@@ -98,7 +98,7 @@ public class Group implements Cacheable {
             groupManager.groupCache.put(name, this);
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             GroupEventDispatcher.dispatchEvent(this, GroupEventDispatcher.EventType.group_modified,
@@ -133,7 +133,7 @@ public class Group implements Cacheable {
             provider.setDescription(name, description);
             this.description = description;
             // Fire event.
-            Map params = new HashMap();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "descriptionModified");
             params.put("originalValue", originalDescription);
             GroupEventDispatcher.dispatchEvent(this,
@@ -241,13 +241,13 @@ public class Group implements Cacheable {
                     provider.deleteMember(name, user);
                     // Fire event.
                     if (adminCollection) {
-                        Map params = new HashMap();
+                        Map<String, String> params = new HashMap<String, String>();
                         params.put("admin", user);
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.admin_removed, params);
                     }
                     else {
-                        Map params = new HashMap();
+                        Map<String, String> params = new HashMap<String, String>();
                         params.put("member", user);
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.member_removed, params);
@@ -289,7 +289,7 @@ public class Group implements Cacheable {
 
                 // Fire event.
                 if (adminCollection) {
-                    Map params = new HashMap();
+                    Map<String, String> params = new HashMap<String, String>();
                     params.put("admin", username);
                     if (alreadyGroupUser) {
                         GroupEventDispatcher.dispatchEvent(Group.this,
@@ -299,7 +299,7 @@ public class Group implements Cacheable {
                                 GroupEventDispatcher.EventType.admin_added, params);
                 }
                 else {
-                    Map params = new HashMap();
+                    Map<String, String> params = new HashMap<String, String>();
                     params.put("member", username);
                     if (alreadyGroupUser) {
                         GroupEventDispatcher.dispatchEvent(Group.this,
@@ -337,12 +337,12 @@ public class Group implements Cacheable {
             if (key == null || value == null) {
                 throw new NullPointerException();
             }
-            Map eventParams = new HashMap();
+            Map<String, Object> eventParams = new HashMap<String, Object>();
             Object answer;
             String keyString = (String) key;
             synchronized (keyString.intern()) {
-                if (properties.containsKey(key)) {
-                    String originalValue = properties.get(key);
+                if (properties.containsKey(keyString)) {
+                    String originalValue = properties.get(keyString);
                     answer = properties.put(keyString, (String)value);
                     updateProperty(keyString, (String)value);
                     // Configure event.
@@ -401,7 +401,7 @@ public class Group implements Cacheable {
                     deleteProperty(key);
                     iter.remove();
                     // Fire event.
-                    Map params = new HashMap();
+                    Map<String, Object> params = new HashMap<String, Object>();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", key);
                     GroupEventDispatcher.dispatchEvent(Group.this,

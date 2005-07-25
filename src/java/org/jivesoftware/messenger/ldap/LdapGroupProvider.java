@@ -17,27 +17,24 @@ import org.jivesoftware.messenger.group.*;
 import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 import java.text.MessageFormat;
 
-import javax.naming.Context;
+import javax.naming.Name;
 import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
 import javax.naming.directory.*;
-import javax.naming.ldap.InitialLdapContext;
-import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is
  * treated as read-only so any set operations will result in an exception.
  *
- * @author Greg Ferguson
+ * @author Greg Ferguson and Cameron Moore
  */
-public class LdapGroupProvider implements GroupProvider 
+public class LdapGroupProvider implements GroupProvider
 {
 
     private LdapManager manager;
@@ -145,7 +142,7 @@ public class LdapGroupProvider implements GroupProvider
     }
 
     /**
-     * Will return the current number of groups in the 
+     * Will return the current number of groups in the
      * LDAP server.
      *
      * @return the number of groups in the LDAP server.
@@ -173,8 +170,10 @@ public class LdapGroupProvider implements GroupProvider
            }
 
            // Search for the dn based on the groupname.
-           answer = ctx.search("",searchFilter,new SearchControls());
- 
+           SearchControls ctrls = new SearchControls();
+           ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+           answer = ctx.search("",searchFilter,ctrls);
+
            if (manager.isDebugEnabled()) {
               Log.debug("... search finished");
            }
@@ -184,7 +183,7 @@ public class LdapGroupProvider implements GroupProvider
            if (manager.isDebugEnabled())
               Log.debug("Error while searching for groups.",e);
         }
-        try 
+        try
         {
            while (answer.hasMoreElements())
            {
@@ -211,9 +210,9 @@ public class LdapGroupProvider implements GroupProvider
     }
 
     /**
-     * Will return a collecion of groups in the system 
-     * based on the start index and end index.  Useful when 
-     * displaying a certain number of groups per page 
+     * Will return a collecion of groups in the system
+     * based on the start index and end index.  Useful when
+     * displaying a certain number of groups per page
      * on a webpage.
      *
      * @param start starting index
@@ -237,7 +236,7 @@ public class LdapGroupProvider implements GroupProvider
     }
 
     /**
-     * Will return a collection of groups in the  
+     * Will return a collection of groups in the
      * system that the user provided belongs to.
      *
      * @param user a user
@@ -258,7 +257,7 @@ public class LdapGroupProvider implements GroupProvider
               return new ArrayList<Group>();
            }
         }
-        
+
         String filter = MessageFormat.format(manager.getGroupSearchFilter(),username);
         return getGroupBasedOnFilter(filter);
     }
@@ -301,7 +300,7 @@ public class LdapGroupProvider implements GroupProvider
      * @param username Name of a user.
      * @throws UnsupportedOperationException when called.
      */
-    public void deleteMember(String groupName, String username) 
+    public void deleteMember(String groupName, String username)
     	throws UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
@@ -313,13 +312,13 @@ public class LdapGroupProvider implements GroupProvider
      *
      * @return true always because all LDAP functions are read only.
      */
-    public boolean isReadOnly() 
+    public boolean isReadOnly()
     {
         return true;
     }
 
     /**
-     * An auxilary method used to perform LDAP queries based on a 
+     * An auxilary method used to perform LDAP queries based on a
      * provided LDAP search filter.
      *
      * @return a collection of groups.
@@ -327,7 +326,7 @@ public class LdapGroupProvider implements GroupProvider
      */
     public Collection<Group> getGroupBasedOnFilter (String searchFilter)
     {
-       ArrayList<Group> groups = new ArrayList<Group>();
+       TreeMap<String,Group> groups = new TreeMap<String,Group>();
        boolean debug = Log.isDebugEnabled();
        if (debug) {
            Log.debug("Trying to find all groups in the system.");
@@ -344,10 +343,11 @@ public class LdapGroupProvider implements GroupProvider
 
           // Search for the dn based on the groupname.
           SearchControls searchControls = new SearchControls();
-          String returnedAtts[]= { manager.getNameField(), 
-                                   manager.getGroupDescriptionField(), 
+          String returnedAtts[]= { manager.getGroupNameField(),
+                                   manager.getGroupDescriptionField(),
                                    manager.getGroupMemberField() };
           searchControls.setReturningAttributes(returnedAtts);
+          searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
           answer = ctx.search("",searchFilter,searchControls);
 
           if (manager.isDebugEnabled()) {
@@ -359,8 +359,12 @@ public class LdapGroupProvider implements GroupProvider
        {
           if (manager.isDebugEnabled())
              Log.debug("Error while searching for groups.",e);
-          return groups;
+          return groups.values();
        }
+
+       SearchControls ctrls = new SearchControls();
+       ctrls.setReturningAttributes( new String[]{manager.getUsernameField()} );
+       ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
        while (answer.hasMoreElements())
        {
@@ -371,14 +375,14 @@ public class LdapGroupProvider implements GroupProvider
              String description;
              try
              {
-                name = ((String)((a.get(manager.getNameField())).get()));
+                name = ((String)((a.get(manager.getGroupNameField())).get()));
                 description = ((String)((a.get(manager.getGroupDescriptionField())).get()));
              }
              catch (Exception e)
              {
                 description = "";
              }
-             ArrayList<String> members = new ArrayList<String>();
+             TreeSet<String> members = new TreeSet<String>();
              Attribute member = a.get(manager.getGroupMemberField());
              NamingEnumeration ne = member.getAll();
              while (ne.hasMore())
@@ -386,16 +390,30 @@ public class LdapGroupProvider implements GroupProvider
                 String userName = (String)ne.next();
                 if (!manager.getPosixEnabled())
                 {   //userName is full dn if not posix
-                    StringTokenizer st = new StringTokenizer(userName,",");
-                    Attributes attrs = ctx.getAttributes(st.nextToken(), 
-                                       new String[]{manager.getUsernameField()});
-                    Attribute a1 = attrs.get(manager.getUsernameField());
-                    if (a1 != null)
-                       userName = (String)a1.get();
+                    try
+                    {
+                       // Get the CN using LDAP
+                       Name ldapname = new LdapName(userName);
+                       String ldapcn = ldapname.get(ldapname.size()-1);
+
+                       // We have to do a new search to find the username field
+
+                       NamingEnumeration usrAnswer = ctx.search("",ldapcn,ctrls);
+                       if (usrAnswer.hasMoreElements())
+                       {
+                    	   userName = (String)((SearchResult)usrAnswer.next()).getAttributes().get(
+                                   manager.getUsernameField()).get();
+                       }
+                    }
+                    catch (Exception e)
+                    {
+                       if (manager.isDebugEnabled())
+                          Log.debug("Error populating user with DN: "+userName,e);
+                    }
                 }
                 try
                 {
-                    User user = userManager.getUser(userName);
+                    User user = userManager.getUser(JID.escapeNode(userName));
                     members.add(user.getUsername());
                 }
                 catch (UserNotFoundException e)
@@ -404,8 +422,10 @@ public class LdapGroupProvider implements GroupProvider
                        Log.debug("User not found: "+userName);
                 }
              }
+             if (manager.isDebugEnabled())
+            	 Log.debug("Adding group \""+name+"\" with "+members.size()+" members.");
              Group g = new Group(this,name,description,members,new ArrayList<String>());
-             groups.add(g);
+             groups.put(name,g);
           }
           catch (Exception e)
           {
@@ -422,6 +442,6 @@ public class LdapGroupProvider implements GroupProvider
        }
        catch (Exception e) { }
 
-       return groups;
+       return groups.values();
     }
 }

@@ -2,20 +2,19 @@
 
 <plugin>
     <class>org.jivesoftware.messenger.plugin.PresencePlugin</class>
-    <name>Presence Servlet</name>
-    <description>Exposes users presences through HTTP</description>
+    <name>Presence Service</name>
+    <description>Exposes presence information through HTTP.</description>
     <author>Jive Software</author>
-    <version>1.0</version>
-    <date>07/20/2005</date>
+    <version>1.1</version>
+    <date>07/25/2005</date>
     <minServerVersion>2.2.0</minServerVersion>
 	
-	<adminconsole>		
-		<tab id="tab-server">
-			<sidebar id="sidebar-server-settings">
-				<item id="presence-servlet" name="Presence Servlet"
-					url="presence-servlet.jsp"
-					description="Click to manage servlet that exposes presence information" />
-			</sidebar>
+    <adminconsole>		
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="presence-service" name="Presence Service" url="presence-service.jsp"
+                     description="Click to manage the service that exposes presence information" />
+            </sidebar>
         </tab>
     </adminconsole>
 </plugin>

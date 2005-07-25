@@ -26,7 +26,7 @@
     if (save) {
         if (errors.size() == 0) {
         	plugin.setPresencePublic(presencePublic);
-            response.sendRedirect("presence-servlet.jsp?success=true");
+            response.sendRedirect("presence-service.jsp?success=true");
             return;
         }
     }
@@ -39,7 +39,7 @@
     String title = "Presence Servlet Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "presence-servlet.jsp"));
+    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "presence-service.jsp"));
     pageinfo.setPageID("presence-servlet");
 %>
 <jsp:include page="top.jsp" flush="true" />
@@ -64,7 +64,7 @@ presence should only be visible to those users that are authorized.<br>
     </div><br>
 <% } %>
 
-<form action="presence-servlet.jsp?save" method="post">
+<form action="presence-service.jsp?save" method="post">
 
 <fieldset>
     <legend>Presence visibility</legend>

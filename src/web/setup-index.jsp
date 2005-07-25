@@ -1,4 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
@@ -131,7 +132,7 @@
              id="loc06" />
         </td>
         <td colspan="2">
-            <label for="loc06">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+            <label for="loc06">Portugu&ecirc;s Brasileiro</label> (pt_BR)
         </td>
     </tr>
     <tr>

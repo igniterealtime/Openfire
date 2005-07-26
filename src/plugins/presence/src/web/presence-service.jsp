@@ -36,17 +36,17 @@
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 <%
-    String title = "Presence Servlet Properties";
+    String title = "Presence Service Properties";
     pageinfo.setTitle(title);
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "presence-service.jsp"));
-    pageinfo.setPageID("presence-servlet");
+    pageinfo.setPageID("presence-service");
 %>
 <jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>
-Use the form below to configure users presence visibility. By default, users
+Use the form below to configure user presence visibility. By default, user
 presence should only be visible to those users that are authorized.<br>
 </p>
 
@@ -57,7 +57,7 @@ presence should only be visible to those users that are authorized.<br>
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-            Presence servlet properties edited successfully.
+            Presence service properties edited successfully.
         </td></tr>
     </tbody>
     </table>
@@ -70,9 +70,9 @@ presence should only be visible to those users that are authorized.<br>
     <legend>Presence visibility</legend>
     <div>
     <p>
-    For security reasons, the XMPP allows users to control which users are authorized to see their presences. However, it is
-    possible to configure the servlet so that anyone may get information about users presences. Use this feature with
-    precaution.
+    For security reasons, users control which users are authorized to see their presence. However,
+    it is posible to configure the service so that anyone has access to all presence information.
+    Use this option with caution.
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>

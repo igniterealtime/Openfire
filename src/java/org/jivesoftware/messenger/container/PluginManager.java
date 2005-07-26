@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
@@ -62,6 +63,8 @@ public class PluginManager {
     private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
+    private Map<Plugin, List<String>> parentPluginMap;
+    private Map<Plugin, String> childPluginMap;
 
     /**
      * Constructs a new plugin manager.
@@ -70,10 +73,12 @@ public class PluginManager {
      */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
-        plugins = new HashMap<String, Plugin>();
+        plugins = new ConcurrentHashMap<String, Plugin>();
         pluginDirs = new HashMap<Plugin, File>();
         classloaders = new HashMap<Plugin, PluginClassLoader>();
         pluginDevelopment = new HashMap<Plugin, PluginDevEnvironment>();
+        parentPluginMap = new HashMap<Plugin, List<String>>();
+        childPluginMap = new HashMap<Plugin, String>();
     }
 
     /**
@@ -81,7 +86,7 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
-        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 10, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 15, TimeUnit.SECONDS);
     }
 
     /**
@@ -100,6 +105,7 @@ public class PluginManager {
         pluginDirs.clear();
         classloaders.clear();
         pluginDevelopment.clear();
+        childPluginMap.clear();
     }
 
     /**
@@ -158,11 +164,10 @@ public class PluginManager {
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
                 Document pluginXML = saxReader.read(pluginConfig);
+
                 // See if the plugin specifies a version of Jive Messenger
                 // required to run.
                 Element minServerVersion = (Element)pluginXML.selectSingleNode("/plugin/minServerVersion");
-
-
                 if (minServerVersion != null) {
                     String requiredVersion = minServerVersion.getTextTrim();
                     Version version = XMPPServer.getInstance().getServerInfo().getVersion();
@@ -176,7 +181,60 @@ public class PluginManager {
                         return;
                     }
                 }
-                PluginClassLoader pluginLoader = new PluginClassLoader(pluginDir);
+
+                PluginClassLoader pluginLoader;
+
+                // Check to see if this is a child plugin of another plugin. If it is, we
+                // re-use the parent plugin's class loader so that the plugins can interact.
+                Element parentPluginNode = (Element)pluginXML.selectSingleNode("/plugin/parentPlugin");
+                if (parentPluginNode != null) {
+                    String parentPlugin = parentPluginNode.getTextTrim();
+                    // See if the parent is already loaded.
+                    if (plugins.containsKey(parentPlugin)) {
+                        pluginLoader = classloaders.get(getPlugin(parentPlugin));
+                        pluginLoader.addDirectory(pluginDir);
+                    }
+                    else {
+                        // See if the parent plugin exists but just hasn't been loaded yet.
+                        // This can only be the case if this plugin name is alphabetically before
+                        // the parent.
+                        if (pluginDir.getName().compareTo(parentPlugin) < 0) {
+                            // See if the parent exists.
+                            File file = new File(pluginDir.getParentFile(), parentPlugin + ".jar");
+                            if (file.exists()) {
+                                // Silently return. The child plugin will get loaded up on the next
+                                // plugin load run after the parent.
+                                return;
+                            }
+                            else {
+                                file = new File(pluginDir.getParentFile(), parentPlugin + ".war");
+                                if (file.exists()) {
+                                    // Silently return. The child plugin will get loaded up on the next
+                                    // plugin load run after the parent.
+                                    return;
+                                }
+                                else {
+                                    String msg = "Ignoring plugin " + pluginDir.getName() + ": parent plugin " +
+                                    parentPlugin + " not present.";
+                                    Log.warn(msg);
+                                    System.out.println(msg);
+                                    return;    
+                                }
+                            }
+                        }
+                        else {
+                            String msg = "Ignoring plugin " + pluginDir.getName() + ": parent plugin " +
+                                parentPlugin + " not present.";
+                            Log.warn(msg);
+                            System.out.println(msg);
+                            return;
+                        }
+                    }
+                }
+                // This is not a child plugin, so create a new class loader.
+                else {
+                    pluginLoader = new PluginClassLoader(pluginDir);
+                }
 
                 // Check to see if development mode is turned on for the plugin. If it is,
                 // configure dev mode.
@@ -211,7 +269,25 @@ public class PluginManager {
                 plugin.initializePlugin(this, pluginDir);
                 plugins.put(pluginDir.getName(), plugin);
                 pluginDirs.put(plugin, pluginDir);
-                classloaders.put(plugin, pluginLoader);
+
+                // If this is a child plugin, register it as such.
+                if (parentPluginNode != null) {
+                    String parentPlugin = parentPluginNode.getTextTrim();
+                    List<String> childrenPlugins = parentPluginMap.get(plugins.get(parentPlugin));
+                    if (childrenPlugins == null) {
+                        childrenPlugins = new ArrayList<String>();
+                        parentPluginMap.put(plugins.get(parentPlugin), childrenPlugins);
+                    }
+                    childrenPlugins.add(pluginDir.getName());
+                    // Also register child to parent relationship.
+                    childPluginMap.put(plugin, parentPlugin);
+                }
+                else {
+                    // Only register the class loader in the case of this not being
+                    // a child plugin.
+                    classloaders.put(plugin, pluginLoader);
+                }
+
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
                         File.separator + "web.xml");
@@ -276,10 +352,21 @@ public class PluginManager {
      */
     public void unloadPlugin(String pluginName) {
         Log.debug("Unloading plugin " + pluginName);
+
         Plugin plugin = plugins.get(pluginName);
         if (plugin == null) {
             return;
         }
+
+        // See if any child plugins are defined.
+        if (parentPluginMap.containsKey(plugin)) {
+            for (String childPlugin : parentPluginMap.get(plugin)) {
+                Log.debug("Unloading child plugin: " + childPlugin);
+                unloadPlugin(childPlugin);
+            }
+            parentPluginMap.remove(plugin);
+        }
+
         File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
                 File.separator + "web.xml");
         if (webXML.exists()) {
@@ -292,12 +379,22 @@ public class PluginManager {
             PluginServlet.unregisterServlets(customWebXML);
         }
 
-        PluginClassLoader classLoader = classloaders.get(plugin);
         plugin.destroyPlugin();
-        classLoader.destroy();
+        PluginClassLoader classLoader = classloaders.get(plugin);
+        // Destroy class loader if defined, which it won't be if this is a child plugin.
+        if (classLoader != null) {
+            classLoader.destroy();
+        }
         plugins.remove(pluginName);
         pluginDirs.remove(plugin);
         classloaders.remove(plugin);
+
+        // See if this is a child plugin. If it is, we should unload
+        // the parent plugin as well.
+        if (childPluginMap.containsKey(plugin)) {
+            unloadPlugin(childPluginMap.get(plugin));
+        }
+        childPluginMap.remove(plugin);
     }
 
     /**
@@ -442,10 +539,12 @@ public class PluginManager {
                         unloadPlugin(pluginName);
                         // Ask the system to clean up references.
                         System.gc();
-                        while (!deleteDir(dir)) {
+                        int count = 0;
+                        while (!deleteDir(dir) && count < 5) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
                                     "Will attempt again momentarily.");
                             Thread.sleep(5000);
+                            count++;
                         }
                         // Now unzip the plugin.
                         unzipPlugin(pluginName, jarFile, dir);
@@ -499,10 +598,13 @@ public class PluginManager {
                     for (String pluginName : toDelete) {
                         unloadPlugin(pluginName);
                         System.gc();
-                        while (!deleteDir(new File(pluginDirectory, pluginName))) {
+                        int count = 0;
+                        File dir = new File(pluginDirectory, pluginName);
+                        while (!deleteDir(dir) && count < 5) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
                                     "Will attempt again momentarily.");
                             Thread.sleep(5000);
+                            count++;
                         }
                     }
                 }
@@ -517,8 +619,8 @@ public class PluginManager {
          * isn't a plugin, this method will do nothing.
          *
          * @param pluginName the name of the plugin.
-         * @param file       the JAR file
-         * @param dir        the directory to extract the plugin to.
+         * @param file the JAR file
+         * @param dir the directory to extract the plugin to.
          */
         private void unzipPlugin(String pluginName, File file, File dir) {
             try {

@@ -91,6 +91,10 @@ file might look like the following:
     <li>minServerVersion -- the minimum version of Jive Messenger required
           to run the plugin (supported by Jive Messenger 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
+    <li>parentPlugin -- the name of the parent plugin (given as "foo" for the "foo.jar" plugin).
+            When a plugin has a parent plugin, the parent plugin's classloader will be used instead
+            of creating a new classloader. This lets plugins work together more closely. A
+            child plugin will not function without its parent present.</li>
 </ul></p>
 
 Several additional files can be present in the plugin to provide additional information to

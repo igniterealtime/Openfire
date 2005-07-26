@@ -11,6 +11,8 @@
 
 package org.jivesoftware.messenger.container;
 
+import org.jivesoftware.util.Log;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.MalformedURLException;
@@ -34,24 +36,33 @@ import java.util.List;
 class PluginClassLoader {
 
     private URLClassLoader classLoader;
-    private final List list = new ArrayList();
+    private final List<URL> list = new ArrayList<URL>();
 
 
     /**
      * Constructs a plugin loader for the given plugin directory.
      *
      * @param pluginDir the plugin directory.
-     * @throws java.lang.SecurityException    if the created class loader violates
-     *                                        existing security constraints.
-     * @throws java.net.MalformedURLException if a located resource name cannot be
-     *                                        properly converted to a URL.
+     * @throws java.lang.SecurityException if the created class loader violates
+     *          existing security constraints.
      */
-    public PluginClassLoader(File pluginDir) throws MalformedURLException, SecurityException {
-        File classesDir = new File(pluginDir, "classes");
+    public PluginClassLoader(File pluginDir) throws SecurityException {
+        addDirectory(pluginDir);
+    }
+
+    /**
+     * Adds a directory to the class loader. The {@link #initialize()} method should be called
+     * after adding the directory to make the change take effect.
+     *
+     * @param directory the directory.
+     */
+    public void addDirectory(File directory) {
+        try {
+        File classesDir = new File(directory, "classes");
         if (classesDir.exists()) {
             list.add(classesDir.toURL());
         }
-        File libDir = new File(pluginDir, "lib");
+        File libDir = new File(directory, "lib");
         File[] jars = libDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".jar") || name.endsWith(".zip");
@@ -64,12 +75,26 @@ class PluginClassLoader {
                 }
             }
         }
+        }
+        catch (MalformedURLException mue) {
+            Log.error(mue);
+        }
     }
 
+    /**
+     * Adds a URL to the class loader. The {@link #initialize()} method should be called
+     * after adding the URL to make the change take effect.
+     *
+     * @param url the url.
+     */
     public void addURL(URL url) {
         list.add(url);
     }
 
+    /**
+     * Initializes the class loader with all configured classpath URLs. This method
+     * can be called multiple times if the list of URLs changes.
+     */
     public void initialize(){
         Iterator urls = list.iterator();
         URL[] urlArray = new URL[list.size()];

@@ -251,6 +251,7 @@ public class XMPPServer {
         loadModule(PresenceUpdateHandler.class.getName());
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
+        loadModule(IQOfflineMessagesHandler.class.getName());
         loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
         // Load this module always last since we don't want to start listening for clients

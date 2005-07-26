@@ -11,20 +11,20 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.xmpp.packet.Message;
-import org.dom4j.io.SAXReader;
 import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.util.*;
+import org.xmpp.packet.Message;
 
-import java.util.*;
-import java.util.Date;
-import java.sql.*;
-import java.sql.Connection;
 import java.io.StringReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -42,12 +42,16 @@ public class OfflineMessageStore extends BasicModule {
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
         "SELECT message, creationDate FROM jiveOffline WHERE username=?";
+    private static final String LOAD_OFFLINE_MESSAGE =
+        "SELECT message FROM jiveOffline WHERE username=? AND creationDate=?";
     private static final String SELECT_SIZE_OFFLINE =
         "SELECT SUM(messageSize) FROM jiveOffline WHERE username=?";
     private static final String SELECT_SIZE_ALL_OFFLINE =
         "SELECT SUM(messageSize) FROM jiveOffline";
     private static final String DELETE_OFFLINE =
         "DELETE FROM jiveOffline WHERE username=?";
+    private static final String DELETE_OFFLINE_MESSAGE =
+        "DELETE FROM jiveOffline WHERE username=? AND creationDate=?";
 
     private Cache sizeCache;
     private SimpleDateFormat dateFormat;
@@ -132,13 +136,15 @@ public class OfflineMessageStore extends BasicModule {
 
     /**
      * Returns a Collection of all messages in the store for a user.
-     * Messages are deleted after being selected from the database.
+     * Messages may be deleted after being selected from the database depending on
+     * the delete param.
      *
-     * @param username the username of the user who's messages you'd like to receive
-     * @return An iterator of packets containing all offline messages
+     * @param username the username of the user who's messages you'd like to receive.
+     * @param delete true if the offline messages should be deleted.
+     * @return An iterator of packets containing all offline messages.
      */
-    public Collection<Message> getMessages(String username) {
-        List<Message> messages = new ArrayList<Message>();
+    public Collection<OfflineMessage> getMessages(String username, boolean delete) {
+        List<OfflineMessage> messages = new ArrayList<OfflineMessage>();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -149,7 +155,8 @@ public class OfflineMessageStore extends BasicModule {
             while (rs.next()) {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
-                Message message = new Message(saxReader.read(new StringReader(msgXML)).getRootElement());
+                OfflineMessage message = new OfflineMessage(creationDate,
+                        saxReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
@@ -159,8 +166,81 @@ public class OfflineMessageStore extends BasicModule {
                 messages.add(message);
             }
             rs.close();
-            pstmt.close();
+            // Check if the offline messages loaded should be deleted
+            if (delete) {
+                pstmt.close();
 
+                pstmt = con.prepareStatement(DELETE_OFFLINE);
+                pstmt.setString(1, username);
+                pstmt.executeUpdate();
+            }
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return messages;
+    }
+
+    /**
+     * Returns the offline message of the specified user with the given creation date. The
+     * returned message will NOT be deleted from the database.
+     *
+     * @param username the username of the user who's message you'd like to receive.
+     * @param creationDate the date when the offline message was stored in the database.
+     * @return the offline message of the specified user with the given creation stamp.
+     */
+    public OfflineMessage getMessage(String username, Date creationDate) {
+        OfflineMessage message = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
+            pstmt.setString(1, username);
+            pstmt.setString(2, StringUtils.dateToMillis(creationDate));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String msgXML = rs.getString(1);
+                message =
+                        new OfflineMessage(creationDate,
+                                saxReader.read(new StringReader(msgXML)).getRootElement());
+                // Add a delayed delivery (JEP-0091) element to the message.
+                Element delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
+                synchronized (dateFormat) {
+                    delay.addAttribute("stamp", dateFormat.format(creationDate));
+                }
+            }
+            rs.close();
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+        return message;
+    }
+
+    /**
+     * Deletes all offline messages in the store for a user.
+     *
+     * @param username the username of the user who's messages are going to be deleted.
+     */
+    public void deleteMessages(String username) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_OFFLINE);
             pstmt.setString(1, username);
             pstmt.executeUpdate();
@@ -174,7 +254,34 @@ public class OfflineMessageStore extends BasicModule {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return messages;
+    }
+
+    /**
+     * Deletes the specified offline message in the store for a user. The way to identify the
+     * message to delete is based on the creationDate and username.
+     *
+     * @param username the username of the user who's message is going to be deleted.
+     * @param creationDate the date when the offline message was stored in the database.
+     */
+    public void deleteMessage(String username, Date creationDate) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE);
+            pstmt.setString(1, username);
+            pstmt.setString(2, StringUtils.dateToMillis(creationDate));
+            pstmt.executeUpdate();
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
     }
 
     /**

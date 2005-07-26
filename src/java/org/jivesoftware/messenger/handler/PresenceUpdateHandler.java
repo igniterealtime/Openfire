@@ -171,10 +171,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * </ul>
      *
      * @param session The session being updated
-     * @throws UnauthorizedException If the caller doesn't have the right permissions
      * @throws UserNotFoundException If the user being updated does not exist
      */
-    private void initSession(Session session)  throws UnauthorizedException, UserNotFoundException {
+    private void initSession(ClientSession session)  throws UserNotFoundException {
 
         // Only user sessions need to be authenticated
         if (session.getAddress().getNode() != null && !"".equals(session.getAddress().getNode())) {
@@ -192,10 +191,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     presenceManager.probePresence(session.getAddress(), item.getJid());
                 }
             }
-            // deliver offline messages if any
-            Collection<Message> messages = messageStore.getMessages(username);
-            for (Message message : messages) {
-                session.process(message);
+            if (session.canFloodOfflineMessages()) {
+                // deliver offline messages if any
+                Collection<OfflineMessage> messages = messageStore.getMessages(username, true);
+                for (Message message : messages) {
+                    session.process(message);
+                }
             }
         }
     }

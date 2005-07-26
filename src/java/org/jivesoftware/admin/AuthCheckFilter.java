@@ -11,17 +11,17 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.WebManager;
+import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.WebManager;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.ArrayList;
 
 /**
  * A simple filter which checks for the auth token in the user's session. If it's not there
@@ -29,9 +29,30 @@ import java.util.ArrayList;
  */
 public class AuthCheckFilter implements Filter {
 
+    private static Set<String> excludes = new ConcurrentHashSet<String>();
+
     private ServletContext context;
     private String defaultLoginPage;
-    private List<String> excludes;
+
+    /**
+     * Adds a new string that when present in the requested URL will skip
+     * the "is logged" checking.
+     *
+     * @param exclude the string to exclude.
+     */
+    public static void addExclude(String exclude) {
+        excludes.add(exclude);
+    }
+
+    /**
+     * Removes a string that when present in the requested URL will skip
+     * the "is logged" checking.
+     *
+     * @param exclude the string that was being excluded.
+     */
+    public static void removeExclude(String exclude) {
+        excludes.remove(exclude);
+    }
 
     public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
@@ -39,7 +60,6 @@ public class AuthCheckFilter implements Filter {
         String excludesProp = config.getInitParameter("excludes");
         if (excludesProp != null) {
             StringTokenizer tokenizer = new StringTokenizer(excludesProp, ",");
-            excludes = new ArrayList<String>();
             while (tokenizer.hasMoreTokens()) {
                 String tok = tokenizer.nextToken().trim();
                 excludes.add(tok);

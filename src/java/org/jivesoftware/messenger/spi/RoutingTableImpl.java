@@ -12,17 +12,16 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.server.OutgoingServerSession;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Uses simple hashtables for table storage.</p>
@@ -37,16 +36,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     /**
      * We need a three level tree built of hashtables: host -> name -> resource
      */
-    private Hashtable routes = new Hashtable();
+    private Map routes = new ConcurrentHashMap();
 
     /**
      * locks access to the routing tale
      */
     private ReadWriteLock routeLock = new ReentrantReadWriteLock();
     private String serverName;
+    private InternalComponentManager componentManager;
 
     public RoutingTableImpl() {
         super("Routing table");
+        componentManager = InternalComponentManager.getInstance();
     }
 
     public void addRoute(JID node, RoutableChannelHandler destination) {
@@ -84,7 +85,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         String resourceJID = node.getResource() == null ? "" : node.getResource();
 
         // Check if the address belongs to a remote server
-        if (!node.getDomain().contains(serverName)) {
+        if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
+                componentManager.getComponent(node.getDomain()) == null) {
             // Authenticate this hostname with the remote server so that the remote server can
             // accept packets from this server.
             OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
@@ -124,7 +126,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public Iterator getRoutes(JID node) {
         // Check if the address belongs to a remote server
-        if (!node.getDomain().contains(serverName)) {
+        if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
+                componentManager.getComponent(node.getDomain()) == null) {
             // Authenticate this hostname with the remote server so that the remote server can
             // accept packets from this server.
             OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
@@ -193,7 +196,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      * @param list  The list to stuff entries into
      * @param table The hashtable who's values should be entered into the list
      */
-    private void getRoutes(LinkedList list, Hashtable table) {
+    private void getRoutes(LinkedList list, Map table) {
         Iterator entryIter = table.values().iterator();
         while (entryIter.hasNext()) {
             Object entry = entryIter.next();

@@ -818,8 +818,8 @@ public class SessionManager extends BasicModule {
     }
 
 
-    public Collection<Session> getSessions() {
-        List<Session> allSessions = new ArrayList<Session>();
+    public Collection<ClientSession> getSessions() {
+        List<ClientSession> allSessions = new ArrayList<ClientSession>();
         copyUserSessions(allSessions);
         copyAnonSessions(allSessions);
         return allSessions;

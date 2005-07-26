@@ -71,6 +71,15 @@ public class ClientSession extends Session {
      */
     private boolean initialized;
 
+    /**
+     * Flag indicating if the user requested to not receive offline messages when sending
+     * an available presence. The user may send a disco request with node
+     * "http://jabber.org/protocol/offline" so that no offline messages are sent to the
+     * user when he becomes online. If the user is connected from many resources then
+     * if one of the sessions stopped the flooding then no session should flood the user.
+     */
+    private boolean offlineFloodStopped = false;
+
     private Presence presence = null;
 
     private int conflictCount = 0;
@@ -388,6 +397,53 @@ public class ClientSession extends Session {
      */
     public void setInitialized(boolean isInit) {
         initialized = isInit;
+    }
+
+    /**
+     * Returns true if the offline messages of the user should be sent to the user when
+     * the user becomes online. If the user sent a disco request with node
+     * "http://jabber.org/protocol/offline" before the available presence then do not
+     * flood the user with the offline messages. If the user is connected from many resources
+     * then if one of the sessions stopped the flooding then no session should flood the user.
+     *
+     * @return true if the offline messages of the user should be sent to the user when the user
+     *         becomes online.
+     */
+    public boolean canFloodOfflineMessages() {
+        for (ClientSession session : sessionManager.getSessions()) {
+            if (session.isOfflineFloodStopped()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the user requested to not receive offline messages when sending
+     * an available presence. The user may send a disco request with node
+     * "http://jabber.org/protocol/offline" so that no offline messages are sent to the
+     * user when he becomes online. If the user is connected from many resources then
+     * if one of the sessions stopped the flooding then no session should flood the user.
+     *
+     * @return true if the user requested to not receive offline messages when sending
+     *         an available presence.
+     */
+    public boolean isOfflineFloodStopped() {
+        return offlineFloodStopped;
+    }
+
+    /**
+     * Sets if the user requested to not receive offline messages when sending
+     * an available presence. The user may send a disco request with node
+     * "http://jabber.org/protocol/offline" so that no offline messages are sent to the
+     * user when he becomes online. If the user is connected from many resources then
+     * if one of the sessions stopped the flooding then no session should flood the user.
+     *
+     * @param offlineFloodStopped if the user requested to not receive offline messages when
+     *        sending an available presence.
+     */
+    public void setOfflineFloodStopped(boolean offlineFloodStopped) {
+        this.offlineFloodStopped = offlineFloodStopped;
     }
 
     /**

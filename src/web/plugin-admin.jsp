@@ -292,14 +292,11 @@
                 <% if (readmeExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-                <% } %>
+                <% } else { %> &nbsp; <% } %>
                 <% if (changelogExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-                <% } %>
-                <% if (!readmeExists && !changelogExists) { %>
-                &nbsp;
-                <% } %>
+                <% } else { %> &nbsp; <% } %>
             </td>
 	        <td width="60%">
 	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;

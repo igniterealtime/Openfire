@@ -11,22 +11,22 @@
 
 package org.jivesoftware.messenger.disco;
 
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.handler.IQHandler;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.messenger.IQHandlerInfo;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
+import org.jivesoftware.messenger.handler.IQHandler;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * IQDiscoInfoHandler is responsible for handling disco#info requests. This class holds a map with
@@ -51,11 +51,13 @@ import org.xmpp.packet.JID;
 public class IQDiscoInfoHandler extends IQHandler {
 
     private HashMap entities = new HashMap();
-    private List serverFeatures = new ArrayList();
+    private List<String> serverFeatures = new ArrayList<String>();
+    private Map<String, DiscoInfoProvider> serverNodeProviders =
+            new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
 
-    private List userIdentities = new ArrayList();
-    private List userFeatures = new ArrayList();
+    private List<Element> userIdentities = new ArrayList<Element>();
+    private List<String> userFeatures = new ArrayList<String>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -142,6 +144,29 @@ public class IQDiscoInfoHandler extends IQHandler {
     }
 
     /**
+     * Sets the DiscoInfoProvider to use when a disco#info packet is sent to the server itself
+     * and the specified node. For instance, if node matches "http://jabber.org/protocol/offline"
+     * then a special DiscoInfoProvider should be use to return information about offline messages.
+     *
+     * @param node the node that the provider will handle.
+     * @param provider the DiscoInfoProvider that will handle disco#info packets sent with the
+     *        specified node.
+     */
+    public void setServerNodeInfoProvider(String node, DiscoInfoProvider provider) {
+        serverNodeProviders.put(node, provider);
+    }
+
+    /**
+     * Removes the DiscoInfoProvider to use when a disco#info packet is sent to the server itself
+     * and the specified node.
+     *
+     * @param node the node that the provider was handling.
+     */
+    public void removeServerNodeInfoProvider(String node) {
+        serverNodeProviders.remove(node);
+    }
+
+    /**
      * Returns the DiscoInfoProvider responsible for providing information about a given entity or
      * null if none was found.
      *
@@ -183,7 +208,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      * @param provider the ServerFeaturesProvider that provides new server features.
      */
     private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
-        for (Iterator it = provider.getFeatures(); it.hasNext();) {
+        for (Iterator<String> it = provider.getFeatures(); it.hasNext();) {
             serverFeatures.add(it.next());
         }
     }
@@ -207,10 +232,13 @@ public class IQDiscoInfoHandler extends IQHandler {
      */
     private DiscoInfoProvider getServerInfoProvider() {
         DiscoInfoProvider discoInfoProvider = new DiscoInfoProvider() {
-            ArrayList identities = new ArrayList();
-            ArrayList features = new ArrayList();
+            ArrayList<Element> identities = new ArrayList<Element>();
 
-            public Iterator getIdentities(String name, String node, JID senderJID) {
+            public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
+                if (node != null && serverNodeProviders.get(node) != null) {
+                    // Redirect the request to the disco info provider of the specified node
+                    return serverNodeProviders.get(node).getIdentities(name, node, senderJID);
+                }
                 if (name == null) {
                     // Answer identity of the server
                     synchronized (identities) {
@@ -232,7 +260,11 @@ public class IQDiscoInfoHandler extends IQHandler {
                 }
             }
 
-            public Iterator getFeatures(String name, String node, JID senderJID) {
+            public Iterator<String> getFeatures(String name, String node, JID senderJID) {
+                if (node != null && serverNodeProviders.get(node) != null) {
+                    // Redirect the request to the disco info provider of the specified node
+                    return serverNodeProviders.get(node).getFeatures(name, node, senderJID);
+                }
                 if (name == null) {
                     // Answer features of the server
                     return serverFeatures.iterator();
@@ -244,6 +276,14 @@ public class IQDiscoInfoHandler extends IQHandler {
             }
 
             public boolean hasInfo(String name, String node, JID senderJID) {
+                if (node != null) {
+                    if (serverNodeProviders.get(node) != null) {
+                        // Redirect the request to the disco info provider of the specified node
+                        return serverNodeProviders.get(node).hasInfo(name, node, senderJID);
+                    }
+                    // Unknown node
+                    return false;
+                }
                 try {
                     // True if it is an info request of the server or of a registered user. We
                     // now support disco of user's bare JIDs
@@ -256,6 +296,10 @@ public class IQDiscoInfoHandler extends IQHandler {
             }
 
             public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+                if (node != null && serverNodeProviders.get(node) != null) {
+                    // Redirect the request to the disco info provider of the specified node
+                    return serverNodeProviders.get(node).getExtendedInfo(name, node, senderJID);
+                }
                 return null;
             }
         };

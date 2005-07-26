@@ -11,24 +11,25 @@
 
 package org.jivesoftware.messenger.disco;
 
-import java.util.*;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.handler.IQHandler;
+import org.jivesoftware.messenger.SessionManager;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.handler.IQHandler;
+import org.jivesoftware.messenger.roster.RosterItem;
+import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * IQDiscoItemsHandler is responsible for handling disco#items requests. This class holds a map with
@@ -56,6 +57,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private HashMap entities = new HashMap();
     private List<Element> serverItems = new ArrayList<Element>();
+    private Map<String, DiscoItemsProvider> serverNodeProviders =
+            new ConcurrentHashMap<String, DiscoItemsProvider>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 
@@ -191,6 +194,29 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     }
 
     /**
+     * Sets the DiscoItemsProvider to use when a disco#items packet is sent to the server itself
+     * and the specified node. For instance, if node matches "http://jabber.org/protocol/offline"
+     * then a special DiscoItemsProvider should be use to return information about offline messages.
+     *
+     * @param node the node that the provider will handle.
+     * @param provider the DiscoItemsProvider that will handle disco#items packets sent with the
+     *        specified node.
+     */
+    public void setServerNodeInfoProvider(String node, DiscoItemsProvider provider) {
+        serverNodeProviders.put(node, provider);
+    }
+
+    /**
+     * Removes the DiscoItemsProvider to use when a disco#items packet is sent to the server itself
+     * and the specified node.
+     *
+     * @param node the node that the provider was handling.
+     */
+    public void removeServerNodeInfoProvider(String node) {
+        serverNodeProviders.remove(node);
+    }
+
+    /**
      * Registers a new disco item for a component. The jid attribute of the item will match the jid
      * of the component and the name should be the name of the component discovered using disco.
      *
@@ -249,6 +275,13 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     private DiscoItemsProvider getServerItemsProvider() {
         DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
             public Iterator<Element> getItems(String name, String node, JID senderJID) {
+                if (node != null) {
+                    // Check if there is a provider for the requested node
+                    if (serverNodeProviders.get(node) != null) {
+                        return serverNodeProviders.get(node).getItems(name, node, senderJID);
+                    }
+                    return null;
+                }
                 if (name == null) {
                     return serverItems.iterator();
                 }

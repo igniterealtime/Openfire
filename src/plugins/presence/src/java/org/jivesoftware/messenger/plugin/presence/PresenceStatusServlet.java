@@ -15,6 +15,7 @@ import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.plugin.PresencePlugin;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.admin.AuthCheckFilter;
 import org.xmpp.packet.Presence;
 
 import javax.servlet.ServletConfig;
@@ -64,6 +65,8 @@ public class PresenceStatusServlet extends HttpServlet {
         dnd = loadResource("/images/user-red-16x16.gif");
         offline = loadResource("/images/user-clear-16x16.gif");
         xa = loadResource("/images/user-yellow-16x16.gif");
+        // Exclude this servlet from requering the user to login
+        AuthCheckFilter.addExclude("presence/status");
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -125,6 +128,8 @@ public class PresenceStatusServlet extends HttpServlet {
         dnd = null;
         offline = null;
         xa = null;
+        // Release the excluded URL
+        AuthCheckFilter.removeExclude("presence/status");
     }
 
     private byte[] loadResource(String path) {

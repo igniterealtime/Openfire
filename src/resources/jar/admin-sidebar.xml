@@ -169,33 +169,28 @@
     <!-- Sessions -->
     <tab id="tab-session" name="${tab.tab-session}" url="session-summary.jsp" description="${tab.tab-session.descr}">
 
-        <!-- Client Sessions -->
-        <sidebar id="sidebar-session" name="${sidebar.client-session}">
+        <!-- Active Sessions -->
+        <sidebar id="sidebar-session" name="${sidebar.active-sessions}">
 
             <item id="session-summary" name="${sidebar.session-summary}"
                     url="session-summary.jsp"
                     description="${sidebar.session-summary.descr}" />
 
-            <item id="user-message" name="${sidebar.user-message}"
-                    url="user-message.jsp"
-                    description="${sidebar.user-message.descr}" />
-        </sidebar>
-
-        <!-- Server Sessions -->
-        <sidebar id="sidebar-session" name="${sidebar.server-session}">
-
             <item id="server-session-summary" name="${sidebar.server-session-summary}"
                     url="server-session-summary.jsp"
                     description="${sidebar.server-session-summary.descr}" />
 
+            <item id="component-session-summary" name="${sidebar.component-session-summary}"
+                                url="component-session-summary.jsp"
+                                description="${sidebar.component-session-summary.descr}" />
         </sidebar>
 
-        <!-- Component Sessions -->
-        <sidebar id="sidebar-session" name="${sidebar.component-session}">
+        <!-- Tools -->
+        <sidebar id="sidebar-tools" name="${sidebar.tools}">
 
-            <item id="component-session-summary" name="${sidebar.component-session-summary}"
-                    url="component-session-summary.jsp"
-                    description="${sidebar.component-session-summary.descr}" />
+            <item id="user-message" name="${sidebar.user-message}"
+                    url="user-message.jsp"
+                    description="${sidebar.user-message.descr}" />
 
         </sidebar>
     </tab>

@@ -11,9 +11,8 @@
 
 package org.jivesoftware.messenger.disco;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.xmpp.packet.JID;
 import org.dom4j.Element;
+import org.xmpp.packet.JID;
 
 import java.util.Iterator;
 
@@ -40,9 +39,7 @@ public interface DiscoItemsProvider {
      * @param node the requested disco node.
      * @param senderJID the XMPPAddress of user that sent the disco items request.
      * @return an Iterator (of Element) with the target entity's items or null if none.
-     * @throws UnauthorizedException if the senderJID is not authorized to discover items.
      */
-    public abstract Iterator<Element> getItems(String name, String node, JID senderJID)
-            throws UnauthorizedException;
+    public abstract Iterator<Element> getItems(String name, String node, JID senderJID);
 
 }

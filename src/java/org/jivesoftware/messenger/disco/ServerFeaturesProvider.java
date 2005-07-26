@@ -36,5 +36,5 @@ public interface ServerFeaturesProvider {
      *
      * @return an Iterator (of String) with the supported features by the server.
      */
-    public abstract Iterator getFeatures();
+    public abstract Iterator<String> getFeatures();
 }

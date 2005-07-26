@@ -808,9 +808,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return items.iterator();
     }
 
-    public Iterator getIdentities(String name, String node, JID senderJID) {
-        // TODO Improve performance by not creating objects each time
-        ArrayList identities = new ArrayList();
+    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
+        ArrayList<Element> identities = new ArrayList<Element>();
         if (name == null && node == null) {
             // Answer the identity of the MUC service
             Element identity = DocumentHelper.createElement("identity");
@@ -850,8 +849,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return identities.iterator();
     }
 
-    public Iterator getFeatures(String name, String node, JID senderJID) {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
+        ArrayList<String> features = new ArrayList<String>();
         if (name == null && node == null) {
             // Answer the features of the MUC service
             features.add("http://jabber.org/protocol/muc");
@@ -945,8 +944,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return null;
     }
 
-    public boolean hasInfo(String name, String node, JID senderJID)
-            throws UnauthorizedException {
+    public boolean hasInfo(String name, String node, JID senderJID) {
         if (name == null && node == node) {
             // We always have info about the MUC service
             return true;
@@ -962,8 +960,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return false;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID)
-            throws UnauthorizedException {
+    public Iterator<Element> getItems(String name, String node, JID senderJID) {
         List<Element> answer = new ArrayList<Element>();
         if (name == null && node == null) {
             Element item;

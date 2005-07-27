@@ -132,9 +132,11 @@ public class ClientSession extends Session {
             // is authorized to connect to the server
             if (!allowedIPs.containsKey(connection.getInetAddress().getHostAddress())) {
                 byte[] address = connection.getInetAddress().getAddress();
-                String range1 = address[0] + "." + address[1] + "." + address[2] + ".*";
-                String range2 = address[0] + "." + address[1] + ".*.*";
-                String range3 = address[0] + ".*.*.*";
+                String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
+                        (address[2] & 0xff) +
+                        ".*";
+                String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+                String range3 = (address[0] & 0xff) + ".*.*.*";
                 if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
                         !allowedIPs.containsKey(range3)) {
                     // Client cannot connect from this IP address so end the stream and

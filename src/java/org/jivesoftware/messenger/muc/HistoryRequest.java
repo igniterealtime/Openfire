@@ -22,6 +22,7 @@ import java.util.TimeZone;
 
 import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveConstants;
 import org.dom4j.Element;
 import org.xmpp.packet.Message;
 
@@ -39,7 +40,7 @@ import org.xmpp.packet.Message;
  */
 public class HistoryRequest {
 
-    private static final DateFormat formatter = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+    private static final DateFormat formatter = new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
     private static final DateFormat delayedFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
     static {
         delayedFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));

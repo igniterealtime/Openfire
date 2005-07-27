@@ -15,19 +15,17 @@ import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
 import org.jivesoftware.messenger.IQHandlerInfo;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.TimeZone;
+import java.util.*;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.xmpp.packet.IQ;
 
 /**
- * Implements the TYPE_IQ jabber:iq:time protocol (time info). Allows
- * Jabber entities to query each other's local time.  The server
- * will respond with its local time.
+ * Implements the TYPE_IQ jabber:iq:time protocol (time info) as
+ * as defined by JEP-0090. Allows Jabber entities to query each
+ * other's local time.  The server will respond with its local time.
  * <p/>
  * <h2>Assumptions</h2>
  * This handler assumes that the time request is addressed to itself.
@@ -44,6 +42,16 @@ import org.xmpp.packet.IQ;
  * @author Iain Shigeoka
  */
 public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
+
+     // todo Make display text match the locale of user (xml:lang support)
+    private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
+    private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.LONG);
+    // UTC and not JEP-0082 time format is used as per the JEP-0090 specification.
+    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+
+    static {
+        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+    }
 
     private Element responseElement;
     private IQHandlerInfo info;
@@ -78,26 +86,11 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         return response;
     }
 
-
-    // todo Make display text match the locale of user (xml:lang support)
-    // #################################################################
-    // Standard formatting according to locale and Jabber specs
-    // #################################################################
-    private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
-    private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.LONG);
-    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-
-    static {
-        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+0"));
-    }
-
     public IQHandlerInfo getInfo() {
         return info;
     }
 
     public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
-        features.add("jabber:iq:time");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:time").iterator();
     }
 }

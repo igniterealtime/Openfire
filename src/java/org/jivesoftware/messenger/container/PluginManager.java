@@ -572,40 +572,43 @@ public class PluginManager {
                     }
                 });
 
-                for (int i = 0; i < dirs.length; i++) {
-                    File dirFile = dirs[i];
-                    // If the plugin hasn't already been started, start it.
-                    if (!plugins.containsKey(dirFile.getName())) {
-                        loadPlugin(dirFile);
-                    }
-                }
-
                 // See if any currently running plugins need to be unloaded
-                // due to its JAR file being deleted (ignore admin plugin).
-                if (plugins.size() > jars.length + 1) {
-                    // Build a list of plugins to delete first so that the plugins
-                    // keyset is modified as we're iterating through it.
-                    List<String> toDelete = new ArrayList<String>();
-                    for (String pluginName : plugins.keySet()) {
-                        if (pluginName.equals("admin")) {
-                            continue;
-                        }
-                        File file = new File(pluginDirectory, pluginName + ".jar");
+                // due to the JAR file being deleted (ignore admin plugin).
+                // Build a list of plugins to delete first so that the plugins
+                // keyset isn't modified as we're iterating through it.
+                List<String> toDelete = new ArrayList<String>();
+                for (File pluginDir : dirs) {
+                    String pluginName = pluginDir.getName();
+                    if (pluginName.equals("admin")) {
+                        continue;
+                    }
+                    File file = new File(pluginDirectory, pluginName + ".jar");
+                    if (!file.exists()) {
+                        file = new File(pluginDirectory, pluginName + ".war");
                         if (!file.exists()) {
                             toDelete.add(pluginName);
                         }
                     }
-                    for (String pluginName : toDelete) {
-                        unloadPlugin(pluginName);
-                        System.gc();
-                        int count = 0;
-                        File dir = new File(pluginDirectory, pluginName);
-                        while (!deleteDir(dir) && count < 5) {
-                            Log.error("Error unloading plugin " + pluginName + ". " +
-                                    "Will attempt again momentarily.");
-                            Thread.sleep(5000);
-                            count++;
-                        }
+                }
+                for (String pluginName : toDelete) {
+                    unloadPlugin(pluginName);
+                    System.gc();
+                    int count = 0;
+                    File dir = new File(pluginDirectory, pluginName);
+                    while (!deleteDir(dir) && count < 5) {
+                        Log.error("Error unloading plugin " + pluginName + ". " +
+                                "Will attempt again momentarily.");
+                        Thread.sleep(5000);
+                        count++;
+                    }
+                }
+
+                // Load all plugins that need to be loaded.
+                for (int i = 0; i < dirs.length; i++) {
+                    File dirFile = dirs[i];
+                    // If the plugin hasn't already been started, start it.
+                    if (dirFile.exists() && !plugins.containsKey(dirFile.getName())) {
+                        loadPlugin(dirFile);
                     }
                 }
             }

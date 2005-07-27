@@ -165,7 +165,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 2, 0, Version.ReleaseStatus.Beta, 2);
+        version = new Version(2, 2, 0, Version.ReleaseStatus.Release_Candidate, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -577,7 +577,7 @@ public class XMPPServer {
      * Makes a best effort attempt to shutdown the server
      */
     private void shutdownServer() {
-        // If we don't have modules then the server has already been shutdown 
+        // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
         }

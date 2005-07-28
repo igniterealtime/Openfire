@@ -44,6 +44,7 @@ public class HistoryRequest {
     private static final DateFormat delayedFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
     static {
         delayedFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     private int maxChars = -1;

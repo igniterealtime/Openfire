@@ -265,7 +265,7 @@ function dodelete(propName) {
                     <%  if (n.indexOf("passwd") > -1 || n.indexOf("password") > -1 || n.indexOf("cookieKey") > -1) { %>
                         <span style="color:#999;"><i>hidden</i></span>
                     <%  } else { %>
-                        <%= ("".equals(v) ? "&nbsp;" : v) %>
+                        <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
                     <%  } %>
                 </div>
             </td>

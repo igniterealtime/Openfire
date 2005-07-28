@@ -302,7 +302,7 @@ public class Launcher {
         frame.pack();
 
         frame.setSize(400, 300);
-        frame.setResizable(false);
+        frame.setResizable(true);
 
         GraphicUtils.centerWindowOnScreen(frame);
 

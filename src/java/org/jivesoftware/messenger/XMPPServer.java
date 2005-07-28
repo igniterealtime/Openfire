@@ -85,6 +85,7 @@ public class XMPPServer {
     private ClassLoader loader;
 
     private PluginManager pluginManager;
+    private InternalComponentManager componentManager;
 
     /**
      * True if in setup mode
@@ -131,8 +132,10 @@ public class XMPPServer {
 
     /**
      * Returns true if the given address is local to the server (managed by this
-     * server domain).
+     * server domain). Return false even if the jid's domain matches a local component's
+     * service JID.
      *
+     * @param jid the JID to check.
      * @return true if the address is a local address to this server.
      */
     public boolean isLocal(JID jid) {
@@ -141,6 +144,24 @@ public class XMPPServer {
             local = true;
         }
         return local;
+    }
+
+    /**
+     * Returns true if the given address does not match the local server hostname and does not
+     * match a component service JID.
+     *
+     * @param jid the JID to check.
+     * @return true if the given address does not match the local server hostname and does not
+     *         match a component service JID.
+     */
+    public boolean isRemote(JID jid) {
+        if (jid != null) {
+            String domain = jid.getDomain();
+            if (!name.equals(domain) && componentManager.getComponent(domain) == null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -175,6 +196,7 @@ public class XMPPServer {
         }
 
         loader = Thread.currentThread().getContextClassLoader();
+        componentManager = InternalComponentManager.getInstance();
 
         initialized = true;
     }

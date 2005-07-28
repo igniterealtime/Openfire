@@ -11,13 +11,13 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.xmpp.packet.Packet;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
@@ -28,9 +28,9 @@ import org.xmpp.packet.Presence;
  */
 public class SocketPacketWriteHandler implements ChannelHandler {
 
+    private XMPPServer server;
     private SessionManager sessionManager;
     private OfflineMessageStrategy messageStrategy;
-    private String serverName = XMPPServer.getInstance().getServerInfo().getName();
     private RoutingTable routingTable;
 
     public SocketPacketWriteHandler(SessionManager sessionManager, RoutingTable routingTable,
@@ -38,13 +38,14 @@ public class SocketPacketWriteHandler implements ChannelHandler {
         this.sessionManager = sessionManager;
         this.messageStrategy = messageStrategy;
         this.routingTable = routingTable;
+        this.server = XMPPServer.getInstance();
     }
 
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();
             // Check if the target domain belongs to a remote server
-            if (recipient != null && !recipient.getDomain().contains(serverName)) {
+            if (server.isRemote(recipient)) {
                 try {
                     // Locate the route to the remote server and ask it to process the packet
                     routingTable.getRoute(recipient).process(packet);

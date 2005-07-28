@@ -94,7 +94,7 @@ public class PresencePlugin implements Plugin {
     public Presence getPresence(String sender, String jid) throws UserNotFoundException {
         JID targetJID = new JID(jid);
         // Check that the sender is not requesting information of a remote server entity
-        if (targetJID.getDomain() == null || !targetJID.getDomain().contains(hostname)) {
+        if (targetJID.getDomain() == null || XMPPServer.getInstance().isRemote(targetJID)) {
             throw new UserNotFoundException("Domain does not matches local server domain");
         }
         if (!hostname.equals(targetJID.getDomain())) {

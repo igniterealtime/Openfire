@@ -305,9 +305,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 component.processPacket(presence);
             }
             else {
-                String serverDomain = server.getServerInfo().getName();
                 // Check if the probee may be hosted by this server
-                if (!probee.getDomain().contains(serverDomain)) {
+                /*String serverDomain = server.getServerInfo().getName();
+                if (!probee.getDomain().contains(serverDomain)) {*/
+                if (server.isRemote(probee)) {
                     // Send the probe presence to the remote server
                     Presence probePresence = new Presence();
                     probePresence.setType(Presence.Type.probe);

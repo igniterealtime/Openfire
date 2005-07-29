@@ -23,8 +23,9 @@ public class XMPPBootServlet extends HttpServlet {
     private Object serverLock = new Object();
 
     public void init(ServletConfig servletConfig) throws ServletException {
-        if (server == null) {
-            synchronized (serverLock) {
+        synchronized (serverLock) {
+            // only start up if it hasn't already...
+            if (XMPPServer.getInstance() == null) {
                 if (server == null) {
                     server = new XMPPServer();
                 }

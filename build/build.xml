@@ -353,16 +353,10 @@
         <mkdir dir="${war.dest.dir}"/>
         <mkdir dir="${war.dest.dir}/build"/>
         <!-- Make a new web.xml file in the build dir -->
-        <loadfile property="startup-def" srcFile="${web.dir}/WEB-INF/web.xml.startup.servlet"/>
-        <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}">
-            <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
-                <filter token="STARTUP-SERVLET" value="${startup-def}"/>
-            </filterset>
-        </copy>
+        <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}"/>
         <!-- Make the war -->
         <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
-            webxml="${war.dest.dir}/build/web.xml"
-            excludes="*.jsp*,WEB-INF/web.xml.startup.servlet">
+            webxml="${war.dest.dir}/build/web.xml">
             <patternset refid="web.sources"/>
             <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
         </war>
@@ -943,7 +937,6 @@
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*"/>
                             <exclude name="WEB-INF/web.xml"/>
-                            <exclude name="WEB-INF/web.xml.startup.servlet"/>
                             <exclude name="WEB-INF/classes/messenger_init.xml"/>
                             <exclude name="WEB-INF/tmp/**/*.*"/>
                             <exclude name="WEB-INF/work/**/*.*"/>

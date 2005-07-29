@@ -63,16 +63,11 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <!-- Uncomment this servlet when starting the server in a webapp -->
-    <!--
     <servlet>
         <servlet-name>XMPPBootServlet</servlet-name>
         <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-    -->
-
-    <!--@@STARTUP-SERVLET@@-->
 
     <!--@@JSPC-SERVLETS@@-->
 

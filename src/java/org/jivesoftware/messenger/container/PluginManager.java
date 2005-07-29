@@ -25,15 +25,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +57,7 @@ public class PluginManager {
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
     private Map<Plugin, List<String>> parentPluginMap;
     private Map<Plugin, String> childPluginMap;
+    private Set<String> devPlugins;
 
     /**
      * Constructs a new plugin manager.
@@ -79,6 +72,7 @@ public class PluginManager {
         pluginDevelopment = new HashMap<Plugin, PluginDevEnvironment>();
         parentPluginMap = new HashMap<Plugin, List<String>>();
         childPluginMap = new HashMap<Plugin, String>();
+        devPlugins = new HashSet<String>();
     }
 
     /**
@@ -250,12 +244,22 @@ public class PluginManager {
 
                     String wrd = webRoot.getTextTrim();
                     File webRootDir = new File(wrd);
+                    if (!webRootDir.exists()) {
+                        // ok, let's try it relative from this plugin dir?
+                        webRootDir = new File(pluginDir, wrd);
+                    }
+
                     if (webRootDir.exists()) {
                         dev.setWebRoot(webRootDir);
                     }
 
                     String cd = classesDir.getTextTrim();
                     File classes = new File(cd);
+                    if (!classes.exists()) {
+                        // ok, let's try it relative from this plugin dir?
+                        classes = new File(pluginDir, cd);
+                    }
+
                     if (classes.exists()) {
                         dev.setClassesDir(classes);
                         pluginLoader.addURL(classes.getAbsoluteFile().toURL());
@@ -516,6 +520,19 @@ public class PluginManager {
 
         public void run() {
             try {
+                // look for plugin directories specified as a system property
+                String pluginDirs = System.getProperty("pluginDirs");
+                if (pluginDirs != null) {
+                    StringTokenizer st = new StringTokenizer(pluginDirs, ", ");
+                    while (st.hasMoreTokens()) {
+                        String dir = st.nextToken();
+                        if (!devPlugins.contains(dir)) {
+                            loadPlugin(new File(dir));
+                            devPlugins.add(dir);
+                        }
+                    }
+                }
+
                 File[] jars = pluginDirectory.listFiles(new FileFilter() {
                     public boolean accept(File pathname) {
                         String fileName = pathname.getName().toLowerCase();

@@ -186,7 +186,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 2, 0, Version.ReleaseStatus.Release_Candidate, 1);
+        version = new Version(2, 2, 0, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

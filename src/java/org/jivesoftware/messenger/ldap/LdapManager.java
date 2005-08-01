@@ -194,6 +194,11 @@ public class LdapManager {
             Log.debug("\t initialContextFactory: " + initialContextFactory);
             Log.debug("\t connectionPoolEnabled: " + connectionPoolEnabled);
             Log.debug("\t autoFollowReferrals: " + followReferrals);
+            Log.debug("\t groupNameField: " + groupNameField);
+            Log.debug("\t groupMemberField: " + groupMemberField);
+            Log.debug("\t groupDescriptionField: " + groupDescriptionField);
+            Log.debug("\t posixEnabled: " + posixEnabled);
+            Log.debug("\t groupSearchFilter: " + groupSearchFilter);
         }
     }
 
@@ -830,7 +835,7 @@ public class LdapManager {
      * Sets the field used to list members within a group.
      * Value of groupMemberField defaults to "member".
      *
-     * @param the field used to list members within a group.
+     * @param groupMemberField the field used to list members within a group.
      */
     public void setGroupmemberField(String groupMemberField) {
         this.groupMemberField = groupMemberField;
@@ -851,7 +856,7 @@ public class LdapManager {
      * Sets the field used to describe a group.
      * Value of groupDescriptionField defaults to "description".
      *
-     * @param the field used to describe a group.
+     * @param groupDescriptionField the field used to describe a group.
      */
     public void setGroupDescriptionField(String groupDescriptionField) {
         this.groupDescriptionField = groupDescriptionField;
@@ -872,7 +877,7 @@ public class LdapManager {
      * Sets the field used to tell if ldap server is posix.
      * Value of posixEnabled defaults to false.
      *
-     * @param the field used to tell if ldap server is posix.
+     * @param posixEnabled the field used to tell if ldap server is posix.
      */
     public void setPosixEnabled(boolean posixEnabled) {
         this.posixEnabled = posixEnabled;
@@ -894,7 +899,7 @@ public class LdapManager {
      * Sets the field used as the search filter when searching for groups.
      * Value of groupSearchFilter defaults "(groupMemberField=*)".
      *
-     * @param the field used as the search filter when searching for groups.
+     * @param groupSearchFilter the field used as the search filter when searching for groups.
      */
     public void setGroupSearchFilter(String groupSearchFilter) {
         this.groupSearchFilter = groupSearchFilter;

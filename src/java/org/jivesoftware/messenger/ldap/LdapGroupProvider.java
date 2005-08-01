@@ -21,6 +21,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Enumeration;
+import java.util.Vector;
 import java.text.MessageFormat;
 
 import javax.naming.Name;
@@ -41,6 +43,7 @@ public class LdapGroupProvider implements GroupProvider
     private UserManager userManager;
     private int groupCount;
     private long expiresStamp;
+    private String[] standardAttributes;
 
     /**
      * Constructor of the LdapGroupProvider class.
@@ -52,6 +55,10 @@ public class LdapGroupProvider implements GroupProvider
         userManager = UserManager.getInstance();
         groupCount = -1;
         expiresStamp = System.currentTimeMillis();
+        standardAttributes = new String[3];
+        standardAttributes[0] = manager.getGroupNameField();
+        standardAttributes[1] = manager.getGroupDescriptionField();
+        standardAttributes[2] = manager.getGroupMemberField();
     }
 
     /**
@@ -105,7 +112,7 @@ public class LdapGroupProvider implements GroupProvider
         String filter = MessageFormat.format(manager.getGroupSearchFilter(),"*");
         String searchFilter = "(&"+filter+"("+
                               manager.getGroupNameField()+"="+group+"))";
-        Collection<Group> groups = getGroupBasedOnFilter(searchFilter);
+        Collection<Group> groups = populateGroups(searchForGroups(searchFilter,standardAttributes));
         if (groups.size() > 1)
             return null; //if multiple groups found return null
         for (Group g : groups)
@@ -158,40 +165,18 @@ public class LdapGroupProvider implements GroupProvider
         if (manager.isDebugEnabled()) {
             Log.debug("Trying to get the number of groups in the system.");
         }
-        DirContext ctx = null;
-        NamingEnumeration answer = null;
+
         String searchFilter = MessageFormat.format(manager.getGroupSearchFilter(),"*");
-        try
+        String returningAttributes[]= { manager.getGroupNameField() };
+        NamingEnumeration<SearchResult> answer = searchForGroups(searchFilter,returningAttributes);
+        for (; answer.hasMoreElements(); count++)
         {
-           ctx = manager.getContext();
-           if (manager.isDebugEnabled()) {
-              Log.debug("Starting LDAP search...");
-              Log.debug("Using groupSearchFilter: "+searchFilter);
-           }
-
-           // Search for the dn based on the groupname.
-           SearchControls ctrls = new SearchControls();
-           ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-           answer = ctx.search("",searchFilter,ctrls);
-
-           if (manager.isDebugEnabled()) {
-              Log.debug("... search finished");
-           }
-        }
-        catch (Exception e)
-        {
-           if (manager.isDebugEnabled())
-              Log.debug("Error while searching for groups.",e);
-        }
-        try
-        {
-           while (answer.hasMoreElements())
+           try
            {
-              count++;
               answer.next();
            }
+           catch (Exception e) { }
         }
-        catch (Exception e){ }
 
         this.groupCount = count;
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
@@ -206,33 +191,43 @@ public class LdapGroupProvider implements GroupProvider
     public Collection<Group> getGroups()
     {
         String filter = MessageFormat.format(manager.getGroupSearchFilter(),"*");
-        return getGroupBasedOnFilter(filter);
+        return populateGroups(searchForGroups(filter,standardAttributes));
     }
 
     /**
      * Will return a collecion of groups in the system
-     * based on the start index and end index.  Useful when
-     * displaying a certain number of groups per page
-     * on a webpage.
+     * based on the start index and number of groups desired.  
+     * Useful when displaying a certain number of groups 
+     * per page on a webpage.
      *
      * @param start starting index
-     * @param end ending index
+     * @param num number of groups you want
      * @return collection of groups.
      */
-    public Collection<Group> getGroups(int start, int end)
+    public Collection<Group> getGroups(int start, int num)
     {
         ArrayList<Group> returnCollection = new ArrayList<Group>();
-    	Collection<Group> groups = getGroups();
-        Iterator<Group> it = groups.iterator();
-        for (int i = 0; i < groups.size(); i++)
+
+        // get an enumeration of all groups in the system
+
+        String searchFilter = MessageFormat.format(manager.getGroupSearchFilter(),"*");
+        NamingEnumeration<SearchResult> answer = searchForGroups(searchFilter,standardAttributes);
+
+        //place all groups that are wanted into an enumeration
+
+        Vector<SearchResult> v = new Vector<SearchResult>();
+        for (int i = 1; answer.hasMoreElements() && i <= (start+num); i++)
         {
-           Group g = it.next();
-           if (i >= start && i <= end)
-              returnCollection.add(g);
-           if (i > end)
-              break;
+           try
+           {
+              SearchResult sr = answer.next();
+              if (i >= start)
+                 v.add(sr);
+           }
+           catch (Exception e) { }
         }
-        return returnCollection;
+
+        return populateGroups(v.elements());
     }
 
     /**
@@ -259,7 +254,7 @@ public class LdapGroupProvider implements GroupProvider
         }
 
         String filter = MessageFormat.format(manager.getGroupSearchFilter(),username);
-        return getGroupBasedOnFilter(filter);
+        return populateGroups(searchForGroups(filter,standardAttributes));
     }
 
     /**
@@ -317,22 +312,22 @@ public class LdapGroupProvider implements GroupProvider
         return true;
     }
 
+
     /**
      * An auxilary method used to perform LDAP queries based on a
      * provided LDAP search filter.
      *
-     * @return a collection of groups.
+     * @return an enumeration of SearchResult.
      * @param searchFilter LDAP search filter used to query.
      */
-    public Collection<Group> getGroupBasedOnFilter (String searchFilter)
+    private NamingEnumeration<SearchResult> searchForGroups (String searchFilter, 
+                                                             String[] returningAttributes)
     {
-       TreeMap<String,Group> groups = new TreeMap<String,Group>();
-       boolean debug = Log.isDebugEnabled();
-       if (debug) {
+       if (manager.isDebugEnabled()) {
            Log.debug("Trying to find all groups in the system.");
        }
        DirContext ctx = null;
-       NamingEnumeration answer = null;
+       NamingEnumeration<SearchResult> answer = null;
        try
        {
           ctx = manager.getContext();
@@ -343,35 +338,59 @@ public class LdapGroupProvider implements GroupProvider
 
           // Search for the dn based on the groupname.
           SearchControls searchControls = new SearchControls();
-          String returnedAtts[]= { manager.getGroupNameField(),
-                                   manager.getGroupDescriptionField(),
-                                   manager.getGroupMemberField() };
-          searchControls.setReturningAttributes(returnedAtts);
+          searchControls.setReturningAttributes(returningAttributes);
           searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
           answer = ctx.search("",searchFilter,searchControls);
 
           if (manager.isDebugEnabled()) {
              Log.debug("... search finished");
-             Log.debug("Starting to populate groups with users.");
           }
        }
        catch (Exception e)
        {
           if (manager.isDebugEnabled())
              Log.debug("Error while searching for groups.",e);
-          return groups.values();
+       }
+       return answer;
+    }
+
+    /**
+     * An auxilary method used to populate LDAP groups based on a
+     * provided LDAP search result.
+     *
+     * @return a collection of groups.
+     * @param answer LDAP search result.
+     */
+    private Collection<Group> populateGroups (Enumeration<SearchResult> answer)
+    {
+       if (manager.isDebugEnabled()) {
+          Log.debug("Starting to populate groups with users.");
+       }
+
+       TreeMap<String,Group> groups = new TreeMap<String,Group>();
+
+       DirContext ctx = null;
+       try
+       {
+          ctx = manager.getContext();
+       }
+       catch (Exception e)
+       {
+          return new ArrayList<Group>();
        }
 
        SearchControls ctrls = new SearchControls();
        ctrls.setReturningAttributes( new String[]{manager.getUsernameField()} );
        ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
+       String userSearchFilter = MessageFormat.format(manager.getSearchFilter(),"*");
+
        while (answer.hasMoreElements())
        {
           String name = "";
           try
           {
-             Attributes a = (((SearchResult)answer.next()).getAttributes());
+             Attributes a = (((SearchResult)answer.nextElement()).getAttributes());
              String description;
              try
              {
@@ -393,17 +412,20 @@ public class LdapGroupProvider implements GroupProvider
                     try
                     {
                        // Get the CN using LDAP
-                       Name ldapname = new LdapName(userName);
+                       LdapName ldapname = new LdapName(userName);
                        String ldapcn = ldapname.get(ldapname.size()-1);
 
                        // We have to do a new search to find the username field
 
-                       NamingEnumeration usrAnswer = ctx.search("",ldapcn,ctrls);
+                       String combinedFilter = "(&("+ldapcn+")"+userSearchFilter+")";
+                       NamingEnumeration usrAnswer = ctx.search("",combinedFilter,ctrls);
                        if (usrAnswer.hasMoreElements())
                        {
                     	   userName = (String)((SearchResult)usrAnswer.next()).getAttributes().get(
                                    manager.getUsernameField()).get();
                        }
+                       else
+                          throw new UserNotFoundException();
                     }
                     catch (Exception e)
                     {

@@ -540,6 +540,10 @@ public class PluginManager {
                     }
                 });
 
+                if(jars == null){
+                    return;
+                }
+                
                 for (int i = 0; i < jars.length; i++) {
                     File jarFile = jars[i];
                     String pluginName = jarFile.getName().substring(0,

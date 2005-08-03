@@ -420,7 +420,18 @@ public class Group implements Cacheable {
             pstmt.setString(1, name);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                properties.put(rs.getString(1), rs.getString(2));
+                String key = rs.getString(1);
+                String value = rs.getString(2);
+                if (key != null) {
+                    if (value == null) {
+                        value = "";
+                        Log.warn("There is a group property whose value is null of Group: " + name);
+                    }
+                    properties.put(key, value);
+                }
+                else {
+                    Log.warn("There is a group property whose key is null of Group: " + name);
+                }
             }
             rs.close();
         }

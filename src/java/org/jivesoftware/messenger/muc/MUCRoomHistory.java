@@ -11,16 +11,16 @@
 
 package org.jivesoftware.messenger.muc;
 
-import java.text.SimpleDateFormat;
+import org.dom4j.Element;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.FastDateFormat;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import java.util.Date;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.TimeZone;
-
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.JID;
-import org.dom4j.Element;
 
 /**
  * Represent the data model for one <code>MUCRoom</code> history. Including chat transcript,
@@ -30,10 +30,8 @@ import org.dom4j.Element;
  */
 public final class MUCRoomHistory {
 
-    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-    static {
-        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+0"));
-    }
+    private static final FastDateFormat UTC_FORMAT = FastDateFormat
+            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
 
     private MUCRoom room;
 

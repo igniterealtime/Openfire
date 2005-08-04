@@ -7,11 +7,12 @@
  */
 package org.jivesoftware.util.log.format;
 
+import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.log.ContextMap;
 import org.jivesoftware.util.log.LogEvent;
 import org.jivesoftware.util.log.Priority;
+
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Stack;
 
@@ -117,7 +118,7 @@ public class PatternFormatter implements Formatter {
 
     private PatternRun m_formatSpecification[];
 
-    private SimpleDateFormat m_simpleDateFormat;
+    private FastDateFormat m_simpleDateFormat;
     private final Date m_date = new Date();
 
     /**
@@ -512,7 +513,7 @@ public class PatternFormatter implements Formatter {
         else {
             synchronized (m_date) {
                 if (null == m_simpleDateFormat) {
-                    m_simpleDateFormat = new SimpleDateFormat(format);
+                    m_simpleDateFormat = FastDateFormat.getInstance(format);
                 }
                 m_date.setTime(time);
                 return m_simpleDateFormat.format(m_date);

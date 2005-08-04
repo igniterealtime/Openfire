@@ -7,8 +7,9 @@
  */
 package org.jivesoftware.util.log.output.io.rotate;
 
+import org.jivesoftware.util.FastDateFormat;
+
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -31,7 +32,7 @@ public class UniqueFileStrategy
     private File m_baseFile;
     private File m_currentFile;
 
-    private SimpleDateFormat m_formatter;
+    private FastDateFormat m_formatter;
 
     private String m_suffix;
 
@@ -41,7 +42,7 @@ public class UniqueFileStrategy
 
     public UniqueFileStrategy(final File baseFile, String pattern) {
         this(baseFile);
-        m_formatter = new SimpleDateFormat(pattern);
+        m_formatter = FastDateFormat.getInstance(pattern);
     }
 
     public UniqueFileStrategy(final File baseFile, String pattern, String suffix) {

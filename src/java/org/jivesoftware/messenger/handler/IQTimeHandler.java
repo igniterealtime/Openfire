@@ -11,16 +11,19 @@
 
 package org.jivesoftware.messenger.handler;
 
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.messenger.IQHandlerInfo;
+import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
+import org.jivesoftware.util.FastDateFormat;
 import org.xmpp.packet.IQ;
+
+import java.text.DateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.TimeZone;
 
 /**
  * Implements the TYPE_IQ jabber:iq:time protocol (time info) as
@@ -47,11 +50,8 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
     private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
     private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.LONG);
     // UTC and not JEP-0082 time format is used as per the JEP-0090 specification.
-    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-
-    static {
-        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+0"));
-    }
+    private static final FastDateFormat UTC_FORMAT = FastDateFormat
+            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
 
     private Element responseElement;
     private IQHandlerInfo info;
@@ -90,7 +90,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         return info;
     }
 
-    public Iterator getFeatures() {
+    public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:time").iterator();
     }
 }

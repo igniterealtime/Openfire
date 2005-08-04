@@ -23,7 +23,6 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -54,7 +53,7 @@ public class OfflineMessageStore extends BasicModule {
         "DELETE FROM jiveOffline WHERE username=? AND creationDate=?";
 
     private Cache sizeCache;
-    private SimpleDateFormat dateFormat;
+    private FastDateFormat dateFormat;
 
     /**
      * Returns the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
@@ -72,8 +71,7 @@ public class OfflineMessageStore extends BasicModule {
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = new SimpleDateFormat("yyyyMMdd'T'hh:mm:ss");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'hh:mm:ss", TimeZone.getTimeZone("UTC"));
         sizeCache = new Cache("Offline Message Size Cache", 1024*100, JiveConstants.HOUR*12);
     }
 

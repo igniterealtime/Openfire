@@ -11,13 +11,6 @@
 
 package org.jivesoftware.messenger.muc.spi;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.*;
@@ -31,18 +24,19 @@ import org.jivesoftware.messenger.forms.DataForm;
 import org.jivesoftware.messenger.forms.FormField;
 import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.muc.HistoryStrategy;
-import org.jivesoftware.messenger.muc.MUCRole;
-import org.jivesoftware.messenger.muc.MUCRoom;
-import org.jivesoftware.messenger.muc.MUCUser;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
-import org.jivesoftware.messenger.muc.NotAllowedException;
+import org.jivesoftware.messenger.muc.*;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.xmpp.packet.*;
 import org.xmpp.component.ComponentManager;
+import org.xmpp.packet.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -63,10 +57,8 @@ import org.xmpp.component.ComponentManager;
 public class MultiUserChatServerImpl extends BasicModule implements MultiUserChatServer,
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
 
-    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-    static {
-        dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));
-    }
+    private static final FastDateFormat dateFormatter = FastDateFormat
+            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
     /**
      * The time to elapse between clearing of idle chat users.
      */
@@ -455,8 +447,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void removeChatRoom(String roomName) {
         final MUCRoom room = rooms.remove(roomName.toLowerCase());
         if (room != null) {
-            final long chatLength = room.getChatLength();
-            totalChatTime += chatLength;
+            totalChatTime += room.getChatLength();
         }
     }
 
@@ -750,7 +741,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         super.start();
         // Add the route to this service
         routingTable.addRoute(getAddress(), this);
-        ArrayList params = new ArrayList();
+        ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
@@ -777,8 +768,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
     }
 
-    public Iterator getItems() {
-        ArrayList items = new ArrayList();
+    public Iterator<DiscoServerItem> getItems() {
+        ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
 
         items.add(new DiscoServerItem() {
             public String getJID() {

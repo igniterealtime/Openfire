@@ -23,10 +23,9 @@ import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 
-import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**

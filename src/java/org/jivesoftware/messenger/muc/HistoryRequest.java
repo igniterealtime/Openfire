@@ -67,7 +67,9 @@ public class HistoryRequest {
             if (history.attribute("since") != null) {
                 try {
                     // parse utc into Date
-                    this.since = formatter.parse(history.attributeValue("since"));
+                    synchronized (formatter) {
+                        this.since = formatter.parse(history.attributeValue("since"));
+                    }
                 }
                 catch(ParseException pe) {
                     Log.error("Error parsing date from history management", pe);
@@ -170,7 +172,11 @@ public class HistoryRequest {
                     delayInformation = message.getChildElement("x", "jabber:x:delay");
                     try {
                         // Get the date when the historic message was sent
-                        Date delayedDate = delayedFormatter.parse(delayInformation.attributeValue("stamp"));
+                        Date delayedDate = null;
+                        synchronized (delayedFormatter) {
+                            delayedDate = delayedFormatter
+                                    .parse(delayInformation.attributeValue("stamp"));
+                        }
                         if (getSince() != null && delayedDate.before(getSince())) {
                             // Stop collecting history since we have exceded a limit
                             break;

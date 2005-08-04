@@ -37,9 +37,12 @@
         String d = input.substring(0,19);
         // try to parse it
         try {
-            Date date = formatter.parse(d);
             StringBuffer buf = new StringBuffer(input.length());
-            buf.append("<span class=\"date\" title=\"").append(formatter.format(date)).append("\">");
+            synchronized (formatter) {
+                Date date = formatter.parse(d);
+                buf.append("<span class=\"date\" title=\"").append(formatter.format(date))
+                        .append("\">");
+            }
             buf.append(d).append("</span>");
             buf.append(input.substring(19,input.length()));
             return buf.toString();

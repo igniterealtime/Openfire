@@ -78,6 +78,12 @@ public class RemoteServerManager {
      *         local server.
      */
     public static boolean canAccess(String domain) {
+        // If s2s is disabled then it is not possible to send packets to remote servers or
+        // receive packets from remote servers
+        if (!JiveGlobals.getBooleanProperty("xmpp.server.socket.active", true)) {
+            return false;
+        }
+
         // By default there is no permission defined for the XMPP entity
         Permission permission = null;
 

@@ -30,13 +30,14 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 /**
- * <p>Defines the provider methods required for creating, reading, updating and deleting roster items.</p>
- * <p/>
- * <p>Rosters are another user resource accessed via the user or chatbot's long ID. A user/chatbot may have
- * zero or more roster items and each roster item may have zero or more groups. Each roster item is
- * additionaly keyed on a XMPP jid. In most cases, the entire roster will be read in from memory and manipulated
- * or sent to the user. However some operations will need to retrive specific roster items rather than the
- * entire roster.</p>
+ * Defines the provider methods required for creating, reading, updating and deleting roster
+ * items.<p>
+ *
+ * Rosters are another user resource accessed via the user or chatbot's long ID. A user/chatbot
+ * may have zero or more roster items and each roster item may have zero or more groups. Each
+ * roster item is additionaly keyed on a XMPP jid. In most cases, the entire roster will be read
+ * in from memory and manipulated or sent to the user. However some operations will need to retrive
+ * specific roster items rather than the entire roster.
  *
  * @author Iain Shigeoka
  */
@@ -70,15 +71,17 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Creates a new roster item for the given user (optional operation).</p>
-     * <p/>
-     * <p><b>Important!</b> The item passed as a parameter to this method is strictly a convenience for passing all
-     * of the data needed for a new roster item. The roster item returned from the method will be cached by Messenger.
-     * In some cases, the roster item passed in will be passed back out. However, if an implementation may
-     * return RosterItems as a separate class (for example, a RosterItem that directly accesses the backend
-     * storage, or one that is an object in an object database).
-     * <p/>
-     * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
+     * Creates a new roster item for the given user (optional operation).<p>
+     *
+     * <b>Important!</b> The item passed as a parameter to this method is strictly a convenience
+     * for passing all of the data needed for a new roster item. The roster item returned from the
+     * method will be cached by Messenger. In some cases, the roster item passed in will be passed
+     * back out. However, if an implementation may return RosterItems as a separate class
+     * (for example, a RosterItem that directly accesses the backend storage, or one that is an
+     * object in an object database).<p>
+     *
+     * If you don't want roster items edited through messenger, throw
+     * UnsupportedOperationException.
      *
      * @param username the username of the user/chatbot that owns the roster item
      * @param item the settings for the roster item to create
@@ -104,7 +107,7 @@ public class RosterItemProvider {
             pstmt.executeUpdate();
 
             item.setID(rosterID);
-            insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
+            insertGroups(rosterID, item.getGroups().iterator(), con);
         }
         catch (SQLException e) {
             throw new UserAlreadyExistsException(item.getJid().toBareJID());
@@ -119,13 +122,14 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Update the roster item in storage with the information contained in the given item (optional operation).</p>
-     * <p/>
-     * <p>If you don't want roster items edited through messenger, throw UnsupportedOperationException.</p>
+     * Update the roster item in storage with the information contained in the given item
+     * (optional operation).<p>
+     *
+     * If you don't want roster items edited through messenger, throw UnsupportedOperationException.
      *
      * @param username the username of the user/chatbot that owns the roster item
      * @param item   The roster item to update
-     * @throws org.jivesoftware.messenger.user.UserNotFoundException         If no entry could be found to update
+     * @throws UserNotFoundException If no entry could be found to update
      */
     public void updateItem(String username, RosterItem item) throws UserNotFoundException {
         Connection con = null;
@@ -141,13 +145,15 @@ public class RosterItemProvider {
             pstmt.setString(4, item.getNickname());
             pstmt.setLong(5, rosterID);
             pstmt.executeUpdate();
+            // Close now the statement (do not wait to be GC'ed)
+            pstmt.close();
 
             // Delete old group list
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
             pstmt.setLong(1, rosterID);
             pstmt.executeUpdate();
 
-            insertGroups(rosterID, item.getGroups().iterator(), pstmt, con);
+            insertGroups(rosterID, item.getGroups().iterator(), con);
 
         }
         catch (SQLException e) {
@@ -162,9 +168,10 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Delete the roster item with the given itemJID for the user (optional operation).</p>
-     * <p/>
-     * <p>If you don't want roster items deleted through messenger, throw UnsupportedOperationException.</p>
+     * Delete the roster item with the given itemJID for the user (optional operation).<p>
+     *
+     * If you don't want roster items deleted through messenger, throw
+     * UnsupportedOperationException.
      *
      * @param username the long ID of the user/chatbot that owns the roster item
      * @param rosterItemID The roster item to delete
@@ -230,7 +237,7 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Obtain a count of the number of roster items available for the given user.</p>
+     * Obtain a count of the number of roster items available for the given user.
      *
      * @param username the username of the user/chatbot that owns the roster items
      * @return The number of roster items available for the user
@@ -261,17 +268,17 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Retrieve an iterator of RosterItems for the given user.</p>
-     * <p/>
-     * <p>This method will commonly be called when a user logs in. The data will be cached
+     * Retrieve an iterator of RosterItems for the given user.<p>
+     *
+     * This method will commonly be called when a user logs in. The data will be cached
      * in memory when possible. However, some rosters may be very large so items may need
      * to be retrieved from the provider more frequently than usual for provider data.
      *
      * @param username the username of the user/chatbot that owns the roster items
      * @return An iterator of all RosterItems owned by the user
      */
-    public Iterator getItems(String username) {
-        LinkedList itemList = new LinkedList();
+    public Iterator<RosterItem> getItems(String username) {
+        LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -322,20 +329,20 @@ public class RosterItemProvider {
     }
 
     /**
-     * <p>Insert the groups into the given roster item.</p>
+     * Insert the groups into the given roster item.
      *
      * @param rosterID The roster ID of the item the groups belong to
      * @param iter     An iterator over the group names to insert
      */
-    private void insertGroups(long rosterID, Iterator iter, PreparedStatement pstmt,
-            Connection con) throws SQLException
+    private void insertGroups(long rosterID, Iterator<String> iter, Connection con) throws SQLException
     {
+        PreparedStatement pstmt = null;
         try {
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM_GROUPS);
             pstmt.setLong(1, rosterID);
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);
-                pstmt.setString(3, (String)iter.next());
+                pstmt.setString(3, iter.next());
                 try {
                     pstmt.executeUpdate();
                 }

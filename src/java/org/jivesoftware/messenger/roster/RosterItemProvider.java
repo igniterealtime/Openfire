@@ -187,6 +187,8 @@ public class RosterItemProvider {
 
             pstmt.setLong(1, rosterItemID);
             pstmt.executeUpdate();
+            // Close now the statement (do not wait to be GC'ed)
+            pstmt.close();
 
             // Remove roster
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM);
@@ -280,15 +282,19 @@ public class RosterItemProvider {
     public Iterator<RosterItem> getItems(String username) {
         LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
         Connection con = null;
+        Connection con2 = null;
         PreparedStatement pstmt = null;
+        PreparedStatement gstmt = null;
         try {
+            con2 = DbConnectionManager.getConnection();
+            gstmt = con2.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+            // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
-            // TODO: this code must be refactored ASAP. Not legal to have two open pstmts
-            // TODO: on many databases.
             while (rs.next()) {
+                // Create a new RosterItem (ie. user contact) from the stored information
                 RosterItem item = new RosterItem(rs.getLong(2),
                         new JID(rs.getString(1)),
                         RosterItem.SubType.getTypeFromInt(rs.getInt(3)),
@@ -296,24 +302,17 @@ public class RosterItemProvider {
                         RosterItem.RecvType.getTypeFromInt(rs.getInt(5)),
                         rs.getString(6),
                         null);
-                Connection con2 = DbConnectionManager.getConnection();
-                PreparedStatement gstmt = null;
+                // Load the groups for the loaded contact
                 ResultSet gs = null;
-                try {
-                    gstmt = con2.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
-                    gstmt.setLong(1, item.getID());
-                    gs = gstmt.executeQuery();
-                    while (gs.next()) {
-                        item.getGroups().add(gs.getString(1));
-                    }
-                    itemList.add(item);
+                gstmt.setLong(1, item.getID());
+                gs = gstmt.executeQuery();
+                while (gs.next()) {
+                    item.getGroups().add(gs.getString(1));
                 }
-                finally {
-                    try { if (gstmt != null) { gstmt.close(); } }
-                    catch (Exception e) { Log.error(e); }
-                    try { if (con2 != null) { con2.close(); } }
-                    catch (Exception e) { Log.error(e); }
-                }
+                // Close the result set
+                gs.close();
+                // Add the loaded RosterItem (ie. user contact) to the result
+                itemList.add(item);
             }
         }
         catch (SQLException e) {
@@ -323,6 +322,10 @@ public class RosterItemProvider {
             try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (gstmt != null) { gstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con2 != null) { con2.close(); } }
             catch (Exception e) { Log.error(e); }
         }
         return itemList.iterator();

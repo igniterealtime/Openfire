@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="3.1.4">
+<install4j version="3.2.1">
   <directoryPresets config="" />
-  <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" lzmaCompression="true" keepModificationTimes="false" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
@@ -47,7 +47,7 @@
           <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false">
+      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
         <searchSequence>
           <registry />
           <envVar name="JAVA_HOME" />
@@ -70,7 +70,7 @@
           <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.messenger.launcher.Launcher" vmParameters="&quot;-Dappdir=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="" allowBetaVM="false">
+      <java mainClass="org.jivesoftware.messenger.launcher.Launcher" vmParameters="&quot;-Dappdir=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="" allowBetaVM="false" jdkOnly="false">
         <searchSequence>
           <registry />
           <envVar name="JAVA_HOME" />
@@ -93,7 +93,7 @@
           <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false">
+      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
         <searchSequence>
           <registry />
           <envVar name="JAVA_HOME" />
@@ -116,7 +116,7 @@
           <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="-DmessengerHome=$app_home -Dmessenger.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false">
+      <java mainClass="org.jivesoftware.messenger.starter.ServerStarter" vmParameters="" arguments="-DmessengerHome=$app_home -Dmessenger.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
         <searchSequence>
           <registry />
           <envVar name="JAVA_HOME" />

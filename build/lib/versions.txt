@@ -10,7 +10,7 @@ jetty.jar            | Jetty 5.1.2
 jasper-compiler.jar  | Jetty 5.1.2pre0
 jasper-runtime.jar   | Jetty 5.1.2pre0
 servlet.jar          | Jetty 5.1.2pre0
-dom4j.jar            | 1.6.0
+dom4j.jar            | 1.6.1
 jaxen.jar            | 1.1 beta 4 (from DOM4J 1.5.2)
 junit.jar            | 3.8.1
 ant-contrib.jar      | 1.0b1

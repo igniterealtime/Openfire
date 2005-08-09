@@ -520,7 +520,7 @@ public class PluginManager {
 
         public void run() {
             try {
-                // look for plugin directories specified as a system property
+                // Look for extra plugin directories specified as a system property.
                 String pluginDirs = System.getProperty("pluginDirs");
                 if (pluginDirs != null) {
                     StringTokenizer st = new StringTokenizer(pluginDirs, ", ");
@@ -540,7 +540,7 @@ public class PluginManager {
                     }
                 });
 
-                if(jars == null){
+                if (jars == null) {
                     return;
                 }
                 
@@ -593,6 +593,12 @@ public class PluginManager {
                     }
                 });
 
+                // Turn the list of JAR/WAR files into a set so that we can do lookups.
+                Set<String> jarSet = new HashSet<String>();
+                for (File file : jars) {
+                    jarSet.add(file.getName().toLowerCase());
+                }
+
                 // See if any currently running plugins need to be unloaded
                 // due to the JAR file being deleted (ignore admin plugin).
                 // Build a list of plugins to delete first so that the plugins
@@ -603,10 +609,8 @@ public class PluginManager {
                     if (pluginName.equals("admin")) {
                         continue;
                     }
-                    File file = new File(pluginDirectory, pluginName + ".jar");
-                    if (!file.exists()) {
-                        file = new File(pluginDirectory, pluginName + ".war");
-                        if (!file.exists()) {
+                    if (!jarSet.contains(pluginName + ".jar")) {
+                        if (!jarSet.contains(pluginName + ".war")) {
                             toDelete.add(pluginName);
                         }
                     }

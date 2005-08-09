@@ -51,7 +51,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     public IQOfflineMessagesHandler() {
         super("Flexible Offline Message Retrieval Handler");
         info = new IQHandlerInfo("offline", NAMESPACE);
-        dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'hh:mm:ss.SSS'Z'");
+        dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
@@ -117,7 +117,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+        ArrayList<String> features = new ArrayList<String>();
         features.add(NAMESPACE);
         return features.iterator();
     }

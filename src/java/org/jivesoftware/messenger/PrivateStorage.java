@@ -11,19 +11,22 @@
 
 package org.jivesoftware.messenger;
 
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.dom4j.Element;
 import org.dom4j.Document;
+import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
-import java.sql.*;
-import java.sql.Connection;
-import java.io.StringWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
@@ -47,7 +50,10 @@ public class PrivateStorage extends BasicModule {
 
     private boolean enabled = JiveGlobals.getBooleanProperty("xmpp.privateStorageEnabled", true);
 
-    SAXReader xmlReader = new SAXReader();
+    /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
 
     /**
      * Constructs a new PrivateStore instance.
@@ -143,7 +149,10 @@ public class PrivateStorage extends BasicModule {
         if (enabled) {
             Connection con = null;
             PreparedStatement pstmt = null;
+            SAXReader xmlReader = null;
             try {
+                // Get a sax reader from the pool
+                xmlReader = xmlReaders.take();
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
@@ -161,6 +170,8 @@ public class PrivateStorage extends BasicModule {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
+                // Return the sax reader to the pool
+                if (xmlReader != null) xmlReaders.add(xmlReader);
                 try { if (pstmt != null) { pstmt.close(); } }
                 catch (Exception e) { Log.error(e); }
                 try { if (con != null) { con.close(); } }
@@ -168,5 +179,19 @@ public class PrivateStorage extends BasicModule {
             }
         }
         return data;
+    }
+
+    public void start() throws IllegalStateException {
+        super.start();
+        // Initialize the pool of sax readers
+        for (int i=0; i<10; i++) {
+            xmlReaders.add(new SAXReader());
+        }
+    }
+
+    public void stop() {
+        super.stop();
+        // Clean up the pool of sax readers
+        xmlReaders.clear();
     }
 }

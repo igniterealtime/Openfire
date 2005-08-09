@@ -14,15 +14,17 @@ package org.jivesoftware.messenger.vcard;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 
+import java.io.StringReader;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.io.StringReader;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Default implementation of the VCardProvider interface, which reads and writes data
@@ -41,28 +43,46 @@ public class DefaultVCardProvider implements VCardProvider {
     private static final String INSERT_PROPERTY =
         "INSERT INTO jiveVCard (username, value) VALUES (?, ?)";
 
-    private SAXReader saxReader = new SAXReader();
+    /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
 
+
+    public DefaultVCardProvider() {
+        super();
+        // Initialize the pool of sax readers
+        for (int i=0; i<10; i++) {
+            xmlReaders.add(new SAXReader());
+        }
+    }
 
     public Element loadVCard(String username) {
         synchronized (username.intern()) {
             Element vCardElement = null;
             java.sql.Connection con = null;
             PreparedStatement pstmt = null;
+            SAXReader xmlReader = null;
             try {
+                // Get a sax reader from the pool
+                xmlReader = xmlReaders.take();
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PROPERTIES);
                 pstmt.setString(1, username);
                 ResultSet rs = pstmt.executeQuery();
                 while (rs.next()) {
                     vCardElement =
-                            saxReader.read(new StringReader(rs.getString(1))).getRootElement();
+                            xmlReader.read(new StringReader(rs.getString(1))).getRootElement();
                 }
             }
             catch (Exception e) {
                 Log.error(e);
             }
             finally {
+                // Return the sax reader to the pool
+                if (xmlReader != null) {
+                    xmlReaders.add(xmlReader);
+                }
                 try { if (pstmt != null) { pstmt.close(); } }
                 catch (Exception e) { Log.error(e); }
                 try { if (con != null) { con.close(); } }

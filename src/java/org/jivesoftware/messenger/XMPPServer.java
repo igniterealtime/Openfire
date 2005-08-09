@@ -27,6 +27,7 @@ import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.messenger.spi.*;
 import org.jivesoftware.messenger.container.Module;
 import org.jivesoftware.messenger.container.PluginManager;
+import org.jivesoftware.messenger.container.AdminConsolePlugin;
 import org.jivesoftware.messenger.net.MulticastDNSService;
 import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.util.Version;
@@ -186,7 +187,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 2, 0, Version.ReleaseStatus.Release, -1);
+        version = new Version(2, 2, 1, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -199,6 +200,41 @@ public class XMPPServer {
         componentManager = InternalComponentManager.getInstance();
 
         initialized = true;
+    }
+
+    public void finishSetup() {
+        if (!setupMode) {
+            return;
+        }
+        // Make sure that setup finished correctly.
+        if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
+            setupMode = false;
+        }
+        if (!setupMode) {
+            try {
+                // Workaround while admin is a plugin.
+                ((AdminConsolePlugin)pluginManager.getPlugin("admin")).restartListeners();
+
+                verifyDataSource();
+                // First load all the modules so that modules may access other modules while
+                // being initialized
+                loadModules();
+                // Initize all the modules
+                initModules();
+                // Start all the modules
+                startModules();
+
+                startDate = new Date();
+                stopDate = null;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                Log.error(e);
+                System.out.println(LocaleUtils.getLocalizedString("startup.error"));
+                shutdownServer();
+            }
+        }
+
     }
 
     public void start() {

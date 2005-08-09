@@ -24,6 +24,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -64,14 +66,17 @@ public class OfflineMessageStore extends BasicModule {
         return XMPPServer.getInstance().getOfflineMessageStore();
     }
 
-    private SAXReader saxReader = new SAXReader();
+    /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
 
     /**
      * Constructs a new offline message store.
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'hh:mm:ss", TimeZone.getTimeZone("UTC"));
+        dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
         sizeCache = new Cache("Offline Message Size Cache", 1024*100, JiveConstants.HOUR*12);
     }
 
@@ -145,7 +150,10 @@ public class OfflineMessageStore extends BasicModule {
         List<OfflineMessage> messages = new ArrayList<OfflineMessage>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        SAXReader xmlReader = null;
         try {
+            // Get a sax reader from the pool
+            xmlReader = xmlReaders.take();
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE);
             pstmt.setString(1, username);
@@ -154,7 +162,7 @@ public class OfflineMessageStore extends BasicModule {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
                 OfflineMessage message = new OfflineMessage(creationDate,
-                        saxReader.read(new StringReader(msgXML)).getRootElement());
+                        xmlReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
@@ -177,6 +185,8 @@ public class OfflineMessageStore extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
+            // Return the sax reader to the pool
+            if (xmlReader != null) xmlReaders.add(xmlReader);
             try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
@@ -197,7 +207,10 @@ public class OfflineMessageStore extends BasicModule {
         OfflineMessage message = null;
         Connection con = null;
         PreparedStatement pstmt = null;
+        SAXReader xmlReader = null;
         try {
+            // Get a sax reader from the pool
+            xmlReader = xmlReaders.take();
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
@@ -207,7 +220,7 @@ public class OfflineMessageStore extends BasicModule {
                 String msgXML = rs.getString(1);
                 message =
                         new OfflineMessage(creationDate,
-                                saxReader.read(new StringReader(msgXML)).getRootElement());
+                                xmlReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
@@ -221,6 +234,8 @@ public class OfflineMessageStore extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
+            // Return the sax reader to the pool
+            if (xmlReader != null) xmlReaders.add(xmlReader);
             try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
@@ -350,5 +365,19 @@ public class OfflineMessageStore extends BasicModule {
             catch (Exception e) { Log.error(e); }
         }
         return size;
+    }
+
+    public void start() throws IllegalStateException {
+        super.start();
+        // Initialize the pool of sax readers
+        for (int i=0; i<10; i++) {
+            xmlReaders.add(new SAXReader());
+        }
+    }
+
+    public void stop() {
+        super.stop();
+        // Clean up the pool of sax readers
+        xmlReaders.clear();
     }
 }

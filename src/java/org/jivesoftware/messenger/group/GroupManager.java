@@ -152,6 +152,7 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
+        // TODO: add caching
         return provider.getGroupCount();
     }
 
@@ -161,6 +162,7 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
+        // TODO: add caching
         return provider.getGroups();
     }
 
@@ -179,6 +181,7 @@ public class GroupManager {
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
+        // TODO: add caching
         return provider.getGroups(startIndex, numResults);
     }
 

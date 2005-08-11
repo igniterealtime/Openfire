@@ -207,7 +207,7 @@ public class ImportExportPlugin implements Plugin {
 			Collection<RosterItem> roster = user.getRoster().getRosterItems();
 			for (RosterItem ri : roster) {
 				Element itemElement = rosterElement.addElement("Item");
-				itemElement.addAttribute("jid", ri.getJid().toString());
+				itemElement.addAttribute("jid", ri.getJid().toBareJID());
 				itemElement.addAttribute("askstatus", String.valueOf(ri.getAskStatus().getValue()));
 				itemElement.addAttribute("recvstatus", String.valueOf(ri.getRecvStatus().getValue()));
 				itemElement.addAttribute("substatus", String.valueOf(ri.getSubStatus().getValue()));

@@ -36,7 +36,7 @@ Choose your database from the list below for setup details:
 <ul>
 	<li> <a href="#mysql">MySQL</a>
 	<li> <a href="#oracle">Oracle</a>
-	<li> <a href="#sqlserver2000">Microsoft SQLServer</a>
+	<li> <a href="#sqlserver">Microsoft SQLServer</a>
 	<li> <a href="#postgres">PostgreSQL</a>
 	<li> <a href="#db2">IBM DB2</a>
       <li> <a href="#hsql">HSQL db (Hypersonic)</a>
@@ -135,10 +135,12 @@ Choose your database from the list below for setup details:
 	That will import the schema file. Your database is now setup.
 </ul>
 
-<p><h2><a name="sqlserver2000">SQL Server 2000</a></h2><p>
+<p><h2><a name="sqlserver">SQL Server</a></h2><p>
 
-<ul>	
-	<b>JDBC Drivers</b><p>
+<ul>
+    <p><b>SQL Server 2000</b></p>
+    <b>JDBC Drivers</b><p>
+
 
     Microsoft provides a <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=07287b11-0502-461a-b138-2aa54bfdc03a&DisplayLang=en">free JDBC driver</a> that works with Jive Messenger.
     After downloading and extracting the drivers, place <tt>msbase.jar</tt>,
@@ -172,8 +174,27 @@ Choose your database from the list below for setup details:
 		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
 			when prompted.
    </ol>
-	 
-	 <p>Note: if you are using SQL Server 7, the Open Source jTDS drivers should
+
+    <p><b>SQL Server 2005</b></p>
+
+
+    A JDBC driver for SQL Server 2005 is <a href="http://www.microsoft.com/sql/downloads/2005/jdbc.mspx">available
+    from Microsoft</a>. After downloading and extracting the drivers, place <tt>sqljdbc.jar</tt>
+    in the <tt>lib/</tt> directory of your Jive Messenger installation. Use the following values
+    in the Jive Messenger web-based setup tool:<p>
+
+    	<ul>
+		<li>driver -- <tt>com.microsoft.sqlserver.jdbc.SQLServerDriver</tt>
+		<li>server -- <tt>jdbc:sqlserver://[HOST_NAME]:[PORT_NUMBER]/database=[DB_NAME]</tt>
+	</ul>
+	<p>
+	where [HOST_NAME] is the host name or IP address of your database server,
+    and [PORT_NUMBER] is the port that SQLServer is listening on (normally 1433)
+    and [DB_NAME] is the name of the database (this parameter is optional).
+
+    <p><b>SQL Server 7</b></p>
+
+     <p>Note: if you are using SQL Server 7, the Open Source jTDS drivers should
 	 be used instead of the Microsoft JDBC drivers. Download the jTDS driver from 
    <a href="http://jtds.sourceforge.net/">http://jtds.sourceforge.net/</a>
 	 and place the jtds-1.0.2.jar (name may be different depending on version

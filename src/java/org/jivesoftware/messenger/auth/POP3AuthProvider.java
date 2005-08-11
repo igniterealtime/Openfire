@@ -19,10 +19,22 @@ import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import javax.mail.Store;
 import javax.mail.Session;
 import javax.mail.NoSuchProviderException;
+import java.util.Properties;
 
 /**
  * An AuthProvider that authenticates using a POP3 server. It will automatically create
- * local user accounts as needed. The properties to configure the provider are as follows:
+ * local user accounts as needed. To enable this auth provider, edit the XML config file
+ * file and set:
+ *
+ * <pre>
+ * &lt;provider&gt;
+ *     &lt;auth&gt;
+ *         &lt;className&gt;org.jivesoftware.messenger.auth.POP3AuthProvider&lt;/className&gt;
+ *     &lt;/auth&gt;
+ * &lt;/provider&gt;
+ * </pre>
+ *
+ * The properties to configure the provider are as follows:
  *
  * <ul>
  *      <li>pop3.host -- <i>(required)</i> the name (or IP) of the POP3 server.
@@ -33,7 +45,9 @@ import javax.mail.NoSuchProviderException;
  *              full email address for authentication (foo@example.com) rather than just
  *              a username (foo). The default value is false.
  *      <li>pop3.ssl -- true if an SSL connection to the POP3 server should be used. The default
- *              value is false.
+ *              is false.
+ *      <li>pop3.debug -- true if debugging output for the POP3 connection should be enabled. The
+ *              default is false.
  *      <li>pop3.authCache.enabled -- true if authentication checks should be cached locally.
  *              This will decrease load on the POP3 server if users continually authenticate.
  *              The default value is false.
@@ -53,6 +67,7 @@ public class POP3AuthProvider implements AuthProvider {
     private int port = -1;
     private boolean useSSL = false;
     private boolean authRequiresDomain = false;
+    private boolean debugEnabled;
 
     /**
      * Initialiazes the POP3AuthProvider with values from the global config file.
@@ -74,9 +89,25 @@ public class POP3AuthProvider implements AuthProvider {
             throw new IllegalArgumentException("pop3.host is null or empty");
         }
 
+        debugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.debug")).booleanValue();
+
         domain = JiveGlobals.getXMLProperty("pop3.domain");
 
         port = JiveGlobals.getXMLProperty("pop3.port", useSSL ? 995 : 110);
+
+        if (Log.isDebugEnabled()) {
+            Log.debug("Created new POP3AuthProvider instance, fields:");
+            Log.debug("\t host: " + host);
+            Log.debug("\t port: " + port);
+            Log.debug("\t domain: " + domain);
+            Log.debug("\t useSSL: " + useSSL);
+            Log.debug("\t authRequiresDomain: " + authRequiresDomain);
+            Log.debug("\t authCacheEnabled: " + (authCache != null));
+            if (authCache != null) {
+                Log.debug("\t authCacheSize: " + authCache.getCacheSize());
+                Log.debug("\t authCacheMaxLifetime: " + authCache.getMaxLifetime());
+            }
+        }
     }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
@@ -94,7 +125,9 @@ public class POP3AuthProvider implements AuthProvider {
                 }
             }
 
-        Session session = Session.getDefaultInstance(System.getProperties());
+        Properties mailProps = new Properties();
+        mailProps.setProperty("mail.debug", String.valueOf(debugEnabled));
+        Session session = Session.getInstance(mailProps, null);
         Store store;
         try {
             store = session.getStore(useSSL ? "pop3s" : "pop3");
@@ -140,6 +173,7 @@ public class POP3AuthProvider implements AuthProvider {
         catch (UserNotFoundException unfe) {
             String email = username + "@" + (domain!=null?domain:host);
             try {
+                Log.debug("Automatically creating new user account for " + username);
                 // Create user; use a random password for better safety in the future.
                 userManager.createUser(username, StringUtils.randomString(8), null, email);
             }

@@ -45,7 +45,6 @@ import org.xmpp.packet.JID;
  */
 public class ImportExportPlugin implements Plugin {
 	private UserManager userManager;
-    private PluginManager pluginManager;
     private UserProvider provider;
     
     private String serverName;
@@ -79,12 +78,10 @@ public class ImportExportPlugin implements Plugin {
     }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        pluginManager = manager;
     }
 
     public void destroyPlugin() {
         userManager = null;
-        pluginManager = null;
         provider = null;
         serverName = null;
         exportDirectory = null;
@@ -210,7 +207,7 @@ public class ImportExportPlugin implements Plugin {
 			Collection<RosterItem> roster = user.getRoster().getRosterItems();
 			for (RosterItem ri : roster) {
 				Element itemElement = rosterElement.addElement("Item");
-				itemElement.addAttribute("jid", removeDoman(ri.getJid()));
+				itemElement.addAttribute("jid", ri.getJid().toString());
 				itemElement.addAttribute("askstatus", String.valueOf(ri.getAskStatus().getValue()));
 				itemElement.addAttribute("recvstatus", String.valueOf(ri.getRecvStatus().getValue()));
 				itemElement.addAttribute("substatus", String.valueOf(ri.getSubStatus().getValue()));
@@ -284,7 +281,7 @@ public class ImportExportPlugin implements Plugin {
                             groups.add(group.getText());
                         }
                         
-                        rosterItems.add(new RosterItem(new JID(jid + "@" + serverName),
+                        rosterItems.add(new RosterItem(new JID(jid),
                                         RosterItem.SubType.getTypeFromInt(Integer.parseInt(substatus)),
                                         RosterItem.AskType.getTypeFromInt(Integer.parseInt(askstatus)),
                                         RosterItem.RecvType.getTypeFromInt(Integer.parseInt(recvstatus)),
@@ -316,8 +313,11 @@ public class ImportExportPlugin implements Plugin {
                 RosterItem ri = (RosterItem) rosterIter.next();
                 
                 try {
-                    userManager.getUser(removeDoman(ri.getJid()));
-                    rosterItemProvider.createItem(userName, ri);                    
+                    // If the contact is a local user then check that the user exists
+                    if (serverName.equals(ri.getJid().getDomain())) {
+                        userManager.getUser(removeDoman(ri.getJid()));
+                    }
+                    rosterItemProvider.createItem(userName, ri);
                 }
                 catch (UserNotFoundException  e) {
                     Log.info("User '" + removeDoman(ri.getJid()) + "' not found, will not be added to '" + userName + "' roster.");
@@ -330,13 +330,13 @@ public class ImportExportPlugin implements Plugin {
         
         return duplicateUsers;
      }
-    
+
     private static String removeDoman(JID jid) {
         StringTokenizer tokens = new StringTokenizer(jid.toBareJID(), "@");
         if (tokens.hasMoreTokens()) {
             return tokens.nextToken();
         }
-        
+
         return null;
     }
 }

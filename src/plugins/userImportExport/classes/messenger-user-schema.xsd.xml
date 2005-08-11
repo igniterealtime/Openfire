@@ -11,7 +11,7 @@
 	<xs:element name="User">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element ref="Jid" use="required"/>
+				<xs:element ref="Username" use="required"/>
 				<xs:element ref="Password" use="required"/>
 				<xs:element ref="Email"/>
 				<xs:element ref="Name"/>
@@ -21,7 +21,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>	
-	<xs:element name="Jid" type="xs:string"/>
+	<xs:element name="Username" type="xs:string"/>
 	<xs:element name="Password" type="xs:string"/>
 	<xs:element name="Email" type="xs:string"/>
 	<xs:element name="Name" type="xs:string"/>

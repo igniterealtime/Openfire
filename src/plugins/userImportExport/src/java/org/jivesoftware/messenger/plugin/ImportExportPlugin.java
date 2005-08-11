@@ -173,7 +173,7 @@ public class ImportExportPlugin implements Plugin {
 //            } else {
 //            	userName = "";
 //            }
-            userElement.addElement("Jid").addText(userName);            
+            userElement.addElement("Username").addText(userName);            
 			
 			try {
                 userElement.addElement("Password").addText(provider.getPassword(user.getUsername()));
@@ -250,7 +250,7 @@ public class ImportExportPlugin implements Plugin {
 				
 				String nameElement = userElement.getName();
 				
-				if ("Jid".equals(nameElement)) {
+				if ("Username".equals(nameElement)) {
 					userName = userElement.getText();                    
                 }
                 else if ("Password".equals(nameElement)) {

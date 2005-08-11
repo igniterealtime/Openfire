@@ -61,6 +61,8 @@ import javax.mail.internet.*;
  *          password used to connect to the smtp server. Default is no password.
  *      <li><tt>mail.smtp.ssl</tt> -- an optional property to set whether to use
  *          SSL to connect to the smtp server or not. Default is false.
+ *      <li><tt>mail.debugEnabled</tt> -- true if debug information should written out.
+ *          Default is false.
  * </ul>
  */
 public class EmailService {

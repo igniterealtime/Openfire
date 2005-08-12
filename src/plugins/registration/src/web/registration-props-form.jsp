@@ -188,6 +188,8 @@ function addEmailContact() {
 <legend>Registration Settings</legend>
    <div>
    
+   <p>Enable registration features using the checkboxes below.</p>
+   
    <% if (ParamUtils.getBooleanParameter(request, "settingsSaved")) { %>
    
       <div class="jive-success">
@@ -210,7 +212,7 @@ function addEmailContact() {
       <tbody>
          <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Please enter and save a valid group name before enabling automatic group adding.</td>
+            <td class="jive-icon-label">Please enter and save a valid group name in the Default Group section at the bottom of this page before enabling automatic group adding.</td>
          </tr>
       </tbody>
       </table>

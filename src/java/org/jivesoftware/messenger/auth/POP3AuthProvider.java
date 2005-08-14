@@ -23,7 +23,7 @@ import java.util.Properties;
 
 /**
  * An AuthProvider that authenticates using a POP3 server. It will automatically create
- * local user accounts as needed. To enable this auth provider, edit the XML config file
+ * local user accounts as needed. To enable this provider, edit the XML config file
  * file and set:
  *
  * <pre>
@@ -31,6 +31,9 @@ import java.util.Properties;
  *     &lt;auth&gt;
  *         &lt;className&gt;org.jivesoftware.messenger.auth.POP3AuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
+ *     &lt;user&gt;
+ *         &lt;className&gt;org.jivesoftware.messenger.user.POP3UserProvider&lt;/className&gt;
+ *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>
  *
@@ -73,23 +76,22 @@ public class POP3AuthProvider implements AuthProvider {
      * Initialiazes the POP3AuthProvider with values from the global config file.
      */
     public POP3AuthProvider() {
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authCache.enabled")).booleanValue()) {
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authCache.enabled"))) {
             int maxSize = JiveGlobals.getXMLProperty("pop3.authCache.size", 512*1024);
             long maxLifetime = (long)JiveGlobals.getXMLProperty("pop3.authCache.maxLifetime",
-								(int)JiveConstants.HOUR * 1);
+								(int)JiveConstants.HOUR);
             authCache = new Cache("POP3 Auth Cache", maxSize, maxLifetime);
         }
 
-        useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl")).booleanValue();
-        authRequiresDomain = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authRequiresDomain")
-                ).booleanValue();
+        useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl"));
+        authRequiresDomain = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authRequiresDomain"));
 
         host = JiveGlobals.getXMLProperty("pop3.host");
         if (host == null || host.length() < 1) {
             throw new IllegalArgumentException("pop3.host is null or empty");
         }
 
-        debugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.debug")).booleanValue();
+        debugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.debug"));
 
         domain = JiveGlobals.getXMLProperty("pop3.domain");
 
@@ -157,7 +159,8 @@ public class POP3AuthProvider implements AuthProvider {
         try {
             store.close();
         }
-        catch(Exception e) {
+        catch (Exception e) {
+            // Ignore.
         }
 
         // If cache is enabled, add the item to cache.
@@ -175,10 +178,13 @@ public class POP3AuthProvider implements AuthProvider {
             try {
                 Log.debug("Automatically creating new user account for " + username);
                 // Create user; use a random password for better safety in the future.
-                userManager.createUser(username, StringUtils.randomString(8), null, email);
+                // Note that we have to go to the user provider directly -- because the
+                // provider is read-only, UserManager will usually deny access to createUser.
+                UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
+                        null, email);
             }
             catch (UserAlreadyExistsException uaee) {
-
+                // Ignore.
             }
         }
     }

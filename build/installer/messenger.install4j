@@ -213,7 +213,7 @@
       <variables />
     </win32Archive>
   </mediaSets>
-  <buildIds buildAll="true">
+  <buildIds buildAll="false">
     <mediaSet refId="31" />
   </buildIds>
 </install4j>

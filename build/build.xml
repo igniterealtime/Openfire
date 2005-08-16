@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <!--
-    $RCSfile$
-    $Revision$
+    $RCSfile: build.xml,v $
+    $Revision: 1.113 $
     $Date$
 
     This software is published under the terms of the GNU Public License (GPL),
@@ -642,6 +642,8 @@
         <!-- Copy the license -->
         <copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
         <copy todir="${release.src.out.dir}" file="${license.file.path}/LICENSE.html"/>
+        <mkdir dir="${release.out.dir}/logs" />
+        <touch file="${release.out.dir}/logs/stderr.out" />
 
         <!-- Copy docs -->
         <copy todir="${release.out.dir}/documentation">

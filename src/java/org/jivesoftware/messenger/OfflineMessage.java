@@ -32,9 +32,9 @@ public class OfflineMessage extends Message {
     }
 
     /**
-     * Returns the data when the offline message was stored in the database.
+     * Returns the date when the offline message was stored in the database.
      *
-     * @return
+     * @return the date the offline message was stored.
      */
     public Date getCreationDate() {
         return creationDate;

@@ -586,7 +586,8 @@
             <fileset dir="${webapp.dest.dir}"/>
         </copy>
         <!-- Copy help files -->
-        <unzip src="${src.dir}/help/help.zip" dest="${prepare.out.dir}/plugins/admin/webapp" />
+        <available file="${src.dir}/help/help.zip" property="help.exists" />
+        <antcall target="-extract-help" />
         <!-- Copy in tag library support -->
         <copy todir="${prepare.out.dir}/lib">
             <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
@@ -601,6 +602,10 @@
             <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
         </copy>
 
+    </target>
+
+    <target name="-extract-help" if="help.exists">
+        <unzip src="${src.dir}/help/help.zip" dest="${prepare.out.dir}/plugins/admin/webapp" />
     </target>
 
     <!-- release =============================================================================== -->

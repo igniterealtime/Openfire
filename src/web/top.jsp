@@ -48,7 +48,7 @@
                 helpPage = "index.htm";
             }
         %>
-        window.open('help/<%= helpPage %>','helpWindow',
+        window.open('/help/<%= helpPage %>','helpWindow',
             'width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
     }
     //-->
@@ -69,7 +69,7 @@
             <tr>
                 <td>
                     <a href="#" onclick="helpwin();return false;"
-                     ><img src="images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
+                     ><img src="/images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
                     &nbsp;
                 </td>
                 <td class="info">

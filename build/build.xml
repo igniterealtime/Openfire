@@ -2,7 +2,7 @@
 
 <!--
     $RCSfile: build.xml,v $
-    $Revision: 1.113 $
+    $Revision$
     $Date$
 
     This software is published under the terms of the GNU Public License (GPL),
@@ -122,6 +122,9 @@
     <property name="installer.release_root_path" value="${release.dest.dir}"/>
 
     <property name="license.file.path" value="${docs.dir}/dist"/>
+
+    <!-- For auto-running and debugging -->
+    <property name="debug" value="false" />
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->

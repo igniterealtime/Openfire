@@ -22,3 +22,4 @@ standard.jar         | Jakarta standard taglib 1.1.2
 xpp3.jar             | XPP_3 1.1.3.4.M
 whack.jar            | April-26-2005
 jmdns.jar            | 1.0 RC1
+shaj.jar             | 0.5

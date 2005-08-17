@@ -32,6 +32,27 @@
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /><%= (info.getTitle() != null ? (": "+info.getTitle()) : "") %></title>
     <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
     <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
+    <script language="JavaScript" type="text/javascript">
+    <!-- // code for window popups
+    function helpwin() {
+        <%
+            // Get the help page as a request parameter or a request attribute:
+            String helpPage = null;
+            if (request.getParameter("helpPage") != null) {
+                helpPage = request.getParameter("helpPage");
+            }
+            if (helpPage == null && request.getAttribute("jive.helpPage") != null) {
+                helpPage = request.getAttribute("jive.helpPage").toString();
+            }
+            if (helpPage == null) {
+                helpPage = "index.htm";
+            }
+        %>
+        window.open('help/<%= helpPage %>','helpWindow',
+            'width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
+    }
+    //-->
+    </script>
 </head>
 
 <body id="jive-body">
@@ -47,10 +68,8 @@
             <table cellpadding="0" cellspacing="0" border="0">
             <tr>
                 <td>
-                    <%--
                     <a href="#" onclick="helpwin();return false;"
                      ><img src="images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
-                    --%>
                     &nbsp;
                 </td>
                 <td class="info">

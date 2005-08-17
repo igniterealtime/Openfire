@@ -585,12 +585,14 @@
         <copy todir="${prepare.out.dir}/plugins/admin/webapp">
             <fileset dir="${webapp.dest.dir}"/>
         </copy>
+        <!-- Copy help files -->
+        <unzip src="${src.dir}/help/help.zip" dest="${prepare.out.dir}/plugins/admin/webapp" />
         <!-- Copy in tag library support -->
         <copy todir="${prepare.out.dir}/lib">
             <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
         </copy>
         <!-- Copy in pre-compiled JSP jar -->
-        <copy todir="${prepare.out.dir}/plugins/admin/webapp/WEB-INF/lib">
+        <copy todir="${prepare.out.dir}/plugins/admin/webapp/WEB-INF/lib" overwrite="${overwrite}">
             <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}"/>
         </copy>
         <!-- Copy in jasper runtime jar -->

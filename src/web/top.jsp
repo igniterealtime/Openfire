@@ -45,8 +45,9 @@
                 helpPage = request.getAttribute("jive.helpPage").toString();
             }
         %>
-        window.open('<%= request.getContextPath() %>/help/index.htm<%= (helpPage != null ? "#"+helpPage : "") %>',
+        var newwin = window.open('<%= request.getContextPath() %>/help/index.htm<%= (helpPage != null ? "#"+helpPage : "") %>',
             'helpWindow','width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
+        newwin.focus();
     }
     //-->
     </script>

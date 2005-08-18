@@ -779,7 +779,7 @@ public class DbConnectionManager {
         //   "REM" is Oracle
         //   "/*" is SQLServer
         if (line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
-                line.startsWith("REM") || line.startsWith("/*"))
+                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"))
         {
             return false;
         }

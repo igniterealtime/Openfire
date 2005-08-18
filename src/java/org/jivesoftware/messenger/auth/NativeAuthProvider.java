@@ -57,6 +57,10 @@ import java.lang.reflect.Field;
  *      the PAM module "other" will be used.
  * </ul>
  *
+ * For more information about configuring the domain value and other aspects of Shaj,
+ * please see: <a href="http://opensource.cenqua.com/shaj/doc.html">
+ * http://opensource.cenqua.com/shaj/doc.html</a>.
+ *
  * @author Matt Tucker
  */
 public class NativeAuthProvider implements AuthProvider {

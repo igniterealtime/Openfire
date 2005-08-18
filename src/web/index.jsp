@@ -60,8 +60,7 @@
     pageinfo.setPageID("server-settings");
 %>
 
-<%@ include file="top.jsp" %>
-
+<jsp:include page="top.jsp" flush="true" />
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

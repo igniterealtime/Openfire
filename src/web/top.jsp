@@ -44,12 +44,9 @@
             if (helpPage == null && request.getAttribute("jive.helpPage") != null) {
                 helpPage = request.getAttribute("jive.helpPage").toString();
             }
-            if (helpPage == null) {
-                helpPage = "index.htm";
-            }
         %>
-        window.open('/help/<%= helpPage %>','helpWindow',
-            'width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
+        window.open('<%= request.getContextPath() %>/help/index.htm<%= (helpPage != null ? "#"+helpPage : "") %>',
+            'helpWindow','width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
     }
     //-->
     </script>
@@ -69,7 +66,7 @@
             <tr>
                 <td>
                     <a href="#" onclick="helpwin();return false;"
-                     ><img src="/images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
+                     ><img src="images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
                     &nbsp;
                 </td>
                 <td class="info">

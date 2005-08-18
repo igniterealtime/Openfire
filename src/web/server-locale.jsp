@@ -67,8 +67,9 @@
     pageinfo.setPageID("server-locale");
 %>
 
-<%@ include file="top.jsp" %>
-
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="edit_server_properties.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

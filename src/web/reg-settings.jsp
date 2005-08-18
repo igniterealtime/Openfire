@@ -32,7 +32,9 @@
     pageinfo.setPageID("server-reg-and-login");
 %>
 
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="manage_registration_and_login_settings.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters

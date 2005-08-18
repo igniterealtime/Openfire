@@ -31,7 +31,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-db.jsp"));
     pageinfo.setPageID("server-db");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="view_database_connection_properties.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get metadata about the database

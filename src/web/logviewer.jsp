@@ -203,7 +203,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "logviewer.jsp?log=" + log));
     pageinfo.setPageID("server-logs");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="use_the_server_logs.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>

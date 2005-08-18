@@ -36,7 +36,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "offline-messages.jsp"));
     pageinfo.setPageID("server-offline-messages");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="manage_offline_messages.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <c:set var="success" />

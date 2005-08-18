@@ -60,7 +60,9 @@
     pageinfo.setPageID("server-settings");
 %>
 
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="about_the_server.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

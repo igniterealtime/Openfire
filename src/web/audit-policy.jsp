@@ -34,7 +34,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "audit-policy.jsp"));
     pageinfo.setPageID("server-audit-policy");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="set_server_traffic_auditing_policy.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 <script language="JavaScript" type="text/javascript">
 function openWin(el) {

@@ -35,7 +35,9 @@
     pageinfo.setPageID("server-session-conflict");
 %>
 
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="set_the_server_resource_conflict_policy.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters

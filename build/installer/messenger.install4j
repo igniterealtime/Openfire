@@ -10,7 +10,7 @@
     <variables>
       <variable name="VERSION_MAJOR" value="2" />
       <variable name="VERSION_MINOR" value="2" />
-      <variable name="VERSION_REVISION" value="0" />
+      <variable name="VERSION_REVISION" value="1" />
       <variable name="APP_NAME" value="Jive Messenger" />
       <variable name="APP_SHORT_NAME" value="jive_messenger" />
       <variable name="PRODUCT_NAME" value="messenger" />
@@ -19,7 +19,7 @@
       <variable name="RELEASE_DIR" value="%APP_SHORT_NAME%" />
       <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
       <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
-      <variable name="FILE_PREFIX" value="" />
+      <variable name="FILE_PREFIX" value="%APP_SHORT_NAME%" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
       <variable name="UNIX_INSTALL_DIR" value="jive_messenger" />
       <variable name="WINDOWS_INSTALL_DIR" value="Jive Messenger" />
@@ -181,7 +181,10 @@
         <launcher id="22" />
       </selectedLaunchers>
       <messageSet language="English" />
-      <exclude />
+      <exclude>
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
+      </exclude>
       <variables />
       <customScriptLines />
     </linuxRPM>
@@ -191,7 +194,6 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
-        <entry location="bin/extra" launcher="false" />
         <entry location="bin/messenger.bat" launcher="false" />
         <entry location="bin/messenger.sh" launcher="false" />
       </exclude>
@@ -212,9 +214,22 @@
       </exclude>
       <variables />
     </win32Archive>
+    <macosFolder name="Mac OS X Folder" id="32" mediaFileName="" installDir="%APP_SHORT_NAME%" allLaunchers="false" customInstallBaseDir="" allowUserStartAfterFinish="false" launchExecutableId="" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="" customScriptMode="1" customScriptFile="">
+      <selectedLaunchers>
+        <launcher id="22" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/messenger.bat" launcher="false" />
+        <entry location="bin/messenger.sh" launcher="false" />
+      </exclude>
+      <variables />
+      <excludedScreenIds />
+      <customScriptLines />
+    </macosFolder>
   </mediaSets>
-  <buildIds buildAll="true">
-    <mediaSet refId="31" />
+  <buildIds buildAll="false">
+    <mediaSet refId="32" />
   </buildIds>
 </install4j>
 

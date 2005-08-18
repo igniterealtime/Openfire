@@ -67,7 +67,7 @@
             <tr>
                 <td>
                     <a href="#" onclick="helpwin();return false;"
-                     ><img src="images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
+                     ><img src="/images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
                     &nbsp;
                 </td>
                 <td class="info">

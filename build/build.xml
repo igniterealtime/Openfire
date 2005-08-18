@@ -558,6 +558,13 @@
             </fileset>
         </copy>
 
+        <!-- Copy native authentication files -->
+        <copy todir="${prepare.out.dir}/resources">
+            <fileset dir="${src.dir}/resources">
+                <include name="nativeAuth/**"/>
+            </fileset>
+        </copy>
+
         <!-- Copy bin dir -->
         <copy todir="${prepare.out.dir}">
             <fileset dir="${src.dir}" includes="bin/**/*"/>

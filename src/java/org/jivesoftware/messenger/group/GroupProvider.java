@@ -51,7 +51,7 @@ public interface GroupProvider {
     /**
      * Deletes the group (optional operation).
      *
-     * @param name the name of the group to delete
+     * @param name the name of the group to delete.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */

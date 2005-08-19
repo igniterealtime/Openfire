@@ -84,6 +84,8 @@ public class LdapUserProvider implements UserProvider {
             if (emailField != null) {
                 email = (String)emailField.get();
             }
+            // Escape the username so that it can be used as a JID.
+            username = JID.escapeNode(username);
             return new User(username, name, email, new Date(), new Date());
         }
         catch (Exception e) {

@@ -111,7 +111,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-create.jsp"));
     pageinfo.setPageID("user-create");
 %>
-<jsp:include page="top.jsp" flush="true"/>
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="add_users_to_the_system.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true"/>
 
 <p><fmt:message key="user.create.info" /></p>

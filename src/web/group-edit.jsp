@@ -210,8 +210,12 @@
     pageinfo.setSubPageID("group-edit");
     pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
 %>
-    <jsp:include page="top.jsp" flush="true"/>
-    <jsp:include page="title.jsp" flush="true"/>
+
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="edit_group_properties.html" />
+</jsp:include>
+<jsp:include page="title.jsp" flush="true"/>
+
     <p>
         <fmt:message key="group.edit.form_info" />
     </p>

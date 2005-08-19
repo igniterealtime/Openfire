@@ -125,7 +125,9 @@
     pageinfo.setPageID("user-message");
 %>
 
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="send_an_administrative_message_to_users.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  if (success) { %>

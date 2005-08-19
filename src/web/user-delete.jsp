@@ -70,7 +70,9 @@
     pageinfo.setSubPageID("user-delete");
     pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="remove_a_user_from_the_system.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

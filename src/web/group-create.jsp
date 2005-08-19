@@ -136,7 +136,9 @@
     pageinfo.setPageID("group-create");
 %>
 
-<jsp:include page="top.jsp" flush="true"/>
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="create_a_group.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true"/>
 
 <c:set var="submit" value="${param.create}"/>

@@ -55,7 +55,10 @@
     pageinfo.setSubPageID("group-delete");
     pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
 %>
-<jsp:include page="top.jsp" flush="true" />
+
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="delete_a_group.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

@@ -54,8 +54,12 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
     pageinfo.setPageID("user-search");
 %>
-<jsp:include page="top.jsp" flush="true"/>
+
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="search_for_a_user.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true"/>
+
 <%    if (errors.size() > 0) { %>
 <p class="jive-error-text"><fmt:message key="user.search.not_found" /></p>
 <%    } %>

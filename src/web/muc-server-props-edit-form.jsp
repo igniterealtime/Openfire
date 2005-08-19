@@ -77,7 +77,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-server-props-edit-form.jsp"));
     pageinfo.setPageID("muc-server-props");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="edit_group_chat_service_properties.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

@@ -71,7 +71,9 @@
     pageinfo.setSubPageID("user-properties");
     pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="edit_user_properties.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

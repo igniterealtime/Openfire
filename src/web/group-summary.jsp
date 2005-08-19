@@ -33,7 +33,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-summary.jsp"));
     pageinfo.setPageID("group-summary");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="about_users_and_groups.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters

@@ -83,7 +83,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-summary.jsp"));
     pageinfo.setPageID("session-summary");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="view_current_sessions.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  if (refresh > 0) { %>

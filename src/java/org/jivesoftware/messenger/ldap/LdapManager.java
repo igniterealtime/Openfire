@@ -29,7 +29,9 @@ import java.util.Hashtable;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method
- * should be used to get an instace. The following configure this manager:<ul>
+ * should be used to get an instace. The following properties configure this manager:
+ *
+ * <ul>
  *      <li>ldap.host</li>
  *      <li>ldap.port</li>
  *      <li>ldap.baseDN</li>
@@ -45,7 +47,7 @@ import java.util.Hashtable;
  *      <li>ldap.groupNameField</li>
  *      <li>ldap.groupMemberField</li>
  *      <li>ldap.groupDescriptionField</li>
- *      <li>ldap.posixEnabled</li>
+ *      <li>ldap.posixMode</li>
  *      <li>ldap.groupSearchFilter</li>
  *      <li>ldap.debugEnabled</li>
  *      <li>ldap.sslEnabled</li>
@@ -77,7 +79,7 @@ public class LdapManager {
     private String groupNameField = "cn";
     private String groupMemberField = "member";
     private String groupDescriptionField = "description";
-    private boolean posixEnabled = false;
+    private boolean posixMode = false;
     private String groupSearchFilter = null;
 
     private static LdapManager instance = new LdapManager();
@@ -140,8 +142,8 @@ public class LdapManager {
         if (JiveGlobals.getXMLProperty("ldap.groupDescriptionField") != null) {
             this.groupDescriptionField = JiveGlobals.getXMLProperty("ldap.groupDescriptionField");
         }
-        if (JiveGlobals.getXMLProperty("ldap.posixEnabled") != null) {
-            this.posixEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.posixEnabled"));
+        if (JiveGlobals.getXMLProperty("ldap.posixMode") != null) {
+            this.posixMode = Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.posixMode"));
         }
         if (JiveGlobals.getXMLProperty("ldap.groupSearchFilter") != null) {
             this.groupSearchFilter = JiveGlobals.getXMLProperty("ldap.groupSearchFilter");
@@ -197,7 +199,7 @@ public class LdapManager {
             Log.debug("\t groupNameField: " + groupNameField);
             Log.debug("\t groupMemberField: " + groupMemberField);
             Log.debug("\t groupDescriptionField: " + groupDescriptionField);
-            Log.debug("\t posixEnabled: " + posixEnabled);
+            Log.debug("\t posixMode: " + posixMode);
             Log.debug("\t groupSearchFilter: " + groupSearchFilter);
         }
     }
@@ -230,7 +232,7 @@ public class LdapManager {
         }
 
          // Set up the environment for creating the initial context
-        Hashtable env = new Hashtable();
+        Hashtable<String, Object> env = new Hashtable<String, Object>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
         env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
         if (sslEnabled) {
@@ -290,7 +292,7 @@ public class LdapManager {
         DirContext ctx = null;
         try {
             // See if the user authenticates.
-            Hashtable env = new Hashtable();
+            Hashtable<String, Object> env = new Hashtable<String, Object>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
@@ -324,7 +326,7 @@ public class LdapManager {
                 catch (Exception ignored) { }
                 try {
                     // See if the user authenticates.
-                    Hashtable env = new Hashtable();
+                    Hashtable<String, Object> env = new Hashtable<String, Object>();
                     // Use a custom initial context factory if specified. Otherwise, use the default.
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
@@ -864,25 +866,27 @@ public class LdapManager {
     }
 
     /**
-     * Return the field used to tell if ldap server is posix.
-     * Value of posixEnabled defaults to false.
+     * Return true if the LDAP server is operating in Posix mode. By default
+     * false is returned. When in Posix mode, users are stored within a group
+     * by their username alone. When not enabled, users are stored in a group using
+     * their entire DN.
      *
-     * @return the field used to tell if ldap server is posix.
+     * @return true if posix mode is being used by the LDAP server.
      */
-    public boolean getPosixEnabled() {
-        return posixEnabled;
+    public boolean isPosixMode() {
+        return posixMode;
     }
 
     /**
-     * Sets the field used to tell if ldap server is posix.
-     * Value of posixEnabled defaults to false.
+     * Sets whether the LDAP server is operating in Posix mode. When in Posix mode,
+     * users are stored within a group by their username alone. When not enabled,
+     * users are stored in a group using their entire DN.
      *
-     * @param posixEnabled the field used to tell if ldap server is posix.
+     * @param posixMode true if posix mode is being used by the LDAP server.
      */
-    public void setPosixEnabled(boolean posixEnabled) {
-        this.posixEnabled = posixEnabled;
-        Boolean b = new Boolean(posixEnabled);
-        JiveGlobals.setXMLProperty("ldap.posixEnabled", b.toString());
+    public void setPostfixMode(boolean posixMode) {
+        this.posixMode = posixMode;
+        JiveGlobals.setXMLProperty("ldap.posixEnabled", String.valueOf(posixMode));
     }
 
     /**

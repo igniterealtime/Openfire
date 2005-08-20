@@ -59,7 +59,9 @@
     pageinfo.setSubPageID("muc-room-delete");
     pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8"));
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="delete_a_group_chat_room.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

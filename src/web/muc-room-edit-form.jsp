@@ -322,7 +322,9 @@
     }
     pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create);
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="view_group_chat_room_summary.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  if (!errors.isEmpty()) { %>

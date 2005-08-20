@@ -90,7 +90,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
     pageinfo.setPageID("muc-perms");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="set_group_chat_room_creation_permissions.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <p>

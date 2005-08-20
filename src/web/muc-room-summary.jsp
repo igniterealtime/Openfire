@@ -32,7 +32,9 @@
     pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-summary.jsp"));
     pageinfo.setPageID("muc-room-summary");
 %>
-<jsp:include page="top.jsp" flush="true" />
+<jsp:include page="top.jsp" flush="true">
+    <jsp:param name="helpPage" value="edit_group_chat_room_settings.html" />
+</jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 
 <%  // Get parameters

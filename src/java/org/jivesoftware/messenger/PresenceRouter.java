@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PresenceRouter.java,v $
  * $Revision$
  * $Date$
  *
@@ -37,6 +37,7 @@ public class PresenceRouter extends BasicModule {
     private PresenceSubscribeHandler subscribeHandler;
     private PresenceManager presenceManager;
     private SessionManager sessionManager;
+    private String serverName;
 
     /**
      * Constructs a presence router.
@@ -79,11 +80,10 @@ public class PresenceRouter extends BasicModule {
             // Presence updates (null is 'available')
             if (type == null || Presence.Type.unavailable == type) {
                 // check for local server target
-                if (recipientJID == null
-                        || recipientJID.getDomain() == null
-                        || "".equals(recipientJID.getDomain())
-                        || (recipientJID.getNode() == null && recipientJID.getResource() == null)) {
-
+                if (recipientJID == null || recipientJID.getDomain() == null ||
+                        "".equals(recipientJID.getDomain()) || (recipientJID.getNode() == null &&
+                        recipientJID.getResource() == null) &&
+                        serverName.equals(recipientJID.getDomain())) {
                     updateHandler.process(packet);
                 }
                 else {
@@ -129,6 +129,7 @@ public class PresenceRouter extends BasicModule {
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
+        serverName = server.getServerInfo().getName();
         routingTable = server.getRoutingTable();
         updateHandler = server.getPresenceUpdateHandler();
         subscribeHandler = server.getPresenceSubscribeHandler();

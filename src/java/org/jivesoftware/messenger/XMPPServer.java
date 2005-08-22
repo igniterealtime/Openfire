@@ -177,9 +177,6 @@ public class XMPPServer {
     }
 
     private void initialize() throws FileNotFoundException {
-        // Set the name of the config file
-        JiveGlobals.setConfigName("jive-messenger.xml");
-
         locateMessenger();
 
         name = JiveGlobals.getProperty("xmpp.domain");
@@ -260,7 +257,7 @@ public class XMPPServer {
 
             // Log that the server has been started
 
-            List params = new ArrayList();
+            List<String> params = new ArrayList<String>();
             params.add(version.getVersionString());
             params.add(JiveGlobals.formatDateTime(new Date()));
             String startupBanner = LocaleUtils.getLocalizedString("startup.name", params);
@@ -586,7 +583,10 @@ public class XMPPServer {
             throw new FileNotFoundException();
         }
         else {
-            JiveGlobals.home = messengerHome.toString();
+            // Set the home directory for the config file
+            JiveGlobals.setHomeDirectory(messengerHome.toString());
+            // Set the name of the config file
+            JiveGlobals.setConfigName(jiveConfigName);
         }
     }
 

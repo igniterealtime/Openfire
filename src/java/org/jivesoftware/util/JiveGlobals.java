@@ -11,13 +11,8 @@
 
 package org.jivesoftware.util;
 
-import org.dom4j.Document;
-import org.dom4j.io.SAXReader;
-
-import javax.naming.InitialContext;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.*;
 
@@ -47,13 +42,13 @@ import java.util.*;
  */
 public class JiveGlobals {
 
-    private static String JIVE_CONFIG_FILENAME = null;
+    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "jive-messenger.xml";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
      * located here.
      */
-    public static String home = null;
+    private static String home = null;
 
     public static boolean failedLoading = false;
 
@@ -237,10 +232,33 @@ public class JiveGlobals {
      * @return the location of the home dir.
      */
     public static String getHomeDirectory() {
-        if (home == null) {
+        if (xmlProperties == null) {
             loadSetupProperties();
         }
         return home;
+    }
+
+    /**
+     * Sets the location of the <code>home</code> directory. The directory must exist and the
+     * user running the application must have read and write permissions over the specified
+     * directory.
+     *
+     * @param pathname the location of the home dir.
+     */
+    public static void setHomeDirectory(String pathname) {
+        File mh = new File(pathname);
+        // Do a permission check on the new home directory
+        if (!mh.exists()) {
+            Log.error("Error - the specified home directory does not exist (" + pathname + ")");
+        }
+        else if (!mh.canRead() || !mh.canWrite()) {
+                Log.error("Error - the user running this application can not read " +
+                        "and write to the specified home directory (" + pathname + "). " +
+                        "Please grant the executing user read and write permissions.");
+        }
+        else {
+            home = pathname;
+        }
     }
 
     /**
@@ -676,9 +694,6 @@ public class JiveGlobals {
      * @return the name of the config file.
      */
     static String getConfigName() {
-        if (JIVE_CONFIG_FILENAME == null) {
-            JIVE_CONFIG_FILENAME = "jive-messenger.xml";
-        };
         return JIVE_CONFIG_FILENAME;
     }
 
@@ -696,131 +711,27 @@ public class JiveGlobals {
      * that we give outside classes a chance to set <tt>home</tt>.
      */
     private synchronized static void loadSetupProperties() {
-        if (failedLoading) {
-            return;
-        }
         if (xmlProperties == null) {
-            // If jiveHome is still null, no outside process has set it and
-            // we have to attempt to load the value from jive_init.xml,
-            // which must be in the classpath.
-            if (home == null) {
-                home = new InitPropLoader().getHome();
-            }
-            // If that failed, try loading it from JNDI
-            if (home == null) {
-                try {
-                    InitialContext context = new InitialContext();
-                    home = (String)context.lookup("java:comp/env/home");
-                }
-                catch (Exception e) { }
-            }
-            // Finally, try to load it jiveHome as a system property.
-            if (home == null) {
-                home = System.getProperty("home");
-            }
-
-            if(home == null){
-                try {
-                    home = new File("..").getCanonicalPath();
-                    if(!new File(home, "conf/" + getConfigName()).exists()){
-                        home = null;
-                    }
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-             if(home == null){
-                try {
-                    home = new File("").getCanonicalPath();
-                    if(!new File(home, "conf/" + getConfigName()).exists()){
-                        home = null;
-                    }
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // If still null, finding home failed.
-            if (home == null) {
+            // If home is null then log that the application will not work correctly
+            if (home == null && !failedLoading) {
                 failedLoading = true;
                 StringBuilder msg = new StringBuilder();
-                msg.append("Critical Error! The home directory could not be loaded, \n");
+                msg.append("Critical Error! The home directory has not been configured, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
-                msg.append("You must set home in one of four ways:\n");
-                msg.append("    1) Add a messenger_init.xml file to your classpath, which points \n ");
-                msg.append("       to home.\n");
-                msg.append("    3) Set the JNDI value \"java:comp/env/home\" with a String \n");
-                msg.append("       that points to your home directory. \n");
-                msg.append("    4) Set the Java system property \"home\".\n\n");
-                msg.append("Further instructions for setting home can be found in the \n");
-                msg.append("installation documentation.");
                 System.err.println(msg.toString());
                 return;
             }
             // Create a manager with the full path to the xml config file.
-            try {
-                // Do a permission check on the jiveHome directory:
-                File mh = new File(home);
-                if (!mh.exists()) {
-                    Log.error("Error - the specified home directory does not exist (" + home + ")");
+            else {
+                try {
+                    xmlProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
-                else {
-                    if (!mh.canRead() || !mh.canWrite()) {
-                        Log.error("Error - the user running this application can not read " +
-                                "and write to the specified home directory (" + home + "). " +
-                                "Please grant the executing user read and write permissions.");
-                    }
+                catch (IOException ioe) {
+                    Log.error(ioe);
+                    failedLoading = true;
+                    return;
                 }
-                xmlProperties = new XMLProperties(home + File.separator + "conf" +
-                        File.separator + getConfigName());
-            }
-            catch (IOException ioe) {
-                Log.error(ioe);
-                failedLoading = true;
-                return;
             }
         }
-    }
-}
-
-/**
- * A very small class to load the file defined in JiveGlobals.JIVE_CONFIG_FILENAME. The class is
- * needed since loading files from the classpath in a static context often
- * fails.
- */
-class InitPropLoader {
-
-    public String getHome() {
-        String home = null;
-        InputStream in = null;
-        try {
-            in = getClass().getResourceAsStream("/messenger_init.xml");
-            if (in != null) {
-                SAXReader reader = new SAXReader();
-                Document doc = reader.read(in);
-                home = doc.getRootElement().getText();
-            }
-        }
-        catch (Exception e) {
-            Log.error("Error loading messenger_init.xml to find home.", e);
-        }
-        finally {
-            try { if (in != null) { in.close(); } }
-            catch (Exception e) { }
-        }
-        if (home != null) {
-            home = home.trim();
-            // Remove trailing slashes.
-            while (home.endsWith("/") || home.endsWith("\\")) {
-                home = home.substring(0, home.length() - 1);
-            }
-        }
-        if ("".equals(home)) {
-            home = null;
-        }
-        return home;
     }
 }

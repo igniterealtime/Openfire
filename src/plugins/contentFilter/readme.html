@@ -45,7 +45,7 @@ ContentFilter Plugin Readme
 
 <h2>Overview</h2>
 <p>
-The content filter plugin allows admins to configure various actions based on 
+The content filter plugin allows admins to configure various actions based on
 message content. These actions include notifying the admin of content matches,
 notifying the sender that a message was rejected or masking the content with
 alternative content.
@@ -54,15 +54,29 @@ alternative content.
 <h2>Installation</h2>
 <p>
 Copy the contentfilter.jar into the plugins directory of your Jive Messenger
-installation. The plugin will then be automatically deployed. To upgrade to a 
+installation. The plugin will then be automatically deployed. To upgrade to a
 new version, copy the new contentfilter.jar file over the existing file.
 </p>
 
 <h2>Configuration</h2>
 <p>
-By default, after the plugin has been deployed all of its features are disabled. 
+By default, after the plugin has been deployed all of its features are disabled.
 This plugin is configured via the "Content Filter" sidebar item located under the
-"System" tab in the Jive Messenger Admin Console. 
+"System" tab in the Jive Messenger Admin Console.
+</p>
+
+<p>
+The default comma separated patterns are "fox,dog". This will perform a case
+sensitive match on all words containing these strings. e.g. "fox", "firefox",
+"foxy", "dog", "hotdog", "dogdays" but not "Fox", "firefoX". These simple patterns
+can be enhanced with more complex regular expressions as required e.g.:
+<ul>
+  <li>for a complete word match, add boundary checks with \b e.g. \bfox\b will match against the word "fox" and nothing else.
+  <li>for case insensitive matchs add (?i) e.g. (?i)\bfox\b will match against "fox", "Fox", "foX" etc.
+</ul>
+
+Want to know more about regular expressions in Java? This official <a href="http://java.sun.com/docs/books/tutorial/extra/regex/">tutorial</a>
+is useful.
 </p>
 
 <h2>Using the Plugin</h2>

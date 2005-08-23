@@ -58,8 +58,22 @@ import java.sql.SQLException;
  * through the server. The server maintains a list of loaded modules.<p>
  *
  * After starting up all the modules the server will load any available plugin.
- * For more information see: {@link org.jivesoftware.messenger.container.PluginManager}.
- * </p>
+ * For more information see: {@link org.jivesoftware.messenger.container.PluginManager}.<p>
+ *
+ * A configuration file keeps the server configuration. This information is required for the
+ * server to work correctly. The server assumes that the configuration file is named
+ * <b>jive-messenger.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
+ * the configuration file must be located under the home folder. The server will try different
+ * methods to locate the home folder.
+ *
+ * <ol>
+ *  <li><b>system property</b> - The server will use the value defined in the <i>messengerHome</i>
+ *      system property.</li>
+ *  <li><b>working folder</b> -  The server will check if there is a <i>conf</i> folder in the
+ *      working directory. This is the case when running in standalone mode.</li>
+ *  <li><b>messenger_init.xml file</b> - Attempt to load the value from messenger_init.xml which
+ *      must be in the classpath</li>
+ * </ol>
  *
  * @author Gaston Dombiak
  */

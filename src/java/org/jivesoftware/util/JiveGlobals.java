@@ -18,26 +18,16 @@ import java.util.*;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
- * by core Jive classes.
- * <p/>
- * The location of the home directory should be specified one of
- * three ways:
- * <ol>
- * <li>Set a Java system property named <tt>home</tt> with the full path to your
- * home directory.
- * <li>Indicate its value in the <tt>messenger_init.xml</tt> file. This
- * is a simple xml file that should look something like:<br>
- * <tt><home>c:\JiveMessenger</home></tt> (Windows) <br>
- * or <br>
- * <tt><home>/var/JiveMessenger</home></tt> (Unix) <p>
- * <p/>
- * The file must be in your classpath so that it can be loaded by Java's classloader.
- * <li>Use another class in your VM to set the <tt>JiveGlobals.home</tt> variable.
- * This must be done before the rest of Jive starts up, for example: in a servlet that
- * is set to run as soon as the appserver starts up.
- * </ol>
- * <p/>
- * All property names must be in the form <code>prop.name</code> - parts of the name must
+ * by core Jive classes. Some properties may be stored in XML format while others in the
+ * database.<p>
+ *
+ * When starting up the application this class needs to be configured so that the initial
+ * configuration of the application may be loaded from the configuration file. The configuration
+ * file holds properties stored in XML format, database configuration and user authentication
+ * configuration. Use {@link #setHomeDirectory(String)} and {@link #setConfigName(String)} for
+ * setting the home directory and path to the configuration file.<p>
+ *
+ * XML property names must be in the form <code>prop.name</code> - parts of the name must
  * be seperated by ".". The value can be any valid String, including strings with line breaks.
  */
 public class JiveGlobals {

@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PacketDelivererImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -12,12 +12,9 @@
 package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.net.SocketPacketWriteHandler;
-import org.xmpp.component.Component;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 /**
@@ -35,11 +32,8 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
     private OfflineMessageStrategy messageStrategy;
     private SessionManager sessionManager;
 
-    private InternalComponentManager componentManager;
-
     public PacketDelivererImpl() {
         super("Packet Delivery");
-        componentManager = InternalComponentManager.getInstance();
     }
 
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
@@ -48,17 +42,6 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         }
         if (deliverHandler == null) {
             throw new PacketException("Could not send packet - no route" + packet.toString());
-        }
-        // Check if the target of the packet is the a component itself. If it does then just pass
-        // the packet to the component for processing it
-        JID recipient = packet.getTo();
-        if (recipient != null && recipient.getNode() == null && recipient.getResource() == null) {
-            // Check for registered components
-            Component component = componentManager.getComponent(recipient);
-            if (component != null) {
-                component.processPacket(packet);
-                return;
-            }
         }
         // Let the SocketPacketWriteHandler process the packet. SocketPacketWriteHandler may send
         // it over the socket or store it when user is offline or drop it.

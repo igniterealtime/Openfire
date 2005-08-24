@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: SocketPacketWriteHandler.java,v $
  * $Revision$
  * $Date$
  *
@@ -44,10 +44,11 @@ public class SocketPacketWriteHandler implements ChannelHandler {
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();
-            // Check if the target domain belongs to a remote server
-            if (server.isRemote(recipient)) {
+            // Check if the target domain belongs to a remote server or a component
+            if (server.matchesComponent(recipient) || server.isRemote(recipient)) {
                 try {
-                    // Locate the route to the remote server and ask it to process the packet
+                    // Locate the route to the remote server or component and ask it
+                    // to process the packet
                     routingTable.getRoute(recipient).process(packet);
                 }
                 catch (NoSuchRouteException e) {

@@ -180,6 +180,19 @@ public class XMPPServer {
     }
 
     /**
+     * Returns true if the given address matches a component service JID.
+     *
+     * @param jid the JID to check.
+     * @return true if the given address matches a component service JID.
+     */
+    public boolean matchesComponent(JID jid) {
+        if (jid != null) {
+            return componentManager.getComponent(jid.getDomain()) != null;
+        }
+        return false;
+    }
+
+    /**
      * Creates an XMPPAddress local to this server.
      *
      * @param username the user name portion of the id or null to indicate none is needed.

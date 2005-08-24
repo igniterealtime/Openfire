@@ -17,6 +17,7 @@
                  org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.regex.Pattern"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -54,11 +55,16 @@
         authHandler.setAllowAnonymous(anonLogin);
 
         // Build a Map with the allowed IP addresses
+        Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
+                "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
+                "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
         Map<String,String> newMap = new HashMap<String,String>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
-            newMap.put(address, "");
+            if (pattern.matcher(address).matches()) {
+                newMap.put(address, "");
+            }
         }
         ClientSession.setAllowedIPs(newMap);
     }

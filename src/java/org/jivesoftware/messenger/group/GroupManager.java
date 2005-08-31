@@ -192,6 +192,7 @@ public class GroupManager {
      * @return all groups that a user belongs to.
      */
     public Collection<Group> getGroups(User user) {
+        // TODO: add caching
         return provider.getGroups(user);
     }
 }

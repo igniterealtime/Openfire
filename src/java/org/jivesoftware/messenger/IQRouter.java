@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: IQRouter.java,v $
  * $Revision$
  * $Date$
  *
@@ -75,7 +75,7 @@ public class IQRouter extends BasicModule {
         else {
             IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
-            packet.setError(PacketError.Condition.not_authorized);
+            reply.setError(PacketError.Condition.not_authorized);
             sessionManager.getSession(packet.getFrom()).process(reply);
         }
     }

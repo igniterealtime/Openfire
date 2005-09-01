@@ -1,6 +1,6 @@
 <%@ page import="org.jivesoftware.admin.AdminPageBean,
-				 org.jivesoftware.messenger.plugin.ImportExportPlugin,
-				 org.jivesoftware.messenger.XMPPServer"
+                 org.jivesoftware.messenger.plugin.ImportExportPlugin,
+                 org.jivesoftware.messenger.XMPPServer"
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -20,7 +20,7 @@
 
 <% if (plugin.isUserProviderReadOnly()) { %>
 
-	Sorry, because you are using LDAP as your user store this plugin will not work with your Messenger installation.
+    Sorry, because you are using LDAP as your user store, this plugin will not work with your Messenger installation.
 
 <% } else { %>
 
@@ -28,7 +28,7 @@ The import and export functions allow you to read data into and write user
 data from your Jive Messenger installation.
 
 <ul>
-	<li><a href="import-user-data.jsp">Import User Data</a></li>
+    <li><a href="import-user-data.jsp">Import User Data</a></li>
     <li><a href="export-user-data.jsp">Export User Data</a></li>    
 </ul>
 

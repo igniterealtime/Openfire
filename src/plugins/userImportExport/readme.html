@@ -2,89 +2,284 @@
 
 <html>
 <head>
-	<title>User Import/Export Plugin Readme</title>
-    <style type="text/css">
-        BODY {
-            font-size : 100%;
-        }
-        BODY, TD, TH {
-            font-family : tahoma, verdana, arial, helvetica, sans-serif;
-            font-size : 0.8em;
-        }
-        H2 {
-             font-size : 10pt;
-             font-weight : bold;
-        }
-        A:hover {
-            text-decoration : none;
-        }
-        H1 {
-            font-family : tahoma, arial, helvetica, sans-serif;
-            font-size : 1.4em;
-            font-weight: bold;
-            border-bottom : 1px #ccc solid;
-            padding-bottom : 2px;
-        }
+<title>User Import/Export Plugin Readme</title>
+<style type="text/css">
+   BODY {
+      font-size : 100%;
+   }
+  
+   BODY, TD, TH {
+      font-family : tahoma, verdana, arial, helvetica, sans-serif;
+      font-size : 0.8em;
+   }
+  
+   H2 {
+      font-size : 11pt;
+      font-weight : bold;
+   }
+  
+   A:hover {
+      text-decoration : none;
+   }
+  
+   H1 {
+      font-family : tahoma, arial, helvetica, sans-serif;
+      font-size : 1.4em;
+      font-weight: bold;
+      border-bottom : 1px #ccc solid;
+      padding-bottom : 2px;
+   }
 
-        TT {
-            font-family : courier new;
-            font-weight : bold;
-            color : #060;
-        }
-        PRE {
-            font-family : courier new;
-            font-size : 100%;
-        }
-    </style>
+   TT {
+      font-family : courier new;
+      font-weight : bold;
+      color : #060;
+   }
+  
+   PRE {
+      font-family : courier new;
+      font-size : 100%;
+   }
+  
+   #datatable TH {
+      color : #fff;
+      background-color : #2A448C;
+      text-align : left;
+   }
+  
+   #datatable TD {
+      background-color : #FAF6EF;
+   }
+  
+   #datatable .name {
+      background-color : #DCE2F5;
+      text-align : center;
+   }
+</style>
 </head>
 <body>
 
 <h1>User Import/Export Plugin Readme</h1>
 
 <h2>Overview</h2>
-<p>The user import/export plugin provides a way to import and export Jive Messenger 
-user data via the Admin Console. The user data consists of jid (aka "username"), 
-name, email address, password and roster list (aka "buddy list"). This plugin also 
-can aid in the migration of users from other Jabber/XMPP based systems to Jive 
-Messenger.</p>
+<p>The user import/export plugin provides a way to import and export Jive Messenger user data via 
+the Admin Console. The user data consists of jid (aka "username"), name, email address, password 
+and roster list (aka "buddy list"). This plugin also can aid in the migration of users from other 
+Jabber/XMPP based systems to Jive Messenger.</p>
 
 <h2>Installation</h2>
-<p>Copy the userImportExport.jar into the plugins directory of your Jive Messenger 
-installation. The plugin will then be automatically deployed. To upgrade to a new 
-version, copy the new userImportExport.jar file over the existing file.</p>
+<p>Copy the userImportExport.jar into the plugins directory of your Jive Messenger installation. 
+The plugin will then be automatically deployed. To upgrade to a new version, copy the new 
+userImportExport.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 <p>Presently, there is nothing that can be configured for the user import/export plugin.</p>
 
 <h2>Using the Plugin</h2>
-<p> The plugin is accessed via the "User Import & Export" sidebar item located under 
-the "Users/Groups" tab in the Admin Console. Note: if you are using LDAP as your user 
-data source the following message will appear: "Sorry, because you are using LDAP as 
-your user store this plugin will not work with your Messenger installation."
-<li>Importing - Select the "Import User Data" option from the user import/export 
-selection page. On the import page, notice that the plugin will look for user data 
-import files in the MESSENGER_HOME/export directory. In the "Import File Name" field, 
-enter the name of the file you want import from and then click on the "Import" button. 
-If the plugin is successful in importing all user data, you will be presented with the 
-message: "All users added successfully" If the plugin was not successful in importing 
-all user data you, will receive a message indicating what might have gone wrong. If 
-during the import process, the plugin detects that you are trying to import a user 
-that already exists in the system, it will not import that user or any roster 
+<p>The plugin is accessed via the "User Import & Export" sidebar item located under the 
+"Users/Groups" tab in the Admin Console. Note: if you are using LDAP as your user data source the 
+following message will appear: "Sorry, because you are using LDAP as your user store this plugin 
+will not work with your Messenger installation."
+
+<li><b>Importing</b> - Select the "Import User Data" option from the user import/export selection 
+page. On the import page, use the "Browse" button to locate the file that contains the user 
+information you want to locate and then click on the "Import" button. If the plugin is successful 
+in importing all user data, you will be presented with the message: "All users added successfully".
+If the plugin was not successful in importing all user data you, will receive a message indicating 
+what might have gone wrong. If during the import process, the plugin detects that you are trying to 
+import a user that already exists in the system, it will not import that user or any roster 
 information.</li>
-<li>Exporting - Select the "Export User Data" option from the user import/export 
-selection page. User data can be exported either to a file or directly to the screen.
-To export to a file, select the "To File" radio button. Notice that the plugin will 
-export user data to the MESSENGER_HOME/export directory. In the "Export File Name" 
-field, enter the name of the file you want export to and then click on the "Export" 
-button. Note: the plugin will automatically append an ".xml" extension to the file 
-name if it is not already present. To export to the screen, select the "To Screen"
-radio button and then click on the "Export" button. The user data will be placed in
+<br>
+<li><b>Exporting</b> - Select the "Export User Data" option from the user import/export selection 
+page. User data can be exported either to a file or directly to the screen. To export to a file, 
+select the "To File" radio button, enter the name you want your export file to be called in the 
+"Export File Name" and then click on the "Export" button. Note: the plugin will automatically append
+an ".xml" extension to the file name if it is not already present. To export to the screen, select 
+the "To Screen" radio button and then click on the "Export" button. The user data will be placed in 
 the provided text area.</li>
-<li>Migration - To import user data from another instant messenger system using the 
-plugin, the import file must conform to the messenger-user-schema.xsd.xml schema file 
-(located in the classes directory). When importing a user data file the plugin will 
-first validate the file against the schema file." If the  plugin cannot validate the 
-import file the user data will not be imported.</li>
+<br>
+<li><b>Migration</b> - To import user data from another instant messenger system using the plugin, 
+the import file must conform to the messenger-user-schema.xsd.xml schema file (located in the classes 
+directory of the userImportExport.jar). When importing a user data file the plugin will first validate 
+the file against the schema file." If the plugin cannot validate the import file the user data will 
+not be imported. During the import process the plugin gives you the ability to update user roster 
+entries domain names to server name of your Messenger installation. For example, say you have a user 
+whose roster looks like: <br>
+<br>
+<textarea cols=95 rows=16>
+<User>
+  <Username>mike</Username>
+  <Password>iamcool</Password>
+  <Email>mike@mike.com</Email>
+  <Name>Mike Jones</Name>
+  <CreationDate>1125442154664</CreationDate>
+  <ModifiedDate>1125442154664</ModifiedDate>
+  <Roster>
+    <Item jid="jane@im.olddomain.net" askstatus="-1" recvstatus="-1" substatus="3" name="Jane">
+      <Group></Group>
+    </Item>
+    <Item jid="paul@xyz.net" askstatus="-1" recvstatus="-1" substatus="3" name="Paul">
+      <Group></Group>
+    </Item>
+  </Roster>
+</User>
+</textarea>
+<br>
+<br>
+Mike and Jane's accounts both reside on server whose domain name is "im.olddomain.net" and are being 
+imported to a Messenger installation whose server name is "im.newdomain.net". If on the import screen 
+the "Optional Existing Domain" field is filled in with "im.olddomain.net" (without the quotes) any 
+roster item jid that contains "im.olddomain.net" will be replaced with "im.newdomain.net". So, in 
+effect, the import file would be transformed to look like:
+<br>
+<br>
+<textarea cols=95 rows=16>
+<User>
+  <Username>mike</Username>
+  <Password>iamcool</Password>
+  <Email>mike@mike.com</Email>
+  <Name>Mike Jones</Name>
+  <CreationDate>1125442154664</CreationDate>
+  <ModifiedDate>1125442154664</ModifiedDate>
+  <Roster>
+    <Item jid="jane@im.newdomain.net" askstatus="-1" recvstatus="-1" substatus="3" name="Jane">
+      <Group></Group>
+    </Item>
+    <Item jid="paul@xyz.net" askstatus="-1" recvstatus="-1" substatus="3" name="Paul">
+      <Group></Group>
+    </Item>
+  </Roster>
+</User>
+</textarea></li>
 </p>
+
+<br>
+<br>
+Below is a sample of an exported user list from Messenger than contains two users, Joe and Sally, who
+have added each other to their respective rosters.
+<br>
+<br>
+<textarea cols=95 rows=16>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JiveMessenger>
+  <User>
+    <Username>joe</Username>
+    <Password>joepwd</Password>
+    <Email></Email>
+    <Name></Name>
+    <CreationDate>1125601449177</CreationDate>
+    <ModifiedDate>1125601449177</ModifiedDate>
+    <Roster>
+      <Item jid="sally@localhost" askstatus="-1" recvstatus="-1" substatus="3" name="Sally">
+        <Group/>
+      </Item>
+    </Roster>
+  </User>
+  <User>
+    <Username>sally</Username>
+    <Password>sallypwd</Password>
+    <Email></Email>
+    <Name></Name>
+    <CreationDate>1125601471848</CreationDate>
+    <ModifiedDate>1125601471848</ModifiedDate>
+    <Roster>
+      <Item jid="joe@localhost" askstatus="-1" recvstatus="-1" substatus="3">
+        <Group/>
+      </Item>
+    </Roster>
+  </User>
+</JiveMessenger>
+
+</textarea></li>
+</p>
+
+
+<br>
+<br>
+Below is a list of the different status types and what their associated numbers mean.
+<br>
+<br>
+<div id="datatable">
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">askstatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>The roster item has no pending subscripton requests.</td>
+      </tr>
+      <tr>
+         <td class="name">0</td>
+         <td>The roster item has been asked for permission to subscribe to their presence but no 
+         response has been received.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The roster owner has asked to the roster item to unsubscribe from it's presence but 
+         has not received confirmation.</td>
+      </tr>
+   </tbody>
+</table>
+
+<br>
+
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">recvstatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>There are no subscriptions that have been received but not presented to the user.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The server has received a subscribe request, but has not forwarded it to the user.</td>
+      </tr>
+      <tr>
+         <td class="name">2</td>
+         <td>The server has received an unsubscribe request, but has not forwarded it to the user.</td>
+      </tr>
+   </tbody>
+</table>
+
+<br>
+
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">substatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>Indicates the roster item should be removed.</td>
+      </tr>
+      <tr>
+         <td class="name">0</td>
+         <td>No subscription is established.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The roster owner has a subscription to the roster item's presence.</td>
+      </tr>
+      <tr>
+         <td class="name">2</td>
+         <td>The roster item has a subscription to the roster owner's presence.</td>
+      </tr>
+      <tr>
+         <td class="name">3</td>
+         <td>The roster item and owner have a mutual subscription.</td>
+      </tr>
+   </tbody>
+</table>
+</div>
 </body>
 </html>

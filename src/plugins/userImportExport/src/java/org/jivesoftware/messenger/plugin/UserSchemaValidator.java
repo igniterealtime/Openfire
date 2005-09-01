@@ -1,10 +1,9 @@
 package org.jivesoftware.messenger.plugin;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import javax.xml.parsers.SAXParserFactory;
+import com.sun.msv.reader.util.GrammarLoader;
+import com.sun.msv.reader.util.IgnoreController;
+import com.sun.msv.verifier.DocumentDeclaration;
+import com.sun.msv.verifier.Verifier;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -16,10 +15,11 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
 
-import com.sun.msv.reader.util.GrammarLoader;
-import com.sun.msv.reader.util.IgnoreController;
-import com.sun.msv.verifier.DocumentDeclaration;
-import com.sun.msv.verifier.Verifier;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.xml.parsers.SAXParserFactory;
 
 public class UserSchemaValidator {
     private Document doc;

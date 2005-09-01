@@ -55,6 +55,10 @@
       background-color : #DCE2F5;
       text-align : center;
    }
+   
+   #xmltable TD {
+      background-color : #C3FDB8;
+   }
 </style>
 </head>
 <body>
@@ -80,7 +84,6 @@ userImportExport.jar file over the existing file.</p>
 "Users/Groups" tab in the Admin Console. Note: if you are using LDAP as your user data source the 
 following message will appear: "Sorry, because you are using LDAP as your user store this plugin 
 will not work with your Messenger installation."
-
 <li><b>Importing</b> - Select the "Import User Data" option from the user import/export selection 
 page. On the import page, use the "Browse" button to locate the file that contains the user 
 information you want to locate and then click on the "Import" button. If the plugin is successful 
@@ -104,27 +107,34 @@ directory of the userImportExport.jar). When importing a user data file the plug
 the file against the schema file." If the plugin cannot validate the import file the user data will 
 not be imported. During the import process the plugin gives you the ability to update user roster 
 entries domain names to server name of your Messenger installation. For example, say you have a user 
-whose roster looks like: <br>
+whose roster looks like:
+</li>
 <br>
-<textarea cols=95 rows=16>
-<User>
-  <Username>mike</Username>
-  <Password>iamcool</Password>
-  <Email>mike@mike.com</Email>
-  <Name>Mike Jones</Name>
-  <CreationDate>1125442154664</CreationDate>
-  <ModifiedDate>1125442154664</ModifiedDate>
-  <Roster>
-    <Item jid="jane@im.olddomain.net" askstatus="-1" recvstatus="-1" substatus="3" name="Jane">
-      <Group></Group>
-    </Item>
-    <Item jid="paul@xyz.net" askstatus="-1" recvstatus="-1" substatus="3" name="Paul">
-      <Group></Group>
-    </Item>
-  </Roster>
-</User>
-</textarea>
-<br>
+
+<div id="xmltable">
+<table>
+<tr>
+<td>
+&lt;User&gt;<br>
+&nbsp;&nbsp;&lt;Username&gt;mike&lt;/Username&gt;<br>
+&nbsp;&nbsp;&lt;Password&gt;iamcool&lt;/Password&gt;<br>
+&nbsp;&nbsp;&lt;Email&gt;mike@mike.com&lt;/Email&gt;<br>
+&nbsp;&nbsp;&lt;Name&gt;Mike Jones&lt;/Name&gt;<br>
+&nbsp;&nbsp;&lt;CreationDate&gt;1125442154664&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.olddomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&lt;/User&gt;<br>
+</td>
+</tr>
+</table>
+</div>
 <br>
 Mike and Jane's accounts both reside on server whose domain name is "im.olddomain.net" and are being 
 imported to a Messenger installation whose server name is "im.newdomain.net". If on the import screen 
@@ -133,25 +143,31 @@ roster item jid that contains "im.olddomain.net" will be replaced with "im.newdo
 effect, the import file would be transformed to look like:
 <br>
 <br>
-<textarea cols=95 rows=16>
-<User>
-  <Username>mike</Username>
-  <Password>iamcool</Password>
-  <Email>mike@mike.com</Email>
-  <Name>Mike Jones</Name>
-  <CreationDate>1125442154664</CreationDate>
-  <ModifiedDate>1125442154664</ModifiedDate>
-  <Roster>
-    <Item jid="jane@im.newdomain.net" askstatus="-1" recvstatus="-1" substatus="3" name="Jane">
-      <Group></Group>
-    </Item>
-    <Item jid="paul@xyz.net" askstatus="-1" recvstatus="-1" substatus="3" name="Paul">
-      <Group></Group>
-    </Item>
-  </Roster>
-</User>
-</textarea></li>
-</p>
+
+<div id="xmltable">
+<table>
+<tr>
+<td>
+&lt;User&gt;<br>
+&nbsp;&nbsp;&lt;Username&gt;mike&lt;/Username&gt;<br>
+&nbsp;&nbsp;&lt;Password&gt;iamcool&lt;/Password&gt;<br>
+&nbsp;&nbsp;&lt;Email&gt;mike@mike.com&lt;/Email&gt;<br>
+&nbsp;&nbsp;&lt;Name&gt;Mike Jones&lt;/Name&gt;<br>
+&nbsp;&nbsp;&lt;CreationDate&gt;1125442154664&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.newdomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&lt;/User&gt;<br>
+</td>
+</tr>
+</table>
+</div>
 
 <br>
 <br>
@@ -159,47 +175,52 @@ Below is a sample of an exported user list from Messenger than contains two user
 have added each other to their respective rosters.
 <br>
 <br>
-<textarea cols=95 rows=16>
-<?xml version="1.0" encoding="UTF-8"?>
 
-<JiveMessenger>
-  <User>
-    <Username>joe</Username>
-    <Password>joepwd</Password>
-    <Email></Email>
-    <Name></Name>
-    <CreationDate>1125601449177</CreationDate>
-    <ModifiedDate>1125601449177</ModifiedDate>
-    <Roster>
-      <Item jid="sally@localhost" askstatus="-1" recvstatus="-1" substatus="3" name="Sally">
-        <Group/>
-      </Item>
-    </Roster>
-  </User>
-  <User>
-    <Username>sally</Username>
-    <Password>sallypwd</Password>
-    <Email></Email>
-    <Name></Name>
-    <CreationDate>1125601471848</CreationDate>
-    <ModifiedDate>1125601471848</ModifiedDate>
-    <Roster>
-      <Item jid="joe@localhost" askstatus="-1" recvstatus="-1" substatus="3">
-        <Group/>
-      </Item>
-    </Roster>
-  </User>
-</JiveMessenger>
-
-</textarea></li>
-</p>
-
+<div id="xmltable">
+<table>
+<tr>
+<td>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+<br>
+&lt;JiveMessenger&gt;<br>
+&nbsp;&nbsp;&lt;User&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Username&gt;joe&lt;/Username&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Password&gt;joepwd&lt;/Password&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Email&gt;&lt;/Email&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;&lt;/Name&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;CreationDate&gt;1125601449177&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601449177&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;sally@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Sally&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&nbsp;&nbsp;&lt;/User&gt;<br>
+&nbsp;&nbsp;&lt;User&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Username&gt;sally&lt;/Username&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Password&gt;sallypwd&lt;/Password&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Email&gt;&lt;/Email&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;&lt;/Name&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;CreationDate&gt;1125601471848&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601471848&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;joe@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&nbsp;&nbsp;&lt;/User&gt;<br>
+&lt;/JiveMessenger&gt;<br>
+</td>
+</tr>
+</table>
+</div>
 
 <br>
 <br>
 Below is a list of the different status types and what their associated numbers mean.
 <br>
 <br>
+
 <div id="datatable">
 <table cellpadding="3" cellspacing="1" border="0" width="700">
    <thead>

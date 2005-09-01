@@ -5,6 +5,7 @@ import com.sun.msv.reader.util.IgnoreController;
 import com.sun.msv.verifier.DocumentDeclaration;
 import com.sun.msv.verifier.Verifier;
 
+import org.apache.commons.fileupload.FileItem;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
@@ -15,8 +16,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
 
-import java.io.File;
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URL;
 
 import javax.xml.parsers.SAXParserFactory;
@@ -25,12 +25,11 @@ public class UserSchemaValidator {
     private Document doc;
     private String schema;
     
-    UserSchemaValidator(String usersFile, String schemaFile) throws MalformedURLException, DocumentException {
-        URL usersURL = new File(usersFile).toURL();       
-        URL schemaURL = this.getClass().getClassLoader().getResource(schemaFile);        
-        
+    UserSchemaValidator(FileItem usersFile, String schemaFile) throws DocumentException, IOException {
         SAXReader reader = new SAXReader();
-        doc = reader.read(usersURL);
+        doc = reader.read(usersFile.getInputStream());
+        
+        URL schemaURL = this.getClass().getClassLoader().getResource(schemaFile); 
         schema = schemaURL.toExternalForm();
     }
 

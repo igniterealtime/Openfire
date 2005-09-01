@@ -28,31 +28,36 @@
         FileItem pd = (FileItem) i.next();
         String previousDomain = pd.getString();
         
-        try {
-            if (isEmpty(previousDomain)) {
-                duplicateUsers.addAll(plugin.importUserData(fi, null));
+        if (plugin.validateImportFile(fi)) {
+            try {
+                if (isEmpty(previousDomain)) {
+                    duplicateUsers.addAll(plugin.importUserData(fi, null));
+                }
+                else if (!isEmpty(previousDomain)) {
+                    duplicateUsers.addAll(plugin.importUserData(fi, previousDomain));
+                }
+                else {
+                    errors.put("missingDomain", "missingDomain");
+                }
+              
+                if (duplicateUsers.size() == 0) {
+                    response.sendRedirect("import-user-data.jsp?success=true");
+                    return;
+                }
+      			
+                errors.put("userAlreadyExists", "userAlreadyExists");
             }
-            else if (!isEmpty(previousDomain)) {
-                duplicateUsers.addAll(plugin.importUserData(fi, previousDomain));
+            catch (MalformedURLException e) {
+                errors.put("IOException", "IOException");
             }
-            else {
-                errors.put("missingDomain", "missingDomain");
+            catch (DocumentException e) {
+                errors.put("DocumentException", "DocumentException");
             }
-            
-            if (duplicateUsers.size() == 0) {
-                response.sendRedirect("import-user-data.jsp?success=true");
-                return;
-            }
-    			
-            errors.put("userAlreadyExists", "userAlreadyExists");
         }
-        catch (MalformedURLException e) {
-            errors.put("IOException", "IOException");
+        else {
+            errors.put("invalidUserFile", "invalidUserFile");
         }
-        catch (DocumentException e) {
-            errors.put("DocumentException", "DocumentException");
-        }
-   }
+    }
 %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -84,8 +89,8 @@
                 The import file does not match the user schema.
             <% } else if (errors.containsKey("userAlreadyExists")) { %>
                 The following users are already exist in the system and were not loaded:<br>
-            <%	        	  
-                Iterator iter = duplicateUsers.iterator();	        	  
+            <%
+                Iterator iter = duplicateUsers.iterator();
                 while (iter.hasNext()) {
                     String username = (String) iter.next();
                     %><%= username %><%

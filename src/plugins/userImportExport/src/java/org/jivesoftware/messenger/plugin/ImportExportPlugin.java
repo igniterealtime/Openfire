@@ -86,7 +86,7 @@ public class ImportExportPlugin implements Plugin {
         } catch (IOException ioe) {
             Log.error(ioe);
             throw ioe;
-        } finally {        
+        } finally {
             if (writer != null) {
                 writer.close();
             }
@@ -101,15 +101,25 @@ public class ImportExportPlugin implements Plugin {
         return importUsers(document, previousDomain);
     }
     
+    public boolean validateImportFile(FileItem file) {
+        try { 
+            return new UserSchemaValidator(file, "messenger-user-schema.xsd.xml").validate(); 
+        } 
+        catch (Exception e) {
+            Log.error(e);
+            return false;
+        } 
+    }
+    
     private Document exportUsers() {
         Document document = DocumentHelper.createDocument();
         Element root = document.addElement("JiveMessenger");
 
         Collection<User> users = userManager.getUsers();
-        for (User user : users) {			
+        for (User user : users) {
             Element userElement = root.addElement("User");
             String userName = user.getUsername();
-            userElement.addElement("Username").addText(userName);            
+            userElement.addElement("Username").addText(userName);
 			
             try {
                 userElement.addElement("Password").addText(provider.getPassword(user.getUsername()));
@@ -117,7 +127,7 @@ public class ImportExportPlugin implements Plugin {
             catch (UserNotFoundException e) {
                 //this should never happen
                 Log.info("User not found: " + userName + ", setting password to their username");
-                userElement.addElement("Password").addText(userName);                
+                userElement.addElement("Password").addText(userName);
             }
             userElement.addElement("Email").addText(user.getEmail() == null ? "" : user.getEmail());
 			
@@ -150,7 +160,7 @@ public class ImportExportPlugin implements Plugin {
         return document;
     }
     
-    private List<String> importUsers(Document document, String previousDomain) throws DocumentException {        
+    private List<String> importUsers(Document document, String previousDomain) {        
         List<String> duplicateUsers = new ArrayList<String>();
         
         UserManager userManager = UserManager.getInstance();
@@ -177,16 +187,16 @@ public class ImportExportPlugin implements Plugin {
                 String nameElement = userElement.getName();
 				
                 if ("Username".equals(nameElement)) {
-                    userName = userElement.getText();                    
+                    userName = userElement.getText();
                 }
                 else if ("Password".equals(nameElement)) {
-                    password = userElement.getText();                    
+                    password = userElement.getText();
                 }
                 else if ("Name".equals(nameElement)) {
-                    name = userElement.getText();                    
+                    name = userElement.getText();
                 }
                 else if ("Email".equals(nameElement)) {
-                    email = userElement.getText();                	
+                    email = userElement.getText();
                 }
                 else if ("Roster".equals(nameElement)) {
                     Iterator rosterIter = userElement.elementIterator("Item");    	
@@ -223,7 +233,7 @@ public class ImportExportPlugin implements Plugin {
             }
             
             if ((userName != null) && (password != null)) {
-                try {                    
+                try {
                     userManager.createUser(userName, password, name, email);                    
                     rosterMap.put(userName, rosterItems);
                 }

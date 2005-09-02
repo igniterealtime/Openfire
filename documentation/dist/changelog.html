@@ -69,6 +69,36 @@ Jive Messenger Changelog
 </div>
 
 <p>
+<b>2.2.1</b> -- September 1, 2005
+<p>
+
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-274'>JM-274</a>] - Added POP3 authentication. Thanks to Sean Meiners.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-374'>JM-374</a>] - Added inline help to the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-363'>JM-363</a>] - Updated database libs to the latest releases.</li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-357'>JM-357</a>] - Fixed problem when loading group properties whose key or value was null.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-359'>JM-359</a>] - Fixed case sensitive problem that prevented loading of plugins. <b>(3 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-360'>JM-360</a>] - Fixed parsing of dates that may freeze the server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-361'>JM-361</a>] - When s2s is disabled, the server will no longer attempt to send packets to remote servers.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-364'>JM-364</a>] - Reading XML using SAXParser was not thread safe. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-366'>JM-366</a>] - Handling of offline messages was using a 0-12 hour format.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-368'>JM-368</a>] - Import and export users plugin now uses complete roster item JID instead of just the JID's node.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-371'>JM-371</a>] - Fixed messengerHome location code.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-372'>JM-372</a>] - Fixed Packet.getError() to return correct XML.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-375'>JM-375</a>] - Fixed packet routing between components.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-376'>JM-376</a>] - The bin/extra directory was missing for the Unix builds.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-378'>JM-378</a>] - Added escaping of usernames in LdapGroupProvider</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-380'>JM-380</a>] - Added validation of IP address in accept list. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-381'>JM-381</a>] - IQ packets with node or resource not null may now be routed to components.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-377'>JM-377</a>] - Changed ldap.posixEnabled to ldap.posixMode.</li>
+</ul>
+
+<p>
 <b>2.2.0</b> -- August 2, 2005
 <p>
 

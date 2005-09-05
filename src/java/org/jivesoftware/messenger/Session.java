@@ -15,6 +15,8 @@ import org.jivesoftware.messenger.auth.AuthToken;
 import org.xmpp.packet.JID;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -27,6 +29,12 @@ import java.util.Date;
  * @author Gaston Dombiak
  */
 public abstract class Session implements RoutableChannelHandler {
+
+    /**
+     * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
+     */
+	public static final int MAJOR_VERSION = 1;
+    public static final int MINOR_VERSION = 0;
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -74,6 +82,12 @@ public abstract class Session implements RoutableChannelHandler {
     private long serverPacketCount = 0;
 
     /**
+	 * Session temporary data. All data stored in this <code>Map</code> disapear when session
+	 * finishes.
+	 */
+	private Map<String, Object> sessionData = null;
+	
+    /**
      * Creates a session with an underlying connection and permission protection.
      *
      * @param connection The connection we are proxying
@@ -85,6 +99,7 @@ public abstract class Session implements RoutableChannelHandler {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id);
         this.sessionManager = SessionManager.getInstance();
+        sessionData = new TreeMap<String, Object>();
     }
 
     /**
@@ -207,6 +222,42 @@ public abstract class Session implements RoutableChannelHandler {
      */
     public long getNumServerPackets() {
         return serverPacketCount;
+    }
+    
+    /**
+	 * Saves given session data. Data are saved to temporary storage only and are accessible during
+	 * this session life only and only from this session instance.
+	 * 
+	 * @param key a <code>String</code> value of stored data key ID.
+	 * @param value a <code>Object</code> value of data stored in session.
+	 * @see #getSessionData(String)
+	 */
+	public void setSessionData(String key, Object value) {
+		sessionData.put(key, value);
+	}
+
+	/**
+	 * Retrieves session data. This method gives access to temporary session data only. You can
+	 * retrieve earlier saved data giving key ID to receive needed value. Please see
+	 * {@link #setSessionData(String, Object)}  description for more details.
+	 * 
+	 * @param key a <code>String</code> value of stored data ID.
+	 * @return a <code>Object</code> value of data for given key.
+	 * @see #setSessionData(String, Object)
+	 */
+	public Object getSessionData(String key) {
+		return sessionData.get(key);
+	}
+
+    /**
+     * Removes session data. Please see {@link #setSessionData(String, Object)} description
+     * for more details.
+     *
+     * @param key a <code>String</code> value of stored data ID.
+     * @see #setSessionData(String, Object)
+     */
+    public void removeSessionData(String key) {
+        sessionData.remove(key);
     }
 
     public String toString() {

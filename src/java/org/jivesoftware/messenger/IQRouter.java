@@ -65,11 +65,13 @@ public class IQRouter extends BasicModule {
             throw new NullPointerException();
         }
         Session session = sessionManager.getSession(packet.getFrom());
-        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED
-                || (isLocalServer(packet.getTo())
-                && ("jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI())
-                || "jabber:iq:register".equals(packet.getChildElement().getNamespaceURI())))
-        ) {
+        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
+                isLocalServer(packet.getTo()) && (
+                        "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
+                                "jabber:iq:register"
+                                        .equals(packet.getChildElement().getNamespaceURI()) ||
+                                "urn:ietf:params:xml:ns:xmpp-bind"
+                                        .equals(packet.getChildElement().getNamespaceURI())))) {
             handle(packet);
         }
         else {

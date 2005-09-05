@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: DefaultUserProvider.java,v $
  * $Revision$
  * $Date$
  *
@@ -517,5 +517,9 @@ public class DefaultUserProvider implements UserProvider {
 
     public boolean isReadOnly() {
         return false;
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return true;
     }
 }

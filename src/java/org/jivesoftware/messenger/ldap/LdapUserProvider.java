@@ -438,4 +438,8 @@ public class LdapUserProvider implements UserProvider {
     public boolean isReadOnly() {
         return true;
     }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 }

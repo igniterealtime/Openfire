@@ -227,4 +227,14 @@ public interface UserProvider {
      * @return true if the user provider is read-only.
      */
     public boolean isReadOnly();
+
+    /**
+     * Returns true if this UserProvider is able to retrieve user passwords from
+     * the backend user store. If this operation is not supported then {@link #getPassword(String)}
+     * will throw an {@link UnsupportedOperationException} if invoked.
+     *
+     * @return true if this UserProvider is able to retrieve user passwords from the
+     *         backend user store.
+     */
+    public boolean supportsPasswordRetrieval();
 }

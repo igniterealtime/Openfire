@@ -207,9 +207,9 @@ public class SASLAuthentication {
                     doc = reader.parseDocument().getRootElement();
                 }
             }
-            // Remove the SaslServer from the Session
-            session.removeSessionData("SaslServer");
         }
+        // Remove the SaslServer from the Session
+        session.removeSessionData("SaslServer");
         return success;
     }
 

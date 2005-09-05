@@ -211,7 +211,7 @@ public class XMPPServer {
             name = "127.0.0.1";
         }
 
-        version = new Version(2, 2, 1, Version.ReleaseStatus.Release, -1);
+        version = new Version(2, 3, 0, Version.ReleaseStatus.Alpha, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -321,6 +321,8 @@ public class XMPPServer {
         loadModule(OfflineMessageStrategy.class.getName());
         loadModule(OfflineMessageStore.class.getName());
         // Load standard modules
+        loadModule(IQBindHandler.class.getName());
+        loadModule(IQSessionEstablishmentHandler.class.getName());
         loadModule(IQAuthHandler.class.getName());
         loadModule(IQPrivateHandler.class.getName());
         loadModule(IQRegisterHandler.class.getName());
@@ -779,6 +781,17 @@ public class XMPPServer {
      */
     public IQRegisterHandler getIQRegisterHandler() {
         return (IQRegisterHandler)modules.get(IQRegisterHandler.class);
+    }
+
+    /**
+     * Returns the <code>IQAuthHandler</code> registered with this server. The
+     * <code>IQAuthHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>IQAuthHandler</code> registered with this server.
+     */
+    public IQAuthHandler getIQAuthHandler() {
+        return (IQAuthHandler)modules.get(IQAuthHandler.class);
     }
 
     /**

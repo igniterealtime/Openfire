@@ -58,6 +58,7 @@ public class SocketConnection implements Connection {
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
+	private TLSStreamHandler tlsStreamHandler;
 
     /**
      * Create a new session using the supplied socket.
@@ -81,6 +82,31 @@ public class SocketConnection implements Connection {
         xmlSerializer = new XMLSocketWriter(writer, socket);
     }
 
+    /**
+     * Returns the stream handler responsible for securing the plain connection and providing
+     * the corresponding input and output streams.
+     *
+     * @return the stream handler responsible for securing the plain connection and providing
+     *         the corresponding input and output streams.
+     */
+    public TLSStreamHandler getTLSStreamHandler() {
+		return tlsStreamHandler;
+	}
+
+    /**
+     * Secures the plain connection by negotiating TLS with the client.
+     *
+     * @throws IOException if an error occured while securing the connection.
+     */
+    public void startTLS() throws IOException {
+		if (!secure) {
+			secure = true;
+			tlsStreamHandler = new TLSStreamHandler(socket);
+			writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
+			xmlSerializer = new XMLSocketWriter(writer, socket);
+		}
+	}
+	
     public boolean validate() {
         if (isClosed()) {
             return false;

@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.net;
 import org.dom4j.Element;
 import org.jivesoftware.messenger.ClientSession;
 import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
@@ -76,4 +77,29 @@ public class ClientSocketReader extends SocketReader {
         return false;
     }
 
+    String getNamespace() {
+        return "jabber:client";
+    }
+
+    protected String getAvailableStreamFeatures() {
+        StringBuilder sb = new StringBuilder();
+        // TODO Create and use #hasSASLAuthentication
+        if (((ClientSession)session).getAuthToken() == null) {
+            // Advertise that the server supports Non-SASL Authentication
+            if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            }
+            // Advertise that the server supports In-Band Registration
+            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
+            }
+        }
+        else {
+            // If the session has been authenticated then offer resource binding
+            // and session establishment
+            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
+            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        }
+        return sb.toString();
+    }
 }

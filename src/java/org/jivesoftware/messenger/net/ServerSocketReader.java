@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: ServerSocketReader.java,v $
  * $Revision$
  * $Date$
  *
@@ -209,5 +209,14 @@ public class ServerSocketReader extends SocketReader {
             return true;
         }
         return false;
+    }
+
+    String getNamespace() {
+        return "jabber:server";
+    }
+
+    String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
     }
 }

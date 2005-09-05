@@ -11,25 +11,26 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParser;
-import org.jivesoftware.messenger.*;
+import org.dom4j.Element;
+import org.dom4j.io.XPPPacketReader;
+import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
-import org.dom4j.io.XPPPacketReader;
-import org.dom4j.Element;
+import org.jivesoftware.util.Log;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.*;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketException;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.EOFException;
-import java.io.Writer;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -228,8 +229,35 @@ public abstract class SocketReader implements Runnable {
                     continue;
                 }
                 processIQ(packet);
+			}
+            else if ("starttls".equals(tag)) {
+                // Client requested to secure the connection using TLS
+                connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+                // Negotiate TLS
+                if (negotiateTLS()) {
+                    tlsNegotiated();
+                }
+                else {
+                    open = false;
+                    session = null;
+                }
+                continue;
             }
-            else {
+            else if ("auth".equals(tag)) {
+                // User is trying to authenticate using SASL
+                SASLAuthentication saslAuth = new SASLAuthentication(session, reader);
+                if (saslAuth.doHandshake(doc)) {
+                    // SASL authentication was successful so open a new stream and offer
+                    // resource binding and session establishment (to client sessions only)
+                    saslSuccessful();
+                }
+                else {
+                    open = false;
+                    session = null;
+                }
+                continue;
+            }
+			else {
                 if (!processUnknowPacket(doc)) {
                     Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                             doc.asXML());
@@ -397,7 +425,9 @@ public abstract class SocketReader implements Runnable {
             eventType = xpp.next();
         }
 
-        // Create the correct session based on the sent namespace
+        // Create the correct session based on the sent namespace. At this point the server
+        // may offer the client to secure the connection. If the client decides to secure
+        // the connection then a <starttls> stanza should be received
         if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
@@ -414,6 +444,123 @@ public abstract class SocketReader implements Runnable {
             // Close the underlying connection
             connection.close();
         }
+    }
+
+    /**
+     * Tries to secure the connection using TLS. If the connection is secured then reset
+     * the parser to use the new secured reader. But if the connection failed to be secured
+     * then send a <failure> stanza and close the connection.
+     *
+     * @return true if the connection was secured.
+     * @throws IOException if an I/O error occures while parsing the input stream.
+     * @throws XmlPullParserException if an error occures while parsing.
+     */
+    private boolean negotiateTLS() throws IOException, XmlPullParserException {
+        // Negotiate TLS.
+        try {
+            connection.startTLS();
+        }
+        catch (IOException e) {
+            connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            connection.close();
+            return false;
+        }
+        XmlPullParser xpp = reader.getXPPParser();
+        // Reset the parser to use the new reader
+        xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), CHARSET));
+        // Skip new stream element
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        return true;
+    }
+
+    /**
+     * TLS negotiation was successful so open a new stream and offer the new stream features.
+     * The new stream features will include available SASL mechanisms and specific features
+     * depending on the session type such as auth for Non-SASL authentication and register
+     * for in-band registration.
+     */
+    private void tlsNegotiated() {
+        // Offer stream features including SASL Mechanisms
+        StringBuilder sb = new StringBuilder();
+        sb.append(geStreamHeader());
+        sb.append("<stream:features>");
+        // Include available SASL Mechanisms
+        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        // Include specific features such as auth and register for client sessions
+        String specificFeatures = getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            sb.append(specificFeatures);
+        }
+        sb.append("</stream:features>");
+        connection.deliverRawText(sb.toString());
+    }
+
+    /**
+     * After SASL authentication was successful we should open a new stream and offer
+     * new stream features such as resource binding and session establishment. Notice that
+     * resource binding and session establishment should only be offered to clients (i.e. not
+     * to servers or external components)
+     */
+    private void saslSuccessful() throws XmlPullParserException, IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(geStreamHeader());
+        sb.append("<stream:features>");
+
+        // Include specific features such as resource binding and session establishment
+        // for client sessions
+        String specificFeatures = getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            sb.append(specificFeatures);
+        }
+        sb.append("</stream:features>");
+        connection.deliverRawText(sb.toString());
+
+        // Skip the opening stream sent by the client
+        XmlPullParser xpp = reader.getXPPParser();
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+    }
+
+    /**
+     * Returns a text with the available stream features. Each subclass may return different
+     * values depending whether the session has been authenticated or not.
+     *
+     * @return a text with the available stream features or <tt>null</tt> to add nothing.
+     */
+    abstract String getAvailableStreamFeatures();
+
+    /**
+     * Returns the stream namespace. (E.g. jabber:client, jabber:server, etc.).
+     *
+     * @return the stream namespace.
+     */
+    abstract String getNamespace();
+
+    private String geStreamHeader() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<?xml version='1.0' encoding='");
+        sb.append(CHARSET);
+        sb.append("'?>");
+        if (connection.isFlashClient()) {
+            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
+        } else {
+            sb.append("<stream:stream ");
+        }
+        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
+        sb.append(getNamespace());
+        sb.append("\" from=\"");
+        sb.append(session.getServerName());
+        sb.append("\" id=\"");
+        sb.append(session.getStreamID().toString());
+        sb.append("\" xml:lang=\"");
+        sb.append(connection.getLanguage());
+        sb.append("\" version=\"");
+        sb.append(Session.MAJOR_VERSION).append(".").append(Session.MINOR_VERSION);
+        sb.append("\">");
+        return sb.toString();
     }
 
     /**

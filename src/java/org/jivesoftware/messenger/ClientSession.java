@@ -11,28 +11,28 @@
 
 package org.jivesoftware.messenger;
 
+import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.net.SocketConnection;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
-import org.dom4j.io.XPPPacketReader;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParser;
 
-import java.io.Writer;
 import java.io.IOException;
-import java.util.Map;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
@@ -44,13 +44,6 @@ public class ClientSession extends Session {
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
-    private static final String TLS_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-tls";
-
-    /**
-     * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
-     */
-    private static final int MAJOR_VERSION = 0;
-    private static final int MINOR_VERSION = 0;
 
     /**
      * Keep the list of IP address that are allowed to connect to the server. If the list is
@@ -242,6 +235,7 @@ public class ClientSession extends Session {
         sb = new StringBuilder();
         sb.append("<stream:features>");
         sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+        // TODO Consider that STARTTLS may be optional (add TLS options to the AC - disabled, optional, required)
         // sb.append("<required/>");
         sb.append("</starttls></stream:features>");
 
@@ -251,24 +245,6 @@ public class ClientSession extends Session {
             writer.write('\0');
         }
         writer.flush();
-
-        boolean done = false;
-        while (!done) {
-            if (xpp.next() == XmlPullParser.START_TAG) {
-                done = true;
-                if (xpp.getName().equals("starttls") &&
-                        xpp.getNamespace(xpp.getPrefix()).equals(TLS_NAMESPACE))
-                {
-                    writer.write("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
-                    if (isFlashClient) {
-                        writer.write('\0');
-                    }
-                    writer.flush();
-
-                    // TODO: setup SSLEngine and negotiate TLS.
-                }
-            }
-        }
 
         return session;
     }
@@ -335,6 +311,17 @@ public class ClientSession extends Session {
         return getAddress().getNode();
     }
 
+    /**
+     * Sets the new Authorization Token for this session. The session is not yet considered fully
+     * authenticated (i.e. active) since a resource has not been binded at this point. This
+     * message will be sent after SASL authentication was successful but yet resource binding
+     * is required.
+     *
+     * @param auth the authentication token obtained from SASL authentication.
+     */
+    public void setAuthToken(AuthToken auth) {
+        authToken = auth;
+    }
 
     /**
      * Initialize the session with a valid authentication token and

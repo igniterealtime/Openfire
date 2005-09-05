@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: ComponentSocketReader.java,v $
  * $Revision$
  * $Date$
  *
@@ -52,5 +52,14 @@ public class ComponentSocketReader extends SocketReader {
             return true;
         }
         return false;
+    }
+
+    String getNamespace() {
+        return "jabber:component:accept";
+    }
+
+    String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
     }
 }

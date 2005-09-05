@@ -11,9 +11,6 @@
 
 package org.jivesoftware.messenger.net;
 
-import com.sun.net.ssl.KeyManager;
-import com.sun.net.ssl.KeyManagerFactory;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -21,6 +18,11 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+
+import org.jivesoftware.util.Log;
 
 /**
  * A custom KeyManagerFactory that creates a key manager list using the
@@ -75,4 +77,34 @@ public class SSLJiveKeyManagerFactory {
         }
         return keyManagers;
     }
+    public static KeyManager[] getKeyManagers(KeyStore keystore, String keypass) {
+		KeyManager[] keyManagers;
+		try {
+			if (keystore == null) {
+				keyManagers = null;
+			} else {
+				KeyManagerFactory keyFactory = KeyManagerFactory
+						.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+				if (keypass == null) {
+					keypass = SSLConfig.getKeyPassword();
+				}
+
+				keyFactory.init(keystore, keypass.toCharArray());
+				keyManagers = keyFactory.getKeyManagers();
+			}
+		} catch (KeyStoreException e) {
+			keyManagers = null;
+			Log.error("SSLJiveKeyManagerFactory startup problem.\n" +
+                    "  the keystore is corrupt", e);
+		} catch (NoSuchAlgorithmException e) {
+			keyManagers = null;
+			Log.error("SSLJiveKeyManagerFactory startup problem.\n" +
+                    "  the keystore type doesn't exist (not provided or configured with your JVM)", e);
+		} catch (UnrecoverableKeyException e) {
+			keyManagers = null;
+			Log.error("SSLJiveKeyManagerFactory startup problem.\n" +
+                    "  the keystore could not be opened (typically the password is bad)", e);
+		} 
+		return keyManagers;
+	}
 }

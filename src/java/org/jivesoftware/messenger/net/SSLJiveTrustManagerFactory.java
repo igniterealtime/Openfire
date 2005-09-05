@@ -11,15 +11,17 @@
 
 package org.jivesoftware.messenger.net;
 
-import com.sun.net.ssl.TrustManager;
-import com.sun.net.ssl.TrustManagerFactory;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.jivesoftware.util.Log;
 
 /**
  * A custom TrustManagerFactory that creates a trust manager list using the
@@ -73,4 +75,33 @@ public class SSLJiveTrustManagerFactory {
         }
         return trustManagers;
     }
+    
+    public static TrustManager[] getTrustManagers(KeyStore truststore,
+			String trustpass) {
+		TrustManager[] trustManagers;
+		try {
+			if (truststore == null) {
+				trustManagers = null;
+			} else {
+				TrustManagerFactory trustFactory = TrustManagerFactory
+						.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+				if (trustpass == null) {
+					trustpass = SSLConfig.getTrustPassword();
+				}
+
+				trustFactory.init(truststore);
+
+				trustManagers = trustFactory.getTrustManagers();
+			}
+		} catch (KeyStoreException e) {
+			trustManagers = null;
+			Log.error("SSLJiveTrustManagerFactory startup problem.\n" +
+                    "  the keystore is corrupt", e);
+		} catch (NoSuchAlgorithmException e) {
+			trustManagers = null;
+			Log.error("SSLJiveTrustManagerFactory startup problem.\n" +
+                    "  the keystore type doesn't exist (not provided or configured with your JVM)", e);
+		}
+		return trustManagers;
+	}
 }

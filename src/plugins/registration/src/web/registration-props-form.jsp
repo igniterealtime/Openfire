@@ -224,11 +224,11 @@ function addEmailContact() {
       <tbody>
          <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="imenabled" <%=(imEnabled) ? "checked" : "" %> onclick="return enableWelcomeMessage();"></td>
-            <td width="99%" align="left">Enable instant message registraion notification.</td>
+            <td width="99%" align="left">Enable instant message registration notification.</td>
          </tr>
          <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="emailenabled" <%=(emailEnabled) ? "checked" : "" %> onclick="return enableWelcomeMessage();"></td>
-            <td width="99%" align="left">Enable email registraion notification.</td>
+            <td width="99%" align="left">Enable email registration notification.</td>
          </tr>
          <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="welcomeenabled" <%=(welcomeEnabled) ? "checked" : "" %> onclick="return enableWelcomeMessage();"></td>

@@ -89,6 +89,10 @@ public class DefaultUserProvider implements UserProvider {
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         try {
             loadUser(username);
             // The user already exists since no exception, so:
@@ -134,6 +138,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public void deleteUser(String username) {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -248,6 +256,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public void setName(String username, String name) throws UserNotFoundException {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -269,6 +281,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public void setEmail(String username, String email) throws UserNotFoundException {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -290,6 +306,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -311,6 +331,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -332,6 +356,10 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public String getPassword(String username) throws UserNotFoundException {
+        if (!supportsPasswordRetrieval()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -355,8 +383,11 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
-    public void setPassword(String username, String password) throws UserNotFoundException
-    {
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

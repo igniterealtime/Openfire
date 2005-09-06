@@ -37,4 +37,8 @@ public class POP3UserProvider extends DefaultUserProvider {
     public boolean isReadOnly() {
         return true;
     }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 }

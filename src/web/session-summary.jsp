@@ -84,7 +84,7 @@
     pageinfo.setPageID("session-summary");
 %>
 <jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="view_current_sessions.html" />
+    <jsp:param name="helpPage" value="view_active_client_sessions.html" />
 </jsp:include>
 <jsp:include page="title.jsp" flush="true" />
 

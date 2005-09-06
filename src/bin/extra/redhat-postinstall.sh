@@ -23,6 +23,9 @@ if [ ! $MESSENGER_HOME ]; then
 	fi
 fi
 
+# Grant execution permissions
+chmod +x $MESSENGER_HOME/bin/extra/jive-messengerd
+
 # Install the init script
 cp $MESSENGER_HOME/bin/extra/jive-messengerd /etc/init.d
 /sbin/chkconfig --add jive-messengerd

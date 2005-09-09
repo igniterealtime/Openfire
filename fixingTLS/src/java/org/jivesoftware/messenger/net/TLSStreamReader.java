@@ -65,10 +65,12 @@ public class TLSStreamReader {
         }*/
         final int cnt = rbc.read(inNetBB);
 		if (cnt > 0) {
+            System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (after read)");
+            System.out.println("doRead inAppBB (before decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity());
 			inAppBB = decrypt(inNetBB, inAppBB);
+            System.out.println("doRead inAppBB (after decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity() + " lastStatus: " + lastStatus);
             if (lastStatus == TLSStatus.OK) {
                 inAppBB.flip();
-                System.out.println("doRead inAppBB position: " + inNetBB.position() + " limit: " + inNetBB.limit());
             }
             else {
                 System.out.println("Intento de nuevo doRead");
@@ -114,8 +116,8 @@ public class TLSStreamReader {
 
         if (input.hasRemaining()) {
             System.out.println("hasRemaining = true " + stat);
-            //System.out.println("Hice rewind");
-			//input.rewind();
+            System.out.println("Hice rewind");
+			input.rewind();
 		} else {
 			input.clear();
             System.out.println("inNet position con clear: " + inNetBB.position() + " / " + input.position());
@@ -153,14 +155,14 @@ public class TLSStreamReader {
                      return -1;
                 }
 				inAppBB.get(bytes, off, len2);
+                System.out.println("#createInputStream. available in buffer : " + b + " requested: " + len2);
                 if (inAppBB.hasRemaining()) {
                     inAppBB.compact();
-                    System.out.println("inAppBB compact/flip position: " + inAppBB.position() + " limit: " + inAppBB.limit());
+                    System.out.println("#createInputStream. inAppBB compact position: " + inAppBB.position() + " limit: " + inAppBB.limit());
                 }
                 else {
                     inAppBB.clear();
                 }
-                System.out.println("read: " + b + " / " + len2);
                 //inAppBB.compact();
                 if (len2 <= 0) {
                     System.out.println("????: " + new String(inAppBB.array()));

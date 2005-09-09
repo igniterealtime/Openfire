@@ -58,22 +58,18 @@ public class TLSStreamReader {
 	 * Read TLS encrpyted data from SocketChannel, and use <code>decrypt</code> method to decypt.
 	 */
 	private void doRead() throws IOException {
-		//inNetBB.clear();
-        System.out.println("doRead inNet position: " + inNetBB.position());
-        /*if (lastStatus != TLSStatus.UNDERFLOW) {
-		    inAppBB.clear();
-        }*/
+        //System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (before read)");
         final int cnt = rbc.read(inNetBB);
 		if (cnt > 0) {
-            System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (after read)");
-            System.out.println("doRead inAppBB (before decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity());
+            //System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (after read)");
+            //System.out.println("doRead inAppBB (before decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity());
 			inAppBB = decrypt(inNetBB, inAppBB);
-            System.out.println("doRead inAppBB (after decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity() + " lastStatus: " + lastStatus);
+            ///System.out.println("doRead inAppBB (after decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity() + " lastStatus: " + lastStatus);
             if (lastStatus == TLSStatus.OK) {
                 inAppBB.flip();
             }
             else {
-                System.out.println("Intento de nuevo doRead");
+                //System.out.println("Intento de nuevo doRead");
                 doRead();
             }
         } else {
@@ -93,7 +89,6 @@ public class TLSStreamReader {
 	private ByteBuffer decrypt(ByteBuffer input, ByteBuffer output) throws IOException {
 		TLSStatus stat = null;
 		ByteBuffer out = output;
-        //int i = 1;
         input.flip();
         do {
 
@@ -104,23 +99,13 @@ public class TLSStreamReader {
 			}*/
 
 			stat = wrapper.getStatus();
-            //if (i > 1) {
-                //System.out.println(i + " - " + stat + " - " + input.hasRemaining() + " - pos: " + input.position() + " - lim: " + input.limit());
-            //}
-            //i++;
         } while ((stat == TLSStatus.NEED_READ || stat == TLSStatus.OK) && input.hasRemaining());
 
-        if (stat != TLSStatus.OK) {
-            System.out.println(stat);
-        }
-
         if (input.hasRemaining()) {
-            System.out.println("hasRemaining = true " + stat);
-            System.out.println("Hice rewind");
-			input.rewind();
+            //System.out.println("inNetBB has remaining. inNetBB compacted");
+			input.compact();
 		} else {
 			input.clear();
-            System.out.println("inNet position con clear: " + inNetBB.position() + " / " + input.position());
 		}
 
         lastStatus = stat;
@@ -147,7 +132,13 @@ public class TLSStreamReader {
 			}
 
 			public synchronized int read(byte[] bytes, int off, int len) throws IOException {
-                doRead();
+                if (inAppBB.position() == 0) {
+                    doRead();
+                }
+                else {
+                    //System.out.println("XX remaining: " + inAppBB.remaining() + " position: " + inAppBB.position() + " lastStatus: " + lastStatus);
+                    inAppBB.flip();
+                }
                 int b = inAppBB.remaining();
                 int len2 = Math.min(len, b);
                 if (len2 == 0) {
@@ -155,17 +146,18 @@ public class TLSStreamReader {
                      return -1;
                 }
 				inAppBB.get(bytes, off, len2);
-                System.out.println("#createInputStream. available in buffer : " + b + " requested: " + len2);
+                if (b != len2) {
+                    //System.out.println("#createInputStream. available in buffer : " + b + " requested: " + len2);
+                }
                 if (inAppBB.hasRemaining()) {
                     inAppBB.compact();
-                    System.out.println("#createInputStream. inAppBB compact position: " + inAppBB.position() + " limit: " + inAppBB.limit());
+                    //System.out.println("#createInputStream. inAppBB compact position: " + inAppBB.position() + " limit: " + inAppBB.limit());
                 }
                 else {
                     inAppBB.clear();
                 }
-                //inAppBB.compact();
                 if (len2 <= 0) {
-                    System.out.println("????: " + new String(inAppBB.array()));
+                    //System.out.println("????: " + new String(inAppBB.array()));
                 }
                 return len2;
 			}

@@ -223,7 +223,9 @@ public class TLSWrapper {
 	}
 
 	private ByteBuffer resizeApplicationBuffer(ByteBuffer app) {
-		if (app.remaining() < appBuffSize) {
+        // TODO Creating new buffers and copying over old one may not scale and may even be a
+        // security risk. Consider using views. Thanks to Noah for the tip.
+        if (app.remaining() < appBuffSize) {
 			ByteBuffer bb = ByteBuffer.allocate(app.capacity() + appBuffSize);
 			app.flip();
 			bb.put(app);

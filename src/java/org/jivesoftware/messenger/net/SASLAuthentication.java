@@ -274,8 +274,9 @@ public class SASLAuthentication {
     private void authenticationFailed() {
         StringBuilder reply = new StringBuilder();
         reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        reply.append("<temporary-auth-failure/></failure>");
+        reply.append("<not-authorized/></failure>");
         connection.deliverRawText(reply.toString());
+        // TODO Give a number of retries before closing the connection
         // Close the connection
         connection.close();
     }

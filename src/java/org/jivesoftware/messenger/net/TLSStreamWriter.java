@@ -117,7 +117,6 @@ public class TLSStreamWriter {
     private ByteBuffer resizeApplicationBuffer(int increment) {
         // TODO Creating new buffers and copying over old one may not scale. Consider using views. Thanks to Noah for the tip.
         if (outAppData.remaining() < increment) {
-            System.out.println("resizing writer");
             ByteBuffer bb = ByteBuffer.allocate(outAppData.capacity() + wrapper.getAppBuffSize());
             outAppData.flip();
             bb.put(outAppData);

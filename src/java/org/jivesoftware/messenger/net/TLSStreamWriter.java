@@ -56,11 +56,12 @@ public class TLSStreamWriter {
 		}
 	}
 
-	private void tlsWrite(final ByteBuffer buf) throws IOException {
+	private void tlsWrite(ByteBuffer buf) throws IOException {
 		ByteBuffer tlsBuffer = null;
 		ByteBuffer tlsOutput = null;
 		do {
-			tlsBuffer = ByteBuffer.allocate(Math.min(buf.remaining(), wrapper.getAppBuffSize()));
+            // TODO Consider optimizing by not creating new instances each time
+            tlsBuffer = ByteBuffer.allocate(Math.min(buf.remaining(), wrapper.getAppBuffSize()));
 			tlsOutput = ByteBuffer.allocate(wrapper.getNetBuffSize());
 
 			while (tlsBuffer.hasRemaining() && buf.hasRemaining()) {
@@ -81,7 +82,7 @@ public class TLSStreamWriter {
 	 * Writes outNetData to the SocketChannel. <P> Returns true when the ByteBuffer has no remaining
 	 * data.
 	 */
-	private boolean writeToSocket(final ByteBuffer outNetData) throws IOException {
+	private boolean writeToSocket(ByteBuffer outNetData) throws IOException {
 		wbc.write(outNetData);
 		return !outNetData.hasRemaining();
 	}
@@ -104,12 +105,26 @@ public class TLSStreamWriter {
 			}
 
 			public synchronized void write(byte[] bytes, int off, int len) throws IOException {
-				outAppData.put(bytes, off, len);
+                outAppData = resizeApplicationBuffer(bytes.length);
+                outAppData.put(bytes, off, len);
 				outAppData.flip();
 				doWrite(outAppData);
 				outAppData.clear();
 			}
 		};
 	}
+
+    private ByteBuffer resizeApplicationBuffer(int increment) {
+        // TODO Creating new buffers and copying over old one may not scale. Consider using views. Thanks to Noah for the tip.
+        if (outAppData.remaining() < increment) {
+            System.out.println("resizing writer");
+            ByteBuffer bb = ByteBuffer.allocate(outAppData.capacity() + wrapper.getAppBuffSize());
+            outAppData.flip();
+            bb.put(outAppData);
+            return bb;
+        } else {
+            return outAppData;
+        }
+    }
 
 }

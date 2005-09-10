@@ -329,41 +329,49 @@ public class Roster implements Cacheable {
             throw new SharedGroupException("Cannot remove contact that belongs to a shared group");
         }
 
-        RosterItem.SubType subType = itemToRemove.getSubStatus();
-        // Cancel any existing presence subscription between the user and the contact
-        if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
-            Presence presence = new Presence();
-            presence.setFrom(server.createJID(username, null));
-            presence.setTo(itemToRemove.getJid());
-            presence.setType(Presence.Type.unsubscribe);
-            server.getPacketRouter().route(presence);
-        }
-        // cancel any existing presence subscription between the contact and the user
-        if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
-            Presence presence = new Presence();
-            presence.setFrom(server.createJID(username, null));
-            presence.setTo(itemToRemove.getJid());
-            presence.setType(Presence.Type.unsubscribed);
-            server.getPacketRouter().route(presence);
-        }
-        // If removing the user was successful, remove the user from the subscriber list:
-        RosterItem item = rosterItems.remove(user.toBareJID());
-        if (item != null) {
-            // Delete the item from the provider if the item is persistent. RosteItems that only
-            // belong to shared groups won't be persistent
-            if (item.getID() > 0) {
-                // If removing the user was successful, remove the user from the backend store
-                rosterItemProvider.deleteItem(username, item.getID());
+        if (itemToRemove != null) {
+            RosterItem.SubType subType = itemToRemove.getSubStatus();
+
+            // Cancel any existing presence subscription between the user and the contact
+            if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
+                Presence presence = new Presence();
+                presence.setFrom(server.createJID(username, null));
+                presence.setTo(itemToRemove.getJid());
+                presence.setType(Presence.Type.unsubscribe);
+                server.getPacketRouter().route(presence);
             }
 
-            // Broadcast the update to the user
-            org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
-            roster.setType(IQ.Type.set);
-            roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
-            broadcast(roster);
-        }
-        return item;
+            // cancel any existing presence subscription between the contact and the user
+            if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
+                Presence presence = new Presence();
+                presence.setFrom(server.createJID(username, null));
+                presence.setTo(itemToRemove.getJid());
+                presence.setType(Presence.Type.unsubscribed);
+                server.getPacketRouter().route(presence);
+            }
 
+            // If removing the user was successful, remove the user from the subscriber list:
+            RosterItem item = rosterItems.remove(user.toBareJID());
+
+            if (item != null) {
+                // Delete the item from the provider if the item is persistent. RosteItems that only
+                // belong to shared groups won't be persistent
+                if (item.getID() > 0) {
+                    // If removing the user was successful, remove the user from the backend store
+                    rosterItemProvider.deleteItem(username, item.getID());
+                }
+
+                // Broadcast the update to the user
+                org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
+                roster.setType(IQ.Type.set);
+                roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
+                broadcast(roster);
+            }
+
+            return item;
+        }
+
+        return null;
     }
 
     /**

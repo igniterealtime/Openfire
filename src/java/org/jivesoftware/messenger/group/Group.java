@@ -188,7 +188,11 @@ public class Group implements Cacheable {
      * @return true if the provided username belongs to a user of the group.
      */
     public boolean isUser(String username) {
-        return members.contains(username) || administrators.contains(username);
+        if  (username != null) {
+        	return members.contains(username) || administrators.contains(username);
+        } else {
+            return false;
+        }
     }
 
     public int getCachedSize() {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.messenger.plugin.monitor.MonitorPlugin</class>
+    <name>Monitor</name>
+    <description>Provides in depth monitoring of various runtime components in Messenger.</description>
+    <author>Noah Campbell</author>
+    <version>1.0</version>
+    <date>09/01/2005</date>
+    <minServerVersion>2.1.5</minServerVersion>
+
+	<!--
+	<adminconsole>		
+		<tab id="tab-users">
+			<sidebar id="sidebar-users">
+				<item id="registration-props-form" name="Registration Properties"
+						url="registration-props-form.jsp"
+						description="User Registration" />
+			</sidebar>
+        </tab> 
+    </adminconsole>
+    -->
+</plugin>

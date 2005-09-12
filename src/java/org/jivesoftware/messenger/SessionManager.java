@@ -22,6 +22,7 @@ import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.component.ComponentSession;
 import org.jivesoftware.messenger.component.InternalComponentManager;
+import org.jivesoftware.messenger.event.SessionEventDispatcher;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -501,6 +502,11 @@ public class SessionManager extends BasicModule {
             // Remove the pre-Authenticated session but remember to use the temporary JID as the key
             preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
                     session.getStreamID().toString()).toString());
+            
+            // Fire session created event.
+            SessionEventDispatcher.dispatchEvent(session,
+                    SessionEventDispatcher.EventType.session_created);
+            
             success = true;
         }
         return success;
@@ -841,6 +847,7 @@ public class SessionManager extends BasicModule {
                             results);
                 }
                 catch (UserNotFoundException e) {
+                    // Ignore.
                 }
             }
 
@@ -1109,9 +1116,8 @@ public class SessionManager extends BasicModule {
      * @param packet The packet to be broadcast
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
-        Iterator values = sessions.values().iterator();
-        while (values.hasNext()) {
-            ((SessionMap)values.next()).broadcast(packet);
+        for (SessionMap sessionMap : sessions.values()) {
+            ((SessionMap) sessionMap).broadcast(packet);
         }
 
         for (Session session : anonymousSessions.values()) {
@@ -1150,6 +1156,10 @@ public class SessionManager extends BasicModule {
         if (anonymousSessions.containsValue(session)) {
             anonymousSessions.remove(session.getAddress().getResource());
             sessionCount--;
+            
+            // Fire session event.
+            SessionEventDispatcher.dispatchEvent(session,
+                    SessionEventDispatcher.EventType.anonymous_session_destroyed);
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
@@ -1163,6 +1173,10 @@ public class SessionManager extends BasicModule {
                         if (sessionMap.isEmpty()) {
                             sessions.remove(username);
                         }
+                        
+                        // Fire session event.
+                        SessionEventDispatcher.dispatchEvent(session,
+                                SessionEventDispatcher.EventType.session_destroyed);
                     }
                 }
             }
@@ -1186,6 +1200,10 @@ public class SessionManager extends BasicModule {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
         preAuthenticatedSessions.remove(session.getAddress().toString());
+        
+        // Fire session event.
+        SessionEventDispatcher.dispatchEvent(session,
+                SessionEventDispatcher.EventType.anonymous_session_created);
     }
 
     public int getConflictKickLimit() {
@@ -1372,6 +1390,7 @@ public class SessionManager extends BasicModule {
             }
         }
         catch (UnauthorizedException e) {
+            // Ignore.
         }
     }
 
@@ -1398,10 +1417,12 @@ public class SessionManager extends BasicModule {
                     session.getConnection().close();
                 }
                 catch (Throwable t) {
+                    // Ignore.
                 }
             }
         }
         catch (Exception e) {
+            // Ignore.
         }
     }
 

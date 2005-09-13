@@ -11,7 +11,7 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 
 import javax.security.auth.callback.*;
@@ -60,10 +60,10 @@ public class XMPPCallbackHandler implements CallbackHandler {
 				try {
                     // Get the password from the UserProvider. Some UserProviders may not support
                     // this operation
-                    ((PasswordCallback) callbacks[i]).setPassword(UserManager.getUserProvider()
-							.getPassword(name).toCharArray());
+                    ((PasswordCallback) callbacks[i])
+                            .setPassword(AuthFactory.getPassword(name).toCharArray());
 
-					 //Log.info("PasswordCallback: "
+                    //Log.info("PasswordCallback: "
 					 //+ new String(((PasswordCallback) callbacks[i]).getPassword()));
 				} catch (UserNotFoundException e) {
 					throw new IOException(e.toString());

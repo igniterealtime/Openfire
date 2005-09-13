@@ -13,6 +13,8 @@ package org.jivesoftware.messenger.auth;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.messenger.user.UserManager;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -79,6 +81,21 @@ public class AuthFactory {
      */
     public static boolean isDigestSupported() {
         return authProvider.isDigestSupported();
+    }
+
+    /**
+     * Returns the user's password. This method will throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @return the user's password.
+     * @throws UserNotFoundException if the given user could not be found.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public static String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException {
+        return UserManager.getUserProvider().getPassword(username);
     }
 
     /**

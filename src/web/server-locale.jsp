@@ -12,13 +12,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.HashMap,
                  java.util.Map,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.messenger.user.*,
-                 java.util.*,
-                 java.text.*,
-                 org.jivesoftware.admin.AdminPageBean,
-                 org.jivesoftware.admin.AdminConsole,
-                 javax.servlet.jsp.jstl.core.Config"
+                 java.util.*"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -40,6 +34,7 @@
 
 <%  // Get parameters //
     String localeCode = ParamUtils.getParameter(request,"localeCode");
+    String timeZoneID = ParamUtils.getParameter(request,"timeZoneID");
     boolean save = request.getParameter("save") != null;
 
     Map errors = new HashMap();
@@ -56,9 +51,21 @@
                 return;
             }
         }
+        // Set the timezeone
+        try {
+            TimeZone tz = TimeZone.getTimeZone(timeZoneID);
+            JiveGlobals.setTimeZone(tz);
+        }
+        catch (Exception e) {}
     }
 
     Locale locale = JiveGlobals.getLocale();
+
+    // Get the time zone list.
+    String[][] timeZones = LocaleUtils.getTimeZoneList();
+
+    // Get the current time zone.
+    TimeZone timeZone = JiveGlobals.getTimeZone();
 %>
 
 <%  // Title of this page and breadcrumbs
@@ -83,7 +90,8 @@
     <div style="padding-top:0.5em;">
 
         <p>
-        <fmt:message key="locale.current" />: <%= locale.getDisplayName() %>
+        <b><fmt:message key="locale.current" />:</b> <%= locale.getDisplayName(locale) %> /
+            <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
 
         <%  boolean usingPreset = false;
@@ -94,7 +102,7 @@
             }
         %>
 
-        <p><b><fmt:message key="locale.choose" />:</b></p>
+        <p><b><fmt:message key="language.choose" />:</b></p>
 
         <table cellspacing="0" cellpadding="3" border="0">
         <tbody>
@@ -167,6 +175,20 @@
         </tbody>
         </table>
 
+        <br>
+
+        <p><b><fmt:message key="timezone.choose" />:</b></p>
+
+        <select size="1" name="timeZoneID">
+        <%  for (int i=0; i<timeZones.length; i++) {
+                String selected = "";
+                if (timeZone.getID().equals(timeZones[i][0].trim())) {
+                    selected = " selected";
+                }
+        %>
+            <option value="<%= timeZones[i][0] %>"<%= selected %>><%= timeZones[i][1] %>
+        <%  } %>
+        </select>
     </div>
 </fieldset>
 
@@ -177,13 +199,3 @@
 </form>
 
 <jsp:include page="bottom.jsp" flush="true" />
-
-<%!
-    private String spacer(int length) {
-        StringBuffer buf = new StringBuffer();
-        for (int i=0; i<length; i++) {
-            buf.append("&nbsp;");
-        }
-        return buf.toString();
-    }
-%>

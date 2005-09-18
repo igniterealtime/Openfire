@@ -33,8 +33,8 @@ plugin directory are as follows:
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin, which will be displayed to end users
  |- changelog.html  &lt;- Optional changelog file for plugin, which will be displayed to end users
- |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin
- |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin
+ |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
+ |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
  |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
  |- lib/            &lt;- Libraries (JAR files) your plugin needs
  |- web             &lt;- Resources for Admin Console integration, if any
@@ -102,8 +102,8 @@ end-users (all placed in the main plugin directory):
 <ul>
     <li><tt>readme.html</tt> -- Optional readme file for plugin, which will be displayed to end users.</li>
     <li><tt>changelog.html</tt> -- Optional changelog file for plugin, which will be displayed to end users.</li>
-    <li><tt>icon_small.gif</tt> -- Optional small (16x16) icon associated with the plugin.</li>
-    <li><tt>icon_large.gif</tt> -- Optional large (32x32) icon associated with the plugin.</li>
+    <li><tt>icon_small.png</tt> -- Optional small (16x16) icon associated with the plugin. It can also be a .gif file.</li>
+    <li><tt>icon_large.png</tt> -- Optional large (32x32) icon associated with the plugin. It can also be a .gif file.</li>
 </ul>
 
 <p>Your plugin class must be implement the
@@ -201,16 +201,16 @@ that plugins should integrate seamlessly:
 
 <ul>
 		<li>Integrate into existing tabs and sidebar sections whenever possible
-        instead of creating your own. Only create new tabs for very
-				significant new functionality.
+            instead of creating your own. Only create new tabs for very
+            significant new functionality.
 		<li>Don't use the word "plugin" in names of tabs, sidebars and items.
-				For example, instead of having an item called "Gateway Plugin", it
-				could be called "Gateway Settings".
+            For example, instead of having an item called "Gateway Plugin", it
+            could be called "Gateway Settings".
 		<li>Try to match the UI of the existing admin console in your custom
 		    plugin pages.
 		<li>There is no need to create an admin console entry to show plugin
-	      meta-data. Instead, let Jive Messenger inform the user about which
-				plugins are installed and provide plugin management.
+	        meta-data. Instead, let Jive Messenger inform the user about which
+            plugins are installed and provide plugin management.
 </ul>
 
 <h2>Using the Jive Messenger Build Script</h2>
@@ -226,8 +226,8 @@ looks for plugin development directories in the following format:
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin
  |- changelog.html  &lt;- Optional changelog file for plugin
- |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin
- |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin
+ |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
+ |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
  |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
  |- lib/            &lt;- Libraries your plugin needs
  |- src/

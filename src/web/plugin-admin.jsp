@@ -31,7 +31,7 @@
 
 <%
 	String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
-	String refreshPlugin = ParamUtils.getParameter(request, "refreshplugin");
+	String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
     boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
@@ -61,12 +61,12 @@
         return;
 	}
 	
-	if (refreshPlugin != null) {		
+	if (reloadPlugin != null) {
 		for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
-			if (refreshPlugin.equals(pluginDir.getName())) {
-				pluginManager.unloadPlugin(refreshPlugin);
-				response.sendRedirect("plugin-admin.jsp?refrehsuccess=true");
+			if (reloadPlugin.equals(pluginDir.getName())) {
+				pluginManager.unloadPlugin(reloadPlugin);
+				response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
                 return;
 			}
 		}		
@@ -135,12 +135,23 @@
        String pluginName = ParamUtils.getParameter(request, "plugin");
        Plugin plugin = pluginManager.getPlugin(pluginName);
        if (plugin != null) {
-           File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
+       // Try looking for PNG file first then default to GIF.
+           File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.png");
+           boolean isPng = true;
+           if (!icon.exists()) {
+               icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
+               isPng = false;
+           }
            if (icon.exists()) {
                // Clear any empty line added by the JSP declaration. This is required to show
                // the image in resin!!!!!
                response.reset();
-               response.setContentType("image/gif");
+               if (isPng) {
+                   response.setContentType("image/png");
+               }
+               else {
+                   response.setContentType("image/gif");
+               }
                InputStream in = null;
                OutputStream ost = null;
                try {
@@ -215,13 +226,13 @@
 
 <% } %>
 
-<% if ("true".equals(request.getParameter("refrehsuccess"))) { %>
+<% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-        <td class="jive-icon-label"><fmt:message key="plugin.admin.refresh_success" /></td></tr>
+        <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success" /></td></tr>
     </tbody>
     </table>
     </div>
@@ -271,12 +282,15 @@
             String pluginAuthor = pluginManager.getAuthor(plugin);
             String pluginVersion = pluginManager.getVersion(plugin);
             File pluginDir = pluginManager.getPluginDirectory(plugin);
-            File logo = new File(pluginDir, "logo_small.gif");
+            File icon = new File(pluginDir, "logo_small.png");
+            if (!icon.exists()) {
+                icon = new File(pluginDir, "logo_small.gif");
+            }
 %>
 
 	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
-                <% if (logo.exists()) { %>
+                <% if (icon.exists()) { %>
                 <img src="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true" width="16" height="16" alt="Plugin">
                 <% } else { %>
 	            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
@@ -310,8 +324,8 @@
 	             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
 	        </td>
 	        <td width="1%" align="center">
-	            <a href="plugin-admin.jsp?refreshplugin=<%= dirName %>"
-	             title="<fmt:message key="plugin.admin.click_refresh" />"
+	            <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
+	             title="<fmt:message key="plugin.admin.click_reload" />"
 	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0"></a>
 	        </td>
 	        <td width="1%" align="center" style="border-right:1px #ccc solid;">

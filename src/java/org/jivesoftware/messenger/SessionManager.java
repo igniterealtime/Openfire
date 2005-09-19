@@ -1467,7 +1467,7 @@ public class SessionManager extends BasicModule {
     }
 
     public int getServerSessionIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 30 * 60 * 1000);
+        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
     /**

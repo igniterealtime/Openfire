@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: RoutingTableImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -258,7 +258,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             }
             else if (nameRoutes != null) {
                 // The retrieved route points to a RoutableChannelHandler
-                if (((RoutableChannelHandler)nameRoutes).getAddress().equals(node)) {
+                if (("".equals(nodeJID) && "".equals(resourceJID)) ||
+                        ((RoutableChannelHandler) nameRoutes).getAddress().equals(node)) {
                     // Remove the route to this domain
                     routes.remove(node.getDomain());
                 }

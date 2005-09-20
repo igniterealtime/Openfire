@@ -29,12 +29,13 @@
     <mountPoints>
       <mountPoint name="" id="33" location="resources" mode="755" />
       <mountPoint name="" id="34" location="resources/security" mode="755" />
-      <mountPoint name="" id="1" location="" mode="755" />
       <mountPoint name="" id="46" location="conf" mode="755" />
+      <mountPoint name="" id="1" location="" mode="755" />
     </mountPoints>
     <entries>
       <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/truststore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
       <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/keystore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
+      <fileEntry mountPoint="46" file="%RELEASE_FULL_PATH%/conf/jive-messenger.xml" overwrite="5" shared="false" mode="644" dontUninstall="true" />
       <dirEntry mountPoint="1" file="%RELEASE_FULL_PATH%" overwrite="4" shared="false" mode="644" dontUninstall="false" excludeSuffixes="" dirMode="755">
         <exclude>
           <entry location="conf/jive-messenger.xml" launcher="false" />
@@ -42,7 +43,6 @@
           <entry location="resources/security/truststore" launcher="false" />
         </exclude>
       </dirEntry>
-      <fileEntry mountPoint="46" file="%RELEASE_FULL_PATH%/conf/jive-messenger.xml" overwrite="5" shared="false" mode="644" dontUninstall="true" />
     </entries>
     <components />
   </files>
@@ -168,7 +168,7 @@
     <customScreens />
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_04_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_05_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
       <selectedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -186,7 +186,7 @@
         <entry name="Readme" target="README.html" icon="" />
       </additionalStartMenuEntries>
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_04" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_05" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>

@@ -1,5 +1,5 @@
 <%--
-  -	$RCSfile$
+  -	$RCSfile: server-session-details.jsp,v $
   -	$Revision$
   -	$Date$
   -
@@ -39,7 +39,7 @@
 
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
-    IncomingServerSession inSession = sessionManager.getIncomingServerSession(hostname);
+    List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(hostname);
     OutgoingServerSession outSession = sessionManager.getOutgoingServerSession(hostname);
 
     // Number dateFormatter for all numbers on this page:
@@ -79,10 +79,10 @@
             <fmt:message key="server.session.label.connection" />
         </td>
         <td>
-        <% if (inSession != null && outSession == null) { %>
+        <% if (!inSessions.isEmpty() && outSession == null) { %>
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">
             <fmt:message key="server.session.connection.incoming" />
-        <% } else if (inSession == null && outSession != null) { %>
+        <% } else if (inSessions.isEmpty() && outSession != null) { %>
             <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.outgoing" />">
             <fmt:message key="server.session.connection.outgoing" />
         <% } else { %>
@@ -96,10 +96,10 @@
             <fmt:message key="server.session.details.hostname" />
         </td>
         <td>
-        <% if (inSession != null) { %>
-            <%= inSession.getConnection().getInetAddress().getHostAddress() %>
+        <% if (!inSessions.isEmpty()) { %>
+            <%= inSessions.get(0).getConnection().getInetAddress().getHostAddress() %>
             /
-            <%= inSession.getConnection().getInetAddress().getHostName() %>
+            <%= inSessions.get(0).getConnection().getInetAddress().getHostName() %>
         <% } else if (outSession != null) { %>
             <%= outSession.getConnection().getInetAddress().getHostAddress() %>
             /
@@ -112,8 +112,8 @@
 </div>
 <br>
 
-<%  // Show details of the incoming session
-    if (inSession != null) {
+<%  // Show details of the incoming sessions
+    for (IncomingServerSession inSession : inSessions) {
 %>
     <b><fmt:message key="server.session.details.incoming_session" /></b>
     <div class="jive-table">

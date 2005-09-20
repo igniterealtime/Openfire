@@ -89,9 +89,11 @@ public class SessionManager extends BasicModule {
      * The sessions contained in this Map are server sessions originated by a remote server. These
      * sessions can only receive packets from the remote server but are not capable of sending
      * packets to the remote server. Sessions will be added to this collecion only after they were
-     * authenticated. The key of the Map is the hostname of the remote server.
+     * authenticated. The key of the Map is the hostname of the remote server. The value is a
+     * list of IncomingServerSession that will keep each session created by a remote server to
+     * this server.
      */
-    private Map<String, IncomingServerSession> incomingServerSessions = new ConcurrentHashMap<String, IncomingServerSession>();
+    private Map<String, List<IncomingServerSession>> incomingServerSessions = new ConcurrentHashMap<String, List<IncomingServerSession>>();
 
     /**
      * The sessions contained in this Map are server sessions originated from this server to remote
@@ -437,24 +439,59 @@ public class SessionManager extends BasicModule {
     /**
      * Registers that a server session originated by a remote server is hosting a given hostname.
      * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys.
+     * the same IncomingServerSession may be associated with many keys. If the remote server
+     * creates many sessions to this server (eg. one for each subdomain) then associate all
+     * the sessions with the originating server that created all the sessions.
      *
      * @param hostname the hostname that is being served by the remote server.
      * @param session the incoming server session to the remote server.
      */
     public void registerIncomingServerSession(String hostname, IncomingServerSession session) {
-        incomingServerSessions.put(hostname, session);
+        synchronized (incomingServerSessions) {
+            List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+            if (sessions == null || sessions.isEmpty()) {
+                // First session from the remote server to this server so create a
+                // new association
+                List<IncomingServerSession> value = new ArrayList<IncomingServerSession>();
+                value.add(session);
+                incomingServerSessions.put(hostname, value);
+            }
+            else {
+                // Add new session to the existing list of sessions originated by
+                // the remote server
+                sessions.add(session);
+            }
+        }
     }
 
     /**
-     * Unregisters that a server session originated by a remote server is hosting a given hostname.
+     * Unregisters the server sessions originated by a remote server with the specified hostname.
      * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys.
+     * the same IncomingServerSession may be associated with many keys. The remote server may have
+     * many sessions established with this server (eg. to the server itself and to subdomains
+     * hosted by this server).
      *
      * @param hostname the hostname that is being served by the remote server.
      */
-    public void unregisterIncomingServerSession(String hostname) {
-        incomingServerSessions.remove(hostname);
+    public void unregisterIncomingServerSessions(String hostname) {
+        synchronized (incomingServerSessions) {
+            incomingServerSessions.remove(hostname);
+        }
+    }
+
+    /**
+     * Unregisters the specified remote server session originiated by the specified remote server.
+     *
+     * @param hostname the hostname that is being served by the remote server.
+     * @param session the session to unregiser.
+     */
+    private void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
+        synchronized (incomingServerSessions) {
+            List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+            if (sessions != null) {
+                sessions.remove(session);
+            }
+        }
     }
 
     /**
@@ -917,15 +954,21 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns a session that was originated by a remote server. IncomingServerSession can only
-     * receive packets from the remote server but are not capable of sending packets to the remote
-     * server.
+     * Returns the list of sessions that were originated by a remote server. The list will be
+     * ordered chronologically.  IncomingServerSession can only receive packets from the remote
+     * server but are not capable of sending packets to the remote server.
      *
      * @param hostname the name of the remote server.
-     * @return a session that was originated by a remote server.
+     * @return the sessions that were originated by a remote server.
      */
-    public IncomingServerSession getIncomingServerSession(String hostname) {
-        return incomingServerSessions.get(hostname);
+    public List<IncomingServerSession> getIncomingServerSessions(String hostname) {
+        List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+        if (sessions == null) {
+            return Collections.emptyList();
+        }
+        else {
+            return Collections.unmodifiableList(sessions);
+        }
     }
 
     /**
@@ -1292,7 +1335,7 @@ public class SessionManager extends BasicModule {
             IncomingServerSession session = (IncomingServerSession)handback;
             // Remove all the hostnames that were registered for this server session
             for (String hostname : session.getValidatedDomains()) {
-                unregisterIncomingServerSession(hostname);
+                unregisterIncomingServerSession(hostname, session);
             }
         }
     }
@@ -1495,14 +1538,16 @@ public class SessionManager extends BasicModule {
                 }
             }
             // Check incoming server sessions
-            for (IncomingServerSession session : incomingServerSessions.values()) {
-                try {
-                    if (session.getLastActiveDate().getTime() < deadline) {
-                        session.getConnection().close();
+            for (List<IncomingServerSession> sessions : incomingServerSessions.values()) {
+                for (IncomingServerSession session : sessions) {
+                    try {
+                        if (session.getLastActiveDate().getTime() < deadline) {
+                            session.getConnection().close();
+                        }
                     }
-                }
-                catch (Throwable e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    catch (Throwable e) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    }
                 }
             }
         }

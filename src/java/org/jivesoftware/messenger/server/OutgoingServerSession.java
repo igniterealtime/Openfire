@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: OutgoingServerSession.java,v $
  * $Revision$
  * $Date$
  *
@@ -90,9 +90,8 @@ public class OutgoingServerSession extends Session {
             OutgoingServerSession session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
                 // Try locating if the remote server has previously authenticated with this server
-                IncomingServerSession incomingSession = sessionManager.getIncomingServerSession(
-                        hostname);
-                if (incomingSession != null) {
+                for (IncomingServerSession incomingSession : sessionManager
+                        .getIncomingServerSessions(hostname)) {
                     for (String otherHostname : incomingSession.getValidatedDomains()) {
                         session = sessionManager.getOutgoingServerSession(otherHostname);
                         if (session != null) {

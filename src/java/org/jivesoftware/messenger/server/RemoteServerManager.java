@@ -59,11 +59,10 @@ public class RemoteServerManager {
         config.setPermission(Permission.blocked);
         addConfiguration(config);
         // Check if the remote server was connected and proceed to close the connection
-        Session session = SessionManager.getInstance().getIncomingServerSession(domain);
-        if (session != null) {
+        for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             session.getConnection().close();
         }
-        session = SessionManager.getInstance().getOutgoingServerSession(domain);
+        Session session = SessionManager.getInstance().getOutgoingServerSession(domain);
         if (session != null) {
             session.getConnection().close();
         }
@@ -311,8 +310,10 @@ public class RemoteServerManager {
         // Check if the connected servers can remain connected to the server
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {
-                Session session = SessionManager.getInstance().getIncomingServerSession(hostname);
-                session.getConnection().close();
+                for (Session session : SessionManager.getInstance()
+                        .getIncomingServerSessions(hostname)) {
+                    session.getConnection().close();
+                }
             }
         }
         for (String hostname : SessionManager.getInstance().getOutgoingServers()) {

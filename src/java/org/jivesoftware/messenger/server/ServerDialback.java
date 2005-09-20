@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: ServerDialback.java,v $
  * $Revision$
  * $Date$
  *
@@ -33,6 +33,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
+import java.util.Collection;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -318,6 +319,7 @@ class ServerDialback {
                 if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     if (validateRemoteDomain(doc, streamID)) {
                         String hostname = doc.attributeValue("from");
+                        String recipient = doc.attributeValue("to");
                         // Create a server Session for the remote server
                         IncomingServerSession session = sessionManager.
                                 createIncomingServerSession(connection, streamID);
@@ -325,6 +327,9 @@ class ServerDialback {
                         session.setAddress(new JID(null, hostname, null));
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
+                        // Add the domain or subdomain of the local server used when
+                        // validating the session
+                        session.addLocalDomain(recipient);
                         return session;
                     }
                 }
@@ -417,7 +422,15 @@ class ServerDialback {
             return false;
         }
         else {
-            if (sessionManager.getIncomingServerSession(hostname) != null) {
+            // Check if the remote server already has a connection to the target domain/subdomain
+            boolean alreadyExists = false;
+            for (IncomingServerSession session : sessionManager
+                    .getIncomingServerSessions(hostname)) {
+                if (session.getLocalDomains().contains(recipient)) {
+                    alreadyExists = true;
+                }
+            }
+            if (alreadyExists) {
                 // Remote server already has a IncomingServerSession created
                 error = new StreamError(StreamError.Condition.not_authorized);
                 sb = new StringBuilder();

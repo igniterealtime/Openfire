@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: IncomingServerSession.java,v $
  * $Revision$
  * $Date$
  *
@@ -48,7 +48,19 @@ import java.util.Collections;
  */
 public class IncomingServerSession extends Session {
 
+    /**
+     * List of domains, subdomains and virtual hostnames of the remote server that were
+     * validated with this server. The remote server is allowed to send packets to this
+     * server from any of the validated domains.
+     */
     private Collection<String> validatedDomains = new ArrayList<String>();
+
+    /**
+     * List of domains or subdomains of this server that were used by the remote server
+     * when validating the new connection. For instance, when using ServerDialback the
+     * list will contain the different TO values used in the <tt>db:result</tt> packet.
+     */
+    private Collection<String> localDomains = new ArrayList<String>();
 
     /**
      * Creates a new session that will receive packets. The new session will be authenticated
@@ -106,6 +118,7 @@ public class IncomingServerSession extends Session {
     public boolean validateSubsequentDomain(Element dbResult) {
         ServerDialback method = new ServerDialback(getConnection(), getServerName());
         if (method.validateRemoteDomain(dbResult, getStreamID())) {
+            // Add the validated domain as a valid domain
             addValidatedDomain(dbResult.attributeValue("from"));
             return true;
         }
@@ -169,7 +182,32 @@ public class IncomingServerSession extends Session {
     public void removeValidatedDomain(String domain) {
         validatedDomains.remove(domain);
         // Unregister the validated domain for this server session in SessionManager
-        SessionManager.getInstance().unregisterIncomingServerSession(domain);
+        SessionManager.getInstance().unregisterIncomingServerSessions(domain);
+    }
+
+    /**
+     * Returns a collection with the domains and subdomains of the local server used by
+     * the remote server when validating the session. This information is only used to
+     * prevent many connections from the same remote server to the same domain or
+     * subdomain of the local server.
+     *
+     * @return collection with the domains and subdomains of the local server used by
+     *         the remote server when validating the session.
+     */
+    public Collection<String> getLocalDomains() {
+        return Collections.unmodifiableCollection(localDomains);
+    }
+
+    /**
+     * Adds a new domain or subdomain of the local server used by the remote server when asking
+     * to validate the session. This information is only used to prevent many connections from
+     * the same remote server to the same domain or subdomain of the local server.
+     *
+     * @param domain the domain or subdomain of the local server used when validating the
+     *        session.
+     */
+    public void addLocalDomain(String domain) {
+        localDomains.add(domain);
     }
 
     /**

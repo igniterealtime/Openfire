@@ -60,11 +60,11 @@
     // Close all connections related to the specified host
     if (close) {
         try {
-            Session sess = sessionManager.getIncomingServerSession(hostname);
-            if (sess != null) {
+            for (Session sess : sessionManager.getIncomingServerSessions(hostname)) {
                 sess.getConnection().close();
             }
-            sess = sessionManager.getOutgoingServerSession(hostname);
+
+            Session sess = sessionManager.getOutgoingServerSession(hostname);
             if (sess != null) {
                 sess.getConnection().close();
             }
@@ -183,9 +183,9 @@
         hostnames = new ArrayList<String>(hostnames).subList(start, maxIndex);
         for (String host : hostnames) {
             count++;
-            IncomingServerSession inSession = sessionManager.getIncomingServerSession(host);
+            List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);
             OutgoingServerSession outSession = sessionManager.getOutgoingServerSession(host);
-            if (inSession == null && outSession == null) {
+            if (inSessions.isEmpty() && outSession == null) {
                 // If the connections were just closed then skip this host
                 continue;
             }

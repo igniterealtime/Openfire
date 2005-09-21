@@ -361,7 +361,7 @@ IFRAME {
                                 <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"><img src="images/delete-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_clear" />"></a>
                             </td>
                             <td class="icon-label">
-                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.clear" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
+                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
                                  ><fmt:message key="logviewer.clear" /></a>
                             </td>
                             <td class="icon">

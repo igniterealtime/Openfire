@@ -22,6 +22,7 @@ import javax.management.ReflectionException;
 
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
+import org.jivesoftware.messenger.plugin.meter.accumulator.Accumulator;
 import org.jrobin.core.RrdDbPool;
 import org.jrobin.core.RrdException;
 

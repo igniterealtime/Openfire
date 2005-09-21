@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.jivesoftware.messenger.plugin.meter;
+package org.jivesoftware.messenger.plugin.meter.accumulator;
 
 import java.io.IOException;
 import java.util.Date;
@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import javax.management.ObjectName;
 
+import org.jivesoftware.messenger.plugin.meter.UnableToAllocateAccumulator;
 import org.jrobin.annotations.Arc;
 import org.jrobin.annotations.Ds;
 import org.jrobin.annotations.Rrd;
@@ -25,7 +26,7 @@ import org.jrobin.core.Sample;
  * @author Noah Campbell
  * @version 1.0
  */
-public class Accumulator implements Runnable {
+public class Accumulator implements AccumulatorMBean, Runnable {
 
     
     /** The logger. */
@@ -55,6 +56,9 @@ public class Accumulator implements Runnable {
     
     /** The lastTimestamp. */
     private long lastTimestamp = Long.MIN_VALUE;
+    
+    /** The count. */
+    private long count = 0;
     
     /**
      * @see java.lang.Runnable#run()
@@ -94,6 +98,7 @@ public class Accumulator implements Runnable {
             }
             s.update();
             lastTimestamp = timestamp;
+            count++;
             
         } catch (IOException e) {
             logger.log(Level.WARNING, "accumulator.ioexception", e);
@@ -119,4 +124,24 @@ public class Accumulator implements Runnable {
 
     }
 
+    /**
+     * @see org.jivesoftware.messenger.plugin.meter.accumulator.AccumulatorMBean#getPath()
+     */
+    public String getPath() {
+        return this.getPath();
+    }
+
+    /**
+     * @see org.jivesoftware.messenger.plugin.meter.accumulator.AccumulatorMBean#getSourceMBean()
+     */
+    public ObjectName getSourceMBean() {
+        return this.objectName;
+    }
+
+    /**
+     * @see org.jivesoftware.messenger.plugin.meter.accumulator.AccumulatorMBean#getTotalReads()
+     */
+    public long getTotalReads() {
+        return count;
+    }
 }

@@ -37,6 +37,8 @@ import javax.management.relation.RelationServiceMBean;
 import javax.management.relation.RoleInfo;
 
 import org.apache.commons.jxpath.JXPathIntrospector;
+import org.jivesoftware.messenger.plugin.meter.accumulator.Accumulator;
+import org.jivesoftware.messenger.plugin.meter.accumulator.AccumulatorManager;
 import org.jrobin.annotations.Arc;
 import org.jrobin.annotations.Ds;
 import org.jrobin.annotations.Rrd;
@@ -65,6 +67,9 @@ public class RrdManager {
     public static Map<String, RrdManager> listStores() {
         return Collections.unmodifiableMap(stores);
     }
+    
+    /** The overrides. */
+    private final List<Accumulator> overrides = new ArrayList<Accumulator>();
     
     /** The stores. */
     private static Map<String, RrdManager> stores = new HashMap<String, RrdManager>();
@@ -109,13 +114,14 @@ public class RrdManager {
             is = this.getClass().getClassLoader().getResourceAsStream("typeoverrides.config");
         }
         try {
-            new Properties().load(is);
+            Properties p = new Properties();
+            p.load(is);
             
-            Enumeration names = new Properties().propertyNames();
+            Enumeration names = p.propertyNames();
             for(; names.hasMoreElements(); ) {
                 String name = (String)names.nextElement();
                 try {
-                    AccumulatorManager.registerOverride(new ObjectName(name), Class.forName(new Properties().getProperty(name)));
+                    AccumulatorManager.registerOverride(new ObjectName(name), Class.forName(p.getProperty(name)));
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Unable to register override: {0}", e.getLocalizedMessage());
                 }
@@ -127,6 +133,13 @@ public class RrdManager {
     }
 
 
+    
+    /**
+     * @return overrides A list of overrides
+     */
+    public List<Accumulator> getGraphableObjectNames() {
+        return this.overrides;
+    }
 
     
     /**

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.jivesoftware.messenger.plugin.meter;
+package org.jivesoftware.messenger.plugin.meter.accumulator;
 
 /**
  * @author Noah Campbell

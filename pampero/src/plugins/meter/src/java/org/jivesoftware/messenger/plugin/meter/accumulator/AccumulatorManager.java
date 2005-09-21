@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.jivesoftware.messenger.plugin.meter;
+package org.jivesoftware.messenger.plugin.meter.accumulator;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationHandler;
@@ -20,6 +20,7 @@ import javax.management.ObjectName;
 import org.apache.commons.jxpath.CompiledExpression;
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.jxpath.JXPathException;
+import org.jivesoftware.messenger.plugin.meter.UnableToAllocateAccumulator;
 import org.jrobin.annotations.Ds;
 import org.jrobin.annotations.Rrd;
 

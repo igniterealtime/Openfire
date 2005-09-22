@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: IQDiscoInfoHandler.java,v $
  * $Revision$
  * $Date$
  *
@@ -21,6 +21,7 @@ import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
 import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -50,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQDiscoInfoHandler extends IQHandler {
 
-    private HashMap entities = new HashMap();
+    private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
     private List<String> serverFeatures = new ArrayList<String>();
     private Map<String, DiscoInfoProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoInfoProvider>();
@@ -77,8 +78,6 @@ public class IQDiscoInfoHandler extends IQHandler {
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        // TODO Let configure an authorization policy (ACL?). Currently anyone can discover info.
-        
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
@@ -175,7 +174,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      *         null if none was found.
      */
     private DiscoInfoProvider getProvider(String name) {
-        return (DiscoInfoProvider)entities.get(name);
+        return entities.get(name);
     }
 
     /**
@@ -244,9 +243,10 @@ public class IQDiscoInfoHandler extends IQHandler {
                     synchronized (identities) {
                         if (identities.isEmpty()) {
                             Element identity = DocumentHelper.createElement("identity");
-                            identity.addAttribute("category", "services");
-                            identity.addAttribute("name", "Messenger Server");
-                            identity.addAttribute("type", "jabber");
+                            identity.addAttribute("category", "server");
+                            identity.addAttribute("name", JiveGlobals.getProperty(
+                                    "xmpp.server.name", "Jive Messenger Server"));
+                            identity.addAttribute("type", "im");
 
                             identities.add(identity);
                         }

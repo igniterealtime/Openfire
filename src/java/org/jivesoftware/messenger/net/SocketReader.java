@@ -458,7 +458,7 @@ public abstract class SocketReader implements Runnable {
     private boolean negotiateTLS() throws IOException, XmlPullParserException {
         // Negotiate TLS.
         try {
-            connection.startTLS();
+            connection.startTLS(false);
         }
         catch (IOException e) {
             connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");

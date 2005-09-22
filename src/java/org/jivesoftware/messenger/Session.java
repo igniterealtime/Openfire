@@ -263,4 +263,12 @@ public abstract class Session implements RoutableChannelHandler {
     public String toString() {
         return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
     }
+
+    protected static int[] decodeVersion(String version) {
+        int[] answer = new int[] {0 , 0};
+        String [] versionString = version.split("\\.");
+        answer[0] = Integer.parseInt(versionString[0]);
+        answer[1] = Integer.parseInt(versionString[1]);
+        return answer;
+    }
 }

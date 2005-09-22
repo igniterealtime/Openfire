@@ -15,6 +15,7 @@ import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.net.SocketConnection;
+import org.jivesoftware.messenger.net.SASLAuthentication;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -161,9 +162,9 @@ public class ClientSession extends Session {
             }
             if ("version".equals(xpp.getAttributeName(i))) {
                 try {
-                    String [] versionString = xpp.getAttributeValue(i).split("\\.");
-                    majorVersion = Integer.parseInt(versionString[0]);
-                    minorVersion = Integer.parseInt(versionString[1]);
+                    int[] version = decodeVersion(xpp.getAttributeValue(i));
+                    majorVersion = version[0];
+                    minorVersion = version[1];
                 }
                 catch (Exception e) {
                     Log.error(e);
@@ -237,7 +238,10 @@ public class ClientSession extends Session {
         sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
         // TODO Consider that STARTTLS may be optional (add TLS options to the AC - disabled, optional, required)
         // sb.append("<required/>");
-        sb.append("</starttls></stream:features>");
+        sb.append("</starttls>");
+        // Include available SASL Mechanisms
+        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        sb.append("</stream:features>");
 
         writer.write(sb.toString());
 

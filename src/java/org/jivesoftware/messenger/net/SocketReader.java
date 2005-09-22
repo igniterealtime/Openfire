@@ -517,8 +517,18 @@ public abstract class SocketReader implements Runnable {
         sb.append("</stream:features>");
         connection.deliverRawText(sb.toString());
 
-        // Skip the opening stream sent by the client
+
         XmlPullParser xpp = reader.getXPPParser();
+        // Reset the parser since a new stream header has been sent from the client
+        if (connection.getTLSStreamHandler() == null) {
+            xpp.setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
+        }
+        else {
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(),
+                    CHARSET));
+        }
+
+        // Skip the opening stream sent by the client
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }

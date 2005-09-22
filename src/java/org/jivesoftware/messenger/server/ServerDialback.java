@@ -120,15 +120,17 @@ class ServerDialback {
      */
     public OutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
         String realHostname = null;
+        int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
             Log.debug("OS - Trying to connect to " + hostname + ":" + port);
             // Get the real hostname to connect to using DNS lookup of the specified hostname
-            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
+            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
             realHostname = address.getHost();
+            realPort = address.getPort();
             // Connect to the remote server
             Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(realHostname, port),
+            socket.connect(new InetSocketAddress(realHostname, realPort),
                     RemoteServerManager.getSocketTimeout());
             Log.debug("OS - Connection to " + hostname + ":" + port + " successful");
             connection =
@@ -184,9 +186,7 @@ class ServerDialback {
         }
         catch (UnknownHostException e) {
             Log.debug("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
-                    realHostname +
-                    ")",
-                    e);
+                    realHostname + ":" + realPort + ")", e);
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -445,7 +445,8 @@ class ServerDialback {
             else {
                 String key = doc.getTextTrim();
 
-                DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
+                DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname,
+                        RemoteServerManager.getPortForServer(hostname));
 
                 try {
                     boolean valid = verifyKey(key, streamID.toString(), recipient, hostname,

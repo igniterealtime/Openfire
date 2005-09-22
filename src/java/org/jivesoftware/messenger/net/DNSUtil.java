@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: DNSUtil.java,v $
  * $Revision$
  * $Date$
  *
@@ -29,7 +29,7 @@ public class DNSUtil {
 
     static {
         try {
-            Hashtable env = new Hashtable();
+            Hashtable<String,String> env = new Hashtable<String,String>();
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             context = new InitialDirContext(env);
         }
@@ -46,21 +46,21 @@ public class DNSUtil {
      * of "_jabber._tcp.example.com" is attempted since servers that implement an
      * older version of the protocol may be listed using that notation. If that
      * lookup fails as well, it's assumed that the XMPP server lives at the
-     * host resolved by a DNS lookup at the specified domain on the default port
-     * of 5269.<p>
+     * host resolved by a DNS lookup at the specified domain on the specified default port.<p>
      *
      * As an example, a lookup for "example.com" may return "im.example.com:5269".
      *
      * @param domain the domain.
+     * @param defaultPort default port to return if the DNS look up fails.
      * @return a HostAddress, which encompasses the hostname and port that the XMPP
      *      server can be reached at for the specified domain.
      */
-    public static HostAddress resolveXMPPServerDomain(String domain) {
+    public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
         if (context == null) {
-            return new HostAddress(domain, 5269);
+            return new HostAddress(domain, defaultPort);
         }
         String host = domain;
-        int port = 5269;
+        int port = defaultPort;
         try {
             Attributes dnsLookup = context.getAttributes("_xmpp-server._tcp." + domain);
             String srvRecord = (String)dnsLookup.get("SRV").get();

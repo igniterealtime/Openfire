@@ -26,7 +26,6 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -43,7 +42,7 @@ public class SocketConnection implements Connection {
      */
     public static final String CHARSET = "UTF-8";
 
-    private Map listeners = new HashMap();
+    private Map<ConnectionCloseListener, Object> listeners = new HashMap<ConnectionCloseListener, Object>();
 
     private Socket socket;
 
@@ -96,12 +95,13 @@ public class SocketConnection implements Connection {
     /**
      * Secures the plain connection by negotiating TLS with the client.
      *
+     * @param clientMode boolean indicating if this entity is a client or a server.
      * @throws IOException if an error occured while securing the connection.
      */
-    public void startTLS() throws IOException {
+    public void startTLS(boolean clientMode) throws IOException {
 		if (!secure) {
 			secure = true;
-			tlsStreamHandler = new TLSStreamHandler(socket);
+			tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
 			writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
 			xmlSerializer = new XMLSocketWriter(writer, socket);
 		}
@@ -336,9 +336,7 @@ public class SocketConnection implements Connection {
      */
     private void notifyCloseListeners() {
         synchronized (listeners) {
-            Iterator itr = listeners.keySet().iterator();
-            while (itr.hasNext()) {
-                ConnectionCloseListener listener = (ConnectionCloseListener)itr.next();
+            for (ConnectionCloseListener listener : listeners.keySet()) {
                 listener.onConnectionClose(listeners.get(listener));
             }
         }

@@ -77,11 +77,12 @@ public class TLSStreamHandler {
     /**
      * Creates a new TLSStreamHandler and secures the plain socket connection.
      *
+     * @param clientMode boolean indicating if this entity is a client or a server.
      * @param socket the plain socket connection to secure
      * @throws IOException
      */
-    public TLSStreamHandler(Socket socket) throws IOException {
-		wrapper = new TLSWrapper();
+    public TLSStreamHandler(Socket socket, boolean clientMode) throws IOException {
+		wrapper = new TLSWrapper(clientMode);
         tlsEngine = wrapper.getTlsEngine();
 		reader = new TLSStreamReader(wrapper, socket);
 		writer = new TLSStreamWriter(wrapper, socket);
@@ -101,8 +102,12 @@ public class TLSStreamHandler {
 
 		appBB = ByteBuffer.allocate(appBBSize);
 
-        //socket.setSoTimeout(0);
-        //socket.setKeepAlive(true);
+        if (clientMode) {
+            socket.setSoTimeout(0);
+            socket.setKeepAlive(true);
+            initialHSStatus = HandshakeStatus.NEED_WRAP;
+            tlsEngine.beginHandshake();
+        }
 
         while (!initialHSComplete) {
 			initialHSComplete = doHandshake(null);

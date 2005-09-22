@@ -19,7 +19,6 @@ import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.net.DNSUtil;
 import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
@@ -28,12 +27,11 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
-import javax.net.SocketFactory;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
-import java.util.Collection;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -50,7 +48,7 @@ import java.util.Collection;
  *  not.</li>
  * </ol>
  *
- * By default a timeout of 60 seconds will be used for reading packets from remote servers. Use
+ * By default a timeout of 20 seconds will be used for reading packets from remote servers. Use
  * the property <b>xmpp.server.read.timeout</b> to change that value. The value should be in
  * milliseconds.
  *
@@ -128,8 +126,11 @@ class ServerDialback {
             // Get the real hostname to connect to using DNS lookup of the specified hostname
             DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname);
             realHostname = address.getHost();
-            Socket socket = SocketFactory.getDefault().createSocket(realHostname, port);
-            Log.debug("OS - Connection to " + hostname + ":" + port + " successfull");
+            // Connect to the remote server
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(realHostname, port),
+                    RemoteServerManager.getSocketTimeout());
+            Log.debug("OS - Connection to " + hostname + ":" + port + " successful");
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
                             false);
@@ -238,7 +239,7 @@ class ServerDialback {
 
             // Process the answer from the Receiving Server
             try {
-                Element doc = socketReader.getElement(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000),
+                Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(),
                         TimeUnit.MILLISECONDS);
                 if (doc == null) {
                     Log.debug("OS - Time out waiting for answer in validation from: " + hostname +
@@ -512,10 +513,12 @@ class ServerDialback {
         StreamError error;
         // Establish a TCP connection back to the domain name asserted by the Originating Server
         Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
-        Socket socket = SocketFactory.getDefault().createSocket(host, port);
-        // Set a read timeout of 60 seconds.
-        socket.setSoTimeout(JiveGlobals.getIntProperty("xmpp.server.read.timeout", 60000));
-        Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successfull");
+        // Connect to the Authoritative server
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(host, port), RemoteServerManager.getSocketTimeout());
+        // Set a read timeout
+        socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
+        Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successful");
         try {
             reader = new XPPPacketReader();
             reader.setXPPFactory(FACTORY);

@@ -17,6 +17,7 @@ import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.ClientSession;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.server.IncomingServerSession;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.AuthToken;
@@ -24,6 +25,7 @@ import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.JID;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -114,8 +116,8 @@ public class SASLAuthentication {
         if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
             sb.append("<mechanism>ANONYMOUS</mechanism>");
         }
-        if (session.getConnection().isSecure()) {
-            //sb.append("<mechanism>EXTERNAL</mechanism>");
+        if (session.getConnection().isSecure() && session instanceof IncomingServerSession) {
+            sb.append("<mechanism>EXTERNAL</mechanism>");
         }
         sb.append("</mechanisms>");
         return sb.toString();
@@ -139,6 +141,10 @@ public class SASLAuthentication {
                         }
                         else if (mechanism.equalsIgnoreCase("ANONYMOUS")) {
                             success = doAnonymousAuthentication();
+                            isComplete = true;
+                        }
+                        else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
+                            success = doExternalAuthentication(doc);
                             isComplete = true;
                         }
                         else {
@@ -252,6 +258,34 @@ public class SASLAuthentication {
         }
     }
 
+    private boolean doExternalAuthentication(Element doc) throws DocumentException, IOException,
+            XmlPullParserException {
+        // Only accept EXTERNAL SASL for s2s
+        if (!(session instanceof IncomingServerSession)) {
+            return false;
+        }
+        String hostname = doc.getTextTrim();
+        if (hostname != null  && hostname.length() > 0) {
+            // TODO Check that the hostname matches the one provided in the certificate
+            authenticationSuccessful(StringUtils.decodeBase64(hostname));
+            return true;
+        }
+        else {
+            // No hostname was provided so send a challenge to get it
+            sendChallenge(new byte[0]);
+            // Get the next answer since we are not done yet
+            doc = reader.parseDocument().getRootElement();
+            if (doc != null && doc.getTextTrim().length() > 0) {
+                authenticationSuccessful(StringUtils.decodeBase64(doc.getTextTrim()));
+                return true;
+            }
+            else {
+                authenticationFailed();
+                return false;
+            }
+        }
+    }
+
     private void sendChallenge(byte[] challenge) {
         StringBuilder reply = new StringBuilder();
         reply.append(
@@ -268,6 +302,14 @@ public class SASLAuthentication {
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((ClientSession) session).setAuthToken(new AuthToken(username));
+        }
+        else if (session instanceof IncomingServerSession) {
+            String hostname = username;
+            // Set the first validated domain as the address of the session
+            session.setAddress(new JID(null, hostname, null));
+            // Add the validated domain as a valid domain. The remote server can
+            // now send packets from this address
+            ((IncomingServerSession) session).addValidatedDomain(hostname);
         }
     }
 

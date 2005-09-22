@@ -328,9 +328,9 @@ class ServerDialback {
                         session.setAddress(new JID(null, hostname, null));
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
-                        // Add the domain or subdomain of the local server used when
+                        // Set the domain or subdomain of the local server used when
                         // validating the session
-                        session.addLocalDomain(recipient);
+                        session.setLocalDomain(recipient);
                         return session;
                     }
                 }
@@ -427,7 +427,7 @@ class ServerDialback {
             boolean alreadyExists = false;
             for (IncomingServerSession session : sessionManager
                     .getIncomingServerSessions(hostname)) {
-                if (session.getLocalDomains().contains(recipient)) {
+                if (recipient.equals(session.getLocalDomain())) {
                     alreadyExists = true;
                 }
             }

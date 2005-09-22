@@ -134,6 +134,18 @@ public class RemoteServerManager {
     }
 
     /**
+     * Returns the number of milliseconds to wait to connect to a remote server or read
+     * data from a remote server. Default timeout value is 20 seconds. Configure the
+     * <tt>xmpp.server.read.timeout</tt> global property to override the default value.
+     *
+     * @return the number of milliseconds to wait to connect to a remote server or read
+     *         data from a remote server.
+     */
+    public static int getSocketTimeout() {
+        return JiveGlobals.getIntProperty("xmpp.server.read.timeout", 20000);
+    }
+
+    /**
      * Removes any existing defined permission and configuration for the specified
      * remote server.
      *
@@ -187,10 +199,10 @@ public class RemoteServerManager {
     }
 
     /**
-     * Returns the configuration for a remote server.
+     * Returns the configuration for a remote server or <tt>null</tt> if none was found.
      *
      * @param domain the domain of the remote server.
-     * @return the configuration for a remote server.
+     * @return the configuration for a remote server or <tt>null</tt> if none was found.
      */
     public static RemoteServerConfiguration getConfiguration(String domain) {
         RemoteServerConfiguration configuration = null;

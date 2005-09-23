@@ -21,13 +21,6 @@
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
-<%  // Edit this code when new locales are added:
-    final Locale[] builtinLocales = new Locale[] {
-        new Locale("en", "US"),
-        new Locale("zh", "CN")
-    };
-%>
-
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>
@@ -135,41 +128,50 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="es" <%= ("es".equals(locale.toString()) ? "checked" : "") %>
                      id="loc04" />
                 </td>
                 <td colspan="2">
-                    <label for="loc04">Fran&ccedil;ais (fr)</label>
+                    <label for="loc04">Espa&ntilde;ol (es)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc05" />
+                </td>
+                <td colspan="2">
+                    <label for="loc05">Fran&ccedil;ais (fr)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc05" />
+                     id="loc06" />
                 </td>
                 <td colspan="2">
-                    <label for="loc05">Nederlands (nl)</label>
+                    <label for="loc06">Nederlands (nl)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc06" />
+                     id="loc07" />
                 </td>
                 <td colspan="2">
-                    <label for="loc06">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+                    <label for="loc07">Portugu&ecirc;s Brasileiro (pt_BR)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc07" />
+                     id="loc08" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
                 </td>
                 <td>
-                    <label for="loc07">Simplified Chinese (zh_CN)</label>
+                    <label for="loc08">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

@@ -110,41 +110,50 @@
     </tr>
     <tr>
         <td>
-            <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %>
+            <input type="radio" name="localeCode" value="es" <%= ("es".equals(locale.toString()) ? "checked" : "") %>
              id="loc04" />
         </td>
         <td colspan="2">
-            <label for="loc04">Fran&ccedil;ais</label> (fr)
+            <label for="loc04">Espa&ntilde;ol</label> (es)
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %>
+             id="loc05" />
+        </td>
+        <td colspan="2">
+            <label for="loc05">Fran&ccedil;ais</label> (fr)
         </td>
     </tr>
     <tr>
         <td>
             <input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %>
-             id="loc05" />
+             id="loc06" />
         </td>
         <td colspan="2">
-            <label for="loc05">Nederlands</label> (nl)
+            <label for="loc06">Nederlands</label> (nl)
         </td>
     </tr>
     <tr>
         <td>
             <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
-             id="loc06" />
+             id="loc07" />
         </td>
         <td colspan="2">
-            <label for="loc06">Portugu&ecirc;s Brasileiro</label> (pt_BR)
+            <label for="loc07">Portugu&ecirc;s Brasileiro</label> (pt_BR)
         </td>
     </tr>
     <tr>
         <td>
             <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-             id="loc07" />
+             id="loc08" />
         </td>
         <td>
             <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
         </td>
         <td>
-            <label for="loc07">Simplified Chinese</label> (zh_CN)
+            <label for="loc08">Simplified Chinese</label> (zh_CN)
         </td>
     </tr>
 </tbody>

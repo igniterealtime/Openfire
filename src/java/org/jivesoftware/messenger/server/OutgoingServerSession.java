@@ -420,6 +420,21 @@ public class OutgoingServerSession extends Session {
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (conn != null && !conn.isClosed()) {
             try {
+                // Check if the domain from where the packet is being sent has been authenticated
+                // with the remote server. This may be the case for subdomains hosted in this
+                // server
+                if (!getAuthenticatedDomains().contains(packet.getFrom().getDomain())) {
+                    // We need to do "piggybacking" and authenticate the domain from where the
+                    // packet is being sent using the existing connection
+                    if (!authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain())) {
+                        // Authentication of the subdomain failed
+                        Log.error("Authentication of subdomain: " + packet.getFrom().getDomain() +
+                                " with remote server: " + packet.getTo().getDomain() +
+                                "has failed. Packet not sent to remote server: " + packet.toXML());
+                        return;
+                    }
+                }
+
                 conn.deliver(packet);
             }
             catch (Exception e) {

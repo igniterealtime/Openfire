@@ -540,7 +540,7 @@ public class DbConnectionManager {
         }
         // SQLServer, JDBC driver i-net UNA properties
         else if (dbName.indexOf("sql server") != -1 &&
-                driverName.indexOf("una") != -1)
+                (driverName.indexOf("una") != -1 || driverName.indexOf("sqlserver") != -1))
         {
             databaseType = DatabaseType.sqlserver;
             fetchSizeSupported = true;

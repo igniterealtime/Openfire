@@ -13,15 +13,15 @@ package org.jivesoftware.messenger.spi;
 
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.component.InternalComponentManager;
-import org.jivesoftware.messenger.server.OutgoingServerSession;
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Uses simple hashtables for table storage.</p>
@@ -87,9 +87,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         // Check if the address belongs to a remote server
         if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
                 componentManager.getComponent(node.getDomain()) == null) {
-            // Authenticate this hostname with the remote server so that the remote server can
-            // accept packets from this server.
-            OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
+            // Return a promise of a remote session. This object will queue packets pending
+            // to be sent to remote servers
+            return OutgoingSessionPromise.getInstance();
         }
 
         routeLock.readLock().lock();
@@ -128,9 +128,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         // Check if the address belongs to a remote server
         if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
                 componentManager.getComponent(node.getDomain()) == null) {
-            // Authenticate this hostname with the remote server so that the remote server can
-            // accept packets from this server.
-            OutgoingServerSession.authenticateDomain(serverName, node.getDomain());
+            // Return a promise of a remote session. This object will queue packets pending
+            // to be sent to remote servers
+            return Arrays.asList(OutgoingSessionPromise.getInstance()).iterator();
         }
 
         LinkedList list = null;

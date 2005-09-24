@@ -81,6 +81,10 @@ public class ClientSocketReader extends SocketReader {
         return "jabber:client";
     }
 
+    boolean validateHost() {
+        return true;
+    }
+
     protected String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder();
         // TODO Create and use #hasSASLAuthentication

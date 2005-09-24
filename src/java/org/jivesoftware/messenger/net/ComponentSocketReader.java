@@ -58,6 +58,10 @@ public class ComponentSocketReader extends SocketReader {
         return "jabber:component:accept";
     }
 
+    boolean validateHost() {
+        return false;
+    }
+
     String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;

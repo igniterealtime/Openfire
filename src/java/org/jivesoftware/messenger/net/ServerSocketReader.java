@@ -215,6 +215,10 @@ public class ServerSocketReader extends SocketReader {
         return "jabber:server";
     }
 
+    boolean validateHost() {
+        return true;
+    }
+
     String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;

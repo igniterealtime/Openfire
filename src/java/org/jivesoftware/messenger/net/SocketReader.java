@@ -16,6 +16,7 @@ import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.PacketRouter;
 import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
 import org.jivesoftware.util.LocaleUtils;
@@ -60,6 +61,7 @@ public abstract class SocketReader implements Runnable {
     private PacketRouter router;
     XPPPacketReader reader = null;
     protected boolean open;
+    private InternalComponentManager componentManager;
 
     static {
         try {
@@ -84,6 +86,7 @@ public abstract class SocketReader implements Runnable {
         this.router = router;
         this.connection = connection;
         this.socket = socket;
+        componentManager = InternalComponentManager.getInstance();
     }
 
     /**
@@ -425,10 +428,30 @@ public abstract class SocketReader implements Runnable {
             eventType = xpp.next();
         }
 
+        // Check that the TO attribute of the stream header matches the server name or a valid
+        // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
+        // error and close the underlying connection.
+        String host = reader.getXPPParser().getAttributeValue("", "to");
+        if (validateHost() && !serverName.equals(host) &&
+                componentManager.getComponent(host) == null) {
+            Writer writer = connection.getWriter();
+            StringBuilder sb = new StringBuilder();
+            sb.append("<?xml version='1.0' encoding='");
+            sb.append(CHARSET);
+            sb.append("'?>");
+            // Set the host_unknown error
+            StreamError error = new StreamError(StreamError.Condition.host_unknown);
+            sb.append(error.toXML());
+            writer.write(sb.toString());
+            writer.flush();
+            // Close the underlying connection
+            connection.close();
+        }
+
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
-        if (!createSession(xpp.getNamespace(null))) {
+        else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
             Writer writer = connection.getWriter();
@@ -548,6 +571,16 @@ public abstract class SocketReader implements Runnable {
      * @return the stream namespace.
      */
     abstract String getNamespace();
+
+    /**
+     * Returns true if the value of the 'to' attribute in the stream header should be
+     * validated. If the value of the 'to' attribute is not valid then a host-unknown error
+     * will be returned and the underlying connection will be closed.
+     *
+     * @return true if the value of the 'to' attribute in the initial stream header should be
+     *         validated.
+     */
+    abstract boolean validateHost();
 
     private String geStreamHeader() {
         StringBuilder sb = new StringBuilder();

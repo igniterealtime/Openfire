@@ -17,6 +17,7 @@ import org.jivesoftware.messenger.container.BasicModule;
 import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.messenger.server.IncomingServerSession;
 import org.jivesoftware.messenger.server.OutgoingServerSession;
+import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -1449,6 +1450,8 @@ public class SessionManager extends BasicModule {
 
     public void stop() {
         Log.debug("Stopping server");
+        // Stop threads that are sending packets to remote servers
+        OutgoingSessionPromise.getInstance().shutdown();
         timer.cancel();
         serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {

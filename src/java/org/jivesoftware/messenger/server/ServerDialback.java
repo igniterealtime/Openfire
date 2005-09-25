@@ -230,8 +230,8 @@ class ServerDialback {
             // Send a dialback key to the Receiving Server
             StringBuilder sb = new StringBuilder();
             sb.append("<db:result");
-            sb.append(" from=\"" + domain + "\"");
-            sb.append(" to=\"" + hostname + "\">");
+            sb.append(" from=\"").append(domain).append("\"");
+            sb.append(" to=\"").append(hostname).append("\">");
             sb.append(key);
             sb.append("</db:result>");
             connection.deliverRawText(sb.toString());
@@ -455,8 +455,8 @@ class ServerDialback {
                     Log.debug("RS - Sending key verification result to OS: " + hostname);
                     sb = new StringBuilder();
                     sb.append("<db:result");
-                    sb.append(" from=\"" + recipient + "\"");
-                    sb.append(" to=\"" + hostname + "\"");
+                    sb.append(" from=\"").append(recipient).append("\"");
+                    sb.append(" to=\"").append(hostname).append("\"");
                     sb.append(" type=\"");
                     sb.append(valid ? "valid" : "invalid");
                     sb.append("\"/>");
@@ -493,8 +493,13 @@ class ServerDialback {
         // servers may establish connections directly to a subdomain of this server
         if (host_unknown && recipient.contains(serverName)) {
             try {
-                routingTable.getRoute(new JID(recipient));
-                host_unknown = false;
+                RoutableChannelHandler route = routingTable.getRoute(new JID(recipient));
+                if (route instanceof OutgoingSessionPromise) {
+                    host_unknown = true;
+                }
+                else {
+                    host_unknown = false;
+                }
             }
             catch (NoSuchRouteException e) {
                 host_unknown = true;
@@ -550,9 +555,9 @@ class ServerDialback {
                 // Request for verification of the key
                 StringBuilder sb = new StringBuilder();
                 sb.append("<db:verify");
-                sb.append(" from=\"" + recipient + "\"");
-                sb.append(" to=\"" + hostname + "\"");
-                sb.append(" id=\"" + streamID + "\">");
+                sb.append(" from=\"").append(recipient).append("\"");
+                sb.append(" to=\"").append(hostname).append("\"");
+                sb.append(" id=\"").append(streamID).append("\">");
                 sb.append(key);
                 sb.append("</db:verify>");
                 writer.write(sb.toString());
@@ -675,11 +680,11 @@ class ServerDialback {
         // Send the result of the key verification
         StringBuilder sb = new StringBuilder();
         sb.append("<db:verify");
-        sb.append(" from=\"" + verifyTO + "\"");
-        sb.append(" to=\"" + verifyFROM + "\"");
+        sb.append(" from=\"").append(verifyTO).append("\"");
+        sb.append(" to=\"").append(verifyFROM).append("\"");
         sb.append(" type=\"");
         sb.append(verified ? "valid" : "invalid");
-        sb.append("\" id=\"" + id + "\"/>");
+        sb.append("\" id=\"").append(id).append("\"/>");
         connection.deliverRawText(sb.toString());
         Log.debug("AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
                 verifyFROM +

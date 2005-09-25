@@ -67,8 +67,12 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         routingTable = XMPPServer.getInstance().getRoutingTable();
         // Create a pool of threads that will process queued packets.
         int maxThreads = JiveGlobals.getIntProperty("xmpp.server.outgoing.threads", 20);
+        if (maxThreads < 10) {
+            // Ensure that the max number of threads in the pool is at least 10
+            maxThreads = 10;
+        }
         threadPool =
-                new ThreadPoolExecutor(1, maxThreads, 60, TimeUnit.SECONDS,
+                new ThreadPoolExecutor(Math.round(maxThreads/4), maxThreads, 60, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<Runnable>(),
                         new ThreadPoolExecutor.AbortPolicy());
 
@@ -91,7 +95,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                                     }
                                     catch (Exception e) {
                                         returnErrorToSender(packet);
-                                        Log.debug("Error sending packet to remote server", e);
+                                        Log.debug(
+                                                "Error sending packet to remote server: " + packet,
+                                                e);
                                     }
                                 }
                             });

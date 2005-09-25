@@ -13,8 +13,8 @@ package org.jivesoftware.messenger.net;
 
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
@@ -61,7 +61,7 @@ public abstract class SocketReader implements Runnable {
     private PacketRouter router;
     XPPPacketReader reader = null;
     protected boolean open;
-    private InternalComponentManager componentManager;
+    private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     static {
         try {
@@ -86,7 +86,6 @@ public abstract class SocketReader implements Runnable {
         this.router = router;
         this.connection = connection;
         this.socket = socket;
-        componentManager = InternalComponentManager.getInstance();
     }
 
     /**
@@ -432,8 +431,7 @@ public abstract class SocketReader implements Runnable {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
-        if (validateHost() && !serverName.equals(host) &&
-                componentManager.getComponent(host) == null) {
+        if (validateHost() && isHostUnknown(host)) {
             Writer writer = connection.getWriter();
             StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
@@ -466,6 +464,32 @@ public abstract class SocketReader implements Runnable {
             writer.flush();
             // Close the underlying connection
             connection.close();
+        }
+    }
+
+    private boolean isHostUnknown(String host) {
+        if (host == null) {
+            // Answer false since when using server dialback the stream header will not
+            // have a TO attribute
+            return false;
+        }
+        if (serverName.equals(host)) {
+            // requested host matched the server name
+            return false;
+        }
+        // Check if the host matches a subdomain of this host
+        RoutableChannelHandler route = null;
+        try {
+            route = routingTable.getRoute(new JID(host));
+            if (route instanceof OutgoingSessionPromise) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (NoSuchRouteException e) {
+            return true;
         }
     }
 

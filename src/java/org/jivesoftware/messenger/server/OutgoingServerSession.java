@@ -70,6 +70,10 @@ public class OutgoingServerSession extends Session {
     private Collection<String> authenticatedDomains = new ArrayList<String>();
     private Collection<String> hostnames = new ArrayList<String>();
     private OutgoingServerSocketReader socketReader;
+    /**
+     * Flag that indicates if the session was created usign server-dialback.
+     */
+    private boolean usingServerDialback = true;
 
     /**
      * Creates a new outgoing connection to the specified hostname if no one exists. The port of
@@ -99,9 +103,9 @@ public class OutgoingServerSession extends Session {
                 return false;
             }
 
-            // Check if a session already exists to the desired hostname (i.e. remote server). If
-            // no one exists then create a new session. The same session will be used for the same
-            // hostname for all the domains to authenticate
+            // Check if a session, that is using server dialback, already exists to the desired
+            // hostname (i.e. remote server). If no one exists then create a new session. The same
+            // session will be used for the same hostname for all the domains to authenticate
             SessionManager sessionManager = SessionManager.getInstance();
             OutgoingServerSession session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
@@ -111,10 +115,16 @@ public class OutgoingServerSession extends Session {
                     for (String otherHostname : incomingSession.getValidatedDomains()) {
                         session = sessionManager.getOutgoingServerSession(otherHostname);
                         if (session != null) {
-                            // A session to the same remote server but with different hostname
-                            // was found. Use this session and add the new hostname to the session
-                            session.addHostname(hostname);
-                            break;
+                            if (session.usingServerDialback) {
+                                // A session to the same remote server but with different hostname
+                                // was found. Use this session and add the new hostname to the
+                                // session
+                                session.addHostname(hostname);
+                                break;
+                            }
+                            else {
+                                session = null;
+                            }
                         }
                     }
                 }
@@ -189,6 +199,8 @@ public class OutgoingServerSession extends Session {
                     }
                 }
             }
+            // A session already exists. The session was established using server dialback so
+            // it is possible to do piggybacking to authenticate more domains
             if (session.getAuthenticatedDomains().contains(domain)) {
                 // Do nothing since the domain has already been authenticated
                 return true;
@@ -374,6 +386,8 @@ public class OutgoingServerSession extends Session {
                             connection.init(session);
                             // Set the hostname as the address of the session
                             session.setAddress(new JID(null, hostname, null));
+                            // Set that the session was created using TLS+SASL (no server dialback)
+                            session.usingServerDialback = false;
                             return session;
                         }
                         else {
@@ -420,21 +434,6 @@ public class OutgoingServerSession extends Session {
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (conn != null && !conn.isClosed()) {
             try {
-                // Check if the domain from where the packet is being sent has been authenticated
-                // with the remote server. This may be the case for subdomains hosted in this
-                // server
-                if (!getAuthenticatedDomains().contains(packet.getFrom().getDomain())) {
-                    // We need to do "piggybacking" and authenticate the domain from where the
-                    // packet is being sent using the existing connection
-                    if (!authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain())) {
-                        // Authentication of the subdomain failed
-                        Log.error("Authentication of subdomain: " + packet.getFrom().getDomain() +
-                                " with remote server: " + packet.getTo().getDomain() +
-                                "has failed. Packet not sent to remote server: " + packet.toXML());
-                        return;
-                    }
-                }
-
                 conn.deliver(packet);
             }
             catch (Exception e) {

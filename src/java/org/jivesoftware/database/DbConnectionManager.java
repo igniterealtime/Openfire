@@ -390,9 +390,12 @@ public class DbConnectionManager {
             }
             finally {
                 try {
-                    bodyReader.close();
+                    if (bodyReader != null) {
+                        bodyReader.close();
+                    }
                 }
                 catch (Exception e) {
+                    // Ignore.
                 }
             }
             return value;
@@ -416,7 +419,7 @@ public class DbConnectionManager {
             String value) throws SQLException
     {
         if (isStreamTextRequired()) {
-            Reader bodyReader = null;
+            Reader bodyReader;
             try {
                 bodyReader = new StringReader(value);
                 pstmt.setCharacterStream(parameterIndex, bodyReader, value.length());
@@ -538,13 +541,14 @@ public class DbConnectionManager {
             fetchSizeSupported = false;
             maxRowsSupported = false;
         }
-        // SQLServer, JDBC driver i-net UNA properties
-        else if (dbName.indexOf("sql server") != -1 &&
-                driverName.indexOf("una") != -1)
-        {
+        // SQLServer
+        else if (dbName.indexOf("sql server") != -1) {
             databaseType = DatabaseType.sqlserver;
-            fetchSizeSupported = true;
-            maxRowsSupported = false;
+            // JDBC driver i-net UNA properties
+            if (driverName.indexOf("una") != -1) {
+                fetchSizeSupported = true;
+                maxRowsSupported = false;
+            }
         }
         // MySQL properties
         else if (dbName.indexOf("mysql") != -1) {
@@ -655,7 +659,7 @@ public class DbConnectionManager {
 
         interbase,
 
-        unknown;
+        unknown
     }
 
     /**
@@ -714,14 +718,14 @@ public class DbConnectionManager {
         // Run all upgrade scripts until we're up to the latest schema.
         for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
             BufferedReader in = null;
-            Statement stmt = null;
+            Statement stmt;
             try {
                 // Resource will be like "/database/upgrade/2.0_to_2.1/messenger_hsqldb.sql"
                 String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
                         "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/messenger_" +
                         databaseType + ".sql";
                 in = new BufferedReader(new InputStreamReader(
-                        new DbConnectionManager().getClass().getResourceAsStream(resourceName)));
+                        DbConnectionManager.class.getResourceAsStream(resourceName)));
                 boolean done = false;
                 while (!done) {
                     StringBuilder command = new StringBuilder();
@@ -752,7 +756,9 @@ public class DbConnectionManager {
                 catch (Exception e) { Log.error(e); }
                 if (in != null) {
                     try { in.close(); }
-                    catch (Exception e) { }
+                    catch (Exception e) {
+                        // Ignore.
+                    }
                 }
             }
         }
@@ -778,12 +784,8 @@ public class DbConnectionManager {
         //   "#" is MySQL
         //   "REM" is Oracle
         //   "/*" is SQLServer
-        if (line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
-                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"))
-        {
-            return false;
-        }
-        return true;
+        return !(line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
+                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"));
     }
 
     private DbConnectionManager() {

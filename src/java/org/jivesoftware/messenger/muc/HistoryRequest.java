@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: HistoryRequest.java,v $
  * $Revision$
  * $Date$
  *
@@ -156,6 +156,10 @@ public class HistoryRequest {
                 message = (Message)iterator.previous();
                 // Update number of characters to send
                 String text = message.getBody() == null ? message.getSubject() : message.getBody();
+                if (text == null) {
+                    // Skip this message since it has no body and no subject  
+                    continue;
+                }
                 accumulatedChars += text.length();
                 if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
                     // Stop collecting history since we have exceded a limit

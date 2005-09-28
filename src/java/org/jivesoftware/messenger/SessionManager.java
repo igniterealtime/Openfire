@@ -453,7 +453,7 @@ public class SessionManager extends BasicModule {
             if (sessions == null || sessions.isEmpty()) {
                 // First session from the remote server to this server so create a
                 // new association
-                List<IncomingServerSession> value = new ArrayList<IncomingServerSession>();
+                List<IncomingServerSession> value = new CopyOnWriteArrayList<IncomingServerSession>();
                 value.add(session);
                 incomingServerSessions.put(hostname, value);
             }

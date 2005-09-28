@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: ComponentSession.java,v $
  * $Revision$
  * $Date$
  *
@@ -221,9 +221,9 @@ public class ComponentSession extends Session {
      */
     public class ExternalComponent implements Component {
 
-        private String name;
-        private String type;
-        private String category;
+        private String name = "";
+        private String type = "";
+        private String category = "";
         private String subdomain;
 
         public void processPacket(Packet packet) {

@@ -125,9 +125,24 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
+        <%
+            Date creationDate = inSession.getCreationDate();
+            Date lastActiveDate = inSession.getLastActiveDate();
+
+            Calendar creationCal = Calendar.getInstance();
+            creationCal.setTime(creationDate);
+
+            Calendar lastActiveCal = Calendar.getInstance();
+            lastActiveCal.setTime(lastActiveDate);
+
+            Calendar nowCal = Calendar.getInstance();
+
+            boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+            boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+        %>
         <td><%= inSession.getStreamID()%></td>
-        <td align="center"><%= (System.currentTimeMillis() - inSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getCreationDate()) : JiveGlobals.formatDateTime(inSession.getCreationDate()) %></td>
-        <td align="center"><%= (System.currentTimeMillis() - inSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getLastActiveDate()) : JiveGlobals.formatDateTime(inSession.getLastActiveDate()) %></td>
+        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
     </tr>
     </table>
@@ -149,9 +164,24 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
+        <%
+            Date creationDate = outSession.getCreationDate();
+            Date lastActiveDate = outSession.getLastActiveDate();
+
+            Calendar creationCal = Calendar.getInstance();
+            creationCal.setTime(creationDate);
+
+            Calendar lastActiveCal = Calendar.getInstance();
+            lastActiveCal.setTime(lastActiveDate);
+
+            Calendar nowCal = Calendar.getInstance();
+
+            boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+            boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+        %>
         <td><%= outSession.getStreamID()%></td>
-        <td align="center"><%= (System.currentTimeMillis() - outSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getCreationDate()) : JiveGlobals.formatDateTime(outSession.getCreationDate()) %></td>
-        <td align="center"><%= (System.currentTimeMillis() - outSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getLastActiveDate()) : JiveGlobals.formatDateTime(outSession.getLastActiveDate()) %></td>
+        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
     </table>

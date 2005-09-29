@@ -2,9 +2,8 @@ package org.jivesoftware.messenger.net;
 
 import org.jivesoftware.util.XMLWriter;
 
-import java.net.Socket;
-import java.io.Writer;
 import java.io.IOException;
+import java.io.Writer;
 
 /**
  * XMLWriter whose writer is actually sending data on a socket connection. Since sending data over
@@ -12,11 +11,11 @@ import java.io.IOException;
  */
 public class XMLSocketWriter extends XMLWriter {
 
-    private Socket socket;
+    private SocketConnection connection;
 
-    public XMLSocketWriter(Writer writer, Socket socket) {
+    public XMLSocketWriter(Writer writer, SocketConnection connection) {
         super( writer, DEFAULT_FORMAT );
-        this.socket = socket;
+        this.connection = connection;
     }
 
     /**
@@ -27,13 +26,13 @@ public class XMLSocketWriter extends XMLWriter {
      */
     public void flush() throws IOException {
         // Register that we have started sending data
-        SocketSendingTracker.getInstance().socketStartedSending(socket);
+        SocketSendingTracker.getInstance().socketStartedSending(connection);
         try {
             super.flush();
         }
         finally {
             // Register that we have finished sending data
-            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+            SocketSendingTracker.getInstance().socketFinishedSending(connection);
         }
     }
 }

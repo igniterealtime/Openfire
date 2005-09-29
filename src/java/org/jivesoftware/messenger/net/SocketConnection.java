@@ -78,7 +78,7 @@ public class SocketConnection implements Connection {
         this.socket = socket;
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
-        xmlSerializer = new XMLSocketWriter(writer, socket);
+        xmlSerializer = new XMLSocketWriter(writer, this);
     }
 
     /**
@@ -103,7 +103,7 @@ public class SocketConnection implements Connection {
 			secure = true;
 			tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
 			writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
-			xmlSerializer = new XMLSocketWriter(writer, socket);
+			xmlSerializer = new XMLSocketWriter(writer, this);
 		}
 	}
 	
@@ -114,7 +114,7 @@ public class SocketConnection implements Connection {
         try {
             synchronized (writer) {
                 // Register that we started sending data on the connection
-                SocketSendingTracker.getInstance().socketStartedSending(socket);
+                SocketSendingTracker.getInstance().socketStartedSending(this);
                 writer.write(" ");
                 writer.flush();
             }
@@ -125,7 +125,7 @@ public class SocketConnection implements Connection {
         }
         finally {
             // Register that we finished sending data on the connection
-            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+            SocketSendingTracker.getInstance().socketFinishedSending(this);
         }
         return !isClosed();
     }
@@ -229,7 +229,7 @@ public class SocketConnection implements Connection {
                     synchronized (writer) {
                         try {
                             // Register that we started sending data on the connection
-                            SocketSendingTracker.getInstance().socketStartedSending(socket);
+                            SocketSendingTracker.getInstance().socketStartedSending(this);
                             writer.write("</stream:stream>");
                             if (flashClient) {
                                 writer.write('\0');
@@ -239,7 +239,7 @@ public class SocketConnection implements Connection {
                         catch (IOException e) {}
                         finally {
                             // Register that we finished sending data on the connection
-                            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+                            SocketSendingTracker.getInstance().socketFinishedSending(this);
                         }
                     }
                 }
@@ -247,18 +247,48 @@ public class SocketConnection implements Connection {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.close")
                             + "\n" + this.toString(), e);
                 }
-                try {
-                    socket.close();
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
+                closeConnection();
                 wasClosed = true;
             }
         }
         if (wasClosed) {
             notifyCloseListeners();
+        }
+    }
+
+    /**
+     * Forces the connection to be closed immediately no matter if closing the socket takes
+     * a long time. This method should only be called from {@link SocketSendingTracker} when
+     * sending data over the socket has taken a long time and we need to close the socket, discard
+     * the connection and its session.
+     */
+    void forceClose() {
+        if (session != null) {
+            // Set that the session is closed. This will prevent threads from trying to
+            // deliver packets to this session thus preventing future locks.
+            session.setStatus(Session.STATUS_CLOSED);
+        }
+        closeConnection();
+        // Notify the close listeners so that the SessionManager can send unavailable
+        // presences if required.
+        notifyCloseListeners();
+    }
+
+    private void closeConnection() {
+        try {
+            if (tlsStreamHandler == null) {
+                socket.close();
+            }
+            else {
+                // Close the channels since we are using TLS (i.e. NIO). If the channels implement
+                // the InterruptibleChannel interface then any other thread that was blocked in
+                // an I/O operation will be interrupted and an exception thrown
+                tlsStreamHandler.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                    + "\n" + this.toString(), e);
         }
     }
 
@@ -308,7 +338,7 @@ public class SocketConnection implements Connection {
             synchronized (writer) {
                 try {
                     // Register that we started sending data on the connection
-                    SocketSendingTracker.getInstance().socketStartedSending(socket);
+                    SocketSendingTracker.getInstance().socketStartedSending(this);
                     writer.write(text);
                     if (flashClient) {
                         writer.write('\0');
@@ -321,7 +351,7 @@ public class SocketConnection implements Connection {
                 }
                 finally {
                     // Register that we finished sending data on the connection
-                    SocketSendingTracker.getInstance().socketFinishedSending(socket);
+                    SocketSendingTracker.getInstance().socketFinishedSending(this);
                 }
             }
             if (errorDelivering) {

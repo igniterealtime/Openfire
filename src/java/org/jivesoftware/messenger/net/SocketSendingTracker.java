@@ -3,8 +3,6 @@ package org.jivesoftware.messenger.net;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import java.io.IOException;
-import java.net.Socket;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,10 +30,10 @@ public class SocketSendingTracker {
 
     private static SocketSendingTracker instance = new SocketSendingTracker();
     /**
-     * Map that holds the sockets that are currently sending information together with the date
+     * Map that holds the connections that are currently sending information together with the date
      * when the sending operation started.
      */
-    private Map<Socket, Date> sockets = new ConcurrentHashMap<Socket, Date>();
+    private Map<SocketConnection, Date> sockets = new ConcurrentHashMap<SocketConnection, Date>();
 
     /**
      * Flag that indicates if the tracket should shutdown the tracking process.
@@ -70,7 +68,7 @@ public class SocketSendingTracker {
      *
      * @param socket the socket that started sending data.
      */
-    public void socketStartedSending(Socket socket) {
+    public void socketStartedSending(SocketConnection socket) {
         sockets.put(socket, new Date());
     }
 
@@ -80,7 +78,7 @@ public class SocketSendingTracker {
      *
      * @param socket the socket that finished sending data.
      */
-    public void socketFinishedSending(Socket socket) {
+    public void socketFinishedSending(SocketConnection socket) {
         sockets.remove(socket);
     }
 
@@ -131,25 +129,22 @@ public class SocketSendingTracker {
      * quite small.
      */
     private void checkHealth() {
-        for (Socket socket : sockets.keySet()) {
-            Date startDate = sockets.get(socket);
+        for (SocketConnection connection : sockets.keySet()) {
+            Date startDate = sockets.get(connection);
             if (startDate != null &&
                     System.currentTimeMillis() - startDate.getTime() >
                     JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
                 // Check that the sending operation is still active
-                if (sockets.get(socket) != null) {
+                if (sockets.get(connection) != null) {
                     // Close the socket
                     try {
-                        Log.debug("Closing socket: " + socket + " that started sending data at: " +
-                                startDate);
-                        socket.close();
-                    }
-                    catch (IOException e) {
-                        Log.error("Error closing socket", e);
+                        Log.debug("Closing connection: " + connection +
+                                " that started sending data at: " + startDate);
+                        connection.forceClose();
                     }
                     finally {
                         // Remove tracking on this socket
-                        sockets.remove(socket);
+                        sockets.remove(connection);
                     }
                 }
             }

@@ -11,6 +11,9 @@
 
 package org.jivesoftware.messenger.net;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,10 +23,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
@@ -280,4 +279,15 @@ public class TLSStreamHandler {
 		return tlsEngine.getHandshakeStatus();
 	}
 
+    /**
+     * Closes the channels that will end up closing the input and output streams of the connection.
+     * The channels implement the InterruptibleChannel interface so any other thread that was
+     * blocked in an I/O operation will be interrupted and will get an exception.
+     *
+     * @throws IOException if an I/O error occurs.
+     */
+    public void close() throws IOException {
+        wbc.close();
+        rbc.close();
+    }
 }

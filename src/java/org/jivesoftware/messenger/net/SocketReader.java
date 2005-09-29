@@ -14,11 +14,10 @@ package org.jivesoftware.messenger.net;
 import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
+import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -32,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.channels.AsynchronousCloseException;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -121,6 +121,9 @@ public abstract class SocketReader implements Runnable {
         catch (SocketException se) {
             // The socket was closed. The server may close the connection for several
             // reasons (e.g. user requested to remove his account). Do nothing here.
+        }
+        catch (AsynchronousCloseException ace) {
+            // The socket was closed.
         }
         catch (XmlPullParserException ie) {
             // It is normal for clients to abruptly cut a connection
@@ -231,7 +234,7 @@ public abstract class SocketReader implements Runnable {
                     continue;
                 }
                 processIQ(packet);
-			}
+            }
             else if ("starttls".equals(tag)) {
                 // Client requested to secure the connection using TLS
                 connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -259,7 +262,7 @@ public abstract class SocketReader implements Runnable {
                 }
                 continue;
             }
-			else {
+            else {
                 if (!processUnknowPacket(doc)) {
                     Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                             doc.asXML());

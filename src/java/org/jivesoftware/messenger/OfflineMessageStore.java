@@ -179,6 +179,8 @@ public class OfflineMessageStore extends BasicModule {
                 pstmt = con.prepareStatement(DELETE_OFFLINE);
                 pstmt.setString(1, username);
                 pstmt.executeUpdate();
+                
+                removeUsernameFromSizeCache(username);
             }
         }
         catch (Exception e) {
@@ -257,6 +259,8 @@ public class OfflineMessageStore extends BasicModule {
             pstmt = con.prepareStatement(DELETE_OFFLINE);
             pstmt.setString(1, username);
             pstmt.executeUpdate();
+            
+            removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -266,6 +270,13 @@ public class OfflineMessageStore extends BasicModule {
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    private void removeUsernameFromSizeCache(String username) {
+        // Update the cached size if it exists.
+        if (sizeCache.containsKey(username)) {
+            sizeCache.remove(username);
         }
     }
 
@@ -285,6 +296,11 @@ public class OfflineMessageStore extends BasicModule {
             pstmt.setString(1, username);
             pstmt.setString(2, StringUtils.dateToMillis(creationDate));
             pstmt.executeUpdate();
+            
+            //force a refresh for next call to getSize(username)
+            //its easier than loading the msg to be deleted just
+            //to update the cache.
+            removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

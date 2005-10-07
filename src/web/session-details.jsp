@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -12,7 +11,6 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
-                 java.text.DateFormat,
                  java.text.NumberFormat,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.user.User,
@@ -24,7 +22,9 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
@@ -67,16 +67,12 @@
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("session.details.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-details.jsp"));
-    pageinfo.setPageID("session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="session.details.title"/></title>
+        <meta name="pageID" content="session-summary"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="session.details.info">
@@ -327,4 +323,5 @@
 </center>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

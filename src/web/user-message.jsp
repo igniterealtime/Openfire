@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -13,8 +12,6 @@
                  java.util.*,
                  org.jivesoftware.messenger.*,
                  org.jivesoftware.admin.*,
-                 java.util.Date,
-                 java.text.DateFormat,
                  java.util.HashMap,
                  org.jivesoftware.messenger.user.*,
                  java.util.Map,
@@ -116,19 +113,14 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.message.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
-    pageinfo.setPageID("user-message");
-%>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="send_an_administrative_message_to_users.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="user.message.title"/></title>
+        <meta name="pageID" content="user-message"/>
+        <meta name="helpPage" content="send_an_administrative_message_to_users.html"/>
+    </head>
+    <body>
 
 <%  if (success) { %>
 
@@ -264,4 +256,5 @@ function updateSelect(el) {
 document.f.message.focus();
 </script>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

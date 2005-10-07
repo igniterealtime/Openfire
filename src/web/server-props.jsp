@@ -1,17 +1,14 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.XMPPServerInfo,
-                 org.jivesoftware.messenger.ServerPort,
                  org.jivesoftware.admin.AdminPageBean,
                  java.util.*,
                  org.jivesoftware.messenger.XMPPServer,
@@ -28,8 +25,8 @@
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%
     // Get parameters
@@ -62,9 +59,9 @@
         save = true;
     }
 
-    XMPPServer server = admin.getXMPPServer();
+    XMPPServer server = webManager.getXMPPServer();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (serverName == null) {
             errors.put("serverName","");
@@ -143,16 +140,12 @@
     }
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.props.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("index.properties"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-props.jsp"));
-    pageinfo.setPageID("server-settings");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.props.title"/></title>
+        <meta name="pageID" content="server-settings"/>
+    </head>
+    <body>
 
 <style type="text/css">
 .c1 {
@@ -366,4 +359,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

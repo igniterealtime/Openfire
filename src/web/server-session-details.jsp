@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile: server-session-details.jsp,v $
   -	$Revision$
   -	$Date$
   -
@@ -12,13 +11,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.messenger.*,
-                 java.text.DateFormat,
                  java.text.NumberFormat,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User,
-                 org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
                  org.jivesoftware.messenger.server.IncomingServerSession,
                  org.jivesoftware.messenger.server.OutgoingServerSession"
     errorPage="error.jsp"
@@ -26,7 +19,9 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String hostname = ParamUtils.getParameter(request, "hostname");
@@ -46,16 +41,12 @@
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.session.details.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-session-details.jsp?hostname=" + hostname));
-    pageinfo.setPageID("server-session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.session.details.title"/></title>
+        <meta name="pageID" content="server-session-summary"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="server.session.details.info">
@@ -198,4 +189,5 @@
 </center>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

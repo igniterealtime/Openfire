@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
@@ -14,10 +13,6 @@
                  org.jivesoftware.messenger.*,
                  java.util.Date,
                  org.jivesoftware.admin.*,
-                 java.text.DateFormat,
-                 org.xmpp.packet.JID,
-                 java.net.URLEncoder,
-                 org.xmpp.packet.Presence,
                  org.jivesoftware.messenger.server.IncomingServerSession,
                  org.jivesoftware.messenger.server.OutgoingServerSession"
     errorPage="error.jsp"
@@ -30,21 +25,21 @@
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("server-session-summary", DEFAULT_RANGE));
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("server-session-summary", DEFAULT_RANGE));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String hostname = ParamUtils.getParameter(request,"hostname");
 
     if (request.getParameter("range") != null) {
-        admin.setRowsPerPage("server-session-summary", range);
+        webManager.setRowsPerPage("server-session-summary", range);
     }
 
     // Get the user manager
-    SessionManager sessionManager = admin.getSessionManager();
+    SessionManager sessionManager = webManager.getSessionManager();
 
     Collection<String> hostnames = new TreeSet<String>();
     // Get the incoming session hostnames
@@ -84,18 +79,13 @@
     int maxIndex = (start+range <= sessionCount ? start+range : sessionCount);
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.session.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-session-summary.jsp"));
-    pageinfo.setPageID("server-session-summary");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="view_active_server_sessions.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.session.summary.title"/></title>
+        <meta name="pageID" content="server-session-summary"/>
+        <meta name="helpPage" content="view_active_server_sessions.html"/>
+    </head>
+    <body>
 
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
@@ -123,7 +113,6 @@
     <%  } %>
 
 </select>
-</p>
 
 <%  if (numPages > 1) { %>
 
@@ -143,8 +132,6 @@
     </p>
 
 <%  } %>
-
-</p>
 
 <p>
 <fmt:message key="server.session.summary.info">
@@ -221,4 +208,5 @@
 <fmt:message key="server.session.summary.last_update" />: <%= JiveGlobals.formatDateTime(new Date()) %>
 </p>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

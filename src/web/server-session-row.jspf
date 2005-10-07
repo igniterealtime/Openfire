@@ -1,18 +1,15 @@
-<%@ page import="org.jivesoftware.messenger.Session,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils,
+ <%--
+  -	$Revision$
+  -	$Date$
+--%>
+
+<%@ page import="java.net.URLEncoder,
                  org.jivesoftware.util.JiveGlobals,
                  java.util.Date,
                  java.util.Calendar,
                  javax.swing.*,
                  java.net.URL"%>
 <%@ page import="org.jivesoftware.messenger.server.IncomingServerSession"%>
- <%--
-  -	$RCSfile: server-session-row.jspf,v $
-  -	$Revision$
-  -	$Date$
---%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 4 variables:

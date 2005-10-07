@@ -1,39 +1,27 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 org.jivesoftware.messenger.user.UserManager,
                  org.jivesoftware.messenger.user.*,
-                 java.util.*,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 java.io.StringWriter,
-                 java.io.StringWriter,
-                 java.io.IOException,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 java.io.PrintStream,
-                 org.dom4j.xpath.DefaultXPath,
-                 org.dom4j.*,
                  java.net.URLEncoder,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.util.HashMap"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<jsp:useBean id="errors" class="java.util.HashMap" />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
@@ -46,6 +34,7 @@
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
 
+    Map<String, String> errors = new HashMap<String, String>();
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("user-summary.jsp");
@@ -103,18 +92,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-<%   // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.create.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-create.jsp"));
-    pageinfo.setPageID("user-create");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="add_users_to_the_system.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
+<html>
+    <head>
+        <title><fmt:message key="user.create.title"/></title>
+        <meta name="pageID" content="user-create"/>
+        <meta name="helpPage" content="add_users_to_the_system.html"/>
+    </head>
+    <body>
 
 <p><fmt:message key="user.create.info" /></p>
 
@@ -239,4 +223,5 @@
 document.f.username.focus();
 </script>
 
-<jsp:include page="bottom.jsp" flush="true"/>
+    </body>
+</html>

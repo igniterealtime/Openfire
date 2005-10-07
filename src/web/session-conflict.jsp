@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -13,32 +12,22 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
                  org.jivesoftware.messenger.*,
-                 java.util.Date,
-                 java.text.DateFormat,
                  java.util.HashMap,
-                 java.util.Map,
-                 org.jivesoftware.admin.AdminPageBean"
+                 java.util.Map"
     errorPage="error.jsp"
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("session.conflict.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-conflict.jsp"));
-    pageinfo.setPageID("server-session-conflict");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="set_the_server_resource_conflict_policy.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="session.conflict.title"/></title>
+        <meta name="pageID" content="server-session-conflict"/>
+        <meta name="helpPage" content="set_the_server_resource_conflict_policy.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;
@@ -46,7 +35,7 @@
     int kickValue = ParamUtils.getIntParameter(request,"kickValue",-2);
 
     if (kickPolicy == -2) {
-        kickPolicy = admin.getSessionManager().getConflictKickLimit();
+        kickPolicy = webManager.getSessionManager().getConflictKickLimit();
     }
 
     // Update the session kick policy if requested
@@ -61,10 +50,10 @@
         // If no errors, continue:
         if (errors.size() == 0) {
             if (kickPolicy != 0 && kickPolicy != 1 && kickPolicy != SessionManager.NEVER_KICK) {
-                admin.getSessionManager().setConflictKickLimit(kickValue);
+                webManager.getSessionManager().setConflictKickLimit(kickValue);
             }
             else {
-                admin.getSessionManager().setConflictKickLimit(kickPolicy);
+                webManager.getSessionManager().setConflictKickLimit(kickPolicy);
             }
             %>
 
@@ -86,7 +75,7 @@
     }
 
     // Update variable values
-    kickPolicy = admin.getSessionManager().getConflictKickLimit();
+    kickPolicy = webManager.getSessionManager().getConflictKickLimit();
 %>
 
 <p>
@@ -174,4 +163,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -11,13 +10,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.messenger.*,
-                 java.text.DateFormat,
-                 org.jivesoftware.admin.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils"
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
@@ -52,18 +45,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.edit.form.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
-            "user-edit-form.jsp?username="+URLEncoder.encode(username, "UTF-8")));
-    pageinfo.setSubPageID("user-properties");
-    pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="user.edit.form.title"/></title>
+        <meta name="subPageID" content="user-properties"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+    </head>
+    <body>
 
 <%  if (success) { %>
 
@@ -132,4 +120,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

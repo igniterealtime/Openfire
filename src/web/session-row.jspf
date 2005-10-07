@@ -1,12 +1,12 @@
+ <%--
+  -	$Revision$
+  -	$Date$
+--%>
+
 <%@ page import="org.jivesoftware.messenger.Session,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
                  org.jivesoftware.util.LocaleUtils"%>
- <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
---%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 2 variables:

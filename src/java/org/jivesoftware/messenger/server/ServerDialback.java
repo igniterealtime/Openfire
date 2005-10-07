@@ -28,9 +28,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -184,7 +182,7 @@ class ServerDialback {
                 connection.close();
             }
         }
-        catch (UnknownHostException e) {
+        catch (IOException e) {
             Log.debug("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
                     realHostname + ":" + realPort + ")", e);
             // Close the connection

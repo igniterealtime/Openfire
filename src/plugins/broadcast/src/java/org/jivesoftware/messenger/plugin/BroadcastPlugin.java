@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: BroadcastPlugin.java,v $
  * $Revision$
  * $Date$
  *
@@ -161,10 +161,9 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             else {
                 try {
                     Group group = groupManager.getGroup(toNode);
-                    if (disableGroupPermissions || (groupMembersAllowed && group.isUser(fromNode)) ||
-                            group.getAdmins().contains(fromNode) ||
-                            allowedUsers.contains(message.getFrom().toBareJID()))
-                    {
+                    if (disableGroupPermissions ||
+                            (groupMembersAllowed && group.isUser(message.getFrom())) ||
+                            allowedUsers.contains(message.getFrom().toBareJID())) {
                         for (String user : group.getMembers()) {
                             Message newMessage = message.createCopy();
                             JID userJID = XMPPServer.getInstance().createJID(user, null);

@@ -1,22 +1,15 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.messenger.user.*,
-                 java.util.*,
                  java.text.*,
-                 org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.admin.AdminConsole"
 %>
 
@@ -54,22 +47,19 @@
     }
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("index.title");
-    pageinfo.setTitle(title);
-    pageinfo.setPageID("server-settings");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="about_the_server.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="index.title"/></title>
+        <meta name="pageID" content="server-settings"/>
+        <meta name="helpPage" content="about_the_server.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="index.title.info" />
 </p>
 
-<script lang="JavaScript" type="text/javascript">
+<script language="JavaScript" type="text/javascript">
     var checked = false;
     function checkClick() {
         if (checked) { return false; }
@@ -313,4 +303,5 @@
 <input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

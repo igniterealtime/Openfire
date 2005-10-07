@@ -25,18 +25,13 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("group.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-summary.jsp"));
-    pageinfo.setPageID("group-summary");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="about_users_and_groups.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="group.summary.title"/></title>
+        <meta name="pageID" content="group-summary"/>
+        <meta name="helpPage" content="about_users_and_groups.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
@@ -154,12 +149,12 @@
         <td width="1%" align="center">
             <a href="group-edit.jsp?group=<%= groupName %>"
              title=<fmt:message key="global.click_edit" />
-             ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
+             ><img src="images/edit-16x16.gif" width="17" height="17" border="0" alt=""></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="group-delete.jsp?group=<%= groupName %>"
              title=<fmt:message key="global.click_delete" />
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
     </tr>
 
@@ -189,4 +184,5 @@
 
 <%  } %>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

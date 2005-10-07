@@ -5,8 +5,7 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.admin.*,
-                 org.jivesoftware.util.*,
+<%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.messenger.user.*,
                  java.util.*,
                  javax.mail.*,
@@ -18,8 +17,8 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%	// Get paramters
     boolean doTest = request.getParameter("test") != null;
@@ -41,7 +40,7 @@
     Exception mex = null;
 
     // Validate input
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (doTest) {
         if (from == null) { errors.put("from",""); }
         if (to == null) { errors.put("to",""); }
@@ -80,7 +79,7 @@
     }
 
     // Set var defaults
-    User user = admin.getUserManager().getUser("admin");
+    User user = webManager.getUserManager().getUser("admin");
     if (from == null) {
         from = user.getEmail();
     }
@@ -95,17 +94,12 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("system.emailtest.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "system-email.jsp"));
-    pageinfo.setPageID("system-email");
-%>
-
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="system.emailtest.title"/></title>
+        <meta name="pageID" content="system-email"/>
+    </head>
+    <body>
 
 <script language="JavaScript" type="text/javascript">
 var clicked = false;
@@ -128,7 +122,7 @@ function checkClick(el) {
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
 	        <td class="jive-icon-label">
 		        <fmt:message key="system.emailtest.no_host">
 				    <fmt:param value="<%= "<a href='system-email.jsp>" %>"/>
@@ -150,7 +144,7 @@ function checkClick(el) {
         <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr>
-            	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+            	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
             	<td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
             </tr>
         </tbody>
@@ -162,7 +156,7 @@ function checkClick(el) {
         <div class="jive-error">
         <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
-            <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+            <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
             <td class="jive-icon-label">
                 <fmt:message key="system.emailtest.failure" />
                 <%  if (mex != null) { %>
@@ -259,4 +253,5 @@ function checkClick(el) {
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

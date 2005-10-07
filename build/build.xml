@@ -356,6 +356,7 @@
         <mkdir dir="${war.dest.dir}/build"/>
         <!-- Make a new web.xml file in the build dir -->
         <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}"/>
+        <!-- TODO: copy in decorators.xml -->
         <!-- Make the war -->
         <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
             webxml="${war.dest.dir}/build/web.xml">
@@ -458,6 +459,12 @@
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
                 <filter token="JSPC-SERVLETS" value="${servlet-xml}"/>
             </filterset>
+        </copy>
+
+        <!-- Copy over decorators file. -->
+        <copy file="${web.dir}/WEB-INF/decorators.xml"
+            toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
+            overwrite="true">
         </copy>
 
         <!-- Create a jar of compiled servlets -->

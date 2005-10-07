@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -17,13 +16,6 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-
-<%-- Define page bean for header and sidebar --%>
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-
-<%-- Define Administration Bean --%>
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters //
     String localeCode = ParamUtils.getParameter(request,"localeCode");
@@ -61,16 +53,14 @@
     TimeZone timeZone = JiveGlobals.getTimeZone();
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("locale.title");
-    pageinfo.setTitle(title);
-    pageinfo.setPageID("server-locale");
-%>
+<html>
+    <head>
+        <title><fmt:message key="locale.title" /></title>
+        <meta name="pageID" content="server-locale"/>
+        <meta name="helpPage" content="edit_server_properties.html"/>
+    </head>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_server_properties.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<body>
 
 <p>
 <fmt:message key="locale.title.info" />
@@ -200,4 +190,6 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+
+</body>
+</html>

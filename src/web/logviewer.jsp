@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
@@ -12,12 +11,9 @@
 <%@ page import="java.io.*,
                  org.jivesoftware.util.*,
                  java.text.*,
-                 org.jivesoftware.util.log.Logger,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.messenger.user.*,
-                 java.util.*,
-                 org.jivesoftware.admin.AdminPageBean"
+                 java.util.*"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -49,7 +45,7 @@
             return empty;
         }
         StringTokenizer tokenizer = new StringTokenizer(cookie.getValue(),"&");
-        HashMap valueMap = new HashMap();
+        HashMap<String, String> valueMap = new HashMap<String, String>();
         while (tokenizer.hasMoreTokens()) {
             String tok = tokenizer.nextToken();
             int pos = tok.indexOf("=");
@@ -196,22 +192,16 @@
     HashMap newlogs = getLogUpdate(request, response, logDir);
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("logviewer.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "logviewer.jsp?log=" + log));
-    pageinfo.setPageID("server-logs");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="use_the_server_logs.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="logviewer.title"/></title>
+        <meta name="pageID" content="server-logs"/>
+        <meta name="helpPage" content="use_the_server_logs.html"/>
+    </head>
+    <body>
 
 <%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
-
     <meta http-equiv="refresh" content="<%= refresh %>">
-
 <%  } %>
 
 <div id="logviewer">
@@ -447,4 +437,5 @@ IFRAME {
 
 </div>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

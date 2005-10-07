@@ -6,19 +6,14 @@
 --%>
 
 <%@ page import="java.util.*,
-				 org.jivesoftware.util.*,
-                 org.jivesoftware.admin.*"
+				 org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
-
-<%	
+<%
     // get parameters
     String host = ParamUtils.getParameter(request,"host");
     int port = ParamUtils.getIntParameter(request,"port",0);
@@ -73,17 +68,12 @@
     debug = service.isDebugEnabled();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("system.email.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "main.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "system-email.jsp"));
-    pageinfo.setPageID("system-email");
-%>
-
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="system.email.title"/></title>
+        <meta name="pageID" content="system-email"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="system.email.info" />
@@ -95,7 +85,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         	<td class="jive-icon-label"><fmt:message key="system.email.update_success" /></td>
         </tr>
     </tbody>
@@ -110,7 +100,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         	<td class="jive-icon-label"><fmt:message key="system.email.update_failure" /></td>
         </tr>
     </tbody>
@@ -210,4 +200,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

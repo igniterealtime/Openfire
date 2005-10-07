@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -11,17 +10,14 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer,
-                 java.util.Iterator"
+                 org.jivesoftware.messenger.muc.MultiUserChatServer"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String userJID = ParamUtils.getParameter(request,"userJID");
@@ -34,7 +30,7 @@
     boolean openPerms = ParamUtils.getBooleanParameter(request,"openPerms");
 
 	// Get muc server
-    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
+    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
 
     // Handle a save
     Map errors = new HashMap();
@@ -82,18 +78,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.create.permission.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-create-permission.jsp"));
-    pageinfo.setPageID("muc-perms");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="set_group_chat_room_creation_permissions.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.create.permission.title"/></title>
+        <meta name="pageID" content="muc-perms"/>
+        <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="muc.create.permission.info" />
@@ -235,4 +226,5 @@
 
 <%  } %>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

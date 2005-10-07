@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
@@ -11,25 +10,17 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
                  org.jivesoftware.messenger.net.SSLConfig,
-                 javax.net.ssl.KeyManager,
-                 javax.net.ssl.TrustManager,
                  java.security.KeyStore,
                  java.security.cert.CertificateFactory,
                  java.security.cert.Certificate,
-                 java.io.ByteArrayInputStream,
-                 org.jivesoftware.admin.*"
+                 java.io.ByteArrayInputStream"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  try { %>
-
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
 
 <%  // Get parameters:
     String type = ParamUtils.getParameter(request, "type");
@@ -41,7 +32,7 @@
     KeyStore keyStore = SSLConfig.getKeyStore();
     KeyStore trustStore = SSLConfig.getTrustStore();
 
-    Map errors = new HashMap();
+    Map<String, Object> errors = new HashMap<String, Object>();
     if (install) {
         if (cert == null){
             errors.put("cert","");
@@ -89,25 +80,20 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("ssl.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "ssl-settings.jsp"));
-    pageinfo.setPageID("server-ssl");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_security_certificates.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="ssl.settings.title"/></title>
+        <meta name="pageID" content="server-ssl"/>
+        <meta name="helpPage" content="manage_security_certificates.html"/>
+    </head>
+    <body>
 
 <%  if (ParamUtils.getBooleanParameter(request,"success")) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="ssl.settings.update" />
         </td></tr>
@@ -120,7 +106,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="ssl.settings.uninstalled" />
         </td></tr>
@@ -135,7 +121,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="ssl.settings.error" />
         <%  if (e != null && e.getMessage() != null) { %>
@@ -151,7 +137,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="ssl.settings.error_certificate" />
         </td></tr>
@@ -203,7 +189,7 @@
             <a href="ssl-settings.jsp?alias=<%= a %>&type=server&uninstall=true"
              title="<fmt:message key="ssl.settings.click_uninstall" />"
              onclick="return confirm('<fmt:message key="ssl.settings.confirm_uninstall" />');"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
     </tr>
     <tr>
@@ -313,6 +299,7 @@
 
 </form>
 
-<%  } catch (Throwable t) { t.printStackTrace(); } %>
+    </body>
+</html>
 
-<jsp:include page="bottom.jsp" flush="true" />
+<%  } catch (Throwable t) { t.printStackTrace(); } %>

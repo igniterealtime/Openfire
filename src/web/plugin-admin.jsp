@@ -5,17 +5,8 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.util.zip.ZipFile,
-                 java.util.jar.JarFile,
-                 java.util.jar.JarEntry,
-                 java.io.*,
-                 org.dom4j.io.SAXReader,
-                 org.dom4j.Document,
-                 org.dom4j.Element,
-                 org.dom4j.Node,
-                 java.text.DateFormat,
+<%@ page import="java.io.*,
                  org.jivesoftware.admin.AdminPageBean,
-				 org.jivesoftware.messenger.XMPPServer,
 				 org.jivesoftware.messenger.container.PluginManager,
 				 org.jivesoftware.util.*,
                  org.jivesoftware.messenger.container.Plugin,
@@ -202,7 +193,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_success" /></td>
         </tr>
     </tbody>
@@ -216,7 +207,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" />></td>
         	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_failure" /></td>
         </tr>
     </tbody>
@@ -231,7 +222,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success" /></td></tr>
     </tbody>
     </table>
@@ -271,8 +262,7 @@
     }
 
     int count = 0;
-    for (int i=0; i<plugins.size(); i++) {
-        Plugin plugin = plugins.get(i);
+    for (Plugin plugin : plugins) {
         String dirName = pluginManager.getPluginDirectory(plugin).getName();
         // Skip the admin plugin.
         if (!"admin".equals(dirName)) {
@@ -326,12 +316,12 @@
 	        <td width="1%" align="center">
 	            <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
 	             title="<fmt:message key="plugin.admin.click_reload" />"
-	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0"></a>
+	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
 	        </td>
 	        <td width="1%" align="center" style="border-right:1px #ccc solid;">
 	            <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
 	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>
 	        </td>
 	    </tr>
 <%		    

@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -13,15 +12,6 @@
                  java.util.HashMap,
                  java.util.Map,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 java.io.StringWriter,
-                 java.io.StringWriter,
-                 java.io.IOException,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 java.io.PrintStream,
-                 org.dom4j.xpath.DefaultXPath,
-                 org.dom4j.*,
                  org.jivesoftware.messenger.group.*,
                  java.net.URLEncoder,
                  org.jivesoftware.messenger.user.UserManager,
@@ -33,8 +23,6 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<jsp:useBean id="errors" class="java.util.HashMap" />
-
 <%  webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters //
@@ -53,6 +41,8 @@
 //    boolean showInRoster = "onlyGroup".equals(showInRosterType) || "everybody".equals(showInRosterType);
 //    String displayName = ParamUtils.getParameter(request, "display");
 //    String groupList = ParamUtils.getParameter(request, "groupList");
+
+    Map<String, String> errors = new HashMap<String, String>();
 
     // Handle a cancel
     if (cancel) {
@@ -126,32 +116,24 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-
-<% // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("group.create.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-create.jsp"));
-    pageinfo.setPageID("group-create");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="create_a_group.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
+<html>
+    <head>
+        <title><fmt:message key="group.create.title"/></title>
+        <meta name="pageID" content="group-create"/>
+        <meta name="helpPage" content="create_a_group.html"/>
+    </head>
+    <body>
 
 <c:set var="submit" value="${param.create}"/>
-<c:set var="errors" value="${errors}"/>
 
 <%  if (errors.get("general") != null) { %>
 
-    <div class="jive-success">
+    <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
             <td class="jive-icon">
-                <img src="images/success-16x16.gif" width="16" height="16" border="0">
+                <img src="images/error-16x16.gif" width="16" height="16" border="0" alt="">
             </td>
             <td class="jive-icon-label">
                 <fmt:message key="group.create.error" />
@@ -227,7 +209,7 @@
             <fmt:message key="group.create.label_initial_member" />
         </td>
         <td nowrap class="c1" align="left">
-            <textarea name="users" cols="30" rows="3" id="gdesc"
+            <textarea name="users" cols="30" rows="3" id="users"
              ><%= ((users != null) ? users : "") %></textarea>
         </td>
     </tr>
@@ -360,7 +342,8 @@
 document.f.name.focus();
 </script>
 
-<jsp:include page="bottom.jsp" flush="true"/>
+    </body>
+</html>
 
 <%!
     private static String toList(String[] array) {

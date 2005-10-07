@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
@@ -9,17 +8,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.text.DateFormat,
-                 java.util.*,
-                 org.jivesoftware.admin.*,
-                 org.xmpp.packet.JID,
+<%@ page import="java.util.*,
                  org.jivesoftware.messenger.group.GroupManager,
                  org.jivesoftware.messenger.group.Group,
                  java.net.URLEncoder,
                  java.net.URLDecoder,
-                 org.jivesoftware.messenger.user.UserManager,
-                 org.jivesoftware.messenger.user.UserNotFoundException,
-                 org.jivesoftware.stringprep.Stringprep,
                  java.io.UnsupportedEncodingException,
                  org.jivesoftware.util.*"
 %>
@@ -28,9 +21,10 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<%  webManager.init(pageContext); %>
 <jsp:useBean id="errors" class="java.util.HashMap"/>
 
-<%  webManager.init(pageContext); %>
+
 
 <%  // Get parameters
     boolean add = request.getParameter("add") != null;
@@ -148,11 +142,15 @@
                     count++;
                 }
                 catch (IllegalArgumentException unfe) {
-                  errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.inexistent_user", JiveGlobals.getLocale(), Arrays.asList(username)));
+                    errorBuf.append("<br>").append(
+                            LocaleUtils.getLocalizedString("group.edit.inexistent_user",
+                            JiveGlobals.getLocale(), Arrays.asList(username)));
                 }
             }
             else {
-                errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.already_user", JiveGlobals.getLocale(), Arrays.asList(username)));
+                errorBuf.append("<br>").append(
+                        LocaleUtils.getLocalizedString("group.edit.already_user",
+                        JiveGlobals.getLocale(), Arrays.asList(username)));
             }
         }
         if (count > 0) {
@@ -201,20 +199,15 @@
         groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
     }
 %>
-    <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-<% // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("group.edit.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
-    pageinfo.setSubPageID("group-edit");
-    pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
-%>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_properties.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
+<html>
+    <head>
+        <title><fmt:message key="group.edit.title"/></title>
+        <meta name="subPageID" content="group-edit"/>
+        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+        <meta name="helpPage" content="edit_group_properties.html"/>
+    </head>
+    <body>
 
     <p>
         <fmt:message key="group.edit.form_info" />
@@ -226,7 +219,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if (groupInfoChanged) { %>
         <fmt:message key="group.edit.update" />
@@ -252,7 +245,7 @@
  <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if(add) { %>
         <fmt:message key="group.edit.not_update" />
@@ -282,7 +275,7 @@
                 </td>
                 <td>
                     <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
-                    <img src="images/edit-16x16.gif" border="0">
+                    <img src="images/edit-16x16.gif" border="0" alt="">
                    </a>
                 </td>
                 <% } else { %>
@@ -537,9 +530,8 @@
         document.f.users.focus();
     </script>
 
-    <jsp:include page="footer.jsp" flush="true"/>
-
-
+    </body>
+</html>
 
 <%!
     private static String toList(String[] array, String enc) {

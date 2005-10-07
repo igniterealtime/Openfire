@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is the proprietary information of Jive Software.
   - Use is subject to license terms.
@@ -11,9 +10,6 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 java.util.Iterator,
                  org.jivesoftware.messenger.muc.*,
                  org.xmpp.packet.IQ,
                  org.dom4j.Element,
@@ -23,8 +19,8 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String roomName = ParamUtils.getParameter(request,"roomName");
@@ -37,7 +33,7 @@
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
 
     // Load the room object
-    MUCRoom room = admin.getMultiUserChatServer().getChatRoom(roomName);
+    MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
 
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
@@ -105,19 +101,14 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.room.affiliations.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-affiliations.jsp?roomName="+URLEncoder.encode(roomName, "UTF-8")));
-    pageinfo.setSubPageID("muc-room-affiliations");
-    pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8"));
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_chat_room_user_permissions.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.room.affiliations.title"/></title>
+        <meta name="subPageID" content="muc-room-affiliations"/>
+        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8") %>"/>
+        <meta name="helpPage" content="edit_group_chat_room_user_permissions.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="muc.room.affiliations.info" />
@@ -322,4 +313,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

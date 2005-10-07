@@ -21,18 +21,12 @@ import org.jivesoftware.messenger.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
  * A utility bean for Messenger admin console pages.
  */
 public class WebManager extends WebBean {
-
-    private Map breadcrumbMap = new LinkedHashMap();
-    private String title = "";
-    private String sidebar = "";
 
     private int start = 0;
     private int range = 15;
@@ -107,7 +101,9 @@ public class WebManager extends WebBean {
         try {
             pageUser = getUserManager().getUser(getAuthToken().getUsername());
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+            // Ignore.
+        }
         return pageUser;
     }
 
@@ -162,39 +158,7 @@ public class WebManager extends WebBean {
     }
 
     public boolean isServerRunning() {
-        if (getPresenceManager() == null ||
-                getXMPPServer() == null) {
-            return false;
-        }
-        return true;
-    }
-
-    public void addBreadCrumb(String name, String url) {
-        breadcrumbMap.put(name, url);
-    }
-
-    public Map getBreadCrumbs() {
-        return breadcrumbMap;
-    }
-
-    public void setSidebar(String sidebar) {
-        this.sidebar = sidebar;
-    }
-
-    public String getSidebar() {
-        return sidebar;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public int getBreadcrumbSize() {
-        return getBreadCrumbs().size();
+        return !(getPresenceManager() == null || getXMPPServer() == null);
     }
 
     public void setStart(int start) {
@@ -223,6 +187,7 @@ public class WebManager extends WebBean {
             Thread.sleep(3000L);
         }
         catch (Exception ignored) {
+            // Ignore.
         }
     }
 
@@ -253,13 +218,17 @@ public class WebManager extends WebBean {
                     in.close();
                 }
             }
-            catch (IOException e) { }
+            catch (IOException e) {
+                // Ignore.
+            }
             try {
                 if (out != null) {
                     out.close();
                 }
             }
-            catch (IOException e) { }
+            catch (IOException e) {
+                // Ignore.
+            }
         }
     }
 
@@ -378,7 +347,7 @@ public class WebManager extends WebBean {
                     }
                 }
             }
-            else if (values == null) {
+            else {
                 // Store the new page-value as a new user property
                 user.getProperties().put(property, toStore);
             }

@@ -225,7 +225,6 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
-
         HttpServlet servlet = servlets.get(jspURL);
         if (servlet != null) {
             servlet.service(request, response);
@@ -338,11 +337,13 @@ public class PluginServlet extends HttpServlet {
                     in.close();
                 }
                 catch (Exception ignored) {
+                    // Ignore.
                 }
                 try {
                     out.close();
                 }
                 catch (Exception ignored) {
+                    // Ignore.
                 }
             }
         }
@@ -455,19 +456,18 @@ public class PluginServlet extends HttpServlet {
         // Load all jars from lib
         File libDirectory = new File(pluginDirectory, "lib");
         File[] libs = libDirectory.listFiles();
-        for (int i = 0; i < libs.length; i++) {
-            File libFile = libs[i];
-            builder.append(libFile.getAbsolutePath() + ';');
+        for (File libFile : libs) {
+            builder.append(libFile.getAbsolutePath()).append(';');
         }
 
         File messengerRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
         File messengerLib = new File(messengerRoot, "target//lib");
 
-        builder.append(messengerLib.getAbsolutePath() + "//servlet.jar;");
-        builder.append(messengerLib.getAbsolutePath() + "//messenger.jar;");
-        builder.append(messengerLib.getAbsolutePath() + "//jasper-compiler.jar;");
-        builder.append(messengerLib.getAbsolutePath() + "//jasper-runtime.jar;");
-        builder.append(env.getClassesDir().getAbsolutePath() + ";");
+        builder.append(messengerLib.getAbsolutePath()).append("//servlet.jar;");
+        builder.append(messengerLib.getAbsolutePath()).append("//messenger.jar;");
+        builder.append(messengerLib.getAbsolutePath()).append("//jasper-compiler.jar;");
+        builder.append(messengerLib.getAbsolutePath()).append("//jasper-runtime.jar;");
+        builder.append(env.getClassesDir().getAbsolutePath()).append(";");
 
         return builder.toString();
     }

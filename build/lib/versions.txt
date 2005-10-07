@@ -1,25 +1,26 @@
 Name                 |  Version
 ---------------------------------------------
-hsqldb.jar           | 1.8.0.1
-mysql.jar            | 3.1.10
-postgres.jar         | 7.4 version 215
 ant.jar              | Jetty 5.1.2pre0
+ant-contrib.jar      | 1.0b1
+ant-subdirtask.jar   | Revision 1.4 (CVS)
 commons-logging.jar  | Jetty 5.1.2pre0
 commons-el.jar       | Jetty 5.1.2pre0
+dom4j.jar            | 1.6.1
+hsqldb.jar           | 1.8.0.1
 jetty.jar            | Jetty 5.1.2
 jasper-compiler.jar  | Jetty 5.1.2pre0
 jasper-runtime.jar   | Jetty 5.1.2pre0
-servlet.jar          | Jetty 5.1.2pre0
-dom4j.jar            | 1.6.1
-jaxen.jar            | 1.1 beta 4 (from DOM4J 1.5.2)
+jaxen.jar            | 1.1 beta 4 (from DOM4J 1.6.1)
 junit.jar            | 3.8.1
-ant-contrib.jar      | 1.0b1
-ant-subdirtask.jar   | Revision 1.4 (CVS)
-jdic.jar             | 0.8.7 (for windows only)
-xmltask.jar          | 1.10.5
+jdic.jar             | 0.9.1 (for windows only)
 jstl.jar             | Jakarta standard taglib 1.1.2
-standard.jar         | Jakarta standard taglib 1.1.2
-xpp3.jar             | XPP_3 1.1.3.4.M
-whack.jar            | April-26-2005
 jmdns.jar            | 1.0 RC1
+mysql.jar            | 3.1.10
+postgres.jar         | 7.4 version 215
+servlet.jar          | Jetty 5.1.2pre0
 shaj.jar             | 0.5
+sitemesh.jar         | 2.2.1
+standard.jar         | Jakarta standard taglib 1.1.2
+whack.jar            | April-26-2005
+xmltask.jar          | 1.10.5
+xpp3.jar             | XPP_3 1.1.3.4.M

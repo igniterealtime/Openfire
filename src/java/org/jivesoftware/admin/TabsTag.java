@@ -118,12 +118,8 @@ public class TabsTag extends BodyTagSupport {
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
         String beanName = getBean();
         // Get the page data bean from the request:
-        AdminPageBean pageInfo = (AdminPageBean)request.getAttribute(beanName);
         // If the page info bean is not in the request then no tab will be selected - so, it'll fail gracefully
-        String pageID = null;
-        if (pageInfo != null) {
-            pageID = pageInfo.getPageID();
-        }
+        String pageID = (String)request.getAttribute("pageID");
         // Get tabs from the model:
         List tabs = AdminConsole.getModel().selectNodes("//tab");
         if (tabs.size() > 0) {

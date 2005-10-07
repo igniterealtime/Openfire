@@ -1,17 +1,14 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is the proprietary information of Jive Software.
   - Use is subject to license terms.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.muc.spi.*,
-                 java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MUCRoom,
                  java.util.*,
@@ -24,18 +21,13 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.room.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-summary.jsp"));
-    pageinfo.setPageID("muc-room-summary");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_chat_room_settings.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.room.summary.title"/></title>
+        <meta name="pageID" content="muc-room-summary"/>
+        <meta name="helpPage" content="edit_group_chat_room_settings.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
@@ -205,4 +197,5 @@
 
 <%  } %>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

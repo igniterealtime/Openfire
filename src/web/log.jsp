@@ -11,10 +11,8 @@
 
 <%@ page import="java.io.*,
                  java.text.SimpleDateFormat,
-                 org.jivesoftware.messenger.user.User,
                  java.util.Date,
                  java.text.ParseException,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.StringUtils"
@@ -138,6 +136,7 @@
 <html>
 <head>
     <title><%= log %></title>
+    <meta name="decorator" content="false"/>
     <style type="text/css">
     .log TABLE {
         border : 1px #ccc solid;

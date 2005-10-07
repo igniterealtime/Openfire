@@ -16,28 +16,17 @@
                  java.util.Iterator,
                  org.jivesoftware.messenger.*,
                  java.util.*,
-                 java.text.DateFormat,
-                 org.jivesoftware.admin.AdminPageBean,
-                 org.jivesoftware.messenger.net.SocketAcceptThread,
                  org.jivesoftware.messenger.component.ExternalComponentManager,
                  org.jivesoftware.messenger.component.ExternalComponentConfiguration"
     errorPage="error.jsp"
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
-
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("component.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "external-components-settings.jsp"));
-    pageinfo.setPageID("external-components-settings");
-%>
-
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="component.settings.title"/></title>
+        <meta name="pageID" content="external-components-settings"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;
@@ -61,7 +50,7 @@
 
 
     // Update the session kick policy if requested
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (update) {
         // Validate params
         if (componentEnabled) {
@@ -255,7 +244,7 @@
                         <fmt:message key="component.settings.port" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="port"
+                        <input type="text" size="10" maxlength="50" name="port"
                          value="<%= port %>">
                     </td>
                 </tr>
@@ -264,7 +253,7 @@
                         <fmt:message key="component.settings.defaultSecret" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="25" maxlength="70" name="defaultSecret"
+                        <input type="text" size="15" maxlength="70" name="defaultSecret"
                          value="<%= ((defaultSecret != null) ? defaultSecret : "") %>">
                     </td>
                 </tr>
@@ -374,7 +363,7 @@
             <fmt:message key="component.settings.secret" />
         </td>
         <td>
-            <input type="text" size="40" name="secret"value="<%= componentAllowed ?  secret : "" %>"/>
+            <input type="text" size="15" name="secret"value="<%= componentAllowed ?  secret : "" %>"/>
         </td>
     </tr>
     <tr align="center">
@@ -392,9 +381,14 @@
 
 <fieldset>
     <legend><fmt:message key="component.settings.disallowed" /></legend>
-    <p><fmt:message key="component.settings.disallowed.info" /></p>
     <div>
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr><td><p><fmt:message key="component.settings.disallowed.info" /></p></td></tr>
+    </tbody>
+    </table>
+    <br><br>
+    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
             <th width="1%">&nbsp;</th>
@@ -449,4 +443,5 @@
     </div>
 </fieldset>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

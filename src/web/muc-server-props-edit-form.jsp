@@ -1,22 +1,15 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.text.DateFormat,
-                 org.jivesoftware.messenger.XMPPServerInfo,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.util.JiveGlobals,
-                 java.util.*,
-                 org.jivesoftware.util.LocaleUtils"
+                 java.util.*"
     errorPage="error.jsp"
 %>
 
@@ -32,9 +25,8 @@
 %>
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<c:set var="admin" value="${admin.manager}" />
-<% admin.init(pageContext); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -53,34 +45,29 @@
             errors.put("mucname","mucname");
         }
         if (errors.size() == 0) {
-            admin.getMultiUserChatServer().setServiceName(muc);
+            webManager.getMultiUserChatServer().setServiceName(muc);
             response.sendRedirect("muc-server-props-edit-form.jsp?success=true&mucname="+muc);
             return;
         }
     }
     else if(muc == null) {
-        name = admin.getServerInfo().getName() == null ? "" : admin.getServerInfo().getName();
-        muc = admin.getMultiUserChatServer().getServiceName() == null  ? "" : admin.getMultiUserChatServer().getServiceName();
+        name = webManager.getServerInfo().getName() == null ? "" : webManager.getServerInfo().getName();
+        muc = webManager.getMultiUserChatServer().getServiceName() == null  ? "" : webManager.getMultiUserChatServer().getServiceName();
     }
 
-    name = admin.getServerInfo().getName();
+    name = webManager.getServerInfo().getName();
     if (errors.size() == 0 && muc == null) {
-        muc = admin.getMultiUserChatServer().getServiceName();
+        muc = webManager.getMultiUserChatServer().getServiceName();
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("groupchat.service.properties.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-server-props-edit-form.jsp"));
-    pageinfo.setPageID("muc-server-props");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_chat_service_properties.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="groupchat.service.properties.title"/></title>
+        <meta name="pageID" content="muc-server-props"/>
+        <meta name="helpPage" content="edit_group_chat_service_properties.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="groupchat.service.properties.introduction" />
@@ -148,4 +135,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

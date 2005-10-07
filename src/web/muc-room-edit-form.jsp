@@ -79,7 +79,7 @@
     }
 
     // Handle an save
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         // do validation
 
@@ -307,25 +307,18 @@
     roomName = roomName == null ? "" : roomName;
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.room.edit.form.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    if (create) {
-        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?create=true"));
-        pageinfo.setPageID("muc-room-create");
-    }
-    else {
-        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+URLEncoder.encode(roomName, "UTF-8")));
-        pageinfo.setSubPageID("muc-room-edit-form");
-    }
-    pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create);
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="view_group_chat_room_summary.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.room.edit.form.title"/></title>
+        <% if (create) { %>
+        <meta name="pageID" content="muc-room-create"/>
+        <% } else { %>
+        <meta name="subPageID" content="muc-room-edit-form"/>
+        <% } %>
+        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
+        <meta name="helpPage" content="view_group_chat_room_summary.html"/>
+    </head>
+    <body>
 
 <%  if (!errors.isEmpty()) { %>
 
@@ -381,7 +374,7 @@
         </td></tr>
     </tbody>
     </table>
-    </div><br
+    </div><br>
 
 <%  } %>
 
@@ -423,7 +416,8 @@
 <input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">
 
     <table width="100%" border="0"> <tr>
-         <td width="70%"><table width="100%"  border="0">
+         <td width="70%">
+            <table width="100%" border="0">
                 <tbody>
                 <% if (create) { %>
                 <tr>
@@ -488,7 +482,9 @@
                     </td>
                  </tr>
          </tbody>
-         </table></td>
+         </table>
+
+         </td>
         <td width="30%" valign="top" >
         <fieldset>
         <legend><fmt:message key="muc.room.edit.form.room_options" /></legend>
@@ -530,6 +526,7 @@
                 <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" <% if ("true".equals(enableLog)) out.write("checked");%>>
                     <LABEL FOR="enablelogging"><fmt:message key="muc.room.edit.form.log" /></td>
             </tr>
+        </tbody>
         </table>
         </fieldset>
         </tr>
@@ -541,4 +538,5 @@
     </table>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

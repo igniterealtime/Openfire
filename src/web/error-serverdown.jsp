@@ -65,7 +65,9 @@
         </td>
         <td width="99%" id="jive-content">
 
-        <jsp:include page="title.jsp" flush="true" />
+        <div id="jive-title">
+            <%= title %>
+        </div>
 
         <p>
         <%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.is_down" />

@@ -25,11 +25,6 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>
-            <name>bean</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
             <name>role</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -58,11 +53,6 @@
         <attribute>
             <name>headercss</name>
             <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-            <name>bean</name>
-            <required>true</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>

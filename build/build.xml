@@ -149,7 +149,6 @@
         <path refid="compile.dependencies"/>
         <fileset dir="${jar.dest.dir}" includes="messenger.jar"/>
         <fileset dir="${lib.build.dir}" includes="junit.jar"/>
-        <fileset dir="${jar.dest.dir}" includes="messenger.jar"/>
         <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
     </path>
 
@@ -1017,7 +1016,6 @@
                         includeAntRuntime="no"
                         debug="on"
                         source="1.5"
-                        includes="org/jivesoftware/messenger/plugin/**/*.java"
                         >
                         <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                         <classpath>

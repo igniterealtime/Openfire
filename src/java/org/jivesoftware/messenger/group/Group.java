@@ -11,20 +11,22 @@
 
 package org.jivesoftware.messenger.group;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Groups organize users into a single entity for easier management.
@@ -179,6 +181,21 @@ public class Group implements Cacheable {
     public Collection<String> getMembers() {
         // Return a wrapper that will intercept add and remove commands.
         return new MemberCollection(members, false);
+    }
+
+    /**
+     * Returns true if the provided username belongs to a local user that is part of the group.
+     *
+     * @param user the JID address of the user to check.
+     * @return true if the provided username belongs to a user of the group.
+     */
+    public boolean isUser(JID user) {
+        String serverName = XMPPServer.getInstance().getServerInfo().getName();
+        if  (user != null && serverName.equals(user.getDomain())) {
+            return isUser(user.getNode());
+        } else {
+            return false;
+        }
     }
 
     /**

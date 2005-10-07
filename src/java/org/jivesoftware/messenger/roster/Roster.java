@@ -97,7 +97,7 @@ public class Roster implements Cacheable {
             // Check if the item (i.e. contact) belongs to a shared group of the user. Add the
             // shared group (if any) to this item
             for (Group group : sharedGroups) {
-                if (group.isUser(item.getJid().getNode())) {
+                if (group.isUser(item.getJid())) {
                     // TODO Group name conflicts are not being considered (do we need this?)
                     item.addSharedGroup(group);
                 }
@@ -115,7 +115,7 @@ public class Roster implements Cacheable {
                         RosterItem.RECV_NONE, nickname , null);
                 // Add the shared groups to the new roster item
                 for (Group group : sharedUsers.get(jid)) {
-                    if (group.isUser(jid.getNode())) {
+                    if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
                     }
@@ -134,7 +134,7 @@ public class Roster implements Cacheable {
                     // the associated shared groups
                     boolean belongsToGroup = false;
                     for (Group group : sharedUsers.get(jid)) {
-                        if (group.isUser(jid.getNode())) {
+                        if (group.isUser(jid)) {
                             belongsToGroup = true;
                         }
                     }

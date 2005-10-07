@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: MultiUserChatServerImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -214,6 +214,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private boolean process(IQ iq) {
         Element childElement = iq.getChildElement();
         String namespace = null;
+        // Ignore IQs of type ERROR
+        if (IQ.Type.error == iq.getType()) {
+            return false;
+        }
         if (childElement != null) {
             namespace = childElement.getNamespaceURI();
         }

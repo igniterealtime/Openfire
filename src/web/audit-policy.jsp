@@ -330,23 +330,14 @@
                         <fmt:message key="audit.policy.ignore" />
                     </td>
                     <td width="99%">
-                        <table>
-                            <td>
-                            <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
-                            <%  if (errors.get("ignore") != null) { %>
+                        <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
+                        <%  if (errors.get("ignore") != null) { %>
 
-                                <span class="jive-error-text">
-                                <fmt:message key="audit.policy.validignore" />
-                                </span>
+                            <span class="jive-error-text">
+                            <fmt:message key="audit.policy.validignore" />
+                            </span>
 
-                            <%  } %>
-                            </td>
-                             <td nowrap valign="top">
-                                <a href="#" onclick="openWin(document.f.ignore);return false;"
-                                 title="<fmt:message key="user.browser.browse_users_desc" />"
-                                 ><img src="images/user.gif" border="0" alt=""/> <fmt:message key="user.browser.browse_users" /></a>
-                            </td>
-                        </table>
+                        <%  } %>
                     </td>
                 </tr>
                 </table>

@@ -1,5 +1,4 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
@@ -11,17 +10,15 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer,
-                 java.util.Iterator"
+                 org.jivesoftware.messenger.muc.MultiUserChatServer"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% admin.init(request, response, session, application, out ); %>
+
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean kickEnabled = ParamUtils.getBooleanParameter(request,"kickEnabled");
@@ -34,9 +31,9 @@
     boolean logSettingSuccess = request.getParameter("logSettingSuccess") != null;
 
 	// Get muc server
-    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
+    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
 
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     // Handle an update of the kicking task settings
     if (kickSettings) {
         if (!kickEnabled) {
@@ -106,18 +103,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.tasks.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-tasks.jsp"));
-    pageinfo.setPageID("muc-tasks");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_idle_user_settings.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.tasks.title"/></title>
+        <meta name="pageID" content="muc-tasks"/>
+        <meta name="helpPage" content="edit_idle_user_settings.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="muc.tasks.info" />
@@ -243,4 +235,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

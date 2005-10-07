@@ -6,7 +6,6 @@
 --%>
 
 <%@ page import="java.io.*,
-                 org.jivesoftware.admin.AdminPageBean,
 				 org.jivesoftware.messenger.container.PluginManager,
 				 org.jivesoftware.util.*,
                  org.jivesoftware.messenger.container.Plugin,
@@ -173,19 +172,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%
-    String title = LocaleUtils.getLocalizedString("plugin.admin.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "plugin-admin.jsp"));
-    pageinfo.setPageID("plugin-settings");    
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_system_plugins.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="plugin.admin.title"/></title>
+        <meta name="pageID" content="plugin-settings"/>
+        <meta name="helpPage" content="manage_system_plugins.html"/>
+    </head>
+    <body>
 
 <% if ("true".equals(request.getParameter("deletesuccess"))) { %>
 
@@ -332,4 +325,5 @@
 </table>
 </div>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

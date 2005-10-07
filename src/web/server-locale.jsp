@@ -59,8 +59,7 @@
         <meta name="pageID" content="server-locale"/>
         <meta name="helpPage" content="edit_server_properties.html"/>
     </head>
-
-<body>
+    <body>
 
 <p>
 <fmt:message key="locale.title.info" />

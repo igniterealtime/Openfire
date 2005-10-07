@@ -10,16 +10,14 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.muc.MultiUserChatServer"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% admin.init(request, response, session, application, out ); %>
-
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String userJID = ParamUtils.getParameter(request,"userJID");
@@ -27,7 +25,7 @@
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
 
 	// Get muc server
-    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
+    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
 
     // Handle a save
     Map errors = new HashMap();
@@ -52,18 +50,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("groupchat.admins.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-sysadmins.jsp"));
-    pageinfo.setPageID("muc-sysadmin");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_chat_service_administrators.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="groupchat.admins.title"/></title>
+        <meta name="pageID" content="muc-sysadmin"/>
+        <meta name="helpPage" content="edit_group_chat_service_administrators.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="groupchat.admins.introduction" />
@@ -163,4 +156,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

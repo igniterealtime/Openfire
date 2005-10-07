@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -11,7 +10,6 @@
 
 <%@ page import="org.jivesoftware.messenger.handler.IQRegisterHandler,
                  org.jivesoftware.messenger.handler.IQAuthHandler,
-                 org.jivesoftware.admin.AdminPageBean,
                  java.util.*,
                  org.jivesoftware.messenger.ClientSession,
                  org.jivesoftware.util.*"
@@ -21,22 +19,14 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("reg.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "reg-settings.jsp"));
-    pageinfo.setPageID("server-reg-and-login");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_registration_and_login_settings.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="reg.settings.title"/></title>
+        <meta name="pageID" content="server-reg-and-login"/>
+        <meta name="helpPage" content="manage_registration_and_login_settings.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -183,7 +173,7 @@
     <tbody>
         <tr>
             <td width="1%">
-            <input type="radio" name="anonLogin" value="true" id="rb03"
+            <input type="radio" name="anonLogin" value="true" id="rb05"
              <%= ((anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
@@ -192,7 +182,7 @@
         </tr>
         <tr>
             <td width="1%">
-            <input type="radio" name="anonLogin" value="false" id="rb04"
+            <input type="radio" name="anonLogin" value="false" id="rb06"
              <%= ((!anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
@@ -230,4 +220,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

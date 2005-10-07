@@ -1,20 +1,17 @@
 <%--
-  -	$RCSfile$
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.io.File,
-                 java.util.*,
+<%@ page import="java.util.*,
                  org.jivesoftware.util.*,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.admin.AdminPageBean"
+                 org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -70,7 +67,7 @@
         }
     }
 
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (propName == null || "".equals(propName.trim())) {
             errors.put("propName","");
@@ -102,18 +99,13 @@
     }
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.properties.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-properties.jsp"));
-    pageinfo.setPageID("server-props");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_system_properties.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.properties.title"/></title>
+        <meta name="pageID" content="server-props"/>
+        <meta name="helpPage" content="manage_system_properties.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="server.properties.info" />
@@ -368,4 +360,5 @@ function dodelete(propName) {
 <br><br><br><br><br><br>
 <br><br><br><br><br><br>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

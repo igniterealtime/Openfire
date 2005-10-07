@@ -18,28 +18,23 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("private.data.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "private-data-settings.jsp"));
-    pageinfo.setPageID("server-data-settings");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="set_private_data_storage_policy.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="private.data.settings.title"/></title>
+        <meta name="pageID" content="server-data-settings"/>
+        <meta name="helpPage" content="set_private_data_storage_policy.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean privateEnabled = ParamUtils.getBooleanParameter(request,"privateEnabled");
 
     // Get an audit manager:
-    PrivateStorage privateStorage = admin.getPrivateStore();
+    PrivateStorage privateStorage = webManager.getPrivateStore();
 
     Map errors = new HashMap();
     if (update) {
@@ -111,4 +106,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

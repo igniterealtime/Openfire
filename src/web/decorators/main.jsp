@@ -21,8 +21,8 @@
 
 <jsp:useBean id="info" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out); %>
 
 <decorator:usePage id="decoratedPage" />
 
@@ -34,15 +34,6 @@
     request.setAttribute("pageID", decoratedPage.getProperty("meta.pageID"));
     request.setAttribute("subPageID", decoratedPage.getProperty("meta.subPageID"));
     request.setAttribute("extraParams", decoratedPage.getProperty("meta.extraParams"));
-%>
-
-<%
-    // If the page has instructed that no decorator should be applied, include the original
-    // page content and return.
-    if("false".equals(decoratedPage.getProperty("meta.decorator"))) {
-        decoratedPage.writePage(out);
-        return;
-    }
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -104,7 +95,7 @@
                         </div>
                     </td>
                     <td width="1%" id="jive-logout" nowrap>
-                        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(admin.getUser().getUsername()) %>]</a>
+                        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(webManager.getUser().getUsername()) %>]</a>
                         &nbsp;&nbsp;&nbsp;
                     </td>
                 </tr>

@@ -1,18 +1,11 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.XMPPServer,
 				 org.jivesoftware.messenger.plugin.SearchPlugin,
                  org.jivesoftware.util.*"
-    errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -47,16 +40,12 @@
     searchEnabled = plugin.getServiceEnabled();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  
-    String title = "Search Service Properties";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "search-props-edit-form.jsp"));
-    pageinfo.setPageID("search-props-edit-form");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>Search Service Properties</title>
+        <meta name="pageID" content="search-props-edit-form"/>
+    </head>
+    <body>
 
 <p>
 Use the form below to edit search service settings, these settings do not affect the user search in the admin console.<br>
@@ -155,4 +144,5 @@ Use the form below to edit search service settings, these settings do not affect
 <input type="submit" value="Save Properties">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

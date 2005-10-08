@@ -17,7 +17,6 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<% webManager.init(request, response, session, application, out ); %>
 
 <%
 	String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
@@ -114,56 +113,6 @@
                finally {
                    if (in != null) {
                        try { in.close(); } catch (Exception e) { }
-                   }
-               }
-           }
-       }
-       return;
-    }
-%>
-<% if (showIcon) {
-       String pluginName = ParamUtils.getParameter(request, "plugin");
-       Plugin plugin = pluginManager.getPlugin(pluginName);
-       if (plugin != null) {
-       // Try looking for PNG file first then default to GIF.
-           File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.png");
-           boolean isPng = true;
-           if (!icon.exists()) {
-               icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
-               isPng = false;
-           }
-           if (icon.exists()) {
-               // Clear any empty line added by the JSP declaration. This is required to show
-               // the image in resin!!!!!
-               response.reset();
-               if (isPng) {
-                   response.setContentType("image/png");
-               }
-               else {
-                   response.setContentType("image/gif");
-               }
-               InputStream in = null;
-               OutputStream ost = null;
-               try {
-                   in = new FileInputStream(icon);
-                   ost = response.getOutputStream();
-
-                   byte[] buf = new byte[1024];
-                   int len;
-                   while ((len = in.read(buf)) >= 0) {
-                      ost.write(buf,0,len);
-                   }
-                   ost.flush();
-               }
-               catch (IOException ioe) {
-
-               }
-               finally {
-                   if (in != null) {
-                       try { in.close(); } catch (Exception e) { }
-                   }
-                   if (ost != null) {
-                       try { ost.close(); } catch (Exception e) { }
                    }
                }
            }
@@ -274,7 +223,7 @@
 	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
                 <% if (icon.exists()) { %>
-                <img src="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true" width="16" height="16" alt="Plugin">
+                <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
                 <% } else { %>
 	            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
                 <% } %>
@@ -289,11 +238,11 @@
                 </td>
             <td nowrap>
                 <% if (readmeExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
                 <% } else { %> &nbsp; <% } %>
                 <% if (changelogExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
                 <% } else { %> &nbsp; <% } %>
             </td>

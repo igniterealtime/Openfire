@@ -136,7 +136,7 @@
 <html>
 <head>
     <title><%= log %></title>
-    <meta name="decorator" content="false"/>
+    <meta name="decorator" content="none"/>
     <style type="text/css">
     .log TABLE {
         border : 1px #ccc solid;

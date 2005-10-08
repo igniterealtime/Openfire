@@ -3,20 +3,25 @@
 				 org.jivesoftware.util.*,
 				 org.jivesoftware.messenger.PresenceManager,
                  org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.admin.*,
+                 org.jivesoftware.messenger.XMPPServer,
                  org.xmpp.packet.Presence"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
-<%  webManager.init(request, response, session, application, out);
+<html>
+    <head>
+        <title>User Search</title>
+        <meta name="pageID" content="advance-user-search"/>
+    </head>
+    <body>
 
+<%
     String criteria = ParamUtils.getParameter(request, "criteria");
     boolean moreOptions = ParamUtils.getBooleanParameter(request, "moreOptions", false);
-    
-    UserManager userManager = webManager.getUserManager();
+
+    UserManager userManager = UserManager.getInstance();
     Set<String> searchFields = userManager.getSearchFields();
     List<String> selectedFields = new ArrayList<String>();
 
@@ -24,36 +29,22 @@
 
 	if (criteria != null) {
 		for (String searchField : searchFields) {
-			
+
 			boolean searchValue = ParamUtils.getBooleanParameter(request, searchField, false);
 			if (!moreOptions || searchValue) {
 				selectedFields.add(searchField);
 				Collection<User> foundUsers = userManager.findUsers(new HashSet<String>(Arrays.asList(searchField)), criteria);
-	    		
+
 				//filter out duplicate users
 	            for (User user : foundUsers) {
 	                if (!users.contains(user)) {
 	                    users.add(user);
 	                }
 	            }
-	    		}
+            }
 		}
 	}
 %>
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-<%
-    String title = "Advance User Search";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "advance-user-search.jsp"));
-    pageinfo.setPageID("advance-user-search");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="advanced_searching.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
-
 
 <form name="f" action="advance-user-search.jsp">
   <input type="hidden" name="search" value="true"/>
@@ -97,6 +88,7 @@
 	     	</tr>
 	    <% } %>
     </table>
+    </div>
   </fieldset>
 </form>	
 
@@ -115,7 +107,7 @@ Users Found: <%=users.size() %>
         <th nowrap><fmt:message key="user.create.name" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
         <th nowrap><fmt:message key="user.summary.edit" /></th>
-        <th nowrap><fmt:message key="user.summary.delete" /></th>
+        <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
 <tbody>
@@ -128,7 +120,7 @@ Users Found: <%=users.size() %>
 	<% 
 	} else {
 	    int i = 0;
-	    PresenceManager presenceManager = webManager.getPresenceManager();
+	    PresenceManager presenceManager = XMPPServer.getInstance().getPresenceManager();
 	    
 	    for (User user : users) {
 	        i++;
@@ -174,12 +166,12 @@ Users Found: <%=users.size() %>
 	        </td>
 	        <td width="1%" align="center">
 	            <a href="../../user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-	             title="<fmt:message key="user.summary.click_edit" />"
+	             title="<fmt:message key="global.click_edit" />"
 	             ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
 	        </td>
 	        <td width="1%" align="center" style="border-right:1px #ccc solid;">
 	            <a href="../../user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
-	             title="<fmt:message key="user.summary.click_delete" />"
+	             title="<fmt:message key="global.click_delete" />"
 	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
 	        </td>
 	    </tr>
@@ -198,4 +190,5 @@ Users Found: <%=users.size() %>
 document.f.criteria.focus();
 </script>
 
-<jsp:include page="bottom.jsp" flush="true"/>
+</body>
+</html>

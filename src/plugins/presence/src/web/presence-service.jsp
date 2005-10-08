@@ -1,5 +1,4 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.util.*,
                  org.jivesoftware.messenger.plugin.PresencePlugin"
@@ -9,41 +8,29 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
-
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
 	boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
 
-	PresencePlugin plugin = (PresencePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("presence");
+	PresencePlugin plugin = (PresencePlugin)XMPPServer.getInstance().getPluginManager().getPlugin("presence");
 
     // Handle a save
-    Map errors = new HashMap();
     if (save) {
-        if (errors.size() == 0) {
-        	plugin.setPresencePublic(presencePublic);
-            response.sendRedirect("presence-service.jsp?success=true");
-            return;
-        }
+        plugin.setPresencePublic(presencePublic);
+        response.sendRedirect("presence-service.jsp?success=true");
+        return;
     }
 
     presencePublic = plugin.isPresencePublic();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%
-    String title = "Presence Service Properties";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "presence-service.jsp"));
-    pageinfo.setPageID("presence-service");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>Presence Service Properties</title>
+        <meta name="pageID" content="presence-service"/>
+    </head>
+    <body>
 
 <p>
 Use the form below to configure user presence visibility. By default, user
@@ -104,4 +91,5 @@ presence should only be visible to those users that are authorized.<br>
 <input type="submit" value="Save Properties">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

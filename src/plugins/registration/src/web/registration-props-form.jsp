@@ -8,26 +8,10 @@
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
 
-<script lang="JavaScript" type="text/javascript">
-function addIMContact() {
-	document.regform.addIM.value = 'true';
-	document.regform.submit();
-}
-
-function addEmailContact() {
-	document.regform.addEmail.value = 'true';
-	document.regform.submit();
-}
-</script>
-
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<c:set var="admin" value="${admin.manager}" />
 <%
-	admin.init(request, response, session, application, out); 
-
 	boolean save = request.getParameter("save") != null;
 	boolean saveWelcome = request.getParameter("savemessage") != null;
 	boolean saveGroup = request.getParameter("savegroup") != null;
@@ -59,7 +43,7 @@ function addEmailContact() {
         	contactIM = contactIM.trim().toLowerCase();
         
 			try  {
-				admin.getUserManager().getUser(contactIM);
+				XMPPServer.getInstance().getUserManager().getUser(contactIM);
 				plugin.addIMContact(contactIM);
 				response.sendRedirect("registration-props-form.jsp?addSuccess=true");
 				return;
@@ -110,7 +94,7 @@ function addEmailContact() {
 			} 
 		    
 			try {
-			    admin.getGroupManager().getGroup(group);
+			    GroupManager.getInstance().getGroup(group);
 			}
 			catch (Exception e) {
 				errors.put("groupNotFound", "groupNotFound");
@@ -140,7 +124,7 @@ function addEmailContact() {
 		} 
 	    
 		try {
-		    admin.getGroupManager().getGroup(group);
+		    GroupManager.getInstance().getGroup(group);
 		}
 		catch (Exception e) {
 			errors.put("groupNotFound", "groupNotFound");
@@ -167,16 +151,24 @@ function addEmailContact() {
 	group = plugin.getGroup();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%
-    String title = "User Registration";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "registration-props-form.jsp"));
-    pageinfo.setPageID("registration-props-form");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>User Registration</title>
+        <meta name="pageID" content="registration-props-form"/>
+    </head>
+    <body>
+
+<script language="JavaScript" type="text/javascript">
+function addIMContact() {
+	document.regform.addIM.value = 'true';
+	document.regform.submit();
+}
+
+function addEmailContact() {
+	document.regform.addEmail.value = 'true';
+	document.regform.submit();
+}
+</script>
 
 <p>Use the form below to edit user registration settings.</p>
 
@@ -495,4 +487,5 @@ function addEmailContact() {
 </fieldset>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

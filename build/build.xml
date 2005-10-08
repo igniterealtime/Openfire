@@ -356,7 +356,7 @@
         <mkdir dir="${war.dest.dir}/build"/>
         <!-- Make a new web.xml file in the build dir -->
         <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}"/>
-        <!-- TODO: copy in decorators.xml -->
+        <!-- TODO: copy in decorators.xml and sitemesh.xml -->
         <!-- Make the war -->
         <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
             webxml="${war.dest.dir}/build/web.xml">
@@ -461,9 +461,13 @@
             </filterset>
         </copy>
 
-        <!-- Copy over decorators file. -->
+        <!-- Copy over Sitemesh files. -->
         <copy file="${web.dir}/WEB-INF/decorators.xml"
             toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
+            overwrite="true">
+        </copy>
+        <copy file="${web.dir}/WEB-INF/sitemesh.xml"
+            toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
             overwrite="true">
         </copy>
 

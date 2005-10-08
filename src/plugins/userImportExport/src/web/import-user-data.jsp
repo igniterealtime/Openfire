@@ -3,19 +3,16 @@
                  org.dom4j.DocumentException,
                  org.apache.commons.fileupload.DiskFileUpload,
                  org.apache.commons.fileupload.FileItem,
-                 org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.messenger.plugin.ImportExportPlugin,
+                 org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.util.ParamUtils"
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
-<% 
-    admin.init(request, response, session, application, out); 
-
+<%
     boolean importUsers = request.getParameter("importUsers") != null;
     boolean success = request.getParameter("success") != null;
    
-    ImportExportPlugin plugin = (ImportExportPlugin) admin.getXMPPServer().getPluginManager().getPlugin("userimportexport");
+    ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
     List<String> duplicateUsers = new ArrayList<String>();
    
     Map<String, String> errors = new HashMap<String, String>();
@@ -60,16 +57,12 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Import User Data";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "import-user-data.jsp"));
-    pageinfo.setPageID("import-export-selection");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>Import User Data</title>
+        <meta name="pageID" content="import-export-selection"/>
+    </head>
+    <body>
 
 <% if (errors.size() > 0) { %>
 
@@ -124,30 +117,35 @@
 
 <% } %>
 
+Use the form below to import a user data XML file.
+
+
 <form action="import-user-data.jsp?importUsers" method="post" enctype="multipart/form-data">
 
 <fieldset>
     <legend>Import</legend>
     <div>
     <p>
-    Use the Browse button to select the file that conatians the Jive Messenger user data to be imported, then click on the Import button.
-    </p>
-    <input type="file" name="thefile"><input type="submit" value="Import">
-   
+    Choose a file to import:</p>
+    <input type="file" name="thefile">
+
     <br><br><br>
    
     <p>
     <b>Optional</b> - Use the field below to replace the domain name of user roster entries with the current hostname.
-    See the migration section of the <a href="../../plugin-admin.jsp?plugin=userimportexport&showReadme=true">readme</a> for details.
+    See the migration section of the <a href="../../plugin-admin.jsp?plugin=userimportexport&showReadme=true&decorator=none">readme</a> for details.
     </p>
-    Existing Domain:<input type="text" size="20" maxlength="150" name="previousDomain" value=""/>
+    Replace Domain: <input type="text" size="20" maxlength="150" name="previousDomain" value=""/>
    
     </div>
 </fieldset>
+<br><br>
+<input type="submit" value="Import">
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>
 
 <%! 
 public boolean isEmpty(String s) {

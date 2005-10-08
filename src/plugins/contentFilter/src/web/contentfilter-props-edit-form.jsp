@@ -1,18 +1,13 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.messenger.user.*,
 				 org.jivesoftware.messenger.plugin.ContentFilterPlugin,                 
                  org.jivesoftware.util.*"
-    errorPage="error.jsp"
 %>
+<%@ page import="java.util.regex.Pattern"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<c:set var="admin" value="${admin.manager}" />
-<% admin.init(request, response, session, application, out ); %>
 
 <%
     boolean save = request.getParameter("save") != null;
@@ -38,18 +33,19 @@
 	ContentFilterPlugin plugin = (ContentFilterPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("contentfilter");
 
     //input validation
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         
         if (patterns == null) {
     	    errors.put("missingPatterns", "missingPatterns");    	    
-    	} else {
+    	}
+        else {
     	   
     		String[] data = patterns.split(",");
     		try {
-      			for (int i = 0; i < data.length; i++) {
-        			java.util.regex.Pattern.compile(data[i]);
-    			}
+                for (String aData : data) {
+                    Pattern.compile(aData);
+                }
     		} catch (java.util.regex.PatternSyntaxException e) {
     			errors.put("patternSyntaxException", e.getMessage());
     		}
@@ -110,16 +106,12 @@
 
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%
-    String title = "Content Filter";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "contentfilter-props-edit-form.jsp"));
-    pageinfo.setPageID("contentfilter-props-edit-form");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>Content Filter</title>
+        <meta name="pageID" content="contentfilter-props-edit-form"/>
+    </head>
+    <body>
 
 <p>
 Use the form below to edit content filter settings.<br>
@@ -218,7 +210,7 @@ Use the form below to edit content filter settings.<br>
     <tbody>
     	<tr>
             <td width="1%">
-            <input type="radio" name="maskenabled" value="false" id="not01"
+            <input type="radio" name="maskenabled" value="false" id="not03"
              <%= ((maskEnabled) ? "" : "checked") %>>
             </td>
             <td width="99%">
@@ -227,7 +219,7 @@ Use the form below to edit content filter settings.<br>
         </tr>
         <tr>
             <td width="1%">
-            <input type="radio" name="maskenabled" value="true" id="not02"
+            <input type="radio" name="maskenabled" value="true" id="not04"
              <%= ((maskEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
@@ -266,7 +258,7 @@ Use the form below to edit content filter settings.<br>
     <tbody>
     	<tr>
             <td width="1%">
-            <input type="radio" name="rejectionnotificationenabled" value="false" id="not01"
+            <input type="radio" name="rejectionnotificationenabled" value="false" id="not05"
              <%= ((rejectionNotificationEnabled) ? "" : "checked") %>>
             </td>
             <td width="99%">
@@ -275,7 +267,7 @@ Use the form below to edit content filter settings.<br>
         </tr>
         <tr>
             <td width="1%">
-            <input type="radio" name="rejectionnotificationenabled" value="true" id="not02"
+            <input type="radio" name="rejectionnotificationenabled" value="true" id="not06"
              <%= ((rejectionNotificationEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
@@ -313,7 +305,7 @@ Use the form below to edit content filter settings.<br>
     <tbody>
     	<tr>
             <td width="1%">
-            <input type="radio" name="notificationenabled" value="false" id="not01"
+            <input type="radio" name="notificationenabled" value="false" id="not07"
              <%= ((notificationEnabled) ? "" : "checked") %>>
             </td>
             <td width="99%">
@@ -322,7 +314,7 @@ Use the form below to edit content filter settings.<br>
         </tr>
         <tr>
             <td width="1%">
-            <input type="radio" name="notificationenabled" value="true" id="not02"
+            <input type="radio" name="notificationenabled" value="true" id="not08"
              <%= ((notificationEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
@@ -332,7 +324,7 @@ Use the form below to edit content filter settings.<br>
         <tr>
         	<td>&nbsp;</td>
 	        <td align="left">Username:&nbsp;
-	        <input type="text" size="100" maxlength="100" name="contactname" 
+	        <input type="text" size="20" maxlength="100" name="contactname" 
 	        	value="<%= (contactName != null ? contactName : "") %>">@<%= XMPPServer.getInstance().getServerInfo().getName() %>
 	        <% if (errors.containsKey("missingContactName")) { %>
 	            <span class="jive-error-text">
@@ -355,4 +347,5 @@ Use the form below to edit content filter settings.<br>
 <input type="submit" value="Save Properties">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

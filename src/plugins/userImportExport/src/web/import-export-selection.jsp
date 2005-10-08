@@ -1,20 +1,18 @@
-<%@ page import="org.jivesoftware.admin.AdminPageBean,
-                 org.jivesoftware.messenger.plugin.ImportExportPlugin,
+<%@ page import="org.jivesoftware.messenger.plugin.ImportExportPlugin,
                  org.jivesoftware.messenger.XMPPServer"
 %>
 
+<html>
+    <head>
+        <title>Import/Export Selection</title>
+        <meta name="pageID" content="import-export-selection"/>
+    </head>
+    <body>
+
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Import/Export Selection";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "import-export-selection.jsp"));
-    pageinfo.setPageID("import-export-selection");
-    
+<%
     ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
 %>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
 
 <p>
 
@@ -34,4 +32,5 @@ data from your Jive Messenger installation.
 
 <% } %>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

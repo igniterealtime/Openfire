@@ -1,6 +1,5 @@
 <%@ page import="java.io.IOException,
                  java.util.*,				 
-                 org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.messenger.plugin.ImportExportPlugin,
                  org.jivesoftware.messenger.XMPPServer,
                  org.jivesoftware.util.ParamUtils"
@@ -9,15 +8,13 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% 
-    admin.init(request, response, session, application, out);
-
+<%
     boolean exportUsers = request.getParameter("exportUsers") != null;
     boolean success = request.getParameter("success") != null;
     boolean exportToFile = ParamUtils.getBooleanParameter(request, "exporttofile", true);
     
-    ImportExportPlugin plugin = (ImportExportPlugin) admin.getXMPPServer().getPluginManager().getPlugin("userimportexport");
+    ImportExportPlugin plugin = (ImportExportPlugin)XMPPServer.getInstance().getPluginManager(
+            ).getPlugin("userimportexport");
 
     String exportText = "";
     
@@ -43,16 +40,12 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = "Export User Data";
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb("Main", "../../index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "export-user-data.jsp"));
-    pageinfo.setPageID("import-export-selection");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title>Export User Data</title>
+        <meta name="pageID" content="import-export-selection"/>
+    </head>
+    <body>
 
 <% if (errors.size() > 0) { %>
 
@@ -127,4 +120,5 @@
 <input type="submit" value="Export">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+</body>
+</html>

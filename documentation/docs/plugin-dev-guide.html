@@ -213,6 +213,53 @@ that plugins should integrate seamlessly:
             plugins are installed and provide plugin management.
 </ul>
 
+<h3>Writing Pages for the Admin Console</h3>
+
+<p>
+Jive Messenger uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
+framework to decorate pages in the admin console. A globally-defined decorator is applied to
+each page in order to render the final output, as in the following diagram:</p>
+<br>
+<div align="center"><img src="images/sitemesh.png" width="484" height="372" alt="Sitemesh"></div>
+<br><br>
+<p>
+Creating pages that work with Sitemesh is easy. Simply create valid HTML pages and then
+use meta tags to send instructions to Sitemesh. When rendering the output, Sitemesh will
+use the instructions you provide to render the decorator along with any content in the
+body of your HTML page. The following meta tags can be used:
+<ul>
+    <li><b>pageID</b> -- the ID of the page, which must match an entry in the admin console
+    XML described above. Either a pageID or subPageID <b>must</b> be specified.</li>
+    <li><b>subPageID</b> -- the ID of the sub-page, which must match an entry in the
+    admin console XML described above. Sub-pages are used for administrative actions
+    related to a parent page ID. For example, editing or deleting a particular group.
+    Either a pageID or subPageID <b>must</b> be specified.</li>
+    <li><b>extraParams</b> (Optional) -- extra parameters that should be passed in to the page.
+    For example, on a page to delete a group it might be the ID of the group. Parameters
+    must be URL encoded.</li>
+    <li><b>decorator</b> (Optional) -- overrides the Sitemesh decorator to use for the page.
+    A decorator named <tt>none</tt> is available that will simply render the page
+    without a decorator.</li>
+</ul>
+
+The following HTML snippet demonstrates a valid page:
+</p>
+
+<fieldset>
+    <legend>Sample HTML</legend>
+<pre>
+   &lt;html&gt;
+   &lt;head&gt;
+       &lt;title&gt;My Plugin Page&lt;/title&gt;
+       &lt;meta name="pageID" content="myPluginPage"/&gt;
+   &lt;/head&gt;
+   &lt;body&gt;
+        Body here!
+   &lt;/body&gt;
+   &lt;/html&gt;
+</pre>
+</fieldset>
+
 <h2>Using the Jive Messenger Build Script</h2>
 
 <p>

@@ -8,7 +8,7 @@
 	<author>Ryan Graham</author>
 	<version>2.0</version>
 	<date>09/01/2005</date>
-	<minServerVersion>2.1.5</minServerVersion>
+	<minServerVersion>2.3.0</minServerVersion>
 
 	<adminconsole>
 		<tab id="tab-users">

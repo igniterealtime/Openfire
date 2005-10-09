@@ -10,7 +10,7 @@
     <author>Conor Hayes</author>
     <version>1.0</version>
     <date>07/02/2005</date>
-    <minServerVersion>2.2.0</minServerVersion>
+    <minServerVersion>2.3.0</minServerVersion>
     
     <!-- UI extension -->
     <adminconsole>		

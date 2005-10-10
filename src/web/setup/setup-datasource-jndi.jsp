@@ -52,10 +52,9 @@
                     "org.jivesoftware.database.JNDIDataSourceProvider");
             // Save the name (must do this *first* before initializing
             // the JNDIDataSourceProvider
-            JiveGlobals.setProperty("database.JNDIProvider.name",lookupName);
+            JiveGlobals.setXMLProperty("database.JNDIProvider.name",lookupName);
             // Use the Jive default connection provider
             JNDIDataSourceProvider conProvider = new JNDIDataSourceProvider();
-            conProvider.setProperty("name", lookupName);
             // Set the provider in the connection manager
             DbConnectionManager.setConnectionProvider(conProvider);
             // Try to establish a connection to the datasource

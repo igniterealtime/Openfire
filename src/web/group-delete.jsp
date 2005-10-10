@@ -50,7 +50,7 @@
     <head>
         <title><fmt:message key="group.delete.title"/></title>
         <meta name="subPageID" content="group-delete"/>
-        <meta name="extraParams" content="<%= URLEncoder.encode(groupName, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
         <meta name="helpPage" content="delete_a_group.html"/>
     </head>
     <body>

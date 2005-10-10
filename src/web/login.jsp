@@ -5,16 +5,14 @@
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.Log,
                  org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -55,6 +53,10 @@
 
 <%	// get parameters
     String username = ParamUtils.getParameter(request,"username");
+    // Escape HTML tags in username to prevent cross-site scripting attacks. This
+    // is necessary because we display the username in the page below.
+    username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
+
     String password = ParamUtils.getParameter(request,"password");
     String url = ParamUtils.getParameter(request,"url");
 
@@ -242,7 +244,7 @@
                 </td>
             </tr>
             <tr class="jive-login-label">
-                <td colspan="3"><img src="images/blank.gif" width="1" height="4" border="0"></td>
+                <td colspan="3"><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
             </tr>
             <tr class="jive-footer">
                 <td colspan="3" nowrap>

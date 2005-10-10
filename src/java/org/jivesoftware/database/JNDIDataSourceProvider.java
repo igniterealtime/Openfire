@@ -1,9 +1,8 @@
 /**
- * $RCSfile$
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -61,33 +60,10 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
     };
 
     /**
-     * Initialize.
+     * Constructs a new JNDI pool.
      */
     public JNDIDataSourceProvider() {
         dataSourceName = JiveGlobals.getXMLProperty("database.JNDIProvider.name");
-    }
-
-    public String getName() {
-        return "JNDI DataSource Connection Provider";
-    }
-
-    public String getDescription() {
-        return "Connection Provider for Jive to lookup pooled "
-                + "DataSource from JNDI location. Requires 'name' "
-                + "property with JNDI location. This can be set in "
-                + "the properties file as 'JNDIDataSource.name'";
-    }
-
-    public String getAuthor() {
-        return "Joe Walnes - joe@truemesh.com";
-    }
-
-    public int getMajorVersion() {
-        return 2;
-    }
-
-    public int getMinorVersion() {
-        return 1;
     }
 
     public boolean isPooled() {
@@ -96,19 +72,18 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
 
     public void start() {
         if (dataSourceName == null || dataSourceName.equals("")) {
-            error("No name specified for DataSource. JNDI lookup will fail", null);
+            Log.error("No name specified for DataSource. JNDI lookup will fail", null);
             return;
         }
         try {
             Properties contextProperties = new Properties();
-            for (int i = 0; i < jndiPropertyKeys.length; i++) {
-                String k = jndiPropertyKeys[i];
-                String v = JiveGlobals.getXMLProperty(k);
-                if (v != null) {
-                    contextProperties.setProperty(k, v);
+            for (String key: jndiPropertyKeys) {
+                String value = JiveGlobals.getXMLProperty(key);
+                if (value != null) {
+                    contextProperties.setProperty(key, value);
                 }
             }
-            Context context = null;
+            Context context;
             if (contextProperties.size() > 0) {
                 context = new InitialContext(contextProperties);
             }
@@ -118,7 +93,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
             dataSource = (DataSource)context.lookup(dataSourceName);
         }
         catch (Exception e) {
-            error("Could not lookup DataSource at '" + dataSourceName + "'", e);
+            Log.error("Could not lookup DataSource at '" + dataSourceName + "'", e);
         }
     }
 
@@ -133,56 +108,15 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
 
     public Connection getConnection() {
         if (dataSource == null) {
-            error("DataSource has not been initialized.", null);
+            Log.error("DataSource has not been initialized.", null);
             return null;
         }
         try {
             return dataSource.getConnection();
         }
         catch (SQLException e) {
-            error("Could not retrieve Connection from DataSource", e);
+            Log.error("Could not retrieve Connection from DataSource", e);
             return null;
         }
-    }
-
-    public String getProperty(String name) {
-        if ("name".equals(name)) {
-            return dataSourceName;
-        }
-        else {
-            return null;
-        }
-    }
-
-    public void setProperty(String name, String value) {
-        if ("name".equals(name)) {
-            this.dataSourceName = value;
-            JiveGlobals.setXMLProperty("database.JNDIProvider.name", value);
-        }
-    }
-
-    public Iterator propertyNames() {
-        List list = new ArrayList();
-        list.add("name");
-        return Collections.unmodifiableList(list).iterator();
-    }
-
-    public String getPropertyDescription(String name) {
-        if ("name".equals(name)) {
-            return "JNDI name to lookup. eg: java:comp/env/jdbc/MyDataSource";
-        }
-        else {
-            return null;
-        }
-    }
-
-    /**
-     * Log an error.
-     *
-     * @param msg Description of error
-     * @param e   Exception to printStackTrace (may be null)
-     */
-    private final void error(String msg, Exception e) {
-        Log.error(msg, e);
     }
 }

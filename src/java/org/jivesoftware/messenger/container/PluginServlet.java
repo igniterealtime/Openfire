@@ -91,20 +91,18 @@ public class PluginServlet extends HttpServlet {
                     handleJSP(pathInfo, request, response);
                     return;
                 }
-                // Handle image requests.
-                else if (pathInfo.endsWith(".gif") || pathInfo.endsWith(".png")) {
-                    handleImage(pathInfo, response);
-                    return;
-                }
                 // Handle servlet requests.
                 else if (getServlet(pathInfo) != null) {
                     handleServlet(pathInfo, request, response);
                 }
-                // Anything else results in a 404.
+                // Handle image requests.
                 else {
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    handleOtherRequest(pathInfo, response);
                     return;
                 }
+
+                // Anything else results in a 404.
+
             }
             catch (Exception e) {
                 Log.error(e);
@@ -292,24 +290,39 @@ public class PluginServlet extends HttpServlet {
         return servlet;
     }
 
+
     /**
-     * Handles a request for an image.
+     * Handles a request for other web items (images, flash, applets, etc.)
      *
      * @param pathInfo the extra path info.
      * @param response the response object.
      * @throws IOException if an IOException occurs while handling the request.
      */
-    private void handleImage(String pathInfo, HttpServletResponse response) throws IOException {
+    private void handleOtherRequest(String pathInfo, HttpServletResponse response) throws IOException {
         String[] parts = pathInfo.split("/");
         // Image request must be in correct format.
-        if (parts.length != 4) {
+        if (parts.length < 3) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
+
+        String contextPath = "";
+        int index = pathInfo.indexOf(parts[1]);
+        if (index != -1) {
+            contextPath = pathInfo.substring(index + parts[1].length());
+        }
+
         File pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
-        File image = new File(pluginDirectory, parts[1] + File.separator + "web" +
-                File.separator + "images" + File.separator + parts[3]);
-        if (!image.exists()) {
+        File file = new File(pluginDirectory, parts[1] + File.separator + "web" + contextPath);
+
+        // When using dev environment, the images dir may be under something other that web.
+        Plugin plugin = pluginManager.getPlugin(parts[1]);
+        PluginDevEnvironment environment = pluginManager.getDevEnvironment(plugin);
+
+        if (environment != null) {
+            file = new File(environment.getWebRoot(), contextPath);
+        }
+        if (!file.exists()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -319,17 +332,20 @@ public class PluginServlet extends HttpServlet {
             if (pathInfo.endsWith(".png")) {
                 contentType = "image/png";
             }
-            response.setHeader("Content-disposition", "filename=\"" + image + "\";");
+            else if (pathInfo.endsWith(".swf")) {
+                contentType = "application/x-shockwave-flash";
+            }
+            response.setHeader("Content-disposition", "filename=\"" + file + "\";");
             response.setContentType(contentType);
             // Write out the image to the user.
             InputStream in = null;
             ServletOutputStream out = null;
             try {
-                in = new BufferedInputStream(new FileInputStream(image));
+                in = new BufferedInputStream(new FileInputStream(file));
                 out = response.getOutputStream();
 
                 // Set the size of the file.
-                response.setContentLength((int)image.length());
+                response.setContentLength((int)file.length());
 
                 // Use a 1K buffer.
                 byte[] buf = new byte[1024];
@@ -352,6 +368,7 @@ public class PluginServlet extends HttpServlet {
             }
         }
     }
+
 
     /**
      * Handles a request for a JSP page in development mode. If development mode is
@@ -457,7 +474,7 @@ public class PluginServlet extends HttpServlet {
         PluginDevEnvironment pluginEnv = pluginManager.getDevEnvironment(plugin);
 
         PluginClassLoader pluginClassloader = pluginManager.getPluginClassloader(plugin);
-        
+
         Collection col = pluginClassloader.getURLS();
         for (Object aCol : col) {
             URL url = (URL)aCol;

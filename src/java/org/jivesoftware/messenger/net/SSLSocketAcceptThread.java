@@ -27,7 +27,7 @@ import java.net.UnknownHostException;
  * Implements a network front end with a dedicated thread reading
  * each incoming socket.
  */
-public class SSLSocketAcceptThread extends Thread {
+public class SSLSocketAcceptThread extends Thread implements SocketAcceptMBean {
 
     /**
      * The default Jabber socket
@@ -63,6 +63,8 @@ public class SSLSocketAcceptThread extends Thread {
      * to shutdown the SSL port.
      */
     private static final int MAX_SSL_EXCEPTIONS = 10;
+    
+    private long acceptCount = 0;
 
     /**
      * Creates an instance using the default port, TLS transport security, and
@@ -143,6 +145,7 @@ public class SSLSocketAcceptThread extends Thread {
                 Socket sock = serverSocket.accept();
                 Log.debug("SSL Connect " + sock.toString());
                 connManager.addSocket(sock, true, serverPort);
+                this.acceptCount++;
             }
             catch (SSLException se) {
                 long exceptionTime = System.currentTimeMillis();
@@ -184,5 +187,12 @@ public class SSLSocketAcceptThread extends Thread {
         catch (IOException e) {
             // we don't care, no matter what, the socket should be dead
         }
+    }
+
+    /**
+     * @see org.jivesoftware.messenger.net.SocketAcceptMBean#getAcceptCount()
+     */
+    public long getAcceptCount() {
+        return this.acceptCount;
     }
 }

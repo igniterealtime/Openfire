@@ -19,15 +19,27 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+import javax.management.StandardMBean;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager {
 
+    private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    
     private SocketAcceptThread socketThread;
     private SSLSocketAcceptThread sslSocketThread;
     private SocketAcceptThread componentSocketThread;
@@ -92,6 +104,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 serverSocketThread.setDaemon(true);
                 serverSocketThread.start();
 
+                register("serverListener", serverPort, serverSocketThread);
+                
                 List params = new ArrayList();
                 params.add(Integer.toString(serverSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.server", params));
@@ -102,6 +116,26 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
             }
         }
+    }
+
+    private void register(String type, ServerPort serverPort, Object obj) throws MalformedObjectNameException, NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
+        Properties props = new Properties();
+        props.setProperty("port", Integer.toString(serverPort.getPort()));
+//                
+//                props.setProperty("interface", serverPort.getInterfaceName());
+//                props.setProperty("ipaddr", serverPort.getIPAddress());
+        if(serverPort.getSecurityType() != null) {
+            props.setProperty("securityType", serverPort.getSecurityType());
+        } else {
+            props.setProperty("securityType", "NONE");
+        }
+        
+        props.setProperty("type", type);
+        
+        ObjectName objectName = new ObjectName("org.jivesoftware.messenger", props);
+        StandardMBean mbean = new StandardMBean(obj, SocketAcceptMBean.class);
+        
+        mbeanServer.registerMBean(mbean, objectName);
     }
 
     private void stopServerListener() {
@@ -124,7 +158,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ports.add(serverPort);
                 componentSocketThread.setDaemon(true);
                 componentSocketThread.start();
-
+                
+                register("componentListener", serverPort, componentSocketThread);
                 List params = new ArrayList();
                 params.add(Integer.toString(componentSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
@@ -158,6 +193,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 socketThread.setDaemon(true);
                 socketThread.start();
 
+                register("clientListener", serverPort, socketThread);
+                
                 List params = new ArrayList();
                 params.add(Integer.toString(socketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
@@ -195,6 +232,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
 
+                register("SSLClientListner", serverPort, sslSocketThread);
                 List params = new ArrayList();
                 params.add(Integer.toString(sslSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));

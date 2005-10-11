@@ -27,7 +27,7 @@ import java.net.Socket;
  *
  * @author Iain Shigeoka
  */
-public class SocketAcceptThread extends Thread {
+public class SocketAcceptThread extends Thread implements SocketAcceptMBean {
 
     /**
      * The default XMPP port for clients.
@@ -65,7 +65,16 @@ public class SocketAcceptThread extends Thread {
     ServerSocket serverSocket;
 
     private ConnectionManager connManager;
+    
+    private long acceptCount = 0;
 
+    /**
+     * Construct a new <code>SocketAcceptThread</code>.
+     *
+     * @param connManager
+     * @param serverPort
+     * @throws IOException
+     */
     public SocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
             throws IOException {
         super("Socket Listener at port " + serverPort.getPort());
@@ -122,6 +131,7 @@ public class SocketAcceptThread extends Thread {
      * About as simple as it gets.  The thread spins around an accept
      * call getting sockets and handing them to the SocketManager.
      */
+    @Override
     public void run() {
         while (notTerminated) {
             try {
@@ -129,6 +139,7 @@ public class SocketAcceptThread extends Thread {
                 if (sock != null) {
                     Log.debug("Connect " + sock.toString());
                     connManager.addSocket(sock, false, serverPort);
+                    acceptCount++;
                 }
             }
             catch (IOException ie) {
@@ -152,5 +163,12 @@ public class SocketAcceptThread extends Thread {
         catch (IOException e) {
             // we don't care, no matter what, the socket should be dead
         }
+    }
+
+    /**
+     * @see org.jivesoftware.messenger.net.SocketAcceptMBean#getAcceptCount()
+     */
+    public long getAcceptCount() {
+        return this.acceptCount;
     }
 }

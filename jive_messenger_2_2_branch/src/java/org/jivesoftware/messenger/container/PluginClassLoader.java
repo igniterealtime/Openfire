@@ -21,6 +21,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -79,6 +80,10 @@ class PluginClassLoader {
         catch (MalformedURLException mue) {
             Log.error(mue);
         }
+    }
+
+    public Collection<URL> getURLS(){
+        return list;
     }
 
     /**

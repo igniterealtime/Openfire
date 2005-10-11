@@ -52,6 +52,7 @@
     }
     //-->
     </script>
+    <decorator:head />
 </head>
 
 <body id="jive-body">

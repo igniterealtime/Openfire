@@ -303,7 +303,7 @@
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${src.dir}" includes="database/*.sql"/>
             <fileset dir="${src.dir}" includes="database/upgrade/**/*.sql"/>
-            <fileset dir="${resources.dir}/jar" includes="admin-sidebar.xml"/>
+            <fileset dir="${resources.dir}/jar" includes="**"/>
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>

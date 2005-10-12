@@ -290,6 +290,18 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         router = server.getPacketRouter();
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
+        
+        
+        Properties props = new Properties();
+        props.put("name","ServerReader");
+        try {
+            ObjectName objectName = new ObjectName("org.jivesoftware.messenger", props);
+            StandardMBean mbean = new StandardMBean(SocketReaderObserver.getInstance(), SocketReaderMBean.class);
+            mbeanServer.registerMBean(mbean, objectName);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public void enableClientListener(boolean enabled) {

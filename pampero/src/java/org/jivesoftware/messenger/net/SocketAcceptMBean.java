@@ -1,5 +1,5 @@
 /**
- * Copyright Noah Campbell 2004
+ * Copyright Noah Campbell 2005
  */
 package org.jivesoftware.messenger.net;
 

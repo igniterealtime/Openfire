@@ -32,5 +32,7 @@
 	<classpathentry kind="lib" path="build/lib/merge/standard.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/whack.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/xpp3.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/commons-math-1.0.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/sitemesh.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

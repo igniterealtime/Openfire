@@ -31,6 +31,8 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -84,6 +86,47 @@ public abstract class SocketReader implements Runnable {
         this.router = router;
         this.connection = connection;
         this.socket = socket;
+        SocketReader.concurrent++;
+        this.connectedTimestamp = System.currentTimeMillis();
+    }
+
+    
+    /** The connectedTimestamp. */
+    private long connectedTimestamp;
+    
+    /** The disconnectedTimestamp. */
+    private long disconnectedTimestamp = -1;
+
+    
+    /** 
+     * The total concurrent StreamReaders in memory.
+     * 
+     * @see SocketReaderObserver
+     */
+    static volatile int concurrent;
+    
+    
+    /** 
+     * The statsOutboundQueue.  Sends the amount of time that the socket reader
+     * is connected to the <code>SocketReaderObserver</code> so it can calculate
+     * the appropriate. 
+     * 
+     * @see SocketReaderObserver
+     */
+    static Queue<Long> statsOutboundQueue = new ConcurrentLinkedQueue<Long>();
+    
+    /**
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if(disconnectedTimestamp <= -1) {
+            this.disconnectedTimestamp = System.currentTimeMillis();
+        }
+        SocketReader.concurrent--;
+        statsOutboundQueue.offer(disconnectedTimestamp - connectedTimestamp);
+        
     }
 
     /**
@@ -569,6 +612,7 @@ public abstract class SocketReader implements Runnable {
      * for releasing any resource they might need.
      */
     protected void shutdown() {
+        this.disconnectedTimestamp = System.currentTimeMillis();
     }
 
     /**
@@ -582,4 +626,5 @@ public abstract class SocketReader implements Runnable {
      */
     abstract boolean createSession(String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;
+
 }

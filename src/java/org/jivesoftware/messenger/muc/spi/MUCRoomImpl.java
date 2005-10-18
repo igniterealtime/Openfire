@@ -750,12 +750,12 @@ public class MUCRoomImpl implements MUCRoom {
         send(message);
     }
 
-    public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException {
-        String resource = message.getTo().getResource();
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {
+        String resource = packet.getTo().getResource();
         MUCRole occupant = occupants.get(resource.toLowerCase());
         if (occupant != null) {
-            message.setFrom(senderRole.getRoleAddress());
-            occupant.send(message);
+            packet.setFrom(senderRole.getRoleAddress());
+            occupant.send(packet);
         }
         else {
             throw new NotFoundException();

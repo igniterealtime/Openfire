@@ -466,13 +466,15 @@ public interface MUCRoom {
     public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException;
 
     /**
-     * Sends a private message to a selected occupant. 
+     * Sends a private packet to a selected occupant. The packet can be a Message for private
+     * conversation between room occupants or IQ packets when an occupant wants to send IQ packets
+     * to other room occupants.
      * 
-     * @param message The message to send.
+     * @param packet The packet to send.
      * @param senderRole the role of the user that is trying to send a public message.
-     * @throws NotFoundException If the user is sending a message to a room JID that does not exist.
+     * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
      */
-    public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException;
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException;
 
     /**
      * Kicks a user from the room. If the user was in the room, the returned updated presence will

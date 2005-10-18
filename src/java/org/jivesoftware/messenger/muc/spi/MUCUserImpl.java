@@ -216,7 +216,7 @@ public class MUCUserImpl implements MUCUser {
                             else if (resource != null
                                     && (Message.Type.chat == type || Message.Type.normal == type)) {
                                 // An occupant is trying to send a private message
-                                role.getChatRoom().sendPrivateMessage(packet, role);
+                                role.getChatRoom().sendPrivatePacket(packet, role);
                             }
                             else if (resource == null && Message.Type.normal == type) {
                                 // An occupant could be sending an invitation or declining an
@@ -321,11 +321,20 @@ public class MUCUserImpl implements MUCUser {
                             role.getChatRoom().getIQAdminHandler().handleIQ(packet, role);
                         }
                         else {
-                            sendErrorPacket(packet, PacketError.Condition.bad_request);
+                            if (packet.getTo().getResource() != null) {
+                                // User is sending an IQ packet to another room occupant
+                                role.getChatRoom().sendPrivatePacket(packet, role);
+                            }
+                            else {
+                                sendErrorPacket(packet, PacketError.Condition.bad_request);
+                            }
                         }
                     }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);
+                    }
+                    catch (NotFoundException e) {
+                        sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
                     }
                     catch (ConflictException e) {
                         sendErrorPacket(packet, PacketError.Condition.conflict);

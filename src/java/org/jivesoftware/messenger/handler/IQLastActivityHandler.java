@@ -38,7 +38,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         IQ reply = IQ.createResultIQ(packet);
         Element lastActivity = reply.setChildElement("query", "jabber:iq:last");
         String sender = packet.getFrom().getNode();
-        String username = packet.getTo().getNode();
+        String username = packet.getTo() == null ? null : packet.getTo().getNode();
 
         // Check if any of the usernames is null
         if (sender == null || username == null) {

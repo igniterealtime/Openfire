@@ -218,6 +218,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (IQ.Type.error == iq.getType()) {
             return false;
         }
+        if (iq.getTo().getResource() != null) {
+            // Ignore IQ packets sent to room occupants
+            return false;
+        }
         if (childElement != null) {
             namespace = childElement.getNamespaceURI();
         }

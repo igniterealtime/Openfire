@@ -133,7 +133,8 @@ public abstract class SocketReader implements Runnable {
         }
         catch (Exception e) {
             if (session != null) {
-                Log.warn(LocaleUtils.getLocalizedString("admin.error.stream"), e);
+                Log.warn(LocaleUtils.getLocalizedString("admin.error.stream") + ". Session: " +
+                        session, e);
             }
         }
         finally {

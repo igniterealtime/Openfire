@@ -92,26 +92,37 @@
                     if ("en".equals(JiveGlobals.getLocale().getLanguage())) {
                         long now = System.currentTimeMillis();
                         long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
-                        long uptime = (now - lastStarted) / 1000L;
+                        long uptime = now - lastStarted;
 
-                        if (uptime < 60) {
+                        if (uptime < JiveConstants.MINUTE) {
                             uptimeDisplay = "Less than 1 minute";
                         }
-                        else if (uptime < 60*60) {
-                            long mins = uptime / (60);
-                            uptimeDisplay = "Approx " + mins + ((mins==1) ? " minute" : " minutes");
+                        else if (uptime < JiveConstants.HOUR) {
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = mins + ((mins==1) ? " minute" : " minutes");
                         }
-                        else if (uptime < 60*60*24) {
-                            long days = uptime / (60*60);
-                            uptimeDisplay = "Approx " + days + ((days==1) ? " hour" : " hours");
+                        else if (uptime < JiveConstants.DAY) {
+                            long hours = uptime / JiveConstants.HOUR;
+                            uptime -= hours * JiveConstants.HOUR;
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = hours + ((hours==1) ? " hour" : " hours" + ", " +
+                                    mins + ((mins==1) ? " minute" : " minutes"));
+                        }
+                        else {
+                            long days = uptime / JiveConstants.DAY;
+                            uptime -= days * JiveConstants.DAY;
+                            long hours = uptime / JiveConstants.HOUR;
+                            uptime -= hours * JiveConstants.HOUR;
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = days + ((days==1) ? " day" : " days") + ", " +
+                                    hours + ((hours==1) ? " hour" : " hours") + ", " +
+                                    mins + ((mins==1) ? " minute" : " minutes");
                         }
                     }
                 %>
 
                 <%  if (uptimeDisplay != null) { %>
-
                     <%= uptimeDisplay %> -- started
-
                 <%  } %>
 
                 <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>

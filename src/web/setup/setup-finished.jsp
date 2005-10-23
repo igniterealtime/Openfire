@@ -33,9 +33,15 @@
         String value = (String)xmlSettings.get(name);
         JiveGlobals.setXMLProperty(name, value);
     }
-    // Shut down connection provider. Some connection providers (such as the
-    // embedded provider) require a clean shut-down.
-    DbConnectionManager.getConnectionProvider().destroy();    
+    Runnable restart = new Runnable() {
+        public void run() {
+            // Shut down connection provider. Some connection providers (such as the
+            // embedded provider) require a clean shut-down.
+            DbConnectionManager.getConnectionProvider().destroy();
+            XMPPServer.getInstance().finishSetup();
+        }
+    };
+    new Thread(restart).start();
 %>
 
 <%@ include file="setup-header.jspf" %>

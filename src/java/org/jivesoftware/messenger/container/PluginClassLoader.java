@@ -21,6 +21,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -43,8 +44,8 @@ class PluginClassLoader {
      * Constructs a plugin loader for the given plugin directory.
      *
      * @param pluginDir the plugin directory.
-     * @throws java.lang.SecurityException if the created class loader violates
-     *          existing security constraints.
+     * @throws SecurityException if the created class loader violates
+     *                                     existing security constraints.
      */
     public PluginClassLoader(File pluginDir) throws SecurityException {
         addDirectory(pluginDir);
@@ -58,27 +59,31 @@ class PluginClassLoader {
      */
     public void addDirectory(File directory) {
         try {
-        File classesDir = new File(directory, "classes");
-        if (classesDir.exists()) {
-            list.add(classesDir.toURL());
-        }
-        File libDir = new File(directory, "lib");
-        File[] jars = libDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".jar") || name.endsWith(".zip");
+            File classesDir = new File(directory, "classes");
+            if (classesDir.exists()) {
+                list.add(classesDir.toURL());
             }
-        });
-        if (jars != null) {
-            for (int i = 0; i < jars.length; i++) {
-                if (jars[i] != null && jars[i].isFile()) {
-                    list.add(jars[i].toURL());
+            File libDir = new File(directory, "lib");
+            File[] jars = libDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".jar") || name.endsWith(".zip");
+                }
+            });
+            if (jars != null) {
+                for (int i = 0; i < jars.length; i++) {
+                    if (jars[i] != null && jars[i].isFile()) {
+                        list.add(jars[i].toURL());
+                    }
                 }
             }
-        }
         }
         catch (MalformedURLException mue) {
             Log.error(mue);
         }
+    }
+
+    public Collection<URL> getURLS(){
+        return list;
     }
 
     /**
@@ -95,13 +100,21 @@ class PluginClassLoader {
      * Initializes the class loader with all configured classpath URLs. This method
      * can be called multiple times if the list of URLs changes.
      */
-    public void initialize(){
+    public void initialize() {
         Iterator urls = list.iterator();
         URL[] urlArray = new URL[list.size()];
         for (int i = 0; urls.hasNext(); i++) {
             urlArray[i] = (URL)urls.next();
         }
-        classLoader = new URLClassLoader(urlArray, findParentClassLoader());
+
+        // If the classloader is to be used by a child plugin, we should
+        // never use the ContextClassLoader, but only reuse the plugin classloader itself.
+        if (classLoader != null) {
+            classLoader = new URLClassLoader(urlArray, classLoader);
+        }
+        else {
+            classLoader = new URLClassLoader(urlArray, findParentClassLoader());
+        }
     }
 
     /**
@@ -115,7 +128,7 @@ class PluginClassLoader {
      * @throws SecurityException      if the custom class loader not allowed.
      */
     public Class loadClass(String name) throws ClassNotFoundException, IllegalAccessException,
-            InstantiationException, SecurityException {
+        InstantiationException, SecurityException {
         return classLoader.loadClass(name);
     }
 

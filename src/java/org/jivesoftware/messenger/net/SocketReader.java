@@ -448,6 +448,9 @@ public abstract class SocketReader implements Runnable {
             writer.flush();
             // Close the underlying connection
             connection.close();
+            // Log a warning so that admins can track this cases from the server side
+            Log.warn("Closing session due to incorrect hostname in stream header. Connection: " +
+                    connection);
         }
 
         // Create the correct session based on the sent namespace. At this point the server
@@ -468,6 +471,9 @@ public abstract class SocketReader implements Runnable {
             writer.flush();
             // Close the underlying connection
             connection.close();
+            // Log a warning so that admins can track this cases from the server side
+            Log.warn("Closing session due to bad_namespace_prefix in stream header. Connection: " +
+                    connection);
         }
     }
 

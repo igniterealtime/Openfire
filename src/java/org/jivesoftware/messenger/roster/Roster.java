@@ -100,6 +100,7 @@ public class Roster implements Cacheable {
                 if (group.isUser(item.getJid())) {
                     // TODO Group name conflicts are not being considered (do we need this?)
                     item.addSharedGroup(group);
+                    item.setSubStatus(RosterItem.SUB_BOTH);
                 }
             }
             rosterItems.put(item.getJid().toBareJID(), item);

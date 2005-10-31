@@ -356,11 +356,12 @@
         <mkdir dir="${war.dest.dir}/build"/>
         <!-- Make a new web.xml file in the build dir -->
         <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}"/>
-        <!-- TODO: copy in decorators.xml and sitemesh.xml -->
         <!-- Make the war -->
         <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
             webxml="${war.dest.dir}/build/web.xml">
             <patternset refid="web.sources"/>
+            <include name="**/decorators.xml"/>
+            <include name="**/sitemesh.xml"/>
             <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
         </war>
         <!-- Create a Messenger home -->

@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PacketInterceptor.java,v $
  * $Revision$
  * $Date$
  *
@@ -44,10 +44,11 @@ public interface PacketInterceptor {
      *
      * @param packet    the packet to take action on.
      * @param session   the session that received or is sending the packet.
-     * @param read      flag that indicates if the packet was read or sent.
+     * @param incoming  flag that indicates if the packet was read by the server or sent from 
+     *                  the server.
      * @param processed flag that indicates if the action (read/send) was performed. (PRE vs. POST).
      * @throws PacketRejectedException if the packet should be prevented from being processed.
      */
-    void interceptPacket(Packet packet, Session session, boolean read, boolean processed)
+    void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
             throws PacketRejectedException;
 }

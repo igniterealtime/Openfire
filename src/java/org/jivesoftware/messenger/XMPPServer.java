@@ -11,34 +11,33 @@
 
 package org.jivesoftware.messenger;
 
-import org.xmpp.packet.JID;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.handler.*;
-import org.jivesoftware.messenger.transport.TransportHandler;
+import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.disco.ServerItemsProvider;
-import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
-import org.jivesoftware.messenger.disco.IQDiscoItemsHandler;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
-import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
-import org.jivesoftware.messenger.spi.*;
+import org.jivesoftware.messenger.component.InternalComponentManager;
+import org.jivesoftware.messenger.container.AdminConsolePlugin;
 import org.jivesoftware.messenger.container.Module;
 import org.jivesoftware.messenger.container.PluginManager;
-import org.jivesoftware.messenger.container.AdminConsolePlugin;
+import org.jivesoftware.messenger.disco.IQDiscoInfoHandler;
+import org.jivesoftware.messenger.disco.IQDiscoItemsHandler;
+import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
+import org.jivesoftware.messenger.disco.ServerItemsProvider;
+import org.jivesoftware.messenger.handler.*;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
+import org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.messenger.net.MulticastDNSService;
-import org.jivesoftware.messenger.component.InternalComponentManager;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.messenger.roster.RosterManager;
+import org.jivesoftware.messenger.spi.*;
+import org.jivesoftware.messenger.transport.TransportHandler;
+import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.database.DbConnectionManager;
-import org.dom4j.io.SAXReader;
-import org.dom4j.Document;
+import org.jivesoftware.util.Version;
+import org.xmpp.packet.JID;
 
-import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -203,6 +203,35 @@ public class XMPPServer {
         return new JID(username, name, resource);
     }
 
+    /**
+     * Returns a collection with the JIDs of the server's admins. The collection may include
+     * JIDs of local users and users of remote servers.
+     *
+     * @return a collection with the JIDs of the server's admins.
+     */
+    public Collection<JID> getAdmins() {
+        Collection<JID> admins = new ArrayList<JID>();
+        // Add the JIDs of the local users that are admins
+        String usernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        usernames = (usernames == null || usernames.trim().length() == 0) ? "admin" : usernames;
+        StringTokenizer tokenizer = new StringTokenizer(usernames, ",");
+        while (tokenizer.hasMoreTokens()) {
+            String username = tokenizer.nextToken();
+            admins.add(createJID(username, null));
+        }
+
+        // Add bare JIDs of users that are admins (may include remote users)
+        String jids = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
+        jids = (jids == null || jids.trim().length() == 0) ? "" : jids;
+        tokenizer = new StringTokenizer(jids, ",");
+        while (tokenizer.hasMoreTokens()) {
+            String jid = tokenizer.nextToken();
+            admins.add(new JID(jid));
+        }
+
+        return admins;
+    }
+
     private void initialize() throws FileNotFoundException {
         locateMessenger();
 
@@ -238,21 +267,26 @@ public class XMPPServer {
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
-        }
-        if (!setupMode) {
+            // Set the new server domain assigned during the setup process
+            name = JiveGlobals.getProperty("xmpp.domain");
+
             Thread finishSetup = new Thread() {
                 public void run() {
                     try {
-                        // If the user selected different ports for the admin console to run on,
-                        // we need to restart the embedded Jetty instance to listen on the
-                        // new ports.
-                        if (!JiveGlobals.getXMLProperty("adminConsole.port").equals("9090") ||
-                                !JiveGlobals.getXMLProperty("adminConsole.securePort").equals("9091"))
-                        {
-                            // Wait a short period before shutting down the admin console. Otherwise,
-                            // the page that requested the setup finish won't render properly!
-                            Thread.sleep(1000);
-                            ((AdminConsolePlugin)pluginManager.getPlugin("admin")).restartListeners();
+                        if (isStandAlone()) {
+                            // If the user selected different ports for the admin console to run on,
+                            // we need to restart the embedded Jetty instance to listen on the
+                            // new ports.
+                            if (!JiveGlobals.getXMLProperty("adminConsole.port").equals("9090") ||
+                                    !JiveGlobals.getXMLProperty("adminConsole.securePort")
+                                            .equals("9091")) {
+                                // Wait a short period before shutting down the admin console.
+                                // Otherwise, the page that requested the setup finish won't
+                                // render properly!
+                                Thread.sleep(1000);
+                                ((AdminConsolePlugin) pluginManager.getPlugin("admin"))
+                                        .restartListeners();
+                            }
                         }
 
                         verifyDataSource();
@@ -460,6 +494,12 @@ public class XMPPServer {
                 shutdownThread.setDaemon(true);
                 shutdownThread.start();
             }
+        }
+        else {
+            // Close listening socket no matter what the condition is in order to be able
+            // to be restartable inside a container.
+            shutdownServer();
+            stopDate = new Date();
         }
     }
 

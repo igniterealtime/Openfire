@@ -73,11 +73,9 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <servlet>
-        <servlet-name>XMPPBootServlet</servlet-name>
-        <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
+    <listener>
+         <listener-class>org.jivesoftware.messenger.XMPPContextListener</listener-class>
+    </listener>
 
     <!--@@JSPC-SERVLETS@@-->
 

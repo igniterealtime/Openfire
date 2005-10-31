@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: MessageRouter.java,v $
  * $Revision$
  * $Date$
  *
@@ -133,13 +133,9 @@ public class MessageRouter extends BasicModule {
         }
         else {
             // Forward the message to the users allowed to log into the admin console
-            jids = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
-            jids = (jids == null || jids.trim().length() == 0) ? "admin" : jids;
-            StringTokenizer tokenizer = new StringTokenizer(jids, ",");
-            while (tokenizer.hasMoreTokens()) {
-                String username = tokenizer.nextToken();
+            for (JID jid : XMPPServer.getInstance().getAdmins()) {
                 Message forward = packet.createCopy();
-                forward.setTo(username + "@" + serverName);
+                forward.setTo(jid);
                 route(forward);
             }
         }

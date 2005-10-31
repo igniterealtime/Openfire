@@ -52,7 +52,6 @@ public class PluginManager {
     private Map<String, Plugin> plugins;
     private Map<Plugin, PluginClassLoader> classloaders;
     private Map<Plugin, File> pluginDirs;
-    private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
     private Map<Plugin, List<String>> parentPluginMap;
@@ -148,7 +147,7 @@ public class PluginManager {
      */
     private void loadPlugin(File pluginDir) {
         // Only load the admin plugin during setup mode.
-        if (setupMode && !(pluginDir.getName().equals("admin"))) {
+        if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getName().equals("admin"))) {
             return;
         }
         Log.debug("Loading plugin " + pluginDir.getName());

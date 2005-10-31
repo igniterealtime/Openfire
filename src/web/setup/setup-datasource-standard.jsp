@@ -8,23 +8,70 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  java.util.*,
-                 java.beans.BeanInfo,
-                 java.beans.Introspector,
-                 java.beans.PropertyDescriptor,
                  org.jivesoftware.util.JiveGlobals,
-
                  java.sql.Connection,
                  java.io.File,
                  java.sql.Statement,
                  java.sql.SQLException,
-
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
+                 org.jivesoftware.util.ClassUtils,
+                 org.jivesoftware.util.Log,
                  org.jivesoftware.database.DefaultConnectionProvider"
 %>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
 
-<%@ include file="setup-global.jspf" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
+
+<%!
+    boolean testConnection(Map<String,String> errors) {
+        boolean success = true;
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            if (con == null) {
+                success = false;
+                errors.put("general","A connection to the database could not be "
+                    + "made. View the error message by opening the "
+                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                    + "file, then go back to fix the problem.");
+            }
+            else {
+            	// See if the Jive db schema is installed.
+            	try {
+            		Statement stmt = con.createStatement();
+            		// Pick an arbitrary table to see if it's there.
+            		stmt.executeQuery("SELECT * FROM jiveID");
+            		stmt.close();
+            	}
+            	catch (SQLException sqle) {
+                    success = false;
+                    sqle.printStackTrace();
+                    errors.put("general","The Jive Messenger database schema does not "
+                        + "appear to be installed. Follow the installation guide to "
+                        + "fix this error.");
+            	}
+            }
+        }
+        catch (Exception ignored) {}
+        finally {
+            try {
+        	    con.close();
+            } catch (Exception ignored) {}
+        }
+        return success;
+    }
+%>
+
+
 <%  // Get parameters
     String driver = ParamUtils.getParameter(request,"driver");
     String serverURL = ParamUtils.getParameter(request,"serverURL");
@@ -37,7 +84,7 @@
     boolean doContinue = request.getParameter("continue") != null;
 
     // handle a continue request
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (doContinue) {
         // Error check
         if (driver == null || "sun.jdbc.odbc.JdbcOdbcDriver".equals(driver)
@@ -47,7 +94,7 @@
         }
         else {
             try {
-                loadClass(driver);
+                ClassUtils.forName(driver);
             }
             catch (Throwable t) {
                 errors.put("driver","Unable to load the specified JDBC driver. Please verify the " +
@@ -146,7 +193,11 @@
     }
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.datasource.standard.title" /></title>
+    </head>
+<body>
 
 <p class="jive-setup-page-header">
 <fmt:message key="setup.datasource.standard.title" />
@@ -177,7 +228,7 @@
 <%  } %>
 
 <%  // DB preset data
-    List presets = new ArrayList();
+    List<String[]> presets = new ArrayList<String []>();
     presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://[host-name]:3306/[database-name]"});
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@[host-name]:1521:[SID]"});
     presets.add(new String[]{"MS SQLServer 2000","com.microsoft.jdbc.sqlserver.SQLServerDriver","jdbc:microsoft:sqlserver://[host-name]:1433;databasename=[database-name]"});
@@ -188,7 +239,7 @@
 <script language="JavaScript" type="text/javascript">
 var data = new Array();
 <%  for (int i=0; i<presets.size(); i++) {
-        String[] data = (String[])presets.get(i);
+        String[] data = presets.get(i);
 %>
     data[<%= i %>] = new Array('<%= data[0] %>','<%= data[1] %>','<%= data[2] %>');
 <%  } %>
@@ -216,7 +267,7 @@ function checkSubmit() {
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
             <%  for (int i=0; i<presets.size(); i++) {
-                    String[] data = (String[])presets.get(i);
+                    String[] data = presets.get(i);
             %>
                 <option value="<%= i %>"> &#149; <%= data[0] %>
             <%  } %>
@@ -380,4 +431,5 @@ function checkSubmit() {
 
 </form>
 
-<%@ include file="setup-footer.jsp" %>
+</body>
+</html>

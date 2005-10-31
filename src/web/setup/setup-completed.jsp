@@ -1,12 +1,10 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
-  -	$RCSfile$
   -	$Revision: 985 $
   -	$Date: 2005-02-18 10:35:44 -0800 (Fri, 18 Feb 2005) $
---%>  
+--%>
 
-<%@ page import="org.jivesoftware.util.*" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <html>
 <head>
@@ -34,14 +32,14 @@
 </table>
 </span>
 <table bgcolor="#bbbbbb" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0"></td></tr>
+<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
 </table>
 <table bgcolor="#dddddd" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0"></td></tr>
+<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
 
 </table>
 <table bgcolor="#eeeeee" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0"></td></tr>
+<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
 </table>
 
 <br>
@@ -75,5 +73,5 @@
 </tr>
 </table>
 
-
-<%@ include file="setup-footer.jsp"%>
+</body>
+</html>

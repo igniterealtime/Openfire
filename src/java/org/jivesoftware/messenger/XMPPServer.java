@@ -226,6 +226,11 @@ public class XMPPServer {
         initialized = true;
     }
 
+    /**
+     * Finish the setup process. Because this method is meant to be called from inside
+     * the Admin console plugin, it spawns its own thread to do the work so that the
+     * class loader is correct.
+     */
     public void finishSetup() {
         if (!setupMode) {
             return;
@@ -235,30 +240,41 @@ public class XMPPServer {
             setupMode = false;
         }
         if (!setupMode) {
-            try {
-                // Workaround while admin is a plugin.
-                ((AdminConsolePlugin)pluginManager.getPlugin("admin")).restartListeners();
+            Thread finishSetup = new Thread() {
+                public void run() {
+                    try {
+                        // If the user selected different ports for the admin console to run on,
+                        // we need to restart the embedded Jetty instance to listen on the
+                        // new ports.
+                        if (!JiveGlobals.getXMLProperty("adminConsole.port").equals("9090") ||
+                                !JiveGlobals.getXMLProperty("adminConsole.securePort").equals("9091"))
+                        {
+                            // Wait a short period before shutting down the admin console. Otherwise,
+                            // the page that requested the setup finish won't render properly!
+                            Thread.sleep(1000);
+                            ((AdminConsolePlugin)pluginManager.getPlugin("admin")).restartListeners();
+                        }
 
-                verifyDataSource();
-                // First load all the modules so that modules may access other modules while
-                // being initialized
-                loadModules();
-                // Initize all the modules
-                initModules();
-                // Start all the modules
-                startModules();
-
-                startDate = new Date();
-                stopDate = null;
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-                Log.error(e);
-                System.out.println(LocaleUtils.getLocalizedString("startup.error"));
-                shutdownServer();
-            }
+                        verifyDataSource();
+                        // First load all the modules so that modules may access other modules while
+                        // being initialized
+                        loadModules();
+                        // Initize all the modules
+                        initModules();
+                        // Start all the modules
+                        startModules();
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        Log.error(e);
+                        shutdownServer();
+                    }
+                }
+            };
+            // Use the correct class loader.
+            finishSetup.setContextClassLoader(loader);
+            finishSetup.start();
         }
-
     }
 
     public void start() {
@@ -350,10 +366,9 @@ public class XMPPServer {
      * @param module the name of the class that implements the Module interface.
      */
     private void loadModule(String module) {
-        Module mod = null;
         try {
             Class modClass = loader.loadClass(module);
-            mod = (Module)modClass.newInstance();
+            Module mod = (Module)modClass.newInstance();
             this.modules.put(modClass, mod);
         }
         catch (Exception e) {
@@ -557,7 +572,7 @@ public class XMPPServer {
                 }
             }
             catch (FileNotFoundException fe) {
-
+                // Ignore.
             }
         }
 
@@ -569,8 +584,10 @@ public class XMPPServer {
                 messengerHome = verifyHome("..", jiveConfigName).getCanonicalFile();
             }
             catch (FileNotFoundException fe) {
+                // Ignore.
             }
             catch (IOException ie) {
+                // Ignore.
             }
         }
 
@@ -656,6 +673,7 @@ public class XMPPServer {
                 System.exit(0);
             }
             catch (InterruptedException e) {
+                // Ignore.
             }
 
         }

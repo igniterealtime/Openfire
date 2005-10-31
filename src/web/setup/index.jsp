@@ -10,6 +10,9 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.JiveGlobals,
                  java.util.*" %>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%! // Global vars, methods, etc
 
@@ -20,7 +23,13 @@
     static final String JIVE_CONFIG_FILE = "jive_config_file";
 %>
 
-<%@ include file="setup-global.jspf" %>
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
 
 <%@ include file="setup-env-check.jspf" %>
 
@@ -52,14 +61,18 @@
     Locale locale = JiveGlobals.getLocale();
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.index.title" /></title>
+    </head>
+    <body>
+
 
 <p class="jive-setup-page-header">
 <fmt:message key="setup.index.title" />
 </p>
 
 <p>
-
 
 <fmt:message key="setup.index.info">
     <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
@@ -168,4 +181,5 @@
 </div>
 </form>
 
-<%@ include file="setup-footer.jsp" %>
+    </body>
+</html>

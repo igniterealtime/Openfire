@@ -16,10 +16,71 @@
                  org.jivesoftware.database.JNDIDataSourceProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider" %>
+<%@ page import="org.jivesoftware.util.ClassUtils"%>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.sql.Connection"%>
+<%@ page import="java.io.File"%>
+<%@ page import="java.sql.Statement"%>
+<%@ page import="java.sql.SQLException"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
 
-<%@ include file="setup-global.jspf" %>
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
 
-<%  // check for embedded mode:
+<%!
+    boolean testConnection(Map<String,String> errors) {
+        boolean success = true;
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            if (con == null) {
+                success = false;
+                errors.put("general","A connection to the database could not be "
+                    + "made. View the error message by opening the "
+                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                    + "file, then go back to fix the problem.");
+            }
+            else {
+            	// See if the Jive db schema is installed.
+            	try {
+            		Statement stmt = con.createStatement();
+            		// Pick an arbitrary table to see if it's there.
+            		stmt.executeQuery("SELECT * FROM jiveID");
+            		stmt.close();
+            	}
+            	catch (SQLException sqle) {
+                    success = false;
+                    sqle.printStackTrace();
+                    errors.put("general","The Jive Messenger database schema does not "
+                        + "appear to be installed. Follow the installation guide to "
+                        + "fix this error.");
+            	}
+            }
+        }
+        catch (Exception ignored) {}
+        finally {
+            try {
+        	    con.close();
+            } catch (Exception ignored) {}
+        }
+        return success;
+    }
+%>
+
+<%
+    boolean embeddedMode = false;
+    try {
+        ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
+        embeddedMode = true;
+    }
+    catch (Exception ignored) {}
+    // check for embedded mode:
     if (embeddedMode) {
         // disallow jndi, redirect back to main db page:
         response.sendRedirect("setup-datasource-settings.jsp");
@@ -32,7 +93,7 @@
     String jndiNameMode = ParamUtils.getParameter(request,"jndiNameMode");
 
     // Handle a continue request:
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (request.getParameter("continue") != null) {
         String lookupName = null;
         // Validate the fields:
@@ -70,7 +131,12 @@
     }
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.datasource.jndi.setting" /></title>
+    </head>
+
+<body>
 
 <p class="jive-setup-page-header">
 <fmt:message key="setup.datasource.jndi.setting" />
@@ -169,4 +235,5 @@ document.jndiform.jndiName.focus();
 //-->
 </script>
 
-<%@ include file="setup-footer.jsp" %>
+</body>
+</html>

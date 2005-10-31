@@ -1,53 +1,50 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
-  -	$RCSfile$
   -	$Revision: 1644 $
   -	$Date: 2005-07-19 09:05:10 -0700 (Tue, 19 Jul 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.JiveGlobals,
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
+<%@ page import="org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
-                 java.util.Iterator,
-                 org.jivesoftware.messenger.ConnectionManager,
-                 org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.messenger.XMPPServer"
+%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
 %>
 
 <%
-    boolean showSidebar = false;
     // First, update with XMPPSettings
-    Map xmppSettings = (Map)session.getAttribute("xmppSettings");
-    Iterator iter = xmppSettings.keySet().iterator();
-    while(iter.hasNext()){
-        String name = (String)iter.next();
-        String value = (String)xmppSettings.get(name);
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+    for (String name : xmppSettings.keySet()) {
+        String value = xmppSettings.get(name);
         JiveGlobals.setProperty(name, value);
     }
-    Map xmlSettings = (Map)session.getAttribute("xmlSettings");
-    iter = xmlSettings.keySet().iterator();
-    while(iter.hasNext()){
-        String name = (String)iter.next();
-        String value = (String)xmlSettings.get(name);
+    Map<String,String> xmlSettings = (Map<String,String>)session.getAttribute("xmlSettings");
+    for (String name : xmlSettings.keySet()) {
+        String value = xmlSettings.get(name);
         JiveGlobals.setXMLProperty(name, value);
     }
-    Runnable restart = new Runnable() {
-        public void run() {
-            // Shut down connection provider. Some connection providers (such as the
-            // embedded provider) require a clean shut-down.
-            DbConnectionManager.getConnectionProvider().destroy();
-            XMPPServer.getInstance().finishSetup();
-        }
-    };
-    new Thread(restart).start();
+    // Notify that the XMPP server that setup is finished.
+    XMPPServer.getInstance().finishSetup();
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.finished.title" /></title>
+        <meta name="showSidebar" content="false"/>
+    </head>
+<body>
 
 <p class="jive-setup-page-header">
-<fmt:message key="title" /> <fmt:message key="setup.finished.title" />
+<fmt:message key="setup.finished.title" />
 </p>
 
 <p>
@@ -56,26 +53,30 @@
 </fmt:message>
 </p>
 
-<ol>
-    <li>
-        <fmt:message key="setup.finished.restart" /> <b style="font-size:1.2em;"><fmt:message key="global.restart" /></b> <fmt:message key="setup.finished.restart2" />
-    </li>
-    <li>
-        <%
-            String url = null;
-            if (XMPPServer.getInstance().isStandAlone()) {
-                String server = request.getServerName();
-                String port = JiveGlobals.getXMLProperty("adminConsole.port");
-                url = "http://" + server + ":" + port + "/login.jsp?username=admin";
-            }
-            else {
-                url = request.getRequestURL().toString();
-                url = url.replace("setup-finished.jsp", "login.jsp?username=admin");
-            }
-        %>
-            <a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>.
-    </li>
-</ol>
+<%
+    // Figure out the URL that the user can use to login to the admin console.
+    String url;
+    if (XMPPServer.getInstance().isStandAlone()) {
+        String server = request.getServerName();
+        int plainPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
+        int securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
+        // Use secure login if we're currently secure (and the secure port isn't disabled)
+        // or if the user disabled the plain port.
+        if ((request.isSecure() && securePort > 0) || plainPort < 0) {
+            url = "https://" + server + ":" + securePort + "/login.jsp?username=admin";
+        }
+        else {
+            url = "http://" + server + ":" + plainPort + "/login.jsp?username=admin";
+        }
+    }
+    else {
+        url = request.getRequestURL().toString();
+        url = url.replace("setup/setup-finished.jsp", "login.jsp?username=admin");
+    }
+%>
+<ul>
+    <a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
+</ul>
 
-<%@ include file="setup-footer.jsp" %>
-
+</body>
+</html>

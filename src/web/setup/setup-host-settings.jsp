@@ -15,26 +15,44 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%@ include file="setup-global.jspf" %>
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
 
 <%  // Get parameters
     String domain = ParamUtils.getParameter(request,"domain");
-    int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", -1);
-    int securePort = ParamUtils.getIntParameter(request, "securePort", -1);
+    int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
+    int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
 
     boolean doContinue = request.getParameter("continue") != null;
 
     // handle a continue request:
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (doContinue) {
         // Validate parameters
         if (domain == null) {
             errors.put("domain","domain");
         }
         if (XMPPServer.getInstance().isStandAlone()) {
-            if (embeddedPort < 0) {
+            if (embeddedPort == Integer.MIN_VALUE) {
                 errors.put("embeddedPort","embeddedPort");
+            }
+            // Force any negative value to -1.
+            else if (embeddedPort < 0) {
+                embeddedPort = -1;
+            }
+
+            if (securePort == Integer.MIN_VALUE) {
+                errors.put("securePort","securePort");
+            }
+            // Force any negative value to -1.
+            else if (securePort < 0) {
+                securePort = -1;
             }
         }
         else {
@@ -43,14 +61,14 @@
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
-            Map xmppSettings = new HashMap();
+            Map<String,String> xmppSettings = new HashMap<String,String>();
 
             xmppSettings.put("xmpp.domain",domain);
             xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "true" );
             session.setAttribute("xmppSettings", xmppSettings);
 
-            Map xmlSettings = new HashMap();
+            Map<String,String> xmlSettings = new HashMap<String,String>();
             xmlSettings.put("adminConsole.port",Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort",Integer.toString(securePort));
             session.setAttribute("xmlSettings", xmlSettings);
@@ -79,7 +97,11 @@
     }
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.host.settings.title" /></title>
+    </head>
+<body>
 
 <style type="text/css">
 LABEL { font-weight : normal; }
@@ -130,7 +152,7 @@ LABEL { font-weight : normal; }
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="embeddedPort"
-         value="<%= ((embeddedPort != -1) ? ""+embeddedPort : "9090") %>">
+         value="<%= ((embeddedPort != Integer.MIN_VALUE) ? ""+embeddedPort : "9090") %>">
         <span class="jive-description">
         <br>
         <fmt:message key="setup.host.settings.port_number" />
@@ -150,7 +172,7 @@ LABEL { font-weight : normal; }
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="securePort"
-         value="<%= ((securePort != -1) ? ""+securePort : "9091") %>">
+         value="<%= ((securePort != Integer.MIN_VALUE) ? ""+securePort : "9091") %>">
         <span class="jive-description">
         <br>
         <fmt:message key="setup.host.settings.secure_port_number" />
@@ -192,4 +214,5 @@ LABEL { font-weight : normal; }
 document.f.domain.focus();
 </script>
 
-<%@ include file="setup-footer.jsp" %>
+</body>
+</html>

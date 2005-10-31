@@ -23,7 +23,7 @@
         <filter-class>org.jivesoftware.admin.AuthCheckFilter</filter-class>
         <init-param>
             <param-name>excludes</param-name>
-            <param-value>login.jsp,index.jsp?logout=true,setup-,.gif,.png,error-serverdown.jsp</param-value>
+            <param-value>login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp</param-value>
         </init-param>
     </filter>
 

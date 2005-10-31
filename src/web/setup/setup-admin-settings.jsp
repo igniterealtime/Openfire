@@ -10,27 +10,28 @@
                  java.util.Date,
                  org.jivesoftware.messenger.user.User,
                  org.jivesoftware.messenger.user.UserManager,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.auth.AuthFactory,
-                 org.jivesoftware.messenger.auth.AuthToken,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.messenger.auth.DefaultAuthProvider" %>
+                 org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.jivesoftware.messenger.auth.AuthFactory"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
 
 <%! // Global vars, methods, etc
     void setSetupFinished(HttpSession session) {
         JiveGlobals.setXMLProperty("setup","true");
         // update the sidebar status
         session.setAttribute("jive.setup.sidebar.4","done");
-        // Indicate a server is required:
-        session.setAttribute("jive.setup.requireRestart","true");
     }
 %>
-
-<%@ include file="setup-global.jspf" %>
-<jsp:useBean id="adminManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters
     String password = ParamUtils.getParameter(request,"password");
@@ -51,7 +52,7 @@
     }
 
     // Error checks
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (doContinue) {
         if (password == null) {
             errors.put("password","password");
@@ -86,8 +87,6 @@
                 adminUser.setCreationDate(now);
                 adminUser.setModificationDate(now);
 
-                // TODO: Check for Plugin
-
                 // setup is finished, indicate so:
                 setSetupFinished(session);
                 // All good so redirect
@@ -103,8 +102,11 @@
         }
     }
 %>
-
-<%@ include file="setup-header.jspf" %>
+<html>
+    <head>
+        <title><fmt:message key="setup.admin.settings.account" /></title>
+    </head>
+<body>
 
 <p class="jive-setup-page-header">
 <fmt:message key="setup.admin.settings.account" />
@@ -144,6 +146,25 @@ function checkClick() {
 <form action="setup-admin-settings.jsp" name="acctform" method="post" onsubmit="return checkClick();">
 
 <table cellpadding="3" cellspacing="2" border="0">
+
+<%
+    // If the current password is "admin", don't show the text box for them to type
+    // the current password. This makes setup simpler for first-time users.
+    String currentPass = null;
+    try {
+        currentPass = AuthFactory.getPassword("admin");
+    }
+    catch (Exception e) {
+        // Ignore.
+    }
+    if ("admin".equals(currentPass)) {
+%>
+<input type="hidden" name="password" value="admin">
+<%
+    }
+    else {
+%>
+
 <tr valign="top">
     <td class="jive-label">
         <fmt:message key="setup.admin.settings.current_password" />
@@ -163,6 +184,9 @@ function checkClick() {
         <% } %>
     </td>
 </tr>
+
+<%  } %>
+
 <tr valign="top">
     <td class="jive-label">
         <fmt:message key="setup.admin.settings.email" />
@@ -234,4 +258,5 @@ document.acctform.password.focus();
 //-->
 </script>
 
-<%@ include file="setup-footer.jsp" %>
+</body>
+</html>

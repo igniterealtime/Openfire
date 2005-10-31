@@ -24,7 +24,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
- * A model for admin tab and sidebar info. This class loads in xml definitions of the
+ * A model for admin tab and sidebar info. This class loads in XML definitions of the
  * data and produces an in-memory model.<p>
  *
  * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed
@@ -40,10 +40,6 @@ public class AdminConsole {
     private static Element generatedModel;
 
     static {
-        init();
-    }
-
-    private static void init() {
         overrideModels = new LinkedHashMap<String,Element>();
         load();
     }

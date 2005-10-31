@@ -14,22 +14,81 @@
                  org.jivesoftware.database.ConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  java.util.*" %>
+<%@ page import="java.io.File"%>
+<%@ page import="java.sql.Connection"%>
+<%@ page import="java.sql.Statement"%>
+<%@ page import="java.sql.SQLException"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.ClassUtils"%>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+
+<%
+	// Redirect if we've already run setup:
+	if (!XMPPServer.getInstance().isSetupMode()) {
+        response.sendRedirect("setup-completed.jsp");
+        return;
+    }
+%>
 
 <%! // Global vars
 
     static final String STANDARD = "standard";
     static final String JNDI = "jndi";
     static final String EMBEDDED = "embedded";
+
+    boolean testConnection(Map<String,String> errors) {
+        boolean success = true;
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            if (con == null) {
+                success = false;
+                errors.put("general","A connection to the database could not be "
+                    + "made. View the error message by opening the "
+                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                    + "file, then go back to fix the problem.");
+            }
+            else {
+            	// See if the Jive db schema is installed.
+            	try {
+            		Statement stmt = con.createStatement();
+            		// Pick an arbitrary table to see if it's there.
+            		stmt.executeQuery("SELECT * FROM jiveID");
+            		stmt.close();
+            	}
+            	catch (SQLException sqle) {
+                    success = false;
+                    sqle.printStackTrace();
+                    errors.put("general","The Jive Messenger database schema does not "
+                        + "appear to be installed. Follow the installation guide to "
+                        + "fix this error.");
+            	}
+            }
+        }
+        catch (Exception ignored) {}
+        finally {
+            try {
+        	    con.close();
+            } catch (Exception ignored) {}
+        }
+        return success;
+    }
 %>
 
-<%@ include file="setup-global.jspf" %>
+<%
+    boolean embeddedMode = false;
+    try {
+        ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
+        embeddedMode = true;
+    }
+    catch (Exception ignored) {}
 
-<%  // Get parameters
+    // Get parameters
     String mode = ParamUtils.getParameter(request,"mode");
     boolean next = ParamUtils.getBooleanParameter(request,"next");
 
     // handle a mode redirect
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (next) {
         if (STANDARD.equals(mode)) {
             response.sendRedirect("setup-datasource-standard.jsp");
@@ -71,7 +130,11 @@
     }
 %>
 
-<%@ include file="setup-header.jspf" %>
+<html>
+<head>
+    <title><fmt:message key="setup.datasource.settings.title" /></title>
+</head>
+<body>
 
 <p class="jive-setup-page-header">
 <fmt:message key="setup.datasource.settings.title" />
@@ -101,8 +164,8 @@
          <%= ((STANDARD.equals(mode)) ? "checked" : "") %>>
     </td>
     <td>
-        <label for="rb02"><b><fmt:message key="setup.datasource.settings.connect" /></b></label> -
-        <fmt:message key="setup.datasource.settings.connect_info" />
+        <label for="rb02"><b><fmt:message key="setup.datasource.settings.connect" /></b></label>
+        <br><fmt:message key="setup.datasource.settings.connect_info" />
     </td>
 </tr>
 
@@ -114,8 +177,8 @@
              <%= ((JNDI.equals(mode)) ? "checked" : "") %>>
         </td>
         <td>
-            <label for="rb03"><b><fmt:message key="setup.datasource.settings.jndi" /></b></label> -
-            <fmt:message key="setup.datasource.settings.jndi_info" />
+            <label for="rb03"><b><fmt:message key="setup.datasource.settings.jndi" /></b></label>
+            <br><fmt:message key="setup.datasource.settings.jndi_info" />
         </td>
     </tr>
 
@@ -127,8 +190,8 @@
          <%= ((EMBEDDED.equals(mode)) ? "checked" : "") %>>
     </td>
     <td>
-        <label for="rb01"><b><fmt:message key="setup.datasource.settings.embedded" /></b></label> -
-        <fmt:message key="setup.datasource.settings.embedded_info" />
+        <label for="rb01"><b><fmt:message key="setup.datasource.settings.embedded" /></b></label>
+        <br><fmt:message key="setup.datasource.settings.embedded_info" />
     </td>
 </tr>
 </table>
@@ -141,4 +204,5 @@
 
 </form>
 
-<%@ include file="setup-footer.jsp" %>
+</body>
+</html>

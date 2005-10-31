@@ -49,7 +49,7 @@ public class DbConnectionManager {
     private static final int CURRENT_MINOR_VERSION = 2;
 
     private static ConnectionProvider connectionProvider;
-    private static Object providerLock = new Object();
+    private static final Object providerLock = new Object();
 
     // True if connection profiling is turned on. Always false by default.
     private static boolean profilingEnabled = false;
@@ -354,6 +354,21 @@ public class DbConnectionManager {
         }
         // Remember what connection provider we want to use for restarts.
         JiveGlobals.setXMLProperty("connectionProvider.className", provider.getClass().getName());
+    }
+
+    /**
+     * Destroys the currennt connection provider. Future calls to
+     * {@link #getConnectionProvider()} will return <tt>null</tt> until a new
+     * ConnectionProvider is set, or one is automatically loaded by a call to
+     * {@link #getConnection()}.
+     */
+    public static void destroyConnectionProvider() {
+        synchronized (providerLock) {
+            if (connectionProvider != null) {
+                connectionProvider.destroy();
+                connectionProvider = null;
+            }
+        }
     }
 
     /**

@@ -26,8 +26,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.mortbay.http.SunJsseListener;
 import org.mortbay.http.HttpListener;
+import org.mortbay.http.HttpContext;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.WebApplicationContext;
 import org.mortbay.log.Factory;
 import org.mortbay.log.LogImpl;
 import org.mortbay.log.OutputStreamLogSink;
@@ -44,10 +44,11 @@ import java.io.File;
 public class AdminConsolePlugin implements Plugin {
 
     private static Server jetty = null;
-    private String interfaceName;
     private int port;
     private int securePort;
 
+    private File pluginDir;
+    private HttpContext context = null;
     private HttpListener plainListener = null;
     private HttpListener secureListener = null;
 
@@ -59,15 +60,30 @@ public class AdminConsolePlugin implements Plugin {
 
     public void restartListeners() {
         try {
+            String restarting = LocaleUtils.getLocalizedString("admin.console.restarting");
+            System.out.println(restarting);
+            Log.info(restarting);
+
             jetty.stop();
             if (plainListener != null) {
                 jetty.removeListener(plainListener);
+                plainListener = null;
             }
             if (secureListener != null) {
                 jetty.removeListener(secureListener);
+                secureListener = null;
             }
+            jetty.removeContext(context);
             loadListeners();
+
+            // Add web-app
+            context = jetty.addWebApplication("/",
+                    pluginDir.getAbsoluteFile() + File.separator + "webapp");
+            context.setWelcomeFiles(new String[]{"index.jsp"});
+
             jetty.start();
+
+            printListenerMessages();
         }
         catch (Exception e) {
             Log.error(e);
@@ -75,10 +91,10 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     private void loadListeners() throws Exception {
-         // Configure HTTP socket listener
-        // Setting this property to a not null value will imply that the Jetty server will only
-        // accept connect requests to that IP address
-        interfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
+        // Configure HTTP socket listener. Setting the interface property to a
+        // non null value will imply that the Jetty server will only
+        // accept connect requests to that IP address.
+        String interfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
         port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         InetAddrPort address = new InetAddrPort(interfaceName, port);
         if (port > 0) {
@@ -92,21 +108,12 @@ public class AdminConsolePlugin implements Plugin {
                 // Get the keystore location. The default location is security/keystore
                 String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
                         "resources" + File.separator + "security" + File.separator + "keystore");
+                // The location is relative to the home directory of the application.
                 keyStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + keyStoreLocation;
 
                 // Get the keystore password. The default password is "changeit".
                 String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
                 keypass = keypass.trim();
-
-                // Get the truststore location; default at security/truststore
-                String trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
-                        "resources" + File.separator + "security" + File.separator + "truststore");
-                trustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator +
-                        trustStoreLocation;
-
-                // Get the truststore passwprd; default is "changeit".
-                String trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
-                trustpass = trustpass.trim();
 
                 listener.setKeystore(keyStoreLocation);
                 listener.setKeyPassword(keypass);
@@ -124,6 +131,7 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     public void initializePlugin(PluginManager manager, File pluginDir) {
+        this.pluginDir = pluginDir;
         try {
             // Configure logging to a file, creating log dir if needed
             System.setProperty("org.apache.commons.logging.LogFactory", "org.mortbay.log.Factory");
@@ -144,40 +152,13 @@ public class AdminConsolePlugin implements Plugin {
             loadListeners();
 
             // Add web-app
-            WebApplicationContext webAppContext = jetty.addWebApplication("/",
+            context = jetty.addWebApplication("/",
                     pluginDir.getAbsoluteFile() + File.separator + "webapp");
-            webAppContext.setWelcomeFiles(new String[]{"index.jsp"});
+            context.setWelcomeFiles(new String[]{"index.jsp"});
 
             jetty.start();
 
-            String warning = LocaleUtils.getLocalizedString("admin.console.warning");
-            String listening = LocaleUtils.getLocalizedString("admin.console.listening");
-
-            if (plainListener == null && secureListener == null) {
-                Log.info(warning);
-                System.out.println(warning);
-            }
-            else if (plainListener == null && secureListener != null) {
-                Log.info(listening + " https://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
-                System.out.println(listening + " https://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
-            }
-            else if (secureListener == null && plainListener != null) {
-                Log.info(listening + " http://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
-                System.out.println(listening + " http://" +
-                        XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
-            }
-            else {
-                String msg = listening + ":\n" +
-                        "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
-                        port + "\n" +
-                        "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
-                        securePort;
-                Log.info(msg);
-                System.out.println(msg);
-            }
+            printListenerMessages();
         }
         catch (Exception e) {
             System.err.println("Error starting admin console: " + e.getMessage()); 
@@ -206,5 +187,39 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static Server getJettyServer() {
         return jetty;
+    }
+
+    /**
+     * Writes out startup messages for the listeners.
+     */
+    private void printListenerMessages() {
+        String warning = LocaleUtils.getLocalizedString("admin.console.warning");
+        String listening = LocaleUtils.getLocalizedString("admin.console.listening");
+
+        if (plainListener == null && secureListener == null) {
+            Log.info(warning);
+            System.out.println(warning);
+        }
+        else if (plainListener == null && secureListener != null) {
+            Log.info(listening + " https://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+            System.out.println(listening + " https://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+        }
+        else if (secureListener == null && plainListener != null) {
+            Log.info(listening + " http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+            System.out.println(listening + " http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+        }
+        else {
+            String msg = listening + ":\n" +
+                    "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    port + "\n" +
+                    "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    securePort;
+            Log.info(msg);
+            System.out.println(msg);
+        }
     }
 }

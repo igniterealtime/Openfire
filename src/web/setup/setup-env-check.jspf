@@ -7,8 +7,7 @@
 <%@ page import="java.lang.reflect.Method,
                  java.io.File,
                  org.jivesoftware.util.LocaleUtils" %>
-
-<%-- note, the loadClass method is defined in setup-global.jspf --%>
+<%@ page import="org.jivesoftware.util.ClassUtils"%>
 
 <%  // Check the user's environment for minimum requirements.
 
@@ -21,33 +20,33 @@
 
     // Check for JDK 1.5
     try {
-        loadClass("java.util.concurrent.ConcurrentHashMap");
+        ClassUtils.forName("java.util.concurrent.ConcurrentHashMap");
         jdk13Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
     // Check for Servlet 2.3:
     try {
-        Class c = loadClass("javax.servlet.http.HttpSession");
+        Class c = ClassUtils.forName("javax.servlet.http.HttpSession");
         Method m = c.getMethod("getAttribute",new Class[]{String.class});
         servlet22Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
     // Check for JSP 1.1:
     try {
-        loadClass("javax.servlet.jsp.tagext.Tag");
+        ClassUtils.forName("javax.servlet.jsp.tagext.Tag");
         jsp11Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
     // Check that the Messenger jar are installed:
     try {
-        loadClass("org.jivesoftware.messenger.XMPPServer");
+        ClassUtils.forName("org.jivesoftware.messenger.XMPPServer");
         jiveJarsInstalled = true;
     }
     catch (ClassNotFoundException cnfe) {}
 
     // Try to determine what the jiveHome directory is:
     try {
-        Class jiveGlobalsClass = loadClass("org.jivesoftware.util.JiveGlobals");
+        Class jiveGlobalsClass = ClassUtils.forName("org.jivesoftware.util.JiveGlobals");
         Method getMessengerHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
         String messengerHomeProp = (String)getMessengerHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
         if (messengerHomeProp != null) {

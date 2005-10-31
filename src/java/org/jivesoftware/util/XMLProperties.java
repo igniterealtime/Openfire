@@ -46,7 +46,7 @@ public class XMLProperties {
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map propertyCache = new HashMap();
+    private Map<String, String> propertyCache = new HashMap<String, String>();
 
     /**
      * Creates a new XMLPropertiesTest object.

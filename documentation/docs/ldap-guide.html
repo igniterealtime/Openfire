@@ -193,16 +193,16 @@
 <p>You'll most likely want to change which usernames are authorized to login to the
     admin console. By default, only the user with username "admin" is allowed to login. However,
     you may have different users in your LDAP directory that you'd like to be administrators. The
-    list of authorized usernames is controlled via the <tt>adminConsole.authorizedUsernames</tt>
+    list of authorized usernames is controlled via the <tt>admin.authorizedUsernames</tt>
     property. For example, to let the usersnames "joe" and "jane" login to the admin console:</p>
 
 <pre><code>
     &lt;jive&gt;
       ...
-      &lt;adminConsole&gt;
+      &lt;admin&gt;
         ...
         &lt;authorizedUsernames&gt;joe, jane&lt;/authorizedUsernames&gt;
-      &lt;/adminConsole&gt;
+      &lt;/admin&gt;
       ...
     &lt;/jive&gt;
 </code></pre>

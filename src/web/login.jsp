@@ -8,11 +8,12 @@
                  org.jivesoftware.messenger.auth.AuthToken,
                  org.jivesoftware.messenger.auth.AuthFactory,
                  org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.util.JiveGlobals"
+                 org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.*"%>
+<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -22,17 +23,12 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%! // List of allowed usernames:
-    static Map authorizedUsernames = null;
-    static String authorizedUsernameProp = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
+    static Map authorizedUsernames = new HashMap();
     static {
-        if (authorizedUsernameProp != null) {
-            StringTokenizer tokenizer = new StringTokenizer(authorizedUsernameProp, ",");
-            while (tokenizer.hasMoreTokens()) {
-                if (authorizedUsernames == null) {
-                    authorizedUsernames = new HashMap();
-                }
-                String tok = tokenizer.nextToken().trim();
-                authorizedUsernames.put(tok, tok);
+        for (JID jid : XMPPServer.getInstance().getAdmins()) {
+            // Only allow local users to log into the admin console
+            if (XMPPServer.getInstance().isLocal(jid)) {
+                authorizedUsernames.put(jid.getNode(), jid.getNode());
             }
         }
     }

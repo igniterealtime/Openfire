@@ -16,6 +16,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.messenger.audit.AuditManager;
 import org.jivesoftware.messenger.audit.spi.AuditManagerImpl;
+import org.jivesoftware.messenger.commands.AdHocCommandHandler;
 import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.container.AdminConsolePlugin;
 import org.jivesoftware.messenger.container.Module;
@@ -213,6 +214,10 @@ public class XMPPServer {
         Collection<JID> admins = new ArrayList<JID>();
         // Add the JIDs of the local users that are admins
         String usernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        if (usernames == null) {
+            // Fall back to old method for defining admins (i.e. using adminConsole prefix
+            usernames = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
+        }
         usernames = (usernames == null || usernames.trim().length() == 0) ? "admin" : usernames;
         StringTokenizer tokenizer = new StringTokenizer(usernames, ",");
         while (tokenizer.hasMoreTokens()) {
@@ -389,6 +394,7 @@ public class XMPPServer {
         loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
+        loadModule(AdHocCommandHandler.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
@@ -1050,5 +1056,16 @@ public class XMPPServer {
      */
     public MultiUserChatServer getMultiUserChatServer() {
         return (MultiUserChatServer) modules.get(MultiUserChatServerImpl.class);
+    }
+
+    /**
+     * Returns the <code>AdHocCommandHandler</code> registered with this server. The
+     * <code>AdHocCommandHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>AdHocCommandHandler</code> registered with this server.
+     */
+    public AdHocCommandHandler getAdHocCommandHandler() {
+        return (AdHocCommandHandler) modules.get(AdHocCommandHandler.class);
     }
 }

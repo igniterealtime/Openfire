@@ -146,6 +146,10 @@ public class Group implements Cacheable {
         }
     }
 
+    public String toString() {
+        return name;
+    }
+
     /**
      * Returns all extended properties of the group. Groups
      * have an arbitrary number of extended properties.

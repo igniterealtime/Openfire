@@ -222,7 +222,14 @@ public class XMPPServer {
         StringTokenizer tokenizer = new StringTokenizer(usernames, ",");
         while (tokenizer.hasMoreTokens()) {
             String username = tokenizer.nextToken();
-            admins.add(createJID(username, null));
+            try {
+                admins.add(createJID(username, null));
+            }
+            catch (IllegalArgumentException e) {
+                // Ignore usernames that when appended @server.com result in an invalid JID
+                Log.warn("Invalid username found in authorizedUsernames at jive-messenger.xml: " +
+                        username, e);
+            }
         }
 
         // Add bare JIDs of users that are admins (may include remote users)
@@ -231,7 +238,12 @@ public class XMPPServer {
         tokenizer = new StringTokenizer(jids, ",");
         while (tokenizer.hasMoreTokens()) {
             String jid = tokenizer.nextToken();
-            admins.add(new JID(jid));
+            try {
+                admins.add(new JID(jid));
+            }
+            catch (IllegalArgumentException e) {
+                Log.warn("Invalid JID found in authorizedJIDs at jive-messenger.xml: " + jid, e);
+            }
         }
 
         return admins;

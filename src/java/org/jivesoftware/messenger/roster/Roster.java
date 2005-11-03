@@ -603,34 +603,39 @@ public class Roster implements Cacheable {
                         ")");
             }
         }
+
+        // If an item already exists then take note of the old subscription status
+        RosterItem.SubType prevSubscription = null;
+        if (!newItem) {
+            prevSubscription = item.getSubStatus();
+        }
+
         // Update the subscription of the item **based on the item groups**
-        if (newItem || item.isOnlyShared()) {
-            Collection<Group> userGroups = null;
-            Collection<Group> sharedGroups = new ArrayList<Group>();
-            try {
-                User rosterUser = UserManager.getInstance().getUser(getUsername());
-                GroupManager groupManager = GroupManager.getInstance();
-                userGroups = groupManager.getGroups(rosterUser);
-                sharedGroups.addAll(item.getSharedGroups());
-                // Add the new group to the list of groups to check
-                sharedGroups.add(group);
-                // Set subscription type to BOTH if the roster user belongs to a shared group
-                // that is mutually visible with a shared group of the new roster item
-                if (rosterManager.hasMutualVisibility(getUsername(), userGroups, jid.getNode(),
-                        sharedGroups)) {
-                    item.setSubStatus(RosterItem.SUB_BOTH);
-                }
-                // Update the subscription status depending on the group membership of the new
-                // user and this user
-                else if (group.isUser(addedUser) && !group.isUser(getUsername())) {
-                    item.setSubStatus(RosterItem.SUB_TO);
-                }
-                else if (!group.isUser(addedUser) && group.isUser(getUsername())) {
-                    item.setSubStatus(RosterItem.SUB_FROM);
-                }
+        Collection<Group> userGroups = null;
+        Collection<Group> sharedGroups = new ArrayList<Group>();
+        try {
+            User rosterUser = UserManager.getInstance().getUser(getUsername());
+            GroupManager groupManager = GroupManager.getInstance();
+            userGroups = groupManager.getGroups(rosterUser);
+            sharedGroups.addAll(item.getSharedGroups());
+            // Add the new group to the list of groups to check
+            sharedGroups.add(group);
+            // Set subscription type to BOTH if the roster user belongs to a shared group
+            // that is mutually visible with a shared group of the new roster item
+            if (rosterManager.hasMutualVisibility(getUsername(), userGroups, jid.getNode(),
+                    sharedGroups)) {
+                item.setSubStatus(RosterItem.SUB_BOTH);
             }
-            catch (UserNotFoundException e) {
+            // Update the subscription status depending on the group membership of the new
+            // user and this user
+            else if (group.isUser(addedUser) && !group.isUser(getUsername())) {
+                item.setSubStatus(RosterItem.SUB_TO);
             }
+            else if (!group.isUser(addedUser) && group.isUser(getUsername())) {
+                item.setSubStatus(RosterItem.SUB_FROM);
+            }
+        }
+        catch (UserNotFoundException e) {
         }
 
         // Add the shared group to the list of shared groups
@@ -640,6 +645,20 @@ public class Roster implements Cacheable {
         else {
             item.addInvisibleSharedGroup(group);
         }
+
+        // If the item already exists then check if the subscription status should be
+        // changed to BOTH based on the old and new subscription status
+        if (prevSubscription != null) {
+            if (prevSubscription == RosterItem.SUB_TO &&
+                    item.getSubStatus() == RosterItem.SUB_FROM) {
+                item.setSubStatus(RosterItem.SUB_BOTH);
+            }
+            else if (prevSubscription == RosterItem.SUB_FROM &&
+                    item.getSubStatus() == RosterItem.SUB_TO) {
+                item.setSubStatus(RosterItem.SUB_BOTH);
+            }
+        }
+
         // Brodcast to all the user resources of the updated roster item
         broadcast(item, true);
         // Probe the presence of the new group user
@@ -682,54 +701,71 @@ public class Roster implements Cacheable {
             }
         }
         // Update the subscription of the item **based on the item groups**
-        if (newItem || item.isOnlyShared()) {
-            Collection<Group> userGroups = null;
-            try {
-                User rosterUser = UserManager.getInstance().getUser(getUsername());
-                GroupManager groupManager = GroupManager.getInstance();
-                userGroups = groupManager.getGroups(rosterUser);
-                // Set subscription type to BOTH if the roster user belongs to a shared group
-                // that is mutually visible with a shared group of the new roster item
-                if (rosterManager.hasMutualVisibility(getUsername(), userGroups, jid.getNode(),
-                        groups)) {
-                    item.setSubStatus(RosterItem.SUB_BOTH);
-                    for (Group group : groups) {
-                        if (rosterManager.isGroupVisible(group, getUsername())) {
-                            // Add the shared group to the list of shared groups
-                            item.addSharedGroup(group);
-                        }
-                    }
-                    // Add to the item the groups of this user that generated a FROM subscription
-                    // Note: This FROM subscription is overridden by the BOTH subscription but in
-                    // fact there is a TO-FROM relation between these two users that ends up in a
-                    // BOTH subscription
-                    for (Group group : userGroups) {
-                        if (!group.isUser(addedUser) &&
-                                rosterManager.isGroupVisible(group, addedUser)) {
-                            // Add the shared group to the list of invisible shared groups
-                            item.addInvisibleSharedGroup(group);
-                        }
+        Collection<Group> userGroups = null;
+        try {
+            User rosterUser = UserManager.getInstance().getUser(getUsername());
+            GroupManager groupManager = GroupManager.getInstance();
+            userGroups = groupManager.getGroups(rosterUser);
+            // Set subscription type to BOTH if the roster user belongs to a shared group
+            // that is mutually visible with a shared group of the new roster item
+            if (rosterManager.hasMutualVisibility(getUsername(), userGroups, jid.getNode(),
+                    groups)) {
+                item.setSubStatus(RosterItem.SUB_BOTH);
+                for (Group group : groups) {
+                    if (rosterManager.isGroupVisible(group, getUsername())) {
+                        // Add the shared group to the list of shared groups
+                        item.addSharedGroup(group);
                     }
                 }
-                else {
-                    // Assume by default that the contact has subscribed from the presence of
-                    // this user
-                    item.setSubStatus(RosterItem.SUB_FROM);
-                    // Check if the user may see the new contact in a shared group
-                    for (Group group : groups) {
-                        if (rosterManager.isGroupVisible(group, getUsername())) {
-                            // Add the shared group to the list of shared groups
-                            item.addSharedGroup(group);
-                            item.setSubStatus(RosterItem.SUB_TO);
-                        }
-                    }
-                    if (item.getSubStatus() == RosterItem.SUB_FROM) {
-                        item.addInvisibleSharedGroup(addedGroup);
+                // Add to the item the groups of this user that generated a FROM subscription
+                // Note: This FROM subscription is overridden by the BOTH subscription but in
+                // fact there is a TO-FROM relation between these two users that ends up in a
+                // BOTH subscription
+                for (Group group : userGroups) {
+                    if (!group.isUser(addedUser) &&
+                            rosterManager.isGroupVisible(group, addedUser)) {
+                        // Add the shared group to the list of invisible shared groups
+                        item.addInvisibleSharedGroup(group);
                     }
                 }
             }
-            catch (UserNotFoundException e) {
+            else {
+                // If an item already exists then take note of the old subscription status
+                RosterItem.SubType prevSubscription = null;
+                if (!newItem) {
+                    prevSubscription = item.getSubStatus();
+                }
+
+                // Assume by default that the contact has subscribed from the presence of
+                // this user
+                item.setSubStatus(RosterItem.SUB_FROM);
+                // Check if the user may see the new contact in a shared group
+                for (Group group : groups) {
+                    if (rosterManager.isGroupVisible(group, getUsername())) {
+                        // Add the shared group to the list of shared groups
+                        item.addSharedGroup(group);
+                        item.setSubStatus(RosterItem.SUB_TO);
+                    }
+                }
+                if (item.getSubStatus() == RosterItem.SUB_FROM) {
+                    item.addInvisibleSharedGroup(addedGroup);
+                }
+
+                // If the item already exists then check if the subscription status should be
+                // changed to BOTH based on the old and new subscription status
+                if (prevSubscription != null) {
+                    if (prevSubscription == RosterItem.SUB_TO &&
+                            item.getSubStatus() == RosterItem.SUB_FROM) {
+                        item.setSubStatus(RosterItem.SUB_BOTH);
+                    }
+                    else if (prevSubscription == RosterItem.SUB_FROM &&
+                            item.getSubStatus() == RosterItem.SUB_TO) {
+                        item.setSubStatus(RosterItem.SUB_BOTH);
+                    }
+                }
             }
+        }
+        catch (UserNotFoundException e) {
         }
         // Brodcast to all the user resources of the updated roster item
         broadcast(item, true);

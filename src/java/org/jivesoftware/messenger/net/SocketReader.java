@@ -203,6 +203,7 @@ public abstract class SocketReader implements Runnable {
                     session.process(reply);
                     continue;
                 }
+                // Check that the presence type is valid. If not then assume available type
                 try {
                     packet.getType();
                 }
@@ -211,6 +212,16 @@ public abstract class SocketReader implements Runnable {
                     // The presence packet contains an invalid presence type so replace it with
                     // an available presence type
                     packet.setType(null);
+                }
+                // Check that the presence show is valid. If not then assume available show value
+                try {
+                    packet.getShow();
+                }
+                catch (IllegalArgumentException e) {
+                    Log.warn("Invalid presence show", e);
+                    // The presence packet contains an invalid presence show so replace it with
+                    // an available presence show
+                    packet.setShow(null);
                 }
                 processPresence(packet);
             }

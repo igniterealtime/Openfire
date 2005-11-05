@@ -143,8 +143,13 @@ public class AdminConsolePlugin implements Plugin {
             OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
             logSink.start();
             LogImpl log = (LogImpl) Factory.getFactory().getInstance("");
-            // Ignore INFO logs.
-            log.setVerbose(-1);
+            // Ignore INFO logs unless debugging turned on.
+            if (!Log.isDebugEnabled()) {
+                log.setVerbose(-1);
+            }
+            else {
+                log.setVerbose(1);
+            }
             log.add(logSink);
 
             jetty = new Server();

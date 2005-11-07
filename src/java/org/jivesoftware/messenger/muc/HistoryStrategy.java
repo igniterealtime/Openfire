@@ -186,7 +186,7 @@ public class HistoryStrategy {
      * @return An iterator of Message objects to be sent to the new room member.
      */
     public Iterator getMessageHistory(){
-        LinkedList list = new LinkedList(history);
+        LinkedList list = (LinkedList) history.clone();
         return list.iterator();
     }
 
@@ -198,7 +198,7 @@ public class HistoryStrategy {
      * @return A list iterator of Message objects positioned at the end of the list.
      */
     public ListIterator getReverseMessageHistory(){
-        LinkedList list = new LinkedList(history);
+        LinkedList list = (LinkedList) history.clone();
         return list.listIterator(list.size());
     }
 

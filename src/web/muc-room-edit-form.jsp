@@ -20,13 +20,12 @@
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.messenger.muc.NotAllowedException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -128,7 +127,7 @@
                             errors.put("room_already_exists", "room_already_exists");
                         }
                     }
-                    catch (UnauthorizedException e) {
+                    catch (NotAllowedException e) {
                         // This user is not allowed to create rooms
                         errors.put("not_enough_permissions", "not_enough_permissions");
                     }

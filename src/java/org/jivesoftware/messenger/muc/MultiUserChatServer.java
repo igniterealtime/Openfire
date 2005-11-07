@@ -201,9 +201,9 @@ public interface MultiUserChatServer extends Component {
      * @param roomName Name of the room to get.
      * @param userjid The user's normal jid, not the chat nickname jid.
      * @return The chatroom for the given name.
-     * @throws UnauthorizedException If the caller doesn't have permission to create a new room.
+     * @throws NotAllowedException If the caller doesn't have permission to create a new room.
      */
-    MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException;
+    MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException;
 
     /**
      * Obtains a chatroom by name. If the chatroom does not exists then null will be returned.

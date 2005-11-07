@@ -420,6 +420,9 @@ public class MUCUserImpl implements MUCUser {
                         catch (NotAcceptableException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                         }
+                        catch (NotAllowedException e) {
+                            sendErrorPacket(packet, PacketError.Condition.not_allowed);
+                        }
                     }
                     else {
                         // TODO: send error message to user (can't send presence to group you

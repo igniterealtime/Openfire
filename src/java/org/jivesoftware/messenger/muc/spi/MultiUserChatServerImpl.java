@@ -385,7 +385,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException {
+    public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
         MUCRoom room = null;
         synchronized (roomName.intern()) {
             room = rooms.get(roomName.toLowerCase());
@@ -407,7 +407,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         if (!allowedToCreate.contains(userjid.toBareJID())) {
                             // The user is not in the list of allowed JIDs to create a room so raise
                             // an exception
-                            throw new UnauthorizedException();
+                            throw new NotAllowedException();
                         }
                     }
                     room.addFirstOwner(userjid.toBareJID());

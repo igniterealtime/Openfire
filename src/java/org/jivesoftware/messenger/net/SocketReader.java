@@ -20,6 +20,7 @@ import org.jivesoftware.messenger.interceptor.PacketRejectedException;
 import org.jivesoftware.messenger.server.OutgoingSessionPromise;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -447,16 +448,22 @@ public abstract class SocketReader implements Runnable {
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
         if (validateHost() && isHostUnknown(host)) {
-            Writer writer = connection.getWriter();
             StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
+            // Append stream header
+            sb.append("<stream:stream ");
+            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
+            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
+            sb.append("version=\"1.0\">");
             // Set the host_unknown error
             StreamError error = new StreamError(StreamError.Condition.host_unknown);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            // Deliver stanza
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             // Log a warning so that admins can track this cases from the server side
@@ -470,16 +477,21 @@ public abstract class SocketReader implements Runnable {
         else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
-            Writer writer = connection.getWriter();
             StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
+            // Append stream header
+            sb.append("<stream:stream ");
+            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
+            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
+            sb.append("version=\"1.0\">");
             // Include the bad-namespace-prefix in the response
             StreamError error = new StreamError(StreamError.Condition.bad_namespace_prefix);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             // Log a warning so that admins can track this cases from the server side

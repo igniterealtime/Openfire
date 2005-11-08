@@ -285,7 +285,7 @@ public class MUCUserImpl implements MUCUser {
 
     public void process(IQ packet) {
         // Ignore IQs of type ERROR or RESULT sent to a room
-        if (IQ.Type.error == packet.getType() || IQ.Type.result == packet.getType()) {
+        if (IQ.Type.error == packet.getType()) {
             return;
         }
         lastPacketTime = System.currentTimeMillis();
@@ -302,6 +302,19 @@ public class MUCUserImpl implements MUCUser {
             if (role == null) {
                 // TODO: send error message to user (can't send packets to group you haven't
                 // joined)
+            }
+            else if (IQ.Type.result == packet.getType()) {
+                // Only process IQ result packet if it's a private packet sent to another
+                // room occupant
+                if (packet.getTo().getResource() != null) {
+                    try {
+                        // User is sending an IQ result packet to another room occupant
+                        role.getChatRoom().sendPrivatePacket(packet, role);
+                    }
+                    catch (NotFoundException e) {
+                        // Do nothing. No error will be sent to the sender of the IQ result packet
+                    }
+                }
             }
             else {
                 // Check and reject conflicting packets with conflicting roles

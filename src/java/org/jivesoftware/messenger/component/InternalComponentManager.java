@@ -106,7 +106,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void removeComponent(String subdomain) {
-        components.remove(subdomain);
+        Component component = components.remove(subdomain);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
@@ -118,6 +118,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         // Remove the disco item from the server for the component that is being removed
         if (XMPPServer.getInstance().getIQDiscoItemsHandler() != null) {
             XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
+        }
+
+        // Ask the component to shutdown
+        if (component != null) {
+            component.shutdown();
         }
     }
 

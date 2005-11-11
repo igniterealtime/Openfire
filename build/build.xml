@@ -652,6 +652,13 @@
         <mkdir dir="${release.out.dir}"/>
         <mkdir dir="${release.src.out.dir}"/>
 
+        <!-- Make & copy the search plugin. -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${target.dir}">
+                <include name="plugins/search.jar"/>
+            </fileset>
+        </copy>
+
         <!-- Copy all prepare dirs to the binary dist -->
         <ant antfile="${basedir}/build/build.xml" target="-prepare">
             <property name="prepare.out.dir" value="${release.out.dir}"/>

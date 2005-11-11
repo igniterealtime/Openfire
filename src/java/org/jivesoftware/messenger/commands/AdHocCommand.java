@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-abstract class AdHocCommand {
+public abstract class AdHocCommand {
 
     /**
      * Label of the command. This information may be used to display the command as a button

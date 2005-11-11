@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: DefaultVCardProvider.java,v $
  * $Revision$
  * $Date$
  *
@@ -76,7 +76,7 @@ public class DefaultVCardProvider implements VCardProvider {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error("Error loading vCard of username: " + username, e);
             }
             finally {
                 // Return the sax reader to the pool
@@ -108,7 +108,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error creating vCard for username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -133,7 +133,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error updating vCard of username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -153,7 +153,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error deleting vCard of username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }

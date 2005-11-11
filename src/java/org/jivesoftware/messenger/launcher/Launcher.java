@@ -81,7 +81,15 @@ public class Launcher {
      */
     public Launcher() {
         // Initialize the SystemTray now (to avoid a bug!)
-        final SystemTray tray = SystemTray.getDefaultSystemTray();
+        SystemTray tray = null;
+        try {
+            tray = SystemTray.getDefaultSystemTray();
+        }
+        catch (Throwable e) {
+            // Log to System error instead of standard error log.
+            System.err.println("Error loading system tray library, system tray support disabled.");
+        }
+        
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -125,14 +133,15 @@ public class Launcher {
 
         // Set the icon.
         try {
-            splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
             splashLabel = new JLabel("", splash, JLabel.CENTER);
+            splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
 
             onIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_on-16x16.gif"));
             offIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_off-16x16.gif"));
             frame.setIconImage(offIcon.getImage());
         }
         catch (Exception e) {
+            e.printStackTrace();
         }
 
         mainPanel.setLayout(new BorderLayout());
@@ -152,10 +161,14 @@ public class Launcher {
         quitButton.setActionCommand("Quit");
 
         toolbar.setLayout(new GridBagLayout());
-        toolbar.add(startButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(stopButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(startButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(stopButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
 
         mainPanel.add(cardPanel, BorderLayout.CENTER);
         mainPanel.add(toolbar, BorderLayout.SOUTH);
@@ -213,7 +226,8 @@ public class Launcher {
                             try {
                                 sleep(8000);
                             }
-                            catch (Exception e) {
+                            catch (InterruptedException ie) {
+                                // Ignore.
                             }
                             // Enable the Launch Admin button/menu item only if the
                             // server has started.
@@ -282,7 +296,9 @@ public class Launcher {
         trayIcon.setIconAutoSize(true);
         trayIcon.addActionListener(actionListener);
 
-        tray.addTrayIcon(trayIcon);
+        if (tray != null) {
+            tray.addTrayIcon(trayIcon);
+        }
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -400,6 +416,7 @@ public class Launcher {
                                             "" + (char)c, styles);
                                 }
                                 catch (BadLocationException e) {
+                                    // Ignore.
                                 }
                             }
                             in.close();
@@ -427,6 +444,7 @@ public class Launcher {
                                     pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
                                 }
                                 catch (BadLocationException e) {
+                                    // Ignore.
                                 }
                             }
                             in.close();
@@ -446,7 +464,7 @@ public class Launcher {
                     cardLayout.show(cardPanel, "running");
                 }
                 catch (Exception ex) {
-
+                    // Ignore.
                 }
                 freshStart = false;
             }
@@ -478,7 +496,13 @@ public class Launcher {
         try {
             XMLProperties props = new XMLProperties(configFile);
             String port = props.getProperty("adminConsole.port");
-            BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+            String securePort = props.getProperty("adminConsole.securePort");
+            if ("-1".equals(port)) {
+                BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
+            }
+            else {
+                BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+            }
         }
         catch (Exception e) {
             JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());

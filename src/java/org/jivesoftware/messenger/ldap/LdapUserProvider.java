@@ -92,8 +92,14 @@ public class LdapUserProvider implements UserProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) { }
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
     }
 
@@ -131,8 +137,14 @@ public class LdapUserProvider implements UserProvider {
             Log.error(e);
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) { }
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
         this.userCount = count;
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
@@ -174,13 +186,15 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
         // If client-side sorting is enabled, do it.
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting")).booleanValue()) {
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
             Collections.sort(usernames);
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
@@ -200,17 +214,13 @@ public class LdapUserProvider implements UserProvider {
             constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
             // Limit results to those we'll need to process unless client-side sorting
             // is turned on.
-            if (!Boolean.valueOf(JiveGlobals.getXMLProperty(
-                    "ldap.clientSideSorting")).booleanValue())
-            {
+            if (!(Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting")))) {
                 constraints.setCountLimit(startIndex+numResults);
             }
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, constraints);
             // If client-side sorting is enabled, read in all results, sort, then get a sublist.
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
-                    "ldap.clientSideSorting")).booleanValue())
-            {
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 while (answer.hasMoreElements()) {
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
@@ -256,9 +266,11 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public String getPassword(String username) throws UserNotFoundException,
@@ -294,11 +306,16 @@ public class LdapUserProvider implements UserProvider {
     public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {
-        if (fields.isEmpty()) {
+        if (fields.isEmpty() || query == null || "".equals(query)) {
             return Collections.emptyList();
         }
         if (!searchFields.keySet().containsAll(fields)) {
             throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        }
+        // Make the query be a wildcard search by default. So, if the user searches for
+        // "John", make the search be "John*" instead.
+        if (!query.endsWith("*")) {
+            query = query + "*";
         }
         List<String> usernames = new ArrayList<String>();
         LdapContext ctx = null;
@@ -334,9 +351,7 @@ public class LdapUserProvider implements UserProvider {
                 usernames.add(JID.escapeNode(username));
             }
             // If client-side sorting is enabled, sort.
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
-                    "ldap.clientSideSorting")).booleanValue())
-            {
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(usernames);
             }
         }
@@ -350,9 +365,11 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
@@ -414,9 +431,7 @@ public class LdapUserProvider implements UserProvider {
             }
             
             // If client-side sorting is enabled, sort.
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty(
-                    "ldap.clientSideSorting")).booleanValue())
-            {
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(usernames);
             }
         }
@@ -430,9 +445,11 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public boolean isReadOnly() {

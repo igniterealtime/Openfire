@@ -435,7 +435,7 @@ public class JiveGlobals {
         String[] propNames = xmlProperties.getChildrenProperties(parent);
         List<String> values = new ArrayList<String>();
         for (String propName : propNames) {
-            String value = getProperty(parent + "." + propName);
+            String value = getXMLProperty(parent + "." + propName);
             if (value != null) {
                 values.add(value);
             }

@@ -14,10 +14,7 @@ package org.jivesoftware.messenger.auth;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.NativeUserProvider;
+import org.jivesoftware.messenger.user.*;
 import com.cenqua.shaj.Shaj;
 
 import java.net.URL;
@@ -135,6 +132,12 @@ public class NativeAuthProvider implements AuthProvider {
                 // Create user; use a random password for better safety in the future.
                 // Note that we have to go to the user provider directly -- because the
                 // provider is read-only, UserManager will usually deny access to createUser.
+                UserProvider provider = UserManager.getUserProvider();
+                if (!(provider instanceof NativeUserProvider)) {
+                    Log.error("Error: not using NativeUserProvider so authentication with " +
+                            "NativeAuthProvider will likely fail. Using: " +
+                            provider.getClass().getName());
+                }
                 UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
                         null, null);
             }

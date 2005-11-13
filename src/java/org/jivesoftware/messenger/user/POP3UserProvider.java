@@ -16,7 +16,8 @@ package org.jivesoftware.messenger.user;
  * {@link org.jivesoftware.messenger.auth.POP3AuthProvider POP3AuthProvider}, which
  * authenticates using a POP3 server. New user accounts will automatically be created
  * as needed (upon successful initial authentication) and are subsequently treated as
- * read-only. To enable this provider, edit the XML config file file and set:
+ * read-only (for the most part). To enable this provider, edit the XML config file
+ * and set:
  *
  * <pre>
  * &lt;provider&gt;
@@ -34,8 +35,12 @@ package org.jivesoftware.messenger.user;
  */
 public class POP3UserProvider extends DefaultUserProvider {
 
-    public boolean isReadOnly() {
-        return true;
+    public void setEmail(String username, String email) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
     }
 
     public boolean supportsPasswordRetrieval() {

@@ -4,8 +4,8 @@ package org.jivesoftware.messenger.user;
  * A UserProvider to be used in conjunction with
  * {@link org.jivesoftware.messenger.auth.NativeAuthProvider NativeAuthProvider}, which
  * authenticates using OS-level authentication. New user accounts will automatically be
- * created as needed (upon successful initial authentication) and are subsequently treated as
- * read-only. To enable this provider, edit the XML config file file and set:
+ * created as needed (upon successful initial authentication). To enable this provider,
+ * edit the XML config file file and set:
  *
  * <pre>
  * &lt;provider&gt;
@@ -24,8 +24,8 @@ package org.jivesoftware.messenger.user;
  */
 public class NativeUserProvider extends DefaultUserProvider {
 
-    public boolean isReadOnly() {
-        return true;
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
     }
 
     public boolean supportsPasswordRetrieval() {

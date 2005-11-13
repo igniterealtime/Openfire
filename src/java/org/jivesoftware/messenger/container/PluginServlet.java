@@ -1,9 +1,8 @@
 /**
- * $RCSfile$
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -24,9 +23,10 @@ import org.xml.sax.SAXException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
+import javax.servlet.GenericServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServlet;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -61,12 +61,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PluginServlet extends HttpServlet {
 
-    private static Map<String, HttpServlet> servlets;
+    private static Map<String, GenericServlet> servlets;
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
     static {
-        servlets = new ConcurrentHashMap<String, HttpServlet>();
+        servlets = new ConcurrentHashMap<String, GenericServlet>();
     }
 
     public void init(ServletConfig config) throws ServletException {
@@ -75,11 +75,11 @@ public class PluginServlet extends HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException
+    {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
         }
         else {
             try {
@@ -89,25 +89,19 @@ public class PluginServlet extends HttpServlet {
                         return;
                     }
                     handleJSP(pathInfo, request, response);
-                    return;
                 }
                 // Handle servlet requests.
                 else if (getServlet(pathInfo) != null) {
                     handleServlet(pathInfo, request, response);
                 }
-                // Handle image requests.
+                // Handle image/other requests.
                 else {
                     handleOtherRequest(pathInfo, response);
-                    return;
                 }
-
-                // Anything else results in a 404.
-
             }
             catch (Exception e) {
                 Log.error(e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                return;
             }
         }
     }
@@ -160,10 +154,10 @@ public class PluginServlet extends HttpServlet {
                 // Register the servlet for the URL.
                 Class servletClass = classMap.get(name);
                 Object instance = servletClass.newInstance();
-                if (instance instanceof HttpServlet) {
+                if (instance instanceof GenericServlet) {
                     // Initialize the servlet then add it to the map..
-                    ((HttpServlet)instance).init(servletConfig);
-                    servlets.put(pluginName + url, (HttpServlet)instance);
+                    ((GenericServlet)instance).init(servletConfig);
+                    servlets.put(pluginName + url, (GenericServlet)instance);
                 }
                 else {
                     Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
@@ -201,7 +195,7 @@ public class PluginServlet extends HttpServlet {
                 Element nameElement = (Element)names.get(i);
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
-                HttpServlet servlet = servlets.get(pluginName + url);
+                GenericServlet servlet = servlets.get(pluginName + url);
                 servlet.destroy();
                 servlets.remove(pluginName + url);
                 servlet = null;
@@ -228,15 +222,12 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
-
-        HttpServlet servlet = servlets.get(jspURL);
+        GenericServlet servlet = servlets.get(jspURL);
         if (servlet != null) {
             servlet.service(request, response);
-            return;
         }
         else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
         }
     }
 
@@ -253,14 +244,12 @@ public class PluginServlet extends HttpServlet {
     private void handleServlet(String pathInfo, HttpServletRequest request,
                                HttpServletResponse response) throws ServletException, IOException {
         // Strip the starting "/" from the path to find the JSP URL.
-        HttpServlet servlet = getServlet(pathInfo);
+        GenericServlet servlet = getServlet(pathInfo);
         if (servlet != null) {
             servlet.service(request, response);
-            return;
         }
         else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
         }
     }
 
@@ -270,10 +259,10 @@ public class PluginServlet extends HttpServlet {
      * @param pathInfo the pathinfo to map to the servlet.
      * @return the mapped servlet, or null if no servlet was found.
      */
-    private HttpServlet getServlet(String pathInfo) {
+    private GenericServlet getServlet(String pathInfo) {
         pathInfo = pathInfo.substring(1).toLowerCase();
 
-        HttpServlet servlet = servlets.get(pathInfo);
+        GenericServlet servlet = servlets.get(pathInfo);
         if (servlet == null) {
             for (String key : servlets.keySet()) {
                 int index = key.indexOf("/*");
@@ -359,11 +348,13 @@ public class PluginServlet extends HttpServlet {
                     in.close();
                 }
                 catch (Exception ignored) {
+                    // Ignore.
                 }
                 try {
                     out.close();
                 }
                 catch (Exception ignored) {
+                    // Ignore.
                 }
             }
         }
@@ -480,7 +471,7 @@ public class PluginServlet extends HttpServlet {
             URL url = (URL)aCol;
             File file = new File(url.getFile());
 
-            classpath.append(file.getAbsolutePath().toString()).append(";");
+            classpath.append(file.getAbsolutePath()).append(";");
         }
 
         // Load all jars from lib

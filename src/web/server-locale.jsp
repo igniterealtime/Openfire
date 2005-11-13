@@ -24,6 +24,14 @@
 
     Map errors = new HashMap();
     if (save) {
+        // Set the timezeone
+        try {
+            TimeZone tz = TimeZone.getTimeZone(timeZoneID);
+            JiveGlobals.setTimeZone(tz);
+        }
+        catch (Exception e) {
+            Log.debug(e);
+        }
         Locale newLocale = null;
         if (localeCode != null) {
             newLocale = LocaleUtils.localeCodeToLocale(localeCode.trim());
@@ -36,12 +44,6 @@
                 return;
             }
         }
-        // Set the timezeone
-        try {
-            TimeZone tz = TimeZone.getTimeZone(timeZoneID);
-            JiveGlobals.setTimeZone(tz);
-        }
-        catch (Exception e) {}
     }
 
     Locale locale = JiveGlobals.getLocale();

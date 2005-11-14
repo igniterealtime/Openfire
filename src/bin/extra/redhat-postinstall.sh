@@ -33,7 +33,7 @@ cp $MESSENGER_HOME/bin/extra/jive-messengerd /etc/init.d
 
 # Create the jive user and group
 /usr/sbin/groupadd $MESSENGER_GROUP
-/usr/sbin/useradd $MESSENGER_USER -g $MESSENGER_GROUP
+/usr/sbin/useradd $MESSENGER_USER -g $MESSENGER_GROUP -s /bin/bash
 
 # Change the permissions on the installtion directory
 /bin/chown -R $MESSENGER_USER:$MESSENGER_GROUP $MESSENGER_HOME 

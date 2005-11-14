@@ -11,6 +11,8 @@
 package org.jivesoftware.messenger.commands;
 
 import org.dom4j.Element;
+import org.xmpp.packet.JID;
+import org.jivesoftware.messenger.XMPPServer;
 
 import java.util.List;
 
@@ -40,12 +42,6 @@ public abstract class AdHocCommand {
      */
     private String label = getDefaultLabel();
 
-    /**
-     * Flag that indicates if the default permission schema defined in AdHocCommandHandler should
-     * be overridden while the permission schema defined for this command.
-     */
-    private boolean overridePermissions;
-
     public AdHocCommand() {
     }
 
@@ -57,12 +53,24 @@ public abstract class AdHocCommand {
         this.label = label;
     }
 
-    public boolean isOverridePermissions() {
-        return overridePermissions;
-    }
-
-    public void setOverridePermissions(boolean overridePermissions) {
-        this.overridePermissions = overridePermissions;
+    /**
+     * Returns true if the requester is allowed to execute this command. By default only admins
+     * are allowed to execute commands. Subclasses may redefine this method with any specific
+     * logic.<p>
+     *
+     * Note: The bare JID of the requester will be compared with the bare JID of the admins.
+     *
+     * @param requester the JID of the user requesting to execute this command.
+     * @return true if the requester is allowed to execute this command.
+     */
+    public boolean hasPermission(JID requester) {
+        String requesterBareJID = requester.toBareJID();
+        for (JID adminJID : XMPPServer.getInstance().getAdmins()) {
+            if (adminJID.toBareJID().equals(requesterBareJID)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

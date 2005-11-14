@@ -106,7 +106,13 @@ public class AdHocCommandHandler extends IQHandler
                 reply.setError(PacketError.Condition.item_not_found);
             }
             else {
-                // TODO Check that the requester has enough permission. Answer forbidden error if requester permissions are not enough
+                // Check that the requester has enough permission. Answer forbidden error if
+                // requester permissions are not enough to execute the requested command
+                if (!command.hasPermission(packet.getFrom())) {
+                    reply.setChildElement(iqCommand.createCopy());
+                    reply.setError(PacketError.Condition.forbidden);
+                    return reply;
+                }
 
                 // Create new session ID
                 sessionid = StringUtils.randomString(15);
@@ -318,8 +324,9 @@ public class AdHocCommandHandler extends IQHandler
             return true;
         }
         else {
-            // TODO Should we include permission checking? Wait for answer from mailing list
-            return commands.containsKey(node);
+            // Only include commands that the sender can execute
+            AdHocCommand command = commands.get(node);
+            return command != null && command.hasPermission(senderJID);
         }
     }
 
@@ -331,13 +338,15 @@ public class AdHocCommandHandler extends IQHandler
         else {
             Element item;
             for (AdHocCommand command : commands.values()) {
-                // TODO Only include commands that the sender can invoke (i.e. has enough permissions)
-                item = DocumentHelper.createElement("item");
-                item.addAttribute("jid", serverName);
-                item.addAttribute("node", command.getCode());
-                item.addAttribute("name", command.getLabel());
+                // Only include commands that the sender can invoke (i.e. has enough permissions)
+                if (command.hasPermission(senderJID)) {
+                    item = DocumentHelper.createElement("item");
+                    item.addAttribute("jid", serverName);
+                    item.addAttribute("node", command.getCode());
+                    item.addAttribute("name", command.getLabel());
 
-                answer.add(item);
+                    answer.add(item);
+                }
             }
         }
         return answer.iterator();

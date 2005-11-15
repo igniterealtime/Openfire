@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: RosterItem.java,v $
  * $Revision$
  * $Date$
  *
@@ -322,16 +322,32 @@ public class RosterItem implements Cacheable {
             }
 
             // Remove shared groups from the param
+            Collection<Group> existingGroups = GroupManager.getInstance().getGroups();
             for (Iterator<String> it=groups.iterator(); it.hasNext();) {
+                String groupName = it.next();
                 try {
-                    String group = it.next();
+                    // Optimistic approach for performance reasons. Assume first that the shared
+                    // group name is the same as the display name for the shared roster
+
                     // Check if exists a shared group with this name
-                    GroupManager.getInstance().getGroup(group);
-                    // Remove the shared group from the list (since it exists)
-                    it.remove();
+                    Group group = GroupManager.getInstance().getGroup(groupName);
+                    // Get the display name of the group
+                    String displayName = group.getProperties().get("sharedRoster.displayName");
+                    if (displayName.equals(groupName)) {
+                        // Remove the shared group from the list (since it exists)
+                        it.remove();
+                    }
                 }
                 catch (GroupNotFoundException e) {
-                    // Do nothing since the group is a personal group
+                    // Check now if there is a group whose display name matches the requested group
+                    for (Group group : existingGroups) {
+                        // Get the display name of the group
+                        String displayName = group.getProperties().get("sharedRoster.displayName");
+                        if (displayName.equals(groupName)) {
+                            // Remove the shared group from the list (since it exists)
+                            it.remove();
+                        }
+                    }
                 }
             }
             this.groups = groups;

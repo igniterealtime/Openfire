@@ -103,6 +103,7 @@ server certificate.
 going to use a self-signed certificate
 generated in step 2, the certificate is already imported and you can
 skip this step.</li>
+  <li>Remove default certificates from the keystore.</li>
   <li>Import client certificates into the truststore.</li>
   <li>Adjust the Messenger configuration with proper keystore and
 truststore settings.</li>
@@ -171,7 +172,14 @@ signed_certificate_file</tt></p>
 It is important that the alias not already have an associated key or
 you'll receive an error.
 </p>
-<h3>5. Import client certificates</h3>
+<h3>5. Remove default certificates</h3>
+<p>
+After importing your certificate you must remove the default certificates
+using the keytool.
+</p>
+<p><tt>keytool -delete -keystore keystore -alias rsa</tt></p>
+<p><tt>keytool -delete -keystore keystore -alias dsa</tt></p>
+<h3>6. Import client certificates</h3>
 <p>
 If you require clients to verify themselves using certificates, obtain
 their certificates and import them into the truststore file rather than
@@ -186,7 +194,7 @@ Now import each certificate using the keytool:
 </p>
 <p><tt>keytool -import -keystore truststore -alias user_name -file
 certificate_file</tt></p>
-<h3>6. Configure Messenger</h3>
+<h3>7. Configure Messenger</h3>
 <p>
 Open the Jive Messenger Admin Console in your favorite
 browser and add or change the following system properties:
@@ -207,7 +215,7 @@ changed in step 2.</li>
 truststore, otherwise the location of the truststore file relative to
 your Jive Messenger installation root directory.</li>
   <li>xmpp.socket.ssl.trustpass -- the truststore/key password you
-changed in step 5.</li>
+changed in step 6.</li>
 </ul>
 You will need to restart the server after you have modified any of the above system properties.
 </body>

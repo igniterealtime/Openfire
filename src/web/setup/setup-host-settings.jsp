@@ -180,24 +180,6 @@ LABEL { font-weight : normal; }
     </td>
 </tr>
 <% } %>
-<tr valign="middle">
-    <td width="1%" nowrap>
-        <fmt:message key="setup.host.settings.ssl" />
-    </td>
-    <td width="99%">
-        <input type="radio" name="sslEnabled" value="true" id="rb01"
-            <%= ((sslEnabled) ? " checked" : "") %>>
-        <label for="rb01"><fmt:message key="setup.host.settings.yes" /></label>
-        &nbsp;
-        <input type="radio" name="sslEnabled" value="false" id="rb02"
-            <%= ((!sslEnabled) ? " checked" : "") %>>
-        <label for="rb02"><fmt:message key="setup.host.settings.no" /></label>
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.host.settings.secure" />
-        </span>
-    </td>
-</tr>
 </table>
 
 <br><br>

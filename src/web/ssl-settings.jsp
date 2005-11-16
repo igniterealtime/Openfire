@@ -297,23 +297,23 @@
         <tr valign="middle">
             <tr valign="middle">
                 <td width="1%" nowrap>
-                    <input type="radio" name="clientSecurityRequired" value="req" id="rb01" onclick="showOrHide('custom', 'hide')"
-                 <%= ("req".equals(clientSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb01">
-                    <b><fmt:message key="ssl.settings.client.label_required" /></b> - <fmt:message key="ssl.settings.client.label_required_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
                     <input type="radio" name="clientSecurityRequired" value="notreq" id="rb02" onclick="showOrHide('custom', 'hide')"
                      <%= ("notreq".equals(clientSecurityRequired) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
                     <label for="rb02">
                     <b><fmt:message key="ssl.settings.client.label_notrequired" /></b> - <fmt:message key="ssl.settings.client.label_notrequired_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="clientSecurityRequired" value="req" id="rb01" onclick="showOrHide('custom', 'hide')"
+                 <%= ("req".equals(clientSecurityRequired) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="ssl.settings.client.label_required" /></b> - <fmt:message key="ssl.settings.client.label_required_info" />
                     </label>
                 </td>
             </tr>

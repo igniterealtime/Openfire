@@ -283,7 +283,6 @@ public class XMPPServer {
         }
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
-            setupMode = false;
             // Set the new server domain assigned during the setup process
             name = JiveGlobals.getProperty("xmpp.domain");
 
@@ -314,6 +313,8 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
+                        // Initialize component manager (initialize before plugins get loaded)
+                        InternalComponentManager.getInstance().start();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -325,6 +326,8 @@ public class XMPPServer {
             // Use the correct class loader.
             finishSetup.setContextClassLoader(loader);
             finishSetup.start();
+            // We can now safely indicate that setup has finished
+            setupMode = false;
         }
     }
 
@@ -342,9 +345,10 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
+                // Initialize component manager (initialize before plugins get loaded)
+                InternalComponentManager.getInstance().start();
             }
-            // Load plugins. First, initialize component manager.
-            InternalComponentManager.getInstance().start();
+            // Load plugins (when in setup mode only the admin console will be loaded)
             File pluginDir = new File(messengerHome, "plugins");
             pluginManager = new PluginManager(pluginDir);
             pluginManager.start();

@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger.net;
 
 import org.dom4j.Element;
+import org.dom4j.DocumentException;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -29,7 +30,6 @@ import org.xmpp.packet.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
@@ -249,8 +249,6 @@ public abstract class SocketReader implements Runnable {
                 processIQ(packet);
             }
             else if ("starttls".equals(tag)) {
-                // Client requested to secure the connection using TLS
-                connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
                 // Negotiate TLS
                 if (negotiateTLS()) {
                     tlsNegotiated();
@@ -263,8 +261,7 @@ public abstract class SocketReader implements Runnable {
             }
             else if ("auth".equals(tag)) {
                 // User is trying to authenticate using SASL
-                SASLAuthentication saslAuth = new SASLAuthentication(session, reader);
-                if (saslAuth.doHandshake(doc)) {
+                if (authenticateClient(doc)) {
                     // SASL authentication was successful so open a new stream and offer
                     // resource binding and session establishment (to client sessions only)
                     saslSuccessful();
@@ -285,6 +282,18 @@ public abstract class SocketReader implements Runnable {
         }
     }
 
+    private boolean authenticateClient(Element doc) throws DocumentException, IOException,
+            XmlPullParserException {
+        // Ensure that connection was secured if TLS was required
+        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+                !connection.isSecure()) {
+            closeNeverSecuredConnection();
+            return false;
+        }
+        SASLAuthentication saslAuth = new SASLAuthentication(session, reader);
+        return saslAuth.doHandshake(doc);
+    }
+
     /**
      * Process the received IQ packet. Registered
      * {@link org.jivesoftware.messenger.interceptor.PacketInterceptor} will be invoked before
@@ -297,6 +306,12 @@ public abstract class SocketReader implements Runnable {
      * @param packet the received packet.
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
+        // Ensure that connection was secured if TLS was required
+        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+                !connection.isSecure()) {
+            closeNeverSecuredConnection();
+            return;
+        }
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -340,6 +355,12 @@ public abstract class SocketReader implements Runnable {
      * @param packet the received packet.
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
+        // Ensure that connection was secured if TLS was required
+        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+                !connection.isSecure()) {
+            closeNeverSecuredConnection();
+            return;
+        }
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -382,6 +403,12 @@ public abstract class SocketReader implements Runnable {
      * @param packet the received packet.
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
+        // Ensure that connection was secured if TLS was required
+        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+                !connection.isSecure()) {
+            closeNeverSecuredConnection();
+            return;
+        }
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -417,6 +444,24 @@ public abstract class SocketReader implements Runnable {
      * @return  true if a received packet has been processed.
      */
     abstract boolean processUnknowPacket(Element doc);
+
+    /**
+     * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
+     * closing the connection a stream error will be sent to the entity.
+     */
+    private void closeNeverSecuredConnection() {
+        StringBuilder sb = new StringBuilder();
+        // Set the not_authorized error
+        StreamError error = new StreamError(StreamError.Condition.not_authorized);
+        sb.append(error.toXML());
+        // Deliver stanza
+        connection.deliverRawText(sb.toString());
+        // Close the underlying connection
+        connection.close();
+        // Log a warning so that admins can track this case from the server side
+        Log.warn("TLS was required by the server and connection was never secured. " +
+                "Closing connection : " + connection);
+    }
 
     private IQ getIQ(Element doc) {
         Element query = doc.element("query");
@@ -536,6 +581,22 @@ public abstract class SocketReader implements Runnable {
      * @throws XmlPullParserException if an error occures while parsing.
      */
     private boolean negotiateTLS() throws IOException, XmlPullParserException {
+        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.disabled) {
+            StringBuilder sb = new StringBuilder();
+            // Set the not_authorized error
+            StreamError error = new StreamError(StreamError.Condition.not_authorized);
+            sb.append(error.toXML());
+            // Deliver stanza
+            connection.deliverRawText(sb.toString());
+            // Close the underlying connection
+            connection.close();
+            // Log a warning so that admins can track this case from the server side
+            Log.warn("TLS requested by initiator when TLS was never offered by server. " +
+                    "Closing connection : " + connection);
+            return false;
+        }
+        // Client requested to secure the connection using TLS
+        connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
         // Negotiate TLS.
         try {
             connection.startTLS(false);

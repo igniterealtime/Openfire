@@ -58,6 +58,10 @@ public class SocketConnection implements Connection {
     private int minorVersion = 0;
     private String language = null;
 	private TLSStreamHandler tlsStreamHandler;
+    /**
+     * TLS policy currently in use for this connection.
+     */
+    private TLSPolicy tlsPolicy = TLSPolicy.optional;
 
     /**
      * Create a new session using the supplied socket.
@@ -166,6 +170,32 @@ public class SocketConnection implements Connection {
 
     public boolean isSecure() {
         return secure;
+    }
+
+    /**
+     * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @return whether TLS is mandatory, optional or is disabled.
+     */
+    public TLSPolicy getTlsPolicy() {
+        return tlsPolicy;
+    }
+
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
+     */
+    public void setTlsPolicy(TLSPolicy tlsPolicy) {
+        this.tlsPolicy = tlsPolicy;
     }
 
     public int getMajorXMPPVersion() {
@@ -374,5 +404,29 @@ public class SocketConnection implements Connection {
 
     public String toString() {
         return super.toString() + " socket: " + socket + " session: " + session;
+    }
+
+    /**
+     * Enumeration of possible TLS policies required to interact with the server.
+     */
+    public enum TLSPolicy {
+
+        /**
+         * TLS is required to interact with the server. Entities that do not secure their
+         * connections using TLS will get a stream error and their connections will be closed.
+         */
+        required,
+
+        /**
+         * TLS is optional to interact with the server. Entities may or may not secure their
+         * connections using TLS.
+         */
+        optional,
+
+        /**
+         * TLS is not available. Entities that request a TLS negotiation will get a stream
+         * error and their connections will be closed.
+         */
+        disabled;
     }
 }

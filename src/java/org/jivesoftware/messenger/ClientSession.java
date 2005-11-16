@@ -55,6 +55,8 @@ public class ClientSession extends Session {
      */
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
 
+    private static SocketConnection.TLSPolicy tlsPolicy;
+
     /**
      * The authentication token for this session.
      */
@@ -86,6 +88,11 @@ public class ClientSession extends Session {
             String address = tokens.nextToken().trim();
             allowedIPs.put(address, "");
         }
+        // Set the TLS policy stored as a system property
+        String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy",
+                SocketConnection.TLSPolicy.optional.toString());
+        tlsPolicy = SocketConnection.TLSPolicy.valueOf(policyName);
+
     }
 
     /**
@@ -191,6 +198,9 @@ public class ClientSession extends Session {
         connection.setLanaguage(language);
         connection.setXMPPVersion(majorVersion, minorVersion);
 
+        // Indicate the TLS policy to use for this connection
+        connection.setTlsPolicy(tlsPolicy);
+
         // Create a ClientSession for this user.
         Session session = SessionManager.getInstance().createClientSession(connection);
 
@@ -235,10 +245,13 @@ public class ClientSession extends Session {
 
         sb = new StringBuilder();
         sb.append("<stream:features>");
-        sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-        // TODO Consider that STARTTLS may be optional (add TLS options to the AC - disabled, optional, required)
-        // sb.append("<required/>");
-        sb.append("</starttls>");
+        if (tlsPolicy != SocketConnection.TLSPolicy.disabled) {
+            sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            if (tlsPolicy == SocketConnection.TLSPolicy.required) {
+                sb.append("<required/>");
+            }
+            sb.append("</starttls>");
+        }
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
         sb.append("</stream:features>");
@@ -286,6 +299,33 @@ public class ClientSession extends Session {
             }
             JiveGlobals.setProperty("xmpp.client.login.allowed", buf.toString());
         }
+    }
+
+    /**
+     * Returns whether TLS is mandatory, optional or is disabled for clients. When TLS is
+     * mandatory clients are required to secure their connections or otherwise their connections
+     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
+     * their connections using TLS. Their connections will be closed if they try to secure the
+     * connection. in this last case.
+     *
+     * @return whether TLS is mandatory, optional or is disabled.
+     */
+    public static SocketConnection.TLSPolicy getTLSPolicy() {
+        return tlsPolicy;
+    }
+
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled for clients. When TLS is
+     * mandatory clients are required to secure their connections or otherwise their connections
+     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
+     * their connections using TLS. Their connections will be closed if they try to secure the
+     * connection. in this last case.
+     *
+     * @param policy whether TLS is mandatory, optional or is disabled.
+     */
+    public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
+        tlsPolicy = policy;
+        JiveGlobals.setProperty("xmpp.client.tls.policy", tlsPolicy.toString());
     }
 
     /**

@@ -228,30 +228,34 @@ public class MUCUserImpl implements MUCUser {
                                 // persistence will be added. Replace locking with transactions!
                                 MUCRoomImpl room = (MUCRoomImpl) role.getChatRoom();
                                 if (userInfo != null && userInfo.element("invite") != null) {
-                                    // An occupant is sending an invitation
-                                    Element info = userInfo.element("invite");
+                                    // An occupant is sending invitations
 
-                                    // Add the user as a member of the room if the room is
-                                    // members only
-                                    if (room.isMembersOnly()) {
-                                        room.lock.writeLock().lock();
-                                        try {
-                                            room.addMember(info.attributeValue("to"), null, role);
-                                        }
-                                        finally {
-                                            room.lock.writeLock().unlock();
-                                        }
-                                    }
-                                    // Try to keep the list of extensions sent together with the 
-                                    // message invitation. These extensions will be sent to the 
-                                    // invitee.
+                                    // Try to keep the list of extensions sent together with the
+                                    // message invitation. These extensions will be sent to the
+                                    // invitees.
                                     List<Element> extensions = new ArrayList<Element>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
+                                    // Send invitations to invitees
+                                    for (Iterator it=userInfo.elementIterator("invite");it.hasNext();) {
+                                        Element info = (Element) it.next();
 
-                                    // Send the invitation to the user
-                                    room.sendInvitation(new JID(info.attributeValue("to")),
-                                            info.elementTextTrim("reason"), role, extensions);
+                                        // Add the user as a member of the room if the room is
+                                        // members only
+                                        if (room.isMembersOnly()) {
+                                            room.lock.writeLock().lock();
+                                            try {
+                                                room.addMember(info.attributeValue("to"), null, role);
+                                            }
+                                            finally {
+                                                room.lock.writeLock().unlock();
+                                            }
+                                        }
+
+                                        // Send the invitation to the invitee
+                                        room.sendInvitation(new JID(info.attributeValue("to")),
+                                                info.elementTextTrim("reason"), role, extensions);
+                                    }
                                 }
                                 else if (userInfo != null
                                         && userInfo.element("decline") != null) {

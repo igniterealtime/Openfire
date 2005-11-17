@@ -69,16 +69,32 @@ Jive Messenger Changelog
 </div>
 
 <p>
-<b>2.3.0 Beta 2</b> -- November 11, 2005
+<b>2.3.0</b> -- November 17, 2005
 <p>
 
 <h2>New Features</h2>
 <ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-387'>JM-387</a>] - Added TLS support for client sessions. Thanks to Hao Chen.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-7'>JM-7</a>] - Added SASL support and resource binding for client sessions. Thanks to Hao Chen.  <b>(7 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-388'>JM-388</a>] - Added Session Establishment support.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-201'>JM-201</a>] - Added support for PAM authentication.  <b>(4 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-347'>JM-347</a>] - Added session event support. Thanks to Conor Hayes.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-416'>JM-416</a>] - Creation of connections to remote servers is now asynchronous.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-409'>JM-409</a>] - Connection timeout to remote servers is now configurable. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-411'>JM-411</a>] - SASL authentication is now offered before TLS is negotiated.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-121'>JM-121</a>] - VCARDs can now be populated from LDAP info. <b>(19 votes)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-458'>JM-458</a>] - LDAP searches now include wildcard by default.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-450'>JM-450</a>] - Added support for JEP-50: Ad-hoc commands.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-425'>JM-425</a>] - Delete operation was implemented for POP3 provider.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-417'>JM-417</a>] - Value of 'to' attribute of stream headers is now validated.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-252'>JM-252</a>] - Added Spanish translation. Thanks to Jorge Merlino.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-403'>JM-403</a>] - Added support for setting time zone.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-437'>JM-437</a>] - Added packet extension to indicate when a group is a shared group. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-444'>JM-444</a>] - Removed restarting requirement from setup tool.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-421'>JM-421</a>] - Converted admin console to use Sitemesh. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-365'>JM-365</a>] - Added support for PNG plugin icons. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-435'>JM-435</a>] - Added mime.types file to build.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-408'>JM-408</a>] - Upgraded to JDK 1.5.0_05.</li>
 </ul>
 
 <h2>Bug Fixes</h2>
@@ -87,14 +103,16 @@ Jive Messenger Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-446'>JM-446</a>] - Modified way admins were being specified in jive-messenger.xml</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-442'>JM-442</a>] - Fixed shared group problem where contacts may incorrectly appear as offline.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-451'>JM-451</a>] - Members added to shared groups did not have correct presence subscription status in some cases.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-463'>JM-463</a>] - Couldn't add a contact to a group if the group matched the name of a shared group.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-427'>JM-427</a>] - Users of remote servers could incorrectly appear in share groups.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-430'>JM-430</a>] - Fixed cross-site scripting attack in the login form. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-439'>JM-439</a>] - Fixed exception when sending last presence with no TO attribute.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-436'>JM-436</a>] - Room occupants can now exchange IQ packets.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-440'>JM-440</a>] - Room occupants can now exchange disco packets.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-447'>JM-447</a>] - IQ packets of type result sent to the MUC service are now ignored.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-456'>JM-456</a>] - Not-allowed error is now returned when room creation is restricted.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-464'>JM-464</a>] - Server was ignoring room invitations when message contained many invitations.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-424'>JM-424</a>] - Replaced XMPPBootServlet with context listener. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-445'>JM-445</a>] - Sitemesh xml files were missing when deploying as WAR format.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-443'>JM-443</a>] - "Launch Admin" button in launcher now works if only secure port is enabled.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-432'>JM-432</a>] - Jive Messenger was not handling different web types (flash, applets, etc.).</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-452'>JM-452</a>] - Invalid show value in Presence packet was breaking the admin console.</li>
@@ -102,27 +120,6 @@ Jive Messenger Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-457'>JM-457</a>] - Stream header was not being added when sending some stream errors.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-461'>JM-461</a>] - Fixed bug in getXMLProperties()</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-401'>JM-401</a>] - Presence plugin includes new icons. Fixed licensing problem.</li>
-</ul>
-
-<p>
-<b>2.3.0 Beta 1</b> -- October 8, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-416'>JM-416</a>] - Creation of connections to remote servers is now asynchronous.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-411'>JM-411</a>] - SASL authentication is now offered before TLS is negotiated.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-417'>JM-417</a>] - Value of 'to' attribute of stream headers is now validated.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-252'>JM-252</a>] - Added Spanish translation. Thanks to Jorge Merlino.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-403'>JM-403</a>] - Added support for setting time zone.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-421'>JM-421</a>] - Converted admin console to use Sitemesh. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-365'>JM-365</a>] - Added support for PNG plugin icons. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-409'>JM-409</a>] - Connection timeout to remote servers is now configurable. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-408'>JM-408</a>] - Upgraded to JDK 1.5.0_05.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-204'>JM-204</a>] - Installer no longer overwrites keystore or config file. <b>(4 votes)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-383'>JM-383</a>] - Default port used for server dialback is now configurable. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-406'>JM-406</a>] - Route to subdomains of remote servers was not being removed.</li>
@@ -133,29 +130,13 @@ Jive Messenger Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-418'>JM-418</a>] - An error is now returned when it is not possible to send packets to remote servers.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-422'>JM-422</a>] - Broken connections could freeze the server.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-423'>JM-423</a>] - The returned size in bytes of offline messages of a user could be incorrect. Thanks to Conor Hayes.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-427'>JM-427</a>] - Users of remote servers could incorrectly appear in share groups.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-428'>JM-428</a>] - Remote users could broadcast messages faking local users.</li>
-</ul>
-
-<p>
-<b>2.3.0 Alpha 1</b> -- September 12, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-387'>JM-387</a>] - Added TLS support for client sessions. Thanks to Hao Chen.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-7'>JM-7</a>] - Added SASL support and resource binding for client sessions. Thanks to Hao Chen.  <b>(7 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-388'>JM-388</a>] - Added Session Establishment support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-201'>JM-201</a>] - Added support for PAM authentication.  <b>(4 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-347'>JM-347</a>] - Added session event support. Thanks to Conor Hayes.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-385'>JM-385</a>] - Fixed exception in Roster when contact has no username. Thanks to Nathan Palmer.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-389'>JM-389</a>] - Fixed jive-messengerd script to have unix line endings.  <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-389'>JM-389</a>] - Fixed jive-messengerd script to have unix line endings. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-426'>JM-426</a>] - Fixed post-install script.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-390'>JM-390</a>] - Fixed sessions summary page to show its inline help.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-392'>JM-392</a>] - Fixed exception when removing the same item from the roster twice. Thanks to Nathan Palmer.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-459'>JM-459</a>] - Allowed GenericServlet support in plugins.</li>
 </ul>
 
 <p>

@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: OfflineMessageStrategy.java,v $
  * $Revision$
  * $Date$
  *
@@ -12,6 +12,7 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -31,6 +32,7 @@ public class OfflineMessageStrategy extends BasicModule {
     private OfflineMessageStore messageStore;
     private JID serverAddress;
     private PacketRouter router;
+    private String mucServiceDomain;
 
     public OfflineMessageStrategy() {
         super("Offline Message Strategy");
@@ -60,8 +62,15 @@ public class OfflineMessageStrategy extends BasicModule {
     public void storeOffline(Message message) {
         if (message != null) {
             // Do nothing if the message was sent to the server itself or to an anonymous user
-            if (message.getTo() == null || serverAddress.equals(message.getTo()) ||
-                    message.getTo().getNode() == null) {
+            JID recipientJID = message.getTo();
+            if (recipientJID == null || serverAddress.equals(recipientJID) ||
+                    recipientJID.getNode() == null) {
+                return;
+            }
+            // Ignore packets sent from the MUC service
+            // TODO Remove this code when JEP-79 is implemented and MUC packets include the drop action
+            JID senderJID = message.getFrom();
+            if (senderJID != null && mucServiceDomain.equals(senderJID.getDomain())) {
                 return;
             }
 
@@ -119,6 +128,7 @@ public class OfflineMessageStrategy extends BasicModule {
         super.initialize(server);
         messageStore = server.getOfflineMessageStore();
         router = server.getPacketRouter();
+        mucServiceDomain = server.getMultiUserChatServer().getServiceDomain();
         serverAddress = new JID(server.getServerInfo().getName());
 
         String quota = JiveGlobals.getProperty("xmpp.offline.quota");

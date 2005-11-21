@@ -68,6 +68,11 @@ public class ClientSession extends Session {
     private boolean initialized;
 
     /**
+     * Flag that indicates if the session was available ever.
+     */
+    private boolean wasAvailable = false;
+
+    /**
      * Flag indicating if the user requested to not receive offline messages when sending
      * an available presence. The user may send a disco request with node
      * "http://jabber.org/protocol/offline" so that no offline messages are sent to the
@@ -433,6 +438,15 @@ public class ClientSession extends Session {
     }
 
     /**
+     * Returns true if the session was available ever.
+     *
+     * @return true if the session was available ever.
+     */
+    public boolean wasAvailable() {
+        return wasAvailable;
+    }
+
+    /**
      * Returns true if the offline messages of the user should be sent to the user when
      * the user becomes online. If the user sent a disco request with node
      * "http://jabber.org/protocol/offline" before the available presence then do not
@@ -508,6 +522,7 @@ public class ClientSession extends Session {
         else if (!oldPresence.isAvailable() && this.presence.isAvailable()) {
             // The client is available
             sessionManager.sessionAvailable(this);
+            wasAvailable = true;
         }
         else if (oldPresence.getPriority() != this.presence.getPriority()) {
             // The client has changed the priority of his presence

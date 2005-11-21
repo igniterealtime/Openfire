@@ -1279,7 +1279,7 @@ public class SessionManager extends BasicModule {
             try {
                 ClientSession session = (ClientSession)handback;
                 try {
-                    if (session.getPresence().isAvailable()) {
+                    if (session.getPresence().isAvailable() || !session.wasAvailable()) {
                         // Send an unavailable presence to the user's subscribers
                         // Note: This gives us a chance to send an unavailable presence to the
                         // entities that the user sent directed presences

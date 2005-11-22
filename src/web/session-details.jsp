@@ -175,33 +175,33 @@
                 if (show == Presence.Show.away) {
             %>
 
-                <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="Away">
                 <fmt:message key="session.details.away" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.chat) {
             %>
-                <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Available to Chat">
+                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="Available to Chat">
                 <fmt:message key="session.details.chat_available" /> <%= statusTxt %>
             <%
                 } else if (show == Presence.Show.dnd) {
             %>
 
-                <img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="Do not Disturb">
+                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="Do not Disturb">
                 <fmt:message key="session.details.not_disturb" /> <%= statusTxt %>
 
             <%
                 } else if (show == null) {
             %>
 
-                <img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="Online">
+                <img src="images/im_available.gif" width="16" height="16" border="0" title="Online">
                 <fmt:message key="session.details.online" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.xa) {
             %>
 
-                <img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="Extended Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="Extended Away">
                 <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%

@@ -74,7 +74,7 @@
         if (_show == Presence.Show.away) {
     %>
         <td width="1%"
-            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.away" />"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -91,7 +91,7 @@
     <%  } else if (_show == Presence.Show.chat) { %>
 
         <td width="1%"
-            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.chat_available" />"
+            ><img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />"
             ></td>
         <td width="46%">
             <fmt:message key="session.details.chat_available" />
@@ -100,7 +100,7 @@
     <%  } else if (_show == Presence.Show.dnd) { %>
 
         <td width="1%"
-            ><img src="images/bullet-red-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.not_disturb" />"
+            ><img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -117,7 +117,7 @@
     <%  } else if (_show == null) { %>
 
         <td width="1%"
-            ><img src="images/bullet-green-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.online" />"
+            ><img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />"
             ></td>
         <td width="46%">
             <fmt:message key="session.details.online" />
@@ -126,7 +126,7 @@
     <%  } else if (_show == Presence.Show.xa) { %>
 
         <td width="1%"
-            ><img src="images/bullet-yellow-14x14.gif" width="14" height="14" border="0" title="<fmt:message key="session.details.extended" />"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>

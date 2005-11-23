@@ -12,7 +12,6 @@
 package org.jivesoftware.messenger;
 
 import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -32,7 +31,6 @@ public class OfflineMessageStrategy extends BasicModule {
     private OfflineMessageStore messageStore;
     private JID serverAddress;
     private PacketRouter router;
-    private String mucServiceDomain;
 
     public OfflineMessageStrategy() {
         super("Offline Message Strategy");
@@ -67,10 +65,10 @@ public class OfflineMessageStrategy extends BasicModule {
                     recipientJID.getNode() == null) {
                 return;
             }
-            // Ignore packets sent from the MUC service
-            // TODO Remove this code when JEP-79 is implemented and MUC packets include the drop action
-            JID senderJID = message.getFrom();
-            if (senderJID != null && mucServiceDomain.equals(senderJID.getDomain())) {
+            // Do not store messages of type groupchat, error or headline as specified in JEP-160
+            if (Message.Type.groupchat == message.getType() ||
+                    Message.Type.error == message.getType() ||
+                    Message.Type.headline == message.getType()) {
                 return;
             }
 
@@ -128,7 +126,6 @@ public class OfflineMessageStrategy extends BasicModule {
         super.initialize(server);
         messageStore = server.getOfflineMessageStore();
         router = server.getPacketRouter();
-        mucServiceDomain = server.getMultiUserChatServer().getServiceDomain();
         serverAddress = new JID(server.getServerInfo().getName());
 
         String quota = JiveGlobals.getProperty("xmpp.offline.quota");

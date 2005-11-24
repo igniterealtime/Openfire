@@ -232,7 +232,7 @@ public class DefaultUserProvider implements UserProvider {
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(ALL_USERS);
+            pstmt = DbConnectionManager.createScrollablePreparedStatement(con, ALL_USERS);
             ResultSet rs = pstmt.executeQuery();
             DbConnectionManager.setFetchSize(rs, startIndex + numResults);
             DbConnectionManager.scrollResultSet(rs, startIndex);

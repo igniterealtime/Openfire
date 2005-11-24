@@ -141,9 +141,15 @@ public class JiveGlobals {
      */
     public static void setTimeZone(TimeZone newTimeZone) {
         timeZone = newTimeZone;
-        timeFormat.setTimeZone(timeZone);
-        dateFormat.setTimeZone(timeZone);
-        dateTimeFormat.setTimeZone(timeZone);
+        if (timeFormat != null) {
+            timeFormat.setTimeZone(timeZone);
+        }
+        if (dateFormat != null) {
+            dateFormat.setTimeZone(timeZone);
+        }
+        if (dateTimeFormat != null) {
+            dateTimeFormat.setTimeZone(timeZone);
+        }
         setProperty("locale.timeZone", timeZone.getID());
     }
 

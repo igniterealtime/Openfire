@@ -30,7 +30,7 @@
             JiveGlobals.setTimeZone(tz);
         }
         catch (Exception e) {
-            Log.debug(e);
+            Log.error(e);
         }
         Locale newLocale = null;
         if (localeCode != null) {

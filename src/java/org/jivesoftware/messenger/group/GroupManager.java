@@ -15,6 +15,8 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.messenger.event.GroupEventDispatcher;
+import org.jivesoftware.messenger.XMPPServer;
+import org.xmpp.packet.JID;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -136,12 +138,13 @@ public class GroupManager {
      * @param user the deleted user from the system.
      */
     public void deleteUser(User user) {
-        for (Group group : getGroups(user)) {
-            if (group.getAdmins().contains(user.getUsername())) {
-                group.getAdmins().remove(user.getUsername());
+        JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
+        for (Group group : getGroups(userJID)) {
+            if (group.getAdmins().contains(userJID)) {
+                group.getAdmins().remove(userJID);
             }
             else {
-                group.getMembers().remove(user.getUsername());
+                group.getMembers().remove(userJID);
             }
         }
     }
@@ -186,12 +189,12 @@ public class GroupManager {
     }
 
     /**
-     * Returns an iterator for all groups that a user is a member of.
+     * Returns an iterator for all groups that the entity with the specified JID is a member of.
      *
-     * @param user the user to get a list of groups for.
-     * @return all groups that a user belongs to.
+     * @param user the JID of the entity to get a list of groups for.
+     * @return all groups that an entity belongs to.
      */
-    public Collection<Group> getGroups(User user) {
+    public Collection<Group> getGroups(JID user) {
         // TODO: add caching
         return provider.getGroups(user);
     }

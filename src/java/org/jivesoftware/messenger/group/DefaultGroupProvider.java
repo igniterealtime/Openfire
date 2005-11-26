@@ -12,16 +12,17 @@
 package org.jivesoftware.messenger.group;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -63,6 +64,8 @@ public class DefaultGroupProvider implements GroupProvider {
         "SELECT groupName FROM jiveGroupUser WHERE username=?";
     private static final String ALL_GROUPS = "SELECT groupName FROM jiveGroup ORDER BY groupName";
 
+    private XMPPServer server = XMPPServer.getInstance();
+
     public Group createGroup(String name) throws GroupAlreadyExistsException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -82,8 +85,8 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        Collection<String> members = getMembers(name, false);
-        Collection<String> administrators = getMembers(name, true);
+        Collection<JID> members = getMembers(name, false);
+        Collection<JID> administrators = getMembers(name, true);
         return new Group(this, name, "", members, administrators);
     }
 
@@ -112,8 +115,8 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        Collection<String> members = getMembers(name, false);
-        Collection<String> administrators = getMembers(name, true);
+        Collection<JID> members = getMembers(name, false);
+        Collection<JID> administrators = getMembers(name, true);
         return new Group(this, name, description, members, administrators);
     }
 
@@ -306,14 +309,14 @@ public class DefaultGroupProvider implements GroupProvider {
         return groups;
     }
 
-    public Collection<Group> getGroups(User user) {
+    public Collection<Group> getGroups(JID user) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_GROUPS);
-            pstmt.setString(1, user.getUsername());
+            pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
@@ -342,14 +345,14 @@ public class DefaultGroupProvider implements GroupProvider {
         return groups;
     }
 
-    public void addMember(String groupName, String username, boolean administrator) {
+    public void addMember(String groupName, JID user, boolean administrator) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_USER);
             pstmt.setString(1, groupName);
-            pstmt.setString(2, username);
+            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toString());
             pstmt.setInt(3, administrator ? 1 : 0);
             pstmt.executeUpdate();
         }
@@ -364,7 +367,7 @@ public class DefaultGroupProvider implements GroupProvider {
         }
     }
 
-    public void updateMember(String groupName, String username, boolean administrator) {
+    public void updateMember(String groupName, JID user, boolean administrator) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -372,7 +375,7 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt = con.prepareStatement(UPDATE_USER);
             pstmt.setInt(1, administrator ? 1 : 0);
             pstmt.setString(2, groupName);
-            pstmt.setString(3, username);
+            pstmt.setString(3, server.isLocal(user) ? user.getNode() : user.toString());
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -386,14 +389,14 @@ public class DefaultGroupProvider implements GroupProvider {
         }
     }
 
-    public void deleteMember(String groupName, String username) {
+    public void deleteMember(String groupName, JID user) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(REMOVE_USER);
             pstmt.setString(1, groupName);
-            pstmt.setString(2, username);
+            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toString());
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -411,8 +414,8 @@ public class DefaultGroupProvider implements GroupProvider {
         return false;
     }
 
-    private Collection<String> getMembers(String groupName, boolean adminsOnly) {
-        List<String> members = new ArrayList<String>();
+    private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
+        List<JID> members = new ArrayList<JID>();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -426,7 +429,15 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.setString(1, groupName);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                members.add(rs.getString(1));
+                String user = rs.getString(1);
+                JID userJID = new JID(user);
+                if (user.indexOf('@') == -1) {
+                    // Create JID of local user if JID does not match a component's JID
+                    if (!server.matchesComponent(userJID)) {
+                        userJID = server.createJID(user, null);
+                    }
+                }
+                members.add(userJID);
             }
             rs.close();
         }

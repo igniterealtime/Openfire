@@ -304,7 +304,8 @@ public class RegistrationPlugin implements Plugin {
             try {
                 GroupManager groupManager =  GroupManager.getInstance();
                 Group group = groupManager.getGroup(getGroup());
-                group.getMembers().add(user.getUsername());
+                group.getMembers()
+                        .add(XMPPServer.getInstance().createJID(user.getUsername(), null));
             }
             catch (GroupNotFoundException e) {
                 Log.error(e);

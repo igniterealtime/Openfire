@@ -164,9 +164,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     if (disableGroupPermissions ||
                             (groupMembersAllowed && group.isUser(message.getFrom())) ||
                             allowedUsers.contains(message.getFrom().toBareJID())) {
-                        for (String user : group.getMembers()) {
+                        for (JID userJID : group.getMembers()) {
                             Message newMessage = message.createCopy();
-                            JID userJID = XMPPServer.getInstance().createJID(user, null);
                             newMessage.setTo(userJID);
                             try {
                                 componentManager.sendPacket(this, newMessage);

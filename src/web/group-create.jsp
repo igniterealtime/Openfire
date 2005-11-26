@@ -14,10 +14,11 @@
                  java.util.*,
                  org.jivesoftware.messenger.group.*,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.user.UserManager,
-                 org.jivesoftware.messenger.user.UserNotFoundException"
+                 org.jivesoftware.messenger.user.UserManager"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
+<%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -91,10 +92,20 @@
                     while (tokenizer.hasMoreTokens()) {
                         String username = tokenizer.nextToken();
                         try {
-                            UserManager.getInstance().getUser(username);
-                            newGroup.getMembers().add(username);
+                            if (username.indexOf('@') == -1) {
+                                // No @ was found so assume this is a JID of a local user
+                                username = Stringprep.nodeprep(username);
+                                UserManager.getInstance().getUser(username);
+                                newGroup.getMembers().add(webManager.getXMPPServer().createJID(username, null));
+                            }
+                            else {
+                                // Admin entered a JID. Add the JID directly to the list of group members
+                                newGroup.getMembers().add(new JID(username));
+                            }
                         }
-                        catch (UserNotFoundException unfe) { }
+                        catch (Exception e) {
+                            throw new IllegalArgumentException("Invalid user.", e);
+                        }
                     }
                 }
                 // Successful, so redirect

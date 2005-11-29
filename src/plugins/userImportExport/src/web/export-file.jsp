@@ -1,6 +1,7 @@
 <%@ page import="java.io.OutputStream,
                  org.jivesoftware.messenger.XMPPServer,
-                 org.jivesoftware.messenger.plugin.ImportExportPlugin"%><%
+                 org.jivesoftware.messenger.plugin.ImportExportPlugin"
+         contentType="application/x-download"%><%
     String fileName = request.getParameter("fileName");
     response.setContentType("application/x-download");
     response.setHeader("Content-Disposition","attachment;filename="+fileName+".xml");

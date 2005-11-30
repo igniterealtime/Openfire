@@ -49,8 +49,8 @@ public class Group implements Cacheable {
     private String name;
     private String description;
     private Map<String, String> properties;
-    private Collection<JID> members;
-    private Collection<JID> administrators;
+    private Set<JID> members;
+    private Set<JID> administrators;
 
     /**
      * Constructs a new group. Note: this constructor is intended for implementors of the
@@ -70,8 +70,8 @@ public class Group implements Cacheable {
         this.groupManager = GroupManager.getInstance();
         this.name = name;
         this.description = description;
-        this.members = members;
-        this.administrators = administrators;
+        this.members = new HashSet<JID>(members);
+        this.administrators = new HashSet<JID>(administrators);
     }
 
     /**

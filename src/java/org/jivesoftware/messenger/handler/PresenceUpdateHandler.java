@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PresenceUpdateHandler.java,v $
  * $Revision$
  * $Date$
  *
@@ -307,7 +307,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavailable presence to the entity
-                    if (!roster.isRosterItem(update.getTo())) {
+                    RosterItem rosterItem = null;
+                    try {
+                        rosterItem = roster.getRosterItem(update.getTo());
+                    }
+                    catch (UserNotFoundException e) {}
+                    if (rosterItem == null || RosterItem.SUB_NONE == rosterItem.getSubStatus() ||
+                            RosterItem.SUB_TO == rosterItem.getSubStatus()) {
                         keepTrack = true;
                     }
                 }
@@ -406,6 +412,22 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
+    public boolean hasDirectPresence(Session session, JID recipientJID) {
+        Map<ChannelHandler, Set<String>> map =
+                directedPresences.get(session.getAddress().toString());
+        if (map != null) {
+            String recipient = recipientJID.toBareJID();
+            for (Set<String> fullJIDs : map.values()) {
+                for (String fullJID : fullJIDs) {
+                    if (fullJID.contains(recipient)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
@@ -415,4 +437,5 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
     }
+
 }

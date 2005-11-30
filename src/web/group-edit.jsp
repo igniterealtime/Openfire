@@ -490,11 +490,12 @@
 %>
 <%
             boolean showUpdateButtons = memberCount > 0;
+            boolean showRemoteJIDsWarning = false;
             while (admins.hasNext()) {
                 JID user = (JID)admins.next();
 %>
                 <tr>
-                    <td><%= user %></td>
+                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <td align="center">
                         <input type="checkbox" name="admin" value="<%= user %>" checked>
                     </td>
@@ -510,7 +511,7 @@
                 JID user = (JID)members.next();
 %>
                 <tr>
-                    <td><%= user %></td>
+                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <td align="center">
                         <input type="checkbox" name="admin" value="<%= user %>">
                     </td>
@@ -535,6 +536,16 @@
                         <input type="submit" name="remove" value="Remove">
                     </td>
                 </tr>
+<%
+            }
+
+            if (showRemoteJIDsWarning) {
+%>
+            <tr>
+                <td colspan="3">
+                    <font color="red">* Note: Remote users or entities should accept presence subscriptions automatically.</font>
+                </td>
+            </tr>
 <%
             }
 %>

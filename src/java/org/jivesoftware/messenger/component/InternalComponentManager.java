@@ -12,21 +12,20 @@
 package org.jivesoftware.messenger.component;
 
 import org.dom4j.Element;
+import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.RoutableChannelHandler;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
+import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.messenger.component.ComponentSession;
-import org.jivesoftware.messenger.RoutableChannelHandler;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.PacketException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -219,11 +218,14 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             return components.get(jid);
         }
         else {
+            if (!jid.contains(serverDomain)) {
+                // Ignore JIDs that doesn't belong to this server
+                return null;
+            }
             String serverName = new JID(jid).getDomain();
             int index = serverName.indexOf(".");
             if (index != -1) {
-                String serviceName = serverName.substring(0, index);
-                jid = serviceName;
+                jid = serverName.substring(0, index);
             }
         }
         return components.get(jid);

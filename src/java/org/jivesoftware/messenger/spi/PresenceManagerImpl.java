@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PresenceManagerImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -15,6 +15,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.DocumentException;
 import org.jivesoftware.messenger.*;
+import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
 import org.jivesoftware.messenger.component.InternalComponentManager;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.container.BasicModule;
@@ -49,6 +50,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private SessionManager sessionManager;
     private XMPPServer server;
     private PacketDeliverer deliverer;
+    private PresenceUpdateHandler presenceUpdateHandler;
 
     private InternalComponentManager componentManager;
 
@@ -333,6 +335,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
         if (userJID.getNode() != null && !"".equals(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
+                // Do not send an unavailable presence if the user sent a direct available presence
+                if (presenceUpdateHandler.hasDirectPresence(session, recipientJID)) {
+                    continue;
+                }
                 Presence presencePacket = new Presence();
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
@@ -356,6 +362,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         this.server = server;
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
+        presenceUpdateHandler = server.getPresenceUpdateHandler();
     }
 
     public Component getPresenceComponent(JID probee) {

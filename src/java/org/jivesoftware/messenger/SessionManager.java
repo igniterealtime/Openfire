@@ -163,7 +163,7 @@ public class SessionManager extends BasicModule {
      */
     private class SessionMap {
         private Map<String,ClientSession> resources = new ConcurrentHashMap<String,ClientSession>();
-        private LinkedList priorityList = new LinkedList();
+        private LinkedList<String> priorityList = new LinkedList<String>();
 
         /**
          * Add a session to the manager.
@@ -187,7 +187,7 @@ public class SessionManager extends BasicModule {
         private void sortSession(String resource, int priority) {
             synchronized (priorityList) {
                 if (priorityList.size() > 0) {
-                    Iterator iter = priorityList.iterator();
+                    Iterator<String> iter = priorityList.iterator();
                     for (int i = 0; iter.hasNext(); i++) {
                         ClientSession sess = resources.get(iter.next());
                         if (sess != null && sess.getPresence().getPriority() <= priority) {
@@ -309,12 +309,8 @@ public class SessionManager extends BasicModule {
          *
          * @return An iterator of all sessions
          */
-        public Iterator getSessions() {
-            LinkedList<Session> list = new LinkedList<Session>();
-            for (Session session : resources.values()) {
-                list.add(session);
-            }
-            return list.iterator();
+        public Collection<ClientSession> getSessions() {
+            return resources.values();
         }
 
         /**
@@ -1030,30 +1026,28 @@ public class SessionManager extends BasicModule {
         return between;
     }
 
-    private void copyAnonSessions(List sessions) {
+    private void copyAnonSessions(List<ClientSession> sessions) {
         // Add anonymous sessions
-        for (Session session : anonymousSessions.values()) {
+        for (ClientSession session : anonymousSessions.values()) {
             sessions.add(session);
         }
     }
 
-    private void copyUserSessions(List sessions) {
+    private void copyUserSessions(List<ClientSession> sessions) {
         // Get a copy of the sessions from all users
         for (String username : getSessionUsers()) {
-            Collection<ClientSession> usrSessions = getSessions(username);
-            for (Session session : usrSessions) {
+            for (ClientSession session : getSessions(username)) {
                 sessions.add(session);
             }
         }
     }
 
-    private void copyUserSessions(String username, List sessionList) {
+    private void copyUserSessions(String username, List<ClientSession> sessionList) {
         // Get a copy of the sessions from all users
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
-            Iterator sessionItr = sessionMap.getSessions();
-            while (sessionItr.hasNext()) {
-                sessionList.add(sessionItr.next());
+            for (ClientSession session : sessionMap.getSessions()) {
+                sessionList.add(session);
             }
         }
     }

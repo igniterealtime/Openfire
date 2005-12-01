@@ -140,7 +140,9 @@ public abstract class SocketReader implements Runnable {
         }
         finally {
             if (session != null) {
-                Log.debug("Logging off " + session.getAddress() + " on " + connection);
+                if (Log.isDebugEnabled()) {
+                    Log.debug("Logging off " + session.getAddress() + " on " + connection);
+                }
                 try {
                     session.getConnection().close();
                 }

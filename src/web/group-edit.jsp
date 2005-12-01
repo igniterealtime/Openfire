@@ -543,7 +543,7 @@
 %>
             <tr>
                 <td colspan="3">
-                    <font color="red">* Note: Remote users or entities should accept presence subscriptions automatically.</font>
+                    <font color="red">* <fmt:message key="group.edit.note" /></font>
                 </td>
             </tr>
 <%

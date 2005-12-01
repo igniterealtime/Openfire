@@ -821,7 +821,7 @@ public class SessionManager extends BasicModule {
 
         ClientSession session = null;
         // Build a JID represention based on the given JID data
-        StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder(40);
         if (username != null) {
             buf.append(username).append("@");
         }

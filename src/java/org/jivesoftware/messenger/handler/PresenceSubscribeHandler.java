@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: PresenceSubscribeHandler.java,v $
  * $Revision$
  * $Date$
  *
@@ -135,10 +135,15 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // Session the packet will be routed to the client. If a route cannot be found
                     // then the packet will be delivered based on its recipient and sender.
                     ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    Presence presenteToSend = presence.createCopy();
-                    // Stamp the presence with the user's bare JID as the 'from' address
-                    presenteToSend.setFrom(senderJID.toBareJID());
-                    handler.process(presenteToSend);
+                    if (handler != null) {
+                        Presence presenteToSend = presence.createCopy();
+                        // Stamp the presence with the user's bare JID as the 'from' address
+                        presenteToSend.setFrom(senderJID.toBareJID());
+                        handler.process(presenteToSend);
+                    }
+                    else {
+                        deliverer.deliver(presence.createCopy());
+                    }
 
                     if (type == Presence.Type.subscribed) {
                         // Send the presence of the local user to the remote user. The remote user
@@ -152,9 +157,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // to the remote user
                     presenceManager.sendUnavailableFromSessions(recipientJID, senderJID);
                 }
-            }
-            catch (NoSuchRouteException e) {
-                deliverer.deliver(presence.createCopy());
             }
             catch (SharedGroupException e) {
                 Presence result = presence.createCopy();
@@ -220,6 +222,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 item = roster.getRosterItem(target);
             }
             else {
+                if (Presence.Type.unsubscribed == type) {
+                    // Do not create a roster item when processing a confirmation of
+                    // an unsubscription
+                    return false;
+                }
                 item = roster.createRosterItem(target);
             }
             // Get a snapshot of the item state

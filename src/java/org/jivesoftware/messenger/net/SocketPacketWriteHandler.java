@@ -46,12 +46,13 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             JID recipient = packet.getTo();
             // Check if the target domain belongs to a remote server or a component
             if (server.matchesComponent(recipient) || server.isRemote(recipient)) {
-                try {
-                    // Locate the route to the remote server or component and ask it
-                    // to process the packet
-                    routingTable.getRoute(recipient).process(packet);
+                // Locate the route to the remote server or component and ask it
+                // to process the packet
+                ChannelHandler route = routingTable.getRoute(recipient);
+                if (route != null) {
+                    route.process(packet);
                 }
-                catch (NoSuchRouteException e) {
+                else {
                     // No root was found so either drop or store the packet
                     handleUnprocessedPacket(packet);
                 }

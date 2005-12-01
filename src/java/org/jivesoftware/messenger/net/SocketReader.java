@@ -556,18 +556,12 @@ public abstract class SocketReader implements Runnable {
             return false;
         }
         // Check if the host matches a subdomain of this host
-        RoutableChannelHandler route = null;
-        try {
-            route = routingTable.getRoute(new JID(host));
-            if (route instanceof OutgoingSessionPromise) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        catch (NoSuchRouteException e) {
+        RoutableChannelHandler route = routingTable.getRoute(new JID(host));
+        if (route == null || route instanceof OutgoingSessionPromise) {
             return true;
+        }
+        else {
+            return false;
         }
     }
 

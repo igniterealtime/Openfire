@@ -11,10 +11,7 @@
 
 package org.jivesoftware.messenger.server;
 
-import org.jivesoftware.messenger.NoSuchRouteException;
-import org.jivesoftware.messenger.RoutableChannelHandler;
-import org.jivesoftware.messenger.RoutingTable;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -130,7 +127,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
         if (created) {
             // A connection to the remote server was created so get the route and send the packet
-            routingTable.getRoute(packet.getTo()).process(packet);
+            ChannelHandler route = routingTable.getRoute(packet.getTo());
+            if (route != null) {
+                route.process(packet);
+            }
+            else {
+                throw new Exception("Failed to create connection to remote server");
+            }
         }
         else {
             throw new Exception("Failed to create connection to remote server");
@@ -147,7 +150,10 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 reply.setFrom(packet.getTo());
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.getRoute(reply.getTo()).process(reply);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
             }
             else if (packet instanceof Presence) {
                 Presence reply = new Presence();
@@ -155,7 +161,10 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.getRoute(reply.getTo()).process(reply);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
             }
             else if (packet instanceof Message) {
                 Message reply = new Message();
@@ -165,12 +174,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 reply.setType(((Message)packet).getType());
                 reply.setThread(((Message)packet).getThread());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.getRoute(reply.getTo()).process(reply);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
             }
         }
         catch (UnauthorizedException e) {
-        }
-        catch (NoSuchRouteException e) {
         }
     }
 

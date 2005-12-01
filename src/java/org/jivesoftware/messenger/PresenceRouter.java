@@ -88,10 +88,12 @@ public class PresenceRouter extends BasicModule {
                 }
                 else {
                     // The user sent a directed presence to an entity
-                    ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    handler.process(packet);
-                    // Notify the PresenceUpdateHandler of the directed presence
-                    updateHandler.directedPresenceSent(packet, handler, recipientJID.toString());
+                    ChannelHandler route = routingTable.getRoute(recipientJID);
+                    if (route != null) {
+                        route.process(packet);
+                        // Notify the PresenceUpdateHandler of the directed presence
+                        updateHandler.directedPresenceSent(packet, route, recipientJID.toString());
+                    }
                 }
 
             }
@@ -107,13 +109,14 @@ public class PresenceRouter extends BasicModule {
                 presenceManager.handleProbe(packet);
             }
             else {
-                // It's an unknown or ERROR type, just deliver it because there's nothing else to do with it
-                routingTable.getRoute(recipientJID).process(packet);
+                // It's an unknown or ERROR type, just deliver it because there's nothing
+                // else to do with it
+                ChannelHandler route = routingTable.getRoute(recipientJID);
+                if (route != null) {
+                    route.process(packet);
+                }
             }
 
-        }
-        catch (NoSuchRouteException e) {
-            // Do nothing, presence to unreachable routes are dropped
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);

@@ -535,9 +535,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         }
         try {
             ChannelHandler handler = routingTable.getRoute(recipient);
-            handler.process(presence);
+            if (handler != null) {
+                handler.process(presence);
+            }
         }
-        catch (NoSuchRouteException e) {}
         catch (UnauthorizedException e) {}
     }
 

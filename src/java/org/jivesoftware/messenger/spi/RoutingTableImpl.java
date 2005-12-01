@@ -79,14 +79,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
     }
 
-    public RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException {
+    public RoutableChannelHandler getRoute(JID node) {
+        return getRoute(node.toString(), node.getNode() == null ? "" : node.getNode(),
+                node.getDomain(), node.getResource() == null ? "" : node.getResource());
+    }
+
+    private RoutableChannelHandler getRoute(String jid, String node, String domain,
+            String resource) {
         RoutableChannelHandler route = null;
-        String nodeJID = node.getNode() == null ? "" : node.getNode();
-        String resourceJID = node.getResource() == null ? "" : node.getResource();
 
         // Check if the address belongs to a remote server
-        if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
-                componentManager.getComponent(node.getDomain()) == null) {
+        if (!serverName.equals(domain) && routes.get(domain) == null &&
+                componentManager.getComponent(domain) == null) {
             // Return a promise of a remote session. This object will queue packets pending
             // to be sent to remote servers
             return OutgoingSessionPromise.getInstance();
@@ -94,33 +98,32 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
         routeLock.readLock().lock();
         try {
-            Object nameRoutes = routes.get(node.getDomain());
+            Object nameRoutes = routes.get(domain);
             if (nameRoutes instanceof ChannelHandler) {
                 route = (RoutableChannelHandler)nameRoutes;
             }
             else {
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
+                Object resourceRoutes = ((Hashtable)nameRoutes).get(node);
                 if (resourceRoutes instanceof ChannelHandler) {
                     route = (RoutableChannelHandler)resourceRoutes;
                 }
                 else if (resourceRoutes != null) {
-                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resourceJID);
+                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resource);
                 }
                 else {
-                    throw new NoSuchRouteException(node.toString());
+                    route = null;
                 }
             }
         }
         catch (Exception e) {
-            throw new NoSuchRouteException(node == null ? "No node" : node.toString(), e);
+            if (Log.isDebugEnabled()) {
+                Log.debug("Route not found for JID: "+ jid, e);
+            }
         }
         finally {
             routeLock.readLock().unlock();
         }
 
-        if (route == null) {
-            throw new NoSuchRouteException(node == null ? "No node" : node.toString());
-        }
         return route;
     }
 
@@ -213,18 +216,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
     }
 
-    public ChannelHandler getBestRoute(JID node) throws NoSuchRouteException {
-
-        ChannelHandler route = null;
-        try {
-            route = getRoute(node);
-        }
-        catch (NoSuchRouteException e) {
-            JID defaultNode = new JID(node.getNode(), node.getDomain(), "");
-            route = getRoute(defaultNode);
-        }
+    public ChannelHandler getBestRoute(JID node) {
+        ChannelHandler route = route = getRoute(node);
         if (route == null) {
-            throw new NoSuchRouteException();
+            // Try looking for a route based on the bare JID
+            String nodeJID = node.getNode() == null ? "" : node.getNode();
+            route = getRoute(node.toBareJID(), nodeJID, node.getDomain(), "");
         }
         return route;
     }

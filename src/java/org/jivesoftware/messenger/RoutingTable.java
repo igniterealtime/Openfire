@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: RoutingTable.java,v $
  * $Revision$
  * $Date$
  *
@@ -91,9 +91,8 @@ public interface RoutingTable {
      *
      * @param node The address we want a route to
      * @return The handler corresponding to the route, or null indicating no route exists
-     * @throws NoSuchRouteException If the requested route does not exist
      */
-    RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException;
+    RoutableChannelHandler getRoute(JID node);
 
     /**
      * <p>Obtain all child routes for the given node.</p>
@@ -134,9 +133,8 @@ public interface RoutingTable {
      *
      * @param node The address we want a route to
      * @return The Session corresponding to the route, or null indicating no route exists
-     * @throws NoSuchRouteException If the requested route does not exist
      */
-    ChannelHandler getBestRoute(JID node) throws NoSuchRouteException;
+    ChannelHandler getBestRoute(JID node);
 
     /**
      * <p>Remove a route from the routing table.</p>

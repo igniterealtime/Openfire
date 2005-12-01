@@ -645,14 +645,10 @@ public class SessionManager extends BasicModule {
                 // the user from the routing table
                 if (sessionMap == null) {
                     JID userJID = new JID(session.getUsername(), serverName, "");
-                    try {
-                        routingTable.getRoute(userJID);
+                    if (routingTable.getRoute(userJID) != null) {
                         // Remove the route for the session's BARE address
                         routingTable.removeRoute(new JID(session.getAddress().getNode(),
                                 session.getAddress().getDomain(), ""));
-                    }
-                    catch (NoSuchRouteException e) {
-                        // Do nothing since the routingTable does not have routes to this user
                     }
                 }
                 // If all the user sessions are gone then remove the route to the default session

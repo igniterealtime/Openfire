@@ -88,7 +88,8 @@ public class TLSStreamReader {
             }
         } else {
 			if (cnt == -1) {
-				rbc.close();
+                inAppBB.flip();
+                rbc.close();
 			}
 		}
 	}

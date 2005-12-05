@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: ConnectionManagerImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -227,15 +227,15 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             String threadName = null;
             if (serverPort.isClientPort()) {
                 reader = new ClientSocketReader(router, serverName, sock, conn);
-                threadName = "Client SR";
+                threadName = "Client SR - " + reader.hashCode();
             }
             else if (serverPort.isComponentPort()) {
                 reader = new ComponentSocketReader(router, serverName, sock, conn);
-                threadName = "Component SR";
+                threadName = "Component SR - " + reader.hashCode();
             }
             else {
                 reader = new ServerSocketReader(router, serverName, sock, conn);
-                threadName = "Server SR";
+                threadName = "Server SR - " + reader.hashCode();
             }
             Thread thread = new Thread(reader, threadName);
             thread.setDaemon(true);

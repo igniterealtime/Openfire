@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: IQRosterHandler.java,v $
  * $Revision$
  * $Date$
  *
@@ -169,6 +169,12 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         IQ.Type type = packet.getType();
 
         try {
+            if (session.getUsername() == null && IQ.Type.get == type) {
+                // If anonymous user asks for his roster then return an empty roster
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement("query", "jabber:iq:roster");
+                return reply;
+            }
             User sessionUser = userManager.getUser(session.getUsername());
             Roster cachedRoster = sessionUser.getRoster();
             if (IQ.Type.get == type) {
@@ -275,8 +281,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:roster");
         return features.iterator();
     }

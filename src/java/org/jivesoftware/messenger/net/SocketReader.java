@@ -452,12 +452,10 @@ public abstract class SocketReader implements Runnable {
      * closing the connection a stream error will be sent to the entity.
      */
     private void closeNeverSecuredConnection() {
-        StringBuilder sb = new StringBuilder();
         // Set the not_authorized error
         StreamError error = new StreamError(StreamError.Condition.not_authorized);
-        sb.append(error.toXML());
         // Deliver stanza
-        connection.deliverRawText(sb.toString());
+        connection.deliverRawText(error.toXML());
         // Close the underlying connection
         connection.close();
         // Log a warning so that admins can track this case from the server side
@@ -495,7 +493,7 @@ public abstract class SocketReader implements Runnable {
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
         if (validateHost() && isHostUnknown(host)) {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
@@ -524,7 +522,7 @@ public abstract class SocketReader implements Runnable {
         else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
@@ -578,12 +576,10 @@ public abstract class SocketReader implements Runnable {
      */
     private boolean negotiateTLS() throws IOException, XmlPullParserException {
         if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.disabled) {
-            StringBuilder sb = new StringBuilder();
             // Set the not_authorized error
             StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            sb.append(error.toXML());
             // Deliver stanza
-            connection.deliverRawText(sb.toString());
+            connection.deliverRawText(error.toXML());
             // Close the underlying connection
             connection.close();
             // Log a warning so that admins can track this case from the server side
@@ -620,7 +616,7 @@ public abstract class SocketReader implements Runnable {
      */
     private void tlsNegotiated() {
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(340);
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
@@ -641,7 +637,7 @@ public abstract class SocketReader implements Runnable {
      * to servers or external components)
      */
     private void saslSuccessful() throws XmlPullParserException, IOException {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(145);
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
 
@@ -697,7 +693,7 @@ public abstract class SocketReader implements Runnable {
     abstract boolean validateHost();
 
     private String geStreamHeader() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");

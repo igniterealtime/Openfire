@@ -93,7 +93,7 @@ public class ClientSocketReader extends SocketReader {
     }
 
     protected String getAvailableStreamFeatures() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(110);
         // TODO Create and use #hasSASLAuthentication
         if (((ClientSession)session).getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication

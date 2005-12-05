@@ -104,7 +104,7 @@ public class SASLAuthentication {
      * @return a string with the valid SASL mechanisms available for the specified session.
      */
     public static String getSASLMechanisms(Session session) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(195);
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         // Check if the user provider in use supports passwords retrieval. Accessing to the users
         // passwords will be required by the CallbackHandler
@@ -287,7 +287,7 @@ public class SASLAuthentication {
     }
 
     private void sendChallenge(byte[] challenge) {
-        StringBuilder reply = new StringBuilder();
+        StringBuilder reply = new StringBuilder(250);
         reply.append(
                 "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append(StringUtils.encodeBase64(challenge).trim());
@@ -296,9 +296,7 @@ public class SASLAuthentication {
     }
 
     private void authenticationSuccessful(String username) {
-        StringBuilder reply = new StringBuilder();
-        reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"/>");
-        connection.deliverRawText(reply.toString());
+        connection.deliverRawText("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"/>");
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((ClientSession) session).setAuthToken(new AuthToken(username));
@@ -314,7 +312,7 @@ public class SASLAuthentication {
     }
 
     private void authenticationFailed() {
-        StringBuilder reply = new StringBuilder();
+        StringBuilder reply = new StringBuilder(80);
         reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append("<not-authorized/></failure>");
         connection.deliverRawText(reply.toString());

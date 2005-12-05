@@ -151,9 +151,7 @@ public class ClientSession extends Session {
                             connection.getInetAddress().getHostAddress());
                     // Include the not-authorized error in the response
                     StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(error.toXML());
-                    connection.deliverRawText(sb.toString());
+                    connection.deliverRawText(error.toXML());
                     // Close the underlying connection
                     connection.close();
                     return null;
@@ -211,7 +209,7 @@ public class ClientSession extends Session {
 
         Writer writer = connection.getWriter();
         // Build the start packet response
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
@@ -248,7 +246,7 @@ public class ClientSession extends Session {
         }
         // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
 
-        sb = new StringBuilder();
+        sb = new StringBuilder(300);
         sb.append("<stream:features>");
         if (tlsPolicy != SocketConnection.TLSPolicy.disabled) {
             sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");

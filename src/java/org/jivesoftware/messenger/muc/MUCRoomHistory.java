@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: MUCRoomHistory.java,v $
  * $Revision$
  * $Date$
  *
@@ -53,9 +53,14 @@ public final class MUCRoomHistory {
                 packet.getSubject() == null) {
             return;
         }
-        Message packetToAdd = (Message) packet.createCopy();
+        // Do not store messages is strategy is none and message is not changing the room subject
+        if (!historyStrategy.isHistoryEnabled()) {
+            if (packet.getSubject() == null || packet.getSubject().trim().length() == 0) {
+                return;
+            }
+        }
 
-        // TODO Analyze concurrency (on the LinkList) when adding many messages simultaneously
+        Message packetToAdd = (Message) packet.createCopy();
 
         // Check if the room has changed its configuration
         if (isNonAnonymousRoom != room.canAnyoneDiscoverJID()) {

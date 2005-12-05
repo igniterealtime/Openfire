@@ -181,6 +181,14 @@ public class HistoryStrategy {
         }
     }
 
+    boolean isHistoryEnabled() {
+        Type strategyType = type;
+        if (type == Type.defaulType && parent != null) {
+            strategyType = parent.getType();
+        }
+        return strategyType != HistoryStrategy.Type.none;
+    }
+
     /**
      * Obtain the current history as an iterator of messages to play back to a new room member.
      * 

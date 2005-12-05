@@ -575,7 +575,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (occupant == joinRole) {
                 continue;
             }
-            Presence occupantPresence = occupant.getPresence().createCopy();
+            Presence occupantPresence = occupant.getPresence();
             // Skip to the next occupant if we cannot send presence of this occupant
             if (hasToCheckRoleToBroadcastPresence()) {
                 Element frag = occupantPresence.getChildElement("x",
@@ -588,6 +588,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Don't include the occupant's JID if the room is semi-anon and the new occupant
             // is not a moderator
             if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
+                occupantPresence = occupantPresence.createCopy();
                 Element frag = occupantPresence.getChildElement("x",
                         "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);

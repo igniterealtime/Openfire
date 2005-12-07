@@ -109,7 +109,6 @@ public class IQBindHandler extends IQHandler {
                                 StreamError error = new StreamError(StreamError.Condition.conflict);
                                 conn.getWriter().write(error.toXML());
                                 conn.close();
-                                return null;
                             }
                         }
                         else {

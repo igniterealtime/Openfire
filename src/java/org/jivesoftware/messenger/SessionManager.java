@@ -799,7 +799,7 @@ public class SessionManager extends BasicModule {
         if (from == null) {
             return null;
         }
-        return getSession(from.getNode(), from.getDomain(), from.getResource());
+        return getSession(from.toString(), from.getNode(), from.getDomain(), from.getResource());
     }
 
     /**
@@ -819,7 +819,6 @@ public class SessionManager extends BasicModule {
             return null;
         }
 
-        ClientSession session = null;
         // Build a JID represention based on the given JID data
         StringBuilder buf = new StringBuilder(40);
         if (username != null) {
@@ -829,8 +828,30 @@ public class SessionManager extends BasicModule {
         if (resource != null) {
             buf.append("/").append(resource);
         }
+        return getSession(buf.toString(), username, domain, resource);
+    }
+
+    /**
+     * Returns the session responsible for this JID data. The returned Session may have never sent
+     * an available presence (thus not have a route) or could be a Session that hasn't
+     * authenticated yet (i.e. preAuthenticatedSessions).
+     *
+     * @param jid the full representation of the JID.
+     * @param username the username of the JID.
+     * @param domain the username of the JID.
+     * @param resource the username of the JID.
+     * @return the <code>Session</code> associated with the JID data.
+     */
+    private ClientSession getSession(String jid, String username, String domain, String resource) {
+        // Return null if the JID's data belongs to a foreign server. If the server is
+        // shutting down then serverName will be null so answer null too in this case.
+        if (serverName == null || !serverName.equals(domain)) {
+            return null;
+        }
+
+        ClientSession session = null;
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(buf.toString());
+        session = preAuthenticatedSessions.get(jid);
         if(session != null){
             return session;
         }
@@ -852,7 +873,6 @@ public class SessionManager extends BasicModule {
         }
         return session;
     }
-
 
     public Collection<ClientSession> getSessions() {
         List<ClientSession> allSessions = new ArrayList<ClientSession>();

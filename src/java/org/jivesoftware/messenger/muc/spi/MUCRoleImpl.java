@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: MUCRoleImpl.java,v $
  * $Revision$
  * $Date$
  *
@@ -15,6 +15,9 @@ import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
 import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.messenger.ClientSession;
+import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.messenger.Session;
 import org.jivesoftware.messenger.muc.MUCRole;
 import org.jivesoftware.messenger.muc.MUCRoom;
 import org.jivesoftware.messenger.muc.MUCUser;
@@ -81,6 +84,12 @@ public class MUCRoleImpl implements MUCRole {
     private Element extendedInformation;
 
     /**
+     * Cache session of local user that is a room occupant. If the room occupant is not a local
+     * user then nothing will be cached and packets will be sent through the PacketRouter.
+     */
+    private ClientSession session;
+
+    /**
      * Create a new role.
      * 
      * @param chatserver the server hosting the role.
@@ -103,6 +112,9 @@ public class MUCRoleImpl implements MUCRole {
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
+        // Cache the user's session (will only work for local users)
+        this.session = XMPPServer.getInstance().getSessionManager().getSession(presence.getFrom());
+
         extendedInformation =
                 DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         calculateExtendedInformation();
@@ -207,7 +219,14 @@ public class MUCRoleImpl implements MUCRole {
             return;
         }
         packet.setTo(user.getAddress());
-        router.route(packet);
+
+        if (session != null && session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            // Send the packet directly to the local user session
+            session.process(packet);
+        }
+        else {
+            router.route(packet);
+        }
     }
 
     /**

@@ -26,13 +26,13 @@ public class XMLSocketWriter extends XMLWriter {
      */
     public void flush() throws IOException {
         // Register that we have started sending data
-        SocketSendingTracker.getInstance().socketStartedSending(connection);
+        connection.writeStarted();
         try {
             super.flush();
         }
         finally {
             // Register that we have finished sending data
-            SocketSendingTracker.getInstance().socketFinishedSending(connection);
+            connection.writeFinished();
         }
     }
 }

@@ -17,6 +17,7 @@ import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
 
 import java.io.BufferedWriter;
@@ -27,6 +28,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
+import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -41,6 +45,9 @@ public class SocketConnection implements Connection {
      * The utf-8 charset for decoding and encoding XMPP packet streams.
      */
     public static final String CHARSET = "UTF-8";
+
+    private static Map<SocketConnection, String> instances =
+            new ConcurrentHashMap<SocketConnection, String>();
 
     private Map<ConnectionCloseListener, Object> listeners = new HashMap<ConnectionCloseListener, Object>();
 
@@ -57,11 +64,18 @@ public class SocketConnection implements Connection {
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
-	private TLSStreamHandler tlsStreamHandler;
+    private TLSStreamHandler tlsStreamHandler;
+
+    private long writeStarted = -1;
+
     /**
      * TLS policy currently in use for this connection.
      */
     private TLSPolicy tlsPolicy = TLSPolicy.optional;
+
+    public static Collection<SocketConnection> getInstances() {
+        return instances.keySet();
+    }
 
     /**
      * Create a new session using the supplied socket.
@@ -83,6 +97,8 @@ public class SocketConnection implements Connection {
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
         xmlSerializer = new XMLSocketWriter(writer, this);
+
+        instances.put(this, "");
     }
 
     /**
@@ -93,8 +109,8 @@ public class SocketConnection implements Connection {
      *         the corresponding input and output streams.
      */
     public TLSStreamHandler getTLSStreamHandler() {
-		return tlsStreamHandler;
-	}
+        return tlsStreamHandler;
+    }
 
     /**
      * Secures the plain connection by negotiating TLS with the client.
@@ -103,14 +119,14 @@ public class SocketConnection implements Connection {
      * @throws IOException if an error occured while securing the connection.
      */
     public void startTLS(boolean clientMode) throws IOException {
-		if (!secure) {
-			secure = true;
-			tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
-			writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
-			xmlSerializer = new XMLSocketWriter(writer, this);
-		}
-	}
-	
+        if (!secure) {
+            secure = true;
+            tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
+            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
+            xmlSerializer = new XMLSocketWriter(writer, this);
+        }
+    }
+
     public boolean validate() {
         if (isClosed()) {
             return false;
@@ -118,7 +134,7 @@ public class SocketConnection implements Connection {
         try {
             synchronized (writer) {
                 // Register that we started sending data on the connection
-                SocketSendingTracker.getInstance().socketStartedSending(this);
+                writeStarted();
                 writer.write(" ");
                 writer.flush();
             }
@@ -129,7 +145,7 @@ public class SocketConnection implements Connection {
         }
         finally {
             // Register that we finished sending data on the connection
-            SocketSendingTracker.getInstance().socketFinishedSending(this);
+            writeFinished();
         }
         return !isClosed();
     }
@@ -259,7 +275,7 @@ public class SocketConnection implements Connection {
                     synchronized (writer) {
                         try {
                             // Register that we started sending data on the connection
-                            SocketSendingTracker.getInstance().socketStartedSending(this);
+                            writeStarted();
                             writer.write("</stream:stream>");
                             if (flashClient) {
                                 writer.write('\0');
@@ -269,7 +285,7 @@ public class SocketConnection implements Connection {
                         catch (IOException e) {}
                         finally {
                             // Register that we finished sending data on the connection
-                            SocketSendingTracker.getInstance().socketFinishedSending(this);
+                            writeFinished();
                         }
                     }
                 }
@@ -284,6 +300,32 @@ public class SocketConnection implements Connection {
         if (wasClosed) {
             notifyCloseListeners();
         }
+    }
+
+    void writeStarted() {
+        writeStarted = System.currentTimeMillis();
+    }
+
+    void writeFinished() {
+        writeStarted = -1;
+    }
+
+    void checkHealth() {
+        // Check that the sending operation is still active
+        if (writeStarted > -1 && System.currentTimeMillis() - writeStarted >
+                JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
+            // Close the socket
+            if (Log.isDebugEnabled()) {
+                Log.debug("Closing connection: " + this + " that started sending data at: " +
+                        new Date(writeStarted));
+            }
+            forceClose();
+        }
+    }
+
+    void release() {
+        writeStarted = -1;
+        instances.remove(this);
     }
 
     /**
@@ -368,7 +410,7 @@ public class SocketConnection implements Connection {
             synchronized (writer) {
                 try {
                     // Register that we started sending data on the connection
-                    SocketSendingTracker.getInstance().socketStartedSending(this);
+                    writeStarted();
                     writer.write(text);
                     if (flashClient) {
                         writer.write('\0');
@@ -381,7 +423,7 @@ public class SocketConnection implements Connection {
                 }
                 finally {
                     // Register that we finished sending data on the connection
-                    SocketSendingTracker.getInstance().socketFinishedSending(this);
+                    writeFinished();
                 }
             }
             if (errorDelivering) {

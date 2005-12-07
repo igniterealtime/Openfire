@@ -155,6 +155,7 @@ public abstract class SocketReader implements Runnable {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.connection")
                         + "\n" + socket.toString());
             }
+            connection.release();
             shutdown();
         }
     }

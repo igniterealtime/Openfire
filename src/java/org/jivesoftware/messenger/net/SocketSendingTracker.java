@@ -1,12 +1,5 @@
 package org.jivesoftware.messenger.net;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * A SocketSendingTracker keeps track of all the sockets that are currently sending data and
  * checks the health of the sockets to detect hanged connections. If a sending operation takes
@@ -29,11 +22,6 @@ public class SocketSendingTracker {
 
 
     private static SocketSendingTracker instance = new SocketSendingTracker();
-    /**
-     * Map that holds the connections that are currently sending information together with the date
-     * when the sending operation started.
-     */
-    private Map<SocketConnection, Date> sockets = new ConcurrentHashMap<SocketConnection, Date>();
 
     /**
      * Flag that indicates if the tracket should shutdown the tracking process.
@@ -59,27 +47,6 @@ public class SocketSendingTracker {
      * Hide the constructor so that only one instance of this class can exist.
      */
     private SocketSendingTracker() {
-    }
-
-    /**
-     * Register that the specified socket has started sending information. The registration will
-     * include the timestamp when the sending operation started so that if after several minutes
-     * it hasn't finished then the socket will be closed.
-     *
-     * @param socket the socket that started sending data.
-     */
-    public void socketStartedSending(SocketConnection socket) {
-        sockets.put(socket, new Date());
-    }
-
-    /**
-     * Register that the specified socket has finished sending information. The socket will
-     * be removed from the tracking list.
-     *
-     * @param socket the socket that finished sending data.
-     */
-    public void socketFinishedSending(SocketConnection socket) {
-        sockets.remove(socket);
     }
 
     /**
@@ -129,26 +96,8 @@ public class SocketSendingTracker {
      * quite small.
      */
     private void checkHealth() {
-        for (SocketConnection connection : sockets.keySet()) {
-            Date startDate = sockets.get(connection);
-            if (startDate != null &&
-                    System.currentTimeMillis() - startDate.getTime() >
-                    JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
-                // Check that the sending operation is still active
-                if (sockets.get(connection) != null) {
-                    // Close the socket
-                    try {
-                        Log.debug("Closing connection: " + connection +
-                                " that started sending data at: " + startDate);
-                        connection.forceClose();
-                    }
-                    finally {
-                        // Remove tracking on this socket
-                        sockets.remove(connection);
-                    }
-                }
-            }
-
+        for (SocketConnection connection : SocketConnection.getInstances()) {
+            connection.checkHealth();
         }
     }
 }

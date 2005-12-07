@@ -17,6 +17,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
@@ -59,6 +60,9 @@ import org.xmpp.packet.Packet;
  * @author Ryan Graham 
  */
 public class SearchPlugin implements Component, Plugin, PropertyEventListener {
+    public static final String PLUGIN_SEARCH_SERVICENAME = "plugin.search.serviceName";
+    public static final String PLUGIN_SEARCH_SERVICEENABLED = "plugin.search.serviceEnabled";
+   
     private XMPPServer server;
     private UserManager userManager;
     private ComponentManager componentManager;
@@ -111,7 +115,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         try {
             componentManager.addComponent(serviceName, this);
         }
-		catch (Exception e) {
+        catch (Exception e) {
             componentManager.getLog().error(e);
         }
         PropertyEventDispatcher.addListener(this);
@@ -131,7 +135,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             field.addValue("jabber:iq:search");
             searchForm.addField(field);
             
-			field = new XFormFieldImpl("search");
+            field = new XFormFieldImpl("search");
             field.setType(FormField.TYPE_TEXT_SINGLE);			
             field.setLabel("Search");
             field.setRequired(false);
@@ -143,7 +147,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
                 field = new XFormFieldImpl(searchField);
                 field.setType(FormField.TYPE_BOOLEAN);
-				field.addValue("1");
+                field.addValue("1");
                 field.setLabel(searchField);
                 field.setRequired(false);
                 searchForm.addField(field);
@@ -194,7 +198,6 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 catch (ComponentException e) {
                     componentManager.getLog().error(e);
                 }
-
             }
             else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                 try {
@@ -268,7 +271,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     }
 
     private IQ processSetPacket(IQ packet) {
-        List<User> users = new ArrayList<User>();
+        Set<User> users = new HashSet<User>();
         
         Element incomingForm = packet.getChildElement();
         boolean isDataFormQuery = (incomingForm.element(QName.get("x", "jabber:x:data")) != null);
@@ -276,8 +279,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         Hashtable<String, String> searchList = extractSearchQuery(incomingForm);
         Enumeration<String> searchIter = searchList.keys();
         while (searchIter.hasMoreElements()) {
-            String field = (String) searchIter.nextElement();
-            String query = (String) searchList.get(field);
+            String field = searchIter.nextElement();
+            String query = searchList.get(field);
             
             Collection<User> foundUsers = new ArrayList<User>();
             if (userManager != null) {
@@ -290,9 +293,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 foundUsers.addAll(findUsers(field, query));
             }
             
-            // Filter out all duplicate users.
             for (User user : foundUsers) {
-                if (!users.contains(user)) {
+                if (user != null) {
                     users.add(user);
                 }
             }
@@ -340,32 +342,32 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             }
         }
         else {
-			List<String> searchFields = new ArrayList<String>();
-			String search = "";
+            List<String> searchFields = new ArrayList<String>();
+            String search = "";
 			
             Iterator fields = form.elementIterator("field");
             while (fields.hasNext()) {
                 Element searchField = (Element) fields.next();
 				
-				String field = searchField.attributeValue("var");
-				String value = searchField.element("value").getTextTrim();
-				if (field.equals("search")) {
-					search = value;
-				}
-				else if (value.equals("1")) {
-					searchFields.add(field);
-				}
+                String field = searchField.attributeValue("var");
+                String value = searchField.element("value").getTextTrim();
+                if (field.equals("search")) {
+                    search = value;
+                }
+                else if (value.equals("1")) {
+                    searchFields.add(field);
+                }
             }
 			
-			for (String field : searchFields) {
-				searchList.put(field, search);
-			}
+            for (String field : searchFields) {
+                searchList.put(field, search);
+            }
         }
 		
         return searchList;
     }
     
-    private IQ replyDataFormResult(List<User> users, IQ packet) {
+    private IQ replyDataFormResult(Set<User> users, IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
         
         XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
@@ -415,7 +417,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return replyPacket;
     }
 
-    private IQ replyNonDataFormResult(List<User> users, IQ packet) {
+    private IQ replyNonDataFormResult(Set<User> users, IQ packet) {
         Element replyQuery = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
         String serverName = XMPPServer.getInstance().getServerInfo().getName();
         
@@ -443,7 +445,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     
     public void setServiceName(String name) {
         changeServiceName(name);
-        JiveGlobals.setProperty("plugin.search.serviceName", name);
+        JiveGlobals.setProperty(PLUGIN_SEARCH_SERVICENAME, name);
     }
     
     public boolean getServiceEnabled() {
@@ -452,23 +454,23 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     
     public void setServiceEnabled(boolean enabled) {
         serviceEnabled = enabled;
-        JiveGlobals.setProperty("plugin.search.serviceEnabled", enabled ? "true" : "false");
+        JiveGlobals.setProperty(PLUGIN_SEARCH_SERVICEENABLED, enabled ? "true" : "false");
     }
     
     public void propertySet(String property, Map params) {
-        if (property.equals("plugin.search.serviceEnabled")) {
+        if (property.equals(PLUGIN_SEARCH_SERVICEENABLED)) {
             this.serviceEnabled = Boolean.parseBoolean((String)params.get("value"));
         }
-        else if (property.equals("plugin.search.serviceName")) {
+        else if (property.equals(PLUGIN_SEARCH_SERVICENAME)) {
             changeServiceName((String)params.get("value"));
         }
     }
 
     public void propertyDeleted(String property, Map params) {
-        if (property.equals("plugin.search.serviceEnabled")) {
+        if (property.equals(PLUGIN_SEARCH_SERVICEENABLED)) {
             this.serviceEnabled = true;
         }
-        else if (property.equals("plugin.search.serviceName")) {
+        else if (property.equals(PLUGIN_SEARCH_SERVICENAME)) {
             changeServiceName("search");
         }
     }

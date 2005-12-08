@@ -280,4 +280,9 @@ public class IncomingServerSession extends Session {
     public void verifyReceivedKey(Element doc) {
         ServerDialback.verifyReceivedKey(doc, getConnection());
     }
+
+    public String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
+    }
 }

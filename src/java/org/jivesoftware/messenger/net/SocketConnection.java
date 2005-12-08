@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.*;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -59,6 +60,7 @@ public class SocketConnection implements Connection {
 
     private Session session;
     private boolean secure;
+	private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
     private boolean flashClient = false;
     private int majorVersion = 1;
@@ -73,6 +75,11 @@ public class SocketConnection implements Connection {
      */
     private TLSPolicy tlsPolicy = TLSPolicy.optional;
 
+	/**
+	 * Compression policy currently in use for this connection.
+	 */
+	private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
+
     public static Collection<SocketConnection> getInstances() {
         return instances.keySet();
     }
@@ -86,8 +93,7 @@ public class SocketConnection implements Connection {
      * @throws NullPointerException if the socket is null.
      */
     public SocketConnection(PacketDeliverer deliverer, Socket socket, boolean isSecure)
-            throws IOException
-    {
+            throws IOException {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
         }
@@ -124,6 +130,26 @@ public class SocketConnection implements Connection {
             tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
             xmlSerializer = new XMLSocketWriter(writer, this);
+        }
+    }
+
+    /**
+     * Start using compression for this connection. Compression will only be available after TLS
+     * has been negotiated. This means that a connection can never be using compression before
+     * TLS. However, it is possible to use compression without TLS.
+     *
+     * @throws IOException if an error occured while starting compression.
+     */
+    public void startCompression() throws IOException {
+        compressed = true;
+
+        if (tlsStreamHandler == null) {
+            writer = new BufferedWriter(
+                    new OutputStreamWriter(new ZipOutputStream(socket.getOutputStream()), CHARSET));
+        }
+        else {
+            writer = new BufferedWriter(new OutputStreamWriter(
+                    new ZipOutputStream(tlsStreamHandler.getOutputStream()), CHARSET));
         }
     }
 
@@ -188,30 +214,24 @@ public class SocketConnection implements Connection {
         return secure;
     }
 
-    /**
-     * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
-     * last case.
-     *
-     * @return whether TLS is mandatory, optional or is disabled.
-     */
+    public boolean isCompressed() {
+        return compressed;
+    }
+
     public TLSPolicy getTlsPolicy() {
         return tlsPolicy;
     }
 
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
-     * last case.
-     *
-     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
-     */
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         this.tlsPolicy = tlsPolicy;
+    }
+
+    public CompressionPolicy getCompressionPolicy() {
+        return compressionPolicy;
+    }
+
+    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
+        this.compressionPolicy = compressionPolicy;
     }
 
     public int getMajorXMPPVersion() {
@@ -334,7 +354,7 @@ public class SocketConnection implements Connection {
      * sending data over the socket has taken a long time and we need to close the socket, discard
      * the connection and its session.
      */
-    void forceClose() {
+    private void forceClose() {
         if (session != null) {
             // Set that the session is closed. This will prevent threads from trying to
             // deliver packets to this session thus preventing future locks.
@@ -439,7 +459,12 @@ public class SocketConnection implements Connection {
     private void notifyCloseListeners() {
         synchronized (listeners) {
             for (ConnectionCloseListener listener : listeners.keySet()) {
-                listener.onConnectionClose(listeners.get(listener));
+                try {
+                    listener.onConnectionClose(listeners.get(listener));
+                }
+                catch (Exception e) {
+                    Log.error("Error notifying listener: " + listener, e);
+                }
             }
         }
     }
@@ -448,27 +473,4 @@ public class SocketConnection implements Connection {
         return super.toString() + " socket: " + socket + " session: " + session;
     }
 
-    /**
-     * Enumeration of possible TLS policies required to interact with the server.
-     */
-    public enum TLSPolicy {
-
-        /**
-         * TLS is required to interact with the server. Entities that do not secure their
-         * connections using TLS will get a stream error and their connections will be closed.
-         */
-        required,
-
-        /**
-         * TLS is optional to interact with the server. Entities may or may not secure their
-         * connections using TLS.
-         */
-        optional,
-
-        /**
-         * TLS is not available. Entities that request a TLS negotiation will get a stream
-         * error and their connections will be closed.
-         */
-        disabled;
-    }
 }

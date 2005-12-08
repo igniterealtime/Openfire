@@ -61,9 +61,4 @@ public class ComponentSocketReader extends SocketReader {
     boolean validateHost() {
         return false;
     }
-
-    String getAvailableStreamFeatures() {
-        // Nothing special to add
-        return null;
-    }
 }

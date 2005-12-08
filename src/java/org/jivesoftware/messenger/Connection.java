@@ -1,5 +1,5 @@
 /**
- * $RCSfile$
+ * $RCSfile: Connection.java,v $
  * $Revision$
  * $Date$
  *
@@ -13,6 +13,7 @@ package org.jivesoftware.messenger;
 
 import org.xmpp.packet.Packet;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.messenger.net.SocketConnection;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -176,4 +177,88 @@ public interface Connection {
      * @return the language code for the connection.
      */
     public String getLanguage();
+
+    /**
+     * Returns true if the connection is using compression.
+     *
+     * @return true if the connection is using compression.
+     */
+    boolean isCompressed();
+
+    /**
+     * Returns whether compression is optional or is disabled.
+     *
+     * @return whether compression is optional or is disabled.
+     */
+    CompressionPolicy getCompressionPolicy();
+
+    /**
+     * Sets whether compression is enabled or is disabled.
+     *
+     * @param compressionPolicy whether Compression is enabled or is disabled.
+     */
+    void setCompressionPolicy(CompressionPolicy compressionPolicy);
+
+    /**
+     * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @return whether TLS is mandatory, optional or is disabled.
+     */
+    TLSPolicy getTlsPolicy();
+
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
+     */
+    void setTlsPolicy(TLSPolicy tlsPolicy);
+
+    /**
+     * Enumeration of possible compression policies required to interact with the server.
+     */
+    enum CompressionPolicy {
+
+        /**
+         * compression is optional to interact with the server.
+         */
+        optional,
+
+        /**
+         * compression is not available. Entities that request a compression negotiation
+         * will get a stream error and their connections will be closed.
+         */
+        disabled;
+    }
+
+    /**
+     * Enumeration of possible TLS policies required to interact with the server.
+     */
+    enum TLSPolicy {
+
+        /**
+         * TLS is required to interact with the server. Entities that do not secure their
+         * connections using TLS will get a stream error and their connections will be closed.
+         */
+        required,
+
+        /**
+         * TLS is optional to interact with the server. Entities may or may not secure their
+         * connections using TLS.
+         */
+        optional,
+
+        /**
+         * TLS is not available. Entities that request a TLS negotiation will get a stream
+         * error and their connections will be closed.
+         */
+        disabled;
+    }
 }

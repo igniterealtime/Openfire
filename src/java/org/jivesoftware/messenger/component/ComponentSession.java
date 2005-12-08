@@ -199,6 +199,11 @@ public class ComponentSession extends Session {
         super(serverName, conn, id);
     }
 
+    public String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
+    }
+
     public void process(Packet packet) throws PacketException {
         // Since ComponentSessions are not being stored in the RoutingTable this messages is very
         // unlikely to be sent

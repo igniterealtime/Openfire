@@ -21,6 +21,7 @@
 <%@ page import="org.jivesoftware.messenger.net.SocketConnection"%>
 <%@ page import="org.jivesoftware.messenger.XMPPServer"%>
 <%@ page import="org.jivesoftware.messenger.ConnectionManager"%>
+<%@ page import="org.jivesoftware.messenger.Connection"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -49,7 +50,7 @@
 
             // Enable 5222 port and make TLS required
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            ClientSession.setTLSPolicy(SocketConnection.TLSPolicy.required);
+            ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
         }
@@ -58,7 +59,7 @@
 
             // Enable 5222 port and make TLS optional
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            ClientSession.setTLSPolicy(SocketConnection.TLSPolicy.optional);
+            ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
         }
@@ -71,13 +72,13 @@
             // Enable port 5222 and configure TLS policy
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
             if ("notavailable".equals(tls)) {
-                ClientSession.setTLSPolicy(SocketConnection.TLSPolicy.disabled);
+                ClientSession.setTLSPolicy(Connection.TLSPolicy.disabled);
             }
             else if ("optional".equals(tls)) {
-                ClientSession.setTLSPolicy(SocketConnection.TLSPolicy.optional);
+                ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
             }
             else {
-                ClientSession.setTLSPolicy(SocketConnection.TLSPolicy.required);
+                ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             }
         }
         success = true;
@@ -86,12 +87,12 @@
     // Set page vars
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     if (connectionManager.isClientListenerEnabled() && connectionManager.isClientSSLListenerEnabled()) {
-        if (SocketConnection.TLSPolicy.required.equals(ClientSession.getTLSPolicy())) {
+        if (Connection.TLSPolicy.required.equals(ClientSession.getTLSPolicy())) {
             clientSecurityRequired = "req";
             ssl = "available";
             tls = "required";
         }
-        else if (SocketConnection.TLSPolicy.optional.equals(ClientSession.getTLSPolicy())) {
+        else if (Connection.TLSPolicy.optional.equals(ClientSession.getTLSPolicy())) {
             clientSecurityRequired = "notreq";
             ssl = "available";
             tls = "optional";
@@ -105,7 +106,7 @@
     else {
         clientSecurityRequired = "custom";
         ssl = connectionManager.isClientSSLListenerEnabled() ? "available" : "notavailable";
-        tls = SocketConnection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" : ClientSession.getTLSPolicy().toString();
+        tls = Connection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" : ClientSession.getTLSPolicy().toString();
     }
 
     if (install) {

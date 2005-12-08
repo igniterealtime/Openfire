@@ -503,4 +503,8 @@ public class OutgoingServerSession extends Session {
         }
     }
 
+    public String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
+    }
 }

@@ -11,8 +11,8 @@
 
 package org.jivesoftware.messenger.net;
 
-import org.dom4j.Element;
 import org.dom4j.DocumentException;
+import org.dom4j.Element;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
+import java.util.zip.ZipInputStream;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -260,7 +261,6 @@ public abstract class SocketReader implements Runnable {
                     open = false;
                     session = null;
                 }
-                continue;
             }
             else if ("auth".equals(tag)) {
                 // User is trying to authenticate using SASL
@@ -273,9 +273,22 @@ public abstract class SocketReader implements Runnable {
                     open = false;
                     session = null;
                 }
-                continue;
             }
-            else {
+			else if ("compress".equals(tag)) 
+			{
+                // Client is trying to initiate compression
+                if (compressClient(doc)) {
+                    // Compression was successful so open a new stream and offer
+                    // resource binding and session establishment (to client sessions only)
+                    compressionSuccessful();
+                }
+                else {
+                    open = false;
+                    session = null;
+                }
+			}
+            else 
+			{
                 if (!processUnknowPacket(doc)) {
                     Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                             doc.asXML());
@@ -288,13 +301,66 @@ public abstract class SocketReader implements Runnable {
     private boolean authenticateClient(Element doc) throws DocumentException, IOException,
             XmlPullParserException {
         // Ensure that connection was secured if TLS was required
-        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isSecure()) {
             closeNeverSecuredConnection();
             return false;
         }
         SASLAuthentication saslAuth = new SASLAuthentication(session, reader);
         return saslAuth.doHandshake(doc);
+    }
+
+    /**
+     * Start using compression but first check if the connection can and should use compression.
+     * The connection will be closed if the requested method is not supported, if the connection
+     * is already using compression or if client requested to use compression but this feature
+     * is disabled.
+     *
+     * @param doc the element sent by the client requesting compression. Compression method is
+     *        included.
+     * @return true if it was possible to use compression.
+     * @throws IOException if an error occurs while starting using compression.
+     */
+    private boolean compressClient(Element doc) throws IOException {
+        String error = null;
+        if (connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
+            // Client requested compression but this feature is disabled
+            error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
+            // Log a warning so that admins can track this case from the server side
+            Log.warn("Client requested compression while compression is disabled. Closing " +
+                    "connection : " + connection);
+        }
+        else if (connection.isCompressed()) {
+            // Client requested compression but connection is already compressed
+            error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
+            // Log a warning so that admins can track this case from the server side
+            Log.warn("Client requested compression and connection is already compressed. Closing " +
+                    "connection : " + connection);
+        }
+        else {
+            // Check that the requested method is supported
+            String method = doc.elementText("method");
+            if (!"zlib".equals(method)) {
+                error = "<failure xmlns='http://jabber.org/protocol/compress'><unsupported-method/></failure>";
+                // Log a warning so that admins can track this case from the server side
+                Log.warn("Requested compression method is not supported: " + method +
+                        ". Closing connection : " + connection);
+            }
+        }
+
+        if (error != null) {
+            // Deliver stanza
+            connection.deliverRawText(error);
+            // Close the underlying connection
+            connection.close();
+            return false;
+        }
+        else {
+            // Start using compression
+            connection.startCompression();
+            return true;
+        }
+
     }
 
     /**
@@ -310,7 +376,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
-        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isSecure()) {
             closeNeverSecuredConnection();
             return;
@@ -359,7 +425,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
-        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isSecure()) {
             closeNeverSecuredConnection();
             return;
@@ -407,7 +473,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
-        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.required &&
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isSecure()) {
             closeNeverSecuredConnection();
             return;
@@ -576,7 +642,7 @@ public abstract class SocketReader implements Runnable {
      * @throws XmlPullParserException if an error occures while parsing.
      */
     private boolean negotiateTLS() throws IOException, XmlPullParserException {
-        if (connection.getTlsPolicy() == SocketConnection.TLSPolicy.disabled) {
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
             // Set the not_authorized error
             StreamError error = new StreamError(StreamError.Condition.not_authorized);
             // Deliver stanza
@@ -617,13 +683,13 @@ public abstract class SocketReader implements Runnable {
      */
     private void tlsNegotiated() {
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder(340);
+        StringBuilder sb = new StringBuilder(620);
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
         // Include specific features such as auth and register for client sessions
-        String specificFeatures = getAvailableStreamFeatures();
+        String specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
             sb.append(specificFeatures);
         }
@@ -638,43 +704,84 @@ public abstract class SocketReader implements Runnable {
      * to servers or external components)
      */
     private void saslSuccessful() throws XmlPullParserException, IOException {
-        StringBuilder sb = new StringBuilder(145);
+		XmlPullParser xpp = reader.getXPPParser();
+		// Reset the parser since a new stream header has been sent from the client
+		if (connection.getTLSStreamHandler() == null) 
+		{
+			xpp.setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
+		}
+		else 
+		{
+			xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(),
+				CHARSET));
+		}
+
+		// Skip the opening stream sent by the client
+		for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) 
+		{
+			eventType = xpp.next();
+		}
+
+        StringBuilder sb = new StringBuilder(420);
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
 
         // Include specific features such as resource binding and session establishment
         // for client sessions
-        String specificFeatures = getAvailableStreamFeatures();
+        String specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
             sb.append(specificFeatures);
         }
         sb.append("</stream:features>");
         connection.deliverRawText(sb.toString());
+    }
 
+	/**
+	 * After compression was successful we should open a new stream and offer
+	 * new stream features such as resource binding and session establishment. Notice that
+	 * resource binding and session establishment should only be offered to clients (i.e. not
+	 * to servers or external components)
+	 */
+	private void compressionSuccessful() throws XmlPullParserException, IOException
+	{
+		connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
 
         XmlPullParser xpp = reader.getXPPParser();
         // Reset the parser since a new stream header has been sent from the client
-        if (connection.getTLSStreamHandler() == null) {
-            xpp.setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
+		if (connection.getTLSStreamHandler() == null)
+		{
+			xpp.setInput(new InputStreamReader(new ZipInputStream (socket.getInputStream()), CHARSET));
         }
-        else {
-            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(),
+		else
+		{
+			xpp.setInput(new InputStreamReader(new ZipInputStream (connection.getTLSStreamHandler().getInputStream()),
                     CHARSET));
         }
 
         // Skip the opening stream sent by the client
-        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+		for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
+		{
             eventType = xpp.next();
         }
-    }
 
-    /**
-     * Returns a text with the available stream features. Each subclass may return different
-     * values depending whether the session has been authenticated or not.
-     *
-     * @return a text with the available stream features or <tt>null</tt> to add nothing.
-     */
-    abstract String getAvailableStreamFeatures();
+		StringBuilder sb = new StringBuilder(340);
+		sb.append(geStreamHeader());
+		sb.append("<stream:features>");
+        // Include SASL mechanisms only if client has not been authenticated
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            // Include available SASL Mechanisms
+            sb.append(SASLAuthentication.getSASLMechanisms(session));
+        }
+		// Include specific features such as resource binding and session establishment
+		// for client sessions
+		String specificFeatures = session.getAvailableStreamFeatures();
+		if (specificFeatures != null)
+		{
+			sb.append(specificFeatures);
+		}
+		sb.append("</stream:features>");
+		connection.deliverRawText(sb.toString());
+    }
 
     /**
      * Returns the stream namespace. (E.g. jabber:client, jabber:server, etc.).

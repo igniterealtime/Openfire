@@ -260,6 +260,14 @@ public abstract class Session implements RoutableChannelHandler {
         sessionData.remove(key);
     }
 
+    /**
+     * Returns a text with the available stream features. Each subclass may return different
+     * values depending whether the session has been authenticated or not.
+     *
+     * @return a text with the available stream features or <tt>null</tt> to add nothing.
+     */
+    public abstract String getAvailableStreamFeatures();
+
     public String toString() {
         return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
     }

@@ -85,7 +85,8 @@ public class SequenceManager {
     }
 
     /**
-     * Method for objects that have defined the annotation {@link JiveID} in their class.
+     * Returns the next id for an object that has defined the annotation {@link JiveID}.
+     * The JiveID annotation value is the synonymous for the type integer.
      *
      * The annotation JiveID should contain the id type for the object (the same number you would
      * use to call nextID(int type))
@@ -101,6 +102,7 @@ public class SequenceManager {
      *
      * @param o object that has annotation JiveID
      * @return the next int
+     * @throws IllegalArgumentException If the object passed in does not defined {@link JiveID}
      */
     public static long nextID(Object o) {
         JiveID id = o.getClass().getAnnotation(JiveID.class);
@@ -119,7 +121,7 @@ public class SequenceManager {
      * for the type we will verify the type is valid and then create a new sequence manager for it.
      *
      * @param type the type of unique id
-     * @param blockSize how many blocks of ids we should 
+     * @param blockSize how many blocks of ids we should
      */
     public static void setBlockSize(int type, int blockSize) {
         if (managers.containsKey(type)) {

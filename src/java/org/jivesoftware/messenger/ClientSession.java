@@ -14,8 +14,8 @@ package org.jivesoftware.messenger;
 import org.dom4j.io.XPPPacketReader;
 import org.jivesoftware.messenger.auth.AuthToken;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.net.SASLAuthentication;
+import org.jivesoftware.messenger.net.SocketConnection;
 import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
@@ -55,7 +55,8 @@ public class ClientSession extends Session {
      */
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
 
-    private static SocketConnection.TLSPolicy tlsPolicy;
+    private static Connection.TLSPolicy tlsPolicy;
+	private static Connection.CompressionPolicy compressionPolicy;
 
     /**
      * The authentication token for this session.
@@ -95,9 +96,13 @@ public class ClientSession extends Session {
         }
         // Set the TLS policy stored as a system property
         String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy",
-                SocketConnection.TLSPolicy.optional.toString());
-        tlsPolicy = SocketConnection.TLSPolicy.valueOf(policyName);
+                Connection.TLSPolicy.optional.toString());
+        tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
 
+        // Set the Compression policy stored as a system property
+        policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
+                Connection.CompressionPolicy.disabled.toString());
+        compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
     }
 
     /**
@@ -204,6 +209,9 @@ public class ClientSession extends Session {
         // Indicate the TLS policy to use for this connection
         connection.setTlsPolicy(tlsPolicy);
 
+        // Indicate the compression policy to use for this connection
+        connection.setCompressionPolicy(compressionPolicy);
+
         // Create a ClientSession for this user.
         Session session = SessionManager.getInstance().createClientSession(connection);
 
@@ -246,17 +254,22 @@ public class ClientSession extends Session {
         }
         // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
 
-        sb = new StringBuilder(300);
+        sb = new StringBuilder(490);
         sb.append("<stream:features>");
-        if (tlsPolicy != SocketConnection.TLSPolicy.disabled) {
+        if (tlsPolicy != Connection.TLSPolicy.disabled) {
             sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-            if (tlsPolicy == SocketConnection.TLSPolicy.required) {
+            if (tlsPolicy == Connection.TLSPolicy.required) {
                 sb.append("<required/>");
             }
             sb.append("</starttls>");
         }
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
+        // Include Stream features
+        String specificFeatures = session.getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            sb.append(specificFeatures);
+        }
         sb.append("</stream:features>");
 
         writer.write(sb.toString());
@@ -329,6 +342,25 @@ public class ClientSession extends Session {
     public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
         tlsPolicy = policy;
         JiveGlobals.setProperty("xmpp.client.tls.policy", tlsPolicy.toString());
+    }
+
+    /**
+     * Returns whether compression is optional or is disabled for clients.
+     *
+     * @return whether compression is optional or is disabled.
+     */
+    public static SocketConnection.CompressionPolicy getCompressionPolicy() {
+        return compressionPolicy;
+    }
+
+    /**
+     * Sets whether compression is optional or is disabled for clients.
+     *
+     * @param policy whether compression is optional or is disabled.
+     */
+    public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
+        compressionPolicy = policy;
+        JiveGlobals.setProperty("xmpp.client.compression.policy", compressionPolicy.toString());
     }
 
     /**
@@ -542,6 +574,41 @@ public class ClientSession extends Session {
      */
     public int getConflictCount() {
         return conflictCount;
+    }
+
+    public String getAvailableStreamFeatures() {
+        // Offer authenticate and registration only if TLS was not required or if required
+        // then the connection is already secured
+        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder(200);
+
+        // Include Stream Compression Mechanism
+        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+                !conn.isCompressed()) {
+            sb.append(
+                    "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        }
+
+        if (getAuthToken() == null) {
+            // Advertise that the server supports Non-SASL Authentication
+            if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            }
+            // Advertise that the server supports In-Band Registration
+            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
+            }
+        }
+        else {
+            // If the session has been authenticated then offer resource binding
+            // and session establishment
+            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
+            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        }
+        return sb.toString();
     }
 
     /**

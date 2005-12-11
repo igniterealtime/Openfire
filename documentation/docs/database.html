@@ -14,7 +14,7 @@ This document provides setup instructions for all of the currently supported dat
 <p>
 JDBC 2.0 drivers are required for Jive Messenger to communicate with your database. Suggested
 drivers for particular databases are noted below where applicable. Jive Messenger bundles JDBC
-drivers for MySQL, Postgres, and HSQLDB.
+drivers for MySQL, Postgres, Microsoft SQL Server, and HSQLDB.
 </p>
 <p>
 For a full list of available JDBC drivers, please see:
@@ -95,7 +95,8 @@ Choose your database from the list below for setup details:
 	following sites:<p>
 	
 	<a href="http://www.mysql.com/doc.html">http://www.mysql.com/doc.html</a><br>
-	<a href="http://www.devshed.com/Server_Side/MySQL">http://www.devshed.com/Server_Side/MySQL</a>           
+	<a href="http://www.devshed.com/Server_Side/MySQL">http://www.devshed.com/Server_Side/MySQL</a>
+    </p>
 </ul>
 
 <p><h2><a name="oracle">Oracle</a></h2><p><ul>
@@ -132,30 +133,28 @@ Choose your database from the list below for setup details:
 	directory where sqlplus is installed (should be something like 
 	/Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
 		<code>@ messenger_oracle</code><br>
-	That will import the schema file. Your database is now setup.
+	That will import the schema file. Your database is now setup.</p>
 </ul>
 
 <p><h2><a name="sqlserver">SQL Server</a></h2><p>
 
 <ul>
-    <p><b>SQL Server 2000</b></p>
+    <p><b>SQL Server</b></p>
     <b>JDBC Drivers</b><p>
 
-
-    Microsoft provides a <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=07287b11-0502-461a-b138-2aa54bfdc03a&DisplayLang=en">free JDBC driver</a> that works with Jive Messenger.
-    After downloading and extracting the drivers, place <tt>msbase.jar</tt>,
-    <tt>mssqlserver.jar</tt>, and <tt>msutil.jar</tt> in the <tt>lib/</tt>
-    directory of your Jive Messenger installation. Use the following values in the Jive Messenger
+    Jive Messenger includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
+    is the recommended way to connect to SQL Server databases. To
+    connect to SQL Server, simply use the following values in the Jive Messenger
     web-based setup tool:<p>
 
     	<ul>
-		<li>driver -- <tt>com.microsoft.jdbc.sqlserver.SQLServerDriver</tt>
-		<li>server -- <tt>jdbc:microsoft:sqlserver://[HOST_NAME]:[PORT_NUMBER];databasename=[DB_NAME]</tt>
+		<li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
+		<li>server -- <tt>jdbc:jtds:sqlserver://[host-name]:[port-number]/[database-name];appName=jive</tt>
 	</ul>
 	<p>
-	where [HOST_NAME] is the host name or IP address of your database server,
-    and [PORT_NUMBER] is the port that SQLServer is listening on (normally 1433)
-    and [DB_NAME] is the name of the database (this parameter is optional).
+	where [host-name] is the host name or IP address of your database server,
+    and [port-number] is the port that SQLServer is listening on (normally 1433)
+    and [database-name] is the name of the database (this parameter is optional).
 
 	<p><b>Setup Instructions</b><p>
 
@@ -174,37 +173,6 @@ Choose your database from the list below for setup details:
 		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
 			when prompted.
    </ol>
-
-    <p><b>SQL Server 2005</b></p>
-
-
-    A JDBC driver for SQL Server 2005 is <a href="http://www.microsoft.com/sql/downloads/2005/jdbc.mspx">available
-    from Microsoft</a>. After downloading and extracting the drivers, place <tt>sqljdbc.jar</tt>
-    in the <tt>lib/</tt> directory of your Jive Messenger installation. Use the following values
-    in the Jive Messenger web-based setup tool:<p>
-
-    	<ul>
-		<li>driver -- <tt>com.microsoft.sqlserver.jdbc.SQLServerDriver</tt>
-		<li>server -- <tt>jdbc:sqlserver://[HOST_NAME]:[PORT_NUMBER]/database=[DB_NAME]</tt>
-	</ul>
-	<p>
-	where [HOST_NAME] is the host name or IP address of your database server,
-    and [PORT_NUMBER] is the port that SQLServer is listening on (normally 1433)
-    and [DB_NAME] is the name of the database (this parameter is optional).
-
-    <p><b>SQL Server 7</b></p>
-
-     <p>Note: if you are using SQL Server 7, the Open Source jTDS drivers should
-	 be used instead of the Microsoft JDBC drivers. Download the jTDS driver from 
-   <a href="http://jtds.sourceforge.net/">http://jtds.sourceforge.net/</a>
-	 and place the jtds-1.0.2.jar (name may be different depending on version
-	 downloaded) in the lib/ directory of your Jive Messenger installation. Use
-	 the following values in the Jive Messenger setup tool:</p>
-	 
-	 	<ul>
-				<li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
-				<li>server -- <tt>jdbc:jtds:sqlserver://[HOST_NAME]:[PORT]/[DATABASE]</tt>
-	  </ul>	     
 </ul>     
 
 <p><h2><a name="postgres">PostgreSQL</a></h2><p>

@@ -231,8 +231,7 @@
     List<String[]> presets = new ArrayList<String []>();
     presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://[host-name]:3306/[database-name]"});
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@[host-name]:1521:[SID]"});
-    presets.add(new String[]{"MS SQLServer 2000","com.microsoft.jdbc.sqlserver.SQLServerDriver","jdbc:microsoft:sqlserver://[host-name]:1433;databasename=[database-name]"});
-    presets.add(new String[]{"MS SQLServer 2005","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://[host-name]:1433/database=[database-name]"});
+    presets.add(new String[]{"Microsoft SQLServer","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://[host-name]/[database-name];appName=jive"});
     presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://[host-name]:5432/[database-name]"});
     presets.add(new String[]{"IBM DB2","COM.ibm.db2.jdbc.app.DB2Driver","jdbc:db2:[database-name]"});
 %>

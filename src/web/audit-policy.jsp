@@ -212,7 +212,7 @@
                         <fmt:message key="audit.policy.log_directory" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="30" maxlength="150" name="logDir"
+                        <input type="text" size="50" maxlength="150" name="logDir"
                          value="<%= ((logDir != null) ? logDir : "") %>">
 
                     <%  if (errors.get("logDir") != null) { %>

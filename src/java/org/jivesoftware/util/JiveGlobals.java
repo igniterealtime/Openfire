@@ -396,7 +396,7 @@ public class JiveGlobals {
      *
      * @param propertyMap a map of properties, keyed on property name.
      */
-    public static void setXMLProperties(Map propertyMap) {
+    public static void setXMLProperties(Map<String, String> propertyMap) {
         if (xmlProperties == null) {
             loadSetupProperties();
         }

@@ -170,7 +170,7 @@ public class AuditorImpl implements Auditor {
             }
         }
 
-        writer = new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8");
+        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8"));
         writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
         xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
     }

@@ -59,6 +59,16 @@ public class ClientSession extends Session {
 	private static Connection.CompressionPolicy compressionPolicy;
 
     /**
+     * Milliseconds a connection has to be idle to be closed. Default is 30 minutes. Sending
+     * stanzas to the client is not considered as activity. We are only considering the connection
+     * active when the client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * The reason for this is that sending data will fail if the connection is closed. And if
+     * the thread is blocked while sending data (because the socket is closed) then the clean up
+     * thread will close the socket anyway.
+     */
+    private static long idleTimeout;
+
+    /**
      * The authentication token for this session.
      */
     protected AuthToken authToken;
@@ -103,6 +113,9 @@ public class ClientSession extends Session {
         policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
                 Connection.CompressionPolicy.disabled.toString());
         compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+
+        // Set the default read idle timeout. If none was set then assume 30 minutes
+        idleTimeout = JiveGlobals.getIntProperty("xmpp.client.idle", 30 * 60 * 1000);
     }
 
     /**
@@ -211,6 +224,10 @@ public class ClientSession extends Session {
 
         // Indicate the compression policy to use for this connection
         connection.setCompressionPolicy(compressionPolicy);
+
+        // Set the max number of milliseconds the connection may not receive data from the
+        // client before closing the connection
+        connection.setIdleTimeout(idleTimeout);
 
         // Create a ClientSession for this user.
         Session session = SessionManager.getInstance().createClientSession(connection);
@@ -361,6 +378,31 @@ public class ClientSession extends Session {
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
         compressionPolicy = policy;
         JiveGlobals.setProperty("xmpp.client.compression.policy", compressionPolicy.toString());
+    }
+
+    /**
+     * Returns the number of milliseconds a connection has to be idle to be closed. Default is
+     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
+     * considering the connection active when the client sends some data or hearbeats
+     * (i.e. whitespaces) to the server.
+     *
+     * @return the number of milliseconds a connection has to be idle to be closed.
+     */
+    public static long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    /**
+     * Sets the number of milliseconds a connection has to be idle to be closed. Default is
+     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
+     * considering the connection active when the client sends some data or hearbeats
+     * (i.e. whitespaces) to the server.
+     *
+     * @param timeout the number of milliseconds a connection has to be idle to be closed.
+     */
+    public static void setIdleTimeout(long timeout) {
+        idleTimeout = timeout;
+        JiveGlobals.setProperty("xmpp.client.idle", Long.toString(idleTimeout));
     }
 
     /**

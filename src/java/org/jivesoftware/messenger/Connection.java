@@ -11,13 +11,12 @@
 
 package org.jivesoftware.messenger;
 
-import org.xmpp.packet.Packet;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.net.SocketConnection;
+import org.xmpp.packet.Packet;
 
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.io.Writer;
 
 /**
  * Represents a connection on the server.
@@ -220,6 +219,26 @@ public interface Connection {
      * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
      */
     void setTlsPolicy(TLSPolicy tlsPolicy);
+
+    /**
+     * Returns the number of milliseconds a connection has to be idle to be closed. Sending
+     * stanzas to the client is not considered as activity. We are only considering the
+     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
+     * to the server.
+     *
+     * @return the number of milliseconds a connection has to be idle to be closed.
+     */
+    long getIdleTimeout();
+
+    /**
+     * Sets the number of milliseconds a connection has to be idle to be closed. Sending
+     * stanzas to the client is not considered as activity. We are only considering the
+     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
+     * to the server.
+     *
+     * @param timeout the number of milliseconds a connection has to be idle to be closed.
+     */
+    void setIdleTimeout(long timeout);
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

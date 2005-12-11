@@ -20,6 +20,7 @@ import org.dom4j.QName;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.jivesoftware.messenger.net.MXParser;
 
 /**
  * <p><code>XPPPacketReader</code> is a Reader of DOM4J documents that
@@ -41,7 +42,7 @@ public class XPPPacketReader {
     /**
      * <code>XmlPullParser</code> used to parse XML
      */
-    private XmlPullParser xppParser;
+    private MXParser xppParser;
 
     /**
      * <code>XmlPullParser</code> used to parse XML
@@ -52,6 +53,12 @@ public class XPPPacketReader {
      * DispatchHandler to call when each <code>Element</code> is encountered
      */
     private DispatchHandler dispatchHandler;
+
+    /**
+     * Last time a full Document was read or a heartbeat was received. Hearbeats
+     * are represented as whitespaces received while a Document is not being parsed.
+     */
+    private long lastActive;
 
 
     public XPPPacketReader() {
@@ -179,16 +186,16 @@ public class XPPPacketReader {
     // Properties
     //-------------------------------------------------------------------------
 
-    public XmlPullParser getXPPParser() throws XmlPullParserException {
+    public MXParser getXPPParser() throws XmlPullParserException {
         if (xppParser == null) {
-            xppParser = getXPPFactory().newPullParser();
+            xppParser = (MXParser) getXPPFactory().newPullParser();
         }
         return xppParser;
     }
 
     public XmlPullParserFactory getXPPFactory() throws XmlPullParserException {
         if (xppFactory == null) {
-            xppFactory = XmlPullParserFactory.newInstance();
+            xppFactory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
         }
         xppFactory.setNamespaceAware(true);
         return xppFactory;
@@ -255,6 +262,16 @@ public class XPPPacketReader {
         getDispatchHandler().setDefaultHandler(handler);
     }
 
+    /**
+     * Returns the last time a full Document was read or a heartbeat was received. Hearbeats
+     * are represented as whitespaces received while a Document is not being parsed.
+     *
+     * @return the time in milliseconds when the last document or heartbeat was received.
+     */
+    public long getLastActive() {
+        return lastActive;
+    }
+
     // Implementation methods
     //-------------------------------------------------------------------------
     public Document parseDocument() throws DocumentException, IOException, XmlPullParserException {
@@ -271,17 +288,21 @@ public class XPPPacketReader {
                     String text = pp.getText();
                     int loc = text.indexOf(" ");
                     if (loc >= 0) {
-                        document.addProcessingInstruction(text.substring(0, loc), text.substring(loc + 1));
+                        document.addProcessingInstruction(text.substring(0, loc),
+                                text.substring(loc + 1));
                     }
-                    else
+                    else {
                         document.addProcessingInstruction(text, "");
+                    }
                     break;
                 }
                 case XmlPullParser.COMMENT: {
-                    if (parent != null)
+                    if (parent != null) {
                         parent.addComment(pp.getText());
-                    else
+                    }
+                    else {
                         document.addComment(pp.getText());
+                    }
                     break;
                 }
                 case XmlPullParser.CDSECT: {
@@ -328,9 +349,12 @@ public class XPPPacketReader {
                     }
                     int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
                     int nsEnd = pp.getNamespaceCount(pp.getDepth());
-                    for (int i = nsStart; i < nsEnd; i++)
-                        if (pp.getNamespacePrefix(i) != null)
-                            newElement.addNamespace(pp.getNamespacePrefix(i), pp.getNamespaceUri(i));
+                    for (int i = nsStart; i < nsEnd; i++) {
+                        if (pp.getNamespacePrefix(i) != null) {
+                            newElement
+                                    .addNamespace(pp.getNamespacePrefix(i), pp.getNamespaceUri(i));
+                        }
+                    }
                     for (int i = 0; i < pp.getAttributeCount(); i++) {
                         QName qa = (pp.getAttributePrefix(i) == null) ? df.createQName(pp.getAttributeName(i)) : df.createQName(pp.getAttributeName(i), pp.getAttributePrefix(i), pp.getAttributeNamespace(i));
                         newElement.addAttribute(qa, pp.getAttributeValue(i));
@@ -351,6 +375,8 @@ public class XPPPacketReader {
                     }
                     count--;
                     if (count < 1) {
+                        // Update the last time a Document was received
+                        lastActive = System.currentTimeMillis();
                         return document;
                     }
                     break;
@@ -366,6 +392,11 @@ public class XPPPacketReader {
                         }
                     }
                     break;
+                }
+                case XmlPullParser.IGNORABLE_WHITESPACE: {
+                    //System.out.println("Heartbeat was detected");
+                    // Update the last time a heartbeat was received
+                    lastActive = System.currentTimeMillis();
                 }
                 default:
                 {

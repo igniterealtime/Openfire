@@ -67,7 +67,7 @@ public abstract class SocketReader implements Runnable {
 
     static {
         try {
-            factory = XmlPullParserFactory.newInstance();
+            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
         }
         catch (XmlPullParserException e) {
             Log.error("Error creating a parser factory", e);
@@ -88,6 +88,8 @@ public abstract class SocketReader implements Runnable {
         this.router = router;
         this.connection = connection;
         this.socket = socket;
+
+        connection.setSocketReader(this);
     }
 
     /**
@@ -513,6 +515,16 @@ public abstract class SocketReader implements Runnable {
      * @return  true if a received packet has been processed.
      */
     abstract boolean processUnknowPacket(Element doc);
+
+    /**
+     * Returns the last time a full Document was read or a heartbeat was received. Hearbeats
+     * are represented as whitespaces received while a Document is not being parsed.
+     *
+     * @return the time in milliseconds when the last document or heartbeat was received.
+     */
+    long getLastActive() {
+        return reader.getLastActive();
+    }
 
     /**
      * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before

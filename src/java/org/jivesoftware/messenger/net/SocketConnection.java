@@ -15,9 +15,9 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.messenger.interceptor.InterceptorManager;
 import org.jivesoftware.messenger.interceptor.PacketRejectedException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
 
 import java.io.BufferedWriter;
@@ -26,12 +26,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.*;
+import java.util.zip.ZipOutputStream;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -50,9 +50,21 @@ public class SocketConnection implements Connection {
     private static Map<SocketConnection, String> instances =
             new ConcurrentHashMap<SocketConnection, String>();
 
+    /**
+     * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
+     * up to the connection's owner to configure the timeout value. Sending stanzas to the client
+     * is not considered as activity. We are only considering the connection active when the
+     * client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * The reason for this is that sending data will fail if the connection is closed. And if
+     * the thread is blocked while sending data (because the socket is closed) then the clean up
+     * thread will close the socket anyway.
+     */
+    private long idleTimeout = -1;
+
     private Map<ConnectionCloseListener, Object> listeners = new HashMap<ConnectionCloseListener, Object>();
 
     private Socket socket;
+    private SocketReader socketReader;
 
     private Writer writer;
 
@@ -234,6 +246,14 @@ public class SocketConnection implements Connection {
         this.compressionPolicy = compressionPolicy;
     }
 
+    public long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(long timeout) {
+        this.idleTimeout = timeout;
+    }
+
     public int getMajorXMPPVersion() {
         return majorVersion;
     }
@@ -340,6 +360,19 @@ public class SocketConnection implements Connection {
                         new Date(writeStarted));
             }
             forceClose();
+        }
+        else {
+            // Check if the connection has been idle. A connection is considered idle if the client
+            // has not been receiving data for a period. Sending data to the client is not
+            // considered as activity.
+            if (idleTimeout > -1 && socketReader != null &&
+                    System.currentTimeMillis() - socketReader.getLastActive() > idleTimeout) {
+                // Close the socket
+                if (Log.isDebugEnabled()) {
+                    Log.debug("Closing connection that has been idle: " + this);
+                }
+                forceClose();
+            }
         }
     }
 
@@ -473,4 +506,7 @@ public class SocketConnection implements Connection {
         return super.toString() + " socket: " + socket + " session: " + session;
     }
 
+    public void setSocketReader(SocketReader socketReader) {
+        this.socketReader = socketReader;
+    }
 }

@@ -14,6 +14,7 @@ package org.jivesoftware.messenger.ldap;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.group.Group;
 import org.jivesoftware.messenger.group.GroupProvider;
+import org.jivesoftware.messenger.group.GroupNotFoundException;
 import org.jivesoftware.messenger.user.UserManager;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -77,18 +78,19 @@ public class LdapGroupProvider implements GroupProvider {
         throw new UnsupportedOperationException();
     }
 
-    public Group getGroup(String group) {
+    public Group getGroup(String group) throws GroupNotFoundException {
         String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
         String searchFilter = "(&" + filter + "(" +
                 manager.getGroupNameField() + "=" + group + "))";
         Collection<Group> groups = populateGroups(searchForGroups(searchFilter, standardAttributes));
         if (groups.size() > 1) {
-            return null; //if multiple groups found return null
+            //if multiple groups found throw exception
+            throw new GroupNotFoundException("Too many groups with name " + group + " were found.");
         }
         for (Group g : groups) {
             return g; //returns the first group found
         }
-        return null;
+        throw new GroupNotFoundException("Group with name " + group + " not found.");
     }
 
     /**

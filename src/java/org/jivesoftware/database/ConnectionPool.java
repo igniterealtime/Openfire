@@ -165,7 +165,7 @@ public class ConnectionPool implements Runnable {
                 }
                 catch (InterruptedException ex) {
                     --waitingForCon;
-                    waitLock.notify();
+                    waitLock.notifyAll();
 
                     throw new SQLException("Interrupted while waiting for connection to " +
                             "become available.");
@@ -177,7 +177,7 @@ public class ConnectionPool implements Runnable {
     public void freeConnection() {
         synchronized (waitLock) {
             if (waitingForCon > 0) {
-                waitLock.notify();
+                waitLock.notifyAll();
             }
         }
     }

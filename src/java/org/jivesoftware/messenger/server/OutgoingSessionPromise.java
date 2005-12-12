@@ -71,7 +71,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         threadPool =
                 new ThreadPoolExecutor(Math.round(maxThreads/4), maxThreads, 60, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<Runnable>(),
-                        new ThreadPoolExecutor.AbortPolicy());
+                        new ThreadPoolExecutor.DiscardOldestPolicy());
 
         // Start the thread that will consume the queued packets. Each pending packet will
         // be actually processed by a thread of the pool (when available). If an error occurs

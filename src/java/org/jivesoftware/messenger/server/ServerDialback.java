@@ -18,6 +18,7 @@ import org.jivesoftware.messenger.*;
 import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.net.DNSUtil;
 import org.jivesoftware.messenger.net.SocketConnection;
+import org.jivesoftware.messenger.net.MXParser;
 import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
@@ -66,7 +67,7 @@ class ServerDialback {
 
     static {
         try {
-            FACTORY = XmlPullParserFactory.newInstance();
+            FACTORY = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
         }
         catch (XmlPullParserException e) {
             Log.error("Error creating a parser factory", e);
@@ -145,7 +146,7 @@ class ServerDialback {
             stream = null;
 
             XPPPacketReader reader = new XPPPacketReader();
-            reader.setXPPFactory(XmlPullParserFactory.newInstance());
+            reader.setXPPFactory(FACTORY);
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
                     CHARSET));
             // Get the answer from the Receiving Server

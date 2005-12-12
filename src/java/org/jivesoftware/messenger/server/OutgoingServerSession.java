@@ -25,7 +25,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
@@ -280,7 +279,6 @@ public class OutgoingServerSession extends Session {
                 connection.deliverRawText(openingStream.toString());
 
                 XPPPacketReader reader = new XPPPacketReader();
-                reader.setXPPFactory(XmlPullParserFactory.newInstance());
                 reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
                         CHARSET));
                 // Get the answer from the Receiving Server

@@ -58,7 +58,7 @@ public class XPPPacketReader {
      * Last time a full Document was read or a heartbeat was received. Hearbeats
      * are represented as whitespaces received while a Document is not being parsed.
      */
-    private long lastActive;
+    private long lastActive = System.currentTimeMillis();
 
 
     public XPPPacketReader() {

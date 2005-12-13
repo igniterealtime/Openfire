@@ -15,7 +15,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Messenger" />
+    <orderEntry type="module" module-name="Wildfire" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

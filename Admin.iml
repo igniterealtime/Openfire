@@ -8,7 +8,7 @@
     <content url="file://$MODULE_DIR$/src/web" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Messenger" exported="" />
+    <orderEntry type="module" module-name="Wildfire" exported="" />
     <orderEntryProperties />
   </component>
   <component name="WebModuleBuildComponent">

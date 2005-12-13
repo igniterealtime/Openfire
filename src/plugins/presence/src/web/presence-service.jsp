@@ -1,7 +1,7 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.messenger.XMPPServer,
+                 org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.plugin.PresencePlugin"
+                 org.jivesoftware.wildfire.plugin.PresencePlugin"
     errorPage="error.jsp"
 %>
 

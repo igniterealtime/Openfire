@@ -9,7 +9,7 @@
                  java.util.Calendar,
                  javax.swing.*,
                  java.net.URL"%>
-<%@ page import="org.jivesoftware.messenger.server.IncomingServerSession"%>
+<%@ page import="org.jivesoftware.wildfire.server.IncomingServerSession"%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 4 variables:

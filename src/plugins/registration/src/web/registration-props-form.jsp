@@ -1,10 +1,10 @@
 <%@ page
    import="java.util.*,
            org.jivesoftware.admin.*,
-           org.jivesoftware.messenger.XMPPServer,
-           org.jivesoftware.messenger.user.*,
-           org.jivesoftware.messenger.plugin.RegistrationPlugin,
-           org.jivesoftware.messenger.group.*,
+           org.jivesoftware.wildfire.XMPPServer,
+           org.jivesoftware.wildfire.user.*,
+           org.jivesoftware.wildfire.plugin.RegistrationPlugin,
+           org.jivesoftware.wildfire.group.*,
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
 

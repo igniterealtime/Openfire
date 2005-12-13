@@ -1,21 +1,21 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-  <title>Jive Messenger SSL Guide</title>
+  <title>Wildfire SSL Guide</title>
   <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
 <a name="top"></a>
-<h1>Jive Messenger SSL Guide</h1>
+<h1>Wildfire SSL Guide</h1>
 <h2>Introduction</h2>
 <p>
-This document outlines how to customize the SSL support in Jive Messenger.
+This document outlines how to customize the SSL support in Wildfire.
 <font color="red"><b>Important note:</b></font>
-because Jive Messenger ships with self-signed certificates, most users can
+because Wildfire ships with self-signed certificates, most users can
 use the default configration and do not need to change the SSL environment. You should only
 attempt to change the SSL settings if it's required for your deployment.</p>
 
-<p>Jive Messenger's SSL support is built using the standard Java security
+<p>Wildfire's SSL support is built using the standard Java security
 SSL implementation (javax.net.ssl.SSLServerSocket). In this document, we will
 describe how use the standard JDK 1.5 tools to accomplish these tasks.
 </p>
@@ -74,11 +74,11 @@ record keeping, and costs).
 <h2>Sun JDK 1.5 security tools</h2>
 <p>
 The Sun JDK (version 1.5.x) ships with all the security tools you need
-to configure SSL with Jive Messenger. The most important is the
+to configure SSL with Wildfire. The most important is the
 <tt>keytool</tt> located in the <tt>JAVA_HOME/bin directory</tt> of the
 JDK. Sun JVMs persist keystores and truststores on the filesystem as
 encrypted files. The <tt>keytool</tt> is used to create, read, update,
-and delete entries in these files. Jive Messenger ships with a self-signed
+and delete entries in these files. Wildfire ships with a self-signed
 "dummy" certificate designed for initial evaluation testing. You will need
 to adjust the default configuration for most deployments.
 </p>
@@ -87,9 +87,9 @@ In order to configure SSL on your server you need complete the
 following tasks:
 </p>
 <ol>
-  <li>Decide on your Jive Messenger server's domain.</li>
+  <li>Decide on your Wildfire server's domain.</li>
   <li>Create a self-signed SSL server certificate for your server
-domain. Note: you may already have one if your Jive Messenger server
+domain. Note: you may already have one if your Wildfire server
 domain matches an existing web domain with SSL.
 If so, you can skip to step 4.</li>
   <li>[Optional] Have a certificate authority (CA) certify the SSL
@@ -105,12 +105,12 @@ generated in step 2, the certificate is already imported and you can
 skip this step.</li>
   <li>Remove default certificates from the keystore.</li>
   <li>Import client certificates into the truststore.</li>
-  <li>Adjust the Messenger configuration with proper keystore and
+  <li>Adjust the Wildfire configuration with proper keystore and
 truststore settings.</li>
 </ol>
 <h3>1. Decide on a Server Domain</h3>
 <p>
-The Messenger server domain should match the host name of the server;
+The Wildfire server domain should match the host name of the server;
 for example, "example.com". Your user accounts will have addresses with
 the format "user@example.com" like email addresses. We'll assume
 the domain is "example.com" for the rest of the examples.
@@ -119,7 +119,7 @@ the domain is "example.com" for the rest of the examples.
 <p>
 In order to create a self-signed server certificate go to the command
 line and change directories to the <tt>resources/security</tt>
-directory of your Jive Messenger installation. You should see the default
+directory of your Wildfire installation. You should see the default
 <tt>keystore</tt> and <tt>truststore</tt> files. First, you should
 change the default keystore
 password:
@@ -194,9 +194,9 @@ Now import each certificate using the keytool:
 </p>
 <p><tt>keytool -import -keystore truststore -alias user_name -file
 certificate_file</tt></p>
-<h3>7. Configure Messenger</h3>
+<h3>7. Configure Wildfire</h3>
 <p>
-Open the Jive Messenger Admin Console in your favorite
+Open the Wildfire Admin Console in your favorite
 browser and add or change the following system properties:
 </p>
 <ul>
@@ -205,15 +205,15 @@ browser and add or change the following system properties:
 5223 for XMPP)</li>
   <li>xmpp.socket.ssl.storeType -- the store type used ("JKS" is
 the Sun Java Keystore format used by the JDK keytool). If this property is 
-not defined, Messenger will assume a value of "jks".</li>
+not defined, Wildfire will assume a value of "jks".</li>
   <li>xmpp.socket.ssl.keystore -- the location of the keystore file
-relative to your Jive Messenger installation root directory. You can leave this property
+relative to your Wildfire installation root directory. You can leave this property
 blank to use the default keystore.</li>
   <li>xmpp.socket.ssl.keypass -- the keystore/key password you
 changed in step 2.</li>
   <li>xmpp.socket.ssl.truststore -- leave blank to not use a
 truststore, otherwise the location of the truststore file relative to
-your Jive Messenger installation root directory.</li>
+your Wildfire installation root directory.</li>
   <li>xmpp.socket.ssl.trustpass -- the truststore/key password you
 changed in step 6.</li>
 </ul>

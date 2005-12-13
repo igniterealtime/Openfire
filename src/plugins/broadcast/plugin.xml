@@ -4,12 +4,12 @@
   Plugin configuration for the broadcast plugin.
 -->
 <plugin>
-    <class>org.jivesoftware.messenger.plugin.BroadcastPlugin</class>
+    <class>org.jivesoftware.wildfire.plugin.BroadcastPlugin</class>
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
     <version>1.3</version>
     <date>12/1/2005</date>
     <url>http://www.jivesoftware.org</url>
-    <minMessengerVersion>2.3.1</minMessengerVersion>
+    <minWildfireVersion>2.3.1</minWildfireVersion>
 </plugin>

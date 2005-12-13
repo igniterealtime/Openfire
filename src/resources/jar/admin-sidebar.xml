@@ -2,9 +2,9 @@
 <adminconsole>
     
     <global>
-        <appname>Jive Messenger</appname>
+        <appname>Wildfire</appname>
         <logo-image>images/header-title.gif</logo-image>
-        <login-image>images/logo-messenger.gif</login-image>
+        <login-image>images/logo-wildfire.gif</login-image>
     </global>
 
     <!-- Server -->

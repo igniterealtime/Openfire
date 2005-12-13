@@ -10,9 +10,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.text.NumberFormat,
-                 org.jivesoftware.messenger.component.ComponentSession"
+                 org.jivesoftware.wildfire.component.ComponentSession"
     errorPage="error.jsp"
 %>
 

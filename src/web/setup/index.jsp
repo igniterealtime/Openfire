@@ -10,7 +10,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.JiveGlobals,
                  java.util.*" %>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 

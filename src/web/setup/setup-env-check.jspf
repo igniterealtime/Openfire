@@ -15,8 +15,8 @@
     boolean servlet22Installed = false;
     boolean jsp11Installed = false;
     boolean jiveJarsInstalled = false;
-    boolean messengerHomeExists = false;
-    File messengerHome = null;
+    boolean wildfireHomeExists = false;
+    File wildfireHome = null;
 
     // Check for JDK 1.5
     try {
@@ -37,9 +37,9 @@
         jsp11Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
-    // Check that the Messenger jar are installed:
+    // Check that the Wildfire jar are installed:
     try {
-        ClassUtils.forName("org.jivesoftware.messenger.XMPPServer");
+        ClassUtils.forName("org.jivesoftware.wildfire.XMPPServer");
         jiveJarsInstalled = true;
     }
     catch (ClassNotFoundException cnfe) {}
@@ -47,12 +47,12 @@
     // Try to determine what the jiveHome directory is:
     try {
         Class jiveGlobalsClass = ClassUtils.forName("org.jivesoftware.util.JiveGlobals");
-        Method getMessengerHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
-        String messengerHomeProp = (String)getMessengerHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
-        if (messengerHomeProp != null) {
-            messengerHome = new File(messengerHomeProp);
-            if (messengerHome.exists()) {
-                messengerHomeExists = true;
+        Method getWildfireHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
+        String wildfireHomeProp = (String)getWildfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (wildfireHomeProp != null) {
+            wildfireHome = new File(wildfireHomeProp);
+            if (wildfireHome.exists()) {
+                wildfireHomeExists = true;
             }
         }
     }
@@ -62,7 +62,7 @@
 
     // If there were no errors, redirect to the main setup page
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled
-            || !messengerHomeExists)
+            || !wildfireHomeExists)
     {
 %>
         <html>
@@ -172,13 +172,13 @@
             </tr>
 
         <%  }
-            if (messengerHomeExists) {
+            if (wildfireHomeExists) {
         %>
             <tr>
                 <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    <fmt:message key="setup.env.check.jive" /> (<%= messengerHome.toString() %>)
+                    <fmt:message key="setup.env.check.jive" /> (<%= wildfireHome.toString() %>)
                     </span>
                 </td>
             </tr>

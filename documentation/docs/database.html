@@ -1,19 +1,19 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-	<title>Jive Messenger Database Documentation</title>
+	<title>Wildfire Database Documentation</title>
   <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<h1><a name="introduction">Jive Messenger Database Setup</a></h1>
+<h1><a name="introduction">Wildfire Database Setup</a></h1>
 
-<p>Jive Messenger stores all data in a back-end database. If you choose to not use the embedded
+<p>Wildfire stores all data in a back-end database. If you choose to not use the embedded
 database, you must setup and manage an external database for the application.
 This document provides setup instructions for all of the currently supported databases.
 </p>
 <p>
-JDBC 2.0 drivers are required for Jive Messenger to communicate with your database. Suggested
-drivers for particular databases are noted below where applicable. Jive Messenger bundles JDBC
+JDBC 2.0 drivers are required for Wildfire to communicate with your database. Suggested
+drivers for particular databases are noted below where applicable. Wildfire bundles JDBC
 drivers for MySQL, Postgres, Microsoft SQL Server, and HSQLDB.
 </p>
 <p>
@@ -23,7 +23,7 @@ http://industry.java.sun.com/products/jdbc/drivers</a>.</p>
 
 <p>
 All database schemas can be found in the <tt>resources/database</tt> directory of the
-Jive Messenger installation.
+Wildfire installation.
 </p>
 
 <p>Note that additional databases besides the ones in this list may be supported.
@@ -50,11 +50,11 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b><p>
 
-	The JDBC driver for MySQL is bundled with Jive Messenger, so you do not need
+	The JDBC driver for MySQL is bundled with Wildfire, so you do not need
     to download and install a separate driver.
     
 	<p>
-	In the Jive Messenger setup tool, use the following values:<p><ul>
+	In the Wildfire setup tool, use the following values:<p><ul>
 		<li>driver: <tt>com.mysql.jdbc.Driver</tt>
 		<li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
 	</ul><p>
@@ -66,16 +66,16 @@ Choose your database from the list below for setup details:
 	<p><b>Setup Instructions</b><p>
 	<ol>
 		<li>Make sure that you are using MySQL 3.23.2 or later (4.x recommended).
-		<li>Create a database for the Jive Messenger tables:<br>
+		<li>Create a database for the Wildfire tables:<br>
 	    <code>mysqladmin create [databaseName]</code><br>
-	    (note: "databaseName" can be something like 'messenger')
+	    (note: "databaseName" can be something like 'wildfire')
 
 	    <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
-	    Unix/Linux: <code>cat messenger_mysql.sql | mysql [databaseName];</code>
+	    Unix/Linux: <code>cat wildfire_mysql.sql | mysql [databaseName];</code>
 		<br>   
-        Windows: <code>type messenger_mysql.sql | mysql [databaseName];</code>
+        Windows: <code>type wildfire_mysql.sql | mysql [databaseName];</code>
 		
-		<li>Start the Jive Messenger setup tool, and use the appropriate JDBC connection
+		<li>Start the Wildfire setup tool, and use the appropriate JDBC connection
 			settings.
 	</ol>
 	
@@ -85,7 +85,7 @@ Choose your database from the list below for setup details:
     in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
     which can be enabled by adding 
     <tt>&lt;mysql&gt;&lt;useUnicode&gt;true&lt;/useUnicode&gt;&lt;/mysql&gt;</tt>
-    to the <tt>&lt;database&gt;</tt> section of your <tt>jive_messenger.xml</tt> file.
+    to the <tt>&lt;database&gt;</tt> section of your <tt>wildfire.xml</tt> file.
     When using this setting, you should also set the Jive character encoding
     to utf-8 in the admin tool.
 	
@@ -106,11 +106,11 @@ Choose your database from the list below for setup details:
 	The Oracle 9i or 10g "thin" drivers are recommended and can be downloaded from 
     <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html">Oracle's website</a>. 
      
-    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Jive Messenger.
-    Copy the JDBC driver to the <tt>lib/</tt> directory of your Jive Messenger installation.
+    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Wildfire.
+    Copy the JDBC driver to the <tt>lib/</tt> directory of your Wildfire installation.
     
 	<p>
-	In the Jive Messenger web-based setup tool, use the following values:<p>
+	In the Wildfire web-based setup tool, use the following values:<p>
     
     <ul>
 		<li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
@@ -129,10 +129,10 @@ Choose your database from the list below for setup details:
 	<p>
 	Next import the schema from the <tt>resources/database</tt> directory of the installation
     using sqlplus (or your favorite Oracle tool such
-	as Toad). For sqlplus: copy the "messenger_oracle.sql" file to the same
+	as Toad). For sqlplus: copy the "wildfire_oracle.sql" file to the same
 	directory where sqlplus is installed (should be something like 
 	/Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
-		<code>@ messenger_oracle</code><br>
+		<code>@ wildfire_oracle</code><br>
 	That will import the schema file. Your database is now setup.</p>
 </ul>
 
@@ -142,9 +142,9 @@ Choose your database from the list below for setup details:
     <p><b>SQL Server</b></p>
     <b>JDBC Drivers</b><p>
 
-    Jive Messenger includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
+    Wildfire includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
     is the recommended way to connect to SQL Server databases. To
-    connect to SQL Server, simply use the following values in the Jive Messenger
+    connect to SQL Server, simply use the following values in the Wildfire
     web-based setup tool:<p>
 
     	<ul>
@@ -160,17 +160,17 @@ Choose your database from the list below for setup details:
 
 	<ol>
 		<li>Create a new database using Enterprise Manager if you do not already have
-	   		a database you want to use. You may wish to name the database "messenger".
+	   		a database you want to use. You may wish to name the database "wildfire".
 		<li>Create a user to access the database if you do not already have one you'd
 			like to use. Consider making the default database for the user be the
 			one you created in step 1.
 		<li>Open the Query Analyser and connect to the server.
-		<li>Select the database you want to use for Jive Messenger
+		<li>Select the database you want to use for Wildfire
 		    from the DB drop down (the one you created in step 1 if you're using a new database).
-		<li>Open the messenger_sqlserver.sql file.
+		<li>Open the wildfire_sqlserver.sql file.
 		<li>Press F5 to run the script. The script will run and create the
 			necessary tables.
-		<li>Proceed to the Jive Messenger setup tool and use the appropriate JDBC settings
+		<li>Proceed to the Wildfire setup tool and use the appropriate JDBC settings
 			when prompted.
    </ol>
 </ul>     
@@ -180,10 +180,10 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b>
 	<p>
-	The JDBC driver for Postgres is bundled with Jive Messenger, so you do not need
+	The JDBC driver for Postgres is bundled with Wildfire, so you do not need
     to download and install a separate driver.
     <p>
-	In the Jive Messenger web-based setup tool, use the following values:<p><ul>
+	In the Wildfire web-based setup tool, use the following values:<p><ul>
 		<li>driver -- <tt>org.postgresql.Driver</tt>
 		<li>server -- <tt>jdbc:postgresql://[HOST_NAME]:[PORT_NUMBER]/dbname</tt>
 	</ul><p>
@@ -197,13 +197,13 @@ Choose your database from the list below for setup details:
 	  <li>Create the database. For example, using the 
 	  	PostgreSQL <code>&quot;createdb&quot;</code> utility:
 	  	<br>
-	  	<code>createdb -E UNICODE messenger</code>
+	  	<code>createdb -E UNICODE wildfire</code>
 	  <li>Import the schema from the <tt>resources/database</tt> directory of the installation.
         Use psql (or your favorite Postgres sql 
-	  	utility) to import the Jive Messenger database schema:
+	  	utility) to import the Wildfire database schema:
 	  	<br>
-	  	<code>psql -d messenger -f messenger_postgresql.sql</code>
-	  <li>Proceed to Jive Messenger setup and use the appropriate JDBC settings when
+	  	<code>psql -d wildfire -f wildfire_postgresql.sql</code>
+	  <li>Proceed to Wildfire setup and use the appropriate JDBC settings when
 	  	prompted.	  
 	</ol>
 </ul>
@@ -214,7 +214,7 @@ Choose your database from the list below for setup details:
 	<p>
 	Use the JDBC 1.2 compliant driver, db2java.zip (1293KB),
 	located in the <nobr>"%DB2PATH%\java2"</nobr> directory. Copy the JDBC driver to the <tt>lib/</tt>
-    directory of your Jive Messenger installation.
+    directory of your Wildfire installation.
 	<p>
 	Values for the config file are:
 	<ul>
@@ -242,7 +242,7 @@ Choose your database from the list below for setup details:
 	Start the DB2 command window (in Windows), or the user's shell in 
 	Unix and import the schema in the <tt>resources/database</tt> directory of the
     installation with:<p>
-		<code>db2 -tvf messenger_db2.sql</code>
+		<code>db2 -tvf wildfire_db2.sql</code>
 	<p>
 	Or, use the DB2 Command Center and run the script
 	through the "Replication Sources" folder in the Database tree.
@@ -256,14 +256,14 @@ Choose your database from the list below for setup details:
 
     <b>Special Note</b>
     <p>
-    Jive Messenger bundles hsqldb as its embedded database. If you choose to use the embedded database,
-    it can be configured via the Jive Messenger installer. If you have a stand-alone installation
+    Wildfire bundles hsqldb as its embedded database. If you choose to use the embedded database,
+    it can be configured via the Wildfire installer. If you have a stand-alone installation
     of hsqlDB, follow the instructions below to connect to it.
     </p>
 
 	<b>JDBC Drivers</b>
 	<p>
-	Because hsqldb is embedded in Jive Messenger, there is no need to download the
+	Because hsqldb is embedded in Wildfire, there is no need to download the
     JDBC driver separately. Values for the config file are:
 	<ul>
 		<li>driver: <code>org.hsqldb.jdbcDriver</code>
@@ -274,7 +274,7 @@ Choose your database from the list below for setup details:
 	<p>
 	<b>Setup Instructions</b>
 	<p>
-	Create a database for the Jive Messenger
+	Create a database for the Wildfire
 	tables. This assumes you have HSQL installed in its own
 	directory and working correctly.
 	<ol>
@@ -289,7 +289,7 @@ Choose your database from the list below for setup details:
 	        <p>
 		</ul>
 	    then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
-	    in the Jive Messenger distribution - this is referring to the hsqldb.jar from the HSQL
+	    in the Wildfire distribution - this is referring to the hsqldb.jar from the HSQL
 	    distribution.
 	
 		<li>
@@ -297,7 +297,7 @@ Choose your database from the list below for setup details:
 	    as the Driver, and specify the URL of your database in
 	    the URL field. The default password is already entered.
 	
-	    <li>Now copy and paste the contents of <tt>messenger_hsql.sql</tt> from
+	    <li>Now copy and paste the contents of <tt>wildfire_hsql.sql</tt> from
         the <tt>resources/database</tt> directory of the installation into the
 	    command window, and hit execute.  If no errors are
 	    reported, then your database is setup properly.
@@ -305,7 +305,7 @@ Choose your database from the list below for setup details:
 	    <li>Finally, you should change the username and password login for your
 		database: just open the .script file in your
 	    database folder and change the appropriate values. Make sure that you
-		don't use a blank password, as Jive Messenger will not accept
+		don't use a blank password, as Wildfire will not accept
 		one.
 	</ol>
 </ul>
@@ -367,7 +367,7 @@ Choose your database from the list below for setup details:
 	<a href="http://www.informix.com/cloudscape/" target="_blank">
 	http://www.informix.com/cloudscape/</a>, the zip file is cloudscape364.zip.
 	After downloading, unzip the file into \cloudscape directory and add the 
-	following JARs to the CLASSPATH of your system, the lib directory of Jive Messenger,
+	following JARs to the CLASSPATH of your system, the lib directory of Wildfire,
       your application server,
 	or put them in the WEB-INF/lib directory created for the Jive web application.
 	<p>

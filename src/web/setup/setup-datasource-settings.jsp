@@ -20,7 +20,7 @@
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.ClassUtils"%>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 
 <%
 	// Redirect if we've already run setup:
@@ -59,7 +59,7 @@
             	catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
-                    errors.put("general","The Jive Messenger database schema does not "
+                    errors.put("general","The Wildfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}
@@ -78,7 +78,7 @@
 <%
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}

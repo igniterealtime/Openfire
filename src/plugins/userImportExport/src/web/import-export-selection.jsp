@@ -1,5 +1,5 @@
-<%@ page import="org.jivesoftware.messenger.plugin.ImportExportPlugin,
-                 org.jivesoftware.messenger.XMPPServer"
+<%@ page import="org.jivesoftware.wildfire.plugin.ImportExportPlugin,
+                 org.jivesoftware.wildfire.XMPPServer"
 %>
 
 <html>
@@ -18,12 +18,12 @@
 
 <% if (plugin.isUserProviderReadOnly()) { %>
 
-    Sorry, because you are using LDAP as your user store, this plugin will not work with your Messenger installation.
+    Sorry, because you are using LDAP as your user store, this plugin will not work with your Wildfire installation.
 
 <% } else { %>
 
 The import and export functions allow you to read data into and write user
-data from your Jive Messenger installation.
+data from your Wildfire installation.
 
 <ul>
     <li><a href="import-user-data.jsp">Import User Data</a></li>

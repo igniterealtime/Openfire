@@ -2,38 +2,38 @@
 
 # redhat-poinstall.sh
 #
-# This script sets permissions on the Jive Messenger installtion
+# This script sets permissions on the Wildfire installtion
 # and install the init script.
 #
-# Run this script as root after installation of jive messenger
+# Run this script as root after installation of wildfire
 # It is expected that you are executing this script from the bin directory
 
 # If you used an non standard directory name of location
 # Please specify it here
-# MESSENGER_HOME=
+# WILDFIRE_HOME=
  
-MESSENGER_USER="jive"
-MESSENGER_GROUP="jive"
+WILDFIRE_USER="jive"
+WILDFIRE_GROUP="jive"
 
-if [ ! $MESSENGER_HOME ]; then
-	if [ -d "/opt/jive_messenger" ]; then
-		MESSENGER_HOME="/opt/jive_messenger"
-	elif [ -d "/usr/local/jive_messenger" ]; then
-		MESSENGER_HOME="/usr/local/jive_messenger"
+if [ ! $WILDFIRE_HOME ]; then
+	if [ -d "/opt/wildfire" ]; then
+		WILDFIRE_HOME="/opt/wildfire"
+	elif [ -d "/usr/local/wildfire" ]; then
+		WILDFIRE_HOME="/usr/local/wildfire"
 	fi
 fi
 
 # Grant execution permissions
-chmod +x $MESSENGER_HOME/bin/extra/jive-messengerd
+chmod +x $WILDFIRE_HOME/bin/extra/wildfired
 
 # Install the init script
-cp $MESSENGER_HOME/bin/extra/jive-messengerd /etc/init.d
-/sbin/chkconfig --add jive-messengerd
-/sbin/chkconfig jive-messengerd on
+cp $WILDFIRE_HOME/bin/extra/wildfired /etc/init.d
+/sbin/chkconfig --add wildfired
+/sbin/chkconfig wildfired on
 
 # Create the jive user and group
-/usr/sbin/groupadd $MESSENGER_GROUP
-/usr/sbin/useradd $MESSENGER_USER -g $MESSENGER_GROUP -s /bin/bash
+/usr/sbin/groupadd $WILDFIRE_GROUP
+/usr/sbin/useradd $WILDFIRE_USER -g $WILDFIRE_GROUP -s /bin/bash
 
 # Change the permissions on the installtion directory
-/bin/chown -R $MESSENGER_USER:$MESSENGER_GROUP $MESSENGER_HOME 
+/bin/chown -R $WILDFIRE_USER:$WILDFIRE_GROUP $WILDFIRE_HOME

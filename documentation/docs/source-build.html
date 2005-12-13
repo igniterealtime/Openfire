@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title>Jive Messenger Source Instructions</title>
+	<title>Wildfire Source Instructions</title>
     <link href="style.css" rel="stylesheet" type="text/css">
     <style type="text/css">
         .code {
@@ -30,14 +30,14 @@
 
 <body bgcolor="#ffffff">
 
-<h1>Jive Messenger Source Instructions</h1>
+<h1>Wildfire Source Instructions</h1>
 <p>
 
 This document provides detailed information for developers that wish to
-compile and make changes to the Jive Messenger source code.
+compile and make changes to the Wildfire source code.
 Use of the source code is governed by the GPL or the commercial license
 you purchased for the codebase from Jive Software. 
-<b>If Jive Messenger
+<b>If Wildfire
 source is embedded into another application, that application must also
 be released under the Open Source GPL license (unless you have a commercial OEM license
 in place with Jive Software). Please see the license agreement
@@ -48,21 +48,21 @@ the source, and that source is governed by the license given to it by its author
 
 <p>For additional developer resources, please visit:
 <a href="http://www.jivesoftware.org">
-http://www.jivesoftware.org</a>. The Jive Messenger build process is based on Ant. Visit the
+http://www.jivesoftware.org</a>. The Wildfire build process is based on Ant. Visit the
 <a href="http://ant.apache.org/">Ant website</a>
 for more information. There is no need to download and install Ant - a version of it is included
 in this distribution.
 <p>
 This documentation is divided into three sections:
 <ol>
- <li> <a href="#source">Source</a> -- get te Jive Messenger source code.
-	<li> <a href="#setup">Setup</a> -- how to setup your environment for Jive Messenger development.
+ <li> <a href="#source">Source</a> -- get te Wildfire source code.
+	<li> <a href="#setup">Setup</a> -- how to setup your environment for Wildfire development.
 	<li> <a href="#tasks">Build tasks</a> -- tasks that can be performed using the build program.
 </ol>
 
-<p><a name="source"><b><font color="#0066cc">1.</font> Get the Jive Messenger Source</b></a><p>
+<p><a name="source"><b><font color="#0066cc">1.</font> Get the Wildfire Source</b></a><p>
 
-You can get the Jive Messenger source code by downloading a source distribution or
+You can get the Wildfire source code by downloading a source distribution or
 by checking out the source code from CVS. Instructions for both options can
 be found on the <a href="http://www.jivesoftware.org/source.jsp">source page</a>. 
 
@@ -71,7 +71,7 @@ be found on the <a href="http://www.jivesoftware.org/source.jsp">source page</a>
 Getting your machine ready for development requires a few steps. Wherever
 possible, instructions are provided for both Unix/Linux and Windows users.
 <p>
-<b><a name="javaSetup">Configure Java for Jive Messenger</a></b>
+<b><a name="javaSetup">Configure Java for Wildfire</a></b>
 <ul>
 	Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
 	open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
@@ -79,7 +79,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 	If Java isn't installed, download a copy from the
 	<a href="http://java.sun.com/">Java website</a>.
 	<p>
-	<font color="red">Important!</font> -- the Jive Messenger build tool needs to know
+	<font color="red">Important!</font> -- the Wildfire build tool needs to know
 	where Java is installed on your system. You must configure the "JAVA_HOME"
 	environment variable to point to the correct directory. Instructions on
 	how to set this variable for various platforms are as follows:
@@ -142,7 +142,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 
 <p><b><a name="ant">Install the Ant Build Tool</a></b><p>
 
-The Jive Messenger build process uses Ant, so that tool must be installed
+The Wildfire build process uses Ant, so that tool must be installed
 and configured on your computer. First download Ant from: 
 <a href="http://ant.apache.org/">http://ant.apache.org</a>. Next, follow
 the <a href="http://ant.apache.org/manual/installlist.html">installation instructions</a>.
@@ -161,21 +161,21 @@ chmod u+x ant
 </td></table>
 
 <p>
-Now, invoke the build tool to compile the Jive Messenger source code
+Now, invoke the build tool to compile the Wildfire source code
 
 <p>
 Windows:<span class="code"> ant  <br> </span><br clear="left">
 Unix/Linux:<span class="code"> ./ant </span>
 <p>
 
-If the build tool is invoked correctly and Jive Messenger compiles, you've correctly
-configured your copy of the Jive Messenger source distribution.
+If the build tool is invoked correctly and Wildfire compiles, you've correctly
+configured your copy of the Wildfire source distribution.
 
 </ul>
 
 <p><b>Finished!</b><p>
 <ul>
-If you've gotten this far, you've finished setting up the Jive Messenger source
+If you've gotten this far, you've finished setting up the Wildfire source
 distribution. Now, read below to learn about all of the tasks that you can perform
 with the build tool.
 </ul>
@@ -185,7 +185,7 @@ with the build tool.
 <p><b><a name="tasks"><font color="#0066cc">3.</font> Build Tasks</a></b><p>
 
 	The list of build tasks is below. All build commands should be
-	run from the "build" directory of your Jive Messenger distribution.
+	run from the "build" directory of your Wildfire distribution.
 
 	<br><br>
 
@@ -233,8 +233,8 @@ Equivalent of calling "ant <a href="#jar">jar</a> javadoc".
 
 <p><i>Description:</i></p>
 
-Builds Jive Messenger into the <tt>target</tt> directory. You can then launch
-Jive Messenger using the scripts in <tt>target/bin/</tt>.
+Builds Wildfire into the <tt>target</tt> directory. You can then launch
+Wildfire using the scripts in <tt>target/bin/</tt>.
 <p>[<a href="#tasks">return to task list</a>]
 </ul>
 

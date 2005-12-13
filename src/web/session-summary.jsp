@@ -10,7 +10,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.Date,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"

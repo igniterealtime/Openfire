@@ -17,10 +17,10 @@
         * jUnit in your Ant or Java classpath
 -->
 
-<project name="Messenger XMPP Server" default="all" basedir="..">
+<project name="Wildfire XMPP Server" default="all" basedir="..">
 
     <description>
-        Jive Messenger build script.
+        Wildfire build script.
     </description>
 
     <!-- ======================================================================================= -->
@@ -55,7 +55,7 @@
     <property name="version.minor" value="3"/>
     <property name="version.revision" value="1"/>
     <property name="version.extra" value=""/> <!-- For 'beta' or 'alpha' -->
-    <property name="dist.prefix" value="jive_messenger"/>
+    <property name="dist.prefix" value="wildfire"/>
 
     <property file="${basedir}/build/build.properties"/>
 
@@ -71,13 +71,13 @@
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
     <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
-    <property name="i18n.basename" value="messenger_i18n"/>
+    <property name="i18n.basename" value="wildfire_i18n"/>
     <property name="i18n.default.locale" value="en"/>
     <property name="target.dir" value="${basedir}/target"/>
     <property name="temp.build.dir" value="${basedir}/target/tempbuild"/>
     <property name="target.i18n.dir" value="${temp.build.dir}/i18n"/>
     <property name="compile.dir" value="${target.dir}/classes"/>
-    <property name="jar.name" value="messenger.jar"/>
+    <property name="jar.name" value="wildfire.jar"/>
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${target.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
@@ -95,7 +95,7 @@
     <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev"/>
     <property name="plugin.dest.dir" value="${target.dir}/plugins"/>
     <property name="webapp.dest.dir" value="${target.dir}/webapp"/>
-    <property name="war.name" value="messenger.war"/>
+    <property name="war.name" value="wildfire.war"/>
     <property name="war.dest.dir" value="${target.dir}/war"/>
     <property name="release.dest.dir" value="${target.dir}/release"/>
     <property name="overwrite" value="false"/>
@@ -109,13 +109,13 @@
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}/installers"/>
-    <property name="installer.install4j.srcfile" value="${installer.src}/messenger.install4j"/>
-    <property name="installer.app_name" value="Jive Messenger"/>
-    <property name="installer.app_short_name" value="jive_messenger"/>
-    <property name="installer.product_name" value="messenger"/>
+    <property name="installer.install4j.srcfile" value="${installer.src}/wildfire.install4j"/>
+    <property name="installer.app_name" value="Wildfire"/>
+    <property name="installer.app_short_name" value="wildfire"/>
+    <property name="installer.product_name" value="wildfire"/>
     <property name="installer.application_id" value="6886-9911-0474-3571"/>
-    <property name="installer.unix_install_dir" value="jive_messenger"/>
-    <property name="installer.windows_install_dir" value="Jive Messenger"/>
+    <property name="installer.unix_install_dir" value="wildfire"/>
+    <property name="installer.windows_install_dir" value="Wildfire"/>
     <property name="installer.publisher" value="Jive Software"/>
     <property name="installer.publisher_url" value="www.jivesoftware.org"/>
     <property name="installer.file_prefix" value="${installer.app_short_name}"/>
@@ -147,14 +147,14 @@
 
     <path id="test.dependencies">
         <path refid="compile.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="messenger.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="wildfire.jar"/>
         <fileset dir="${lib.build.dir}" includes="junit.jar"/>
         <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
     </path>
 
     <path id="plugin.dependencies">
         <path refid="javadoc.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="messenger.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="wildfire.jar"/>
     </path>
 
     <patternset id="compile.sources">
@@ -197,8 +197,8 @@
                 <contains string="${ant.java.version}" substring="1.5"/>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Jive Messenger"/>
-        <fail if="java.not.ok" message="Must use JDK 1.5.x to build Jive Messenger"/>
+        <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Wildfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.5.x to build Wildfire"/>
 
         <tstamp/>
         <tstamp>
@@ -230,7 +230,7 @@
     </target>
 
     <!-- compile =============================================================================== -->
-    <target name="compile" depends="init" description="Compiles Messenger app code">
+    <target name="compile" depends="init" description="Compiles Wildfire app code">
         <mkdir dir="${compile.dir}"/>
         <javac
             destdir="${compile.dir}"
@@ -257,7 +257,7 @@
     </target>
 
     <target name="plugins-dev">
-        <!-- Setup Messenger -->
+        <!-- Setup Wildfire -->
         <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="jar" inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
@@ -270,7 +270,7 @@
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
                 <xmltask source="${plugin.src.dir}/@{plugin}/plugin.xml" dest="${plugin.src.dir}/@{plugin}/plugins2.xml">
-                    <insert path="/plugin/minMessengerVersion[last()]"  position="after">
+                    <insert path="/plugin/minWildfireVersion[last()]"  position="after">
                         <![CDATA[
                           <development>
                             <webRoot>
@@ -293,11 +293,11 @@
     </target>
 
     <!-- jar =================================================================================== -->
-    <target name="jar" depends="compile, jspc, -i18n" description="Produces Messengers jars and sets up dependencies">
+    <target name="jar" depends="compile, jspc, -i18n" description="Produces Wildfires jars and sets up dependencies">
         <mkdir dir="${jar.dest.dir}"/>
-        <!-- Make main Messenger jar -->
+        <!-- Make main Wildfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true">
-            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/messenger/starter/ServerStarter.class"/>
+            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/wildfire/starter/ServerStarter.class"/>
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
@@ -315,11 +315,11 @@
         <!-- Make startup jar -->
         <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
             <fileset dir="${compile.dir}">
-                <include name="org/jivesoftware/messenger/starter/ServerStarter.class"/>
-                <include name="org/jivesoftware/messenger/starter/JiveClassLoader*.class"/>
+                <include name="org/jivesoftware/wildfire/starter/ServerStarter.class"/>
+                <include name="org/jivesoftware/wildfire/starter/JiveClassLoader*.class"/>
             </fileset>
             <manifest>
-                <attribute name="Main-Class" value="org.jivesoftware.messenger.starter.ServerStarter"/>
+                <attribute name="Main-Class" value="org.jivesoftware.wildfire.starter.ServerStarter"/>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>
@@ -333,7 +333,7 @@
     </target>
 
     <!-- run =================================================================================== -->
-    <target name="run"  description="Starts Messenger inline to the build process.">
+    <target name="run"  description="Starts Wildfire inline to the build process.">
         <echo>Ensure that you have run ant jar!</echo>
         <condition property="run.debug" value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
             <isset property="debug"/>
@@ -351,7 +351,7 @@
     </target>
 
     <!-- war =================================================================================== -->
-    <target name="war" depends="jar" description="Creates a WAR of Messenger">
+    <target name="war" depends="jar" description="Creates a WAR of Wildfire">
         <mkdir dir="${war.dest.dir}"/>
         <mkdir dir="${war.dest.dir}/build"/>
         <!-- Make a new web.xml file in the build dir -->
@@ -369,8 +369,8 @@
             </fileset>
             <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
         </war>
-        <!-- Create a Messenger home -->
-        <copy todir="${war.dest.dir}/messengerHome">
+        <!-- Create a Wildfire home -->
+        <copy todir="${war.dest.dir}/wildfireHome">
             <fileset dir="${target.dir}">
                 <include name="conf/**/*.*"/>
                 <include name="resources/**/*"/>
@@ -378,13 +378,13 @@
             </fileset>
         </copy>
         <!-- Force create the logs dir (will be empty) -->
-        <mkdir dir="${war.dest.dir}/messengerHome/logs"/>
+        <mkdir dir="${war.dest.dir}/wildfireHome/logs"/>
         <!-- Force create the plugins dir (will be empty) -->
-        <mkdir dir="${war.dest.dir}/messengerHome/plugins"/>
+        <mkdir dir="${war.dest.dir}/wildfireHome/plugins"/>
     </target>
 
     <!-- javadoc =============================================================================== -->
-    <target name="javadoc" depends="compile" description="Produces Messenger Javadocs">
+    <target name="javadoc" depends="compile" description="Produces Wildfire Javadocs">
         <mkdir dir="${javadoc.dest.dir}"/>
         <antcall target="-javadoc-impl"/>
 
@@ -395,7 +395,7 @@
         <javadoc
             packagenames="org.jivesoftware.*, org.xmpp.*"
             destdir="${javadoc.dest.dir}"
-            windowtitle="Jive Messenger ${version} Javadoc"
+            windowtitle="Wildfire ${version} Javadoc"
             overview="${src.java.dir}/overview.html"
             failonerror="yes"
             >
@@ -403,8 +403,8 @@
                 <path location="${src.java.dir}"/>
                 <path location="${whack.src}"/>
             </sourcepath>
-            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Jive Messenger ${version} Javadoc</font>]]></doctitle>
-            <header><![CDATA[<b>Jive Messenger ${version} Javadoc</b>]]></header>
+            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
+            <header><![CDATA[<b>Wildfire ${version} Javadoc</b>]]></header>
             <bottom><![CDATA[<i>Copyright &copy; 1999-2004 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
@@ -439,7 +439,7 @@
             validateXml="false"
             uriroot="${web.dir}"
             outputDir="${jspc.java.dest.dir}"
-            package="org.jivesoftware.messenger.admin"
+            package="org.jivesoftware.wildfire.admin"
             webXmlFragment="${jspc.dest.dir}/web.partial.xml"/>
 
         <!-- Compile java source -->
@@ -448,7 +448,7 @@
             includeAntRuntime="no"
             debug="on"
             source="1.5"
-            includes="org/jivesoftware/messenger/admin/**/*.java"
+            includes="org/jivesoftware/wildfire/admin/**/*.java"
             >
             <src path="${jspc.java.dest.dir}"/>
             <classpath>
@@ -486,7 +486,7 @@
 
     <!--
     <target name="with-clover">
-        <clover-setup initString="${target.dir}/test/messenger-coverage.db" />
+        <clover-setup initString="${target.dir}/test/wildfire-coverage.db" />
     </target>
 
     <target name="clover-html" depends="with-clover">
@@ -637,13 +637,13 @@
 
         <!-- Create a new prop for the final release dirs then create the dirs -->
 
-        <!-- ie: jive_messenger -->
+        <!-- ie: wildfire -->
         <property name="release.name" value="${dist.prefix}"/>
-        <!-- ie: jive_messenger_src -->
+        <!-- ie: jive_wildfire_src -->
         <property name="release.name.src" value="${dist.prefix}_src"/>
-        <!-- ie: jive_messenger_2_1_2 -->
+        <!-- ie: jive_wildfire_2_1_2 -->
         <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
-        <!-- ie: jive_messenger_src_2_1_2 -->
+        <!-- ie: jive_wildfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
 
         <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
@@ -969,7 +969,7 @@
                     <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                     <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"/>
 
-                    <!-- Copy jsp's from plugin and web.xml from messenger to a temp dir. We'll
+                    <!-- Copy jsp's from plugin and web.xml from wildfire to a temp dir. We'll
                          not fail on an error since the web dir might not exist.
                     -->
                     <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web" overwrite="${overwrite}">
@@ -979,7 +979,7 @@
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*"/>
                             <exclude name="WEB-INF/web.xml"/>
-                            <exclude name="WEB-INF/classes/messenger_init.xml"/>
+                            <exclude name="WEB-INF/classes/wildfire_init.xml"/>
                             <exclude name="WEB-INF/tmp/**/*.*"/>
                             <exclude name="WEB-INF/work/**/*.*"/>
                         </fileset>
@@ -1001,7 +1001,7 @@
                         validateXml="false"
                         uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
                         outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                        package="org.jivesoftware.messenger.plugin.@{plugin}"
+                        package="org.jivesoftware.wildfire.plugin.@{plugin}"
                         webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
                         />
 
@@ -1058,7 +1058,7 @@
                 </then>
             </if>
 
-            <!-- Copy everything else to Messenger's plugin dir -->
+            <!-- Copy everything else to Wildfire's plugin dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true" >
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.jar"/>

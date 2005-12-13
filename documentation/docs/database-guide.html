@@ -1,23 +1,23 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-  <title>Jive Messenger Database Schema Guide</title>
+  <title>Wildfire Database Schema Guide</title>
   <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 <a name="top"></a>
-<h1>Jive Messenger Database Schema Guide</h1>
+<h1>Wildfire Database Schema Guide</h1>
 <h2>Introduction</h2>
 <p>
 This document outlines the data type conventions and tables in the Jive
-Messenger 2.1 database schema. Some information, like column indexes and foreign keys, is
+Wildfire 2.1 database schema. Some information, like column indexes and foreign keys, is
 omitted. For this, please read the individual schema of the database you're interested in.
 <br>
 </p>
 <h2>Data Type Conventions</h2>
 <p>
 Date column type support varies widely across databases. Therefore,
-Jive Messenger specially encodes dates as VARCHAR values. Each date is a Java long
+Wildfire specially encodes dates as VARCHAR values. Each date is a Java long
 value which is 0-padded to 15 characters. The long value is the internal
 representation of Java Date objects, which can be obtained with code such as the
 following:
@@ -30,7 +30,7 @@ true.
 </p>
 <h2>Database Tables</h2>
 <p>
-Below is a description of each of the tables in the Jive Messenger
+Below is a description of each of the tables in the Wildfire
 database schema.
 A <span class="primary-key">yellow row</span> denotes a primary key.
 </p>
@@ -149,7 +149,7 @@ Group)</th>
     <tr class="primary-key">
       <td>username</td>
       <td>VARCHAR</td>
-      <td>32</td>
+      <td>100</td>
       <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">

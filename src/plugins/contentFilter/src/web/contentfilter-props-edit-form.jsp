@@ -1,7 +1,7 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.messenger.XMPPServer,
-                 org.jivesoftware.messenger.user.*,
-				 org.jivesoftware.messenger.plugin.ContentFilterPlugin,                 
+                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.user.*,
+				 org.jivesoftware.wildfire.plugin.ContentFilterPlugin,
                  org.jivesoftware.util.*"
 %>
 <%@ page import="java.util.regex.Pattern"%>

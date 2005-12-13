@@ -6,9 +6,9 @@
 --%>
 
 <%@ page import="java.io.*,
-				 org.jivesoftware.messenger.container.PluginManager,
+				 org.jivesoftware.wildfire.container.PluginManager,
 				 org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.container.Plugin,
+                 org.jivesoftware.wildfire.container.Plugin,
                  java.util.*,
                  java.net.URLEncoder"
 %>

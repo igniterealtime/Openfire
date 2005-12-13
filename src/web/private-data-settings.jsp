@@ -11,7 +11,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  org.jivesoftware.admin.*"
     errorPage="error.jsp"
 %>

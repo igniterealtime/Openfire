@@ -11,20 +11,20 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.group.GroupManager;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.AuthToken;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.muc.MultiUserChatServer;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
 import java.util.StringTokenizer;
 
 /**
- * A utility bean for Messenger admin console pages.
+ * A utility bean for Wildfire admin console pages.
  */
 public class WebManager extends WebBean {
 
@@ -42,7 +42,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * Returns <tt>true</tt> if the Messenger container is in setup mode, <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if the Wildfire container is in setup mode, <tt>false</tt> otherwise.
      */
     public boolean isSetupMode() {
         return getXMPPServer().isSetupMode();
@@ -112,7 +112,7 @@ public class WebManager extends WebBean {
      */
     public boolean isEmbedded() {
         try {
-            ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
+            ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
             return true;
         }
         catch (Exception ignored) {

@@ -13,10 +13,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.Iterator,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.*,
-                 org.jivesoftware.messenger.server.RemoteServerManager,
-                 org.jivesoftware.messenger.server.RemoteServerConfiguration"
+                 org.jivesoftware.wildfire.server.RemoteServerManager,
+                 org.jivesoftware.wildfire.server.RemoteServerConfiguration"
     errorPage="error.jsp"
 %>
 

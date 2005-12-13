@@ -2,27 +2,27 @@
 
 <html>
 <head>
-    <title>Jive Messenger Plugin Guide</title>
+    <title>Wildfire Plugin Guide</title>
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
 
-<h1>Jive Messenger Plugin Developer Guide</h1>
+<h1>Wildfire Plugin Developer Guide</h1>
 
 <a name="top"></a>
 
 <h2>Introduction</h2>
 
 <p>
-Plugins enhance the functionality of Jive Messenger. This document is a
+Plugins enhance the functionality of Wildfire. This document is a
 developer's guide for creating plugins.
 </p>
 
 <h2>Structure of a Plugin</h2>
 
 <p>
-Plugins live in the <tt>plugins</tt> directory of <tt>messengerHome</tt>. When a plugin
+Plugins live in the <tt>plugins</tt> directory of <tt>wildfireHome</tt>. When a plugin
 is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
 plugin directory are as follows:
 </p>
@@ -46,7 +46,7 @@ plugin directory are as follows:
 </fieldset>
 
 <p>The <tt>web</tt> directory exists for plugins that need to add content
-to the Jive Messenger Admin Console. Further details are below.</p>
+to the Wildfire Admin Console. Further details are below.</p>
 
 <p>
 The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
@@ -88,8 +88,8 @@ file might look like the following:
     <li>date -- the date the plugin was released. The date must be in the form MM/dd/yyyy, such
           as 07/15/2005.</li>
     <li>url -- a URL where additional information about the plugin is available.</li>
-    <li>minServerVersion -- the minimum version of Jive Messenger required
-          to run the plugin (supported by Jive Messenger 2.1.2 and later). If the
+    <li>minServerVersion -- the minimum version of Wildfire required
+          to run the plugin (supported by Wildfire 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
     <li>parentPlugin -- the name of the parent plugin (given as "foo" for the "foo.jar" plugin).
             When a plugin has a parent plugin, the parent plugin's class loader will be used instead
@@ -107,8 +107,8 @@ end-users (all placed in the main plugin directory):
 </ul>
 
 <p>Your plugin class must be implement the
-<tt><a href="javadoc/org/jivesoftware/messenger/container/Plugin.html">Plugin</a></tt>
-interface from the <a href="javadoc/index.html">Jive Messenger API</a> as
+<tt><a href="javadoc/org/jivesoftware/wildfire/container/Plugin.html">Plugin</a></tt>
+interface from the <a href="javadoc/index.html">Wildfire API</a> as
 well as have a default (no argument) contructor. The Plugin interface has
 methods for initializing and destroying the plugin.
 </p>
@@ -118,13 +118,13 @@ methods for initializing and destroying the plugin.
 <pre class="java">
 package org.example;
 
-import org.jivesoftware.messenger.container.Plugin;
-import org.jivesoftware.messenger.container.PluginManager;
+import org.jivesoftware.wildfire.container.Plugin;
+import org.jivesoftware.wildfire.container.PluginManager;
 
 import java.io.File;
 
 /**
- * A sample plugin for Jive Messenger.
+ * A sample plugin for Wildfire.
  */
 public class ExamplePlugin implements Plugin {
 
@@ -151,7 +151,7 @@ are a several steps to accomplishing this:
     <li>JSP files must be compiled and put into the classpath of the
         plugin. A <tt>web.xml</tt> file containing the compiled JSP
         servlet entries must be put into the <tt>web/</tt> directory
-        of the plugin. <i>Note:</i> the Jive Messenger build script
+        of the plugin. <i>Note:</i> the Wildfire build script
         can assist with compiling JSPs and creating the web.xml. This
         is detailed below.
     </li>
@@ -196,7 +196,7 @@ the existing id attribute values in your own <tt>&lt;adminconsole&gt;</tt> defin
 <h3>Admin Console Best Practices</h3>
 
 There are several best practices to consider when making changes to
-the Jive Messenger admin console via a plugin. The general theme is
+the Wildfire admin console via a plugin. The general theme is
 that plugins should integrate seamlessly:
 
 <ul>
@@ -209,14 +209,14 @@ that plugins should integrate seamlessly:
 		<li>Try to match the UI of the existing admin console in your custom
 		    plugin pages.
 		<li>There is no need to create an admin console entry to show plugin
-	        meta-data. Instead, let Jive Messenger inform the user about which
+	        meta-data. Instead, let Wildfire inform the user about which
             plugins are installed and provide plugin management.
 </ul>
 
 <h3>Writing Pages for the Admin Console</h3>
 
 <p>
-Jive Messenger uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
+Wildfire uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
 framework to decorate pages in the admin console. A globally-defined decorator is applied to
 each page in order to render the final output, as in the following diagram:</p>
 <br>
@@ -260,10 +260,10 @@ The following HTML snippet demonstrates a valid page:
 </pre>
 </fieldset>
 
-<h2>Using the Jive Messenger Build Script</h2>
+<h2>Using the Wildfire Build Script</h2>
 
 <p>
-The Jive Messenger build script will help you build and develop plugins. It
+The Wildfire build script will help you build and develop plugins. It
 looks for plugin development directories in the following format:
 </p>
 
@@ -307,19 +307,19 @@ process.</p>
 
 <h2>Implementing Your Plugin</h2>
 
-<p>Plugins have full access to the Jive Messenger API. This provides a tremendous
+<p>Plugins have full access to the Wildfire API. This provides a tremendous
 amount of flexibility for what plugins can accomplish. However, there are several integration
 points that are the most common:
 
 <ol>
-    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/Component.html">Component</a>.
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/wildfire/Component.html">Component</a>.
  Components receive all packets addressed to a particular sub-domain. For example,
  <tt>test_component.example.com</tt>. So, a packet sent to <tt>joe@test_component.example.com</tt> would
  be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS entries
  for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the
  example above); sub-domains are only used for routing within the XMPP server.
 
-    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/messenger/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
+    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/wildfire/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
   namespace. The following code snippet demonstrates how to register an IQHandler:
 
   <pre>
@@ -328,14 +328,14 @@ points that are the most common:
   iqRouter.addHandler(myHandler);
   </pre>
 
-    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/messenger/interceptor/PacketInterceptor.html">
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/wildfire/interceptor/PacketInterceptor.html">
     PacketInterceptor</a> to receive all packets being sent through the system and
     optionally reject them. For example, an interceptor could reject all messages that contained
     profanity or flag them for review by an administrator.</li>
-    <li>You can store persistent plugin settings as Jive Messenger properties using the
+    <li>You can store persistent plugin settings as Wildfire properties using the
     JiveGlobals.getProperty(String) and JiveGlobals.setProperty(String, String) methods. Make
     your plugin a property listener to listen for changes to its properties by implementing the
-    <tt>org.jivesoftware.messenger.event.PropertyEventListener</tt> method.
+    <tt>org.jivesoftware.wildfire.event.PropertyEventListener</tt> method.
     You can register your plugin as a listener using the PropertyEventDispatcher.addListener(PropertyEventListener)
     method. Be sure to unregister your plugin as a listener in your plugin's destroyPlugin() method.
 
@@ -347,15 +347,15 @@ points that are the most common:
 
 <b>Can I deploy a plugin as a directory instead of a JAR?</b>
 <p>No, all plugins must be deployed as JAR or WAR files. When a JAR or WAR is not present for the plugin,
-Jive Messenger assumes that the file has been deleted and that the users wants to destroy the plugin,
+Wildfire assumes that the file has been deleted and that the users wants to destroy the plugin,
 so it also deletes the directory.</p>
 
 <b>What license agreement are plugins subject to?</b>
-<p>Because Jive Messenger is released under the Open Source GPL license, any plugins developed
+<p>Because Wildfire is released under the Open Source GPL license, any plugins developed
 must also be released under the GPL or a compatible Open Source license. It is a
 violation of the license agreement to create plugins that are not Open Source. Please visit 
-<a href="http://www.jivesoftware.com/products/messenger/">Jive Software</a> if you need different 
-licensing terms for Jive Messenger, including the right to create commercial plugins.</p>
+<a href="http://www.jivesoftware.com/products/wildfire/">Jive Software</a> if you need different
+licensing terms for Wildfire, including the right to create commercial plugins.</p>
 
 <br><br>
 

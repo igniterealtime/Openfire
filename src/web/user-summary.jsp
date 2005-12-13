@@ -10,9 +10,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.*,
-                 org.jivesoftware.messenger.PresenceManager,
+                 org.jivesoftware.wildfire.PresenceManager,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
                  org.jivesoftware.util.JiveGlobals"

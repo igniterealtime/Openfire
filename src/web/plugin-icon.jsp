@@ -1,8 +1,8 @@
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.messenger.container.Plugin"%>
+<%@ page import="org.jivesoftware.wildfire.container.Plugin"%>
 <%@ page import="java.io.*"%>
-<%@ page import="org.jivesoftware.messenger.container.PluginManager"%>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.container.PluginManager"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 <%
    String pluginName = ParamUtils.getParameter(request, "plugin");
    PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();

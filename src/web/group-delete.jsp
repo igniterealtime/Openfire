@@ -11,7 +11,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.group.Group,
+                 org.jivesoftware.wildfire.group.Group,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>

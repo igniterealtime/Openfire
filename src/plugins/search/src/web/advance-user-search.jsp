@@ -1,9 +1,9 @@
 <%@ page import="java.util.*,
 				 java.net.URLEncoder,
 				 org.jivesoftware.util.*,
-				 org.jivesoftware.messenger.PresenceManager,
-                 org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.messenger.XMPPServer,
+				 org.jivesoftware.wildfire.PresenceManager,
+                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.wildfire.XMPPServer,
                  org.xmpp.packet.Presence"
 %>
 

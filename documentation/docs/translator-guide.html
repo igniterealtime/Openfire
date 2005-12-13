@@ -2,24 +2,24 @@
 
 <html>
 <head>
-    <title>Jive Messenger Translator Guide</title>
+    <title>Wildfire Translator Guide</title>
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
 
-<h1>Jive Messenger Translator Guide</h1>
+<h1>Wildfire Translator Guide</h1>
 
 <a name="top"></a>
 
 <h2>Introduction</h2>
 
 <p>
-The Jive Messenger admin console can be easily translated into other languages. This document
+The Wildfire admin console can be easily translated into other languages. This document
 provides instructions for those that wish to make translations.
 </p>
 <p>
-All text in the Jive Messenger admin console is stored in a resource
+All text in the Wildfire admin console is stored in a resource
 bundle. A resource bundle is a file containing key/value pairs.  Words and phrases are
 represented using keys. The correct values are retrieved based on locale settings
 (English values are used for English locales, French values for French locales, etc).
@@ -45,25 +45,25 @@ renaming the file, then translating its contents.</p>
 
 <h2>Construct a Resource Bundle</h2>
 
-<p>To start, make a copy of the default (English) locale file "messenger_i18n.properties".
-It can be found in the <tt>resources\i18n</tt> directory of your Jive Messenger
+<p>To start, make a copy of the default (English) locale file "wildfire_i18n.properties".
+It can be found in the <tt>resources\i18n</tt> directory of your Wildfire
 installation. Note: the files found in <tt>resources\i18n</tt> are copies of the
 real resource bundles used by the application (the real resource bundles are contained
-in the messenger.jar file). Editing the resource files in the <tt>resources\i18n</tt>
-directory will not affect your running copy of Jive Messenger.</p>
+in the wildfire.jar file). Editing the resource files in the <tt>resources\i18n</tt>
+directory will not affect your running copy of Wildfire.</p>
 
 <p>Next, you'll need to rename the file to match the locale that you're making a
-translation for. The syntax of the name is "messenger_i18n_[lang]_[country].properties".
+translation for. The syntax of the name is "wildfire_i18n_[lang]_[country].properties".
 However, the country code should be used in most cases. For example, the German resource
-bundle should be named "messenger_i18n_de.properties" because
+bundle should be named "wildfire_i18n_de.properties" because
 "de" is the language code for German. For French, the file would be called
-"messenger_i18n_fr.properties". A list of language codes can
+"wildfire_i18n_fr.properties". A list of language codes can
 be found at:
 <a href="http://www.ics.uci.edu/pub/ietf/http/related/iso639.txt"
  target="_new">http://www.ics.uci.edu/pub/ietf/http/related/iso639.txt</a>.
  Some locales require a combination of language and country code. For example
- simplified Chinese would have the name "messenger_i18n_zh_CN.properties"
- while traditional Chinese would have the name "messenger_i18n_zh_TW.properties".</p>
+ simplified Chinese would have the name "wildfire_i18n_zh_CN.properties"
+ while traditional Chinese would have the name "wildfire_i18n_zh_TW.properties".</p>
 
 <h2>Translate the Resource Bundle</h2>
 
@@ -80,7 +80,7 @@ use the "native2ascii" tool (bundled with Java) to convert international
 characters to the ASCII format. To use the native2ascii tool:</p>
 
 <pre>
-    native2ascii -encoding XXX my_translation.properties messenger_i18n_YY.properties
+    native2ascii -encoding XXX my_translation.properties wildfire_i18n_YY.properties
                                ^                         ^
                                input file                output file
 </pre>
@@ -94,21 +94,21 @@ document. For example, if you created your translation using UTF-8 as your encod
 you are making a Simplified Chinese translation:</p>
 
 <pre>
-    native2ascii -encoding UTF8 my_translation.properties messenger_i18n_zh_CN.properties
+    native2ascii -encoding UTF8 my_translation.properties wildfire_i18n_zh_CN.properties
  </pre>
 
 <h2>Testing Your Translation</h2>
 
 <p>To test your translation, copy the translated resource bundle file (example,
-messenger_i18n_de.properties) to the <tt>lib/</tt> directory of your Jive Messenger
-installation. Make sure Jive Messenger is stopped and then edit the <tt>conf/jive-messenger.xml</tt>
+wildfire_i18n_de.properties) to the <tt>lib/</tt> directory of your Wildfire
+installation. Make sure Wildfire is stopped and then edit the <tt>conf/wildfire.xml</tt>
 file. Set the <tt>locale</tt> property to match your new resource
-bundle such as "de" or "zh_CN". Start Jive Messenger and the admin console
+bundle such as "de" or "zh_CN". Start Wildfire and the admin console
 should now be using your translation.  If you still see English text you may have
 named your bundle incorrectly or used the wrong value for the <tt>locale</tt>
 property.</p>
 
-<p>Once your translation is complete and tested, please submit it to the Jive Messenger
+<p>Once your translation is complete and tested, please submit it to the Wildfire
 developers so that others can enjoy it in the next release!</p>
 
 <br><br>

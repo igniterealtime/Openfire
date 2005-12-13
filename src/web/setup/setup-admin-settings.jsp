@@ -8,11 +8,11 @@
                  java.util.HashMap,
                  java.util.Map,
                  java.util.Date,
-                 org.jivesoftware.messenger.user.User,
-                 org.jivesoftware.messenger.user.UserManager,
+                 org.jivesoftware.wildfire.user.User,
+                 org.jivesoftware.wildfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
-<%@ page import="org.jivesoftware.messenger.auth.AuthFactory"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

@@ -9,16 +9,16 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.messenger.audit.AuditManager,
+<%@ page import="org.jivesoftware.wildfire.audit.AuditManager,
                    org.jivesoftware.util.*,
                    java.util.*,
                  java.io.File,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.user.UserNotFoundException"
+                 org.jivesoftware.wildfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
-<%@ page import="org.jivesoftware.messenger.user.UserManager"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 

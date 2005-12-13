@@ -12,9 +12,9 @@
                  java.util.HashMap,
                  java.util.Map,
                  java.util.*,
-                 org.jivesoftware.messenger.group.*,
+                 org.jivesoftware.wildfire.group.*,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.user.UserManager"
+                 org.jivesoftware.wildfire.user.UserManager"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.stringprep.Stringprep"%>

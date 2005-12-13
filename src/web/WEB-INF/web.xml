@@ -6,11 +6,11 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
 
-    <display-name>Jive Messenger</display-name>
+    <display-name>Wildfire</display-name>
 
     <context-param>
         <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
-        <param-value>messenger_i18n</param-value>
+        <param-value>wildfire_i18n</param-value>
     </context-param>
 
     <context-param>
@@ -69,12 +69,12 @@
 
     <servlet>
         <servlet-name>PluginServlet</servlet-name>
-        <servlet-class>org.jivesoftware.messenger.container.PluginServlet</servlet-class>
+        <servlet-class>org.jivesoftware.wildfire.container.PluginServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
     <listener>
-         <listener-class>org.jivesoftware.messenger.XMPPContextListener</listener-class>
+         <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
     </listener>
 
     <!--@@JSPC-SERVLETS@@-->

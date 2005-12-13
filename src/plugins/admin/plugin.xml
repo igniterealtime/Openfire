@@ -5,5 +5,5 @@
   live in the root of the plugin's directory.
 -->
 <plugin>
-    <class>org.jivesoftware.messenger.container.AdminConsolePlugin</class>
+    <class>org.jivesoftware.wildfire.container.AdminConsolePlugin</class>
 </plugin>

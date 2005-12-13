@@ -9,7 +9,7 @@
                  java.util.Map,
                  java.util.HashMap,
                  java.net.InetAddress,
-                 org.jivesoftware.messenger.XMPPServer"
+                 org.jivesoftware.wildfire.XMPPServer"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

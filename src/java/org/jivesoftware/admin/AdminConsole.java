@@ -13,7 +13,7 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -140,7 +140,7 @@ public class AdminConsole {
             return globalVersion.getText();
         }
         else {
-            // Default to the Jive Messenger version if none has been provided via XML.
+            // Default to the Wildfire version if none has been provided via XML.
             XMPPServer xmppServer = XMPPServer.getInstance();
             return xmppServer.getServerInfo().getVersion().getVersionString();
         }
@@ -170,7 +170,7 @@ public class AdminConsole {
         // Load the core model as the admin-sidebar.xml file from the classpath.
         InputStream in = ClassUtils.getResourceAsStream("/admin-sidebar.xml");
         if (in == null) {
-            Log.error("Failed to load admin-sidebar.xml file from Jive Messenger classes - admin "
+            Log.error("Failed to load admin-sidebar.xml file from Wildfire classes - admin "
                     + "console will not work correctly.");
             return;
         }

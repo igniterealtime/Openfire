@@ -8,10 +8,10 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.messenger.handler.IQRegisterHandler,
-                 org.jivesoftware.messenger.handler.IQAuthHandler,
+<%@ page import="org.jivesoftware.wildfire.handler.IQRegisterHandler,
+                 org.jivesoftware.wildfire.handler.IQAuthHandler,
                  java.util.*,
-                 org.jivesoftware.messenger.ClientSession,
+                 org.jivesoftware.wildfire.ClientSession,
                  org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>

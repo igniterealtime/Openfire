@@ -1,4 +1,4 @@
-package org.jivesoftware.messenger.plugin;
+package org.jivesoftware.wildfire.plugin;
 
 import java.util.regex.PatternSyntaxException;
 

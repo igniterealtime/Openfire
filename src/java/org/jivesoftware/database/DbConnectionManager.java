@@ -735,9 +735,9 @@ public class DbConnectionManager {
             BufferedReader in = null;
             Statement stmt;
             try {
-                // Resource will be like "/database/upgrade/2.0_to_2.1/messenger_hsqldb.sql"
+                // Resource will be like "/database/upgrade/2.0_to_2.1/wildfire_hsqldb.sql"
                 String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
-                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/messenger_" +
+                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/wildfire_" +
                         databaseType + ".sql";
                 in = new BufferedReader(new InputStreamReader(
                         DbConnectionManager.class.getResourceAsStream(resourceName)));

@@ -19,7 +19,7 @@
                  org.jivesoftware.util.Log,
                  org.jivesoftware.database.DefaultConnectionProvider"
 %>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
@@ -55,7 +55,7 @@
             	catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
-                    errors.put("general","The Jive Messenger database schema does not "
+                    errors.put("general","The Wildfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}
@@ -208,7 +208,7 @@
 </p>
 
 <p>
-<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[MESSENGER_HOME]/resources/database</tt>.
+<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[Wildfire_HOME]/resources/database</tt>.
 </p>
 
 <%  if (errors.size() > 0) { %>

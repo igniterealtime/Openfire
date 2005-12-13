@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-    <class>org.jivesoftware.messenger.plugin.PresencePlugin</class>
+    <class>org.jivesoftware.wildfire.plugin.PresencePlugin</class>
     <name>Presence Service</name>
     <description>Exposes presence information through HTTP.</description>
     <author>Jive Software</author>

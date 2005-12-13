@@ -6,8 +6,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.PresenceManager,
-                 org.jivesoftware.messenger.user.*"
+                 org.jivesoftware.wildfire.PresenceManager,
+                 org.jivesoftware.wildfire.user.*"
     
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

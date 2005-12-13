@@ -13,9 +13,9 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  java.util.*,
-                 org.jivesoftware.messenger.muc.MUCRoom,
-                 org.jivesoftware.messenger.forms.spi.*,
-                 org.jivesoftware.messenger.forms.*,
+                 org.jivesoftware.wildfire.muc.MUCRoom,
+                 org.jivesoftware.wildfire.forms.spi.*,
+                 org.jivesoftware.wildfire.forms.*,
                  org.dom4j.Element,
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
@@ -25,7 +25,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.messenger.muc.NotAllowedException"%>
+<%@ page import="org.jivesoftware.wildfire.muc.NotAllowedException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

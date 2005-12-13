@@ -10,10 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.text.NumberFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User,
+                 org.jivesoftware.wildfire.user.User,
                  org.xmpp.packet.JID,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder"

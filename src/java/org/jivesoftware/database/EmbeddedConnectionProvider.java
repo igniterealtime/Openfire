@@ -69,7 +69,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 }
 
                 String serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() +
-                        File.separator + "messenger";
+                        File.separator + "wildfire";
                 String username = "sa";
                 String password = "";
                 int minConnections = 3;
@@ -135,7 +135,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         Connection con = null;
         try {
             in = new BufferedReader(new InputStreamReader(
-                    getClass().getResourceAsStream("/database/messenger_hsqldb.sql")));
+                    getClass().getResourceAsStream("/database/wildfire_hsqldb.sql")));
             con = connectionPool.getConnection();
             boolean done = false;
             while (!done) {

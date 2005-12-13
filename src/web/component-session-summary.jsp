@@ -11,10 +11,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.Date,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.component.ComponentSession"
+                 org.jivesoftware.wildfire.component.ComponentSession"
     errorPage="error.jsp"
 %>
 

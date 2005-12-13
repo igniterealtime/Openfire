@@ -9,8 +9,8 @@
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.messenger.group.GroupManager,
-                 org.jivesoftware.messenger.group.Group,
+                 org.jivesoftware.wildfire.group.GroupManager,
+                 org.jivesoftware.wildfire.group.Group,
                  java.net.URLEncoder,
                  java.net.URLDecoder,
                  java.io.UnsupportedEncodingException,
@@ -18,8 +18,8 @@
 %>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.stringprep.Stringprep"%>
-<%@ page import="org.jivesoftware.messenger.user.UserManager"%>
-<%@ page import="org.jivesoftware.messenger.user.UserNotFoundException"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

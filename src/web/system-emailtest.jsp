@@ -6,7 +6,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.*,
                  javax.mail.*,
                  javax.mail.internet.*"
@@ -87,7 +87,7 @@
         to = user.getEmail();
     }
     if (subject == null) {
-        subject = "Test email sent via Jive Messenger";
+        subject = "Test email sent via Wildfire";
     }
     if (body == null) {
         body = "This is a test message.";

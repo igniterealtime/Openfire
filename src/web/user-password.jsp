@@ -9,7 +9,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  org.jivesoftware.admin.AdminPageBean,
                  java.net.URLEncoder"
     errorPage="error.jsp"

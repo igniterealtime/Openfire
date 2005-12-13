@@ -8,7 +8,7 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
-                 org.jivesoftware.messenger.XMPPServer"
+                 org.jivesoftware.wildfire.XMPPServer"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 

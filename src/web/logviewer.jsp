@@ -12,7 +12,7 @@
                  org.jivesoftware.util.*,
                  java.text.*,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.*"
 %>
 

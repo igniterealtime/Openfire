@@ -10,18 +10,18 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.net.SSLConfig,
+                 org.jivesoftware.wildfire.net.SSLConfig,
                  java.security.KeyStore,
                  java.security.cert.CertificateFactory,
                  java.security.cert.Certificate,
                  java.io.ByteArrayInputStream"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.messenger.ClientSession"%>
-<%@ page import="org.jivesoftware.messenger.net.SocketConnection"%>
-<%@ page import="org.jivesoftware.messenger.XMPPServer"%>
-<%@ page import="org.jivesoftware.messenger.ConnectionManager"%>
-<%@ page import="org.jivesoftware.messenger.Connection"%>
+<%@ page import="org.jivesoftware.wildfire.ClientSession"%>
+<%@ page import="org.jivesoftware.wildfire.net.SocketConnection"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.ConnectionManager"%>
+<%@ page import="org.jivesoftware.wildfire.Connection"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

@@ -10,11 +10,11 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.*,
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.group.*,
+                 org.jivesoftware.wildfire.group.*,
                  java.net.URLDecoder,
                  java.net.URLEncoder"
 %>

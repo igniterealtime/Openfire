@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class JiveGlobals {
 
-    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "jive-messenger.xml";
+    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "wildfire.xml";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -674,7 +674,7 @@ public class JiveGlobals {
 
    /**
     * Allows the name of the local config file name to be changed. The
-    * default is "jive-messenger.xml".
+    * default is "wildfire.xml".
     *
     * @param configName the name of the config file.
     */

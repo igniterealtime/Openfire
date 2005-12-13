@@ -9,9 +9,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder"
     errorPage="error.jsp"

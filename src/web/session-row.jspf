@@ -3,7 +3,7 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.messenger.Session,
+<%@ page import="org.jivesoftware.wildfire.Session,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
                  org.jivesoftware.util.LocaleUtils"%>

@@ -11,12 +11,12 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.AdminPageBean,
                  java.util.*,
-                 org.jivesoftware.messenger.XMPPServer,
+                 org.jivesoftware.wildfire.XMPPServer,
                  java.net.InetAddress,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.messenger.net.SSLSocketAcceptThread,
-                 org.jivesoftware.messenger.net.SocketAcceptThread,
-                 org.jivesoftware.messenger.ConnectionManager"
+                 org.jivesoftware.wildfire.net.SSLSocketAcceptThread,
+                 org.jivesoftware.wildfire.net.SocketAcceptThread,
+                 org.jivesoftware.wildfire.ConnectionManager"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

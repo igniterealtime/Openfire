@@ -3,8 +3,8 @@
                  org.dom4j.DocumentException,
                  org.apache.commons.fileupload.DiskFileUpload,
                  org.apache.commons.fileupload.FileItem,
-                 org.jivesoftware.messenger.plugin.ImportExportPlugin,
-                 org.jivesoftware.messenger.XMPPServer,
+                 org.jivesoftware.wildfire.plugin.ImportExportPlugin,
+                 org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.ParamUtils"
 %>
 

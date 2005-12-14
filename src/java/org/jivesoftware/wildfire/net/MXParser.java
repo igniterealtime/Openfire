@@ -17,8 +17,8 @@ import org.xmlpull.v1.XmlPullParser;
 import java.io.IOException;
 
 /**
- * MXParser that returns an IGNORABLE_WHITESPACE event when a whitespace character is received.
- * This parser is useful when not validating documents.
+ * MXParser that returns an IGNORABLE_WHITESPACE event when a whitespace character or a
+ * line feed is received. This parser is useful when not validating documents.
  *
  * @author Gaston Dombiak
  */
@@ -256,7 +256,7 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                     do {
 
                         // check that ]]> does not show in
-                        if (eventType == XmlPullParser.END_TAG && ch == ' ') {
+                        if (eventType == XmlPullParser.END_TAG && (ch == ' ' || ch == '\n')) {
                             // ** ADDED CODE (INCLUDING IF STATEMENT)
                             return IGNORABLE_WHITESPACE;
                         }

@@ -92,7 +92,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 serverSocketThread.setDaemon(true);
                 serverSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(serverSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.server", params));
             }
@@ -125,7 +125,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 componentSocketThread.setDaemon(true);
                 componentSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(componentSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
             }
@@ -158,7 +158,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 socketThread.setDaemon(true);
                 socketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(socketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
             }
@@ -195,7 +195,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(sslSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }

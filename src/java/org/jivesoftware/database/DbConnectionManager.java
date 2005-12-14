@@ -46,7 +46,7 @@ public class DbConnectionManager {
     /**
      * Database schema minor version.
      */
-    private static final int CURRENT_MINOR_VERSION = 2;
+    private static final int CURRENT_MINOR_VERSION = 4;
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -739,8 +739,17 @@ public class DbConnectionManager {
                 String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
                         "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/wildfire_" +
                         databaseType + ".sql";
-                in = new BufferedReader(new InputStreamReader(
-                        DbConnectionManager.class.getResourceAsStream(resourceName)));
+                InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
+                if (resource == null) {
+                    Log.info("Warning: Make sure that database was not modified for release: " +
+                            CURRENT_MAJOR_VERSION + "." + (i + 1) + ". Upgrade script not found: " +
+                            resourceName);
+                    System.out.println("Warning: Make sure that database was not modified for " +
+                            "release: " + CURRENT_MAJOR_VERSION + "." + (i + 1) +
+                            ". Upgrade script not found: " + resourceName);
+                    continue;
+                }
+                in = new BufferedReader(new InputStreamReader(resource));
                 boolean done = false;
                 while (!done) {
                     StringBuilder command = new StringBuilder();

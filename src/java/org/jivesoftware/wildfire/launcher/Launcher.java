@@ -133,8 +133,8 @@ public class Launcher {
 
         // Set the icon.
         try {
-            splashLabel = new JLabel("", splash, JLabel.CENTER);
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
+            splashLabel = new JLabel("", splash, JLabel.CENTER);
 
             onIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_on-16x16.gif"));
             offIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_off-16x16.gif"));

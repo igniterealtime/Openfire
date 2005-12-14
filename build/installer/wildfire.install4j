@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="3.2.1">
-  <directoryPresets config="C:/Documents and Settings/Matt/Desktop/jre" />
+<install4j version="3.2.2">
+  <directoryPresets config="../../../../../Desktop/jre" />
   <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" lzmaCompression="true" keepModificationTimes="true" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
@@ -9,8 +9,8 @@
     </searchSequence>
     <variables>
       <variable name="VERSION_MAJOR" value="2" />
-      <variable name="VERSION_MINOR" value="3" />
-      <variable name="VERSION_REVISION" value="2" />
+      <variable name="VERSION_MINOR" value="4" />
+      <variable name="VERSION_REVISION" value="0" />
       <variable name="APP_NAME" value="Wildfire" />
       <variable name="APP_SHORT_NAME" value="jive_wildfire" />
       <variable name="PRODUCT_NAME" value="wildfire" />

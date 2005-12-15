@@ -693,7 +693,7 @@
             </filterset>
         </copy>
         <copy todir="${release.src.out.dir}/documentation">
-            <fileset dir="${docs.dir}/docs"/>
+            <fileset dir="${docs.dir}" includes="**/*.*"/>
             <filterset>
                 <filter token="version" value="${version}"/>
             </filterset>
@@ -701,13 +701,7 @@
         <copy todir="${release.out.dir}/documentation">
             <fileset dir="${docs.dir}/docs/licenses"/>
         </copy>
-        <copy todir="${release.src.out.dir}/documentation">
-            <fileset dir="${docs.dir}/docs/licenses"/>
-        </copy>
         <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
-            <fileset dir="${docs.dir}/docs/images"/>
-        </copy>
-        <copy todir="${release.src.out.dir}/documentation/images" filtering="false" overwrite="true">
             <fileset dir="${docs.dir}/docs/images"/>
         </copy>
 
@@ -715,7 +709,7 @@
         <copy todir="${release.out.dir}/documentation/javadoc">
             <fileset dir="${javadoc.dest.dir}"/>
         </copy>
-        <copy todir="${release.src.out.dir}/documentation/javadoc">
+        <copy todir="${release.src.out.dir}/documentation/docs/javadoc">
             <fileset dir="${javadoc.dest.dir}"/>
         </copy>
 

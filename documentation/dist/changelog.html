@@ -69,15 +69,28 @@ Wildfire Changelog
 </div>
 
 <p>
-<b>2.4.0</b> -- December 14, 2005
+<b>2.4.0</b> -- December 15, 2005
 <p>
 
 <h2>New Features</h2>
 <ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-480'>JM-480</a>] - Server performance was optimized.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-333'>JM-333</a>] - Added support for JEP-0138 (stream compression). <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-486'>JM-486</a>] - Added support for closing idle c2s connections. <b>(4 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-479'>JM-479</a>] - Upgraded to JDK 1.5.0_06</li>
 </ul>
 
 <h2>Bug Fixes</h2>
 <ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-490'>JM-490</a>] - When a group was not found in LDAP an exception was not being thrown.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-491'>JM-491</a>] - Packets for remote servers were sometimes lost.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-483'>JM-483</a>] - Kicking old client due to resource conflict was not letting the new client log into the server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-481'>JM-481</a>] - Last packet sent before closing the client connection was not being processed.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-482'>JM-482</a>] - An empty roster is now returned when anonymous user requests their rosters.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-484'>JM-484</a>] - IQ packets of type &lt;auth&gt; and &lt;register&gt; were not being offered when TLS was disabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-488'>JM-488</a>] - Fixed problem where threads may wait forever trying to obtain a db connection from the pool.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-487'>JM-487</a>] - JDBC drivers were upgraded.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-485'>JM-485</a>] - Source build was failing.</li>
 </ul>
 
 <p>

@@ -192,7 +192,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 2);
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 4);
 
 REM // Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

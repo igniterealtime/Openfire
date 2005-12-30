@@ -277,7 +277,7 @@ public class DefaultGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(ALL_GROUPS);
+            pstmt = DbConnectionManager.createScrollablePreparedStatement(con, ALL_GROUPS);
             ResultSet rs = pstmt.executeQuery();
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;

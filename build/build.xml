@@ -639,11 +639,11 @@
 
         <!-- ie: wildfire -->
         <property name="release.name" value="${dist.prefix}"/>
-        <!-- ie: jive_wildfire_src -->
+        <!-- ie: wildfire_src -->
         <property name="release.name.src" value="${dist.prefix}_src"/>
-        <!-- ie: jive_wildfire_2_1_2 -->
+        <!-- ie: wildfire_2_1_2 -->
         <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
-        <!-- ie: jive_wildfire_src_2_1_2 -->
+        <!-- ie: wildfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
 
         <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>

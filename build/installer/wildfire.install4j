@@ -12,7 +12,7 @@
       <variable name="VERSION_MINOR" value="4" />
       <variable name="VERSION_REVISION" value="0" />
       <variable name="APP_NAME" value="Wildfire" />
-      <variable name="APP_SHORT_NAME" value="jive_wildfire" />
+      <variable name="APP_SHORT_NAME" value="wildfire" />
       <variable name="PRODUCT_NAME" value="wildfire" />
       <variable name="PUBLISHER" value="Jive Software" />
       <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
@@ -21,7 +21,7 @@
       <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
       <variable name="FILE_PREFIX" value="%APP_SHORT_NAME%" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
-      <variable name="UNIX_INSTALL_DIR" value="jive_wildfire" />
+      <variable name="UNIX_INSTALL_DIR" value="wildfire" />
       <variable name="WINDOWS_INSTALL_DIR" value="Wildfire" />
     </variables>
   </application>
@@ -198,7 +198,7 @@
       <variables />
       <customScriptLines />
     </linuxRPM>
-    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="jive_%PRODUCT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="%PRODUCT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
       <selectedLaunchers>
         <launcher id="22" />
       </selectedLaunchers>

@@ -24,7 +24,7 @@
 #
 
 # Set this to tell this script where wildfire lives
-# If this is not set the script will look for /opt/jive_wildfire, then /usr/local/jive_wildfire
+# If this is not set the script will look for /opt/wildfire, then /usr/local/wildfire
 #export WILDFIRE_HOME=
 
 # If there is a different user you would like to run this script as,

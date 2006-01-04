@@ -90,6 +90,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 serverSocketThread = new SocketAcceptThread(this, serverPort);
                 ports.add(serverPort);
                 serverSocketThread.setDaemon(true);
+                serverSocketThread.setPriority(Thread.MAX_PRIORITY);
                 serverSocketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -123,6 +124,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 componentSocketThread = new SocketAcceptThread(this, serverPort);
                 ports.add(serverPort);
                 componentSocketThread.setDaemon(true);
+                componentSocketThread.setPriority(Thread.MAX_PRIORITY);
                 componentSocketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -156,6 +158,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 socketThread = new SocketAcceptThread(this, serverPort);
                 ports.add(serverPort);
                 socketThread.setDaemon(true);
+                socketThread.setPriority(Thread.MAX_PRIORITY);
                 socketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -193,6 +196,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 sslSocketThread = new SSLSocketAcceptThread(this, serverPort);
                 ports.add(serverPort);
                 sslSocketThread.setDaemon(true);
+                sslSocketThread.setPriority(Thread.MAX_PRIORITY);
                 sslSocketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -239,6 +243,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
             Thread thread = new Thread(reader, threadName);
             thread.setDaemon(true);
+            thread.setPriority(Thread.NORM_PRIORITY);
             thread.start();
         }
         catch (IOException e) {

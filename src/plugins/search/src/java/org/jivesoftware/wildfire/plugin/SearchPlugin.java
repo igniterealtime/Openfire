@@ -7,22 +7,14 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -33,10 +25,6 @@ import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -45,16 +33,30 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 /** 
  * Provides support for Jabber Search
  * (<a href="http://www.jabber.org/jeps/jep-0055.html">JEP-0055</a>).<p>
  *
  * The basic functionality is to query an information repository 
  * regarding the possible search fields, to send a search query, 
- * and to receive search results. This implementation below primarily uses
+ * and to receive search results. This implementation was primarily designed to use
  * <a href="http://www.jabber.org/jeps/jep-0004.html">Data Forms</a>, but 
- * limited support for non-datforms searches has been added to support the
- * Miranda client.
+ * also supports non-dataform searches.
  * <p/>
  * 
  * @author Ryan Graham 
@@ -79,6 +81,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     private static Element probeResult;
 
     private Collection<String> searchFields;
+    private TreeMap<String, String> fieldLookup = new TreeMap<String, String>(new CaseInsensitiveComparator());
+    private Map<String, String> reverseFieldLookup = new HashMap<String, String>();
 
     public SearchPlugin() {
         serviceName = JiveGlobals.getProperty("plugin.search.serviceName", "search");
@@ -98,6 +102,14 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             // Use a SearchPluginUserManager instead.
             searchFields = getSearchFields();
         }
+        
+        fieldLookup.put("jid", "Username");
+        fieldLookup.put("username", "Username");
+        fieldLookup.put("first", "Name");
+        fieldLookup.put("last", "Name");
+        fieldLookup.put("nick", "Name");
+        fieldLookup.put("name", "Name");
+        fieldLookup.put("email", "Email");
     }
 
     public String getName() {
@@ -129,21 +141,21 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
             searchForm.setTitle("User Search");
             searchForm.addInstruction(instructions);
-			
+         
             XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
             field.setType(FormField.TYPE_HIDDEN);
             field.addValue("jabber:iq:search");
             searchForm.addField(field);
             
             field = new XFormFieldImpl("search");
-            field.setType(FormField.TYPE_TEXT_SINGLE);			
+            field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel("Search");
             field.setRequired(false);
             searchForm.addField(field);
             
             for (String searchField : searchFields) {
                 //non-data form
-                probeResult.addElement(searchField.toLowerCase());
+                probeResult.addElement(searchField);
 
                 field = new XFormFieldImpl(searchField);
                 field.setType(FormField.TYPE_BOOLEAN);
@@ -175,6 +187,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         server = null;
         userManager = null;
+        fieldLookup = null;
+        reverseFieldLookup = null;
     }
 
     public void shutdown() {
@@ -308,47 +322,33 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
     }
     
-    /**
-     * nick, first, last, email fields have been hardcoded to support Miranda which does not
-     * make a query to discover which fields are available to be searched
-     */
     private  Hashtable<String, String> extractSearchQuery(Element incomingForm) {
         Hashtable<String, String> searchList = new Hashtable<String, String>();
         Element form = incomingForm.element(QName.get("x", "jabber:x:data"));
         if (form == null) {
-            Element name = incomingForm.element("name");
-            if (name != null) {
-                searchList.put("Name", name.getTextTrim());
-            }
-            
-            Element nick = incomingForm.element("nick");
-            if (nick != null) {
-                searchList.put("Username", nick.getTextTrim());
-            }
-            
-            Element first = incomingForm.element("first");
-            if (first != null) {
-                searchList.put("Name", first.getTextTrim());
-            }
-            
-            Element last = incomingForm.element("last");
-            if (last != null) {
-                searchList.put("Name", last.getTextTrim());
-            }
-            
-            Element email = incomingForm.element("email");
-            if (email != null) {
-                searchList.put("Email", email.getTextTrim());
+            //since not all clients request which fields are available for searching
+            //attempt to match submitted fields with available search fields
+            Iterator iter = incomingForm.elementIterator();
+            while (iter.hasNext()) {
+                Element element = (Element) iter.next();
+                String name = element.getName();
+                
+                if (fieldLookup.containsKey(name)) {
+                    //make best effort to map the fields submitted by   
+                    //the client to those that Wildfire can search
+                    reverseFieldLookup.put(fieldLookup.get(name), name);
+                    searchList.put(fieldLookup.get(name), element.getText());
+                }
             }
         }
         else {
             List<String> searchFields = new ArrayList<String>();
             String search = "";
-			
+         
             Iterator fields = form.elementIterator("field");
             while (fields.hasNext()) {
                 Element searchField = (Element) fields.next();
-				
+            
                 String field = searchField.attributeValue("var");
                 String value = searchField.element("value").getTextTrim();
                 if (field.equals("search")) {
@@ -358,12 +358,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                     searchFields.add(field);
                 }
             }
-			
+         
             for (String field : searchFields) {
                 searchList.put(field, search);
             }
         }
-		
+      
         return searchList;
     }
     
@@ -398,11 +398,11 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             items.add(fieldUsername);
 
             XFormFieldImpl fieldName = new XFormFieldImpl("Name");
-            fieldName.addValue(user.getName());
+            fieldName.addValue(removeNull(user.getName()));
             items.add(fieldName);
 
             XFormFieldImpl fieldEmail = new XFormFieldImpl("Email");
-            fieldEmail.addValue(user.getEmail());
+            fieldEmail.addValue(removeNull(user.getEmail()));
             items.add(fieldEmail);
 
             searchResults.addItemFields(items);
@@ -423,14 +423,30 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         
         for (User user : users) {
             Element item = DocumentHelper.createElement("item");
-            Attribute jib = DocumentHelper.createAttribute(item, "jid", user.getUsername() + "@" + serverName);
-            item.add(jib);
-            Element nick = DocumentHelper.createElement("nick");
-            nick.addText(user.getName());
-            item.add(nick);
-            Element email = DocumentHelper.createElement("email");
-            email.addText(user.getEmail());
-            item.add(email);
+            Attribute jid = DocumentHelper.createAttribute(item, "jid", user.getUsername() + "@" + serverName);
+            item.add(jid);
+            
+            //return to the client the same fields that were submitted
+            for (String field : reverseFieldLookup.keySet()) {
+                if ("Username".equals(field)) {
+                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    element.addText(user.getUsername());
+                    item.add(element);
+                } 
+             
+                if ("Name".equals(field)) {
+                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    element.addText(removeNull(user.getName()));
+                    item.add(element);
+                }
+             
+                if ("Email".equals(field)) {
+                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    element.addText(removeNull(user.getEmail()));
+                    item.add(element);
+                }
+            }
+            
             replyQuery.add(item);
         }
         IQ replyPacket = IQ.createResultIQ(packet);
@@ -508,6 +524,26 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         
         this.serviceName = serviceName;
+    }
+    
+    private class CaseInsensitiveComparator implements Comparator {
+        public int compare(Object o1, Object o2) {
+            String s1 = (String) o1;
+            String s2 = (String) o2;
+            return s1.toUpperCase().compareTo(s2.toUpperCase());
+        }
+
+        public boolean equals(Object o) {
+           return compare(this, o) == 0;
+        }
+    }
+    
+    private String removeNull(String s) {
+        if (s == null) {
+            return "";
+        }
+       
+        return s.trim();
     }
 
     /**

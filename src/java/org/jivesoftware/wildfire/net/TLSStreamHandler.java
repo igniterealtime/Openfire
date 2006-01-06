@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.net;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,14 +75,23 @@ public class TLSStreamHandler {
 	private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
-     * Creates a new TLSStreamHandler and secures the plain socket connection.
+     * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
+     * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
+     * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
+     * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
-     * @param clientMode boolean indicating if this entity is a client or a server.
      * @param socket the plain socket connection to secure
-     * @throws IOException
+     * @param clientMode boolean indicating if this entity is a client or a server.
+     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
+     *        when not in client mode.
+     * @param needClientAuth boolean that indicates if client should authenticate during the TLS
+     *        negotiation. This option is only required when the client is a server since
+     *        EXTERNAL SASL is going to be used.
+     * @throws java.io.IOException
      */
-    public TLSStreamHandler(Socket socket, boolean clientMode) throws IOException {
-		wrapper = new TLSWrapper(clientMode);
+    public TLSStreamHandler(Socket socket, boolean clientMode, String remoteServer,
+            boolean needClientAuth) throws IOException {
+        wrapper = new TLSWrapper(clientMode, needClientAuth, remoteServer);
         tlsEngine = wrapper.getTlsEngine();
 		reader = new TLSStreamReader(wrapper, socket);
 		writer = new TLSStreamWriter(wrapper, socket);
@@ -106,6 +116,9 @@ public class TLSStreamHandler {
             socket.setKeepAlive(true);
             initialHSStatus = HandshakeStatus.NEED_WRAP;
             tlsEngine.beginHandshake();
+        }
+        else if (needClientAuth) {
+            tlsEngine.setNeedClientAuth(true);
         }
 
         while (!initialHSComplete) {
@@ -289,5 +302,16 @@ public class TLSStreamHandler {
     public void close() throws IOException {
         wbc.close();
         rbc.close();
+    }
+
+    /**
+     * Returns the SSLSession in use. The session specifies a particular cipher suite which
+     * is being actively used by all connections in that session, as well as the identities
+     * of the session's client and server.
+     *
+     * @return the SSLSession in use.
+     */
+    public SSLSession getSSLSession() {
+        return tlsEngine.getSession();
     }
 }

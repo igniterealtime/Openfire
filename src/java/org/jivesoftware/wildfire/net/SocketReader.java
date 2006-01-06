@@ -670,9 +670,10 @@ public abstract class SocketReader implements Runnable {
         connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
         // Negotiate TLS.
         try {
-            connection.startTLS(false);
+            connection.startTLS(false, null);
         }
         catch (IOException e) {
+            Log.error("Error while negotiating TLS", e);
             connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
             connection.close();
             return false;

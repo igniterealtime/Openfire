@@ -11,7 +11,6 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.net.ssl.*;
@@ -22,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 
 /**
  * Creates and initializes the SSLContext instance to use to secure the plain connection. This
@@ -57,7 +55,7 @@ public class TLSWrapper {
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(boolean clientMode) {
+    public TLSWrapper(boolean clientMode, boolean needClientAuth, String remoteServer) {
 
         if (debug) {
             System.setProperty("javax.net.debug", "all");
@@ -77,26 +75,10 @@ public class TLSWrapper {
 
             // TrustManager's decide whether to allow connections.
             TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
-            boolean verify = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
-            if (clientMode && !verify) {
-                // Trust any certificate presented by the server. Disabling certificate validation
-                // is not recommended for production environments.
-                tm = new TrustManager[]{new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] x509Certificates,
-                            String string) {
-                    }
-
-                    public void checkServerTrusted(X509Certificate[] x509Certificates,
-                            String string) {
-                    }
-
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-                };
+            if (clientMode || needClientAuth) {
+                // Check if we can trust certificates presented by the server
+                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
             }
-
 
             SSLContext tlsContext = SSLContext.getInstance(PROTOCOL);
 

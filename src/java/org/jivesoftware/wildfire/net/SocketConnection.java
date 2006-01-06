@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.net;
 
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
@@ -20,6 +21,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
+import javax.net.ssl.SSLSession;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -131,15 +133,20 @@ public class SocketConnection implements Connection {
     }
 
     /**
-     * Secures the plain connection by negotiating TLS with the client.
+     * Secures the plain connection by negotiating TLS with the client. When connecting
+     * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
+     * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
+     * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
      * @param clientMode boolean indicating if this entity is a client or a server.
+     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
+     *        when not in client mode.
      * @throws IOException if an error occured while securing the connection.
      */
-    public void startTLS(boolean clientMode) throws IOException {
+    public void startTLS(boolean clientMode, String remoteServer) throws IOException {
         if (!secure) {
             secure = true;
-            tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
+            tlsStreamHandler = new TLSStreamHandler(socket, clientMode, remoteServer, session instanceof IncomingServerSession);
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
@@ -302,6 +309,13 @@ public class SocketConnection implements Connection {
      */
     public void setFlashClient(boolean flashClient) {
         this.flashClient = flashClient;
+    }
+
+    public SSLSession getSSLSession() {
+        if (tlsStreamHandler != null) {
+            return tlsStreamHandler.getSSLSession();
+        }
+        return null;
     }
 
     public void close() {

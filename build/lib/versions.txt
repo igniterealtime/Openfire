@@ -3,10 +3,12 @@ Name                 |  Version
 ant.jar              | Jetty 5.1.2pre0
 ant-contrib.jar      | 1.0b1
 ant-subdirtask.jar   | Revision 1.4 (CVS)
+bouncycastle.jar     | JDK 1.5, 131
 commons-logging.jar  | Jetty 5.1.2pre0
 commons-el.jar       | Jetty 5.1.2pre0
 dom4j.jar            | 1.6.1
-hsqldb.jar           | 1.8.0.1
+hsqldb.jar           | 1.8.0.1 (compiled from source)
+hsqldbutil.jar       | 1.8.0.1 (compiled from source)
 jetty.jar            | Jetty 5.1.2
 jasper-compiler.jar  | Jetty 5.1.2pre0
 jasper-runtime.jar   | Jetty 5.1.2pre0

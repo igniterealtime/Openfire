@@ -233,7 +233,7 @@ public class OutgoingServerSession extends Session {
      */
     private static OutgoingServerSession createOutgoingSession(String domain, String hostname,
             int port) {
-        boolean useTLS = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", false);
+        boolean useTLS = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
         RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
         if (configuration != null) {
             // TODO Use the specific TLS configuration for this remote server
@@ -340,7 +340,7 @@ public class OutgoingServerSession extends Session {
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
             Log.debug("OS - Negotiating TLS with " + hostname);
-            connection.startTLS(true);
+            connection.startTLS(true, hostname);
             Log.debug("OS - TLS negotiation with " + hostname + " was successful");
 
             // TLS negotiation was successful so initiate a new stream
@@ -391,6 +391,7 @@ public class OutgoingServerSession extends Session {
                         else {
                             Log.debug("OS - Error, EXTERNAL SASL authentication with " + hostname +
                                     " failed");
+                            return null;
                         }
                     }
                 }

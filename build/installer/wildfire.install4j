@@ -176,7 +176,8 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
-        <entry location="bin/extra" launcher="false" />
+        <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
+        <entry location="bin/extra/wildfired" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
       </exclude>
@@ -192,6 +193,7 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
       </exclude>
@@ -204,6 +206,7 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
       </exclude>
@@ -218,7 +221,8 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
-        <entry location="bin/extra" launcher="false" />
+        <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
+        <entry location="bin/extra/wildfired" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
       </exclude>
@@ -230,6 +234,7 @@
       </selectedLaunchers>
       <messageSet language="English" />
       <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
       </exclude>

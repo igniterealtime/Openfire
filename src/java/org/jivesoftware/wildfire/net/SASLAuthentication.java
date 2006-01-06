@@ -14,16 +14,16 @@ package org.jivesoftware.wildfire.net;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.wildfire.server.IncomingServerSession;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 
@@ -31,6 +31,8 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
@@ -106,18 +108,20 @@ public class SASLAuthentication {
     public static String getSASLMechanisms(Session session) {
         StringBuilder sb = new StringBuilder(195);
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        // Check if the user provider in use supports passwords retrieval. Accessing to the users
-        // passwords will be required by the CallbackHandler
-        if (UserManager.getUserProvider().supportsPasswordRetrieval()) {
-            sb.append("<mechanism>CRAM-MD5</mechanism>");
-            sb.append("<mechanism>DIGEST-MD5</mechanism>");
-        }
-        sb.append("<mechanism>PLAIN</mechanism>");
-        if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
-            sb.append("<mechanism>ANONYMOUS</mechanism>");
-        }
         if (session.getConnection().isSecure() && session instanceof IncomingServerSession) {
             sb.append("<mechanism>EXTERNAL</mechanism>");
+        }
+        else {
+            // Check if the user provider in use supports passwords retrieval. Accessing to the users
+            // passwords will be required by the CallbackHandler
+            if (UserManager.getUserProvider().supportsPasswordRetrieval()) {
+                sb.append("<mechanism>CRAM-MD5</mechanism>");
+                sb.append("<mechanism>DIGEST-MD5</mechanism>");
+            }
+            sb.append("<mechanism>PLAIN</mechanism>");
+            if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                sb.append("<mechanism>ANONYMOUS</mechanism>");
+            }
         }
         sb.append("</mechanisms>");
         return sb.toString();
@@ -260,30 +264,36 @@ public class SASLAuthentication {
 
     private boolean doExternalAuthentication(Element doc) throws DocumentException, IOException,
             XmlPullParserException {
-        // Only accept EXTERNAL SASL for s2s
+        // Only accept EXTERNAL SASL for s2s. At this point the connection has already
+        // been secured using TLS
         if (!(session instanceof IncomingServerSession)) {
             return false;
         }
         String hostname = doc.getTextTrim();
-        if (hostname != null  && hostname.length() > 0) {
-            // TODO Check that the hostname matches the one provided in the certificate
-            authenticationSuccessful(StringUtils.decodeBase64(hostname));
-            return true;
-        }
-        else {
+        if (hostname == null || hostname.length() == 0) {
             // No hostname was provided so send a challenge to get it
             sendChallenge(new byte[0]);
             // Get the next answer since we are not done yet
             doc = reader.parseDocument().getRootElement();
             if (doc != null && doc.getTextTrim().length() > 0) {
-                authenticationSuccessful(StringUtils.decodeBase64(doc.getTextTrim()));
-                return true;
-            }
-            else {
-                authenticationFailed();
-                return false;
+                hostname = doc.getTextTrim();
             }
         }
+
+        if (hostname != null  && hostname.length() > 0) {
+            hostname = StringUtils.decodeBase64(hostname);
+            // Check that hostname matches the one provided in a certificate
+            for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
+                if (hostname
+                        .equals(ServerTrustManager.getPeerIdentity((X509Certificate) certificate)))
+                {
+                    authenticationSuccessful(hostname);
+                    return true;
+                }
+            }
+        }
+        authenticationFailed();
+        return false;
     }
 
     private void sendChallenge(byte[] challenge) {

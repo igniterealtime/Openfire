@@ -223,7 +223,7 @@ public class XMPPServer {
         while (tokenizer.hasMoreTokens()) {
             String username = tokenizer.nextToken();
             try {
-                admins.add(createJID(username, null));
+                admins.add(createJID(username.toLowerCase().trim(), null));
             }
             catch (IllegalArgumentException e) {
                 // Ignore usernames that when appended @server.com result in an invalid JID
@@ -237,7 +237,7 @@ public class XMPPServer {
         jids = (jids == null || jids.trim().length() == 0) ? "" : jids;
         tokenizer = new StringTokenizer(jids, ",");
         while (tokenizer.hasMoreTokens()) {
-            String jid = tokenizer.nextToken();
+            String jid = tokenizer.nextToken().toLowerCase().trim();
             try {
                 admins.add(new JID(jid));
             }

@@ -26,5 +26,5 @@ shaj.jar             | 0.5
 sitemesh.jar         | 2.2.1
 standard.jar         | Jakarta standard taglib 1.1.2
 whack.jar            | April-26-2005
-xmltask.jar          | 1.10.5
+xmltask.jar          | 1.11
 xpp3.jar             | XPP_3 1.1.3.4.M

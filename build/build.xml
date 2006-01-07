@@ -42,6 +42,16 @@
             <pathelement location="${basedir}/build/lib/xmltask.jar"/>
         </classpath>
     </taskdef>
+   <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
+       <classpath>
+           <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+       </classpath>
+   </taskdef>
+   <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
+     <classpath>
+           <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+       </classpath>
+   </taskdef>
 
     <!--
     <taskdef resource="clovertasks" />
@@ -296,8 +306,8 @@
     <target name="jar" depends="compile, jspc, -i18n" description="Produces Wildfires jars and sets up dependencies">
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Wildfire jar -->
-        <jar jarfile="${jar.dest.dir}/${jar.name}" index="true">
-            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/wildfire/starter/ServerStarter.class"/>
+        <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
+            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class"/>
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
@@ -315,7 +325,7 @@
         <!-- Make startup jar -->
         <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
             <fileset dir="${compile.dir}">
-                <include name="org/jivesoftware/wildfire/starter/ServerStarter.class"/>
+                <include name="org/jivesoftware/wildfire/starter/ServerStarter*.class"/>
                 <include name="org/jivesoftware/wildfire/starter/JiveClassLoader*.class"/>
             </fileset>
             <manifest>
@@ -405,7 +415,7 @@
             </sourcepath>
             <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
             <header><![CDATA[<b>Wildfire ${version} Javadoc</b>]]></header>
-            <bottom><![CDATA[<i>Copyright &copy; 1999-2004 Jive Software.</i>]]></bottom>
+            <bottom><![CDATA[<i>Copyright &copy; 2003-2006 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>
@@ -663,6 +673,13 @@
         <ant antfile="${basedir}/build/build.xml" target="-prepare">
             <property name="prepare.out.dir" value="${release.out.dir}"/>
         </ant>
+
+        <!-- Pack200 processing on JAR files in lib dir -->
+        <pack200 src="${release.out.dir}/lib/wildfire.jar"
+            destfile="${release.out.dir}/lib/wildfire.jar.pack"
+            gzipoutput="false"
+	        modificationtime="latest"
+        />
 
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">

@@ -19,6 +19,7 @@ jstl.jar             | Jakarta standard taglib 1.1.2
 jmdns.jar            | 1.0 RC1
 jtds.jar             | 1.2
 mysql.jar            | 3.1.12
+pack200task.jar      | August 5, 2004
 postgres.jar         | 8.1-404 JDBC 3
 servlet.jar          | Jetty 5.1.2pre0
 shaj.jar             | 0.5

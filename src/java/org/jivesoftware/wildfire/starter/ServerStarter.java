@@ -13,7 +13,10 @@ package org.jivesoftware.wildfire.starter;
 
 import org.jivesoftware.util.Log;
 
-import java.io.File;
+import java.io.*;
+import java.util.jar.Pack200;
+import java.util.jar.JarOutputStream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
@@ -74,8 +77,11 @@ public class ServerStarter {
                 libDir = new File(DEFAULT_LIB_DIR);
             }
 
+            // Unpack any pack files.
+            unpackArchives(libDir);
+
             ClassLoader loader = new JiveClassLoader(parent, libDir);
-           
+
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(
                     "org.jivesoftware.wildfire.XMPPServer");
@@ -100,5 +106,39 @@ public class ServerStarter {
             }
         }
         return parent;
+    }
+
+    private void unpackArchives(File libDir) {
+        // Get a list of all packed files in the lib directory.
+        File [] packedFiles = libDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".pack");
+            }
+        });
+        // Unpack each.
+        boolean unpacked = false;
+        for (File packedFile : packedFiles) {
+            try {
+                String jarName = packedFile.getName().substring(0,
+                        packedFile.getName().length() - ".pack".length());
+                InputStream in = new BufferedInputStream(new FileInputStream(packedFile));
+                JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
+                        new FileOutputStream(new File(libDir, jarName))));
+                Pack200.Unpacker unpacker = Pack200.newUnpacker();
+                System.out.print(".");
+                // Call the unpacker
+                unpacker.unpack(in, out);
+
+                in.close();
+                out.close();
+                unpacked = true;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (unpacked) {
+            System.out.println("\n");
+        }
     }
 }

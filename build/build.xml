@@ -675,11 +675,22 @@
         </ant>
 
         <!-- Pack200 processing on JAR files in lib dir -->
-        <pack200 src="${release.out.dir}/lib/wildfire.jar"
-            destfile="${release.out.dir}/lib/wildfire.jar.pack"
-            gzipoutput="false"
-	        modificationtime="latest"
-        />
+
+        <echo>here</echo>
+
+        <for param="jar">
+            <path>
+                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar" />
+            </path>
+            <sequential>
+                <pack200 src="@{jar}"
+                    destfile="@{jar}.pack"
+                    gzipoutput="false"
+                    modificationtime="latest"
+                />
+                <delete file="@{jar}" />
+            </sequential>
+        </for>
 
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">

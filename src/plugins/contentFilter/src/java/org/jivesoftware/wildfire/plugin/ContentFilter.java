@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1594 $
- * $Date: 2005-07-04 14:08:42 -0300 (Mon, 04 Jul 2005) $
+ * $Date: 2005-07-04 18:08:42 +0100 (Mon, 04 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -11,12 +11,15 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import org.xmpp.packet.Message;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.dom4j.Element;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 /**
  * Filters message content using regular expressions. If a content mask is
@@ -109,62 +112,92 @@ public class ContentFilter {
     public boolean isMaskingContent() {
         return mask != null;
     }
-
+    
     /**
-     * Filters message content.
+     * Filters packet content.
      *
-     * @param msg the message to filter, its subject/body may be altered if there
+     * @param packet the packet to filter, its content may be altered if there
      *            are content matches and a content mask is set
      * @return true if the msg content matched up, false otherwise
      */
-    public boolean filter(Message msg) {
-        boolean hasMatch = false;
-
-        if (msg.getSubject() != null) {
-            if (hasMatch(msg.getSubject())) {
-                hasMatch = true;
-                if (isMaskingContent()) {
-                    String newSubject = replaceContent(msg.getSubject());
-                    msg.setSubject(newSubject);
-                }
-            }
-        }
-
-        if (msg.getBody() != null) {
-            if (hasMatch(msg.getBody())) {
-                hasMatch = true;
-                if (isMaskingContent()) {
-                    String newBody = replaceContent(msg.getBody());
-                    msg.setBody(newBody);
-                }
-            }
-        }
-
-        return hasMatch;
+    public boolean filter(Packet p) {        
+        return process(p.getElement());
     }
 
-    private String replaceContent(String content) {
+    private boolean process(Element element) {
+        
+        boolean matched = mask(element);
+        
+        if (!matched || isMaskingContent())
+        {
+            //only check children if no match has yet been found            
+            //or all content must be masked
+            Iterator iter = element.elementIterator();
+            while (iter.hasNext()) {
+                matched |= process((Element)iter.next());
+            }
+        }
+        
+        return matched;
+    }
+    
+    private boolean mask(Element element) {
+        
+        boolean match = false;
+        
+        String content = element.getText();
+        
+        if ((content != null) && (content.length() > 0)) {
+            
+            for (Pattern pattern : compiledPatterns) {                
+                
+                Matcher matcher = pattern.matcher(content);
+                
+                if (matcher.find()) {
+                    
+                    match = true;
+                    
+                    if (isMaskingContent()) {
+                        content = matcher.replaceAll(mask);
+                        element.setText(content);
+                    }
+                }  
+            }    
+        }
+        
+        return match;
+    }
+    
+    /**
+     * Applies mask to the given <code>content</code>
+     * 
+     * @param content
+     * @return masked content
+     */
+    private String mask(String content) {
+        
         for (Pattern pattern : compiledPatterns) {
             Matcher m = pattern.matcher(content);
             content = m.replaceAll(mask);
         }
-
+        
         return content;
     }
 
     /**
-     * Performs sequential search for any pattern match.
+     * Applies patterns against the given <code>content</code>. Terminates on
+     * first match.
      *
      * @param content the content to search against
      * @return true if a match is found, false otherwise
      */
     private boolean hasMatch(String content) {
+        
         boolean hasMatch = false;
 
         for (Pattern pattern : compiledPatterns) {
-            Matcher m = pattern.matcher(content);
-
-            if (m.find()) {
+            Matcher matcher = pattern.matcher(content);
+            if (matcher.find()) {
                 hasMatch = true;
                 break;
             }

@@ -122,6 +122,12 @@ public class ServerStarter {
                 return name.endsWith(".pack");
             }
         });
+
+        if (packedFiles == null) {
+            // Do nothing since no .pack files were found
+            return;
+        }
+
         // Unpack each.
         boolean unpacked = false;
         for (File packedFile : packedFiles) {

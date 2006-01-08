@@ -26,6 +26,7 @@ import java.util.jar.JarOutputStream;
  * classloading facilities to ensure proper startup.<p>
  *
  * Tasks:<ul>
+ *      <li>Unpack any pack files in the lib directory (Pack200 encoded JAR files).</li>
  *      <li>Add all jars in the lib directory to the classpath.</li>
  *      <li>Add the config directory to the classpath for loadResource()</li>
  *      <li>Start the server</li>
@@ -131,6 +132,7 @@ public class ServerStarter {
                 JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
                         new FileOutputStream(new File(libDir, jarName))));
                 Pack200.Unpacker unpacker = Pack200.newUnpacker();
+                // Print something so the user knows something is happening.
                 System.out.print(".");
                 // Call the unpacker
                 unpacker.unpack(in, out);
@@ -141,11 +143,12 @@ public class ServerStarter {
                 unpacked = true;
             }
             catch (Exception e) {
-                e.printStackTrace();
+                Log.error(e);
             }
         }
+        // Print newline if unpacking happened.
         if (unpacked) {
-            System.out.println("\n");
+            System.out.println();
         }
     }
 }

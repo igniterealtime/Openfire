@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="3.2.2">
-  <directoryPresets config="../../../../../Desktop/jre" />
+  <directoryPresets config="./images" />
   <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" lzmaCompression="true" keepModificationTimes="true" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <searchSequence>
       <registry />
@@ -140,7 +140,7 @@
       <includedFiles />
     </launcher>
   </launchers>
-  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="false" customHeaderImage="" customSize="false" customWidth="500" customHeight="390">
+  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="true" customHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390">
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="false" postUninstallActionClass="" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="" />
     <standardScreens>
       <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
@@ -228,20 +228,6 @@
       </exclude>
       <variables />
     </win32Archive>
-    <macosFolder name="Mac OS X Folder" id="32" mediaFileName="" installDir="%APP_SHORT_NAME%" allLaunchers="false" customInstallBaseDir="" allowUserStartAfterFinish="false" launchExecutableId="" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="" customScriptMode="1" customScriptFile="">
-      <selectedLaunchers>
-        <launcher id="22" />
-      </selectedLaunchers>
-      <messageSet language="English" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
-      </exclude>
-      <variables />
-      <excludedScreenIds />
-      <customScriptLines />
-    </macosFolder>
   </mediaSets>
   <buildIds buildAll="false">
     <mediaSet refId="3" />

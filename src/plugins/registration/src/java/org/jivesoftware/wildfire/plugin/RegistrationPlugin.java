@@ -17,12 +17,12 @@ import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,6 +43,8 @@ import javax.mail.internet.MimeUtility;
  * @author Ryan Graham.
  */
 public class RegistrationPlugin implements Plugin {
+    private static final String URL = "registration/sign-up.jsp";
+   
     /**
      * The expected value is a boolean, if true all contacts specified in the property #IM_CONTACTS
      * will receive a notification when a new user registers. The default value is false.
@@ -68,6 +70,12 @@ public class RegistrationPlugin implements Plugin {
     private static final String GROUP_ENABLED = "registration.group.enabled";
     
     /**
+     * The expected value is a boolean, if true any users will be able to register at the following
+     * url http://[SERVER_NAME}:9090/plugins/registration/sign-up.jsp
+     */
+    private static final String WEB_ENABLED = "registration.web.enabled";
+    
+    /**
      * The expected value is a comma separated String of usernames who will receive a instant
      * message when a new user registers if the property #IM_NOTIFICATION_ENABLED is set to true.
      */
@@ -90,6 +98,12 @@ public class RegistrationPlugin implements Plugin {
      * be added to when they register, if the property #GROUP_ENABLED is set to true.
      */
     private static final String REGISTRAION_GROUP = "registration.group";
+    
+    /**
+     * The expected value is a String that contains the text that will be displayed in the header
+     * of the sign-up.jsp, if the property #WEB_ENABLED is set to true.
+     */
+    private static final String HEADER = "registration.header";
 
     private RegistrationUserEventListener listener = new RegistrationUserEventListener();
     
@@ -122,13 +136,12 @@ public class RegistrationPlugin implements Plugin {
         JiveGlobals.deleteProperty("registration.notification.enabled");
     }
 
-    public void processPacket(Packet packet) {
-    }
-
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        AuthCheckFilter.addExclude(URL);
     }
 
     public void destroyPlugin() {
+        AuthCheckFilter.removeExclude(URL);
         UserEventDispatcher.removeListener(listener);
         serverAddress = null;
         listener = null;
@@ -196,7 +209,7 @@ public class RegistrationPlugin implements Plugin {
     }
     
     public void setWelcomeEnabled(boolean enable) {
-       JiveGlobals.setProperty(WELCOME_ENABLED, enable ? "true" : "false");
+        JiveGlobals.setProperty(WELCOME_ENABLED, enable ? "true" : "false");
     }
    
     public boolean welcomeEnabled() {
@@ -219,12 +232,33 @@ public class RegistrationPlugin implements Plugin {
         return JiveGlobals.getBooleanProperty(GROUP_ENABLED, false);
     }
     
+    public void setWebEnabled(boolean enable) {
+        JiveGlobals.setProperty(WEB_ENABLED, enable ? "true" : "false");
+    }
+   
+    public boolean webEnabled() {
+        return JiveGlobals.getBooleanProperty(WEB_ENABLED, false);
+    }
+    
+    public String webRegistrationAddress() {
+        return  "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" 
+            + JiveGlobals.getXMLProperty("adminConsole.port") + "/plugins/" + URL;
+    }
+    
     public void setGroup(String group) {
         JiveGlobals.setProperty(REGISTRAION_GROUP, group);
     }
     
     public String getGroup() {
         return JiveGlobals.getProperty(REGISTRAION_GROUP);
+    }
+    
+    public void setHeader(String message) {
+        JiveGlobals.setProperty(HEADER, message);
+    }
+
+    public String getHeader() {
+        return JiveGlobals.getProperty(HEADER, "Web Sign-In");
     }
     
     private class RegistrationUserEventListener implements UserEventListener {
@@ -304,8 +338,7 @@ public class RegistrationPlugin implements Plugin {
             try {
                 GroupManager groupManager =  GroupManager.getInstance();
                 Group group = groupManager.getGroup(getGroup());
-                group.getMembers()
-                        .add(XMPPServer.getInstance().createJID(user.getUsername(), null));
+                group.getMembers().add(XMPPServer.getInstance().createJID(user.getUsername(), null));
             }
             catch (GroupNotFoundException e) {
                 Log.error(e);

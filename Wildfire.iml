@@ -133,15 +133,6 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/lib/merge/jdic.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/jmdns.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -251,6 +242,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/sitemesh.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/dist/jdic.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

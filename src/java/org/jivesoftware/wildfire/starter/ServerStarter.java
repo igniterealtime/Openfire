@@ -16,7 +16,6 @@ import org.jivesoftware.util.Log;
 import java.io.*;
 import java.util.jar.Pack200;
 import java.util.jar.JarOutputStream;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
@@ -108,6 +107,13 @@ public class ServerStarter {
         return parent;
     }
 
+    /**
+     * Converts any pack files in a directory into standard JAR files. Each
+     * pack file will be deleted after being converted to a JAR. If no
+     * pack files are found, this method does nothing.
+     *
+     * @param libDir the directory containing pack files.
+     */
     private void unpackArchives(File libDir) {
         // Get a list of all packed files in the lib directory.
         File [] packedFiles = libDir.listFiles(new FilenameFilter() {
@@ -131,6 +137,7 @@ public class ServerStarter {
 
                 in.close();
                 out.close();
+                packedFile.delete();
                 unpacked = true;
             }
             catch (Exception e) {

@@ -105,7 +105,7 @@ public class EmailService {
      * object returned and set desired message properties. When done, pass the
      * object to the addMessage(Message) method.
      *
-     * @return A new JavaMail message.
+     * @return a new JavaMail message.
      */
     public MimeMessage createMimeMessage() {
         if (session == null) {

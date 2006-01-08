@@ -13,45 +13,19 @@ package org.jivesoftware.wildfire.launcher;
 
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
-import org.jivesoftware.util.WebManager;
-import org.jivesoftware.util.XMLProperties;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.URL;
 
 /**
  * Graphical launcher for Wildfire.
@@ -89,7 +63,7 @@ public class Launcher {
             // Log to System error instead of standard error log.
             System.err.println("Error loading system tray library, system tray support disabled.");
         }
-        
+
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -494,9 +468,22 @@ public class Launcher {
 
     private synchronized void launchBrowser() {
         try {
-            XMLProperties props = new XMLProperties(configFile);
-            String port = props.getProperty("adminConsole.port");
-            String securePort = props.getProperty("adminConsole.securePort");
+            // Note, we use standard DOM to read in the XML. This is necessary so that
+            // Launcher has fewer dependencies.
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            Document document = factory.newDocumentBuilder().parse(configFile);
+            Element rootElement = document.getDocumentElement();
+            Element adminElement = (Element)rootElement.getElementsByTagName("adminConsole").item(0);
+            String port = "-1";
+            String securePort = "-1";
+            Element portElement = (Element)adminElement.getElementsByTagName("port").item(0);
+            if (portElement != null) {
+                port = portElement.getTextContent();
+            }
+            Element securePortElement = (Element)adminElement.getElementsByTagName("securePort").item(0);
+            if (securePortElement != null) {
+                securePort = securePortElement.getTextContent();
+            }
             if ("-1".equals(port)) {
                 BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
             }
@@ -533,7 +520,7 @@ public class Launcher {
                     // Just for fun. Show no matter what for two seconds.
                     Thread.sleep(2000);
 
-                    WebManager.copy(plugin.toURL(), tempPluginsFile);
+                    copy(plugin.toURL(), tempPluginsFile);
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);
@@ -554,5 +541,50 @@ public class Launcher {
 
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
+    }
+
+    private static void copy(URL src, File dst) throws IOException {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = src.openStream();
+            out = new FileOutputStream(dst);
+            dst.mkdirs();
+            copy(in, out);
+        }
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            }
+            catch (IOException e) {
+                // Ignore.
+            }
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            }
+            catch (IOException e) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
+     * Common code for copy routines.  By convention, the streams are
+     * closed in the same method in which they were opened.  Thus,
+     * this method does not close the streams when the copying is done.
+     */
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[4096];
+        while (true) {
+            int bytesRead = in.read(buffer);
+            if (bytesRead < 0) {
+                break;
+            }
+            out.write(buffer, 0, bytesRead);
+        }
     }
 }

@@ -63,7 +63,7 @@
 
     <property name="version.major" value="2"/>
     <property name="version.minor" value="4"/>
-    <property name="version.revision" value="0"/>
+    <property name="version.revision" value="1"/>
     <property name="version.extra" value=""/> <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="wildfire"/>
 
@@ -143,7 +143,7 @@
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <fileset dir="${lib.merge.dir}" includes="*.jar"/>
-        <fileset dir="${lib.dist.dir}" includes="servlet.jar, mail.jar, activation.jar"/>
+        <fileset dir="${lib.dist.dir}" includes="servlet.jar, mail.jar, activation.jar, jdic.jar"/>
     </path>
 
     <path id="compile.dependencies">
@@ -307,15 +307,14 @@
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Wildfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
-            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class"/>
+            <fileset dir="${compile.dir}" includes="**/*.class"
+                     excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class,org/jivesoftware/wildfire/launcher/*.class"/>
             <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${src.dir}" includes="database/*.sql"/>
             <fileset dir="${src.dir}" includes="database/upgrade/**/*.sql"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
-            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
-            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
@@ -326,8 +325,11 @@
         <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
             <fileset dir="${compile.dir}">
                 <include name="org/jivesoftware/wildfire/starter/ServerStarter*.class"/>
+                <include name="org/jivesoftware/wildfire/launcher/*.class"/>
                 <include name="org/jivesoftware/wildfire/starter/JiveClassLoader*.class"/>
             </fileset>
+            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
+            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
             <manifest>
                 <attribute name="Main-Class" value="org.jivesoftware.wildfire.starter.ServerStarter"/>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
@@ -680,12 +682,14 @@
 
         <for param="jar">
             <path>
-                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar" />
+                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar" />
             </path>
             <sequential>
+                <delete file="@{jar}.pack" />
                 <pack200 src="@{jar}"
                     destfile="@{jar}.pack"
                     gzipoutput="false"
+                    segmentlimit="-1"
                     modificationtime="latest"
                 />
                 <delete file="@{jar}" />

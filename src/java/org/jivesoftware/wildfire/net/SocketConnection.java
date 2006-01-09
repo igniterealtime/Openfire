@@ -11,14 +11,16 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZOutputStream;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.xmpp.packet.Packet;
 
 import javax.net.ssl.SSLSession;
@@ -33,7 +35,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.ZipOutputStream;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -74,7 +75,7 @@ public class SocketConnection implements Connection {
 
     private Session session;
     private boolean secure;
-	private boolean compressed;
+    private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
     private boolean flashClient = false;
     private int majorVersion = 1;
@@ -89,10 +90,10 @@ public class SocketConnection implements Connection {
      */
     private TLSPolicy tlsPolicy = TLSPolicy.optional;
 
-	/**
-	 * Compression policy currently in use for this connection.
-	 */
-	private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
+    /**
+     * Compression policy currently in use for this connection.
+     */
+    private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
 
     public static Collection<SocketConnection> getInstances() {
         return instances.keySet();
@@ -163,12 +164,16 @@ public class SocketConnection implements Connection {
         compressed = true;
 
         if (tlsStreamHandler == null) {
-            writer = new BufferedWriter(
-                    new OutputStreamWriter(new ZipOutputStream(socket.getOutputStream()), CHARSET));
+            ZOutputStream out = new ZOutputStream(socket.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
+            out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+            writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+            xmlSerializer = new XMLSocketWriter(writer, this);
         }
         else {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new ZipOutputStream(tlsStreamHandler.getOutputStream()), CHARSET));
+            ZOutputStream out = new ZOutputStream(tlsStreamHandler.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
+            out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+            writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+            xmlSerializer = new XMLSocketWriter(writer, this);
         }
     }
 

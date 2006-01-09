@@ -11,17 +11,19 @@
 
 package org.jivesoftware.wildfire.net;
 
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZInputStream;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -33,7 +35,6 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
-import java.util.zip.ZipInputStream;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -276,8 +277,8 @@ public abstract class SocketReader implements Runnable {
                     session = null;
                 }
             }
-			else if ("compress".equals(tag)) 
-			{
+            else if ("compress".equals(tag))
+            {
                 // Client is trying to initiate compression
                 if (compressClient(doc)) {
                     // Compression was successful so open a new stream and offer
@@ -288,9 +289,9 @@ public abstract class SocketReader implements Runnable {
                     open = false;
                     session = null;
                 }
-			}
-            else 
-			{
+            }
+            else
+            {
                 if (!processUnknowPacket(doc)) {
                     Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                             doc.asXML());
@@ -358,6 +359,9 @@ public abstract class SocketReader implements Runnable {
             return false;
         }
         else {
+            // Indicate client that he can proceed and compress the socket
+            connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
+
             // Start using compression
             connection.startCompression();
             return true;
@@ -717,23 +721,15 @@ public abstract class SocketReader implements Runnable {
      * to servers or external components)
      */
     private void saslSuccessful() throws XmlPullParserException, IOException {
-		XmlPullParser xpp = reader.getXPPParser();
-		// Reset the parser since a new stream header has been sent from the client
-		if (connection.getTLSStreamHandler() == null) 
-		{
-			xpp.setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
-		}
-		else 
-		{
-			xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(),
-				CHARSET));
-		}
+        MXParser xpp = reader.getXPPParser();
+        // Reset the parser since a new stream header has been sent from the client
+        xpp.resetInput();
 
-		// Skip the opening stream sent by the client
-		for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) 
-		{
-			eventType = xpp.next();
-		}
+        // Skip the opening stream sent by the client
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
+        {
+            eventType = xpp.next();
+        }
 
         StringBuilder sb = new StringBuilder(420);
         sb.append(geStreamHeader());
@@ -749,51 +745,52 @@ public abstract class SocketReader implements Runnable {
         connection.deliverRawText(sb.toString());
     }
 
-	/**
-	 * After compression was successful we should open a new stream and offer
-	 * new stream features such as resource binding and session establishment. Notice that
-	 * resource binding and session establishment should only be offered to clients (i.e. not
-	 * to servers or external components)
-	 */
-	private void compressionSuccessful() throws XmlPullParserException, IOException
-	{
-		connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
-
+    /**
+     * After compression was successful we should open a new stream and offer
+     * new stream features such as resource binding and session establishment. Notice that
+     * resource binding and session establishment should only be offered to clients (i.e. not
+     * to servers or external components)
+     */
+    private void compressionSuccessful() throws XmlPullParserException, IOException
+    {
         XmlPullParser xpp = reader.getXPPParser();
         // Reset the parser since a new stream header has been sent from the client
-		if (connection.getTLSStreamHandler() == null)
-		{
-			xpp.setInput(new InputStreamReader(new ZipInputStream (socket.getInputStream()), CHARSET));
+        if (connection.getTLSStreamHandler() == null)
+        {
+            ZInputStream in = new ZInputStream(socket.getInputStream());
+            in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+            xpp.setInput(new InputStreamReader(in, CHARSET));
         }
-		else
-		{
-			xpp.setInput(new InputStreamReader(new ZipInputStream (connection.getTLSStreamHandler().getInputStream()),
-                    CHARSET));
+        else
+        {
+            ZInputStream in = new ZInputStream(connection.getTLSStreamHandler().getInputStream());
+            in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+            xpp.setInput(new InputStreamReader(in, CHARSET));
         }
 
         // Skip the opening stream sent by the client
-		for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
-		{
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
+        {
             eventType = xpp.next();
         }
 
-		StringBuilder sb = new StringBuilder(340);
-		sb.append(geStreamHeader());
-		sb.append("<stream:features>");
+        StringBuilder sb = new StringBuilder(340);
+        sb.append(geStreamHeader());
+        sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Include available SASL Mechanisms
             sb.append(SASLAuthentication.getSASLMechanisms(session));
         }
-		// Include specific features such as resource binding and session establishment
-		// for client sessions
-		String specificFeatures = session.getAvailableStreamFeatures();
-		if (specificFeatures != null)
-		{
-			sb.append(specificFeatures);
-		}
-		sb.append("</stream:features>");
-		connection.deliverRawText(sb.toString());
+        // Include specific features such as resource binding and session establishment
+        // for client sessions
+        String specificFeatures = session.getAvailableStreamFeatures();
+        if (specificFeatures != null)
+        {
+            sb.append(specificFeatures);
+        }
+        sb.append("</stream:features>");
+        connection.deliverRawText(sb.toString());
     }
 
     /**

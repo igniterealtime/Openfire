@@ -15,6 +15,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
+import java.io.Reader;
 
 /**
  * MXParser that returns an IGNORABLE_WHITESPACE event when a whitespace character or a
@@ -322,5 +323,13 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                 return parseProlog();
             }
         }
+    }
+
+    protected void resetInput() {
+        Reader oldReader = reader;
+        String oldEncoding = inputEncoding;
+        reset();
+        reader = oldReader;
+        inputEncoding = oldEncoding;
     }
 }

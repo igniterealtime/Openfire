@@ -454,8 +454,8 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
             if (contentMatched && violationNotificationEnabled) {
                 
                 if (Log.isDebugEnabled()) {
-                    Log.debug("Content filter: sending violation notification.");                    
-                    Log.debug("Content filter: include original msg?" +
+                    Log.debug("Content filter: sending violation notification");                    
+                    Log.debug("Content filter: include original msg? " +
                             this.violationIncludeOriginalPacketEnabled);
                 }
                 
@@ -473,7 +473,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                 } else {
                     //no masking, msg must be rejected                    
                     if (Log.isDebugEnabled()) {
-                        Log.debug("Content filter: rejecting packet.");
+                        Log.debug("Content filter: rejecting packet");
                     }
                     
                     PacketRejectedException rejected = new PacketRejectedException(
@@ -500,6 +500,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     private void sendViolationNotification(Packet originalPacket) {
           
         String subject = "Content filter notification!";
+        
         String body = null;
         if (originalPacket instanceof Message) {
             Message originalMsg = (Message) originalPacket;
@@ -525,19 +526,24 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         if (violationNotificationByIMEnabled) {
         		
             if (Log.isDebugEnabled()) {
-                Log.debug("Sending IM notification");
+                Log.debug("Content filter: sending IM notification");
             }
-            messageRouter.route(createServerMessage(subject, body));
+            sendViolationNotificationIM(subject, body);
         }
         
         if (violationNotificationByEmailEnabled) {
     		
             if (Log.isDebugEnabled()) {
-                Log.debug("Sending email notification");
+                Log.debug("Content filter: sending email notification");
             }
             sendViolationNotificationEmail(subject, body);
         }        
     }
+
+	private void sendViolationNotificationIM(String subject, String body) {
+		Message message = createServerMessage(subject, body);
+		messageRouter.route(message);
+	}
     
     private Message createServerMessage(String subject, String body) {
         Message message = new Message();

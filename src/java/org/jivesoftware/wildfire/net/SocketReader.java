@@ -272,7 +272,7 @@ public abstract class SocketReader implements Runnable {
                     // resource binding and session establishment (to client sessions only)
                     saslSuccessful();
                 }
-                else {
+                else if (connection.isClosed()) {
                     open = false;
                     session = null;
                 }

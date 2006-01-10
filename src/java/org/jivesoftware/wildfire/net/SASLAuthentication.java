@@ -16,6 +16,7 @@ import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -326,8 +327,18 @@ public class SASLAuthentication {
         reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append("<not-authorized/></failure>");
         connection.deliverRawText(reply.toString());
-        // TODO Give a number of retries before closing the connection
-        // Close the connection
-        connection.close();
+        // Give a number of retries before closing the connection
+        Integer retries = (Integer) session.getSessionData("authRetries");
+        if (retries == null) {
+            retries = new Integer(1);
+        }
+        else {
+            retries = retries + 1;
+        }
+        session.setSessionData("authRetries", retries);
+        if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
+            // Close the connection
+            connection.close();
+        }
     }
 }

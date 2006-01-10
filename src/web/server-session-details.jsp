@@ -110,12 +110,19 @@
     <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
-        <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
+        <%  if (inSession.getConnection().isSecure()) { %>
+            <td width="1%">
+                <img src="images/lock.gif" width="16" height="16" border="0">
+            </td>
+         <% } else { %>
+            <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+         <% } %>
         <%
             Date creationDate = inSession.getCreationDate();
             Date lastActiveDate = inSession.getLastActiveDate();
@@ -149,12 +156,19 @@
     <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
-        <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
+        <%  if (outSession.getConnection().isSecure()) { %>
+        <td width="1%">
+            <img src="images/lock.gif" width="16" height="16" border="0">
+        </td>
+         <% } else { %>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+         <% } %>
         <%
             Date creationDate = outSession.getCreationDate();
             Date lastActiveDate = outSession.getLastActiveDate();

@@ -36,9 +36,14 @@
 
     boolean update = request.getParameter("update") != null;
     boolean success = ParamUtils.getBooleanParameter(request, "success");
+    // Client configuration parameters
     String clientSecurityRequired = ParamUtils.getParameter(request,"clientSecurityRequired");
     String ssl = ParamUtils.getParameter(request, "ssl");
     String tls = ParamUtils.getParameter(request, "tls");
+    // Server configuration parameters
+    String serverSecurityRequired = ParamUtils.getParameter(request,"serverSecurityRequired");
+    String dialback = ParamUtils.getParameter(request, "dialback");
+    String server_tls = ParamUtils.getParameter(request, "server_tls");
 
     KeyStore keyStore = SSLConfig.getKeyStore();
     KeyStore trustStore = SSLConfig.getTrustStore();
@@ -81,6 +86,47 @@
                 ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             }
         }
+
+        if ("req".equals(serverSecurityRequired)) {
+            // User selected that security for s2s is required
+
+            // Enable TLS and disable server dialback
+            XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
+            JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
+            JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
+        }
+        else if ("notreq".equals(serverSecurityRequired)) {
+            // User selected that security for s2s is NOT required
+
+            // Enable TLS and enable server dialback
+            XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
+            JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
+            JiveGlobals.setProperty("xmpp.server.dialback.enabled", "true");
+        }
+        else if ("custom".equals(serverSecurityRequired)) {
+            // User selected custom server authentication
+
+            boolean dialbackEnabled = "available".equals(dialback);
+            boolean tlsEnabled = "optional".equals(server_tls);
+
+            if (dialbackEnabled || tlsEnabled) {
+                XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
+
+                // Enable or disable server dialback
+                JiveGlobals.setProperty("xmpp.server.dialback.enabled", dialbackEnabled ? "true" : "false");
+
+                // Enable or disable TLS for s2s connections
+                JiveGlobals.setProperty("xmpp.server.tls.enabled", tlsEnabled ? "true" : "false");
+            }
+            else {
+                XMPPServer.getInstance().getConnectionManager().enableServerListener(false);
+                // Disable server dialback
+                JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
+
+                // Disable TLS for s2s connections
+                JiveGlobals.setProperty("xmpp.server.tls.enabled", "false");
+            }
+        }
         success = true;
     }
 
@@ -107,6 +153,26 @@
         clientSecurityRequired = "custom";
         ssl = connectionManager.isClientSSLListenerEnabled() ? "available" : "notavailable";
         tls = Connection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" : ClientSession.getTLSPolicy().toString();
+    }
+
+    boolean tlsEnabled = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
+    boolean dialbackEnabled = JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+    if (tlsEnabled) {
+        if (dialbackEnabled) {
+            serverSecurityRequired = "notreq";
+            dialback = "available";
+            server_tls = "optional";
+        }
+        else {
+            serverSecurityRequired = "req";
+            dialback = "notavailable";
+            server_tls = "optional";
+        }
+    }
+    else {
+        serverSecurityRequired = "custom";
+        dialback = dialbackEnabled ? "available" : "notavailable";
+        server_tls = "notavailable";
     }
 
     if (install) {
@@ -293,7 +359,7 @@
 <fieldset>
     <legend><fmt:message key="ssl.settings.client.legend" /></legend>
     <div>
-    <table id="certificates" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr valign="middle">
             <tr valign="middle">
@@ -357,6 +423,91 @@
                                    onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb07"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
                             <input type="radio" name="tls" value="required" id="rb08" <%= ("required".equals(tls) ? "checked" : "") %>
                                    onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb08"><fmt:message key="ssl.settings.required" /></label>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+<br>
+
+<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+
+</form>
+
+<br>
+
+<form action="ssl-settings.jsp" method="post">
+
+<fieldset>
+    <legend><fmt:message key="ssl.settings.server.legend" /></legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="middle">
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="serverSecurityRequired" value="notreq" id="rb09" onclick="showOrHide('server_custom', 'hide')"
+                     <%= ("notreq".equals(serverSecurityRequired) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb09">
+                    <b><fmt:message key="ssl.settings.server.label_notrequired" /></b> - <fmt:message key="ssl.settings.server.label_notrequired_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="serverSecurityRequired" value="req" id="rb10" onclick="showOrHide('server_custom', 'hide')"
+                 <%= ("req".equals(serverSecurityRequired) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb10">
+                    <b><fmt:message key="ssl.settings.server.label_required" /></b> - <fmt:message key="ssl.settings.server.label_required_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="serverSecurityRequired" value="custom" id="rb11" onclick="showOrHide('server_custom', 'show')"
+                     <%= ("custom".equals(serverSecurityRequired) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb11">
+                    <b><fmt:message key="ssl.settings.server.label_custom" /></b> - <fmt:message key="ssl.settings.server.label_custom_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top" id="server_custom" <% if (!"custom".equals(serverSecurityRequired)) out.write("style=\"display:none\""); %>>
+                <td width="1%" nowrap>
+                    &nbsp;
+                </td>
+                <td width="99%">
+                    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                    <tr valign="top">
+                        <td width="1%" nowrap>
+                            <fmt:message key="ssl.settings.server.dialback" />
+                        </td>
+                        <td width="99%">
+                            <input type="radio" name="dialback" value="notavailable" id="rb12" <%= ("notavailable".equals(dialback) ? "checked" : "") %>
+                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb12"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+                            <input type="radio" name="dialback" value="available" id="rb13" <%= ("available".equals(dialback) ? "checked" : "") %>
+                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb13"><fmt:message key="ssl.settings.available" /></label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <td width="1%" nowrap>
+                            <fmt:message key="ssl.settings.server.customTLS" />
+                        </td>
+                        <td width="99%">
+                            <input type="radio" name="server_tls" value="notavailable" id="rb14" <%= ("notavailable".equals(server_tls) ? "checked" : "") %>
+                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb14"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+                            <input type="radio" name="server_tls" value="optional" id="rb15" <%= ("optional".equals(server_tls) ? "checked" : "") %>
+                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb15"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
                         </td>
                     </tr>
                     </table>

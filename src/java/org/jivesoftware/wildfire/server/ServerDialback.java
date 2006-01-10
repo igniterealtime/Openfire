@@ -22,6 +22,7 @@ import org.jivesoftware.wildfire.net.MXParser;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -78,6 +79,21 @@ class ServerDialback {
     private String serverName;
     private SessionManager sessionManager = SessionManager.getInstance();
     private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+
+    /**
+     * Returns true if server dialback is enabled. When enabled remote servers may connect to this
+     * server using the server dialback method and this server may try the server dialback method
+     * to connect to remote servers.<p>
+     *
+     * When TLS is enabled between servers and server dialback method is enabled then TLS is going
+     * to be tried first, when connecting to a remote server, and if TLS fails then server dialback
+     * is going to be used as a last resort.
+     *
+     * @return true if server dialback is enabled.
+     */
+    public static boolean isEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+    }
 
     /**
      * Creates a new instance that will be used for creating {@link IncomingServerSession},

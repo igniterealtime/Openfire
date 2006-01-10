@@ -324,9 +324,12 @@ public class OutgoingServerSession extends Session {
                 }
             }
         }
-        Log.debug("OS - Going to try connecting using server dialback");
-        // Use server dialback over a plain connection
-        return new ServerDialback().createOutgoingSession(domain, hostname, port);
+        if (ServerDialback.isEnabled()) {
+            Log.debug("OS - Going to try connecting using server dialback");
+            // Use server dialback over a plain connection
+            return new ServerDialback().createOutgoingSession(domain, hostname, port);
+        }
+        return null;
     }
 
     private static OutgoingServerSession secureAndAuthenticate(String hostname,

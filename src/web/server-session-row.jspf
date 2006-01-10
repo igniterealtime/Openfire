@@ -19,6 +19,20 @@
   -     * 'count', an int representing the row number we're on.
 --%>
 
+<%  // Show the secured icon only if ALL sessions are secure
+    boolean isSecured = true;
+    // Check if all incoming sessions are secured
+    for (IncomingServerSession inSession : inSessions) {
+        if (!inSession.getConnection().isSecure()) {
+            isSecured = false;
+            break;
+        }
+    }
+    // Check if outgoing session is secured (only if incoming sessions are secured)
+    if (isSecured && outSession != null) {
+        isSecured = outSession.getConnection().isSecure();
+    }
+%>
 <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
     <td width="1%" nowrap><%= count %></td>
     <td width="47%" nowrap>
@@ -38,6 +52,13 @@
             </tr>
         </table>
     </td>
+    <%  if (isSecured) { %>
+    <td width="1%">
+        <img src="images/lock.gif" width="16" height="16" border="0">
+    </td>
+     <% } else { %>
+    <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+     <% } %>
     <% if (!inSessions.isEmpty() && outSession == null) { %>
         <td width="1%">
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">

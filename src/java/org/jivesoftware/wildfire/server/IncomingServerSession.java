@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Packet;
@@ -91,20 +92,27 @@ public class IncomingServerSession extends Session {
         XmlPullParser xpp = reader.getXPPParser();
         if (xpp.getNamespace("db") != null) {
             // Server is trying to establish connection and authenticate using server dialback
-            ServerDialback method = new ServerDialback(connection, serverName);
-            return method.createIncomingSession(reader);
+            if (ServerDialback.isEnabled()) {
+                ServerDialback method = new ServerDialback(connection, serverName);
+                return method.createIncomingSession(reader);
+            }
+            Log.debug("Server dialback is disabled. Rejecting connection: " + connection);
         }
         String version = xpp.getAttributeValue("", "version");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
         if (serverVersion[0] >= 1) {
             // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection
-            try {
-                return createIncomingSession(connection, serverName);
+            if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) {
+                try {
+                    return createIncomingSession(connection, serverName);
+                }
+                catch (Exception e) {
+                    Log.error("Error establishing connection from remote server", e);
+                }
             }
-            catch (Exception e) {
-                Log.error("Error establishing connection from remote server", e);
+            else {
+                Log.debug("Server TLS is disabled. Rejecting connection: " + connection);
             }
-
         }
         // Close the connection since remote server is not XMPP 1.0 compliant and is not
         // using server dialback to establish and authenticate the connection
@@ -143,8 +151,10 @@ public class IncomingServerSession extends Session {
         StringBuilder sb = new StringBuilder();
         sb.append("<stream:features>");
         sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-        // TODO Consider that STARTTLS may be optional (add TLS options to the AC - disabled, optional, required)
-        // sb.append("<required/>");
+        if (!ServerDialback.isEnabled()) {
+            // Server dialback is disabled so TLS is required
+            sb.append("<required/>");
+        }
         sb.append("</starttls>");
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));

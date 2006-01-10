@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.plugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.mail.internet.InternetAddress;
@@ -459,6 +460,10 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                             this.violationIncludeOriginalPacketEnabled);
                 }
                 
+                //TODO consider spining off a separate thread here,
+                //in high volume situations, it will result in
+                //in faster response and notification is not required
+                //to be real time.
                 sendViolationNotification(original);
             }
 
@@ -499,7 +504,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
     private void sendViolationNotification(Packet originalPacket) {
           
-        String subject = "Content filter notification!";
+        String subject = "Content filter notification! (" + originalPacket.getFrom().getNode() + ")";
         
         String body = null;
         if (originalPacket instanceof Message) {
@@ -575,6 +580,8 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
            message.setText(body);
 
            message.setSubject(subject);
+           
+           message.setSentDate(new Date());
 
            messages.add(message);
 

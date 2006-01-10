@@ -73,7 +73,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 String username = "sa";
                 String password = "";
                 int minConnections = 3;
-                int maxConnections = 10;
+                int maxConnections = 25;
                 double connectionTimeout = 0.5;
 
                 connectionPool = new ConnectionPool(driver, serverURL, username, password,

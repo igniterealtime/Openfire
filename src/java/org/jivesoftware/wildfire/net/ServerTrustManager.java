@@ -50,6 +50,26 @@ class ServerTrustManager implements X509TrustManager {
         // when the remote server requests to do EXTERNAL SASL
     }
 
+    /**
+     * Given the partial or complete certificate chain provided by the peer, build a certificate
+     * path to a trusted root and return if it can be validated and is trusted for server SSL
+     * authentication based on the authentication type. The authentication type is the key
+     * exchange algorithm portion of the cipher suites represented as a String, such as "RSA",
+     * "DHE_DSS". Note: for some exportable cipher suites, the key exchange algorithm is
+     * determined at run time during the handshake. For instance, for
+     * TLS_RSA_EXPORT_WITH_RC4_40_MD5, the authType should be RSA_EXPORT when an ephemeral
+     * RSA key is used for the key exchange, and RSA when the key from the server certificate
+     * is used. Checking is case-sensitive.<p>
+     *
+     * By default certificates are going to be verified. This includes verifying the certificate
+     * chain, the root certificate and the certificates validity. However, it is possible to
+     * disable certificates validation as a whole or each specific validation.
+     *
+     * @param x509Certificates an ordered array of peer X.509 certificates with the peer's own
+     *        certificate listed first and followed by any certificate authorities.
+     * @param string the key exchange algorithm used.
+     * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
+     */
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
 
@@ -59,69 +79,86 @@ class ServerTrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            String peerIdentity = getPeerIdentity(x509Certificates[nSize - 1]);
+            String peerIdentity = getPeerIdentity(x509Certificates[0]);
 
-            // Working down the chain, for every certificate in the chain,
-            // verify that the subject of the certificate is the issuer of the
-            // next certificate in the chain.
-            Principal principalLast = null;
-            for (int i = 0; i < nSize; i++) {
-                X509Certificate x509certificate = x509Certificates[i];
-                Principal principalIssuer = x509certificate.getIssuerDN();
-                Principal principalSubject = x509certificate.getSubjectDN();
-                if (principalLast != null) {
-                    if (principalIssuer.equals(principalLast)) {
-                        try {
-                            PublicKey publickey =
-                                    x509Certificates[i - 1].getPublicKey();
-                            x509Certificates[i].verify(publickey);
+            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
+                // Working down the chain, for every certificate in the chain,
+                // verify that the subject of the certificate is the issuer of the
+                // next certificate in the chain.
+                Principal principalLast = null;
+                for (int i = nSize -1; i >= 0 ; i--) {
+                    X509Certificate x509certificate = x509Certificates[i];
+                    Principal principalIssuer = x509certificate.getIssuerDN();
+                    Principal principalSubject = x509certificate.getSubjectDN();
+                    if (principalLast != null) {
+                        if (principalIssuer.equals(principalLast)) {
+                            try {
+                                PublicKey publickey =
+                                        x509Certificates[i + 1].getPublicKey();
+                                x509Certificates[i].verify(publickey);
+                            }
+                            catch (GeneralSecurityException generalsecurityexception) {
+                                throw new CertificateException(
+                                        "signature verification failed of " + peerIdentity);
+                            }
                         }
-                        catch (GeneralSecurityException generalsecurityexception) {
+                        else {
                             throw new CertificateException(
-                                    "signature verification failed of " + peerIdentity);
+                                    "subject/issuer verification failed of " + peerIdentity);
                         }
                     }
-                    else {
-                        throw new CertificateException(
-                                "subject/issuer verification failed of " + peerIdentity);
+                    principalLast = principalSubject;
+                }
+            }
+
+            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.root", true)) {
+                // Verify that the the last certificate in the chain was issued
+                // by a third-party that the client trusts.
+                boolean trusted = false;
+                try {
+                    trusted = trustStore.getCertificateAlias(x509Certificates[nSize - 1]) != null;
+                    if (!trusted && nSize == 1 && JiveGlobals
+                            .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
+                    {
+                        Log.warn("Accepting self-signed certificate of remote server: " +
+                                peerIdentity);
+                        trusted = true;
                     }
                 }
-                principalLast = principalSubject;
-            }
-
-            // Verify that the the first certificate in the chain was issued
-            // by a third-party that the client trusts.
-            boolean trusted = false;
-            try {
-                trusted = trustStore.getCertificateAlias(x509Certificates[0]) != null;
-                if (!trusted && nSize == 1 && JiveGlobals
-                        .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false)) {
-                    Log.warn("Accepting self-signed certificate of remote server: " + peerIdentity);
-                    trusted = true;
+                catch (KeyStoreException e) {
+                    Log.error(e);
+                }
+                if (!trusted) {
+                    throw new CertificateException("root certificate not trusted of " + peerIdentity);
                 }
             }
-            catch (KeyStoreException e) {
-                Log.error(e);
-            }
-            if (!trusted) {
-                throw new CertificateException("root certificate not trusted of " + peerIdentity);
-            }
 
-            // Verify that the last certificate in the chain corresponds to
+            // Verify that the first certificate in the chain corresponds to
             // the server we desire to authenticate.
-            if (!server.equals(peerIdentity)) {
+            // Check if the certificate uses a wildcard indicating that subdomains are valid
+            if (peerIdentity.startsWith("*.")) {
+                // Remove the wildcard
+                peerIdentity = peerIdentity.replace("*.", "");
+                // Check if the requested subdomain matches the certified domain
+                if (!server.endsWith(peerIdentity)) {
+                    throw new CertificateException("target verification failed of " + peerIdentity);
+                }
+            }
+            else if (!server.equals(peerIdentity)) {
                 throw new CertificateException("target verification failed of " + peerIdentity);
             }
 
-            // For every certificate in the chain, verify that the certificate
-            // is valid at the current time.
-            Date date = new Date();
-            for (int i = 0; i < nSize; i++) {
-                try {
-                    x509Certificates[i].checkValidity(date);
-                }
-                catch (GeneralSecurityException generalsecurityexception) {
-                    throw new CertificateException("invalid date of " + peerIdentity);
+            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.validity", true)) {
+                // For every certificate in the chain, verify that the certificate
+                // is valid at the current time.
+                Date date = new Date();
+                for (int i = 0; i < nSize; i++) {
+                    try {
+                        x509Certificates[i].checkValidity(date);
+                    }
+                    catch (GeneralSecurityException generalsecurityexception) {
+                        throw new CertificateException("invalid date of " + peerIdentity);
+                    }
                 }
             }
         }

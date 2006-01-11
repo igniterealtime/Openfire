@@ -286,7 +286,7 @@ public class SASLAuthentication {
             // Check that hostname matches the one provided in a certificate
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
                 if (hostname
-                        .equals(ServerTrustManager.getPeerIdentity((X509Certificate) certificate)))
+                        .equals(TLSStreamHandler.getPeerIdentity((X509Certificate) certificate)))
                 {
                     authenticationSuccessful(hostname);
                     return true;

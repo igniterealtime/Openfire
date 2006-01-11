@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.DNSUtil;
 import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.wildfire.net.MXParser;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -37,6 +38,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.regex.Pattern;
+
+import com.jcraft.jzlib.ZInputStream;
+import com.jcraft.jzlib.JZlib;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -298,7 +302,7 @@ public class OutgoingServerSession extends Session {
                         // Secure the connection with TLS and authenticate using SASL
                         OutgoingServerSession answer;
                         answer = secureAndAuthenticate(hostname, connection, reader, openingStream,
-                                xpp, domain);
+                                domain);
                         if (answer != null) {
                             // Everything went fine so return the secured and
                             // authenticated connection
@@ -334,11 +338,12 @@ public class OutgoingServerSession extends Session {
 
     private static OutgoingServerSession secureAndAuthenticate(String hostname,
             SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream,
-            XmlPullParser xpp, String domain) throws Exception {
+            String domain) throws Exception {
         Element features;
         Log.debug("OS - Indicating we want TLS to " + hostname);
         connection.deliverRawText("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
 
+        MXParser xpp = (MXParser) reader.getXPPParser();
         // Wait for the <proceed> response
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
@@ -359,6 +364,66 @@ public class OutgoingServerSession extends Session {
             // Get new stream features
             features = reader.parseDocument().getRootElement();
             if (features != null && features.element("mechanisms") != null) {
+                // Check if we can use stream compression
+                String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy",
+                        Connection.CompressionPolicy.disabled.toString());
+                Connection.CompressionPolicy compressionPolicy =
+                        Connection.CompressionPolicy.valueOf(policyName);
+                if (Connection.CompressionPolicy.optional == compressionPolicy) {
+                    // Verify if the remote server supports stream compression
+                    Element compression = features.element("compression");
+                    if (compression != null) {
+                        boolean zlibSupported = false;
+                        Iterator it = compression.elementIterator("method");
+                        while (it.hasNext()) {
+                            Element method = (Element) it.next();
+                            if ("zlib".equals(method.getTextTrim())) {
+                                zlibSupported = true;
+                            }
+                        }
+                        if (zlibSupported) {
+                            // Request Stream Compression
+                            connection.deliverRawText("<compress xmlns='http://jabber.org/protocol/compress'><method>zlib</method></compress>");
+                            // Check if we are good to start compression
+                            Element answer = reader.parseDocument().getRootElement();
+                            if ("compressed".equals(answer.getName())) {
+                                // Server confirmed that we can use zlib compression
+                                connection.startCompression();
+                                Log.debug("OS - Stream compression was successful with " + hostname);
+                                // Stream compression was successful so initiate a new stream
+                                connection.deliverRawText(openingStream.toString());
+                                // Reset the parser to use stream compression over TLS
+                                ZInputStream in = new ZInputStream(
+                                        connection.getTLSStreamHandler().getInputStream());
+                                in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+                                xpp.setInput(new InputStreamReader(in, CHARSET));
+                                // Skip the opening stream sent by the server
+                                for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
+                                {
+                                    eventType = xpp.next();
+                                }
+                                // Get new stream features
+                                features = reader.parseDocument().getRootElement();
+                                if (features == null || features.element("mechanisms") == null) {
+                                    Log.debug("OS - Error, EXTERNAL SASL was not offered by " + hostname);
+                                    return null;
+                                }
+                            }
+                            else {
+                                Log.debug("OS - Stream compression was rejected by " + hostname);
+                            }
+                        }
+                        else {
+                            Log.debug(
+                                    "OS - Stream compression found but zlib method is not supported by" +
+                                            hostname);
+                        }
+                    }
+                    else {
+                        Log.debug("OS - Stream compression not supoprted by " + hostname);
+                    }
+                }
+
                 Iterator it = features.element("mechanisms").elementIterator();
                 while (it.hasNext()) {
                     Element mechanism = (Element) it.next();
@@ -369,9 +434,8 @@ public class OutgoingServerSession extends Session {
                             // SASL was successful so initiate a new stream
                             connection.deliverRawText(openingStream.toString());
 
-                            // Reset the parser to use the new secured reader
-                            xpp.setInput(new InputStreamReader(
-                                    connection.getTLSStreamHandler().getInputStream(), CHARSET));
+                            // Reset the parser
+                            xpp.resetInput();
                             // Skip the opening stream sent by the server
                             for (int eventType = xpp.getEventType();
                                  eventType != XmlPullParser.START_TAG;) {

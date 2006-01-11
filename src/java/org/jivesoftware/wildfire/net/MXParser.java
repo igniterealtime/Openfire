@@ -325,7 +325,7 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
         }
     }
 
-    protected void resetInput() {
+    public void resetInput() {
         Reader oldReader = reader;
         String oldEncoding = inputEncoding;
         reset();

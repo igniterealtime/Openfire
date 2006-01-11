@@ -285,10 +285,6 @@ public abstract class SocketReader implements Runnable {
                     // resource binding and session establishment (to client sessions only)
                     compressionSuccessful();
                 }
-                else {
-                    open = false;
-                    session = null;
-                }
             }
             else
             {
@@ -354,8 +350,6 @@ public abstract class SocketReader implements Runnable {
         if (error != null) {
             // Deliver stanza
             connection.deliverRawText(error);
-            // Close the underlying connection
-            connection.close();
             return false;
         }
         else {

@@ -79,7 +79,7 @@ class ServerTrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            String peerIdentity = getPeerIdentity(x509Certificates[0]);
+            String peerIdentity = TLSStreamHandler.getPeerIdentity(x509Certificates[0]);
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
                 // Working down the chain, for every certificate in the chain,
@@ -162,24 +162,6 @@ class ServerTrustManager implements X509TrustManager {
                 }
             }
         }
-    }
-
-    /**
-     * Returns the identity of the remote server as defined in the specified certificate. The
-     * identity is defined in the subjectDN of the certificate and it can also be defined in
-     * the subjectAltName extension of type "xmpp". When the extension is being used then the
-     * identity defined in the extension in going to be returned. Otherwise, the value stored in
-     * the subjectDN is returned.
-     *
-     * @param x509Certificate the certificate the holds the identity of the remote server.
-     * @return the identity of the remote server as defined in the specified certificate.
-     */
-    static String getPeerIdentity(X509Certificate x509Certificate) {
-        Principal principalSubject = x509Certificate.getSubjectDN();
-        // TODO Look the identity in the subjectAltName extension if available
-        String name = principalSubject.getName();
-        name = name.replace("CN=", "");
-        return name;
     }
 
     private boolean isChainTrusted(X509Certificate[] chain) {

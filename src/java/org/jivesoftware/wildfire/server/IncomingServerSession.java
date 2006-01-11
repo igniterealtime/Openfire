@@ -148,6 +148,17 @@ public class IncomingServerSession extends Session {
         openingStream.append(" version=\"1.0\">");
         connection.deliverRawText(openingStream.toString());
 
+        // Indicate the TLS policy to use for this connection
+        connection.setTlsPolicy(ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
+                Connection.TLSPolicy.required);
+
+        // Indicate the compression policy to use for this connection
+        String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy",
+                Connection.CompressionPolicy.disabled.toString());
+        Connection.CompressionPolicy compressionPolicy =
+                Connection.CompressionPolicy.valueOf(policyName);
+        connection.setCompressionPolicy(compressionPolicy);
+
         StringBuilder sb = new StringBuilder();
         sb.append("<stream:features>");
         sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
@@ -292,6 +303,11 @@ public class IncomingServerSession extends Session {
     }
 
     public String getAvailableStreamFeatures() {
+        // Include Stream Compression Mechanism
+        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+                !conn.isCompressed()) {
+            return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
+        }
         // Nothing special to add
         return null;
     }

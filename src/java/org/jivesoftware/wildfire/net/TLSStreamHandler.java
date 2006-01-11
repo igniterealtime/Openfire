@@ -24,6 +24,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
+import java.security.cert.X509Certificate;
+import java.security.Principal;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
@@ -33,46 +35,64 @@ import java.nio.channels.WritableByteChannel;
  */
 public class TLSStreamHandler {
 
-	private TLSStreamWriter writer;
+    private TLSStreamWriter writer;
 
-	private TLSStreamReader reader;
+    private TLSStreamReader reader;
 
-	private TLSWrapper wrapper;
+    private TLSWrapper wrapper;
 
-	private ReadableByteChannel rbc;
-	private WritableByteChannel wbc;
+    private ReadableByteChannel rbc;
+    private WritableByteChannel wbc;
 
-	private SSLEngine tlsEngine;
+    private SSLEngine tlsEngine;
 
-	/*
-	 * During the initial handshake, keep track of the next SSLEngine operation that needs to occur:
-	 * 
-	 * NEED_WRAP/NEED_UNWRAP
-	 * 
-	 * Once the initial handshake has completed, we can short circuit handshake checks with
-	 * initialHSComplete.
-	 */
-	private HandshakeStatus initialHSStatus;
-	private boolean initialHSComplete;
+    /*
+      * During the initial handshake, keep track of the next SSLEngine operation that needs to occur:
+      *
+      * NEED_WRAP/NEED_UNWRAP
+      *
+      * Once the initial handshake has completed, we can short circuit handshake checks with
+      * initialHSComplete.
+      */
+    private HandshakeStatus initialHSStatus;
+    private boolean initialHSComplete;
 
-	private int appBBSize;
-	private int netBBSize;
+    private int appBBSize;
+    private int netBBSize;
 
-	/*
-	 * All I/O goes through these buffers. It might be nice to use a cache of ByteBuffers so we're
-	 * not alloc/dealloc'ing ByteBuffer's for each new SSLEngine. Outbound application data is
-	 * supplied to us by our callers.
-	 */
-	private ByteBuffer incomingNetBB;
-	private ByteBuffer outgoingNetBB;
+    /*
+      * All I/O goes through these buffers. It might be nice to use a cache of ByteBuffers so we're
+      * not alloc/dealloc'ing ByteBuffer's for each new SSLEngine. Outbound application data is
+      * supplied to us by our callers.
+      */
+    private ByteBuffer incomingNetBB;
+    private ByteBuffer outgoingNetBB;
 
-	private ByteBuffer appBB;
+    private ByteBuffer appBB;
 
-	/*
-	 * An empty ByteBuffer for use when one isn't available, say as a source buffer during initial
-	 * handshake wraps or for close operations.
-	 */
-	private static ByteBuffer hsBB = ByteBuffer.allocate(0);
+    /*
+      * An empty ByteBuffer for use when one isn't available, say as a source buffer during initial
+      * handshake wraps or for close operations.
+      */
+    private static ByteBuffer hsBB = ByteBuffer.allocate(0);
+
+    /**
+     * Returns the identity of the remote server as defined in the specified certificate. The
+     * identity is defined in the subjectDN of the certificate and it can also be defined in
+     * the subjectAltName extension of type "xmpp". When the extension is being used then the
+     * identity defined in the extension in going to be returned. Otherwise, the value stored in
+     * the subjectDN is returned.
+     *
+     * @param x509Certificate the certificate the holds the identity of the remote server.
+     * @return the identity of the remote server as defined in the specified certificate.
+     */
+    public static String getPeerIdentity(X509Certificate x509Certificate) {
+        Principal principalSubject = x509Certificate.getSubjectDN();
+        // TODO Look the identity in the subjectAltName extension if available
+        String name = principalSubject.getName();
+        name = name.replace("CN=", "");
+        return name;
+    }
 
     /**
      * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
@@ -93,23 +113,23 @@ public class TLSStreamHandler {
             boolean needClientAuth) throws IOException {
         wrapper = new TLSWrapper(clientMode, needClientAuth, remoteServer);
         tlsEngine = wrapper.getTlsEngine();
-		reader = new TLSStreamReader(wrapper, socket);
-		writer = new TLSStreamWriter(wrapper, socket);
+        reader = new TLSStreamReader(wrapper, socket);
+        writer = new TLSStreamWriter(wrapper, socket);
 
-		rbc = Channels.newChannel(socket.getInputStream());
-		wbc = Channels.newChannel(socket.getOutputStream());
-		initialHSStatus = HandshakeStatus.NEED_UNWRAP;
-		initialHSComplete = false;
+        rbc = Channels.newChannel(socket.getInputStream());
+        wbc = Channels.newChannel(socket.getOutputStream());
+        initialHSStatus = HandshakeStatus.NEED_UNWRAP;
+        initialHSComplete = false;
 
-		netBBSize = tlsEngine.getSession().getPacketBufferSize();
-		appBBSize = tlsEngine.getSession().getApplicationBufferSize();
+        netBBSize = tlsEngine.getSession().getPacketBufferSize();
+        appBBSize = tlsEngine.getSession().getApplicationBufferSize();
 
-		incomingNetBB = ByteBuffer.allocate(netBBSize);
-		outgoingNetBB = ByteBuffer.allocate(netBBSize);
-		outgoingNetBB.position(0);
-		outgoingNetBB.limit(0);
+        incomingNetBB = ByteBuffer.allocate(netBBSize);
+        outgoingNetBB = ByteBuffer.allocate(netBBSize);
+        outgoingNetBB.position(0);
+        outgoingNetBB.limit(0);
 
-		appBB = ByteBuffer.allocate(appBBSize);
+        appBB = ByteBuffer.allocate(appBBSize);
 
         if (clientMode) {
             socket.setSoTimeout(0);
@@ -122,175 +142,175 @@ public class TLSStreamHandler {
         }
 
         while (!initialHSComplete) {
-			initialHSComplete = doHandshake(null);
-		}
-	}
+            initialHSComplete = doHandshake(null);
+        }
+    }
 
-	public InputStream getInputStream(){
-		return reader.getInputStream();
-	}
+    public InputStream getInputStream(){
+        return reader.getInputStream();
+    }
 
-	public OutputStream getOutputStream(){
-		return writer.getOutputStream();
-	}
+    public OutputStream getOutputStream(){
+        return writer.getOutputStream();
+    }
 
-	private boolean doHandshake(SelectionKey sk) throws IOException {
+    private boolean doHandshake(SelectionKey sk) throws IOException {
 
-		SSLEngineResult result;
+        SSLEngineResult result;
 
-		if (initialHSComplete) {
-			return initialHSComplete;
-		}
+        if (initialHSComplete) {
+            return initialHSComplete;
+        }
 
-		/*
-		 * Flush out the outgoing buffer, if there's anything left in it.
-		 */
-		if (outgoingNetBB.hasRemaining()) {
+        /*
+           * Flush out the outgoing buffer, if there's anything left in it.
+           */
+        if (outgoingNetBB.hasRemaining()) {
 
-			if (!flush(outgoingNetBB)) {
-				return false;
-			}
+            if (!flush(outgoingNetBB)) {
+                return false;
+            }
 
-			// See if we need to switch from write to read mode.
+            // See if we need to switch from write to read mode.
 
-			switch (initialHSStatus) {
+            switch (initialHSStatus) {
 
-			/*
-			 * Is this the last buffer?
-			 */
-			case FINISHED:
-				initialHSComplete = true;
+            /*
+                * Is this the last buffer?
+                */
+            case FINISHED:
+                initialHSComplete = true;
 
-			case NEED_UNWRAP:
-				if (sk != null) {
-					sk.interestOps(SelectionKey.OP_READ);
-				}
-				break;
-			}
+            case NEED_UNWRAP:
+                if (sk != null) {
+                    sk.interestOps(SelectionKey.OP_READ);
+                }
+                break;
+            }
 
-			return initialHSComplete;
-		}
+            return initialHSComplete;
+        }
 
-		switch (initialHSStatus) {
+        switch (initialHSStatus) {
 
-		case NEED_UNWRAP:
-			if (rbc.read(incomingNetBB) == -1) {
-				tlsEngine.closeInbound();
-				return initialHSComplete;
-			}
+        case NEED_UNWRAP:
+            if (rbc.read(incomingNetBB) == -1) {
+                tlsEngine.closeInbound();
+                return initialHSComplete;
+            }
 
-			needIO: while (initialHSStatus == HandshakeStatus.NEED_UNWRAP) {
-				/*
-				 * Don't need to resize requestBB, since no app data should be generated here.
-				 */
-				incomingNetBB.flip();
-				result = tlsEngine.unwrap(incomingNetBB, appBB);
-				incomingNetBB.compact();
+            needIO: while (initialHSStatus == HandshakeStatus.NEED_UNWRAP) {
+                /*
+                     * Don't need to resize requestBB, since no app data should be generated here.
+                     */
+                incomingNetBB.flip();
+                result = tlsEngine.unwrap(incomingNetBB, appBB);
+                incomingNetBB.compact();
 
-				initialHSStatus = result.getHandshakeStatus();
+                initialHSStatus = result.getHandshakeStatus();
 
-				switch (result.getStatus()) {
+                switch (result.getStatus()) {
 
-				case OK:
-					switch (initialHSStatus) {
-					case NOT_HANDSHAKING:
-						throw new IOException("Not handshaking during initial handshake");
+                case OK:
+                    switch (initialHSStatus) {
+                    case NOT_HANDSHAKING:
+                        throw new IOException("Not handshaking during initial handshake");
 
-					case NEED_TASK:
-						initialHSStatus = doTasks();
-						break;
+                    case NEED_TASK:
+                        initialHSStatus = doTasks();
+                        break;
 
-					case FINISHED:
-						initialHSComplete = true;
-						break needIO;
-					}
+                    case FINISHED:
+                        initialHSComplete = true;
+                        break needIO;
+                    }
 
-					break;
+                    break;
 
-				case BUFFER_UNDERFLOW:
-					/*
-					 * Need to go reread the Channel for more data.
-					 */
-					if (sk != null) {
-						sk.interestOps(SelectionKey.OP_READ);
-					}
-					break needIO;
+                case BUFFER_UNDERFLOW:
+                    /*
+                          * Need to go reread the Channel for more data.
+                          */
+                    if (sk != null) {
+                        sk.interestOps(SelectionKey.OP_READ);
+                    }
+                    break needIO;
 
-				default: // BUFFER_OVERFLOW/CLOSED:
-					throw new IOException("Received" + result.getStatus()
-							+ "during initial handshaking");
-				}
-			}
+                default: // BUFFER_OVERFLOW/CLOSED:
+                    throw new IOException("Received" + result.getStatus()
+                            + "during initial handshaking");
+                }
+            }
 
-			/*
-			 * Just transitioned from read to write.
-			 */
-			if (initialHSStatus != HandshakeStatus.NEED_WRAP) {
-				break;
-			}
+            /*
+                * Just transitioned from read to write.
+                */
+            if (initialHSStatus != HandshakeStatus.NEED_WRAP) {
+                break;
+            }
 
-		// Fall through and fill the write buffers.
+        // Fall through and fill the write buffers.
 
-		case NEED_WRAP:
-			/*
-			 * The flush above guarantees the out buffer to be empty
-			 */
-			outgoingNetBB.clear();
-			result = tlsEngine.wrap(hsBB, outgoingNetBB);
-			outgoingNetBB.flip();
+        case NEED_WRAP:
+            /*
+                * The flush above guarantees the out buffer to be empty
+                */
+            outgoingNetBB.clear();
+            result = tlsEngine.wrap(hsBB, outgoingNetBB);
+            outgoingNetBB.flip();
 
-			initialHSStatus = result.getHandshakeStatus();
+            initialHSStatus = result.getHandshakeStatus();
 
-			switch (result.getStatus()) {
-			case OK:
+            switch (result.getStatus()) {
+            case OK:
 
-				if (initialHSStatus == HandshakeStatus.NEED_TASK) {
-					initialHSStatus = doTasks();
-				}
+                if (initialHSStatus == HandshakeStatus.NEED_TASK) {
+                    initialHSStatus = doTasks();
+                }
 
-				if (sk != null) {
-					sk.interestOps(SelectionKey.OP_WRITE);
-				}
+                if (sk != null) {
+                    sk.interestOps(SelectionKey.OP_WRITE);
+                }
 
-				break;
+                break;
 
-			default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
-				throw new IOException("Received" + result.getStatus()
-						+ "during initial handshaking");
-			}
-			break;
+            default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
+                throw new IOException("Received" + result.getStatus()
+                        + "during initial handshaking");
+            }
+            break;
 
-		default: // NOT_HANDSHAKING/NEED_TASK/FINISHED
-			throw new RuntimeException("Invalid Handshaking State" + initialHSStatus);
-		} // switch
+        default: // NOT_HANDSHAKING/NEED_TASK/FINISHED
+            throw new RuntimeException("Invalid Handshaking State" + initialHSStatus);
+        } // switch
 
-		return initialHSComplete;
-	}
+        return initialHSComplete;
+    }
 
-	/*
-	 * Writes ByteBuffer to the SocketChannel. Returns true when the ByteBuffer has no remaining
-	 * data.
-	 */
-	private boolean flush(ByteBuffer bb) throws IOException {
-		wbc.write(bb);
-		return !bb.hasRemaining();
-	}
+    /*
+      * Writes ByteBuffer to the SocketChannel. Returns true when the ByteBuffer has no remaining
+      * data.
+      */
+    private boolean flush(ByteBuffer bb) throws IOException {
+        wbc.write(bb);
+        return !bb.hasRemaining();
+    }
 
-	/*
-	 * Do all the outstanding handshake tasks in the current Thread.
-	 */
-	private SSLEngineResult.HandshakeStatus doTasks() {
+    /*
+      * Do all the outstanding handshake tasks in the current Thread.
+      */
+    private SSLEngineResult.HandshakeStatus doTasks() {
 
-		Runnable runnable;
+        Runnable runnable;
 
-		/*
-		 * We could run this in a separate thread, but do in the current for now.
-		 */
-		while ((runnable = tlsEngine.getDelegatedTask()) != null) {
-			runnable.run();
-		}
-		return tlsEngine.getHandshakeStatus();
-	}
+        /*
+           * We could run this in a separate thread, but do in the current for now.
+           */
+        while ((runnable = tlsEngine.getDelegatedTask()) != null) {
+            runnable.run();
+        }
+        return tlsEngine.getHandshakeStatus();
+    }
 
     /**
      * Closes the channels that will end up closing the input and output streams of the connection.

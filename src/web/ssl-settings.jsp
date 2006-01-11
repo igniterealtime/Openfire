@@ -22,6 +22,8 @@
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.wildfire.ConnectionManager"%>
 <%@ page import="org.jivesoftware.wildfire.Connection"%>
+<%@ page import="java.security.cert.X509Certificate"%>
+<%@ page import="org.jivesoftware.wildfire.net.TLSStreamHandler"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -540,7 +542,10 @@
             <fmt:message key="ssl.settings.alias" />
         </th>
         <th>
-            <fmt:message key="ssl.settings.type" />
+            <fmt:message key="ssl.settings.expiration" />
+        </th>
+        <th>
+            <fmt:message key="ssl.settings.self-signed" />
         </th>
         <th>
             <fmt:message key="ssl.settings.publickey" />
@@ -556,15 +561,29 @@
     for (Enumeration aliases=keyStore.aliases(); aliases.hasMoreElements();) {
         i++;
         String a = (String)aliases.nextElement();
-        Certificate c = keyStore.getCertificate(a);
+        X509Certificate c = (X509Certificate) keyStore.getCertificate(a);
 %>
     <tr valign="top">
         <td id="rs<%=i%>" width="1" rowspan="1"><%= (i) %>.</td>
-        <td width="29%">
-            <%= a %>
+        <td>
+            <%= TLSStreamHandler.getPeerIdentity(c) %> (<%= a %>)
         </td>
-        <td width="67%">
-            <%= c.getType() %>
+        <td>
+            <% boolean expired = c.getNotAfter().before(new Date());
+               if (expired) { %>
+                <font color="red">
+            <% } %>
+            <%= JiveGlobals.formatDateTime(c.getNotAfter()) %>
+            <% if (expired) { %>
+                </font>
+            <% } %>
+        </td>
+        <td width="1">
+            <% if (c.getSubjectDN().equals(c.getIssuerDN())) { %>
+                <fmt:message key="global.yes" />
+            <% } else { %>
+                <fmt:message key="global.no" />
+            <% } %>
         </td>
         <td width="2%">
             <a href="javascript:togglePublicKey('pk<%=i%>', 'rs<%=i%>');" title="<fmt:message key="ssl.settings.publickey.title" />"><fmt:message key="ssl.settings.publickey.label" /></a>

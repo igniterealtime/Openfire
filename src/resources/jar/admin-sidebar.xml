@@ -91,6 +91,11 @@
             <item id="server-ssl" name="${sidebar.server-ssl}"
                     url="ssl-settings.jsp"
                     description="${sidebar.server-ssl.descr}" />
+
+            <!-- Compression Settings -->
+            <item id="server-compression" name="${sidebar.server-compression}"
+                    url="compression-settings.jsp"
+                    description="${sidebar.server-compression.descr}" />
         </sidebar>
     </tab>
 

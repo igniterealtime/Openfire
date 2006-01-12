@@ -16,8 +16,18 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import java.io.*;
-import java.sql.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Central manager of database connections. All methods are static so that they
@@ -28,12 +38,11 @@ import java.sql.*;
  * or rows that a query should return.
  *
  * @author Jive Software
- *
- * @see org.jivesoftware.database.ConnectionProvider
+ * @see ConnectionProvider
  */
 public class DbConnectionManager {
 
-     private static final String CHECK_VERSION =
+    private static final String CHECK_VERSION =
             "SELECT majorVersion, minorVersion FROM jiveVersion";
 
     /**
@@ -175,7 +184,7 @@ public class DbConnectionManager {
      * Closes a prepared statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of
      * your database logic, as in the following example:
-     *
+     * <p/>
      * <pre>
      * Connection con = null;
      * PrepatedStatment pstmt = null;
@@ -192,7 +201,7 @@ public class DbConnectionManager {
      * }</pre>
      *
      * @param pstmt the prepated statement.
-     * @param con the connection.
+     * @param con   the connection.
      */
     public static void closeConnection(PreparedStatement pstmt, Connection con) {
         try {
@@ -211,7 +220,7 @@ public class DbConnectionManager {
      * statements associated with the connection should be closed before calling this method.
      * This method should be called within the finally section of your database logic, as
      * in the following example:
-     *
+     * <p/>
      * <pre>
      * Connection con = null;
      * try {
@@ -281,7 +290,7 @@ public class DbConnectionManager {
      * supports the feature, the cursor will be moved directly. Otherwise, we scroll
      * through results one by one manually by calling <tt>rs.next()</tt>.
      *
-     * @param rs the ResultSet object to scroll.
+     * @param rs        the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
      * @throws SQLException if an error occurs.
      */
@@ -290,7 +299,19 @@ public class DbConnectionManager {
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
                 rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-                rs.relative(rowNumber);
+
+                // We will attempt to do a relative fetch. This may fail in SQL Server if
+                // <resultset-navigation-strategy> is set to absolute. It would need to be
+                // set to looping to work correctly.
+                // If so, manually scroll to the correct row.
+                try {
+                    rs.relative(rowNumber);
+                }
+                catch (SQLException e) {
+                    for (int i = 0; i < rowNumber; i++) {
+                        rs.next();
+                    }
+                }
             }
         }
         // Otherwise, manually scroll to the correct row.
@@ -348,8 +369,14 @@ public class DbConnectionManager {
                 Log.error(e);
             }
             finally {
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                try {
+                    if (con != null) {
+                        con.close();
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
             }
         }
         // Remember what connection provider we want to use for restarts.
@@ -377,7 +404,7 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * retrieving large text values.
      *
-     * @param rs the ResultSet to retrieve the text field from.
+     * @param rs          the ResultSet to retrieve the text field from.
      * @param columnIndex the column in the ResultSet of the text field.
      * @return the String value of the text field.
      */
@@ -426,13 +453,12 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * setting large text values.
      *
-     * @param pstmt the PreparedStatement to set the text field in.
+     * @param pstmt          the PreparedStatement to set the text field in.
      * @param parameterIndex the index corresponding to the text field.
-     * @param value the String to set.
+     * @param value          the String to set.
      */
     public static void setLargeTextField(PreparedStatement pstmt, int parameterIndex,
-            String value) throws SQLException
-    {
+                                         String value) throws SQLException {
         if (isStreamTextRequired()) {
             Reader bodyReader;
             try {
@@ -456,7 +482,7 @@ public class DbConnectionManager {
      * statement. The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param stmt the Statement to set the max number of rows for.
+     * @param stmt    the Statement to set the max number of rows for.
      * @param maxRows the max number of rows to return.
      */
     public static void setMaxRows(Statement stmt, int maxRows) {
@@ -480,7 +506,7 @@ public class DbConnectionManager {
      * The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param rs the ResultSet to set the fetch size for.
+     * @param rs        the ResultSet to set the fetch size for.
      * @param fetchSize the fetchSize.
      */
     public static void setFetchSize(ResultSet rs, int fetchSize) {
@@ -706,8 +732,14 @@ public class DbConnectionManager {
             minorVersion = 0;
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         if (majorVersion == CURRENT_MAJOR_VERSION && minorVersion == CURRENT_MINOR_VERSION) {
             return false;
@@ -731,13 +763,13 @@ public class DbConnectionManager {
             return false;
         }
         // Run all upgrade scripts until we're up to the latest schema.
-        for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
+        for (int i = minorVersion; i < CURRENT_MINOR_VERSION; i++) {
             BufferedReader in = null;
             Statement stmt;
             try {
                 // Resource will be like "/database/upgrade/2.0_to_2.1/wildfire_hsqldb.sql"
                 String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
-                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/wildfire_" +
+                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i + 1) + "/wildfire_" +
                         databaseType + ".sql";
                 InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
                 if (resource == null) {
@@ -776,10 +808,18 @@ public class DbConnectionManager {
                 }
             }
             finally {
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
+                try {
+                    if (pstmt != null) {
+                        pstmt.close();
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
                 if (in != null) {
-                    try { in.close(); }
+                    try {
+                        in.close();
+                    }
                     catch (Exception e) {
                         // Ignore.
                     }

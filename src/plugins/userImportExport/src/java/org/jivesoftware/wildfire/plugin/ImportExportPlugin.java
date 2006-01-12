@@ -71,7 +71,7 @@ public class ImportExportPlugin implements Plugin {
     public byte[] exportUsersToFile() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         
-        XMLWriter writer = writer = new XMLWriter(out, OutputFormat.createPrettyPrint());
+        XMLWriter writer = new XMLWriter(out, OutputFormat.createPrettyPrint());
         writer.write(exportUsers());
         
         return out.toByteArray();
@@ -166,7 +166,7 @@ public class ImportExportPlugin implements Plugin {
         UserManager userManager = UserManager.getInstance();
         RosterItemProvider rosterItemProvider = RosterItemProvider.getInstance();
     	
-        Map<String, List>  rosterMap = new HashMap<String, List>();
+        Map<String, List<RosterItem>>  rosterMap = new HashMap<String, List<RosterItem>>();
         
         Element users = document.getRootElement();
         
@@ -245,14 +245,8 @@ public class ImportExportPlugin implements Plugin {
         }
         
         //this prevents a user from adding a non-existent user to their roster
-        Iterator i = rosterMap.keySet().iterator();
-        while (i.hasNext()) {
-            String userName = (String) i.next();
-            
-            Iterator rosterIter = rosterMap.get(userName).iterator();
-            while (rosterIter.hasNext()) {
-                RosterItem ri = (RosterItem) rosterIter.next();
-                
+        for (String userName: rosterMap.keySet()) {
+            for (RosterItem ri: rosterMap.get(userName)) {
                 try {
                     // If the contact is a local user then check that the user exists
                     if (serverName.equals(ri.getJid().getDomain())) {

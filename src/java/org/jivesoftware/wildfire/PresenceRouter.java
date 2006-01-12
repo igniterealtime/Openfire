@@ -11,15 +11,14 @@
 
 package org.jivesoftware.wildfire;
 
-import org.xmpp.packet.Presence;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
-import org.jivesoftware.wildfire.handler.PresenceSubscribeHandler;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -37,6 +36,7 @@ public class PresenceRouter extends BasicModule {
     private PresenceSubscribeHandler subscribeHandler;
     private PresenceManager presenceManager;
     private SessionManager sessionManager;
+    private MulticastRouter multicastRouter;
     private String serverName;
 
     /**
@@ -56,7 +56,7 @@ public class PresenceRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = sessionManager.getSession(packet.getFrom());
+        ClientSession session = sessionManager.getSession(packet.getFrom());
         if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
             handle(packet);
         }
@@ -64,17 +64,22 @@ public class PresenceRouter extends BasicModule {
             packet.setTo(session.getAddress());
             packet.setFrom((JID)null);
             packet.setError(PacketError.Condition.not_authorized);
-            try {
-                session.process(packet);
-            }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
-            }
+            session.process(packet);
         }
     }
 
     private void handle(Presence packet) {
         JID recipientJID = packet.getTo();
+        // Check if the packet was sent to the server hostname
+        if (recipientJID != null && recipientJID.getNode() == null &&
+                recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
+            if (packet.getElement().element("addresses") != null) {
+                // Presence includes multicast processing instructions. Ask the multicastRouter
+                // to route this packet
+                multicastRouter.route(packet);
+                return;
+            }
+        }
         try {
             Presence.Type type = packet.getType();
             // Presence updates (null is 'available')
@@ -137,6 +142,7 @@ public class PresenceRouter extends BasicModule {
         updateHandler = server.getPresenceUpdateHandler();
         subscribeHandler = server.getPresenceSubscribeHandler();
         presenceManager = server.getPresenceManager();
+        multicastRouter = server.getMulticastRouter();
         sessionManager = server.getSessionManager();
     }
 }

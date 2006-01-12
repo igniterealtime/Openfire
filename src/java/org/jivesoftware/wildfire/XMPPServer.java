@@ -386,6 +386,7 @@ public class XMPPServer {
         loadModule(IQRouter.class.getName());
         loadModule(MessageRouter.class.getName());
         loadModule(PresenceRouter.class.getName());
+        loadModule(MulticastRouter.class.getName());
         loadModule(PacketTransporterImpl.class.getName());
         loadModule(PacketDelivererImpl.class.getName());
         loadModule(TransportHandler.class.getName());
@@ -974,6 +975,17 @@ public class XMPPServer {
      */
     public PresenceRouter getPresenceRouter() {
         return (PresenceRouter) modules.get(PresenceRouter.class);
+    }
+
+    /**
+     * Returns the <code>MulticastRouter</code> registered with this server. The
+     * <code>MulticastRouter</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>MulticastRouter</code> registered with this server.
+     */
+    public MulticastRouter getMulticastRouter() {
+        return (MulticastRouter) modules.get(MulticastRouter.class);
     }
 
     /**

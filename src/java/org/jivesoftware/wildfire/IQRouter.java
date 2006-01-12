@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IQRouter extends BasicModule {
 
     private RoutingTable routingTable;
+    private MulticastRouter multicastRouter;
     private String serverName;
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
     private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
@@ -144,6 +145,7 @@ public class IQRouter extends BasicModule {
         super.initialize(server);
         serverName = server.getServerInfo().getName();
         routingTable = server.getRoutingTable();
+        multicastRouter = server.getMulticastRouter();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
     }
@@ -165,11 +167,23 @@ public class IQRouter extends BasicModule {
         // Check if the packet was sent to the server hostname
         if (recipientJID != null && recipientJID.getNode() == null &&
                 recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
-            if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
+            Element childElement = packet.getChildElement();
+            if (childElement != null && childElement.element("addresses") != null) {
+                // Packet includes multicast processing instructions. Ask the multicastRouter
+                // to route this packet
+                multicastRouter.route(packet);
+                return;
+            }
+            else if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
                 // The server got an answer to an IQ packet that was sent from the server
                 IQResultListener iqResultListener = resultListeners.remove(packet.getID());
                 if (iqResultListener != null) {
-                    iqResultListener.receivedAnswer(packet);
+                    try {
+                        iqResultListener.receivedAnswer(packet);
+                    }
+                    catch (Exception e) {
+                        Log.error("Error processing answer of remote entity", e);
+                    }
                     return;
                 }
             }

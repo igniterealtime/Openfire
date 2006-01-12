@@ -35,6 +35,7 @@ public class MessageRouter extends BasicModule {
     private OfflineMessageStrategy messageStrategy;
     private RoutingTable routingTable;
     private SessionManager sessionManager;
+    private MulticastRouter multicastRouter;
 
     private String serverName;
 
@@ -68,11 +69,20 @@ public class MessageRouter extends BasicModule {
         {
             JID recipientJID = packet.getTo();
 
-            // If the message was sent to the server hostname then forward the message to
-            // a configurable set of JID's (probably admin users)
-            if (recipientJID.getNode() == null && recipientJID.getResource() == null &&
+            // Check if the message was sent to the server hostname
+            if (recipientJID != null && recipientJID.getNode() == null &&
+                    recipientJID.getResource() == null &&
                     serverName.equals(recipientJID.getDomain())) {
-                sendMessageToAdmins(packet);
+                if (packet.getElement().element("addresses") != null) {
+                    // Message includes multicast processing instructions. Ask the multicastRouter
+                    // to route this packet
+                    multicastRouter.route(packet);
+                }
+                else {
+                    // Message was sent to the server hostname so forward it to a configurable
+                    // set of JID's (probably admin users)
+                    sendMessageToAdmins(packet);
+                }
                 return;
             }
 
@@ -146,6 +156,7 @@ public class MessageRouter extends BasicModule {
         messageStrategy = server.getOfflineMessageStrategy();
         routingTable = server.getRoutingTable();
         sessionManager = server.getSessionManager();
+        multicastRouter = server.getMulticastRouter();
         serverName = server.getServerInfo().getName();
     }
 }

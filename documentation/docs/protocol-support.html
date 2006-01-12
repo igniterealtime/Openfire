@@ -54,7 +54,7 @@ Suite</a>.</p>
   <th width="35%">Supported</th>
 </tr><tr>
   <td><a href="http://www.xmpp.org/specs/rfc3920.html">RFC 3920</a>: XMPP Core</td>
-  <td class="partially_supported">Yes/No (<a href="#rfc3920">see below</a>)</td>
+    <td class="supported">Yes</td>
 </tr><tr>
   <td><a href="http://www.xmpp.org/specs/rfc3921.html">RFC 3921</a>: XMPP IM</td>
   <td class="partially_supported">Yes/No (<a href="#rfc3921">see below</a>)</td>
@@ -141,6 +141,9 @@ JEPs that only require client-side support are omitted.</p>
   <td><a href="http://www.jabber.org/jeps/jep-0030.html">JEP-0030</a>: Service Discovery</td>
   <td>Basic</td>
 </tr><tr>
+ <td><a href="http://www.jabber.org/jeps/jep-0033.html">JEP-0033</a>: Extended Stanza Addressing</td>
+ <td>-</td>
+</tr><tr>
   <td><a href="http://www.jabber.org/jeps/jep-0045.html">JEP-0045</a>: Multi-User Chat</td>
   <td>Intermediate</td>
 </tr><tr>
@@ -186,22 +189,6 @@ JEPs that only require client-side support are omitted.</p>
 </table>
 <br>
 
-
-<a name="rfc3920"></a>
-<h2>Notes on RFC 3920: XMPP Core</h2>
-
-<p>Wildfire has full support for the XMPP Core specification (RFC 3920), <b>except</b> for the items listed below:
-
-<ul>
-    <li><b>TLS</b> (<a href="http://www.xmpp.org/specs/rfc3920.html#tls">RFC3920.5</a>)  -- Jive
-    Wildfire provides support for client-to-server (c2s) TLS streams as defined in the RFC, but does not currently
-    provide support for TLS between servers (s2s).</li>
-    
-    <li><b>SASL</b> (<a href="http://www.xmpp.org/specs/rfc3920.html#sasl">RFC33920.6</a>)  --
-    Wildfire provides support for client-to-server (c2s) SASL authentication, but does not currently
-    provide support for SASL between servers (s2s).</li>
-</ul>
-<br>
 
 <a name="rfc3921"></a>
 <h2>Notes on RFC 3921: XMPP IM</h2>

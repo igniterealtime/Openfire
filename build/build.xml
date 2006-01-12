@@ -730,9 +730,6 @@
                 <filter token="version" value="${version}"/>
             </filterset>
         </copy>
-        <copy todir="${release.out.dir}/documentation">
-            <fileset dir="${docs.dir}/docs/licenses"/>
-        </copy>
         <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
             <fileset dir="${docs.dir}/docs/images"/>
         </copy>

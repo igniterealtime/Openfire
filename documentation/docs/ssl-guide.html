@@ -11,9 +11,9 @@
 <p>
 This document outlines how to customize the SSL support in Wildfire.
 <font color="red"><b>Important note:</b></font>
-because Wildfire ships with self-signed certificates, most users can
-use the default configration and do not need to change the SSL environment. You should only
-attempt to change the SSL settings if it's required for your deployment.</p>
+because Wildfire ships with self-signed certificates, it will work out of the box without
+installing your own certificate. However, most users will wish to user their own
+certificates.</p>
 
 <p>Wildfire's SSL support is built using the standard Java security
 SSL implementation (javax.net.ssl.SSLServerSocket). In this document, we will

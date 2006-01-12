@@ -39,11 +39,7 @@ Choose your database from the list below for setup details:
 	<li> <a href="#sqlserver">Microsoft SQLServer</a>
 	<li> <a href="#postgres">PostgreSQL</a>
 	<li> <a href="#db2">IBM DB2</a>
-      <li> <a href="#hsql">HSQL db (Hypersonic)</a>
-<!--	
-	<li> <a href="#interbase">Interbase 6</a>
-	<li> <a href="#cloudscape">Cloudscape</a>
--->
+    <li> <a href="#hsql">HSQLDB</a>
 </ul>
 
 <h2><a name="mysql">MySQL</a></h2>
@@ -252,13 +248,13 @@ Choose your database from the list below for setup details:
 
 </ul>
 
-<p><h2><a name="hsql">HSQLDB 1.7.4</a></h2><p><ul>
+<p><h2><a name="hsql">HSQLDB</a></h2><p><ul>
 
     <b>Special Note</b>
     <p>
     Wildfire bundles hsqldb as its embedded database. If you choose to use the embedded database,
     it can be configured via the Wildfire installer. If you have a stand-alone installation
-    of hsqlDB, follow the instructions below to connect to it.
+    of HSQLDB, follow the instructions below to connect to it.
     </p>
 
 	<b>JDBC Drivers</b>
@@ -274,12 +270,11 @@ Choose your database from the list below for setup details:
 	<p>
 	<b>Setup Instructions</b>
 	<p>
-	Create a database for the Wildfire
-	tables. This assumes you have HSQL installed in its own
-	directory and working correctly.
+	Create a database for the Wildfire tables. This assumes you have HSQLDB installed
+    in its own directory and working correctly.
 	<ol>
 		<li>
-		Run the HSQL Database Manager by navigating to the folder where
+		Run the HSQLDB Database Manager by navigating to the folder where
 	    hsqldb.jar is located and type the following
 		<ul>
 		    <p>
@@ -289,7 +284,7 @@ Choose your database from the list below for setup details:
 	        <p>
 		</ul>
 	    then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
-	    in the Wildfire distribution - this is referring to the hsqldb.jar from the HSQL
+	    in the Wildfire distribution - this is referring to the hsqldb.jar from the HSQLDB
 	    distribution.
 	
 		<li>
@@ -309,106 +304,6 @@ Choose your database from the list below for setup details:
 		one.
 	</ol>
 </ul>
-<!--
-
-<p><h2><a name="interbase">Interbase 6.0</a></h2><p><ul>	
- 
-    <font color="red"><b>Warning:</b></font> some users have 
-    experienced problems trying to make Interbase work with Jive. You may
-    wish to try a different database such as MySQL or Postgres if possible.<p>
- 
-	<b>JDBC Drivers</b>
-	<p>
-    
-	JDBC drivers and other files for Interbase can be downloaded at
-	<a href="http://www.borland.com/devsupport/interbase/opensource/" target="_blank">
-	http://www.borland.com/devsupport/interbase/opensource/</a>. The JDBC
-	JAR file is called interclient.jar, and should be put in the classpath of
-	your application server.
-	<p>
-	Values for the config file are:
-	<ul>
-		<li>driver: <code>interbase.interclient.Driver</code>
-		<li>server: <code>jdbc:interbase://host/fullpath</code>
-	</ul>
-	
-	<p>
-	<b>Setup Instructions</b>
-	<p>
-	<ol>
-	  	<li>Create a new database by connecting to your Interbase server with 
-		IBConsole then use the Database/Create Database menu option.
-		<li>Execute the Jive SQL script using Interactive SQL. This can be 
-			started from the Tools/Interactive SQL menu. Within Interactive SQL 
-			load the jive_xmpp_interbase.sql script (Query/Load Script) and execute 
-			it (Query/Execute). The database will now have been constructed.  
-	</ol>
-	<p>
-	Notes: It would probably be a good idea to create a new user for Jive or 
-	at least to change the password. 
-	<p>
-	To use JDBC with interbase you have to have install the Interbase
-	InterServer which enables the InterClient JDBC driver to access the
-	database.	
-</ul>
-
-<p><h2><a name="cloudscape">Cloudscape 3.6.4</a></h2><p><ul>
-
-	Note: The following procedure will use the embedded version of Cloudscape, 
-	but a similar process can be used to setup the client/server version. The 
-	downloaded zip file supports both embedded and client/server modes.
-	<p>
-	
-	<p>
-	<b>Setup Instructions</b>
-	<p>
-
-	Cloudscape and the JDBC drivers can be downloaded at 
-	<a href="http://www.informix.com/cloudscape/" target="_blank">
-	http://www.informix.com/cloudscape/</a>, the zip file is cloudscape364.zip.
-	After downloading, unzip the file into \cloudscape directory and add the 
-	following JARs to the CLASSPATH of your system, the lib directory of Wildfire,
-      your application server,
-	or put them in the WEB-INF/lib directory created for the Jive web application.
-	<p>
-
-	For Windows:
-<pre>
-	md \cloudscape
-	cd \cloudscape
-	jar xvf cloudscape364.zip
-	set CLASSPATH=%CLASSPATH%;\cloudscape\lib\cloudscape.jar;\cloudscape\lib\tools.jar
-</pre>
-	
-	
-<ol>
-	<li> Change into your Cloudscape directory, i.e. cd \cloudscape
-	<li> Copy in the file jive_cloudscape_364.sql.
-	<li> Using the Cloudscape Interactive JDBC scripting tool (ij), create the 
-		database:
-<pre>
-	java COM.cloudscape.tools.ij
-	ij version 3.6 (c) 1997-2001 Informix Software, Inc.
-	ij> connect 'jdbc:cloudscape:jiveDB;create=true';
-	ij> run 'jive_cloudscape_364.sql';
-	ij> select * from jiveuser;
-	ij> exit;
-</pre>
-</ol>
-
-<p>
-<b>JDBC Drivers</b>
-<p>
-
-Values for the admin tool are:<ul>
-	<li>driver: <code>COM.cloudscape.JDBCDriver</code>
-	<li>server: <code>jdbc:cloudscape:/cloudscape/jiveDB</code>
-	<li>username: <code>APP</code>
-	<li>password: <code>APP</code>
-</ul>
-
-</ul>
--->
 
 </body>
 </html>

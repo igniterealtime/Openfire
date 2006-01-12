@@ -180,6 +180,7 @@
         <entry location="bin/extra/wildfired" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
       <excludedScreenIds />
@@ -196,6 +197,7 @@
         <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
       <customScriptLines />
@@ -209,6 +211,7 @@
         <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
       <customScriptLines />
@@ -225,12 +228,13 @@
         <entry location="bin/extra/wildfired" launcher="false" />
         <entry location="bin/wildfire.bat" launcher="false" />
         <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
     </win32Archive>
   </mediaSets>
   <buildIds buildAll="false">
-    <mediaSet refId="3" />
+    <mediaSet refId="31" />
   </buildIds>
 </install4j>
 

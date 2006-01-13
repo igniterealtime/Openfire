@@ -1,13 +1,13 @@
 /**
- * $RCSfile: ,v $
  * $Revision: $
  * $Date:  $
  *
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
+ * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
  * This software is the proprietary information of Jive Software.
  * Use is subject to license terms.
  */
+
 package org.jivesoftware.wildfire.launcher;
 
 import com.install4j.api.Context;
@@ -15,6 +15,7 @@ import com.install4j.api.ProgressInterface;
 import com.install4j.api.UninstallAction;
 
 import java.io.File;
+import java.io.FilenameFilter;
 
 /**
  * Used with the Install4J installer to uninstall the remaining files within
@@ -31,19 +32,19 @@ public class Uninstaller extends UninstallAction {
 
         File libDirectory = new File(installationDirectory, "lib");
 
-        // If the directory still exists, remove all libs.
+        // If the directory still exists, remove all JAR files.
         if (libDirectory.exists() && libDirectory.isDirectory()) {
-            File[] archives = libDirectory.listFiles();
-            int no = archives != null ? archives.length : 0;
-            for (int i = 0; i < no; i++) {
-                File file = archives[i];
-                file.delete();
+            File[] jars = libDirectory.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".jar");
+                }
+            });
+            for (File jar : jars) {
+                jar.delete();
             }
         }
 
-        return super.performAction(context, progressInterface);    //To change body of overridden methods use File | Settings | File Templates.
+        return super.performAction(context, progressInterface);
     }
 
-
 }
-

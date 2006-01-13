@@ -678,8 +678,6 @@
 
         <!-- Pack200 processing on JAR files in lib dir -->
 
-        <echo>here</echo>
-
         <for param="jar">
             <path>
                 <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar" />
@@ -690,7 +688,6 @@
                     destfile="@{jar}.pack"
                     gzipoutput="false"
                     segmentlimit="-1"
-                    modificationtime="latest"
                 />
                 <delete file="@{jar}" />
             </sequential>

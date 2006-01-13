@@ -452,11 +452,8 @@ public class XMLProperties {
         Writer writer = null;
         try {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
-            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
-            prettyPrinter.setEncoding("UTF-8");
-            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
-            xmlWriter.write(document);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
+            writer.write(document.asXML());
         }
         catch (Exception e) {
             Log.error(e);

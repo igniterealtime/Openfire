@@ -403,7 +403,7 @@ function addEmailContact() {
     <% if (plugin.getEmailContacts().size() == 0) { %>
    
     <tr>
-        <td width="100%" colspan="2" align="center" nowrap>No contacts pecified, use the form above to add one.</td>
+        <td width="100%" colspan="2" align="center" nowrap>No contacts specified, use the form above to add one.</td>
     </tr>
    
     <% } %>

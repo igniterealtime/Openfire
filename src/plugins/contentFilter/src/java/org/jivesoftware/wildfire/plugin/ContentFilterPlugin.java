@@ -40,58 +40,52 @@ import org.xmpp.packet.Presence;
 
 /**
  * Content filter plugin.
- *
+ * 
  * @author Conor Hayes
  */
 public class ContentFilterPlugin implements Plugin, PacketInterceptor {
-    
+
     /**
      * The expected value is a boolean, if true the user identified by the value
      * of the property #VIOLATION_NOTIFICATION_CONTACT_PROPERTY will be notified
      * every time there is a content match, otherwise no notification will be
      * sent. Then default value is false.
      */
-    public static final String VIOLATION_NOTIFICATION_ENABLED_PROPERTY =
-            "plugin.contentFilter.violation.notification.enabled";
+    public static final String VIOLATION_NOTIFICATION_ENABLED_PROPERTY = "plugin.contentFilter.violation.notification.enabled";
 
     /**
      * The expected value is a user name. The default value is "admin".
      */
-    public static final String VIOLATION_NOTIFICATION_CONTACT_PROPERTY =
-            "plugin.contentFilter.violation.notification.contact";
+    public static final String VIOLATION_NOTIFICATION_CONTACT_PROPERTY = "plugin.contentFilter.violation.notification.contact";
 
     /**
      * The expected value is a boolean, if true the user identified by the value
-     * of the property #VIOLATION_NOTIFICATION_CONTACT_PROPERTY, will also receive
-     * a copy of the offending packet. The default value is false.
+     * of the property #VIOLATION_NOTIFICATION_CONTACT_PROPERTY, will also
+     * receive a copy of the offending packet. The default value is false.
      */
-    public static final String VIOLATION_INCLUDE_ORIGNAL_PACKET_ENABLED_PROPERTY =
-            "plugin.contentFilter.violation.notification.include.original.enabled";
+    public static final String VIOLATION_INCLUDE_ORIGNAL_PACKET_ENABLED_PROPERTY = "plugin.contentFilter.violation.notification.include.original.enabled";
 
     /**
      * The expected value is a boolean, if true the user identified by the value
      * of the property #VIOLATION_NOTIFICATION_CONTACT_PROPERTY, will receive
      * notification by IM. The default value is true.
      */
-    public static final String VIOLATION_NOTIFICATION_BY_IM_ENABLED_PROPERTY =
-            "plugin.contentFilter.violation.notification.by.im.enabled";
-    
+    public static final String VIOLATION_NOTIFICATION_BY_IM_ENABLED_PROPERTY = "plugin.contentFilter.violation.notification.by.im.enabled";
+
     /**
      * The expected value is a boolean, if true the user identified by the value
      * of the property #VIOLATION_NOTIFICATION_CONTACT_PROPERTY, will receive
      * notification by email. The default value is false.
      */
-    public static final String VIOLATION_NOTIFICATION_BY_EMAIL_ENABLED_PROPERTY =
-            "plugin.contentFilter.violation.notification.by.email.enabled";
-    
+    public static final String VIOLATION_NOTIFICATION_BY_EMAIL_ENABLED_PROPERTY = "plugin.contentFilter.violation.notification.by.email.enabled";
+
     /**
-     * The expected value is a boolean, if true the sender will be notified when a
-     * message is rejected, otherwise the message will be silently rejected,i.e. the
-     * sender will not know that the message was rejected and the receiver will
-     * not get the message. The default value is false.
+     * The expected value is a boolean, if true the sender will be notified when
+     * a message is rejected, otherwise the message will be silently
+     * rejected,i.e. the sender will not know that the message was rejected and
+     * the receiver will not get the message. The default value is false.
      */
-    public static final String REJECTION_NOTIFICATION_ENABLED_PROPERTY =
-            "plugin.contentFilter.rejection.notification.enabled";
+    public static final String REJECTION_NOTIFICATION_ENABLED_PROPERTY = "plugin.contentFilter.rejection.notification.enabled";
 
     /**
      * The expected value is a string, containing the desired message for the
@@ -109,10 +103,10 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * The expected value is a comma separated string of regular expressions.
      */
     public static final String PATTERNS_PROPERTY = "plugin.contentFilter.patterns";
-        
+
     /**
-     * The expected value is a boolean, if true Presence packets will
-     * be filtered
+     * The expected value is a boolean, if true Presence packets will be
+     * filtered
      */
     public static final String FILTER_STATUS_ENABLED_PROPERTY = "plugin.contentFilter.filter.status.enabled";
 
@@ -123,10 +117,10 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     public static final String MASK_ENABLED_PROPERTY = "plugin.contentFilter.mask.enabled";
 
     /**
-     * The expected value is a string. If this property is set any
-     * matching content will not be rejected but masked with the given value.
-     * Setting a content mask means that property #SENDER_NOTIFICATION_ENABLED_PROPERTY
-     * is ignored. The default value is "**".
+     * The expected value is a string. If this property is set any matching
+     * content will not be rejected but masked with the given value. Setting a
+     * content mask means that property #SENDER_NOTIFICATION_ENABLED_PROPERTY is
+     * ignored. The default value is "**".
      */
     public static final String MASK_PROPERTY = "plugin.contentFilter.mask";
 
@@ -164,13 +158,13 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * the admin user to send violation notifications to
      */
     private String violationContact;
-    
+
     /**
-     * flags if original packet should be included in the message
-     * to the violation contact.
+     * flags if original packet should be included in the message to the
+     * violation contact.
      */
     private boolean violationIncludeOriginalPacketEnabled;
-    
+
     /**
      * flags if violation contact should be notified by IM.
      */
@@ -180,7 +174,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * flags if violation contact should be notified by email.
      */
     private boolean violationNotificationByEmailEnabled;
-    
+
     /**
      * flag if patterns should be used
      */
@@ -190,7 +184,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * the patterns to use
      */
     private String patterns;
-    
+
     /**
      * flag if Presence packets should be filtered.
      */
@@ -225,7 +219,8 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
     public void setMaskEnabled(boolean enabled) {
         maskEnabled = enabled;
-        JiveGlobals.setProperty(MASK_ENABLED_PROPERTY, enabled ? "true" : "false");
+        JiveGlobals.setProperty(MASK_ENABLED_PROPERTY, enabled ? "true"
+                : "false");
 
         changeContentFilterMask();
     }
@@ -240,8 +235,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     private void changeContentFilterMask() {
         if (maskEnabled) {
             contentFilter.setMask(mask);
-        }
-        else {
+        } else {
             contentFilter.clearMask();
         }
     }
@@ -268,22 +262,21 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
         changeContentFilterPatterns();
     }
-    
+
     public boolean isFilterStatusEnabled() {
         return filterStatusEnabled;
     }
-    
+
     public void setFilterStatusEnabled(boolean enabled) {
         filterStatusEnabled = enabled;
-        JiveGlobals.setProperty(FILTER_STATUS_ENABLED_PROPERTY, enabled ? "true"
-                : "false");
+        JiveGlobals.setProperty(FILTER_STATUS_ENABLED_PROPERTY,
+                enabled ? "true" : "false");
     }
 
     private void changeContentFilterPatterns() {
         if (patternsEnabled) {
             contentFilter.setPatterns(patterns);
-        }
-        else {
+        } else {
             contentFilter.clearPatterns();
         }
     }
@@ -323,23 +316,25 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
     public void setViolationContact(String contact) {
         violationContact = contact;
-        JiveGlobals.setProperty(VIOLATION_NOTIFICATION_CONTACT_PROPERTY, contact);
+        JiveGlobals.setProperty(VIOLATION_NOTIFICATION_CONTACT_PROPERTY,
+                contact);
     }
 
     public String getViolationContact() {
         return violationContact;
     }
-    
+
     public boolean isViolationIncludeOriginalPacketEnabled() {
         return violationIncludeOriginalPacketEnabled;
     }
-    
+
     public void setViolationIncludeOriginalPacketEnabled(boolean enabled) {
         violationIncludeOriginalPacketEnabled = enabled;
-        JiveGlobals.setProperty(VIOLATION_INCLUDE_ORIGNAL_PACKET_ENABLED_PROPERTY,
+        JiveGlobals.setProperty(
+                VIOLATION_INCLUDE_ORIGNAL_PACKET_ENABLED_PROPERTY,
                 enabled ? "true" : "false");
     }
-    
+
     public boolean isViolationNotificationByIMEnabled() {
         return violationNotificationByIMEnabled;
     }
@@ -349,14 +344,15 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         JiveGlobals.setProperty(VIOLATION_NOTIFICATION_BY_IM_ENABLED_PROPERTY,
                 enabled ? "true" : "false");
     }
-    
+
     public boolean isViolationNotificationByEmailEnabled() {
         return violationNotificationByEmailEnabled;
     }
 
     public void setViolationNotificationByEmailEnabled(boolean enabled) {
         violationNotificationByEmailEnabled = enabled;
-        JiveGlobals.setProperty(VIOLATION_NOTIFICATION_BY_EMAIL_ENABLED_PROPERTY,
+        JiveGlobals.setProperty(
+                VIOLATION_NOTIFICATION_BY_EMAIL_ENABLED_PROPERTY,
                 enabled ? "true" : "false");
     }
 
@@ -374,17 +370,17 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                 VIOLATION_NOTIFICATION_ENABLED_PROPERTY, false);
 
         // default to "admin"
-        violationContact = JiveGlobals.getProperty(VIOLATION_NOTIFICATION_CONTACT_PROPERTY,
-                "admin");
-        
+        violationContact = JiveGlobals.getProperty(
+                VIOLATION_NOTIFICATION_CONTACT_PROPERTY, "admin");
+
         // default to true
         violationNotificationByIMEnabled = JiveGlobals.getBooleanProperty(
                 VIOLATION_NOTIFICATION_BY_IM_ENABLED_PROPERTY, true);
-        
+
         // default to false
         violationNotificationByEmailEnabled = JiveGlobals.getBooleanProperty(
                 VIOLATION_NOTIFICATION_BY_EMAIL_ENABLED_PROPERTY, false);
-        
+
         // default to false
         violationIncludeOriginalPacketEnabled = JiveGlobals.getBooleanProperty(
                 VIOLATION_INCLUDE_ORIGNAL_PACKET_ENABLED_PROPERTY, false);
@@ -398,22 +394,23 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                 "Message rejected. This is an automated server response");
 
         // default to false
-        patternsEnabled = JiveGlobals.getBooleanProperty(PATTERNS_ENABLED_PROPERTY,
-                false);
+        patternsEnabled = JiveGlobals.getBooleanProperty(
+                PATTERNS_ENABLED_PROPERTY, false);
 
-        //default to "fox,dog"
+        // default to "fox,dog"
         patterns = JiveGlobals.getProperty(PATTERNS_PROPERTY, "fox,dog");
 
         changeContentFilterPatterns();
-        
+
         // default to false
-        filterStatusEnabled = JiveGlobals.getBooleanProperty(FILTER_STATUS_ENABLED_PROPERTY,
+        filterStatusEnabled = JiveGlobals.getBooleanProperty(
+                FILTER_STATUS_ENABLED_PROPERTY, false);
+
+        // default to false
+        maskEnabled = JiveGlobals.getBooleanProperty(MASK_ENABLED_PROPERTY,
                 false);
 
-        // default to false
-        maskEnabled = JiveGlobals.getBooleanProperty(MASK_ENABLED_PROPERTY, false);
-
-        //default to "***"
+        // default to "***"
         mask = JiveGlobals.getProperty(MASK_PROPERTY, "***");
 
         changeContentFilterMask();
@@ -426,130 +423,145 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         // unregister with interceptor manager
         interceptorManager.removeInterceptor(this);
     }
-   
+
     public void interceptPacket(Packet packet, Session session, boolean read,
             boolean processed) throws PacketRejectedException {
-   
+
         if (isValidTargetPacket(packet, read, processed)) {
-                       
+
             Packet original = packet;
-            
+
             if (Log.isDebugEnabled()) {
-                Log.debug("Content filter: intercepted packet:" + original.toString());
+                Log.debug("Content filter: intercepted packet:"
+                        + original.toString());
             }
 
             // make a copy of the original packet only if required,
             // as it's an expensive operation
-            if (violationNotificationEnabled && violationIncludeOriginalPacketEnabled && maskEnabled) {
+            if (violationNotificationEnabled
+                    && violationIncludeOriginalPacketEnabled && maskEnabled) {
                 original = packet.createCopy();
             }
-            
+
             // filter the packet
             boolean contentMatched = contentFilter.filter(packet);
-            
+
             if (Log.isDebugEnabled()) {
                 Log.debug("Content filter: content matched? " + contentMatched);
             }
 
             // notify admin of violations
             if (contentMatched && violationNotificationEnabled) {
-                
+
                 if (Log.isDebugEnabled()) {
-                    Log.debug("Content filter: sending violation notification");                    
-                    Log.debug("Content filter: include original msg? " +
-                            this.violationIncludeOriginalPacketEnabled);
+                    Log.debug("Content filter: sending violation notification");
+                    Log.debug("Content filter: include original msg? "
+                            + this.violationIncludeOriginalPacketEnabled);
                 }
-                
-                //TODO consider spining off a separate thread here,
-                //in high volume situations, it will result in
-                //in faster response and notification is not required
-                //to be real time.
+
+                // TODO consider spining off a separate thread here,
+                // in high volume situations, it will result in
+                // in faster response and notification is not required
+                // to be real time.
                 sendViolationNotification(original);
             }
 
-            // msg will either be rejected silently, rejected with 
+            // msg will either be rejected silently, rejected with
             // some notification to sender, or masked.
             if (contentMatched) {
                 if (maskEnabled) {
-                    //masking enabled, no further action required
+                    // masking enabled, no further action required
                     if (Log.isDebugEnabled()) {
-                        Log.debug("Content filter: masked content:" + packet.toString());
+                        Log.debug("Content filter: masked content:"
+                                + packet.toString());
                     }
                 } else {
-                    //no masking, msg must be rejected                    
+                    // no masking, msg must be rejected
                     if (Log.isDebugEnabled()) {
                         Log.debug("Content filter: rejecting packet");
                     }
-                    
+
                     PacketRejectedException rejected = new PacketRejectedException(
                             "Packet rejected with disallowed content!");
-    
+
                     if (rejectionNotificationEnabled) {
                         // let the sender know about the rejection, this is
                         // only possible/useful if the content is not masked
                         rejected.setRejectionMessage(rejectionMessage);
                     }
-    
+
                     throw rejected;
                 }
             }
         }
     }
 
-    private boolean isValidTargetPacket(Packet packet, boolean read, boolean processed) {
-        return patternsEnabled && !processed && read && 
-                (packet instanceof Message || 
-                        (filterStatusEnabled && packet instanceof Presence));
+    private boolean isValidTargetPacket(Packet packet, boolean read,
+            boolean processed) {
+        return patternsEnabled
+                && !processed
+                && read
+                && (packet instanceof Message || (filterStatusEnabled && packet instanceof Presence));
     }
 
     private void sendViolationNotification(Packet originalPacket) {
-          
-        String subject = "Content filter notification! (" + originalPacket.getFrom().getNode() + ")";
-        
+
+        String subject = "Content filter notification! ("
+                + originalPacket.getFrom().getNode() + ")";
+
         String body = null;
         if (originalPacket instanceof Message) {
             Message originalMsg = (Message) originalPacket;
             body = "Disallowed content detected in message from:"
-                + originalMsg.getFrom() + " to:" + originalMsg.getTo()
-                + ", message was "
-                + (contentFilter.isMaskingContent() ? "altered." : "rejected.")
-                + (violationIncludeOriginalPacketEnabled ?  
-                    "\nOriginal subject:" + (originalMsg.getSubject() != null ?  originalMsg.getSubject() : "") 
-                  + "\nOriginal content:" + (originalMsg.getBody() != null ? originalMsg.getBody() : "")  : "");
+                    + originalMsg.getFrom()
+                    + " to:"
+                    + originalMsg.getTo()
+                    + ", message was "
+                    + (contentFilter.isMaskingContent() ? "altered."
+                            : "rejected.")
+                    + (violationIncludeOriginalPacketEnabled ? "\nOriginal subject:"
+                            + (originalMsg.getSubject() != null ? originalMsg
+                                    .getSubject() : "")
+                            + "\nOriginal content:"
+                            + (originalMsg.getBody() != null ? originalMsg
+                                    .getBody() : "")
+                            : "");
 
         } else {
-            //presence
+            // presence
             Presence originalPresence = (Presence) originalPacket;
             body = "Disallowed status detected in presence from:"
-                + originalPresence.getFrom()
-                + ", status was "
-                + (contentFilter.isMaskingContent() ? "altered." : "rejected.")
-                + (violationIncludeOriginalPacketEnabled ?  
-                        "\nOriginal status:" + originalPresence.getStatus() : "");
+                    + originalPresence.getFrom()
+                    + ", status was "
+                    + (contentFilter.isMaskingContent() ? "altered."
+                            : "rejected.")
+                    + (violationIncludeOriginalPacketEnabled ? "\nOriginal status:"
+                            + originalPresence.getStatus()
+                            : "");
         }
-        
+
         if (violationNotificationByIMEnabled) {
-        		
+
             if (Log.isDebugEnabled()) {
                 Log.debug("Content filter: sending IM notification");
             }
             sendViolationNotificationIM(subject, body);
         }
-        
+
         if (violationNotificationByEmailEnabled) {
-    		
+
             if (Log.isDebugEnabled()) {
                 Log.debug("Content filter: sending email notification");
             }
             sendViolationNotificationEmail(subject, body);
-        }        
+        }
     }
 
-	private void sendViolationNotificationIM(String subject, String body) {
-		Message message = createServerMessage(subject, body);
-		messageRouter.route(message);
-	}
-    
+    private void sendViolationNotificationIM(String subject, String body) {
+        Message message = createServerMessage(subject, body);
+        messageRouter.route(message);
+    }
+
     private Message createServerMessage(String subject, String body) {
         Message message = new Message();
         message.setTo(violationContact + "@"
@@ -559,36 +571,40 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         message.setBody(body);
         return message;
     }
-    
+
     private void sendViolationNotificationEmail(String subject, String body) {
 
         List<MimeMessage> messages = new ArrayList<MimeMessage>();
 
-        EmailService emailService = EmailService.getInstance();
-
-        MimeMessage message = emailService.createMimeMessage();
-
-        String encoding = MimeUtility.mimeCharset("iso-8859-1");
-        
         try {
-        	   User user = UserManager.getInstance().getUser(violationContact);
-        	   
-           message.setRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(user.getEmail()));
 
-           message.setFrom(new InternetAddress("no_reply@" + violationNotificationFrom, "Wildfire", encoding));
+            EmailService emailService = EmailService.getInstance();
 
-           message.setText(body);
+            MimeMessage message = emailService.createMimeMessage();
 
-           message.setSubject(subject);
-           
-           message.setSentDate(new Date());
+            String encoding = MimeUtility.mimeCharset("iso-8859-1");
 
-           messages.add(message);
+            User user = UserManager.getInstance().getUser(violationContact);
 
-        } catch (Exception e) {
-            Log.error(e);
+            message.setRecipient(javax.mail.Message.RecipientType.TO,
+                    new InternetAddress(user.getEmail()));
+
+            message.setFrom(new InternetAddress("no_reply@"
+                    + violationNotificationFrom, "Wildfire", encoding));
+
+            message.setText(body);
+
+            message.setSubject(subject);
+
+            message.setSentDate(new Date());
+
+            messages.add(message);
+
+            emailService.sendMessages(messages);
+
+        } catch (Throwable e) { 
+            // catch throwable in case email setup is invalid
+            Log.error("Content Filter: Failed to send email, please review Wildfire setup", e);
         }
-       
-        emailService.sendMessages(messages);
     }
 }

@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.Auditor;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -255,7 +256,7 @@ public class AuditorImpl implements Auditor {
                     element.addAttribute("status", "unknown");
                     break;
             }
-            element.addAttribute("timestamp", new Date().toString());
+            element.addAttribute("timestamp", JiveGlobals.formatDateTime(new Date()));
             element.add(packet.getElement());
         }
 

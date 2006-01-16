@@ -680,7 +680,7 @@
 
         <for param="jar">
             <path>
-                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar,mail.jar" />
+                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar,mail.jar,activation.jar" />
             </path>
             <sequential>
                 <delete file="@{jar}.pack" />

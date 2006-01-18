@@ -361,7 +361,7 @@ public class MUCRoomImpl implements MUCRoom {
         throw new UserNotFoundException();
     }
 
-    public MUCRole getOccupantByFullJID(String jid) throws UserNotFoundException {
+    public MUCRole getOccupantByFullJID(JID jid) throws UserNotFoundException {
         MUCRole role = occupantsByFullJID.get(jid);
         if (role != null) {
             return role;
@@ -664,7 +664,7 @@ public class MUCRoomImpl implements MUCRoom {
                 occupantsByBareJID.remove(user.getAddress().toBareJID());
             }
         }
-        occupantsByFullJID.remove(user.getAddress().toString());
+        occupantsByFullJID.remove(user.getAddress());
     }
 
     public void destroyRoom(String alternateJID, String reason) {

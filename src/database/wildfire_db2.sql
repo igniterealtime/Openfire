@@ -26,7 +26,7 @@ CREATE TABLE jivePrivate (
   username              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
-  value                 LONG VARCHAR    NOT NULL,
+  value                 VARCHAR(2000)   NOT NULL,
   CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
@@ -36,7 +36,7 @@ CREATE TABLE jiveOffline (
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  message               LONG VARCHAR    NOT NULL,
+  message               VARCHAR(2000)   NOT NULL,
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE jiveOffline (
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
   username              VARCHAR(32)     NOT NULL,
-  jid                   VARCHAR(1000)   NOT NULL,
+  jid                   VARCHAR(2000)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
@@ -65,7 +65,7 @@ CREATE INDEX jiveRoGrps_rid_idx ON jiveRosterGroups (rosterID ASC);
 
 CREATE TABLE jiveVCard (
   username              VARCHAR(32)     NOT NULL,
-  value                 LONG VARCHAR    NOT NULL,
+  value                 VARCHAR(2000)   NOT NULL,
   CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
 );
 
@@ -116,14 +116,14 @@ CREATE TABLE jiveExtComponentConf (
   subdomain             VARCHAR(255)    NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT jiveExtComponentConf_pk PRIMARY KEY (subdomain)
+  CONSTRAINT jiveExtCmpConf_pk PRIMARY KEY (subdomain)
 );
 
 CREATE TABLE jiveRemoteServerConf (
   domain                VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
+  CONSTRAINT jiveRmSrvConf_pk PRIMARY KEY (domain)
 );
 
 -- MUC tables
@@ -136,17 +136,17 @@ CREATE TABLE mucRoom (
   naturalName         VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
   lockedDate          CHAR(15)      NOT NULL,
-  emptyDate           CHAR(15)      NULL,
+  emptyDate           CHAR(15),
   canChangeSubject    INTEGER       NOT NULL,
   maxUsers            INTEGER       NOT NULL,
   publicRoom          INTEGER       NOT NULL,
   moderated           INTEGER       NOT NULL,
   membersOnly         INTEGER       NOT NULL,
   canInvite           INTEGER       NOT NULL,
-  password            VARCHAR(50)   NULL,
+  password            VARCHAR(50),
   canDiscoverJID      INTEGER       NOT NULL,
   logEnabled          INTEGER       NOT NULL,
-  subject             VARCHAR(100)  NULL,
+  subject             VARCHAR(100),
   rolesToBroadcast    INTEGER       NOT NULL,
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
@@ -154,7 +154,7 @@ CREATE TABLE mucRoom (
   CONSTRAINT mucRoom_pk PRIMARY KEY (name)
 );
 
-CREATE INDEX mucRoom_roomid_idx ON mucRoom (roomID);
+CREATE INDEX mucRm_roomid_idx ON mucRoom (roomID);
 
 CREATE TABLE mucRoomProp (
   roomID                INTEGER         NOT NULL,
@@ -173,22 +173,22 @@ CREATE TABLE mucAffiliation (
 CREATE TABLE mucMember (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,
-  nickname            VARCHAR(255)  NULL,
-  firstName           VARCHAR(100)  NULL,
-  lastName            VARCHAR(100)  NULL,
-  url                 VARCHAR(100)  NULL,
-  email               VARCHAR(100)  NULL,
-  faqentry            VARCHAR(100)  NULL,
+  nickname            VARCHAR(255),
+  firstName           VARCHAR(100),
+  lastName            VARCHAR(100),
+  url                 VARCHAR(100),
+  email               VARCHAR(100),
+  faqentry            VARCHAR(100),
   CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
 
 CREATE TABLE mucConversationLog (
   roomID              INTEGER       NOT NULL,
-  sender              VARCHAR(1000) NOT NULL,
-  nickname            VARCHAR(255)  NULL,
+  sender              VARCHAR(2000)       NOT NULL,
+  nickname            VARCHAR(255),
   time                CHAR(15)      NOT NULL,
-  subject             VARCHAR(255)  NULL,
-  body                CLOB          NULL
+  subject             VARCHAR(255),
+  body                CLOB
 );
 CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 

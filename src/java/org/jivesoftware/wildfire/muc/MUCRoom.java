@@ -145,7 +145,7 @@ public interface MUCRoom {
      * @return The user's role in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
-    MUCRole getOccupantByFullJID(String jid) throws UserNotFoundException;
+    MUCRole getOccupantByFullJID(JID jid) throws UserNotFoundException;
 
     /**
      * Obtain the roles of all users in the chatroom.

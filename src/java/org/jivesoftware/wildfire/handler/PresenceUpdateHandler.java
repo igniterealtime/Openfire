@@ -87,6 +87,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
+                if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                    Log.warn("Rejected available presence: " + presence + " - " + session);
+                    return;
+                }
                 broadcastUpdate(presence.createCopy());
                 if (session != null) {
                     session.setPresence(presence);
@@ -359,6 +363,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         Set<String> jids = map.get(handler);
                         if (jids != null) {
                             jids.remove(jid);
+                            if (jids.isEmpty()) {
+                                map.remove(handler);
+                                if (map.isEmpty()) {
+                                    // Remove the user from the registry since the list of directed
+                                    // presences is empty
+                                    directedPresences.remove(update.getFrom().toString());
+                                }
+                            }
                         }
 
                     }
@@ -387,7 +399,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
-            Map<ChannelHandler, Set<String>> map = directedPresences.get(update.getFrom().toString());
+            // Remove the registry of directed presences of this user
+            Map<ChannelHandler, Set<String>> map = directedPresences.remove(update.getFrom().toString());
             if (map != null) {
                 // Iterate over all the entities that the user sent a directed presence
                 for (ChannelHandler handler : new HashSet<ChannelHandler>(map.keySet())) {
@@ -406,8 +419,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         }
                     }
                 }
-                // Remove the registry of directed presences of this user
-                directedPresences.remove(update.getFrom().toString());
             }
         }
     }

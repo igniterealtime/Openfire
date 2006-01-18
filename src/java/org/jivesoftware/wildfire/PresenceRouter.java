@@ -95,9 +95,15 @@ public class PresenceRouter extends BasicModule {
                     // The user sent a directed presence to an entity
                     ChannelHandler route = routingTable.getRoute(recipientJID);
                     if (route != null) {
-                        route.process(packet);
-                        // Notify the PresenceUpdateHandler of the directed presence
+                        Session session = sessionManager.getSession(packet.getFrom());
+                        if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                            Log.warn("Rejected available presence: " + packet + " - " + session);
+                            return;
+                        }
+                        // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, route, recipientJID.toString());
+                        // Route the packet
+                        route.process(packet);
                     }
                 }
 

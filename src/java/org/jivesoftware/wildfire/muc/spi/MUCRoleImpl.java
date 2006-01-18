@@ -120,6 +120,8 @@ public class MUCRoleImpl implements MUCRole {
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceDomain(), nick);
         setPresence(presence);
+        // Add the new role to the list of roles
+        user.addRole(room.getName(), this);
     }
 
     public Presence getPresence() {

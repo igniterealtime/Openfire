@@ -78,6 +78,10 @@ public class MUCUserImpl implements MUCUser {
         return Collections.unmodifiableCollection(roles.values()).iterator();
     }
 
+    public void addRole(String roomName, MUCRole role) {
+        roles.put(roomName.toLowerCase(), role);
+    }
+
     public void removeRole(String roomName) {
         roles.remove(roomName.toLowerCase());
     }
@@ -406,7 +410,6 @@ public class MUCUserImpl implements MUCUser {
                                     historyRequest,
                                     this,
                                     packet.createCopy());
-                            roles.put(group.toLowerCase(), role);
                             // If the client that created the room is non-MUC compliant then
                             // unlock the room thus creating an "instant" room
                             if (mucInfo == null && room.isLocked() && !room.isManuallyLocked()) {
@@ -464,7 +467,7 @@ public class MUCUserImpl implements MUCUser {
                 else {
                     if (Presence.Type.unavailable == packet.getType()) {
                         try {
-                            roles.remove(group.toLowerCase());
+                            removeRole(group);
                             role.getChatRoom().leaveRoom(role.getNickname());
                         }
                         catch (UserNotFoundException e) {

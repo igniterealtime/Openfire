@@ -231,6 +231,13 @@ public abstract class SocketReader implements Runnable {
                     // an available presence show
                     packet.setShow(null);
                 }
+                if (session.getStatus() == Session.STATUS_CLOSED && packet.isAvailable()) {
+                    // Ignore available presence packets sent from a closed session. A closed
+                    // session may have buffered data pending to be processes so we want to ignore
+                    // just Presences of type available
+                    Log.warn("Ignoring available presence packet of closed session: " + packet);
+                    continue;
+                }
                 processPresence(packet);
             }
             else if ("iq".equals(tag)) {

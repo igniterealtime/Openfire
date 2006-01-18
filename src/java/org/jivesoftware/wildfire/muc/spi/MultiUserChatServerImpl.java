@@ -296,6 +296,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 if (user.getLastPacketTime() < deadline) {
                     // Kick the user from all the rooms that he/she had previuosly joined
                     Iterator<MUCRole> roles = user.getRoles();
+                    // If user is not present in any room then remove the user from
+                    // the list of users
+                    if (!roles.hasNext()) {
+                        removeUser(user.getAddress());
+                        continue;
+                    }
                     MUCRole role;
                     MUCRoom room;
                     Presence kickedPresence;

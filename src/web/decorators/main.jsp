@@ -46,7 +46,7 @@
     <script language="JavaScript" type="text/javascript">
     <!-- // code for window popups
     function helpwin() {
-        var newwin = window.open('help/index.html#<decorator:getProperty property="meta.helpPage" default=""/>',
+        var newwin = window.open('<%= path %>/help/index.html#<decorator:getProperty property="meta.helpPage" default=""/>',
             'helpWindow','width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
         newwin.focus();
     }
@@ -69,7 +69,7 @@
             <tr>
                 <td>
                     <a href="#" onclick="helpwin();return false;"
-                     ><img src="images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
+                     ><img src="<%= path %>/images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
                     &nbsp;
                 </td>
                 <td class="info">

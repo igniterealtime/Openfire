@@ -110,8 +110,12 @@ public class NativeAuthProvider implements AuthProvider {
 
     public void authenticate(String username, String password) throws UnauthorizedException {
         try {
-            if (!Shaj.checkPassword(domain, username, password)) {
-                throw new UnauthorizedException();
+            // Some native authentication mechanisms appear to not handle high load
+            // very well. Therefore, synchronize access to Shaj to throttle auth checks.
+            synchronized (this) {
+                if (!Shaj.checkPassword(domain, username, password)) {
+                    throw new UnauthorizedException();
+                }
             }
         }
         catch (UnauthorizedException ue) {

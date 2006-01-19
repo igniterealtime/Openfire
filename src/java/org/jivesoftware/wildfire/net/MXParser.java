@@ -25,6 +25,13 @@ import java.io.Reader;
  */
 public class MXParser extends org.xmlpull.mxp1.MXParser {
 
+    /**
+     * Last time a heartbeat was received. Hearbeats are represented as whitespaces
+     * or \n characters received when an XmlPullParser.END_TAG was parsed. Note that we
+     * can falsely detect heartbeats when parsing XHTML content but that is fine.
+     */
+    private long lastHeartbeat = 0;
+
     protected int nextImpl()
         throws XmlPullParserException, IOException
     {
@@ -259,9 +266,9 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                         // check that ]]> does not show in
                         if (eventType == XmlPullParser.END_TAG && (ch == ' ' || ch == '\n')) {
                             // ** ADDED CODE (INCLUDING IF STATEMENT)
-                            return IGNORABLE_WHITESPACE;
+                            lastHeartbeat = System.currentTimeMillis();;
                         }
-                        else if(ch == ']') {
+                        if(ch == ']') {
                             if(seenBracket) {
                                 seenBracketBracket = true;
                             } else {
@@ -323,6 +330,17 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                 return parseProlog();
             }
         }
+    }
+
+    /**
+     * Returns the last time a heartbeat was received. Hearbeats are represented as whitespaces
+     * or \n characters received when an XmlPullParser.END_TAG was parsed. Note that we
+     * can falsely detect heartbeats when parsing XHTML content but that is fine.
+     *
+     * @return the time in milliseconds when a heartbeat was received.
+     */
+    public long getLastHeartbeat() {
+        return lastHeartbeat;
     }
 
     public void resetInput() {

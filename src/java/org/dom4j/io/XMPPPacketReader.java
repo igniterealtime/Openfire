@@ -264,12 +264,17 @@ public class XMPPPacketReader {
 
     /**
      * Returns the last time a full Document was read or a heartbeat was received. Hearbeats
-     * are represented as whitespaces received while a Document is not being parsed.
+     * are represented as whitespaces or \n received while a Document is not being parsed.
      *
      * @return the time in milliseconds when the last document or heartbeat was received.
      */
     public long getLastActive() {
-        return lastActive;
+        long lastHeartbeat = 0;
+        try {
+            lastHeartbeat = getXPPParser().getLastHeartbeat();
+        }
+        catch (XmlPullParserException e) {}
+        return lastActive > lastHeartbeat ? lastActive : lastHeartbeat;
     }
 
     // Implementation methods
@@ -392,11 +397,6 @@ public class XMPPPacketReader {
                         }
                     }
                     break;
-                }
-                case XmlPullParser.IGNORABLE_WHITESPACE: {
-                    //System.out.println("Heartbeat was detected");
-                    // Update the last time a heartbeat was received
-                    lastActive = System.currentTimeMillis();
                 }
                 default:
                 {

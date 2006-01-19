@@ -24,19 +24,17 @@ import java.util.ArrayList;
 public class ServerPort {
 
     private int port;
-    private String interfaceName;
-    private ArrayList names;
+    private ArrayList<String> names;
     private String address;
     private boolean secure;
     private String algorithm;
     private Type type;
 
-    public ServerPort(int port, String interfaceName, String name, String address,
+    public ServerPort(int port, String name, String address,
             boolean isSecure, String algorithm, Type type)
     {
         this.port = port;
-        this.interfaceName = interfaceName;
-        this.names = new ArrayList(1);
+        this.names = new ArrayList<String>(1);
         this.names.add(name);
         this.address = address;
         this.secure = isSecure;
@@ -53,16 +51,12 @@ public class ServerPort {
         return port;
     }
 
-    public String getInterfaceName() {
-        return interfaceName;
-    }
-
     /**
      * Returns the logical domains for this server port. As multiple
      * domains may point to the same server, this helps to define what
      * the server considers "local".
      *
-     * @return The server domain name(s) as Strings
+     * @return the server domain name(s) as Strings.
      */
     public Iterator getDomainNames() {
         return names.iterator();

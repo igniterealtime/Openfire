@@ -94,7 +94,7 @@ public class AdminConsolePlugin implements Plugin {
         // Configure HTTP socket listener. Setting the interface property to a
         // non null value will imply that the Jetty server will only
         // accept connect requests to that IP address.
-        String interfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
         port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         InetAddrPort address = new InetAddrPort(interfaceName, port);
         if (port > 0) {
@@ -205,13 +205,13 @@ public class AdminConsolePlugin implements Plugin {
             Log.info(warning);
             System.out.println(warning);
         }
-        else if (plainListener == null && secureListener != null) {
+        else if (plainListener == null) {
             Log.info(listening + " https://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
             System.out.println(listening + " https://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
         }
-        else if (secureListener == null && plainListener != null) {
+        else if (secureListener == null) {
             Log.info(listening + " http://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
             System.out.println(listening + " http://" +

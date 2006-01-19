@@ -83,8 +83,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start servers socket unless it's been disabled.
         if (isServerListenerEnabled()) {
             int port = getServerListenerPort();
-            String interfaceName = JiveGlobals.getProperty("xmpp.server.socket.interface");
-            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
                     false, null, ServerPort.Type.server);
             try {
                 serverSocketThread = new SocketAcceptThread(this, serverPort);
@@ -117,8 +116,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled()) {
             int port = getComponentListenerPort();
-            String interfaceName = JiveGlobals.getProperty("xmpp.component.socket.interface");
-            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
                     false, null, ServerPort.Type.component);
             try {
                 componentSocketThread = new SocketAcceptThread(this, serverPort);
@@ -151,8 +149,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients plain socket unless it's been disabled.
         if (isClientListenerEnabled()) {
             int port = getClientListenerPort();
-            String interfaceName = JiveGlobals.getProperty("xmpp.socket.plain.interface");
-            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
                     false, null, ServerPort.Type.client);
             try {
                 socketThread = new SocketAcceptThread(this, serverPort);
@@ -185,12 +182,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients SSL unless it's been disabled.
         if (isClientSSLListenerEnabled()) {
             int port = getClientSSLListenerPort();
-            String interfaceName = JiveGlobals.getProperty("xmpp.socket.ssl.interface");
             String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
             if ("".equals(algorithm) || algorithm == null) {
                 algorithm = "TLS";
             }
-            ServerPort serverPort = new ServerPort(port, interfaceName, serverName, localIPAddress,
+            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
                     true, algorithm, ServerPort.Type.client);
             try {
                 sslSocketThread = new SSLSocketAcceptThread(this, serverPort);

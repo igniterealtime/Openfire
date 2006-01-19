@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.ConnectionManager;
 import org.jivesoftware.wildfire.ServerPort;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -50,11 +51,6 @@ public class SocketAcceptThread extends Thread {
     private ServerPort serverPort;
 
     /**
-     * Interface to bind to.
-     */
-    private InetAddress bindInterface;
-
-    /**
      * True while this thread should continue running.
      */
     private boolean notTerminated = true;
@@ -71,8 +67,9 @@ public class SocketAcceptThread extends Thread {
         super("Socket Listener at port " + serverPort.getPort());
         this.connManager = connManager;
         this.serverPort = serverPort;
-        String interfaceName = serverPort.getInterfaceName();
-        bindInterface = null;
+        // Listen on a specific network interface if it's been set.
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        InetAddress bindInterface = null;
         if (interfaceName != null) {
             if (interfaceName.trim().length() > 0) {
                 bindInterface = InetAddress.getByName(interfaceName);

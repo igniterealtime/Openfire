@@ -67,7 +67,7 @@ public class SocketAcceptThread extends Thread {
         super("Socket Listener at port " + serverPort.getPort());
         this.connManager = connManager;
         this.serverPort = serverPort;
-        // Listen on a specific network interface if it's been set.
+        // Listen on a specific network interface if it has been set.
         String interfaceName = JiveGlobals.getXMLProperty("network.interface");
         InetAddress bindInterface = null;
         if (interfaceName != null) {

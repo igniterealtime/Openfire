@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.ConnectionManager;
 import org.jivesoftware.wildfire.ServerPort;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -33,11 +34,6 @@ public class SSLSocketAcceptThread extends Thread {
      * The default Jabber socket
      */
     public static final int DEFAULT_PORT = 5223;
-
-    /**
-     * Interface to bind to
-     */
-    private InetAddress bindInterface;
 
     /**
      * Holds information about the port on which the server will listen for connections.
@@ -78,8 +74,9 @@ public class SSLSocketAcceptThread extends Thread {
         this.connManager = connManager;
         this.serverPort = serverPort;
         int port = serverPort.getPort();
-        String interfaceName = serverPort.getInterfaceName();
-        bindInterface = null;
+        // Listen on a specific network interface if it has been set.
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        InetAddress bindInterface = null;
         if (interfaceName != null) {
             try {
                 if (interfaceName.trim().length() > 0) {

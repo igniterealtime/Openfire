@@ -336,7 +336,11 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     }
 
     public void memberRemoved(Group group, Map params) {
-        JID deletedUser = new JID((String) params.get("member"));
+        String member = (String) params.get("member");
+        if (member == null) {
+            return;
+        }
+        JID deletedUser = new JID(member);
         // Do nothing if the user is still an admin
         if (group.getAdmins().contains(deletedUser)) {
             return;

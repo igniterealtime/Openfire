@@ -16,6 +16,9 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.event.UserEventListener;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.util.*;
 import org.xmpp.packet.Message;
 
@@ -36,7 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Iain Shigeoka
  */
-public class OfflineMessageStore extends BasicModule {
+public class OfflineMessageStore extends BasicModule implements UserEventListener {
 
     private static final String INSERT_OFFLINE =
         "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
@@ -383,17 +386,35 @@ public class OfflineMessageStore extends BasicModule {
         return size;
     }
 
+    public void userCreated(User user, Map params) {
+        //Do nothing
+    }
+
+    public void userDeleting(User user, Map params) {
+        // Delete all offline messages of the user
+        deleteMessages(user.getUsername());
+    }
+
+    public void userModified(User user, Map params) {
+        //Do nothing
+    }
+
     public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
             xmlReaders.add(new SAXReader());
         }
+        // Add this module as a user event listener so we can delete
+        // all offline messages when a user is deleted
+        UserEventDispatcher.addListener(this);
     }
 
     public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();
+        // Remove this module as a user event listener
+        UserEventDispatcher.removeListener(this);
     }
 }

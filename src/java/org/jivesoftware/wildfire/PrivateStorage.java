@@ -16,6 +16,9 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.event.UserEventListener;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -27,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Map;
 
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
@@ -34,7 +38,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Iain Shigeoka
  */
-public class PrivateStorage extends BasicModule {
+public class PrivateStorage extends BasicModule implements UserEventListener {
 
     private static final String LOAD_PRIVATE =
         "SELECT value FROM jivePrivate WHERE username=? AND namespace=?";
@@ -42,6 +46,8 @@ public class PrivateStorage extends BasicModule {
         "INSERT INTO jivePrivate (value,name,username,namespace) VALUES (?,?,?,?)";
     private static final String UPDATE_PRIVATE =
         "UPDATE jivePrivate SET value=?, name=? WHERE username=? AND namespace=?";
+    private static final String DELETE_PRIVATES =
+        "DELETE FROM jivePrivate WHERE username=?";
 
     // Currently no delete supported, we can detect an add of an empty element and
     // use that to signal a delete but that optimization doesn't seem necessary.
@@ -171,7 +177,9 @@ public class PrivateStorage extends BasicModule {
             }
             finally {
                 // Return the sax reader to the pool
-                if (xmlReader != null) xmlReaders.add(xmlReader);
+                if (xmlReader != null) {
+                    xmlReaders.add(xmlReader);
+                }
                 try { if (pstmt != null) { pstmt.close(); } }
                 catch (Exception e) { Log.error(e); }
                 try { if (con != null) { con.close(); } }
@@ -181,17 +189,51 @@ public class PrivateStorage extends BasicModule {
         return data;
     }
 
+    public void userCreated(User user, Map params) {
+        //Do nothing
+    }
+
+    public void userDeleting(User user, Map params) {
+        // Delete all private properties of the user
+        java.sql.Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_PRIVATES);
+            pstmt.setString(1, user.getUsername());
+            pstmt.executeUpdate();
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            try { if (pstmt != null) { pstmt.close(); } }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) { con.close(); } }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    public void userModified(User user, Map params) {
+        //Do nothing
+    }
+
     public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
             xmlReaders.add(new SAXReader());
         }
+        // Add this module as a user event listener so we can delete
+        // all user properties when a user is deleted
+        UserEventDispatcher.addListener(this);
     }
 
     public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();
+        // Remove this module as a user event listener
+        UserEventDispatcher.removeListener(this);
     }
 }

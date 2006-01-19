@@ -80,6 +80,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     }
 
     public RoutableChannelHandler getRoute(JID node) {
+        if (node == null) {
+            return null;
+        }
         return getRoute(node.toString(), node.getNode() == null ? "" : node.getNode(),
                 node.getDomain(), node.getResource() == null ? "" : node.getResource());
     }

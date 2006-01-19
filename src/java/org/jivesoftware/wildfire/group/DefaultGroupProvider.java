@@ -430,12 +430,15 @@ public class DefaultGroupProvider implements GroupProvider {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String user = rs.getString(1);
-                JID userJID = new JID(user);
+                JID userJID = null;
                 if (user.indexOf('@') == -1) {
                     // Create JID of local user if JID does not match a component's JID
                     if (!server.matchesComponent(userJID)) {
                         userJID = server.createJID(user, null);
                     }
+                }
+                else {
+                    userJID = new JID(user);
                 }
                 members.add(userJID);
             }

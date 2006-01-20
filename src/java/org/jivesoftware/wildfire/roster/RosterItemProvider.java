@@ -340,12 +340,14 @@ public class RosterItemProvider {
     private void insertGroups(long rosterID, Iterator<String> iter, Connection con) throws SQLException
     {
         PreparedStatement pstmt = null;
+        String groupName = null;
         try {
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM_GROUPS);
             pstmt.setLong(1, rosterID);
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);
-                pstmt.setString(3, iter.next());
+                groupName = iter.next();
+                pstmt.setString(3, groupName);
                 try {
                     pstmt.executeUpdate();
                 }
@@ -361,7 +363,7 @@ public class RosterItemProvider {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error("Error inserting group: " + groupName + " for rosterID: " + rosterID, e);
             }
         }
     }

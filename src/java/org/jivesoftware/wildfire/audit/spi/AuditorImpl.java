@@ -25,11 +25,9 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 import java.io.*;
-import java.util.Date;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class AuditorImpl implements Auditor {
 
@@ -39,7 +37,6 @@ public class AuditorImpl implements Auditor {
     private org.jivesoftware.util.XMLWriter xmlWriter;
     private int maxSize;
     private long maxCount;
-    private int logTimeout;
     private boolean closed = false;
     /**
      * Directoty (absolute path) where the audit files will be saved.
@@ -49,7 +46,7 @@ public class AuditorImpl implements Auditor {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private Queue<AuditPacket> logQueue = new LinkedBlockingQueue<AuditPacket>();
+    private BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<AuditPacket>();
 
     /**
      * Timer to save queued logs to the XML file.
@@ -121,12 +118,11 @@ public class AuditorImpl implements Auditor {
         maxCount = count;
     }
 
-    public void setLogTimeout(int newTimeout) {
+    public void setLogTimeout(int logTimeout) {
         // Cancel any existing task because the timeout has changed
         if (saveQueuedPacketsTask != null) {
             saveQueuedPacketsTask.cancel();
         }
-        this.logTimeout = newTimeout;
         // Create a new task and schedule it with the new timeout
         saveQueuedPacketsTask = new SaveQueuedPacketsTask();
         timer.schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
@@ -191,17 +187,21 @@ public class AuditorImpl implements Auditor {
     }
 
     private void saveQueuedPackets() {
-        int batchSize = logQueue.size();
-        for (int index = 0; index < batchSize; index++) {
-            AuditPacket auditPacket = logQueue.poll();
-            if (auditPacket != null) {
-                try {
-                    prepareAuditFile();
-                    xmlWriter.write(auditPacket.getElement());
+        List<AuditPacket> packets = new ArrayList<AuditPacket>(logQueue.size());
+        logQueue.drainTo(packets);
+        for (AuditPacket auditPacket : packets) {
+            try {
+                prepareAuditFile();
+                Element element = auditPacket.getElement();
+                // Protect against null elements.
+                if (element != null) {
+                    xmlWriter.write(element);
                 }
-                catch (IOException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    // Add again the entry to the queue to save it later
+            }
+            catch (IOException e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                // Add again the entry to the queue to save it later
+                if (xmlWriter != null) {
                     logQueue.add(auditPacket);
                 }
             }
@@ -212,7 +212,7 @@ public class AuditorImpl implements Auditor {
             }
         }
         catch (IOException ioe) {
-
+            Log.error(ioe);
         }
     }
 

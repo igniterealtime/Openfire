@@ -644,7 +644,7 @@
     </target>
 
     <!-- release =============================================================================== -->
-    <target name="release" depends="jar,javadoc" description="Creates a distribution">
+    <target name="release" depends="clean,jar,javadoc" description="Creates a distribution">
         <mkdir dir="${release.dest.dir}"/>
 
         <!-- Create a new prop for the final release dirs then create the dirs -->

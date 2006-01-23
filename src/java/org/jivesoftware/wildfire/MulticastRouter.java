@@ -97,6 +97,10 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         // remote domains that should receive the packet too
         for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
             Element address = (Element) it.next();
+            // Skip addresses of type noreply since they don't have any address
+            if (Type.noreply.toString().equals(address.attributeValue("type"))) {
+                continue;
+            }
             String jid = address.attributeValue("jid");
             // Only send to local users and if packet has not already been delivered
             if (jid.contains(localDomain) && address.attributeValue("delivered") == null) {

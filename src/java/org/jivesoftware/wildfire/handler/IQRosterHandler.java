@@ -164,23 +164,27 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             UserAlreadyExistsException, SharedGroupException {
 
         IQ returnPacket = null;
-        ClientSession session = sessionManager.getSession(packet.getFrom());
-
+        JID sender = packet.getFrom();
         IQ.Type type = packet.getType();
 
         try {
-            if (session.getUsername() == null && IQ.Type.get == type) {
+            if (sender.getNode() == null && IQ.Type.get == type) {
                 // If anonymous user asks for his roster then return an empty roster
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement("query", "jabber:iq:roster");
                 return reply;
             }
-            User sessionUser = userManager.getUser(session.getUsername());
-            Roster cachedRoster = sessionUser.getRoster();
+            if (!localServer.isLocal(sender)) {
+                // Sender belongs to a remote server so discard this IQ request
+                Log.warn("Discarding IQ roster packet of remote user: " + packet);
+                return null;
+            }
+
+            Roster cachedRoster = userManager.getUser(sender.getNode()).getRoster();
             if (IQ.Type.get == type) {
                 returnPacket = cachedRoster.getReset();
                 returnPacket.setType(IQ.Type.result);
-                returnPacket.setTo(session.getAddress());
+                returnPacket.setTo(sender);
                 returnPacket.setID(packet.getID());
                 // Force delivery of the response because we need to trigger
                 // a presence probe from all contacts

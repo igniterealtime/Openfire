@@ -394,7 +394,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
         MUCRoom room = null;
         synchronized (roomName.intern()) {
-            room = rooms.get(roomName.toLowerCase());
+            room = rooms.get(roomName);
             if (room == null) {
                 room = new MUCRoomImpl(this, roomName, router);
                 // If the room is persistent load the configuration values from the DB
@@ -418,18 +418,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     }
                     room.addFirstOwner(userjid.toBareJID());
                 }
-                rooms.put(roomName.toLowerCase(), room);
+                rooms.put(roomName, room);
             }
         }
         return room;
     }
 
     public MUCRoom getChatRoom(String roomName) {
-        MUCRoom room = rooms.get(roomName.toLowerCase());
+        MUCRoom room = rooms.get(roomName);
         if (room == null) {
             // Check if the room exists in the database and was not present in memory
             synchronized (roomName.intern()) {
-                room = rooms.get(roomName.toLowerCase());
+                room = rooms.get(roomName);
                 if (room == null) {
                     room = new MUCRoomImpl(this, roomName, router);
                     // If the room is persistent load the configuration values from the DB
@@ -438,7 +438,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         // persistent but was added to the DB after the server was started up or the
                         // room may be an old room that was not present in memory)
                         MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
-                        rooms.put(roomName.toLowerCase(), room);
+                        rooms.put(roomName, room);
                     }
                     catch (IllegalArgumentException e) {
                         // The room does not exist so do nothing
@@ -459,7 +459,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void removeChatRoom(String roomName) {
-        final MUCRoom room = rooms.remove(roomName.toLowerCase());
+        final MUCRoom room = rooms.remove(roomName);
         if (room != null) {
             totalChatTime += room.getChatLength();
         }

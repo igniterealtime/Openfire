@@ -238,7 +238,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             String name = update.getFrom().getNode();
             try {
                 if (name != null && !"".equals(name)) {
-                    name = name.toLowerCase();
                     Roster roster = rosterManager.getRoster(name);
                     roster.broadcastPresence(update);
                 }
@@ -305,7 +304,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             WeakHashMap<ChannelHandler, Set<String>> map;
             String name = update.getFrom().getNode();
             if (name != null && !"".equals(name)) {
-                name = name.toLowerCase();
                 try {
                     Roster roster = rosterManager.getRoster(name);
                     // If the directed presence was sent to an entity that is not in the user's

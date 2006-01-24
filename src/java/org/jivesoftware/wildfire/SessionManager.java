@@ -523,7 +523,7 @@ public class SessionManager extends BasicModule {
      */
     public boolean addSession(ClientSession session) {
         boolean success = false;
-        String username = session.getAddress().getNode().toLowerCase();
+        String username = session.getAddress().getNode();
         SessionMap resources = null;
 
         synchronized(username.intern()) {
@@ -684,7 +684,7 @@ public class SessionManager extends BasicModule {
                 // Do nothing if the session belongs to an anonymous user
             return;
         }
-        String username = sender.getNode().toLowerCase();
+        String username = sender.getNode();
         synchronized (username.intern()) {
             SessionMap resources = sessions.get(username);
             if (resources == null) {
@@ -728,7 +728,6 @@ public class SessionManager extends BasicModule {
             }
         }
         else {
-            username = username.toLowerCase();
             synchronized (username.intern()) {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
@@ -818,10 +817,10 @@ public class SessionManager extends BasicModule {
         if (serverName == null || !serverName.equals(domain)) {
             return null;
         }
-
         // Build a JID represention based on the given JID data
         StringBuilder buf = new StringBuilder(40);
         if (username != null) {
+            username = username.toLowerCase();
             buf.append(username).append("@");
         }
         buf.append(domain);
@@ -863,7 +862,6 @@ public class SessionManager extends BasicModule {
             session = anonymousSessions.get(resource);
         }
         else {
-            username = username.toLowerCase();
             synchronized (username.intern()) {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
@@ -1218,7 +1216,7 @@ public class SessionManager extends BasicModule {
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
             if (session.getAddress() != null && session.getAddress().getNode() != null) {
-                String username = session.getAddress().getNode().toLowerCase();
+                String username = session.getAddress().getNode();
                 synchronized (username.intern()) {
                     sessionMap = sessions.get(username);
                     if (sessionMap != null) {

@@ -67,7 +67,7 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public MUCRole getRole(String roomName) throws NotFoundException {
-        MUCRole role = roles.get(roomName.toLowerCase());
+        MUCRole role = roles.get(roomName);
         if (role == null) {
             throw new NotFoundException(roomName);
         }
@@ -79,11 +79,11 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public void addRole(String roomName, MUCRole role) {
-        roles.put(roomName.toLowerCase(), role);
+        roles.put(roomName, role);
     }
 
     public void removeRole(String roomName) {
-        roles.remove(roomName.toLowerCase());
+        roles.remove(roomName);
     }
 
     public long getLastPacketTime() {
@@ -157,7 +157,7 @@ public class MUCUserImpl implements MUCUser {
                     + packet.toString());
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 if (server.hasChatRoom(group)) {
                     boolean declinedInvitation = false;
@@ -306,7 +306,7 @@ public class MUCUserImpl implements MUCUser {
                     + packet.toString());
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 // TODO: send error message to user (can't send packets to group you haven't
                 // joined)
@@ -382,7 +382,7 @@ public class MUCUserImpl implements MUCUser {
             }
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 // If we're not already in a room, we either are joining it or it's not
                 // properly addressed and we drop it silently

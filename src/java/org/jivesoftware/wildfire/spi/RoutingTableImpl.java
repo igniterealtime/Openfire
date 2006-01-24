@@ -105,7 +105,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             if (nameRoutes instanceof ChannelHandler) {
                 route = (RoutableChannelHandler)nameRoutes;
             }
-            else {
+            else if (nameRoutes != null) {
                 Object resourceRoutes = ((Hashtable)nameRoutes).get(node);
                 if (resourceRoutes instanceof ChannelHandler) {
                     route = (RoutableChannelHandler)resourceRoutes;

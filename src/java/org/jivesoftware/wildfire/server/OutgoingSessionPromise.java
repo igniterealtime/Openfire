@@ -182,6 +182,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
         catch (UnauthorizedException e) {
         }
+        catch (Exception e) {
+            Log.warn("Error returning error to sender. Original packet: " + packet, e);
+        }
     }
 
     /**

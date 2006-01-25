@@ -131,7 +131,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error(LocaleUtils.getLocalizedString("admin.error") + ". Triggered by packet: " +
+                    xmppPacket, e);
         }
     }
 

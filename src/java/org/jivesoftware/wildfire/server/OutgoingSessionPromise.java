@@ -141,13 +141,24 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     }
 
     private void returnErrorToSender(Packet packet) {
+        XMPPServer server = XMPPServer.getInstance();
+        JID from = packet.getFrom();
+        JID to = packet.getTo();
+        if (!server.isLocal(from) && !XMPPServer.getInstance().matchesComponent(from) &&
+                !server.isLocal(to) && !XMPPServer.getInstance().matchesComponent(to)) {
+            // Do nothing since the sender and receiver of the packet that failed to reach a remote
+            // server are not local users. This prevents endless loops if the FROM or TO address
+            // are non-existen addresses
+            return;
+        }
+
         // TODO Send correct error condition: timeout or not_found depending on the real error
         try {
             if (packet instanceof IQ) {
                 IQ reply = new IQ();
                 reply.setID(((IQ) packet).getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
+                reply.setTo(from);
+                reply.setFrom(to);
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                 reply.setError(PacketError.Condition.remote_server_not_found);
                 ChannelHandler route = routingTable.getRoute(reply.getTo());
@@ -158,8 +169,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             else if (packet instanceof Presence) {
                 Presence reply = new Presence();
                 reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
+                reply.setTo(from);
+                reply.setFrom(to);
                 reply.setError(PacketError.Condition.remote_server_not_found);
                 ChannelHandler route = routingTable.getRoute(reply.getTo());
                 if (route != null) {
@@ -169,8 +180,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             else if (packet instanceof Message) {
                 Message reply = new Message();
                 reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
+                reply.setTo(from);
+                reply.setFrom(to);
                 reply.setType(((Message)packet).getType());
                 reply.setThread(((Message)packet).getThread());
                 reply.setError(PacketError.Condition.remote_server_not_found);

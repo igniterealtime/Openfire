@@ -11,23 +11,24 @@
 
 package org.jivesoftware.wildfire.server;
 
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZInputStream;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.net.DNSUtil;
-import org.jivesoftware.wildfire.net.SocketConnection;
-import org.jivesoftware.wildfire.net.MXParser;
-import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.net.DNSUtil;
+import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
+import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,9 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.regex.Pattern;
-
-import com.jcraft.jzlib.ZInputStream;
-import com.jcraft.jzlib.JZlib;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -209,13 +207,7 @@ public class OutgoingServerSession extends Session {
                 return true;
             }
             // A session already exists so authenticate the domain using that session
-            ServerDialback method = new ServerDialback(session.getConnection(), domain);
-            if (method.authenticateDomain(session.socketReader, domain, hostname,
-                    session.getStreamID().getID())) {
-                // Add the validated domain as an authenticated domain
-                session.addAuthenticatedDomain(domain);
-                return true;
-            }
+            return session.authenticateSubdomain(domain, hostname);
         }
         catch (Exception e) {
             Log.error("Error authenticating domain with remote server: " + hostname, e);
@@ -498,13 +490,98 @@ public class OutgoingServerSession extends Session {
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
-        if (conn != null && !conn.isClosed()) {
-            try {
+        try {
+            String senderDomain = packet.getFrom().getDomain();
+            if (!getAuthenticatedDomains().contains(senderDomain)) {
+                synchronized (senderDomain.intern()) {
+                    if (!getAuthenticatedDomains().contains(senderDomain) &&
+                            !authenticateSubdomain(senderDomain, packet.getTo().getDomain())) {
+                        // Return error since sender domain was not validated by remote server
+                        returnErrorToSender(packet);
+                        return;
+                    }
+                }
+            }
+
+            if (conn != null && !conn.isClosed()) {
                 conn.deliver(packet);
             }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+    }
+
+    /**
+     * Authenticates a subdomain of this server with the specified remote server over an exsiting
+     * outgoing connection. If the existing session was using server dialback then a new db:result
+     * is going to be sent to the remote server. But if the existing session was TLS+SASL based
+     * then just assume that the subdomain was authenticated by the remote server.
+     *
+     * @param domain the local subdomain to authenticate with the remote server.
+     * @param hostname the hostname of the remote server.
+     * @return True if the subdomain was authenticated by the remote server.
+     */
+    private boolean authenticateSubdomain(String domain, String hostname) {
+        if (!usingServerDialback) {
+            // Using SASL so just assume that the domain was validated
+            // (note: this may not be correct)
+            addAuthenticatedDomain(domain);
+            return true;
+        }
+        ServerDialback method = new ServerDialback(getConnection(), domain);
+        if (method.authenticateDomain(socketReader, domain, hostname, getStreamID().getID())) {
+            // Add the validated domain as an authenticated domain
+            addAuthenticatedDomain(domain);
+            return true;
+        }
+        return false;
+    }
+
+    private void returnErrorToSender(Packet packet) {
+        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        try {
+            if (packet instanceof IQ) {
+                IQ reply = new IQ();
+                reply.setID(((IQ) packet).getID());
+                reply.setTo(packet.getFrom());
+                reply.setFrom(packet.getTo());
+                reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+                reply.setError(PacketError.Condition.remote_server_not_found);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
             }
+            else if (packet instanceof Presence) {
+                Presence reply = new Presence();
+                reply.setID(packet.getID());
+                reply.setTo(packet.getFrom());
+                reply.setFrom(packet.getTo());
+                reply.setError(PacketError.Condition.remote_server_not_found);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
+            }
+            else if (packet instanceof Message) {
+                Message reply = new Message();
+                reply.setID(packet.getID());
+                reply.setTo(packet.getFrom());
+                reply.setFrom(packet.getTo());
+                reply.setType(((Message)packet).getType());
+                reply.setThread(((Message)packet).getThread());
+                reply.setError(PacketError.Condition.remote_server_not_found);
+                ChannelHandler route = routingTable.getRoute(reply.getTo());
+                if (route != null) {
+                    route.process(reply);
+                }
+            }
+        }
+        catch (UnauthorizedException e) {
+        }
+        catch (Exception e) {
+            Log.warn("Error returning error to sender. Original packet: " + packet, e);
         }
     }
 

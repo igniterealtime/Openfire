@@ -22,6 +22,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -111,6 +112,8 @@ public class IncomingServerSession extends Session {
                 }
             }
             else {
+                connection.deliverRawText(
+                        new StreamError(StreamError.Condition.invalid_namespace).toXML());
                 Log.debug("Server TLS is disabled. Rejecting connection: " + connection);
             }
         }

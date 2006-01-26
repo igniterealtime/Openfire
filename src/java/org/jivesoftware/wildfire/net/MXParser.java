@@ -264,7 +264,8 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                     do {
 
                         // check that ]]> does not show in
-                        if (eventType == XmlPullParser.END_TAG && (ch == ' ' || ch == '\n')) {
+                        if (eventType == XmlPullParser.END_TAG &&
+                                (ch == ' ' || ch == '\n' || ch == '\t')) {
                             // ** ADDED CODE (INCLUDING IF STATEMENT)
                             lastHeartbeat = System.currentTimeMillis();;
                         }

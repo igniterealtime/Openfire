@@ -32,11 +32,13 @@ CREATE TABLE mucRoomProp (
 );
 
 REM // mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegister".
-ALTER TABLE mucRoom ADD useReservedNick     INTEGER       NOT NULL;
-ALTER TABLE mucRoom ADD canChangeNick       INTEGER       NOT NULL;
-ALTER TABLE mucRoom ADD canRegister         INTEGER       NOT NULL;
-
+ALTER TABLE mucRoom ADD useReservedNick INTEGER NULL;
+ALTER TABLE mucRoom ADD canChangeNick INTEGER NULL;
+ALTER TABLE mucRoom ADD canRegister INTEGER NULL;
 UPDATE mucRoom set useReservedNick=0, canChangeNick=1, canRegister=1;
+ALTER TABLE mucRoom MODIFY useReservedNick INTEGER NOT NULL;
+ALTER TABLE mucRoom MODIFY canChangeNick INTEGER NOT NULL;
+ALTER TABLE mucRoom MODIFY canRegister INTEGER NOT NULL;
 
 REM // jiveVCard: Recreate table from scratch
 DROP TABLE jiveVCard;

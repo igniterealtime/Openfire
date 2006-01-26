@@ -11,15 +11,6 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
-
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -37,6 +28,15 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeUtility;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Content filter plugin.
@@ -400,7 +400,14 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         // default to "fox,dog"
         patterns = JiveGlobals.getProperty(PATTERNS_PROPERTY, "fox,dog");
 
-        changeContentFilterPatterns();
+        try {
+            changeContentFilterPatterns();
+        }
+        catch (PatternSyntaxException e) {
+            Log.warn("Reseting to default patterns of ContentFilterPlugin", e);
+            // Existing patterns are invalid so reset to default ones
+            setPatterns("fox,dog");
+        }
 
         // default to false
         filterStatusEnabled = JiveGlobals.getBooleanProperty(

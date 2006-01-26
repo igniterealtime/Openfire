@@ -55,7 +55,7 @@ public class ServerStarter {
      * started and the server starter should not be used again.
      */
     private void start() {
-        // setup the classpath using JiveClassLoader
+        // Setup the classpath using JiveClassLoader
         try {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
@@ -134,6 +134,13 @@ public class ServerStarter {
             try {
                 String jarName = packedFile.getName().substring(0,
                         packedFile.getName().length() - ".pack".length());
+                // Delete JAR file with same name if it exists (could be due to upgrade
+                // from old Wildfire release).
+                File jarFile = new File(libDir, jarName);
+                if (jarFile.exists()) {
+                    jarFile.delete();
+                }
+                
                 InputStream in = new BufferedInputStream(new FileInputStream(packedFile));
                 JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
                         new FileOutputStream(new File(libDir, jarName))));

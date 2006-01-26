@@ -1461,12 +1461,20 @@ public class SessionManager extends BasicModule {
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
         timer.cancel();
-        serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
             sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
         }
         try {
-            for (Session session : getSessions()) {
+            // Send the close stream header to all connected connections
+            Set<Session> sessions = new HashSet<Session>();
+            sessions.addAll(getSessions());
+            sessions.addAll(getComponentSessions());
+            sessions.addAll(outgoingServerSessions.values());
+            for (List<IncomingServerSession> incomingSessions : incomingServerSessions.values()) {
+                sessions.addAll(incomingSessions);
+            }
+
+            for (Session session : sessions) {
                 try {
                     session.getConnection().close();
                 }
@@ -1478,6 +1486,7 @@ public class SessionManager extends BasicModule {
         catch (Exception e) {
             // Ignore.
         }
+        serverName = null;
     }
 
     /******************************************************

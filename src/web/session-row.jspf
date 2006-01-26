@@ -34,7 +34,7 @@
              ><%= ((name != null && !"".equals(name)) ? name : "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
-        <%= sess.getAddress().getResource() %>
+        <%= URLEncoder.encode(sess.getAddress().getResource(), "UTF-8") %>
     </td>
     <td>
         <%  int _status = sess.getStatus();

@@ -76,7 +76,7 @@
 
 <p>
 <fmt:message key="session.details.info">
-    <fmt:param value="<%= "<b>"+address.toString()+"</b>" %>" />
+    <fmt:param value="<%= "<b>"+URLEncoder.encode(address.toString(), "UTF-8")+"</b>" %>" />
     <fmt:param value="<%= address.getNode() == null ? "" : "<b>"+address.getNode()+"</b>" %>" />
 </fmt:message>
 
@@ -97,7 +97,7 @@
             <fmt:message key="session.details.session_id" />
         </td>
         <td>
-            <%= address.toString() %>
+            <%= URLEncoder.encode(address.toString(), "UTF-8") %>
         </td>
     </tr>
     <tr>
@@ -108,12 +108,12 @@
             <%  String n = address.getNode(); %>
             <%  if (n == null || "".equals(n)) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":address.getResource() %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":URLEncoder.encode(address.getResource(), "UTF-8") %>
 
             <%  } else { %>
 
                 <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
-                - <%= address.getResource()==null?"":address.getResource() %>
+                - <%= address.getResource()==null?"":URLEncoder.encode(address.getResource(), "UTF-8") %>
 
             <%  } %>
         </td>
@@ -167,7 +167,7 @@
                 Presence.Show show = currentSess.getPresence().getShow();
                 String statusTxt = currentSess.getPresence().getStatus();
                 if (statusTxt != null) {
-                    statusTxt = " -- " + statusTxt;
+                    statusTxt = " -- " + URLEncoder.encode(statusTxt, "UTF-8");
                 }
                 else {
                     statusTxt = "";
@@ -312,7 +312,7 @@
 <br>
 
 <form action="session-details.jsp">
-<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="jid" value="<%= URLEncoder.encode(jid, "UTF-8") %>">
 <center>
 <%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
 <%----%>

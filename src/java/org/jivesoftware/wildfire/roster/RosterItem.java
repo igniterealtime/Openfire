@@ -333,7 +333,7 @@ public class RosterItem implements Cacheable {
                     Group group = GroupManager.getInstance().getGroup(groupName);
                     // Get the display name of the group
                     String displayName = group.getProperties().get("sharedRoster.displayName");
-                    if (displayName.equals(groupName)) {
+                    if (displayName != null && displayName.equals(groupName)) {
                         // Remove the shared group from the list (since it exists)
                         it.remove();
                     }
@@ -343,7 +343,7 @@ public class RosterItem implements Cacheable {
                     for (Group group : existingGroups) {
                         // Get the display name of the group
                         String displayName = group.getProperties().get("sharedRoster.displayName");
-                        if (displayName.equals(groupName)) {
+                        if (displayName != null && displayName.equals(groupName)) {
                             // Remove the shared group from the list (since it exists)
                             it.remove();
                         }

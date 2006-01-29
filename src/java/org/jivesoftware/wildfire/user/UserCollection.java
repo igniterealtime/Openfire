@@ -18,15 +18,13 @@ import java.util.AbstractCollection;
 /**
  * Provides a view of an array of usernames as a Collection of User objects. If
  * any of the usernames cannot be loaded, they are transparently skipped when
- * iteratating over the collection.
+ * iterating over the collection.
  *
  * @author Matt Tucker
  */
 public class UserCollection extends AbstractCollection {
 
     private String[] elements;
-    private int currentIndex = -1;
-    private Object nextElement = null;
 
     /**
      * Constructs a new UserIterator.
@@ -44,6 +42,9 @@ public class UserCollection extends AbstractCollection {
     }
 
     private class UserIterator implements Iterator {
+
+        private int currentIndex = -1;
+        private Object nextElement = null;
 
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
@@ -63,7 +64,7 @@ public class UserCollection extends AbstractCollection {
         }
 
         public Object next() throws java.util.NoSuchElementException {
-            Object element = null;
+            Object element;
             if (nextElement != null) {
                 element = nextElement;
                 nextElement = null;
@@ -93,7 +94,9 @@ public class UserCollection extends AbstractCollection {
                 try {
                     element = UserManager.getInstance().getUser(elements[currentIndex]);
                 }
-                catch (UserNotFoundException unfe) { }
+                catch (UserNotFoundException unfe) {
+                    // Ignore.
+                }
                 if (element != null) {
                     return element;
                 }

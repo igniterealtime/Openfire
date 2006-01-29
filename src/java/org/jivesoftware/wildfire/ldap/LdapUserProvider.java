@@ -229,7 +229,8 @@ public class LdapUserProvider implements UserProvider {
                     usernames.add(JID.escapeNode(username));
                 }
                 Collections.sort(usernames);
-                usernames = usernames.subList(startIndex, startIndex+numResults);
+                int endIndex = Math.min(startIndex + numResults, usernames.size()-1);
+                usernames = usernames.subList(startIndex, endIndex);
             }
             // Otherwise, only read in certain results.
             else {

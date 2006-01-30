@@ -37,5 +37,5 @@ public interface ServerItemsProvider {
      * @return an Iterator (of DiscoServerItem) with the items associated with the server or null
      *         if none.
      */
-    public abstract Iterator getItems();
+    public abstract Iterator<DiscoServerItem> getItems();
 }

@@ -213,22 +213,20 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * @return the component with the specified id.
      */
     public Component getComponent(JID componentJID) {
-        String jid = componentJID.toBareJID();
-        if (components.containsKey(jid)) {
-            return components.get(jid);
+        Component component = components.get(componentJID.getDomain());
+        if (component != null) {
+            return component;
         }
         else {
-            if (!jid.contains(serverDomain)) {
-                // Ignore JIDs that doesn't belong to this server
-                return null;
-            }
-            String serverName = new JID(jid).getDomain();
-            int index = serverName.indexOf(".");
-            if (index != -1) {
-                jid = serverName.substring(0, index);
+            // Search again for those JIDs whose domain include the server name but this
+            // time remove the server name from the JID's domain
+            String serverName = componentJID.getDomain();
+            int index = serverName.lastIndexOf(serverDomain);
+            if (index > 0) {
+                return components.get(serverName.substring(0, --index));
             }
         }
-        return components.get(jid);
+        return null;
     }
 
     /**
@@ -256,7 +254,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         for (JID prober : presenceMap.keySet()) {
             JID probee = presenceMap.get(prober);
 
-            Component component = getComponent(probee.toBareJID());
+            Component component = getComponent(probee);
             if (component != null) {
                 Presence presence = new Presence();
                 presence.setFrom(prober);
@@ -300,7 +298,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * @param packet the packet to process.
      */
     public void process(Packet packet) throws PacketException {
-        Component component = getComponent(packet.getFrom().getDomain());
+        Component component = getComponent(packet.getFrom());
         // Only process packets that were sent by registered components
         if (component != null) {
             if (packet instanceof IQ && IQ.Type.result == ((IQ) packet).getType()) {

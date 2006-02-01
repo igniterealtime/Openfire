@@ -14,6 +14,10 @@ package org.jivesoftware.wildfire;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Version;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.wildfire.commands.AdHocCommandHandler;
@@ -33,10 +37,6 @@ import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
 import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Version;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -172,8 +172,7 @@ public class XMPPServer {
      */
     public boolean isRemote(JID jid) {
         if (jid != null) {
-            String domain = jid.getDomain();
-            if (!name.equals(domain) && componentManager.getComponent(domain) == null) {
+            if (!name.equals(jid.getDomain()) && componentManager.getComponent(jid) == null) {
                 return true;
             }
         }
@@ -188,7 +187,7 @@ public class XMPPServer {
      */
     public boolean matchesComponent(JID jid) {
         if (jid != null) {
-            return componentManager.getComponent(jid.getDomain()) != null;
+            return !name.equals(jid.getDomain()) && componentManager.getComponent(jid) != null;
         }
         return false;
     }

@@ -246,7 +246,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public void probePresence(JID prober, JID probee) {
         try {
-            Component component = getPresenceComponent(probee);
             if (server.isLocal(probee)) {
                 // If the probee is a local user then don't send a probe to the contact's server.
                 // But instead just send the contact's presence to the prober
@@ -297,33 +296,36 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     }
                 }
             }
-            else if (component != null) {
-                // If the probee belongs to a component then ask the component to process the
-                // probe presence
-                Presence presence = new Presence();
-                presence.setType(Presence.Type.probe);
-                presence.setFrom(prober);
-                presence.setTo(probee);
-                component.processPacket(presence);
-            }
             else {
-                // Check if the probee may be hosted by this server
-                /*String serverDomain = server.getServerInfo().getName();
-                if (!probee.getDomain().contains(serverDomain)) {*/
-                if (server.isRemote(probee)) {
-                    // Send the probe presence to the remote server
-                    Presence probePresence = new Presence();
-                    probePresence.setType(Presence.Type.probe);
-                    probePresence.setFrom(prober);
-                    probePresence.setTo(probee.toBareJID());
-                    // Send the probe presence
-                    deliverer.deliver(probePresence);
+                Component component = getPresenceComponent(probee);
+                if (component != null) {
+                    // If the probee belongs to a component then ask the component to process the
+                    // probe presence
+                    Presence presence = new Presence();
+                    presence.setType(Presence.Type.probe);
+                    presence.setFrom(prober);
+                    presence.setTo(probee);
+                    component.processPacket(presence);
                 }
                 else {
-                    // The probee may be related to a component that has not yet been connected so
-                    // we will keep a registry of this presence probe. The component will answer
-                    // this presence probe when he becomes online
-                    componentManager.addPresenceRequest(prober, probee);
+                    // Check if the probee may be hosted by this server
+                    /*String serverDomain = server.getServerInfo().getName();
+                    if (!probee.getDomain().contains(serverDomain)) {*/
+                    if (server.isRemote(probee)) {
+                        // Send the probe presence to the remote server
+                        Presence probePresence = new Presence();
+                        probePresence.setType(Presence.Type.probe);
+                        probePresence.setFrom(prober);
+                        probePresence.setTo(probee.toBareJID());
+                        // Send the probe presence
+                        deliverer.deliver(probePresence);
+                    }
+                    else {
+                        // The probee may be related to a component that has not yet been connected so
+                        // we will keep a registry of this presence probe. The component will answer
+                        // this presence probe when he becomes online
+                        componentManager.addPresenceRequest(prober, probee);
+                    }
                 }
             }
         }
@@ -367,7 +369,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public Component getPresenceComponent(JID probee) {
         // Check for registered components
-        Component component = componentManager.getComponent(probee.toBareJID());
+        Component component = componentManager.getComponent(probee);
         if (component != null) {
             return component;
         }

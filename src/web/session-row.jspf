@@ -6,7 +6,8 @@
 <%@ page import="org.jivesoftware.wildfire.Session,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils"%>
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.StringUtils"%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 2 variables:
@@ -34,7 +35,7 @@
              ><%= ((name != null && !"".equals(name)) ? name : "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
-        <%= URLEncoder.encode(sess.getAddress().getResource(), "UTF-8") %>
+        <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>
     </td>
     <td>
         <%  int _status = sess.getStatus();

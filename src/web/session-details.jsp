@@ -76,7 +76,7 @@
 
 <p>
 <fmt:message key="session.details.info">
-    <fmt:param value="<%= "<b>"+URLEncoder.encode(address.toString(), "UTF-8")+"</b>" %>" />
+    <fmt:param value="<%= "<b>" + StringUtils.escapeForXML(address.toString()) + "</b>" %>" />
     <fmt:param value="<%= address.getNode() == null ? "" : "<b>"+address.getNode()+"</b>" %>" />
 </fmt:message>
 
@@ -97,7 +97,7 @@
             <fmt:message key="session.details.session_id" />
         </td>
         <td>
-            <%= URLEncoder.encode(address.toString(), "UTF-8") %>
+            <%= StringUtils.escapeForXML(address.toString()) %>
         </td>
     </tr>
     <tr>
@@ -108,12 +108,12 @@
             <%  String n = address.getNode(); %>
             <%  if (n == null || "".equals(n)) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":URLEncoder.encode(address.getResource(), "UTF-8") %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } else { %>
 
-                <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
-                - <%= address.getResource()==null?"":URLEncoder.encode(address.getResource(), "UTF-8") %>
+                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= n %></a>
+                - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
         </td>
@@ -167,7 +167,7 @@
                 Presence.Show show = currentSess.getPresence().getShow();
                 String statusTxt = currentSess.getPresence().getStatus();
                 if (statusTxt != null) {
-                    statusTxt = " -- " + URLEncoder.encode(statusTxt, "UTF-8");
+                    statusTxt = " -- " + StringUtils.escapeForXML(statusTxt);
                 }
                 else {
                     statusTxt = "";

@@ -884,7 +884,7 @@ public class LdapManager {
      *
      * @param posixMode true if posix mode is being used by the LDAP server.
      */
-    public void setPostfixMode(boolean posixMode) {
+    public void setPosixMode(boolean posixMode) {
         this.posixMode = posixMode;
         JiveGlobals.setXMLProperty("ldap.posixEnabled", String.valueOf(posixMode));
     }

@@ -106,6 +106,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             else if (Presence.Type.unavailable == type) {
                 broadcastUpdate(presence.createCopy());
                 broadcastUnavailableForDirectedPresences(presence);
+                if (session == null) {
+                    // Recovery logic. Check if a session can be found in the routing table.
+                    session = (ClientSession) XMPPServer.getInstance().getRoutingTable()
+                            .getRoute(presence.getFrom());
+                }
                 if (session != null) {
                     session.setPresence(presence);
                 }

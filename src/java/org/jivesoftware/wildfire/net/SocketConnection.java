@@ -395,7 +395,7 @@ public class SocketConnection implements Connection {
         }
     }
 
-    void release() {
+    private void release() {
         writeStarted = -1;
         instances.remove(this);
     }
@@ -419,6 +419,7 @@ public class SocketConnection implements Connection {
     }
 
     private void closeConnection() {
+        release();
         try {
             if (tlsStreamHandler == null) {
                 socket.close();

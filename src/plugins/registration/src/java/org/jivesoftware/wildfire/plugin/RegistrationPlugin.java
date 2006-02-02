@@ -33,10 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
-
 /**
  * Registration plugin.
  *
@@ -287,7 +283,7 @@ public class RegistrationPlugin implements Plugin {
         }
         
         private void sendIMNotificatonMessage(User user) {
-            String msg = " A new user with the username of '" + user.getUsername() + "' just registered";
+            String msg = " A new user with the username '" + user.getUsername() + "' just registered.";
             
             for (String contact : getIMContacts()) {
                 router.route(createServerMessage(contact + "@" + serverName,
@@ -296,28 +292,21 @@ public class RegistrationPlugin implements Plugin {
         }
         
         private void sendAlertEmail(User user) {
-            String msg = " A new user with the username of '" + user.getUsername() + "' just registered";
+            String subject = "User Registration";
+            String body = " A new user with the username '" + user.getUsername() + "' just registered.";
             
-            List<MimeMessage> messages = new ArrayList<MimeMessage>();
             EmailService emailService = EmailService.getInstance();
-            MimeMessage message = emailService.createMimeMessage();
-            String encoding = MimeUtility.mimeCharset("iso-8859-1");
             for (String toAddress : emailContacts) {
                try {
-                   message.setRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(toAddress));
-                   message.setFrom(new InternetAddress("no_reply@" + serverName, "Wildfire", encoding));
-                   message.setText(msg);
-                   message.setSubject("User Registration");
-                   
-                   messages.add(message);
-               } catch (Exception e) {
+                   emailService.sendMessage(null, toAddress, "Wildfire", "no_reply@" + serverName,
+                           subject, body, null);
+               }
+               catch (Exception e) {
                    Log.error(e);
                }
            }
-            
-            emailService.sendMessages(messages);
         }
-        
+
         private void sendWelcomeMessage(User user) {
             router.route(createServerMessage(user.getUsername() + "@" + serverName, "Welcome",
                     getWelcomeMessage()));
@@ -365,11 +354,7 @@ public class RegistrationPlugin implements Plugin {
             return false;
         }
 
-        //must at least match x@x.xx 
-        if (!address.matches(".{1,}[@].{1,}[.].{2,}")) {
-            return false;
-        }
-
-        return true;
+        // Must at least match x@x.xx. 
+        return address.matches(".{1,}[@].{1,}[.].{2,}");
     }
 }

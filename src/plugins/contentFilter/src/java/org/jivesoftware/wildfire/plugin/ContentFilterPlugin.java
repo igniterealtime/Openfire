@@ -29,13 +29,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -512,7 +506,6 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     }
 
     private void sendViolationNotification(Packet originalPacket) {
-
         String subject = "Content filter notification! ("
                 + originalPacket.getFrom().getNode() + ")";
 
@@ -580,36 +573,13 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     }
 
     private void sendViolationNotificationEmail(String subject, String body) {
-
-        List<MimeMessage> messages = new ArrayList<MimeMessage>();
-
         try {
-
-            EmailService emailService = EmailService.getInstance();
-
-            MimeMessage message = emailService.createMimeMessage();
-
-            String encoding = MimeUtility.mimeCharset("iso-8859-1");
-
             User user = UserManager.getInstance().getUser(violationContact);
+            EmailService.getInstance().sendMessage(user.getName(), user.getEmail(), "Wildfire",
+                "no_reply@" + violationNotificationFrom.getDomain(), subject, body, null);
 
-            message.setRecipient(javax.mail.Message.RecipientType.TO,
-                    new InternetAddress(user.getEmail()));
-
-            message.setFrom(new InternetAddress("no_reply@"
-                    + violationNotificationFrom, "Wildfire", encoding));
-
-            message.setText(body);
-
-            message.setSubject(subject);
-
-            message.setSentDate(new Date());
-
-            messages.add(message);
-
-            emailService.sendMessages(messages);
-
-        } catch (Throwable e) { 
+        }
+        catch (Throwable e) {
             // catch throwable in case email setup is invalid
             Log.error("Content Filter: Failed to send email, please review Wildfire setup", e);
         }

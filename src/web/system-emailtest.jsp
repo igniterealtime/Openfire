@@ -12,6 +12,7 @@
                  javax.mail.internet.*"
     errorPage="error.jsp"
 %>
+<%@ page import="java.text.SimpleDateFormat"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -59,7 +60,13 @@
         if (errors.size() == 0) {
             // Create a message
             MimeMessage message = service.createMimeMessage();
-            // set to and from
+            // Set the date of the message to be the current date
+            SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z",
+                    java.util.Locale.US);
+            format.setTimeZone(JiveGlobals.getTimeZone());
+            message.setHeader("Date", format.format(new Date()));
+
+            // Set to and from.
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(to, null));
             message.setFrom(new InternetAddress(from, null));
             message.setSubject(subject);
@@ -125,8 +132,8 @@ function checkClick(el) {
         	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
 	        <td class="jive-icon-label">
 		        <fmt:message key="system.emailtest.no_host">
-				    <fmt:param value="<%= "<a href='system-email.jsp>" %>"/>
-				    <fmt:param value="<%= "</a>" %>"/>
+				    <fmt:param value="<a href=\"system-email.jsp\">"/>
+				    <fmt:param value="</a>"/>
 				</fmt:message>
 	        </td>
         </tr>

@@ -56,7 +56,11 @@
                 errors.put("username", "");
             }
         }
-        if (password == null) {
+        // Trim the password. This means we don't accept spaces as passwords. We don't
+        // trim the passwordConfirm as well since not trimming will ensure the user doesn't
+        // think space is an ok password character.
+        password = password.trim();
+        if (password == null || password.equals("")) {
             errors.put("password","");
         }
         if (passwordConfirm == null) {

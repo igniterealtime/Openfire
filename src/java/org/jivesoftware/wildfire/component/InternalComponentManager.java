@@ -221,9 +221,9 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             // Search again for those JIDs whose domain include the server name but this
             // time remove the server name from the JID's domain
             String serverName = componentJID.getDomain();
-            int index = serverName.lastIndexOf(serverDomain);
-            if (index > 0) {
-                return components.get(serverName.substring(0, --index));
+            int index = serverName.lastIndexOf("." + serverDomain);
+            if (index > -1) {
+                return components.get(serverName.substring(0, index));
             }
         }
         return null;

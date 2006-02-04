@@ -248,14 +248,14 @@ function dodelete(propName) {
         <tr class="<%= (n.equals(propName) ? "hilite" : "") %>">
 
             <td>
-                <div class="hidebox" style="width:150px;">
+                <div class="hidebox" style="width:200px;">
                 <span title="<%= StringUtils.escapeHTMLTags(n) %>">
                 <%= StringUtils.escapeHTMLTags(n) %>
                 </span>
                 </div>
             </td>
             <td>
-                <div class="hidebox" style="width:350px;">
+                <div class="hidebox" style="width:300px;">
                     <%  if (n.indexOf("passwd") > -1 || n.indexOf("password") > -1 || n.indexOf("cookieKey") > -1) { %>
                         <span style="color:#999;"><i>hidden</i></span>
                     <%  } else { %>

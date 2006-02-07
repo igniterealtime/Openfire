@@ -69,8 +69,20 @@ public class IQRouter extends BasicModule {
             throw new NullPointerException();
         }
         Session session = sessionManager.getSession(packet.getFrom());
-        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
-                isLocalServer(packet.getTo()) && (
+        JID to = packet.getTo();
+        if (session != null && to != null && session.getStatus() == Session.STATUS_CONNECTED &&
+                !serverName.equals(to.toString())) {
+            // User is requesting this server to authenticate for another server. Return
+            // a bad-request error
+            IQ reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.bad_request);
+            sessionManager.getSession(packet.getFrom()).process(reply);
+            Log.warn("User tried to authenticate with this server using an unknown receipient: " +
+                    packet);
+        }
+        else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
+                isLocalServer(to) && (
                         "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
                                 "jabber:iq:register"
                                         .equals(packet.getChildElement().getNamespaceURI()) ||

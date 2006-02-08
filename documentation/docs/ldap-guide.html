@@ -157,6 +157,13 @@
     <li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this
         property is not set,
         the default value is <tt>("ldap.groupNameField"={0})</tt></li>
+    <li>ldap.searchFields -- the LDAP fields that will be used for user searches. If
+        this property is not set, the username, name, and email fields will be searched. An example
+        value for this field is "Username/uid,Name/cname". That searches the uid and cname fields
+        in the directory and labels them as "Username" and "Name" in the search UI. You can add
+        as many fields as you'd like using comma-delimited "DisplayName/Field" pairs. You should
+        ensure that any fields used for searching are properly indexed so that searches return
+        quickly.<li>
 </ul>
 
 <p>

@@ -15,6 +15,8 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.DocumentException;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.privacy.PrivacyList;
+import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
@@ -267,8 +269,14 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                                     Presence presencePacket = new Presence(element.getRootElement());
                                     presencePacket.setFrom(probee.toBareJID());
                                     presencePacket.setTo(prober);
-                                    // Send the presence to the prober
-                                    deliverer.deliver(presencePacket);
+                                    // Check if default privacy list of the probee blocks the
+                                    // outgoing presence
+                                    PrivacyList list = PrivacyListManager.getInstance()
+                                            .getDefaultPrivacyList(probee.getNode());
+                                    if (list == null || !list.shouldBlockPacket(presencePacket)) {
+                                        // Send the presence to the prober
+                                        deliverer.deliver(presencePacket);
+                                    }
                                 }
                                 catch (Exception e) {
                                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -283,9 +291,19 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         // The contact is online so send to the prober all the resources where the
                         // probee is connected
                         for (ClientSession session : sessions) {
+                            // Create presence to send from probee to prober
                             Presence presencePacket = session.getPresence().createCopy();
                             presencePacket.setFrom(session.getAddress());
                             presencePacket.setTo(prober);
+                            // Check if a privacy list of the probee blocks the outgoing presence
+                            PrivacyList list = session.getActiveList();
+                            list = list == null ? session.getDefaultList() : list;
+                            if (list != null) {
+                                if (list.shouldBlockPacket(presencePacket)) {
+                                    // Default list blocked outgoing presence so skip this session
+                                    continue;
+                                }
+                            }
                             try {
                                 deliverer.deliver(presencePacket);
                             }

@@ -12,6 +12,8 @@
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.privacy.PrivacyList;
+import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -69,6 +71,12 @@ public class OfflineMessageStrategy extends BasicModule {
             if (Message.Type.groupchat == message.getType() ||
                     Message.Type.error == message.getType() ||
                     Message.Type.headline == message.getType()) {
+                return;
+            }
+            // Do not store messages if communication is blocked
+            PrivacyList list =
+                    PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
+            if (list != null && list.shouldBlockPacket(message)) {
                 return;
             }
 

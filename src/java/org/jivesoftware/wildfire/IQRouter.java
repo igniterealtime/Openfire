@@ -14,6 +14,9 @@ package org.jivesoftware.wildfire;
 import org.dom4j.Element;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.wildfire.privacy.PrivacyList;
+import org.jivesoftware.wildfire.privacy.PrivacyListManager;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -224,44 +227,34 @@ public class IQRouter extends BasicModule {
                     }
                 }
                 else {
+                    // Check if communication to local users is allowed
+                    if (recipientJID != null && recipientJID.getNode() != null) {
+                        PrivacyList list = PrivacyListManager.getInstance()
+                                .getDefaultPrivacyList(recipientJID.getNode());
+                        if (list != null && list.shouldBlockPacket(packet)) {
+                            // Communication is blocked
+                            if (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType()) {
+                                // Answer that the service is unavailable
+                                sendErrorPacket(packet, PacketError.Condition.service_unavailable);
+                            }
+                            return;
+                        }
+                    }
                     IQHandler handler = getHandler(namespace);
                     if (handler == null) {
-                        IQ reply = IQ.createResultIQ(packet);
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
+                            sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                         else if (recipientJID.getNode() == null ||
                                 "".equals(recipientJID.getNode())) {
                             // Answer an error if JID is of the form <domain>
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.feature_not_implemented);
+                            sendErrorPacket(packet, PacketError.Condition.feature_not_implemented);
                         }
                         else {
                             // JID is of the form <node@domain>
                             // Answer an error since the server can't handle packets sent to a node
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
-                        }
-
-                        // Locate a route to the sender of the IQ and ask it to process
-                        // the packet. Use the routingTable so that routes to remote servers
-                        // may be found
-                        ChannelHandler route = routingTable.getRoute(packet.getFrom());
-                        if (route != null) {
-                            route.process(reply);
-                        }
-                        else {
-                            // No root was found so try looking for local sessions that have never
-                            // sent an available presence or haven't authenticated yet
-                            Session session = sessionManager.getSession(packet.getFrom());
-                            if (session != null) {
-                                session.process(reply);
-                            }
-                            else {
-                                Log.warn("Packet could not be delivered " + packet);
-                            }
+                            sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                     }
                     else {
@@ -299,27 +292,7 @@ public class IQRouter extends BasicModule {
                 // If a route to the target address was not found then try to answer a
                 // service_unavailable error code to the sender of the IQ packet
                 if (!handlerFound && IQ.Type.result != packet.getType()) {
-                    IQ reply = IQ.createResultIQ(packet);
-                    reply.setChildElement(packet.getChildElement().createCopy());
-                    reply.setError(PacketError.Condition.service_unavailable);
-                    // Locate a route to the sender of the IQ and ask it to process
-                    // the packet. Use the routingTable so that routes to remote servers
-                    // may be found
-                    ChannelHandler route = routingTable.getRoute(packet.getFrom());
-                    if (route != null) {
-                        route.process(reply);
-                    }
-                    else {
-                        // No root was found so try looking for local sessions that have never
-                        // sent an available presence or haven't authenticated yet
-                        Session session = sessionManager.getSession(packet.getFrom());
-                        if (session != null) {
-                            session.process(reply);
-                        }
-                        else {
-                            Log.warn("Packet could not be delivered " + reply);
-                        }
-                    }
+                    sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                 }
             }
         }
@@ -331,6 +304,31 @@ public class IQRouter extends BasicModule {
                 if (conn != null) {
                     conn.close();
                 }
+            }
+        }
+    }
+
+    private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition)
+            throws UnauthorizedException {
+        IQ reply = IQ.createResultIQ(originalPacket);
+        reply.setChildElement(originalPacket.getChildElement().createCopy());
+        reply.setError(condition);
+        // Locate a route to the sender of the IQ and ask it to process
+        // the packet. Use the routingTable so that routes to remote servers
+        // may be found
+        ChannelHandler route = routingTable.getRoute(originalPacket.getFrom());
+        if (route != null) {
+            route.process(reply);
+        }
+        else {
+            // No root was found so try looking for local sessions that have never
+            // sent an available presence or haven't authenticated yet
+            Session session = sessionManager.getSession(originalPacket.getFrom());
+            if (session != null) {
+                session.process(reply);
+            }
+            else {
+                Log.warn("Error packet could not be delivered " + reply);
             }
         }
     }

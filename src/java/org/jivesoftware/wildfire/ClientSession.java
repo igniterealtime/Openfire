@@ -12,16 +12,18 @@
 package org.jivesoftware.wildfire;
 
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.wildfire.privacy.PrivacyList;
+import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
@@ -95,6 +97,17 @@ public class ClientSession extends Session {
     private Presence presence = null;
 
     private int conflictCount = 0;
+
+    /**
+     * Privacy list that overrides the default privacy list. This list affects only this
+     * session and only for the duration of the session.
+     */
+    private PrivacyList activeList;
+    /**
+     * Default privacy list used for the session's user. This list is processed if there
+     * is no active list set for the session.
+     */
+    private PrivacyList defaultList;
 
     static {
         // Fill out the allowedIPs with the system property
@@ -381,6 +394,47 @@ public class ClientSession extends Session {
     }
 
     /**
+     * Returns the Privacy list that overrides the default privacy list. This list affects
+     * only this session and only for the duration of the session.
+     *
+     * @return the Privacy list that overrides the default privacy list.
+     */
+    public PrivacyList getActiveList() {
+        return activeList;
+    }
+
+    /**
+     * Sets the Privacy list that overrides the default privacy list. This list affects
+     * only this session and only for the duration of the session.
+     *
+     * @param activeList the Privacy list that overrides the default privacy list.
+     */
+    public void setActiveList(PrivacyList activeList) {
+        this.activeList = activeList;
+    }
+
+    /**
+     * Returns the default Privacy list used for the session's user. This list is
+     * processed if there is no active list set for the session.
+     *
+     * @return the default Privacy list used for the session's user.
+     */
+    public PrivacyList getDefaultList() {
+        return defaultList;
+    }
+
+    /**
+     * Sets the default Privacy list used for the session's user. This list is
+     * processed if there is no active list set for the session.
+     *
+     *
+     * @param defaultList the default Privacy list used for the session's user.
+     */
+    public void setDefaultList(PrivacyList defaultList) {
+        this.defaultList = defaultList;
+    }
+
+    /**
      * Returns the number of milliseconds a connection has to be idle to be closed. Default is
      * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
      * considering the connection active when the client sends some data or hearbeats
@@ -463,6 +517,9 @@ public class ClientSession extends Session {
 
         sessionManager.addSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
+
+        // Set default privacy list for this session
+        setDefaultList(PrivacyListManager.getInstance().getDefaultPrivacyList(user.getUsername()));
     }
 
     /**
@@ -661,6 +718,22 @@ public class ClientSession extends Session {
     }
 
     public void process(Packet packet) {
+        if (activeList != null) {
+            // If a privacy list is active then make sure that the packet is not blocked
+            if (activeList.shouldBlockPacket(packet)) {
+                // Communication is blocked. Drop packet.
+                return;
+            }
+        }
+        else if (defaultList != null) {
+            // There is no active list so check if there exists a default list and make
+            // sure that the packet is not blocked
+            if (defaultList.shouldBlockPacket(packet)) {
+                // Communication is blocked. Drop packet.
+                return;
+            }
+        }
+        // Deliver packet to the client
         deliver(packet);
     }
 

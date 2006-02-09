@@ -11,20 +11,24 @@
 
 package org.jivesoftware.wildfire.roster;
 
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.group.GroupManager;
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.database.JiveID;
-import org.xmpp.packet.*;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.privacy.PrivacyList;
+import org.jivesoftware.wildfire.privacy.PrivacyListManager;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -444,12 +448,31 @@ public class Roster implements Cacheable {
         if (routingTable == null) {
             return;
         }
+        // Get the privacy list of this user
+        PrivacyList list = null;
+        if (packet.getFrom() != null) {
+            // Try to use the active list of the session. If none was found then try to use
+            // the default privacy list of the session
+            ClientSession session = sessionManager.getSession(packet.getFrom());
+            if (session != null) {
+                list = session.getActiveList();
+                list = list == null ? session.getDefaultList() : list;
+            }
+        }
+        if (list == null) {
+            // No privacy list was found (based on the session) so check if there is a default list
+            list = PrivacyListManager.getInstance().getDefaultPrivacyList(username);
+        }
         for (RosterItem item : rosterItems.values()) {
             if (item.getSubStatus() == RosterItem.SUB_BOTH
                     || item.getSubStatus() == RosterItem.SUB_FROM) {
                 JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
                 Iterator sessions = routingTable.getRoutes(searchNode);
                 packet.setTo(item.getJid());
+                if (list != null && list.shouldBlockPacket(packet)) {
+                    // Outgoing presence notifications are blocked for this contact
+                    continue;
+                }
                 while (sessions.hasNext()) {
                     ChannelHandler session = (ChannelHandler)sessions.next();
                     try {

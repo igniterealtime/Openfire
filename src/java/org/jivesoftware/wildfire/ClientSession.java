@@ -717,21 +717,32 @@ public class ClientSession extends Session {
         conflictCount++;
     }
 
-    public void process(Packet packet) {
+    /**
+     * Returns true if the specified packet must be blocked based on the active or default
+     * privacy list rules. The active list will be tried first. If none was found then the
+     * default list is going to be used. If no default list was defined for this user then
+     * allow the packet to flow.
+     *
+     * @param packet the packet to analyze if it must be blocked.
+     * @return true if the specified packet must be blocked.
+     */
+    public boolean shouldBlockPacket(Packet packet) {
         if (activeList != null) {
             // If a privacy list is active then make sure that the packet is not blocked
-            if (activeList.shouldBlockPacket(packet)) {
-                // Communication is blocked. Drop packet.
-                return;
-            }
+            return activeList.shouldBlockPacket(packet);
         }
         else if (defaultList != null) {
             // There is no active list so check if there exists a default list and make
             // sure that the packet is not blocked
-            if (defaultList.shouldBlockPacket(packet)) {
-                // Communication is blocked. Drop packet.
-                return;
-            }
+            return defaultList.shouldBlockPacket(packet);
+        }
+        return false;
+    }
+
+    public void process(Packet packet) {
+        if (shouldBlockPacket(packet)) {
+            // Communication is blocked. Drop packet.
+            return;
         }
         // Deliver packet to the client
         deliver(packet);

@@ -12,13 +12,13 @@
 package org.jivesoftware.wildfire;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -270,10 +270,12 @@ public class IQRouter extends BasicModule {
                 // So if the target address belongs to this server then use the sessionManager
                 // instead of the routingTable since unavailable clients won't have a route to them
                 if (XMPPServer.getInstance().isLocal(recipientJID)) {
-                    Session session = sessionManager.getBestRoute(recipientJID);
+                    ClientSession session = sessionManager.getBestRoute(recipientJID);
                     if (session != null) {
-                        session.process(packet);
-                        handlerFound = true;
+                        if (!session.shouldBlockPacket(packet)) {
+                            session.process(packet);
+                            handlerFound = true;
+                        }
                     }
                     else {
                         Log.info("Packet sent to unreachable address " + packet);

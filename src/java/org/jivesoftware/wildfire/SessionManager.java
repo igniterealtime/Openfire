@@ -11,9 +11,15 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.component.ComponentSession;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.jivesoftware.wildfire.server.OutgoingServerSession;
@@ -21,12 +27,6 @@ import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.component.ComponentSession;
-import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.event.SessionEventDispatcher;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -711,7 +711,7 @@ public class SessionManager extends BasicModule {
      * @param recipient The recipient ID to deliver packets to
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
-    public Session getBestRoute(JID recipient) {
+    public ClientSession getBestRoute(JID recipient) {
         // Return null if the JID belongs to a foreign server
         if (serverName == null || !serverName.equals(recipient.getDomain())) {
              return null;

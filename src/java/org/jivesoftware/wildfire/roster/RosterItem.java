@@ -11,13 +11,13 @@
 
 package org.jivesoftware.wildfire.roster;
 
-import org.jivesoftware.util.IntEnum;
-import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.IntEnum;
+import org.jivesoftware.wildfire.SharedGroupException;
+import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.wildfire.SharedGroupException;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -335,7 +335,10 @@ public class RosterItem implements Cacheable {
                     String displayName = group.getProperties().get("sharedRoster.displayName");
                     if (displayName != null && displayName.equals(groupName)) {
                         // Remove the shared group from the list (since it exists)
-                        it.remove();
+                        try {
+                            it.remove();
+                        }
+                        catch (IllegalStateException e) {}
                     }
                 }
                 catch (GroupNotFoundException e) {
@@ -345,7 +348,10 @@ public class RosterItem implements Cacheable {
                         String displayName = group.getProperties().get("sharedRoster.displayName");
                         if (displayName != null && displayName.equals(groupName)) {
                             // Remove the shared group from the list (since it exists)
-                            it.remove();
+                            try {
+                                it.remove();
+                            }
+                            catch (IllegalStateException ise) {}
                         }
                     }
                 }

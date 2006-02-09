@@ -411,6 +411,7 @@ public class XMPPServer {
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
         loadModule(AdHocCommandHandler.class.getName());
+        loadModule(IQPrivacyHandler.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

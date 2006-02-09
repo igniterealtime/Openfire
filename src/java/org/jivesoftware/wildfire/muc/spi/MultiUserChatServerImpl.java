@@ -730,6 +730,15 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 Log.error("Wrong number format of property xmpp.muc.tasks.log.batchsize", e);
             }
         }
+        value = JiveGlobals.getProperty("xmpp.muc.unload.empty_days");
+        if (value != null) {
+            try {
+                emptyLimit = Integer.parseInt(value) * 24;
+            }
+            catch (NumberFormatException e) {
+                Log.error("Wrong number format of property xmpp.muc.unload.empty_days", e);
+            }
+        }
         if (chatServiceName == null) {
             chatServiceName = "conference";
         }

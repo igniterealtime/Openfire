@@ -47,6 +47,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#jiveUserProp">jiveUserProp</a> </li>
   <li><a href="#jiveRoster">jiveRoster</a> </li>
   <li><a href="#jiveRosterGroups">jiveRosterGroups</a> </li>
+  <li><a href="#jivePrivacy">jivePrivacyList</a> </li>
   <li><a href="#jiveVCard">jiveVCard</a> </li>
   <li><a href="#jiveProperty">jiveProperty</a><br>
   </li>
@@ -506,6 +507,48 @@ roster)</th>
       <td>VARCHAR</td>
       <td>255</td>
       <td>The user defined name for this roster group</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jivePrivacy"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jivePrivacyList (Users privacy lists)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name of the privacy list (Primary Key)</td>
+    </tr>
+      <tr>
+        <td>isDefault</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating if this is the default privacy list of the user</td>
+      </tr>
+    <tr>
+      <td>list</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>XML representation of the privacy list</td>
     </tr>
   </tbody>
 </table>

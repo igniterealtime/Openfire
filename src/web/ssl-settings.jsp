@@ -8,22 +8,25 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.net.SSLConfig,
-                 java.security.KeyStore,
-                 java.security.cert.CertificateFactory,
-                 java.security.cert.Certificate,
-                 java.io.ByteArrayInputStream"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.ClientSession,
+                 org.jivesoftware.wildfire.Connection,
+                 org.jivesoftware.wildfire.ConnectionManager,
+                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.net.SSLConfig"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.wildfire.ClientSession"%>
-<%@ page import="org.jivesoftware.wildfire.net.SocketConnection"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.ConnectionManager"%>
-<%@ page import="org.jivesoftware.wildfire.Connection"%>
-<%@ page import="java.security.cert.X509Certificate"%>
 <%@ page import="org.jivesoftware.wildfire.net.TLSStreamHandler"%>
+<%@ page import="java.io.ByteArrayInputStream"%>
+<%@ page import="java.security.KeyStore"%>
+<%@ page import="java.security.cert.Certificate"%>
+<%@ page import="java.security.cert.CertificateFactory"%>
+<%@ page import="java.security.cert.X509Certificate"%>
+<%@ page import="java.util.Date"%>
+<%@ page import="java.util.Enumeration"%>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.Map"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -562,11 +565,18 @@
         i++;
         String a = (String)aliases.nextElement();
         X509Certificate c = (X509Certificate) keyStore.getCertificate(a);
+        StringBuffer identities = new StringBuffer();
+        for (String identity : TLSStreamHandler.getPeerIdentities(c)) {
+            identities.append(identity).append(", ");
+        }
+        if (identities.length() > 0) {
+            identities.setLength(identities.length() - 2);
+        }
 %>
     <tr valign="top">
         <td id="rs<%=i%>" width="1" rowspan="1"><%= (i) %>.</td>
         <td>
-            <%= TLSStreamHandler.getPeerIdentity(c) %> (<%= a %>)
+            <%= identities.toString() %> (<%= a %>)
         </td>
         <td>
             <% boolean expired = c.getNotAfter().before(new Date());

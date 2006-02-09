@@ -14,9 +14,9 @@ package org.jivesoftware.wildfire.net;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -285,9 +285,8 @@ public class SASLAuthentication {
             hostname = StringUtils.decodeBase64(hostname);
             // Check that hostname matches the one provided in a certificate
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                if (hostname
-                        .equals(TLSStreamHandler.getPeerIdentity((X509Certificate) certificate)))
-                {
+                if (TLSStreamHandler.getPeerIdentities((X509Certificate) certificate)
+                        .contains(hostname)) {
                     authenticationSuccessful(hostname);
                     return true;
                 }

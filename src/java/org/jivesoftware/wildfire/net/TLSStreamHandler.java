@@ -11,6 +11,9 @@
 
 package org.jivesoftware.wildfire.net;
 
+import org.bouncycastle.asn1.*;
+import org.jivesoftware.util.Log;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
@@ -18,14 +21,16 @@ import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
-import java.security.Principal;
+import java.util.*;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
@@ -77,21 +82,75 @@ public class TLSStreamHandler {
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
-     * Returns the identity of the remote server as defined in the specified certificate. The
-     * identity is defined in the subjectDN of the certificate and it can also be defined in
-     * the subjectAltName extension of type "xmpp". When the extension is being used then the
-     * identity defined in the extension in going to be returned. Otherwise, the value stored in
+     * Returns the identities of the remote server as defined in the specified certificate. The
+     * identities are defined in the subjectDN of the certificate and it can also be defined in
+     * the subjectAltName extensions of type "xmpp". When the extension is being used then the
+     * identities defined in the extension are going to be returned. Otherwise, the value stored in
      * the subjectDN is returned.
      *
-     * @param x509Certificate the certificate the holds the identity of the remote server.
-     * @return the identity of the remote server as defined in the specified certificate.
+     * @param x509Certificate the certificate the holds the identities of the remote server.
+     * @return the identities of the remote server as defined in the specified certificate.
      */
-    public static String getPeerIdentity(X509Certificate x509Certificate) {
-        Principal principalSubject = x509Certificate.getSubjectDN();
-        // TODO Look the identity in the subjectAltName extension if available
-        String name = principalSubject.getName();
-        name = name.replace("CN=", "");
-        return name;
+    public static List<String> getPeerIdentities(X509Certificate x509Certificate) {
+        // Look the identity in the subjectAltName extension if available
+        List<String> names = getSubjectAlternativeNames(x509Certificate);
+        if (names.isEmpty()) {
+            String name = x509Certificate.getSubjectDN().getName();
+            name = name.replace("CN=", "");
+            // Create an array with the unique identity
+            names = new ArrayList<String>();
+            names.add(name);
+        }
+        return names;
+    }
+
+    /**
+     * Returns the JID representation of an XMPP entity contained as a SubjectAltName extension
+     * in the certificate. If none was found then return <tt>null</tt>.
+     *
+     * @param certificate the certificate presented by the remote entity.
+     * @return the JID representation of an XMPP entity contained as a SubjectAltName extension
+     *         in the certificate. If none was found then return <tt>null</tt>.
+     */
+    private static List<String> getSubjectAlternativeNames(X509Certificate certificate) {
+        List<String> identities = new ArrayList<String>();
+        try {
+            Collection altNames = certificate.getSubjectAlternativeNames();
+            // Check that the certificate includes the SubjectAltName extension
+            if (altNames == null) {
+                return Collections.emptyList();
+            }
+            // Use the type OtherName to search for the certified server name
+            for (Iterator lists=altNames.iterator(); lists.hasNext();) {
+                List item = (List) lists.next();
+                Integer type = (Integer) item.get(0);
+                if (type.intValue() == 0) {
+                    // Type OtherName found so return the associated value
+                    try {
+                        // Value is encoded using ASN.1 so decode it to get the server's identity
+                        ASN1InputStream decoder = new ASN1InputStream((byte[]) item.toArray()[1]);
+                        DEREncodable encoded = decoder.readObject();
+                        encoded = ((DERSequence) encoded).getObjectAt(1);
+                        encoded = ((DERTaggedObject) encoded).getObject();
+                        encoded = ((DERTaggedObject) encoded).getObject();
+                        String identity = ((DERUTF8String) encoded).getString();
+                        // Add the decoded server name to the list of identities
+                        identities.add(identity);
+                    }
+                    catch (UnsupportedEncodingException e) {}
+                    catch (IOException e) {}
+
+                }
+                // Other types are not good for XMPP so ignore them
+                if (Log.isDebugEnabled()) {
+                    Log.debug("SubjectAltName of invalid type found: " + certificate);
+                }
+            }
+        }
+        catch (CertificateParsingException e) {
+            Log.error("Error parsing SubjectAltName in certificate: " + certificate, e);
+        }
+        return identities;
     }
 
     /**

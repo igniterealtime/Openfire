@@ -16,6 +16,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * ServerTrustManager is a Trust Manager that is only used for s2s connections. This TrustManager
@@ -79,7 +80,7 @@ class ServerTrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            String peerIdentity = TLSStreamHandler.getPeerIdentity(x509Certificates[0]);
+            List<String> peerIdentities = TLSStreamHandler.getPeerIdentities(x509Certificates[0]);
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
                 // Working down the chain, for every certificate in the chain,
@@ -99,12 +100,12 @@ class ServerTrustManager implements X509TrustManager {
                             }
                             catch (GeneralSecurityException generalsecurityexception) {
                                 throw new CertificateException(
-                                        "signature verification failed of " + peerIdentity);
+                                        "signature verification failed of " + peerIdentities);
                             }
                         }
                         else {
                             throw new CertificateException(
-                                    "subject/issuer verification failed of " + peerIdentity);
+                                    "subject/issuer verification failed of " + peerIdentities);
                         }
                     }
                     principalLast = principalSubject;
@@ -121,7 +122,7 @@ class ServerTrustManager implements X509TrustManager {
                             .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
                     {
                         Log.warn("Accepting self-signed certificate of remote server: " +
-                                peerIdentity);
+                                peerIdentities);
                         trusted = true;
                     }
                 }
@@ -129,23 +130,23 @@ class ServerTrustManager implements X509TrustManager {
                     Log.error(e);
                 }
                 if (!trusted) {
-                    throw new CertificateException("root certificate not trusted of " + peerIdentity);
+                    throw new CertificateException("root certificate not trusted of " + peerIdentities);
                 }
             }
 
             // Verify that the first certificate in the chain corresponds to
             // the server we desire to authenticate.
             // Check if the certificate uses a wildcard indicating that subdomains are valid
-            if (peerIdentity.startsWith("*.")) {
+            if (peerIdentities.size() == 1 && peerIdentities.get(0).startsWith("*.")) {
                 // Remove the wildcard
-                peerIdentity = peerIdentity.replace("*.", "");
+                String peerIdentity = peerIdentities.get(0).replace("*.", "");
                 // Check if the requested subdomain matches the certified domain
                 if (!server.endsWith(peerIdentity)) {
-                    throw new CertificateException("target verification failed of " + peerIdentity);
+                    throw new CertificateException("target verification failed of " + peerIdentities);
                 }
             }
-            else if (!server.equals(peerIdentity)) {
-                throw new CertificateException("target verification failed of " + peerIdentity);
+            else if (!peerIdentities.contains(server)) {
+                throw new CertificateException("target verification failed of " + peerIdentities);
             }
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.validity", true)) {
@@ -157,7 +158,7 @@ class ServerTrustManager implements X509TrustManager {
                         x509Certificates[i].checkValidity(date);
                     }
                     catch (GeneralSecurityException generalsecurityexception) {
-                        throw new CertificateException("invalid date of " + peerIdentity);
+                        throw new CertificateException("invalid date of " + peerIdentities);
                     }
                 }
             }

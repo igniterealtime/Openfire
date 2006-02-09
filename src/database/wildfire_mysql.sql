@@ -115,6 +115,15 @@ CREATE TABLE jiveRemoteServerConf (
   PRIMARY KEY (domain)
 );
 
+CREATE TABLE jivePrivacyList (
+  username              VARCHAR(32)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  isDefault             TINYINT         NOT NULL,
+  list                  TEXT            NOT NULL,
+  PRIMARY KEY (username, name),
+  INDEX jivePList_default_idx (username, isDefault)
+);
+
 # MUC Tables
 
 CREATE TABLE mucRoom (
@@ -186,7 +195,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 4);
+INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 5);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

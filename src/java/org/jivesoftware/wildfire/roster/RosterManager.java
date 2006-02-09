@@ -69,9 +69,14 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         }
         Roster roster = (Roster)rosterCache.get(username);
         if (roster == null) {
-            // Not in cache so load a new one:
-            roster = new Roster(username);
-            rosterCache.put(username, roster);
+            synchronized(username.intern()) {
+                roster = (Roster)rosterCache.get(username);
+                if (roster == null) {
+                    // Not in cache so load a new one:
+                    roster = new Roster(username);
+                    rosterCache.put(username, roster);
+                }
+            }
         }
         if (roster == null) {
             throw new UserNotFoundException(username);
@@ -93,11 +98,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         try {
             String username = user.getNode();
             // Get the roster of the deleted user
-            Roster roster = (Roster)CacheManager.getCache("username2roster").get(username);
-            if (roster == null) {
-                // Not in cache so load a new one:
-                roster = new Roster(username);
-            }
+            Roster roster = getRoster(username);
             // Remove each roster item from the user's roster
             for (RosterItem item : roster.getRosterItems()) {
                 try {
@@ -115,23 +116,25 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             Iterator<String> usernames = rosteItemProvider.getUsernames(user.toBareJID());
             while (usernames.hasNext()) {
                 username = usernames.next();
-                // Get the roster that has a reference to the deleted user
-                roster = (Roster)CacheManager.getCache("username2roster").get(username);
-                if (roster == null) {
-                    // Not in cache so load a new one:
-                    roster = new Roster(username);
-                }
-                // Remove the deleted user reference from this roster
                 try {
+                    // Get the roster that has a reference to the deleted user
+                    roster = getRoster(username);
+                    // Remove the deleted user reference from this roster
                     roster.deleteRosterItem(user, false);
                 }
                 catch (SharedGroupException e) {
                     // Do nothing. We shouldn't have this exception since we disabled the checkings
                 }
+                catch (UserNotFoundException e) {
+                    // Do nothing.
+                }
             }
         }
         catch (UnsupportedOperationException e) {
             // Do nothing
+        }
+        catch (UserNotFoundException e) {
+            // Do nothing.
         }
     }
 

@@ -13,6 +13,10 @@ package org.jivesoftware.wildfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
@@ -26,10 +30,6 @@ import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.wildfire.muc.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
 
@@ -154,9 +154,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * Max number of hours that a persistent room may be empty before the service removes the
      * room from memory. Unloaded rooms will exist in the database and may be loaded by a user
-     * request. Default time limit is: 7 days.
+     * request. Default time limit is: 30 days.
      */
-    private long emptyLimit = 7 * 24;
+    private long emptyLimit = 30 * 24;
     /**
      * Task that removes rooms from memory that have been without activity for a period of time. A
      * room is considered without activity when no occupants are present in the room for a while.

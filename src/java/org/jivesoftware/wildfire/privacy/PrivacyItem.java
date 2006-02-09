@@ -143,7 +143,7 @@ class PrivacyItem implements Serializable, Comparable {
             // notification then use the receipient of the packet in the analysis
             matches = verifyJID(packet.getTo(), roster);
         }
-        if (!matches && (filterEverything || filterPresence_in && filterIQ || filterMessage)) {
+        if (!matches && (filterEverything || filterPresence_in || filterIQ || filterMessage)) {
             matches = verifyJID(packet.getFrom(), roster);
         }
         return matches;

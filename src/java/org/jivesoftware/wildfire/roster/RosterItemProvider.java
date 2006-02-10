@@ -11,23 +11,23 @@
 
 package org.jivesoftware.wildfire.roster;
 
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Defines the provider methods required for creating, reading, updating and deleting roster
@@ -282,12 +282,8 @@ public class RosterItemProvider {
     public Iterator<RosterItem> getItems(String username) {
         LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
         Connection con = null;
-        Connection con2 = null;
         PreparedStatement pstmt = null;
-        PreparedStatement gstmt = null;
         try {
-            con2 = DbConnectionManager.getConnection();
-            gstmt = con2.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
@@ -302,17 +298,23 @@ public class RosterItemProvider {
                         RosterItem.RecvType.getTypeFromInt(rs.getInt(5)),
                         rs.getString(6),
                         null);
-                // Load the groups for the loaded contact
-                ResultSet gs = null;
-                gstmt.setLong(1, item.getID());
-                gs = gstmt.executeQuery();
-                while (gs.next()) {
-                    item.getGroups().add(gs.getString(1));
-                }
-                // Close the result set
-                gs.close();
                 // Add the loaded RosterItem (ie. user contact) to the result
                 itemList.add(item);
+            }
+            // Close the statement and result set
+            pstmt.close();
+            rs.close();
+
+            // Load the groups for the loaded contact
+            for (RosterItem item : itemList) {
+                pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+                pstmt.setLong(1, item.getID());
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    item.getGroups().add(rs.getString(1));
+                }
+                // Close the result set
+                rs.close();
             }
         }
         catch (SQLException e) {
@@ -322,10 +324,6 @@ public class RosterItemProvider {
             try { if (pstmt != null) { pstmt.close(); } }
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (gstmt != null) { gstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con2 != null) { con2.close(); } }
             catch (Exception e) { Log.error(e); }
         }
         return itemList.iterator();

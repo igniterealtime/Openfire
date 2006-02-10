@@ -15,11 +15,11 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.event.UserEventListener;
-import org.jivesoftware.wildfire.event.UserEventDispatcher;
-import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.event.UserEventListener;
+import org.jivesoftware.wildfire.user.User;
 import org.xmpp.packet.Message;
 
 import java.io.StringReader;
@@ -169,9 +169,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
-                synchronized (dateFormat) {
-                    delay.addAttribute("stamp", dateFormat.format(creationDate));
-                }
+                delay.addAttribute("stamp", dateFormat.format(creationDate));
                 messages.add(message);
             }
             rs.close();
@@ -229,9 +227,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
-                synchronized (dateFormat) {
-                    delay.addAttribute("stamp", dateFormat.format(creationDate));
-                }
+                delay.addAttribute("stamp", dateFormat.format(creationDate));
             }
             rs.close();
         }

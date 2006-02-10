@@ -181,20 +181,22 @@ public class SASLAuthentication {
                         // ok, so I move the complete mark at the begining of RESPONSE. I don't think
                         // a success mark is enough. In case of a failed SASL handshake, the success
                         // mark is false. But the handshake is done anyway.
-                        isComplete = true;
                         if (ss != null) {
+                            boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
                             try {
                                 byte[] data = StringUtils.decodeBase64(response).getBytes(CHARSET);
                                 if (data == null) {
                                     data = new byte[0];
                                 }
-                                byte[] challenge = ss.evaluateResponse(data);
-                                if (ss.isComplete()) {
+
+                                if (ssComplete) {
                                     authenticationSuccessful(ss.getAuthorizationID());
                                     success = true;
+                                    isComplete = true;
                                 }
                                 else {
+                                    byte[] challenge = ss.evaluateResponse(data);
                                     // Send the challenge
                                     sendChallenge(challenge);
                                 }
@@ -205,6 +207,7 @@ public class SASLAuthentication {
                             }
                         }
                         else {
+                            isComplete = true;
                             Log.fatal("SaslServer is null, should be valid object instead.");
                             authenticationFailed();
                         }

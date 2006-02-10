@@ -29,25 +29,22 @@ import javax.mail.internet.*;
  * or to add messages into a queue to be sent. Using these methods, you can
  * send emails in the following couple of ways:<p>
  * <pre>
- *   EmailTask emailTask = new EmailTask();
- *   emailTask.addMessage(
+ *   EmailService.sendMessage(
  *     "Joe Bloe", "jbloe@place.org",
  *     "Jane Doe", "jane@doe.com",
  *     "Hello...",
- *     "This is the body of the email..."
+ *     "This is the body of the email...",
+ *     null
  *   );
- *   emailTask.run();
  * </pre>
  * or
  * <pre>
- *   EmailTask emailTask = new EmailTask();
- *   Message message = emailTask.createMimeMessage();
+ *   Message message = EmailService.createMimeMessage();
  *   // call setters on the message object
  *   // .
  *   // .
  *   // .
- *   emailTask.sendMessage(message);
- *   emailTask.run();
+ *   emailService.sendMessage(message);
  * </pre><p>
  *
  * This class is configured with a set of Jive properties:<ul>

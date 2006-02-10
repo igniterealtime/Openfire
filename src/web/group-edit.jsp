@@ -8,18 +8,20 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.group.GroupManager,
+<%@ page import="org.jivesoftware.stringprep.Stringprep,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.Log,
+                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.group.Group,
-                 java.net.URLEncoder,
-                 java.net.URLDecoder,
-                 java.io.UnsupportedEncodingException,
-                 org.jivesoftware.util.*"
+                 org.jivesoftware.wildfire.group.GroupManager"
 %>
-<%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
 <%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
+<%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="java.io.UnsupportedEncodingException"%>
+<%@ page import="java.net.URLDecoder"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -361,7 +363,7 @@
                         </td>
                         <td width="99%">
                             <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
+                             onchange="this.form.enableRosterGroups[1].checked=true;">
 
                             <%  if (errors.get("groupDisplayName") != null) { %>
 

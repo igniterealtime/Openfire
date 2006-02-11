@@ -139,7 +139,9 @@ public class TLSStreamHandler {
                     }
                     catch (UnsupportedEncodingException e) {}
                     catch (IOException e) {}
-
+                    catch (Exception e) {
+                        Log.error("Error decoding subjectAltName", e);
+                    }
                 }
                 // Other types are not good for XMPP so ignore them
                 if (Log.isDebugEnabled()) {

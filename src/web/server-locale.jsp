@@ -8,11 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.util.*"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.Log,
+                 org.jivesoftware.util.ParamUtils"
 %>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.Locale"%>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.util.TimeZone"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -146,23 +150,32 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="pl_PL" <%= ("pl_PL".equals(locale.toString()) ? "checked" : "") %>
                      id="loc07" />
                 </td>
                 <td colspan="2">
-                    <label for="loc07">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+                    <label for="loc07">Polski (pl_PL)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc08" />
+                </td>
+                <td colspan="2">
+                    <label for="loc08">Portugu&ecirc;s Brasileiro (pt_BR)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc08" />
+                     id="loc09" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
                 </td>
                 <td>
-                    <label for="loc08">Simplified Chinese (zh_CN)</label>
+                    <label for="loc09">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

@@ -7,10 +7,12 @@
   -	$Date: 2005-09-23 10:54:57 -0700 (Fri, 23 Sep 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 java.util.*" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.XMPPServer" %>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.Locale"%>
+<%@ page import="java.util.Map"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
@@ -150,23 +152,32 @@
     </tr>
     <tr>
         <td>
-            <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+            <input type="radio" name="localeCode" value="pl_PL" <%= ("pl_PL".equals(locale.toString()) ? "checked" : "") %>
              id="loc07" />
         </td>
         <td colspan="2">
-            <label for="loc07">Portugu&ecirc;s Brasileiro</label> (pt_BR)
+            <label for="loc07">Polski</label> (pl_PL)
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+             id="loc08" />
+        </td>
+        <td colspan="2">
+            <label for="loc08">Portugu&ecirc;s Brasileiro</label> (pt_BR)
         </td>
     </tr>
     <tr>
         <td>
             <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-             id="loc08" />
+             id="loc09" />
         </td>
         <td>
             <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="../images/language_zh_CN.gif" border="0" /></a>
         </td>
         <td>
-            <label for="loc08">Simplified Chinese</label> (zh_CN)
+            <label for="loc09">Simplified Chinese</label> (zh_CN)
         </td>
     </tr>
 </tbody>

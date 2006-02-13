@@ -37,6 +37,7 @@ import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
 import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.filetransfer.FileTransferProxy;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -412,6 +413,7 @@ public class XMPPServer {
         loadModule(IQSharedGroupHandler.class.getName());
         loadModule(AdHocCommandHandler.class.getName());
         loadModule(IQPrivacyHandler.class.getName());
+        loadModule(FileTransferProxy.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

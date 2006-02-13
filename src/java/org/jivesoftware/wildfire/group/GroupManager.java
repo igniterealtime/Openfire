@@ -12,12 +12,12 @@
 package org.jivesoftware.wildfire.group;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.event.GroupEventDispatcher;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.wildfire.user.User;
 import org.xmpp.packet.JID;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -165,8 +165,10 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        // TODO: add caching
-        return provider.getGroups();
+        Collection<Group> groups = provider.getGroups();
+        // Add to cache and ensure correct identity
+        groups = cacheAndEnsureIdentity(groups);
+        return groups;
     }
 
     /**
@@ -184,8 +186,10 @@ public class GroupManager {
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
-        // TODO: add caching
-        return provider.getGroups(startIndex, numResults);
+        Collection<Group> groups = provider.getGroups(startIndex, numResults);
+        // Add to cache and ensure correct identity
+        groups = cacheAndEnsureIdentity(groups);
+        return groups;
     }
 
     /**
@@ -195,7 +199,35 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        // TODO: add caching
-        return provider.getGroups(user);
+        Collection<Group> groups = provider.getGroups(user);
+        // Add to cache and ensure correct identity
+        groups = cacheAndEnsureIdentity(groups);
+        return groups;
+    }
+
+    /**
+     * Caches groups present in the specified collection that are not already cached and
+     * ensures correct identity of already cached groups.
+     *
+     * @param groups loaded groups from the backend store.
+     * @return a list containing the correct and valid groups (i.e. ensuring identity).
+     */
+    private Collection<Group> cacheAndEnsureIdentity(Collection<Group> groups) {
+        Collection<Group> answer = new ArrayList<Group>(groups.size());
+        for (Group group : groups) {
+            synchronized (group.getName().intern()) {
+                Group existingGroup = (Group) groupCache.get(group.getName());
+                if (existingGroup == null) {
+                    // Add loaded group to the cache
+                    groupCache.put(group.getName(), group);
+                    answer.add(group);
+                }
+                else {
+                    // Replace loaded group with the cached one to ensure correct identity
+                    answer.add(existingGroup);
+                }
+            }
+        }
+        return answer;
     }
 }

@@ -7,7 +7,6 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -34,19 +33,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /** 
  * Provides support for Jabber Search
@@ -65,7 +52,6 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     public static final String PLUGIN_SEARCH_SERVICENAME = "plugin.search.serviceName";
     public static final String PLUGIN_SEARCH_SERVICEENABLED = "plugin.search.serviceEnabled";
    
-    private XMPPServer server;
     private UserManager userManager;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
@@ -88,8 +74,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         serviceName = JiveGlobals.getProperty("plugin.search.serviceName", "search");
         serviceEnabled = JiveGlobals.getBooleanProperty("plugin.search.serviceEnabled", true);
         
-        server = XMPPServer.getInstance();
-        serverName = server.getServerInfo().getName();
+        serverName = XMPPServer.getInstance().getServerInfo().getName();
         // See if the installed provider supports searching. If not, workaround
         // by providing our own searching.
         UserManager manager = UserManager.getInstance();
@@ -185,7 +170,6 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
-        server = null;
         userManager = null;
         fieldLookup = null;
         reverseFieldLookup = null;
@@ -217,13 +201,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 try {
                     IQ replyPacket = IQ.createResultIQ(packet);
 
-                    Element responseElement = DocumentHelper.createElement(QName.get(
-                            "query", "http://jabber.org/protocol/disco#info"));
+                    Element responseElement = replyPacket
+                            .setChildElement("query", "http://jabber.org/protocol/disco#info");
                     responseElement.addElement("identity").addAttribute("category", "search")
                                                           .addAttribute("type", "text")
                                                           .addAttribute("name", "User Search");
                     responseElement.addElement("feature").addAttribute("var", "jabber:iq:search");
-                    replyPacket.setChildElement(responseElement);
 
                     componentManager.sendPacket(this, replyPacket);
                 }
@@ -234,10 +217,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
                 try {
                     IQ replyPacket = IQ.createResultIQ(packet);
-                    Element responseElement = DocumentHelper.createElement(QName.get(
-                            "query", "http://jabber.org/protocol/disco#info"));
-                    
-                    replyPacket.setChildElement(responseElement);
+                    replyPacket.setChildElement("query", "http://jabber.org/protocol/disco#items");
                     componentManager.sendPacket(this, replyPacket);
                 }
                 catch (ComponentException e) {
@@ -263,22 +243,18 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     }
     
     private IQ replyDisabled(IQ packet) {
-        Element reply = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
+        IQ replyPacket = IQ.createResultIQ(packet);
+        Element reply = replyPacket.setChildElement("query", "jabber:iq:search");
         XDataFormImpl unavailableForm = new XDataFormImpl(DataForm.TYPE_CANCEL);
         unavailableForm.setTitle("User Search");
         unavailableForm.addInstruction("This service is unavailable.");
         reply.add(unavailableForm.asXMLElement());
-        
-        IQ replyPacket = IQ.createResultIQ(packet);
-        replyPacket.setChildElement("query", "jabber:iq:search");
-        replyPacket.setChildElement(reply.createCopy());
 
         return replyPacket;
     }
 
     private IQ processGetPacket(IQ packet) {
         IQ replyPacket = IQ.createResultIQ(packet);
-        replyPacket.setChildElement("query", "jabber:iq:search");
         replyPacket.setChildElement(probeResult.createCopy());
 
         return replyPacket;
@@ -408,50 +384,40 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             searchResults.addItemFields(items);
         }
 
-        Element reply = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
+        IQ replyPacket = IQ.createResultIQ(packet);
+        Element reply = replyPacket.setChildElement("query", "jabber:iq:search");
         reply.add(searchResults.asXMLElement());
 
-        IQ replyPacket = IQ.createResultIQ(packet);
-        replyPacket.setChildElement(reply);
-        
         return replyPacket;
     }
 
     private IQ replyNonDataFormResult(Set<User> users, IQ packet) {
-        Element replyQuery = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
-        String serverName = XMPPServer.getInstance().getServerInfo().getName();
-        
+        IQ replyPacket = IQ.createResultIQ(packet);
+        Element replyQuery = replyPacket.setChildElement("query", "jabber:iq:search");
+
         for (User user : users) {
-            Element item = DocumentHelper.createElement("item");
-            Attribute jid = DocumentHelper.createAttribute(item, "jid", user.getUsername() + "@" + serverName);
-            item.add(jid);
-            
+            Element item = replyQuery.addElement("item");
+            item.addAttribute("jid", user.getUsername() + "@" + serverName);
+
             //return to the client the same fields that were submitted
             for (String field : reverseFieldLookup.keySet()) {
                 if ("Username".equals(field)) {
-                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    Element element = item.addElement(reverseFieldLookup.get(field));
                     element.addText(user.getUsername());
-                    item.add(element);
-                } 
+                }
              
                 if ("Name".equals(field)) {
-                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    Element element = item.addElement(reverseFieldLookup.get(field));
                     element.addText(removeNull(user.getName()));
-                    item.add(element);
                 }
              
                 if ("Email".equals(field)) {
-                    Element element = DocumentHelper.createElement(reverseFieldLookup.get(field));
+                    Element element = item.addElement(reverseFieldLookup.get(field));
                     element.addText(removeNull(user.getEmail()));
-                    item.add(element);
                 }
             }
-            
-            replyQuery.add(item);
         }
-        IQ replyPacket = IQ.createResultIQ(packet);
-        replyPacket.setChildElement(replyQuery);
-        
+
         return replyPacket;
     }
     

@@ -219,6 +219,21 @@ public class Group implements Cacheable {
         return size;
     }
 
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object != null && object instanceof Group) {
+            return name.equals(((Group)object).getName());
+        }
+        else {
+            return false;
+        }
+    }
     /**
      * Collection implementation that notifies the GroupProvider of any
      * changes to the collection.

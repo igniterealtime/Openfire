@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <adminconsole>
-    
+
     <global>
         <appname>Wildfire</appname>
         <logo-image>images/header-title.gif</logo-image>
@@ -96,6 +96,11 @@
             <item id="server-compression" name="${sidebar.server-compression}"
                     url="compression-settings.jsp"
                     description="${sidebar.server-compression.descr}" />
+
+            <!-- File Transfer Settings -->
+            <item id="server-transfer-proxy" name="${sidebar.transfer-proxy}"
+                    url="file-transfer-proxy.jsp"
+                    description="${sidebar.transfer-proxy.descr}"/>
         </sidebar>
     </tab>
 

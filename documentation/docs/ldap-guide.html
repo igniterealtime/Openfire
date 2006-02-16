@@ -81,12 +81,12 @@
     support, all other properties are optional:
 </p>
 <ul>
+    <b>Main Settings</b><br><br>
+
     <li>provider.user.className <font color="red"><b>*</b></font> -- set the value to
         "org.jivesoftware.wildfire.ldap.LdapUserProvider".</li>
     <li>provider.auth.className <font color="red"><b>*</b></font> -- set the value to
         "org.jivesoftware.wildfire.ldap.LdapAuthProvider".</li>
-    <li>provider.group.className <font color="red"><b>**</b></font> -- set the value to
-        "org.jivesoftware.wildfire.ldap.LdapGroupProvider".</li>
     <li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or
         machine.example.com, etc.</li>
     <li>ldap.port -- LDAP server port number. If this property is not set, the default value is
@@ -100,7 +100,7 @@
         will be used for authentication and loading single users, but will not be used to display a
         list of users
         (due to technical limitations).
-        <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be
+    <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be
             performed
             with this account. The admin must be able to perform searches and load user records. The
             user does
@@ -108,24 +108,53 @@
             directory as read-only.
             If this property is not set, an anonymous login to the server will be attempted.
         </li>
-        <li>ldap.adminPassword -- the password for the directory administrator.</li>
-        <li>ldap.usernameField -- the field name that the username lookups will be performed on. If
+    <li>ldap.adminPassword -- the password for the directory administrator.</li>
+    <li>ldap.usernameField -- the field name that the username lookups will be performed on. If
             this property is not set,
             the default value is <tt>uid</tt></li>
-        <li>ldap.nameField -- the field name that holds the user's name. If this property is not
+    <li>ldap.nameField -- the field name that holds the user's name. If this property is not
             set, the default value is
             <tt>cn</tt></li>
-        <li>ldap.emailField -- the field name that holds the user's email address. If this property
+    <li>ldap.emailField -- the field name that holds the user's email address. If this property
             is not set,
             the default value is <tt>mail</tt>.</li>
+     <li>ldap.searchFields -- the LDAP fields that will be used for user searches. If
+        this property is not set, the username, name, and email fields will be searched. An example
+        value for this field is "Username/uid,Name/cname". That searches the uid and cname fields
+        in the directory and labels them as "Username" and "Name" in the search UI. You can add
+        as many fields as you'd like using comma-delimited "DisplayName/Field" pairs. You should
+        ensure that any fields used for searching are properly indexed so that searches return
+        quickly.</li>
     <li>ldap.searchFilter -- the search filter that should be used when loading users. If this
-        property
-        is not set, the default search will be for users that have the attribute specified by
+        property is not set, the default search will be for users that have the attribute specified by
         ldap.usernameField.
-        <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
+
+    <br><br>
+    <b>Group Settings</b><br><br>
+
+    <li>provider.group.className <font color="red"><b>**</b></font> -- set the value to
+        "org.jivesoftware.wildfire.ldap.LdapGroupProvider".</li>
+    <li>ldap.groupNameField <font color="red"><b>**</b></font> -- the field name that the groupname
+        lookups will be performed on. If this property is not set, the default value is <tt>cn</tt>.</li>
+    <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
+        is not set, the default value is <tt>member</tt>.</li>
+    <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
+        property is not set, the default value is <tt>description</tt>.</li>
+    <li>ldap.posixMode <font color="red"><b>**</b></font> -- a value of "true" means that users are stored within the group by their
+        user name alone. A value of "false" means that users are stored by their entire DN within
+        the group. If this property is not set, the default value is <tt>false</tt>. <b>Note:</b>
+        the posix mode must be set correctly for your server in order for group integration to
+        work.</li>
+    <li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this
+        property is not set, the default value is <tt>("ldap.groupNameField"={0})</tt>.</li>
+
+    <br><br>
+    <b>Connection Settings</b><br><br>
+
+    <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
             information about buffers sent and received by the LDAP provider is written to
             System.out</li>
-        <li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If
+    <li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If
             you
             enable SSL connections, the LDAP server port number most likely should be changed to
             636.</li>
@@ -135,41 +164,14 @@
         instead.
         Most users will not need to set this value.
     <li>ldap.autoFollowReferrals -- a value of "true" indicates that LDAP referrals should be
-        automatically
-        followed. If this property is not set or is set to "false", the referral policy used is left
-        up to
-        to the provider. A referral is an entity that is used to redirect a client's request to
-        another server.
-        A referral contains the names and locations of other objects. It is sent by the server to
-        indicate
-        that the information that the client has requested can be found at another location (or
-        locations),
-        possibly at another server or several servers.
+        automatically followed. If this property is not set or is set to "false", the referral policy used is left
+        up to to the provider. A referral is an entity that is used to redirect a client's request to
+        another server. A referral contains the names and locations of other objects. It is sent by the server to
+        indicate that the information that the client has requested can be found at another location (or
+        locations), possibly at another server or several servers.
     <li>ldap.connectionPoolEnabled -- a value of "false" disables LDAP connection pooling. If this
         property is not set, the default value is "true".
-    <li>ldap.groupNameField -- the field name that the groupname lookups will be performed on. If
-        this property is not set,
-        the default value is <tt>cn</tt></li>
-    <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
-        is not set, the default value is <tt>member</tt></li>
-    <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
-        property is not set,
-        the default value is <tt>description</tt></li>
-    <li>ldap.posixMode -- a value of "true" means that users are stored within the group by their
-        user name alone.
-        A value of "false" means that users are stored by their entire DN within the group. If this
-        property is not set,
-        the default value is <tt>false</tt></li>
-    <li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this
-        property is not set,
-        the default value is <tt>("ldap.groupNameField"={0})</tt></li>
-    <li>ldap.searchFields -- the LDAP fields that will be used for user searches. If
-        this property is not set, the username, name, and email fields will be searched. An example
-        value for this field is "Username/uid,Name/cname". That searches the uid and cname fields
-        in the directory and labels them as "Username" and "Name" in the search UI. You can add
-        as many fields as you'd like using comma-delimited "DisplayName/Field" pairs. You should
-        ensure that any fields used for searching are properly indexed so that searches return
-        quickly.<li>
+
 </ul>
 
 <p>

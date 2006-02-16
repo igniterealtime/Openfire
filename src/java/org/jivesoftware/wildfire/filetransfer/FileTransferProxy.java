@@ -12,7 +12,6 @@ package org.jivesoftware.wildfire.filetransfer;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.QName;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
@@ -99,12 +98,11 @@ public class FileTransferProxy extends BasicModule
         else if (NAMESPACE.equals(namespace)) {
             if (packet.getType() == IQ.Type.get) {
                 IQ reply = IQ.createResultIQ(packet);
-                reply.setChildElement("query", NAMESPACE);
-                Element response = DocumentHelper.createElement(QName.get("streamhost"));
+                Element newChild = reply.setChildElement("query", NAMESPACE);
+                Element response = newChild.addElement("streamhost");
                 response.addAttribute("jid", getServiceDomain());
                 response.addAttribute("host", proxyIP);
                 response.addAttribute("port", String.valueOf(connectionManager.getProxyPort()));
-                reply.getChildElement().add(response);
                 router.route(reply);
                 return true;
             }
@@ -273,7 +271,7 @@ public class FileTransferProxy extends BasicModule
 
     public Iterator<Element> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
-        return null;
+        return new ArrayList<Element>().iterator();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {

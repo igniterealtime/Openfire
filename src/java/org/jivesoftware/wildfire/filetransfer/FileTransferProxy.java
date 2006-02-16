@@ -53,7 +53,6 @@ public class FileTransferProxy extends BasicModule
     private IQHandlerInfo info;
     private RoutingTable routingTable;
     private PacketRouter router;
-    private int proxyPort;
     private String proxyIP;
     private ProxyConnectionManager connectionManager;
 
@@ -104,7 +103,7 @@ public class FileTransferProxy extends BasicModule
                 Element response = DocumentHelper.createElement(QName.get("streamhost"));
                 response.addAttribute("jid", getServiceDomain());
                 response.addAttribute("host", proxyIP);
-                response.addAttribute("port", String.valueOf(proxyPort));
+                response.addAttribute("port", String.valueOf(connectionManager.getProxyPort()));
                 reply.getChildElement().add(response);
                 router.route(reply);
                 return true;
@@ -150,21 +149,53 @@ public class FileTransferProxy extends BasicModule
         catch (UnknownHostException e) {
             Log.error("Couldn't discover local host", e);
         }
-        proxyPort = JiveGlobals.getIntProperty("xmpp.proxy.port", 7777);
-        connectionManager = new ProxyConnectionManager(proxyPort);
+
+        connectionManager = new ProxyConnectionManager();
     }
 
     public void start() {
         super.start();
 
-        routingTable.addRoute(getAddress(), this);
-        connectionManager.processConnections();
+        if (isEnabled()) {
+            connectionManager.processConnections(getProxyPort());
+            routingTable.addRoute(getAddress(), this);
+        }
     }
 
     public void stop() {
         super.stop();
 
         routingTable.removeRoute(getAddress());
+        connectionManager.disable();
+    }
+
+    public void destroy() {
+        super.destroy();
+
+        connectionManager.shutdown();
+    }
+
+    public void setEnabled(boolean isEnabled) {
+        JiveGlobals.setProperty("xmpp.proxy.enabled", Boolean.toString(isEnabled));
+        if (isEnabled) {
+            start();
+        }
+        else {
+            stop();
+        }
+    }
+
+    public boolean isEnabled() {
+        return connectionManager.isRunning() ||
+                JiveGlobals.getBooleanProperty("xmpp.proxy.enabled", true);
+    }
+
+    public void setProxyPort(int port) {
+        JiveGlobals.setProperty("xmpp.proxy.port", Integer.toString(port));
+    }
+
+    public int getProxyPort() {
+        return JiveGlobals.getIntProperty("xmpp.proxy.port", 7777);
     }
 
     /**

@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Manages the connections to the proxy server. The connections go through two stages before
@@ -31,8 +32,6 @@ import java.util.concurrent.Executors;
  */
 public class ProxyConnectionManager {
 
-    private int port;
-
     private Map<String, ProxyTransfer> connectionMap =
             new Cache("File Transfer Cache", -1, 1000 * 60 * 10);
 
@@ -40,16 +39,28 @@ public class ProxyConnectionManager {
 
     private ExecutorService executor = Executors.newCachedThreadPool();
 
-    public ProxyConnectionManager(int port) {
-        this.port = port;
+    private Future<?> socketProcess;
+    private int proxyPort;
+
+    public ProxyConnectionManager() {
     }
 
     /*
     * Processes the clients connecting to the proxy matching the initiator and target together.
     * This is the main loop of the manager which will run until the process is canceled.
     */
-    public void processConnections() {
-        executor.submit(new Runnable() {
+    synchronized void processConnections(final int port) {
+        if (socketProcess != null) {
+            if (port != proxyPort) {
+                socketProcess.cancel(true);
+                socketProcess = null;
+            }
+            else {
+                return;
+            }
+        }
+
+        socketProcess = executor.submit(new Runnable() {
             public void run() {
                 ServerSocket serverSocket = null;
                 try {
@@ -82,7 +93,11 @@ public class ProxyConnectionManager {
                 }
             }
         });
+        proxyPort = port;
+    }
 
+    public int getProxyPort() {
+        return proxyPort;
     }
 
     private void processConnection(Socket connection) throws IOException {
@@ -175,6 +190,11 @@ public class ProxyConnectionManager {
         return data;
     }
 
+    synchronized void shutdown() {
+        disable();
+        executor.shutdown();
+    }
+
     /**
      * Activates the stream, this method should be called when the initiator sends the activate
      * packet after both parties have connected to the proxy.
@@ -236,6 +256,9 @@ public class ProxyConnectionManager {
             // read more bytes from the input stream
             count = in.read(b);
         }
+
+        transfer.getInitiatorSocket().close();
+        transfer.getTargetSocket().close();
     }
 
     /**
@@ -290,5 +313,17 @@ public class ProxyConnectionManager {
         }
 
         return hex.toString();
+    }
+
+
+    public boolean isRunning() {
+        return socketProcess != null;
+    }
+
+    public void disable() {
+        if (socketProcess != null) {
+            socketProcess.cancel(true);
+            socketProcess = null;
+        }
     }
 }

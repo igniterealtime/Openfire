@@ -553,7 +553,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         Collection<Group> answer = new HashSet<Group>();
         Collection<Group> groups = GroupManager.getInstance().getGroups();
         for (Group group : groups) {
-            if (groupToCheck == group) {
+            if (group.equals(groupToCheck)) {
                 continue;
             }
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
@@ -724,7 +724,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 if (!group.isUser(user) || !otherGroup.isUser(otherUser)) {
                     continue;
                 }
-                if (group == otherGroup) {
+                if (group.equals(otherGroup)) {
                      return true;
                 }
                 String showInRoster = group.getProperties().get("sharedRoster.showInRoster");

@@ -69,6 +69,36 @@ Wildfire Changelog
 </div>
 
 <p>
+<b>2.5.0</b> -- February 16, 2006
+<p>
+
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-102'>JM-102</a>] - Added privacy rules support. <b>(14 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-108'>JM-108</a>] - Added support for JEP-65: SOCKS Bytestreams. <b>(33 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-564'>JM-564</a>] - Peers certificates are now verified using the subjectAltName extension when available.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-555'>JM-555</a>] - Improved performance by avoiding creating JIDs instance.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-568'>JM-568</a>] - Added new Polish translation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-565'>JM-565</a>] - Improved concurrency when storing offline messages.</li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-557'>JM-557</a>] - Presence updates were not working correctly with LDAP groups. <b>(5 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-562'>JM-562</a>] - An error is now returned and a warning is logged when user tries to authenticate using an unknown server name.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-558'>JM-558</a>] - Fixed memory leaks with SocketConnection and Sessions.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-566'>JM-566</a>] - Fixed potential deadlock while loading rosters or deleting users.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-554'>JM-554</a>] - Fixed concurrency bug in UserCollection.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-563'>JM-563</a>] - Fixed concurrency bug in RosterItem.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-552'>JM-552</a>] - Fixed NPE in RosterItem.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-553'>JM-553</a>] - Fixed IndexOutOfBoundsException in LdapUserProvider.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-567'>JM-567</a>] - Complete set of challenges and responses for SASL auth was not being sent.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-324'>JM-324</a>] - Allowed to specify many JIDs when setting user permissions. <b>(2 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-556'>JM-556</a>] - Components whose subdomain include a "." were not found by InternalComponentManager#getComponent(JID).</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-559'>JM-559</a>] - Test emails now include a date.</li>
+</ul>
+
+<p>
 <b>2.4.4</b> -- January 26, 2006
 <p>
 

@@ -9,6 +9,9 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+
 import java.net.Socket;
 import java.util.concurrent.Future;
 
@@ -16,7 +19,7 @@ import java.util.concurrent.Future;
  * Tracks the different connections related to a file transfer. There are two connections, the
  * initiator and the target and when both connections are completed the transfer can begin.
  */
-public class ProxyTransfer {
+public class ProxyTransfer implements Cacheable {
 
     private String initiatorJID;
 
@@ -96,5 +99,17 @@ public class ProxyTransfer {
 
     public void setTransferFuture(Future<?> future) {
         this.future = future;
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();              // overhead of object
+        size += CacheSizes.sizeOfString(initiatorJID);
+        size += CacheSizes.sizeOfString(targetJID);
+        size += CacheSizes.sizeOfString(transferDigest);
+        size += CacheSizes.sizeOfString(transferSession);
+        return size;
     }
 }

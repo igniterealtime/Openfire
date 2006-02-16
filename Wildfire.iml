@@ -55,7 +55,10 @@
           <root url="jar://$MODULE_DIR$/build/lib/merge/whack.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../whack/source/java" />
+          <root url="jar://$MODULE_DIR$/build/lib/merge/whack.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
@@ -259,7 +262,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/lib/i4jruntime.jar!/" />
+          <root url="jar://$MODULE_DIR$/build/lib/merge/jzlib.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -269,6 +272,33 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/jzlib.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/i4jruntime.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/dist/bouncycastle.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/target/resources" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

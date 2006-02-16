@@ -14,7 +14,11 @@
 
 <p>
     This document details how to configure your Wildfire installation to use
-    an external LDAP store when authenticating users and loading user profile information.
+    an external directory such as Open LDAP or Active Directory. Integration with a directory
+    lets users authenticate using their directory username and password.
+    Optionally, you can configure Wildfire to load user profile and group information from the directory.
+    Any group in Wildfire can be designated as a shared group, which means that you can pre-populate user's
+    rosters using directory groups.
 </p>
 
 <h2>Background</h2>
@@ -23,11 +27,14 @@
     LDAP (Lightweight Directory Access Protocol) has emerged as a dominant standard
     for user authentication and for storage of user profile data. It serves as a
     powerful tool for large organizations (or those organizations integrating many
-    applications) to simplify user management issues.
+    applications) to simplify user management issues. Many LDAP servers are available,
+    such as <a href="http://www.openldap.org/">Open LDAP</a>, 
+    <a href="http://www.microsoft.com/windowsserver2003/technologies/directory/activedirectory/">Active Directory</a>, 
+    and Novell's <a href="http://www.novell.com/products/edirectory/">eDirectory</a>.
 </p>
 
 <p>
-    By default, Wildfire stores all user data in a database and performs
+    By default, Wildfire stores all user data in its database and performs
     authentication using database lookups. The LDAP module replaces that
     functionality and allows Wildfire to:
     <ul>
@@ -36,7 +43,7 @@
         <li>Load group information from an LDAP directory.</li>
     </ul>
 
-    <b>Note:</b> Wildfire treats the LDAP directory as read-only.
+    <b>Note:</b> Wildfire treats the LDAP directory as read-only. 
 </p>
 
 <p>
@@ -144,8 +151,7 @@
         this property is not set,
         the default value is <tt>cn</tt></li>
     <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
-        is not set,
-        the default value is <tt>member</tt></li>
+        is not set, the default value is <tt>member</tt></li>
     <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
         property is not set,
         the default value is <tt>description</tt></li>

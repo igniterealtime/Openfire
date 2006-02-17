@@ -265,7 +265,6 @@ public class FileTransferProxy extends BasicModule
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
-        Log.info("Name Info: " + name);
         return true;
     }
 

@@ -8,7 +8,7 @@
 UPDATE jiveVersion SET majorVersion=2, minorVersion=5;
 
 
-/* jivePrivacyList: Create new table
+/* jivePrivacyList: Create new table */
 CREATE TABLE jivePrivacyList (
   username              NVARCHAR(32)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,

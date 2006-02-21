@@ -304,6 +304,9 @@ public class RosterItemProvider {
             // Close the statement and result set
             pstmt.close();
             rs.close();
+            // Set null to pstmt to be sure that it's not closed twice. It seems that
+            // Sybase driver is raising an error when trying to close an alrady closed statement.
+            pstmt = null;
 
             // Load the groups for the loaded contact
             for (RosterItem item : itemList) {

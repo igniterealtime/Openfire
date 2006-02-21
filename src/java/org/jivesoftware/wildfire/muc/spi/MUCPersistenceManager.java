@@ -11,19 +11,19 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.*;
-
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.muc.MUCRole;
 import org.jivesoftware.wildfire.muc.MUCRoom;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * A manager responsible for ensuring room persistence. There are different ways to make a room 
@@ -126,7 +126,6 @@ public class MUCPersistenceManager {
                 answer = rs.getString(1);
             }
             rs.close();
-            pstmt.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);

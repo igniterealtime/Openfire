@@ -12,8 +12,8 @@
 package org.jivesoftware.wildfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.packet.JID;
 
 import java.sql.Connection;
@@ -198,7 +198,6 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt = con.prepareStatement(DELETE_GROUP);
             pstmt.setString(1, groupName);
             pstmt.executeUpdate();
-            pstmt.close();
         }
         catch (SQLException e) {
             Log.error(e);

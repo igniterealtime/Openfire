@@ -169,6 +169,7 @@ public class SASLAuthentication {
                                 session.setSessionData("SaslServer", ss);
                             }
                             catch (SaslException e) {
+                                isComplete = true;
                                 Log.warn("SaslException", e);
                                 authenticationFailed();
                             }
@@ -202,6 +203,7 @@ public class SASLAuthentication {
                                 }
                             }
                             catch (SaslException e) {
+                                isComplete = true;
                                 Log.warn("SaslException", e);
                                 authenticationFailed();
                             }

@@ -223,6 +223,11 @@ public class SASLAuthentication {
                     doc = reader.parseDocument().getRootElement();
                 }
             }
+            else {
+                isComplete = true;
+                Log.debug("Unknown namespace sent in auth element: " + doc.asXML());
+                authenticationFailed();
+            }
         }
         // Remove the SaslServer from the Session
         session.removeSessionData("SaslServer");

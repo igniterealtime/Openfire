@@ -1,8 +1,8 @@
 /**
- * $Revision$
- * $Date$
- * <p/>
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
+ * $Revision $
+ * $Date $
+ *
+ * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -157,12 +157,20 @@ public class FileTransferProxy extends BasicModule
         if (isEnabled()) {
             connectionManager.processConnections(getProxyPort());
             routingTable.addRoute(getAddress(), this);
+            XMPPServer.getInstance().getIQDiscoItemsHandler()
+                    .addComponentItem(getAddress().toString(), "Socks 5 Bytestreams Proxy");
+        }
+        else {
+            XMPPServer.getInstance().getIQDiscoItemsHandler()
+                    .removeComponentItem(getAddress().toString());
         }
     }
 
     public void stop() {
         super.stop();
 
+        XMPPServer.getInstance().getIQDiscoItemsHandler()
+                .removeComponentItem(getAddress().toString());
         routingTable.removeRoute(getAddress());
         connectionManager.disable();
     }

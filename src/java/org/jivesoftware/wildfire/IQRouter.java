@@ -152,7 +152,7 @@ public class IQRouter extends BasicModule {
      * @param id the id of the IQ packet being sent from the server to an XMPP entity.
      * @param listener the IQResultListener that will be invoked when an answer is received
      */
-    void addIQResultListener(String id, IQResultListener listener) {
+    public void addIQResultListener(String id, IQResultListener listener) {
         resultListeners.put(id, listener);
     }
 

@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -70,6 +71,7 @@ public class SocketConnection implements Connection {
     private SocketReader socketReader;
 
     private Writer writer;
+    private AtomicBoolean writing = new AtomicBoolean(false);
 
     private PacketDeliverer deliverer;
 
@@ -181,13 +183,14 @@ public class SocketConnection implements Connection {
         if (isClosed()) {
             return false;
         }
+        boolean allowedToWrite = false;
         try {
-            synchronized (writer) {
-                // Register that we started sending data on the connection
-                writeStarted();
-                writer.write(" ");
-                writer.flush();
-            }
+            requestWriting();
+            allowedToWrite = true;
+            // Register that we started sending data on the connection
+            writeStarted();
+            writer.write(" ");
+            writer.flush();
         }
         catch (Exception e) {
             Log.warn("Closing no longer valid connection" + "\n" + this.toString(), e);
@@ -196,6 +199,9 @@ public class SocketConnection implements Connection {
         finally {
             // Register that we finished sending data on the connection
             writeFinished();
+            if (allowedToWrite) {
+                releaseWriting();
+            }
         }
         return !isClosed();
     }
@@ -331,20 +337,24 @@ public class SocketConnection implements Connection {
                     if (session != null) {
                         session.setStatus(Session.STATUS_CLOSED);
                     }
-                    synchronized (writer) {
-                        try {
-                            // Register that we started sending data on the connection
-                            writeStarted();
-                            writer.write("</stream:stream>");
-                            if (flashClient) {
-                                writer.write('\0');
-                            }
-                            writer.flush();
+                    boolean allowedToWrite = false;
+                    try {
+                        requestWriting();
+                        allowedToWrite = true;
+                        // Register that we started sending data on the connection
+                        writeStarted();
+                        writer.write("</stream:stream>");
+                        if (flashClient) {
+                            writer.write('\0');
                         }
-                        catch (IOException e) {}
-                        finally {
-                            // Register that we finished sending data on the connection
-                            writeFinished();
+                        writer.flush();
+                    }
+                    catch (IOException e) {}
+                    finally {
+                        // Register that we finished sending data on the connection
+                        writeFinished();
+                        if (allowedToWrite) {
+                            releaseWriting();
                         }
                     }
                 }
@@ -369,7 +379,15 @@ public class SocketConnection implements Connection {
         writeStarted = -1;
     }
 
-    void checkHealth() {
+    /**
+     * Returns true if the socket was closed due to a bad health. The socket is considered to
+     * be in a bad state if a thread has been writing for a while and the write operation has
+     * not finished in a long time or when the client has not sent a heartbeat for a long time.
+     * In any of both cases the socket will be closed.
+     *
+     * @return true if the socket was closed due to a bad health.s
+     */
+    boolean checkHealth() {
         // Check that the sending operation is still active
         if (writeStarted > -1 && System.currentTimeMillis() - writeStarted >
                 JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
@@ -379,6 +397,7 @@ public class SocketConnection implements Connection {
                         new Date(writeStarted));
             }
             forceClose();
+            return true;
         }
         else {
             // Check if the connection has been idle. A connection is considered idle if the client
@@ -391,8 +410,10 @@ public class SocketConnection implements Connection {
                     Log.debug("Closing connection that has been idle: " + this);
                 }
                 forceClose();
+                return true;
             }
         }
+        return false;
     }
 
     private void release() {
@@ -446,17 +467,23 @@ public class SocketConnection implements Connection {
                 // Invoke the interceptors before we send the packet
                 InterceptorManager.getInstance().invokeInterceptors(packet, session, false, false);
                 boolean errorDelivering = false;
-                synchronized (writer) {
-                    try {
-                        xmlSerializer.write(packet.getElement());
-                        if (flashClient) {
-                            writer.write('\0');
-                        }
-                        xmlSerializer.flush();
+                boolean allowedToWrite = false;
+                try {
+                    requestWriting();
+                    allowedToWrite = true;
+                    xmlSerializer.write(packet.getElement());
+                    if (flashClient) {
+                        writer.write('\0');
                     }
-                    catch (IOException e) {
-                        Log.debug("Error delivering packet" + "\n" + this.toString(), e);
-                        errorDelivering = true;
+                    xmlSerializer.flush();
+                }
+                catch (Exception e) {
+                    Log.debug("Error delivering packet" + "\n" + this.toString(), e);
+                    errorDelivering = true;
+                }
+                finally {
+                    if (allowedToWrite) {
+                        releaseWriting();
                     }
                 }
                 if (errorDelivering) {
@@ -480,23 +507,27 @@ public class SocketConnection implements Connection {
     public void deliverRawText(String text) {
         if (!isClosed()) {
             boolean errorDelivering = false;
-            synchronized (writer) {
-                try {
-                    // Register that we started sending data on the connection
-                    writeStarted();
-                    writer.write(text);
-                    if (flashClient) {
-                        writer.write('\0');
-                    }
-                    writer.flush();
+            boolean allowedToWrite = false;
+            try {
+                requestWriting();
+                allowedToWrite = true;
+                // Register that we started sending data on the connection
+                writeStarted();
+                writer.write(text);
+                if (flashClient) {
+                    writer.write('\0');
                 }
-                catch (IOException e) {
-                    Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
-                    errorDelivering = true;
-                }
-                finally {
-                    // Register that we finished sending data on the connection
-                    writeFinished();
+                writer.flush();
+            }
+            catch (Exception e) {
+                Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
+                errorDelivering = true;
+            }
+            finally {
+                // Register that we finished sending data on the connection
+                writeFinished();
+                if (allowedToWrite) {
+                    releaseWriting();
                 }
             }
             if (errorDelivering) {
@@ -520,6 +551,29 @@ public class SocketConnection implements Connection {
                 }
             }
         }
+    }
+
+    private void requestWriting() throws Exception {
+        for (;;) {
+            if (writing.compareAndSet(false, true)) {
+                // We are now in writing mode and only we can write to the socket
+                return;
+            }
+            else {
+                // Check health of the socket
+                if (checkHealth()) {
+                    // Connection was closed then stop
+                    throw new Exception("Probable dead connection was closed");
+                }
+                else {
+                    Thread.sleep(1);
+                }
+            }
+        }
+    }
+
+    private void releaseWriting() {
+        writing.compareAndSet(true, false);
     }
 
     public String toString() {

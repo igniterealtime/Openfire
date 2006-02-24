@@ -11,13 +11,19 @@
 
 package org.jivesoftware.wildfire.user;
 
-import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.dom4j.Element;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.IQResultListener;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -26,17 +32,20 @@ import java.util.Set;
  * @author Matt Tucker
  * @see User
  */
-public class UserManager {
+public class UserManager implements IQResultListener {
 
     private static Cache userCache;
+    private static Cache registeredUsersCache;
     private static UserProvider provider;
     private static UserManager instance = new UserManager();
 
     static {
         // Initialize caches.
         CacheManager.initializeCache("userCache", 512 * 1024);
+        CacheManager.initializeCache("registeredUsersCache", 512 * 1024);
         CacheManager.initializeCache("username2roster", 512 * 1024);
         userCache = CacheManager.getCache("userCache");
+        registeredUsersCache = CacheManager.getCache("registeredUsersCache");
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.wildfire.user.DefaultUserProvider");
@@ -233,5 +242,122 @@ public class UserManager {
             throws UnsupportedOperationException
     {
         return provider.findUsers(fields, query);
+    }
+
+    /**
+     * Returns true if the specified local username belongs to a registered local user.
+     *
+     * @param username to username of the user to check it it's a registered user.
+     * @return true if the specified JID belongs to a local registered user.
+     */
+    public boolean isRegisteredUser(String username) {
+        // Look up in the cache
+        Boolean isRegistered = (Boolean) registeredUsersCache.get(username);
+        if (isRegistered == null) {
+            // No information is cached so check user identity and cache it
+            try {
+                getUser(username);
+                isRegistered = Boolean.TRUE;
+            }
+            catch (UserNotFoundException e) {
+                isRegistered = Boolean.FALSE;
+            }
+            // Cache "discovered" information
+            registeredUsersCache.put(username, isRegistered);
+        }
+        return isRegistered.booleanValue();
+    }
+
+    /**
+     * Returns true if the specified JID belongs to a local or remote registered user. For
+     * remote users (i.e. domain does not match local domain) a disco#info request is going
+     * to be sent to the bare JID of the user.
+     *
+     * @param user to JID of the user to check it it's a registered user.
+     * @return true if the specified JID belongs to a local or remote registered user.
+     */
+    public boolean isRegisteredUser(JID user) {
+        Boolean isRegistered = null;
+        XMPPServer server = XMPPServer.getInstance();
+        if (server.isLocal(user)) {
+            isRegistered = (Boolean) registeredUsersCache.get(user.getNode());
+        }
+        else {
+            // Look up in the cache using the full JID
+            isRegistered = (Boolean) registeredUsersCache.get(user.toString());
+            if (isRegistered == null) {
+                // Check if the bare JID of the user is cached
+                isRegistered = (Boolean) registeredUsersCache.get(user.toBareJID());
+            }
+        }
+
+        if (isRegistered == null) {
+            // No information is cached so check user identity and cache it
+            if (server.isLocal(user)) {
+                // User belongs to local user so no disco is used in this case
+                try {
+                    getUser(user.getNode());
+                    isRegistered = Boolean.TRUE;
+                }
+                catch (UserNotFoundException e) {
+                    isRegistered = Boolean.FALSE;
+                }
+                // Cache "discovered" information
+                registeredUsersCache.put(user.getNode(), isRegistered);
+            }
+            else {
+                // A disco#info is going to be sent to the bare JID of the user. This packet
+                // is going to be handled by the remote server.
+                IQ iq = new IQ(IQ.Type.get);
+                iq.setFrom(server.getServerInfo().getName());
+                iq.setTo(user.toBareJID());
+                iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                // Send the disco#info request to the remote server. The reply will be
+                // processed by the IQResultListener (interface that this class implements)
+                server.getIQRouter().addIQResultListener(iq.getID(), this);
+                synchronized (user.toBareJID().intern()) {
+                    server.getIQRouter().route(iq);
+                    // Wait for the reply to be processed. Time out in 10 minutes.
+                    try {
+                        user.toBareJID().intern().wait(600000);
+                    }
+                    catch (InterruptedException e) {}
+                }
+                // Get the discovered result
+                isRegistered = (Boolean) registeredUsersCache.get(user.toBareJID());
+                if (isRegistered == null) {
+                    // Disco failed for some reason (i.e. we timed out before getting a result)
+                    // so assume that user is not anonymous and cache result
+                    isRegistered = Boolean.FALSE;
+                    registeredUsersCache.put(user.toString(), isRegistered);
+                }
+            }
+        }
+        return isRegistered.booleanValue();
+    }
+
+    public void receivedAnswer(IQ packet) {
+        JID from = packet.getFrom();
+        // Assume that the user is not a registered user
+        Boolean isRegistered = Boolean.FALSE;
+        // Analyze the disco result packet
+        if (IQ.Type.result == packet.getType()) {
+            Element child = packet.getChildElement();
+            for (Iterator it=child.elementIterator("identity"); it.hasNext();) {
+                Element identity = (Element) it.next();
+                String accountType = identity.attributeValue("type");
+                if ("registered".equals(accountType) || "admin".equals(accountType)) {
+                    isRegistered = Boolean.TRUE;
+                    break;
+                }
+            }
+        }
+        // Update cache of remote registered users
+        registeredUsersCache.put(from.toBareJID(), isRegistered);
+
+        // Wake up waiting thread
+        synchronized (from.toBareJID().intern()) {
+            from.toBareJID().intern().notifyAll();
+        }
     }
 }

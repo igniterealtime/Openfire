@@ -156,6 +156,8 @@ public abstract class SocketReader implements Runnable {
                 }
             }
             else {
+                // Close and release the created connection
+                connection.close();
                 Log.error(LocaleUtils.getLocalizedString("admin.error.connection")
                         + "\n" + socket.toString());
             }
@@ -595,8 +597,8 @@ public abstract class SocketReader implements Runnable {
             // Close the underlying connection
             connection.close();
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to incorrect hostname in stream header. Connection: " +
-                    connection);
+            Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host +
+                    ". Connection: " + connection);
         }
 
         // Create the correct session based on the sent namespace. At this point the server

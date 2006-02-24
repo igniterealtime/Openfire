@@ -14,14 +14,15 @@ package org.jivesoftware.wildfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -57,7 +58,8 @@ public class IQDiscoInfoHandler extends IQHandler {
             new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
 
-    private List<Element> userIdentities = new ArrayList<Element>();
+    private List<Element> anonymousUserIdentities = new ArrayList<Element>();
+    private List<Element> registeredUserIdentities = new ArrayList<Element>();
     private List<String> userFeatures = new ArrayList<String>();
 
     public IQDiscoInfoHandler() {
@@ -68,8 +70,12 @@ public class IQDiscoInfoHandler extends IQHandler {
         // the same objects for each response)
         Element userIdentity = DocumentHelper.createElement("identity");
         userIdentity.addAttribute("category", "account");
+        userIdentity.addAttribute("type", "anonymous");
+        anonymousUserIdentities.add(userIdentity);
+        userIdentity = DocumentHelper.createElement("identity");
+        userIdentity.addAttribute("category", "account");
         userIdentity.addAttribute("type", "registered");
-        userIdentities.add(userIdentity);
+        registeredUserIdentities.add(userIdentity);
         userFeatures.add("http://jabber.org/protocol/disco#info");
     }
 
@@ -254,9 +260,15 @@ public class IQDiscoInfoHandler extends IQHandler {
                     return identities.iterator();
                 }
                 else {
-                    // Answer identity of a registered user.
-                    // Note: We know that this user exists because #hasInfo returned true
-                    return userIdentities.iterator();
+                    if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                        // Answer identity of an anonymous user.
+                        return anonymousUserIdentities.iterator();
+                    }
+                    else {
+                        // Answer identity of a registered user.
+                        // Note: We know that this user exists because #hasInfo returned true
+                        return registeredUserIdentities.iterator();
+                    }
                 }
             }
 
@@ -285,10 +297,10 @@ public class IQDiscoInfoHandler extends IQHandler {
                     return false;
                 }
                 try {
-                    // True if it is an info request of the server or of a registered user. We
-                    // now support disco of user's bare JIDs
-                    return node == null &&
-                            (name == null || UserManager.getInstance().getUser(name) != null);
+                    // True if it is an info request of the server, a registered user or an
+                    // anonymous user. We now support disco of user's bare JIDs
+                    return name == null || UserManager.getInstance().getUser(name) != null ||
+                            SessionManager.getInstance().isAnonymousRoute(name);
                 }
                 catch (UserNotFoundException e) {
                     return false;

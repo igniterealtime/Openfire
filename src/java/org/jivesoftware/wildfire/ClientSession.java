@@ -523,12 +523,14 @@ public class ClientSession extends Session {
     }
 
     /**
-     * <p>Initialize the session as an anonymous login.</p>
-     * <p>This automatically upgrades the session's
-     * status to authenticated and enables many features that are not
-     * available until authenticated (obtaining managers for example).</p>
+     * Initialize the session as an anonymous login. This automatically upgrades the session's
+     * status to authenticated and enables many features that are not available until
+     * authenticated (obtaining managers for example).<p>
      */
     public void setAnonymousAuth() {
+        // Anonymous users have a full JID. Use the random resource as the JID's node
+        String resource = getAddress().getResource();
+        setAddress(new JID(resource, getServerName(), resource));
         sessionManager.addAnonymousSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
     }

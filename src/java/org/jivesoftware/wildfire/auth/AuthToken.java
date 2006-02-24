@@ -11,6 +11,8 @@
 
 package org.jivesoftware.wildfire.auth;
 
+import org.jivesoftware.wildfire.user.UserManager;
+
 /**
  * A token that proves that a user has successfully authenticated.
  *
@@ -46,6 +48,6 @@ public class AuthToken {
      * @return true if this token is the anonymous AuthToken.
      */
     public boolean isAnonymous() {
-        return username == null;
+        return username == null || !UserManager.getInstance().isRegisteredUser(username);
     }
 }

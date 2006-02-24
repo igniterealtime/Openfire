@@ -14,17 +14,17 @@ package org.jivesoftware.wildfire.handler;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.stringprep.Stringprep;
-import org.jivesoftware.stringprep.StringprepException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -263,6 +263,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         IQ response = IQ.createResultIQ(packet);;
         if (anonymousAllowed) {
             session.setAnonymousAuth();
+            response.setTo(session.getAddress());
             Element auth = response.setChildElement("query", "jabber:iq:auth");
             auth.addElement("resource").setText(session.getAddress().getResource());
         }

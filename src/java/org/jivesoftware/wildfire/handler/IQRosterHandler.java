@@ -11,17 +11,16 @@
 
 package org.jivesoftware.wildfire.handler;
 
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -99,7 +98,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             JID recipientJID = packet.getTo();
 
             // The packet is bound for the server and must be roster management
-            if (recipientJID == null || recipientJID.getNode() == null) {
+            if (recipientJID == null || recipientJID.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 returnPacket = manageRoster(roster);
             }
             // The packet must be a roster removal from a foreign domain user.
@@ -168,7 +168,9 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         IQ.Type type = packet.getType();
 
         try {
-            if (sender.getNode() == null && IQ.Type.get == type) {
+            if ((sender.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(sender.getNode())) &&
+                    IQ.Type.get == type) {
                 // If anonymous user asks for his roster then return an empty roster
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement("query", "jabber:iq:roster");

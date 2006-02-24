@@ -11,11 +11,12 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
@@ -64,7 +65,8 @@ public class OfflineMessageStrategy extends BasicModule {
             // Do nothing if the message was sent to the server itself or to an anonymous user
             JID recipientJID = message.getTo();
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
-                    recipientJID.getNode() == null) {
+                    recipientJID.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 return;
             }
             // Do not store messages of type groupchat, error or headline as specified in JEP-160

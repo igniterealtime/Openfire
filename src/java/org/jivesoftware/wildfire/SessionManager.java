@@ -680,8 +680,9 @@ public class SessionManager extends BasicModule {
      * @param priority The new priority for the session
      */
     public void changePriority(JID sender, int priority) {
-        if (sender.getNode() == null) {
-                // Do nothing if the session belongs to an anonymous user
+        if (sender.getNode() == null ||
+                !UserManager.getInstance().isRegisteredUser(sender.getNode())) {
+            // Do nothing if the session belongs to an anonymous user
             return;
         }
         String username = sender.getNode();
@@ -719,12 +720,11 @@ public class SessionManager extends BasicModule {
         ClientSession session = null;
         String resource = recipient.getResource();
         String username = recipient.getNode();
-        if (username == null || "".equals(username)) {
-            if (resource != null) {
-                session = anonymousSessions.get(resource);
-                if (session == null){
-                    session = getSession(recipient);
-                }
+        if (resource != null &&
+                (username == null || !UserManager.getInstance().isRegisteredUser(username))) {
+            session = anonymousSessions.get(resource);
+            if (session == null){
+                session = getSession(recipient);
             }
         }
         else {
@@ -752,15 +752,21 @@ public class SessionManager extends BasicModule {
         return session;
     }
 
+    public boolean isAnonymousRoute(String username) {
+        // JID's node and resource are the same for anonymous sessions
+        return anonymousSessions.containsKey(username);
+    }
+
     public boolean isActiveRoute(String username, String resource) {
         boolean hasRoute = false;
 
-        if (username == null || "".equals(username)) {
-            if (resource != null) {
-                hasRoute = anonymousSessions.containsKey(resource);
-            }
+        // Check if there is an anonymous session
+        if (resource != null && resource.equals(username) &&
+                anonymousSessions.containsKey(resource)) {
+            hasRoute = true;
         }
         else {
+            // Check if there is a session for a registered user
             username = username.toLowerCase();
             Session session = null;
             synchronized (username.intern()) {
@@ -858,7 +864,7 @@ public class SessionManager extends BasicModule {
         if (resource == null) {
             return null;
         }
-        if (username == null || "".equals(username)) {
+        if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
             session = anonymousSessions.get(resource);
         }
         else {
@@ -1100,7 +1106,7 @@ public class SessionManager extends BasicModule {
     }
 
     public int getSessionCount(String username) {
-        if (username == null) {
+        if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
             return 0;
         }
         int sessionCount = 0;
@@ -1428,7 +1434,8 @@ public class SessionManager extends BasicModule {
     public void sendServerMessage(JID address, String subject, String body) {
         Message packet = createServerMessage(subject, body);
         try {
-            if (address == null || address.getNode() == null || address.getNode().length() < 1) {
+            if (address == null || address.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(address)) {
                 broadcast(packet);
             }
             else if (address.getResource() == null || address.getResource().length() < 1) {

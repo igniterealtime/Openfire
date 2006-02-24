@@ -20,6 +20,8 @@ import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.jivesoftware.wildfire.event.UserEventListener;
 import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import java.io.StringReader;
@@ -93,13 +95,14 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         if (message == null) {
             return;
         }
-        String username = message.getTo().getNode();
+        JID recipient = message.getTo();
+        String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
-        if (username == null) {
+        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
             return;
         }
-        else if (!XMPPServer.getInstance().getServerInfo().getName().equals(message.getTo()
-                .getDomain())) {
+        else
+        if (!XMPPServer.getInstance().getServerInfo().getName().equals(recipient.getDomain())) {
             // Do not store messages sent to users of remote servers
             return;
         }

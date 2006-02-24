@@ -8,17 +8,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.text.NumberFormat,
-                 org.jivesoftware.admin.*,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.ClientSession,
+                 org.jivesoftware.wildfire.PresenceManager,
+                 org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.user.User,
+                 org.jivesoftware.wildfire.user.UserManager,
                  org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder"
+                 java.text.NumberFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Collection"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -39,7 +40,7 @@
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
     ClientSession currentSess = sessionManager.getSession(address);
-    boolean isAnonymous = address.getNode() == null || "".equals(address.getNode());
+    boolean isAnonymous = !UserManager.getInstance().isRegisteredUser(address);
 
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();

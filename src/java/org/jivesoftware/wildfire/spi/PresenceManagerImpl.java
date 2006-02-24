@@ -12,23 +12,23 @@
 package org.jivesoftware.wildfire.spi;
 
 import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
-import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
-import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -140,7 +140,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         // THE SERVER and the presence belongs to a local user.
         if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
             String username = presence.getFrom().getNode();
-            if (username == null) {
+            if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
                 // Ignore anonymous users
                 return;
             }
@@ -159,7 +159,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         // to a local user.
         if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
             String username = presence.getFrom().getNode();
-            if (username == null) {
+            if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
                 // Ignore anonymous users
                 return;
             }

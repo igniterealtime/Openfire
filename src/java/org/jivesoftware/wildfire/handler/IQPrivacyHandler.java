@@ -16,13 +16,14 @@ import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.event.UserEventListener;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.event.UserEventListener;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.privacy.PrivacyListProvider;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -53,7 +54,7 @@ public class IQPrivacyHandler extends IQHandler
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ.Type type = packet.getType();
         JID from = packet.getFrom();
-        if (from.getNode() == null) {
+        if (from.getNode() == null || !UserManager.getInstance().isRegisteredUser(from.getNode())) {
             // Service is unavailable for anonymous users
             IQ result = IQ.createResultIQ(packet);
             result.setChildElement(packet.getChildElement().createCopy());

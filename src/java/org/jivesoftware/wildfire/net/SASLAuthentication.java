@@ -177,11 +177,6 @@ public class SASLAuthentication {
                         break;
                     case RESPONSE:
                         SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
-                        // TODO Should we mark complete here? or only if failure or success?
-                        // Seems like the challenge-response loop may only have 1 iteration.
-                        // ok, so I move the complete mark at the begining of RESPONSE. I don't think
-                        // a success mark is enough. In case of a failed SASL handshake, the success
-                        // mark is false. But the handshake is done anyway.
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
@@ -221,6 +216,10 @@ public class SASLAuthentication {
                 if (!isComplete) {
                     // Get the next answer since we are not done yet
                     doc = reader.parseDocument().getRootElement();
+                    if (doc == null) {
+                        // Nothing was read because the connection was closed or dropped
+                        isComplete = true;
+                    }
                 }
             }
             else {

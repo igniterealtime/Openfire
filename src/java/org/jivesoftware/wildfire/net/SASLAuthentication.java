@@ -162,7 +162,16 @@ public class SASLAuthentication {
                                         session.getServerName(), props,
                                         new XMPPCallbackHandler());
                                 // evaluateResponse doesn't like null parameter
-                                byte[] challenge = ss.evaluateResponse(new byte[0]);
+                                byte[] token = new byte[0];
+                                if (doc.isTextOnly()) {
+                                    // If auth request includes a value then validate it
+                                    token = StringUtils.decodeBase64(doc.getText())
+                                            .getBytes(CHARSET);
+                                    if (token == null) {
+                                        token = new byte[0];
+                                    }
+                                }
+                                byte[] challenge = ss.evaluateResponse(token);
                                 // Send the challenge
                                 sendChallenge(challenge);
 

@@ -1496,6 +1496,43 @@ public class SessionManager extends BasicModule {
         serverName = null;
     }
 
+    /**
+     * Returns true if remote servers are allowed to have more than one connection to this
+     * server. Having more than one connection may improve number of packets that can be
+     * transfered per second. This setting only used by the server dialback mehod.<p>
+     *
+     * It is highly recommended that {@link #getServerSessionTimeout()} is enabled so that
+     * dead connections to this server can be easily discarded.
+     *
+     * @return true if remote servers are allowed to have more than one connection to this
+     *         server.
+     */
+    public boolean isMultipleServerConnectionsAllowed() {
+        return JiveGlobals.getBooleanProperty("xmpp.server.session.allowmultiple", true);
+    }
+
+    /**
+     * Sets if remote servers are allowed to have more than one connection to this
+     * server. Having more than one connection may improve number of packets that can be
+     * transfered per second. This setting only used by the server dialback mehod.<p>
+     *
+     * It is highly recommended that {@link #getServerSessionTimeout()} is enabled so that
+     * dead connections to this server can be easily discarded.
+     *
+     * @param allowed true if remote servers are allowed to have more than one connection to this
+     *        server.
+     */
+    public void setMultipleServerConnectionsAllowed(boolean allowed) {
+        JiveGlobals.setProperty("xmpp.server.session.allowmultiple", Boolean.toString(allowed));
+        if (allowed && JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000) <= 0)
+        {
+            Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
+                    "maximum idle timeout for these connections, is unrecommended! Either " +
+                    "set xmpp.server.session.allowmultiple to 'false' or change " +
+                    "xmpp.server.session.idle to a (large) positive value.");
+        }
+    }
+
     /******************************************************
      * Clean up code
      *****************************************************/
@@ -1534,6 +1571,14 @@ public class SessionManager extends BasicModule {
         }
         // Set the new property value
         JiveGlobals.setProperty("xmpp.server.session.idle", Integer.toString(idleTime));
+
+		if (idleTime <= 0 && isMultipleServerConnectionsAllowed() )
+		{
+			Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
+				"maximum idle timeout for these connections, is unrecommended! Either " +
+				"set xmpp.server.session.allowmultiple to 'false' or change " +
+				"xmpp.server.session.idle to a (large) positive value.");
+		}
     }
 
     public int getServerSessionIdleTime() {

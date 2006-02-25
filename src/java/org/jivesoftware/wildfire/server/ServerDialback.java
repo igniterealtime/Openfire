@@ -14,15 +14,15 @@ package org.jivesoftware.wildfire.server;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.net.DNSUtil;
-import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -30,7 +30,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import java.io.*;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -432,7 +433,7 @@ class ServerDialback {
                     alreadyExists = true;
                 }
             }
-            if (alreadyExists) {
+            if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
                 // Remote server already has a IncomingServerSession created
                 connection.deliverRawText(
                         new StreamError(StreamError.Condition.not_authorized).toXML());

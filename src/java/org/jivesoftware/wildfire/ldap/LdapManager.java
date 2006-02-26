@@ -104,7 +104,9 @@ public class LdapManager {
             try {
                 this.port = Integer.parseInt(portStr);
             }
-            catch (NumberFormatException nfe) { }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
         }
         if (JiveGlobals.getXMLProperty("ldap.usernameField") != null) {
             this.usernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
@@ -123,7 +125,7 @@ public class LdapManager {
         }
         if (JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled") != null) {
             this.connectionPoolEnabled = Boolean.valueOf(
-                    JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled")).booleanValue();
+                    JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled"));
         }
         if (JiveGlobals.getXMLProperty("ldap.searchFilter") != null) {
             this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
@@ -158,11 +160,11 @@ public class LdapManager {
         }
         this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
         this.ldapDebugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.debugEnabled")).booleanValue();
+                "ldap.debugEnabled"));
         this.sslEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.sslEnabled")).booleanValue();
+                "ldap.sslEnabled"));
         this.followReferrals = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.autoFollowReferrals")).booleanValue();
+                "ldap.autoFollowReferrals"));
         this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -323,7 +325,9 @@ public class LdapManager {
             // If an alt baseDN is defined, attempt a lookup there.
             if (alternateBaseDN != null) {
                 try { ctx.close(); }
-                catch (Exception ignored) { }
+                catch (Exception ignored) {
+                    // Ignore.
+                }
                 try {
                     // See if the user authenticates.
                     Hashtable<String, Object> env = new Hashtable<String, Object>();
@@ -366,7 +370,9 @@ public class LdapManager {
         }
         finally {
             try { ctx.close(); }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
         return true;
     }
@@ -488,7 +494,9 @@ public class LdapManager {
         }
         finally {
             try { ctx.close(); }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
     }
 
@@ -500,7 +508,7 @@ public class LdapManager {
      * @return the properly encoded URL for use in as PROVIDER_URL.
      */
     private String getProviderURL(String baseDN) {
-        String ldapURL = "";
+        String ldapURL;
         try {
             // Create a correctly-encoded ldap URL for the PROVIDER_URL
             ldapURL = "ldap://" + host + ":" + port + "/" +
@@ -886,7 +894,7 @@ public class LdapManager {
      */
     public void setPosixMode(boolean posixMode) {
         this.posixMode = posixMode;
-        JiveGlobals.setXMLProperty("ldap.posixEnabled", String.valueOf(posixMode));
+        JiveGlobals.setXMLProperty("ldap.posixMode", String.valueOf(posixMode));
     }
 
     /**

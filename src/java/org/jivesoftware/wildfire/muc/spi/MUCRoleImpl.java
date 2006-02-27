@@ -11,20 +11,18 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
-import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.wildfire.muc.MUCRole;
-import org.jivesoftware.wildfire.muc.MUCRoom;
-import org.jivesoftware.wildfire.muc.MUCUser;
-import org.jivesoftware.wildfire.muc.MultiUserChatServer;
-import org.jivesoftware.wildfire.muc.NotAllowedException;
 import org.jivesoftware.util.ElementUtil;
-import org.xmpp.packet.*;
+import org.jivesoftware.wildfire.ClientSession;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.muc.*;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Simple in-memory implementation of a role in a chatroom
@@ -67,6 +65,12 @@ public class MUCRoleImpl implements MUCRole {
      * The affiliation.
      */
     private MUCRole.Affiliation affiliation;
+
+    /**
+     * Flag that indicates if the room occupant is in the room only to send messages or also
+     * to receive room messages. True means that the room occupant is deaf.
+     */
+    private boolean voiceOnly = false;
 
     /**
      * The router used to send packets from this role.
@@ -120,6 +124,12 @@ public class MUCRoleImpl implements MUCRole {
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceDomain(), nick);
         setPresence(presence);
+        // Check if new occupant wants to be a deaf occupant
+        Element element = presence.getElement()
+                .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
+        if (element != null) {
+            voiceOnly = element.element("deaf-occupant/") != null;
+        }
         // Add the new role to the list of roles
         user.addRole(room.getName(), this);
     }
@@ -214,6 +224,10 @@ public class MUCRoleImpl implements MUCRole {
         rJID = jid;
         // Set the new sender of the user presence in the room
         presence.setFrom(jid);
+    }
+
+    public boolean isVoiceOnly() {
+        return voiceOnly;
     }
 
     public void send(Packet packet) {

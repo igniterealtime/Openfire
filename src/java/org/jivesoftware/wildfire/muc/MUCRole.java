@@ -11,10 +11,10 @@
 
 package org.jivesoftware.wildfire.muc;
 
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Packet;
 import org.dom4j.Element;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Defines the permissions and actions that a MUCUser may use in
@@ -214,6 +214,26 @@ public interface MUCRole {
      * @param nickname the new nickname of the occupant in the room.
      */
     public void changeNickname(String nickname);
+
+    /**
+     * Returns true if the room occupant does not want to get messages broadcasted to all
+     * room occupants. This type of users are called "deaf" occupants. Deaf occupants will still
+     * be able to get private messages, presences, IQ packets or room history.<p>
+     *
+     * To be a deaf occupant the initial presence sent to the room while joining the room has
+     * to include the following child element:
+     * <pre>
+     * &lt;x xmlns='http://jivesoftware.org/protocol/muc'&gt;
+     *     &lt;deaf-occupant/&gt;
+     * &lt;/x&gt;
+     * </pre>
+     *
+     * Note that this is a custom extension to the MUC specification.
+     *
+     * @return true if the room occupant does not want to get messages broadcasted to all
+     *         room occupants.
+     */
+    boolean isVoiceOnly();
 
     /**
      * Obtain the chat user that plays this role.

@@ -11,21 +11,24 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
+import org.dom4j.Element;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.muc.*;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.xmpp.packet.*;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.wildfire.muc.*;
-import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.*;
-import org.dom4j.Element;
 
 /**
  * Simple in-memory implementation of a chatroom. A MUCRoomImpl could represent a persistent room 
@@ -834,7 +837,10 @@ public class MUCRoomImpl implements MUCRoom {
 
     private void broadcast(Message message) {
         for (MUCRole occupant : occupants.values()) {
-            occupant.send(message);
+            // Do not send broadcast messages to deaf occupants
+            if (!occupant.isVoiceOnly()) {
+                occupant.send(message);
+            }
         }
         if (isLogEnabled()) {
             MUCRole senderRole = null;
@@ -898,6 +904,10 @@ public class MUCRoomImpl implements MUCRoom {
 
         public MUCUser getChatUser() {
             return null;
+        }
+
+        public boolean isVoiceOnly() {
+            return false;
         }
 
         public MUCRoom getChatRoom() {

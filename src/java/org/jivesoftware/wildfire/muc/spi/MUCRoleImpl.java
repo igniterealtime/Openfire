@@ -128,7 +128,7 @@ public class MUCRoleImpl implements MUCRole {
         Element element = presence.getElement()
                 .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
         if (element != null) {
-            voiceOnly = element.element("deaf-occupant/") != null;
+            voiceOnly = element.element("deaf-occupant") != null;
         }
         // Add the new role to the list of roles
         user.addRole(room.getName(), this);

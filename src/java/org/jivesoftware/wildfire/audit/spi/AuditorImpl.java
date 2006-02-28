@@ -13,12 +13,12 @@ package org.jivesoftware.wildfire.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.Auditor;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -26,8 +26,8 @@ import org.xmpp.packet.Presence;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class AuditorImpl implements Auditor {
 
@@ -108,7 +108,7 @@ public class AuditorImpl implements Auditor {
     }
 
     private void prepareAuditFile() throws IOException {
-        if (currentAuditFile == null || currentAuditFile.length() > maxSize) {
+        if (currentAuditFile == null || currentAuditFile.length() > maxSize || xmlWriter == null) {
             rotateFiles();
         }
     }

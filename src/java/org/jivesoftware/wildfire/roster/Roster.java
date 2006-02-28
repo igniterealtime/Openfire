@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision: 3117 $
- * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -22,10 +22,7 @@ import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.*;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -114,7 +111,7 @@ public class Roster implements Cacheable {
         for (JID jid : sharedUsers.keySet()) {
             try {
                 Collection<Group> itemGroups = new ArrayList<Group>();
-                String nickname = getContactNickname(jid);
+                String nickname = UserNameManager.getUserName(jid);
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname , null);
                 // Add the shared groups to the new roster item
@@ -607,7 +604,7 @@ public class Roster implements Cacheable {
         catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-                String nickname = getContactNickname(addedUser);
+                String nickname = UserNameManager.getUserName(addedUser);
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -696,7 +693,7 @@ public class Roster implements Cacheable {
         catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-                String nickname = getContactNickname(addedUser);
+                String nickname = UserNameManager.getUserName(addedUser);
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -919,20 +916,6 @@ public class Roster implements Cacheable {
                 // Do nothing since the contact does not exist in the user's roster. (strange case!)
             }
         }
-    }
-
-    private String getContactNickname(JID jid) throws UserNotFoundException {
-        String nickname;
-        if (server.isLocal(jid)) {
-            // Contact is a local user so search for his user name
-            User user = UserManager.getInstance().getUser(jid.getNode());
-            nickname = "".equals(user.getName()) ? jid.getNode() : user.getName();
-        }
-        else {
-            // Contact is a remote user so use his JID as his nickname
-            nickname = jid.toString();
-        }
-        return nickname;
     }
 
     private JID getUserJID() {

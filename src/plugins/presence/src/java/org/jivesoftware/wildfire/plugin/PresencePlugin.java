@@ -11,16 +11,16 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.PresenceManager;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.wildfire.container.Plugin;
+import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.io.File;
 
@@ -102,7 +102,8 @@ public class PresencePlugin implements Plugin {
             // TODO Implement this
             throw new UserNotFoundException("Presence of components not supported yet!");
         }
-        if (targetJID.getNode() == null) {
+        if (targetJID.getNode() == null ||
+                !UserManager.getInstance().isRegisteredUser(targetJID.getNode())) {
             // Sender is requesting presence information of an anonymous user
             throw new UserNotFoundException("Username is null");
         }

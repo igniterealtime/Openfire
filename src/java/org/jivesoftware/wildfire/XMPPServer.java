@@ -157,7 +157,7 @@ public class XMPPServer {
      */
     public boolean isLocal(JID jid) {
         boolean local = false;
-        if (jid != null && name != null && name.equalsIgnoreCase(jid.getDomain())) {
+        if (jid != null && name != null && name.equals(jid.getDomain())) {
             local = true;
         }
         return local;
@@ -252,7 +252,7 @@ public class XMPPServer {
     private void initialize() throws FileNotFoundException {
         locateWildfire();
 
-        name = JiveGlobals.getProperty("xmpp.domain");
+        name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
         if (name == null) {
             name = "127.0.0.1";
         }
@@ -284,7 +284,7 @@ public class XMPPServer {
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Set the new server domain assigned during the setup process
-            name = JiveGlobals.getProperty("xmpp.domain");
+            name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
 
             Thread finishSetup = new Thread() {
                 public void run() {

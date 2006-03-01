@@ -551,7 +551,7 @@ public class JiveGlobals {
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = getProperty(name);
         if (value != null) {
-            return Boolean.valueOf(getProperty(name));
+            return Boolean.valueOf(value);
         }
         else {
             return defaultValue;

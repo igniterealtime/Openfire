@@ -11,11 +11,15 @@
 
 package org.jivesoftware.wildfire.interceptor;
 
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.packet.Packet;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -38,6 +42,7 @@ public class InterceptorManager {
 
     private static InterceptorManager instance = new InterceptorManager();
 
+    private XMPPServer server = XMPPServer.getInstance();
     private List<PacketInterceptor> globalInterceptors =
             new CopyOnWriteArrayList<PacketInterceptor>();
     private Map<String, List<PacketInterceptor>> usersInterceptors =
@@ -236,8 +241,12 @@ public class InterceptorManager {
             }
         }
         // Invoke the interceptors that are related to the address of the session
+        if (usersInterceptors.isEmpty()) {
+            // Do nothing
+            return;
+        }
         String username = session.getAddress().getNode();
-        if (username != null) {
+        if (username != null && server.isLocal(session.getAddress())) {
             Collection<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
             if (userInterceptors != null && !userInterceptors.isEmpty()) {
                 for (PacketInterceptor interceptor : userInterceptors) {

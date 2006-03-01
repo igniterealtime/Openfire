@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.handler;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -22,7 +23,6 @@ import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.vcard.VCardManager;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -100,7 +100,7 @@ public class IQvCardHandler extends IQHandler {
                 Element vcard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
                 result.setChildElement(vcard);
                 // Only try to get the vCard values of non-anonymous users 
-                if (recipient != null && recipient.getNode() != null) {
+                if (recipient != null && userManager.isRegisteredUser(recipient.getNode())) {
                     User user = userManager.getUser(recipient.getNode());
                     VCardManager vManager = VCardManager.getInstance();
                     Element userVCard = vManager.getVCard(user.getUsername());

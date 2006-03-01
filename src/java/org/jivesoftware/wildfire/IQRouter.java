@@ -19,6 +19,7 @@ import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -46,6 +47,7 @@ public class IQRouter extends BasicModule {
     private Map<String, IQResultListener> resultListeners =
             new ConcurrentHashMap<String, IQResultListener>();
     private SessionManager sessionManager;
+    private UserManager userManager;
 
     /**
      * Creates a packet router.
@@ -163,6 +165,7 @@ public class IQRouter extends BasicModule {
         multicastRouter = server.getMulticastRouter();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
+        userManager = server.getUserManager();
     }
 
     /**
@@ -228,7 +231,8 @@ public class IQRouter extends BasicModule {
                 }
                 else {
                     // Check if communication to local users is allowed
-                    if (recipientJID != null && recipientJID.getNode() != null) {
+                    if (recipientJID != null &&
+                            userManager.isRegisteredUser(recipientJID.getNode())) {
                         PrivacyList list = PrivacyListManager.getInstance()
                                 .getDefaultPrivacyList(recipientJID.getNode());
                         if (list != null && list.shouldBlockPacket(packet)) {

@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.*;
@@ -20,7 +21,7 @@ import org.jivesoftware.wildfire.forms.DataForm;
 import org.jivesoftware.wildfire.forms.FormField;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -46,6 +47,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     private IQDiscoItemsHandler itemsHandler;
 
     private SessionManager sessionManager;
+    private UserManager userManager;
     private OfflineMessageStore messageStore;
 
     public IQOfflineMessagesHandler() {
@@ -154,7 +156,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
-        return NAMESPACE.equals(node) && senderJID.getNode() != null;
+        return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
 
     public Iterator<Element> getItems(String name, String node, JID senderJID) {
@@ -182,6 +184,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         itemsHandler = server.getIQDiscoItemsHandler();
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
+        userManager = server.getUserManager();
     }
 
     public void start() throws IllegalStateException {

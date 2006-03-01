@@ -251,6 +251,9 @@ public class UserManager implements IQResultListener {
      * @return true if the specified JID belongs to a local registered user.
      */
     public boolean isRegisteredUser(String username) {
+        if (username == null || "".equals(username)) {
+            return false;
+        }
         // Look up in the cache
         Boolean isRegistered = (Boolean) registeredUsersCache.get(username);
         if (isRegistered == null) {

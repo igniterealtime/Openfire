@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -168,10 +169,11 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         IQ.Type type = packet.getType();
 
         try {
-            if ((sender.getNode() == null ||
-                    !UserManager.getInstance().isRegisteredUser(sender.getNode())) &&
+            if ((sender.getNode() == null || !RosterManager.isRosterServiceEnabled() ||
+                    !userManager.isRegisteredUser(sender.getNode())) &&
                     IQ.Type.get == type) {
-                // If anonymous user asks for his roster then return an empty roster
+                // If anonymous user asks for his roster or roster service is disabled then
+                // return an empty roster
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement("query", "jabber:iq:roster");
                 return reply;

@@ -378,7 +378,7 @@ public class SessionManager extends BasicModule {
         conn.registerCloseListener(clientSessionListener, session);
 
         // Add to pre-authenticated sessions.
-        preAuthenticatedSessions.put(session.getAddress().toString(), session);
+        preAuthenticatedSessions.put(session.getAddress().getResource(), session);
         return session;
     }
 
@@ -533,9 +533,8 @@ public class SessionManager extends BasicModule {
                 sessions.put(username, resources);
             }
             resources.addSession(session);
-            // Remove the pre-Authenticated session but remember to use the temporary JID as the key
-            preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
-                    session.getStreamID().toString()).toString());
+            // Remove the pre-Authenticated session but remember to use the temporary ID as the key
+            preAuthenticatedSessions.remove(session.getStreamID().toString());
             
             // Fire session created event.
             SessionEventDispatcher.dispatchEvent(session,
@@ -680,8 +679,7 @@ public class SessionManager extends BasicModule {
      * @param priority The new priority for the session
      */
     public void changePriority(JID sender, int priority) {
-        if (sender.getNode() == null ||
-                !UserManager.getInstance().isRegisteredUser(sender.getNode())) {
+        if (sender.getNode() == null || !userManager.isRegisteredUser(sender.getNode())) {
             // Do nothing if the session belongs to an anonymous user
             return;
         }
@@ -720,8 +718,7 @@ public class SessionManager extends BasicModule {
         ClientSession session = null;
         String resource = recipient.getResource();
         String username = recipient.getNode();
-        if (resource != null &&
-                (username == null || !UserManager.getInstance().isRegisteredUser(username))) {
+        if (resource != null && (username == null || !userManager.isRegisteredUser(username))) {
             session = anonymousSessions.get(resource);
             if (session == null){
                 session = getSession(recipient);
@@ -856,15 +853,17 @@ public class SessionManager extends BasicModule {
 
         ClientSession session = null;
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(jid);
-        if(session != null){
-            return session;
+        if (resource != null) {
+            session = preAuthenticatedSessions.get(resource);
+            if(session != null){
+                return session;
+            }
         }
 
         if (resource == null) {
             return null;
         }
-        if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
+        if (username == null || !userManager.isRegisteredUser(username)) {
             session = anonymousSessions.get(resource);
         }
         else {
@@ -1106,7 +1105,7 @@ public class SessionManager extends BasicModule {
     }
 
     public int getSessionCount(String username) {
-        if (username == null || !UserManager.getInstance().isRegisteredUser(username)) {
+        if (username == null || !userManager.isRegisteredUser(username)) {
             return 0;
         }
         int sessionCount = 0;
@@ -1221,7 +1220,8 @@ public class SessionManager extends BasicModule {
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
-            if (session.getAddress() != null && session.getAddress().getNode() != null) {
+            if (session.getAddress() != null &&
+                    userManager.isRegisteredUser(session.getAddress().getNode())) {
                 String username = session.getAddress().getNode();
                 synchronized (username.intern()) {
                     sessionMap = sessions.get(username);
@@ -1250,14 +1250,14 @@ public class SessionManager extends BasicModule {
         }
         else if (preAuthenticatedSessions.containsValue(session)) {
             // Remove the session from the pre-Authenticated sessions list
-            preAuthenticatedSessions.remove(session.getAddress().toString());
+            preAuthenticatedSessions.remove(session.getAddress().getResource());
         }
     }
 
     public void addAnonymousSession(ClientSession session) {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
-        preAuthenticatedSessions.remove(session.getAddress().toString());
+        preAuthenticatedSessions.remove(session.getAddress().getResource());
         
         // Fire session event.
         SessionEventDispatcher.dispatchEvent(session,
@@ -1435,7 +1435,7 @@ public class SessionManager extends BasicModule {
         Message packet = createServerMessage(subject, body);
         try {
             if (address == null || address.getNode() == null ||
-                    !UserManager.getInstance().isRegisteredUser(address)) {
+                    !userManager.isRegisteredUser(address)) {
                 broadcast(packet);
             }
             else if (address.getResource() == null || address.getResource().length() < 1) {

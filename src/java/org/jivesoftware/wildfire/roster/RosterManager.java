@@ -11,21 +11,25 @@
 
 package org.jivesoftware.wildfire.roster;
 
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.ChannelHandler;
+import org.jivesoftware.wildfire.RoutingTable;
+import org.jivesoftware.wildfire.SharedGroupException;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.event.GroupEventListener;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.wildfire.event.GroupEventListener;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.util.*;
 
@@ -45,6 +49,16 @@ public class RosterManager extends BasicModule implements GroupEventListener {
     private Cache rosterCache = null;
     private XMPPServer server;
     private RoutingTable routingTable;
+
+    /**
+     * Returns true if the roster service is enabled. When disabled it is not possible to
+     * retrieve users rosters or broadcast presence packets to roster contacts.
+     *
+     * @return true if the roster service is enabled.
+     */
+    public static boolean isRosterServiceEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.client.roster.active", true);
+    }
 
     public RosterManager() {
         super("Roster Manager");

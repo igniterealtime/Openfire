@@ -11,24 +11,23 @@
 
 package org.jivesoftware.wildfire.plugin;
 
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.JID;
 import org.xmpp.component.Component;
+import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.packet.*;
 
 import java.io.File;
 import java.util.*;
@@ -121,34 +120,52 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     }
 
     public void processPacket(Packet packet) {
+        boolean canProceed = false;
+        Group group = null;
+        String toNode = packet.getTo().getNode();
+        // Check if user is allowed to send packet to this service[+group]
+        if ("all".equals(toNode)) {
+            // See if the user is allowed to send the packet.
+            JID address = new JID(packet.getFrom().toBareJID());
+            if (allowedUsers.isEmpty() || allowedUsers.contains(address)) {
+                canProceed = true;
+            }
+        }
+        else {
+            try {
+                group = groupManager.getGroup(toNode);
+                boolean isGroupUser = group.isUser(packet.getFrom()) ||
+                        group.isUser(new JID(packet.getFrom().toBareJID()));
+                if (disableGroupPermissions || (groupMembersAllowed && isGroupUser) ||
+                        allowedUsers.contains(new JID(packet.getFrom().toBareJID()))) {
+                    canProceed = true;
+                }
+            }
+            catch (GroupNotFoundException e) {
+            }
+        }
         // Only respond to incoming messages. TODO: handle disco, presence, etc.
         if (packet instanceof Message) {
             Message message = (Message)packet;
-            String toNode = message.getTo().getNode();
-            String fromNode = message.getFrom().getNode();
             // Check to see if trying to broadcast to all connected users.
             if ("all".equals(toNode)) {
-                if (allowedUsers.size() > 0) {
-                    // See if the user is allowed to send the message.
-                    JID address = new JID(message.getFrom().toBareJID());
-                    if (!allowedUsers.contains(address)) {
-                        Message error = new Message();
-                        if (message.getID() != null) {
-                            error.setID(message.getID());
-                        }
-                        error.setError(PacketError.Condition.not_allowed);
-                        error.setTo(message.getFrom());
-                        error.setSubject("Error sending broadcast message");
-                        error.setBody("Not allowed to send a broadcast message to " +
-                                message.getTo());
-                        try {
-                            componentManager.sendPacket(this, error);
-                        }
-                        catch (Exception e) {
-                            componentManager.getLog().error(e);
-                        }
-                        return;
+                if (!canProceed) {
+                    Message error = new Message();
+                    if (message.getID() != null) {
+                        error.setID(message.getID());
                     }
+                    error.setError(PacketError.Condition.not_allowed);
+                    error.setTo(message.getFrom());
+                    error.setSubject("Error sending broadcast message");
+                    error.setBody("Not allowed to send a broadcast message to " +
+                            message.getTo());
+                    try {
+                        componentManager.sendPacket(this, error);
+                    }
+                    catch (Exception e) {
+                        componentManager.getLog().error(e);
+                    }
+                    return;
                 }
                 try {
                     sessionManager.broadcast(message);
@@ -159,43 +176,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             }
             // See if the name is a group.
             else {
-                try {
-                    Group group = groupManager.getGroup(toNode);
-                    if (disableGroupPermissions ||
-                            (groupMembersAllowed && group.isUser(message.getFrom())) ||
-                            allowedUsers.contains(message.getFrom().toBareJID())) {
-                        for (JID userJID : group.getMembers()) {
-                            Message newMessage = message.createCopy();
-                            newMessage.setTo(userJID);
-                            try {
-                                componentManager.sendPacket(this, newMessage);
-                            }
-                            catch (Exception e) {
-                                componentManager.getLog().error(e);
-                            }
-                        }
-                    }
-                    else {
-                        // Otherwise, the address is recognized so send an error message back.
-                        Message error = new Message();
-                        if (message.getID() != null) {
-                            error.setID(message.getID());
-                        }
-                        error.setTo(message.getFrom());
-                        error.setError(PacketError.Condition.not_allowed);
-                        error.setSubject("Error sending broadcast message");
-                        error.setBody("Not allowed to send a broadcast message to " +
-                                message.getTo());
-                        try {
-                            componentManager.sendPacket(this, error);
-                        }
-                        catch (Exception e) {
-                            componentManager.getLog().error(e);
-                        }
-                    }
-                }
-                catch (GroupNotFoundException gnfe) {
-                    // Otherwise, the address is recognized so send an error message back.
+                if (group == null) {
+                    // The address is not recognized so send an error message back.
                     Message error = new Message();
                     if (message.getID() != null) {
                         error.setID(message.getID());
@@ -212,6 +194,92 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                         componentManager.getLog().error(e);
                     }
                 }
+                else if (canProceed) {
+                    // Broadcast message to group users. Users that are offline will get
+                    // the message when they come back online
+                    for (JID userJID : group.getMembers()) {
+                        Message newMessage = message.createCopy();
+                        newMessage.setTo(userJID);
+                        try {
+                            componentManager.sendPacket(this, newMessage);
+                        }
+                        catch (Exception e) {
+                            componentManager.getLog().error(e);
+                        }
+                    }
+                }
+                else {
+                    // Otherwise, the address is recognized so send an error message back.
+                    Message error = new Message();
+                    if (message.getID() != null) {
+                        error.setID(message.getID());
+                    }
+                    error.setTo(message.getFrom());
+                    error.setError(PacketError.Condition.not_allowed);
+                    error.setSubject("Error sending broadcast message");
+                    error.setBody("Not allowed to send a broadcast message to " +
+                            message.getTo());
+                    try {
+                        componentManager.sendPacket(this, error);
+                    }
+                    catch (Exception e) {
+                        componentManager.getLog().error(e);
+                    }
+                }
+            }
+        }
+        else if (packet instanceof Presence) {
+            Presence presence = (Presence) packet;
+            try {
+                if (!canProceed) {
+                    // Send forbidden error since user is not allowed
+                    Presence reply = new Presence();
+                    reply.setID(presence.getID());
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    reply.setError(PacketError.Condition.forbidden);
+                    componentManager.sendPacket(this, reply);
+                    return;
+                }
+
+                if (Presence.Type.subscribe == presence.getType()) {
+                    // Accept all presence requests
+                    // Reply that the subscription request was approved
+                    Presence reply = new Presence();
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    reply.setType(Presence.Type.subscribed);
+                    componentManager.sendPacket(this, reply);
+                    // Send that the service is available
+                    /*reply = new Presence();
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    componentManager.sendPacket(this, reply);*/
+                }
+                else if (Presence.Type.unsubscribe == presence.getType()) {
+                    // Send confirmation of unsubscription
+                    Presence reply = new Presence();
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    reply.setType(Presence.Type.unsubscribed);
+                    componentManager.sendPacket(this, reply);
+                    // Send unavailable presence of the service
+                    reply = new Presence();
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    reply.setType(Presence.Type.unavailable);
+                    componentManager.sendPacket(this, reply);
+                }
+                else if (Presence.Type.probe == presence.getType()) {
+                    // Send that the service is available
+                    Presence reply = new Presence();
+                    reply.setTo(presence.getFrom());
+                    reply.setFrom(presence.getTo());
+                    componentManager.sendPacket(this, reply);
+                }
+            }
+            catch (ComponentException e) {
+                componentManager.getLog().error(e);
             }
         }
     }

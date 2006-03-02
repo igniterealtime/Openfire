@@ -125,8 +125,8 @@ public class RosterItem implements Cacheable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<Group> sharedGroups = new HashSet<Group>();
-    protected Set<Group> invisibleSharedGroups = new HashSet<Group>();
+    protected Set<String> sharedGroups = new HashSet<String>();
+    protected Set<String> invisibleSharedGroups = new HashSet<String>();
     protected SubType subStatus;
     protected AskType askStatus;
     private long rosterID;
@@ -366,7 +366,15 @@ public class RosterItem implements Cacheable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getSharedGroups() {
-        return sharedGroups;
+        Collection<Group> groups = new ArrayList<Group>(sharedGroups.size());
+        for (String groupName : sharedGroups) {
+            try {
+                groups.add(GroupManager.getInstance().getGroup(groupName));
+            }
+            catch (GroupNotFoundException e) {
+            }
+        }
+        return groups;
     }
 
     /**
@@ -377,7 +385,15 @@ public class RosterItem implements Cacheable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getInvisibleSharedGroups() {
-        return invisibleSharedGroups;
+        Collection<Group> groups = new ArrayList<Group>(invisibleSharedGroups.size());
+        for (String groupName : invisibleSharedGroups) {
+            try {
+                groups.add(GroupManager.getInstance().getGroup(groupName));
+            }
+            catch (GroupNotFoundException e) {
+            }
+        }
+        return groups;
     }
 
     /**
@@ -386,8 +402,8 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
     public void addSharedGroup(Group sharedGroup) {
-        sharedGroups.add(sharedGroup);
-        invisibleSharedGroups.remove(sharedGroup);
+        sharedGroups.add(sharedGroup.getName());
+        invisibleSharedGroups.remove(sharedGroup.getName());
     }
 
     /**
@@ -398,7 +414,7 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
     public void addInvisibleSharedGroup(Group sharedGroup) {
-        invisibleSharedGroups.add(sharedGroup);
+        invisibleSharedGroups.add(sharedGroup.getName());
     }
 
     /**
@@ -407,8 +423,8 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to remove from the list of shared groups.
      */
     public void removeSharedGroup(Group sharedGroup) {
-        sharedGroups.remove(sharedGroup);
-        invisibleSharedGroups.remove(sharedGroup);
+        sharedGroups.remove(sharedGroup.getName());
+        invisibleSharedGroups.remove(sharedGroup.getName());
     }
 
     /**

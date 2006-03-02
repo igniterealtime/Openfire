@@ -252,10 +252,7 @@ public class XMPPServer {
     private void initialize() throws FileNotFoundException {
         locateWildfire();
 
-        name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
-        if (name == null) {
-            name = "127.0.0.1";
-        }
+        name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
         version = new Version(2, 5, 1, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {

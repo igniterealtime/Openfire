@@ -88,7 +88,9 @@
     <li>provider.auth.className <font color="red"><b>*</b></font> -- set the value to
         "org.jivesoftware.wildfire.ldap.LdapAuthProvider".</li>
     <li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or
-        machine.example.com, etc.</li>
+        machine.example.com, etc. It is possible to use many LDAP servers but all of them
+        <b>should share the same configuration</b> (e.g. SSL, baseDN, admin account, etc).
+        To specify many LDAP servers use the comma or the white space character as delimiter.</li>
     <li>ldap.port -- LDAP server port number. If this property is not set, the default value is
         389.</li>
     <li>ldap.baseDN <font color="red"><b>*</b></font> -- the starting DN that searches for users

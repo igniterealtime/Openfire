@@ -11,9 +11,9 @@
 
 package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -25,7 +25,10 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method
@@ -60,7 +63,7 @@ import java.util.Hashtable;
  */
 public class LdapManager {
 
-    private String host;
+    private Collection<String> hosts = new ArrayList<String>();
     private int port = 389;
     private String usernameField = "uid";
     private String nameField = "cn";
@@ -98,7 +101,13 @@ public class LdapManager {
      * constructor is private.
      */
     private LdapManager() {
-        this.host = JiveGlobals.getXMLProperty("ldap.host");
+        String host = JiveGlobals.getXMLProperty("ldap.host");
+        // Parse the property and check if many hosts were defined. Hosts can be separated
+        // by commas or white spaces
+        StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
+        while (st.hasMoreTokens()) {
+            hosts.add(st.nextToken());
+        }
         String portStr = JiveGlobals.getXMLProperty("ldap.port");
         if (portStr != null) {
             try {
@@ -183,7 +192,7 @@ public class LdapManager {
 
         if (Log.isDebugEnabled()) {
             Log.debug("Created new LdapManager() instance, fields:");
-            Log.debug("\t host: " + host);
+            Log.debug("\t host: " + hosts);
             Log.debug("\t port: " + port);
             Log.debug("\t usernamefield: " + usernameField);
             Log.debug("\t baseDN: " + baseDN);
@@ -508,42 +517,59 @@ public class LdapManager {
      * @return the properly encoded URL for use in as PROVIDER_URL.
      */
     private String getProviderURL(String baseDN) {
-        String ldapURL;
+        StringBuffer ldapURL = new StringBuffer();
         try {
-            // Create a correctly-encoded ldap URL for the PROVIDER_URL
-            ldapURL = "ldap://" + host + ":" + port + "/" +
-                    URLEncoder.encode(baseDN, "UTF-8");
+            baseDN = URLEncoder.encode(baseDN, "UTF-8");
             // The java.net.URLEncoder class encodes spaces as +, but they need to be %20
-            ldapURL = ldapURL.replaceAll("\\+", "%20");
+            baseDN = baseDN.replaceAll("\\+", "%20");
         }
         catch (java.io.UnsupportedEncodingException e) {
             // UTF-8 is not supported, fall back to using raw baseDN
-            ldapURL = "ldap://" + host + ":" + port + "/" + baseDN;
         }
-        return ldapURL;
+        for (String host : hosts) {
+            // Create a correctly-encoded ldap URL for the PROVIDER_URL
+            ldapURL.append("ldap://");
+            ldapURL.append(host);
+            ldapURL.append(":");
+            ldapURL.append(port);
+            ldapURL.append("/");
+            ldapURL.append(baseDN);
+            ldapURL.append(" ");
+        }
+        return ldapURL.toString();
     }
 
     /**
-     * Returns the LDAP server host; e.g. <tt>localhost</tt> or
+     * Returns the LDAP servers hosts; e.g. <tt>localhost</tt> or
      * <tt>machine.example.com</tt>, etc. This value is stored as the Jive
      * Property <tt>ldap.host</tt>.
      *
      * @return the LDAP server host name.
      */
-    public String getHost() {
-        return host;
+    public Collection<String> getHosts() {
+        return hosts;
     }
 
     /**
-     * Sets the LDAP server host; e.g., <tt>localhost</tt> or
+     * Sets the list of LDAP servers host; e.g., <tt>localhost</tt> or
      * <tt>machine.example.com</tt>, etc. This value is store as the Jive
-     * Property <tt>ldap.host</tt>
+     * Property <tt>ldap.host</tt> using a comma as a delimiter for each host.<p>
      *
-     * @param host the LDAP server host name.
+     * Note that all LDAP servers have to share the same configuration.
+     *
+     * @param hosts the LDAP servers host names.
      */
-    public void setHost(String host) {
-        this.host = host;
-        JiveGlobals.setXMLProperty("ldap.host", host);
+    public void setHosts(Collection<String> hosts) {
+        this.hosts = hosts;
+        StringBuilder hostProperty = new StringBuilder();
+        for (String host : hosts) {
+            hostProperty.append(host).append(",");
+        }
+        if (!hosts.isEmpty()) {
+            // Remove the last comma
+            hostProperty.setLength(hostProperty.length()-1);
+        }
+        JiveGlobals.setXMLProperty("ldap.host", hostProperty.toString());
     }
 
     /**
@@ -788,7 +814,7 @@ public class LdapManager {
      * @return the search filter.
      */
     public String getSearchFilter() {
-    	return searchFilter;
+        return searchFilter;
     }
 
     /**
@@ -799,7 +825,7 @@ public class LdapManager {
      * @param searchFilter the search filter.
      */
     public void setSearchFilter(String searchFilter) {
-    	if (searchFilter == null || "".equals(searchFilter)) {
+        if (searchFilter == null || "".equals(searchFilter)) {
             StringBuilder filter = new StringBuilder();
             filter.append("(").append(usernameField).append("={0})");
             this.searchFilter = filter.toString();
@@ -807,8 +833,8 @@ public class LdapManager {
         }
         else {
             this.searchFilter = searchFilter;
-    		JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
-    	}
+            JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+        }
     }
 
     /**

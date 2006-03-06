@@ -156,7 +156,7 @@ public class ServerStarter {
                 unpacked = true;
             }
             catch (Exception e) {
-                Log.error(e);
+                e.printStackTrace();
             }
         }
         // Print newline if unpacking happened.

@@ -364,6 +364,11 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                         // Group name is not valid to be used as a JID
                     }
                 }
+                if (allowedUsers.isEmpty() || allowedUsers.contains(address)) {
+                    // Add the "all" group to the list
+                    childElementCopy.addElement("item").addAttribute("jid",
+                            "all@" + serviceName + "." + componentManager.getServerName());
+                }
             }
         }
         else {

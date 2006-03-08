@@ -318,6 +318,8 @@ public class RosterItemProvider {
                 }
                 // Close the result set
                 rs.close();
+                // Close the prepared statement
+                pstmt.close();
             }
         }
         catch (SQLException e) {

@@ -499,10 +499,11 @@ public class Roster implements Cacheable {
             // Get all the users that should be in this roster
             Collection<JID> users = rosterManager.getSharedUsersForRoster(group, this);
             // Add the users of the group to the general list of users to process
+            JID userJID = getUserJID();
             for (JID jid : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
                 // (since we have already added the user to the answer)
-                if (!isRosterItem(jid) && !getUsername().equals(jid.getNode())) {
+                if (!isRosterItem(jid) && !userJID.equals(jid)) {
                     List<Group> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
                         groups = new ArrayList<Group>();

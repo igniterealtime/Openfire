@@ -16,6 +16,8 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.wildfire.group.Group"%>
+<%@ page import="java.util.Collection"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -193,6 +195,31 @@
         </td>
         <td>
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            Groups:
+        </td>
+        <td>
+            <%
+                Collection<Group> groups = webManager.getGroupManager().getGroups(user);
+                if (groups.isEmpty()) {
+            %>
+                <i>None</i>
+            <%
+                }
+                else {
+                    int count = 0;
+                    for (Group group: groups) {
+                        if (count != 0) {
+                            out.print(", ");
+                        }
+                        out.print(group.getName());
+                        count ++;
+                    }
+                }
+            %>
         </td>
     </tr>
 </tbody>

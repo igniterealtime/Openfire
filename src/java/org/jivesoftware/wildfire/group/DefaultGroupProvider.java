@@ -87,7 +87,7 @@ public class DefaultGroupProvider implements GroupProvider {
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
-        return new Group(this, name, "", members, administrators);
+        return new Group(name, "", members, administrators);
     }
 
     public Group getGroup(String name) throws GroupNotFoundException {
@@ -117,7 +117,7 @@ public class DefaultGroupProvider implements GroupProvider {
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
-        return new Group(this, name, description, members, administrators);
+        return new Group(name, description, members, administrators);
     }
 
     public void setDescription(String name, String description)
@@ -257,17 +257,7 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        GroupManager manager = GroupManager.getInstance();
-        for (String groupName : groupNames) {
-            try {
-                groups.add(manager.getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
     }
 
     public Collection<Group> getGroups(int startIndex, int numResults) {
@@ -295,17 +285,7 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        GroupManager manager = GroupManager.getInstance();
-        for (String groupName : groupNames) {
-            try {
-                groups.add(manager.getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
     }
 
     public Collection<Group> getGroups(JID user) {
@@ -331,17 +311,7 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        GroupManager manager = GroupManager.getInstance();
-        for (String groupName : groupNames) {
-            try {
-                groups.add(manager.getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
     }
 
     public void addMember(String groupName, JID user, boolean administrator) {

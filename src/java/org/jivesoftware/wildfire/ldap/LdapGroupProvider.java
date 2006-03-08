@@ -84,13 +84,15 @@ public class LdapGroupProvider implements GroupProvider {
                 manager.getGroupNameField() + "=" + group + "))";
         Collection<Group> groups = populateGroups(searchForGroups(searchFilter, standardAttributes));
         if (groups.size() > 1) {
-            //if multiple groups found throw exception
+            // If multiple groups found, throw exception.
             throw new GroupNotFoundException("Too many groups with name " + group + " were found.");
         }
-        for (Group g : groups) {
-            return g; //returns the first group found
+        else if (groups.isEmpty()) {
+            throw new GroupNotFoundException("Group with name " + group + " not found.");
         }
-        throw new GroupNotFoundException("Group with name " + group + " not found.");
+        else {
+            return groups.iterator().next();
+        }
     }
 
     /**
@@ -136,6 +138,7 @@ public class LdapGroupProvider implements GroupProvider {
                 answer.next();
             }
             catch (Exception e) {
+                // Ignore.
             }
         }
 
@@ -189,8 +192,8 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     /**
-     * Always throws an UnsupportedOperationException because
-     * LDAP groups are read-only.
+     * Always throws an UnsupportedOperationException because LDAP groups
+     * are read-only.
      *
      * @param groupName name of a group.
      * @param user the JID of the user to add
@@ -204,8 +207,8 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     /**
-     * Always throws an UnsupportedOperationException because
-     * LDAP groups are read-only.
+     * Always throws an UnsupportedOperationException because LDAP groups
+     * are read-only.
      *
      * @param groupName the naame of a group.
      * @param user the JID of the user with new privileges
@@ -219,21 +222,19 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     /**
-     * Always throws an UnsupportedOperationException because
-     * LDAP groups are read-only.
+     * Always throws an UnsupportedOperationException because LDAP groups
+     * are read-only.
      *
      * @param groupName the name of a group.
      * @param user the JID of the user to delete.
      * @throws UnsupportedOperationException when called.
      */
-    public void deleteMember(String groupName, JID user)
-            throws UnsupportedOperationException {
+    public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * Always throws an UnsupportedOperationException because
-     * LDAP groups are read-only.
+     * Returns true because LDAP groups are read-only.
      *
      * @return true because all LDAP functions are read-only.
      */
@@ -253,7 +254,7 @@ public class LdapGroupProvider implements GroupProvider {
         if (manager.isDebugEnabled()) {
             Log.debug("Trying to find all groups in the system.");
         }
-        DirContext ctx = null;
+        DirContext ctx;
         NamingEnumeration<SearchResult> answer = null;
         try {
             ctx = manager.getContext();
@@ -294,7 +295,7 @@ public class LdapGroupProvider implements GroupProvider {
 
         TreeMap<String, Group> groups = new TreeMap<String, Group>();
 
-        DirContext ctx = null;
+        DirContext ctx;
         try {
             ctx = manager.getContext();
         }
@@ -313,7 +314,7 @@ public class LdapGroupProvider implements GroupProvider {
         while (answer.hasMoreElements()) {
             String name = "";
             try {
-                Attributes a = (((SearchResult) answer.nextElement()).getAttributes());
+                Attributes a = answer.nextElement().getAttributes();
                 String description;
                 try {
                     name = ((String) ((a.get(manager.getGroupNameField())).get()));
@@ -355,7 +356,7 @@ public class LdapGroupProvider implements GroupProvider {
                     // Therefore, we have to try to load each user we found to see if
                     // it passes the filter.
                     try {
-                        JID userJID = null;
+                        JID userJID;
                         // Create JID of local user if JID does not match a component's JID
                         if (!username.contains(serverName)) {
                             // In order to lookup a username from the manager, the username
@@ -381,7 +382,7 @@ public class LdapGroupProvider implements GroupProvider {
                 if (manager.isDebugEnabled()) {
                     Log.debug("Adding group \"" + name + "\" with " + members.size() + " members.");
                 }
-                Group g = new Group(this, name, description, members, new ArrayList<JID>());
+                Group g = new Group(name, description, members, new ArrayList<JID>());
                 groups.put(name, g);
             }
             catch (Exception e) {
@@ -397,6 +398,7 @@ public class LdapGroupProvider implements GroupProvider {
             ctx.close();
         }
         catch (Exception e) {
+            // Ignore.
         }
 
         return groups.values();

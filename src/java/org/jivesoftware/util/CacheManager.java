@@ -1,56 +1,82 @@
 /*
- * $RCSfile$
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
+ * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
- * This software is the proprietary information of CoolServlets, Inc.
  * Use is subject to license terms.
  */
+
 package org.jivesoftware.util;
 
 import java.util.*;
 
 /**
- * A centralized, JVM static manager of Jive caches. Caches are essential for
- * scalability.
+ * Centralized management of caches. Caches are essential for performance and scalability.
  *
- * @author Iain Shigeoka
+ * @see Cache
+ * @author Matt Tucker
  */
 public class CacheManager {
 
-    private static Map caches = new HashMap();
-    private static long maxLifetime = JiveConstants.HOUR * 6;
+    private static Map<String, Cache> caches = new HashMap<String, Cache>();
+    private static final long DEFAULT_EXPIRATION_TIME = JiveConstants.HOUR * 6;
 
     /**
-     * <p>Initialize a cache by name.</p>
-     * <p/>
-     * <p>Caches require initialization before use. Be careful to initialize your cache before using it.
-     * Initializing a cache that has already been initialized once does nothing.</p>
-     * <p/>
-     * <p>The cache manager will check jive module context for overriding defaultMaxCacheSize values.
-     * The property names should be "cache.name.size" where 'name' will be the same as the cache name.
-     * If the property exists, that value will be used instead of the defaultMaxCacheSize.</p>
+     * Initializes a cache given it's name and max size. The default expiration time
+     * of six hours will be used. If a cache with the same name has already been initialized,
+     * this method returns the existing cache.<p>
      *
-     * @param name the name of the cache to create.
-     * @param defaultMaxCacheSize the default max size the cache can grow to, in bytes.
+     * The size and expiration time for the cache can be overridden by setting Jive properties
+     * in the format:<ul>
+     *
+     *  <li>Size: "cache.CACHE_NAME.size", in bytes.
+     *  <li>Expiration: "cache.CACHE_NAME.expirationTime", in milleseconds.
+     * </ul>
+     * where CACHE_NAME is the name of the cache.
+     *
+     * @param name the name of the cache to initialize.
+     * @param size the size the cache can grow to, in bytes.
      */
-    public static void initializeCache(String name, int defaultMaxCacheSize) {
-        Cache cache = (Cache)caches.get(name);
-        if (cache == null) {
-            int maxCacheSize = JiveGlobals.getIntProperty("cache." + name + ".size", defaultMaxCacheSize);
-            caches.put(name, new Cache(name, maxCacheSize, maxLifetime));
-        }
+    public static Cache initializeCache(String name, int size) {
+        return initializeCache(name, size, DEFAULT_EXPIRATION_TIME);
     }
 
     /**
-     * Returns the cache specified by name.
+     * Initializes a cache given it's name, max size, and expiration time. If a cache with
+     * the same name has already been initialized, this method returns the existing cache.<p>
+     *
+     * The size and expiration time for the cache can be overridden by setting Jive properties
+     * in the format:<ul>
+     *
+     *  <li>Size: "cache.CACHE_NAME.size", in bytes.
+     *  <li>Expiration: "cache.CACHE_NAME.expirationTime", in milleseconds.
+     * </ul>
+     * where CACHE_NAME is the name of the cache.
+     *
+     * @param name the name of the cache to initialize.
+     * @param size the size the cache can grow to, in bytes.
+     */
+    public static Cache initializeCache(String name, int size, long expirationTime) {
+        Cache cache = caches.get(name);
+        if (cache == null) {
+            size = JiveGlobals.getIntProperty("cache." + name + ".size", size);
+            expirationTime = (long)JiveGlobals.getIntProperty("cache." + name + ".expirationTime",
+                    (int)expirationTime);
+            caches.put(name, new Cache(name, size, expirationTime));
+        }
+        return cache;
+    }
+
+    /**
+     * Returns the cache specified by name. The cache must be initialized before this
+     * method can be called.
      *
      * @param name the name of the cache to return.
-     * @return the cache found, or null if no cache by that name has been initialized.
+     * @return the cache found, or <tt>null</tt> if no cache by that name
+     *      has been initialized.
      */
     public static Cache getCache(String name) {
-        return (Cache)caches.get(name);
+        return caches.get(name);
     }
 }

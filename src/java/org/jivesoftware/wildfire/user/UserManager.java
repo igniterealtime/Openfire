@@ -224,13 +224,13 @@ public class UserManager implements IQResultListener {
     }
 
     /**
-     * earches for users based on a set of fields and a query string. The fields must
+     * Searches for users based on a set of fields and a query string. The fields must
      * be taken from the values returned by {@link #getSearchFields()}. The query can
      * include wildcards. For example, a search on the field "Name" with a query of "Ma*"
      * might return user's with the name "Matt", "Martha" and "Madeline".<p>
      *
-     * This method should throw an UnsupportedOperationException if this
-     * operation is not supported by the backend user store.
+     * This method throws an UnsupportedOperationException if this operation is
+     * not supported by the user provider.
      *
      * @param fields the fields to search on.
      * @param query the query string.

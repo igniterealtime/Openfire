@@ -440,7 +440,11 @@ public class StringUtils {
      * @return a base64 encode String.
      */
     public static String encodeBase64(byte[] data) {
-        return Base64.encodeBytes(data);
+        // Encode the String. We pass in a flag to specify that line
+        // breaks not be added. This is consistent with our previous base64
+        // implementation. Section 2.1 of 3548 (base64 spec) also specifies
+        // no line breaks by default.
+        return Base64.encodeBytes(data, Base64.DONT_BREAK_LINES);
     }
 
     /**
@@ -462,7 +466,7 @@ public class StringUtils {
     /**
      * Converts a line of text into an array of lower case words using a
      * BreakIterator.wordInstance().<p>
-     * 
+     *
      * This method is under the Jive Open Source Software License and was
      * written by Mark Imbriaco.
      *

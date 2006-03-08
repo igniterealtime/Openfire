@@ -193,6 +193,16 @@ public class GroupManager {
     }
 
     /**
+     * Returns an iterator for all groups that the User is a member of.
+     *
+     * @param user the user.
+     * @return all groups the user belongs to.
+     */
+    public Collection<Group> getGroups(User user) {
+        return getGroups(XMPPServer.getInstance().createJID(user.getUsername(), null));
+    }
+
+    /**
      * Returns an iterator for all groups that the entity with the specified JID is a member of.
      *
      * @param user the JID of the entity to get a list of groups for.
@@ -203,6 +213,16 @@ public class GroupManager {
         // Add to cache and ensure correct identity
         groups = cacheAndEnsureIdentity(groups);
         return groups;
+    }
+
+    /**
+     * Returns the configured group provider. Note that this method has special access
+     * privileges since only a few certain classes need to access the provider directly.
+     *
+     * @return the group provider.
+     */
+    GroupProvider getProvider() {
+        return provider;
     }
 
     /**

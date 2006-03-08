@@ -455,6 +455,15 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                     roster = (Roster) CacheManager.getCache("username2roster")
                             .get(userToUpdate.getNode());
                 }
+                // Only update rosters in memory
+                if (roster != null) {
+                    roster.addSharedUser(group, addedUser);
+                }
+                // Update the roster of the newly added group user.
+                if (addedUserRoster != null) {
+                    Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
+                    addedUserRoster.addSharedUser(userToUpdate, groups, group);
+                }
                 if (!server.isLocal(addedUser)) {
                     // Susbcribe to the presence of the remote user. This is only necessary for
                     // remote users and may only work with remote users that **automatically**
@@ -466,15 +475,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                     // remote users and may only work with remote users that **automatically**
                     // accept presence subscription requests
                     sendSubscribeRequest(addedUser, userToUpdate, true);
-                }
-                // Only update rosters in memory
-                if (roster != null) {
-                    roster.addSharedUser(group, addedUser);
-                }
-                // Update the roster of the newly added group user.
-                if (addedUserRoster != null) {
-                    Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
-                    addedUserRoster.addSharedUser(userToUpdate, groups, group);
                 }
             }
         }
@@ -520,6 +520,15 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 roster = (Roster) CacheManager.getCache("username2roster")
                         .get(userToUpdate.getNode());
             }
+            // Only update rosters in memory
+            if (roster != null) {
+                roster.deleteSharedUser(group, deletedUser);
+            }
+            // Update the roster of the newly deleted group user.
+            if (deletedUserRoster != null) {
+                Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
+                deletedUserRoster.deleteSharedUser(userToUpdate, groups, group);
+            }
             if (!server.isLocal(deletedUser)) {
                 // Unsusbcribe from the presence of the remote user. This is only necessary for
                 // remote users and may only work with remote users that **automatically**
@@ -531,15 +540,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 // remote users and may only work with remote users that **automatically**
                 // accept presence subscription requests
                 sendSubscribeRequest(deletedUser, userToUpdate, false);
-            }
-            // Only update rosters in memory
-            if (roster != null) {
-                roster.deleteSharedUser(group, deletedUser);
-            }
-            // Update the roster of the newly deleted group user.
-            if (deletedUserRoster != null) {
-                Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
-                deletedUserRoster.deleteSharedUser(userToUpdate, groups, group);
             }
         }
     }

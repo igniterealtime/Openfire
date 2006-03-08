@@ -526,8 +526,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             }
             // Update the roster of the newly deleted group user.
             if (deletedUserRoster != null) {
-                Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
-                deletedUserRoster.deleteSharedUser(userToUpdate, groups, group);
+                deletedUserRoster.deleteSharedUser(userToUpdate, group);
             }
             if (!server.isLocal(deletedUser)) {
                 // Unsusbcribe from the presence of the remote user. This is only necessary for

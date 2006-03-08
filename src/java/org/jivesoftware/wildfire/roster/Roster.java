@@ -294,6 +294,11 @@ public class Roster implements Cacheable {
         }
         // If the item only had shared groups before this update then make it persistent
         if (item.isShared() && item.getID() == 0) {
+            // Do nothing if item is only shared and it is using the default user name
+            String defaultContactName = UserNameManager.getUserName(item.getJid());
+            if (item.isOnlyShared() && defaultContactName.equals(item.getNickname())) {
+                return;
+            }
             try {
                 rosterItemProvider.createItem(username, item);
             }
@@ -831,7 +836,7 @@ public class Roster implements Cacheable {
         }
     }
 
-    void deleteSharedUser(JID deletedUser, Collection<Group> groups, Group deletedGroup) {
+    void deleteSharedUser(JID deletedUser, Group deletedGroup) {
         try {
             // Get the RosterItem for the *local* user to remove
             RosterItem item = getRosterItem(deletedUser);
@@ -852,6 +857,8 @@ public class Roster implements Cacheable {
                         rosterManager.isGroupPublic(deletedGroup))) {
                     item.removeSharedGroup(deletedGroup);
                 }
+                // Get the groups of the deleted user
+                Collection<Group> groups = GroupManager.getInstance().getGroups(deletedUser);
                 // Remove all invalid shared groups from the roster item
                 for (Group group : groups) {
                     if (!rosterManager.isGroupVisible(group, getUserJID())) {

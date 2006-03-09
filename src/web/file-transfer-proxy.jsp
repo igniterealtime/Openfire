@@ -20,7 +20,7 @@
 <% webManager.init(request, response, session, application, out); %>
 
 <%
-    Map<String, String> errors = new HashMap<String, String>();
+    Map errors = new HashMap();
     FileTransferProxy transferProxy = XMPPServer.getInstance().getFileTransferProxy();
 
     boolean isUpdated = request.getParameter("update") != null;

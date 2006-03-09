@@ -8,16 +8,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.*,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.PresenceManager,
+                 org.jivesoftware.wildfire.group.Group,
+                 org.jivesoftware.wildfire.user.User,
+                 org.jivesoftware.wildfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.wildfire.group.Group"%>
+<%@ page import="org.xmpp.packet.Presence"%>
+<%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.Collection"%>
+<%@ page import="java.util.Iterator"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -203,7 +205,7 @@
         </td>
         <td>
             <%
-                Collection<Group> groups = webManager.getGroupManager().getGroups(user);
+                Collection groups = webManager.getGroupManager().getGroups(user);
                 if (groups.isEmpty()) {
             %>
                 <i>None</i>
@@ -211,7 +213,8 @@
                 }
                 else {
                     int count = 0;
-                    for (Group group: groups) {
+                    for (Iterator it=groups.iterator();it.hasNext();) {
+                        Group group = (Group) it.next();
                         if (count != 0) {
                             out.print(", ");
                         }

@@ -350,7 +350,7 @@ public class PluginManager {
                 Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
             }
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             Log.error("Error loading plugin", e);
         }
     }

@@ -69,6 +69,43 @@ Wildfire Changelog
 </div>
 
 <p>
+<b>2.5.1</b> -- March 9, 2006
+<p>
+
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-266'>JM-266</a>] - Collections of LDAP servers is now supported. Thanks to Jay Kline. <b>(9 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-572'>JM-572</a>] - Anonymous users is now implemented as defined in JEP-175.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-579'>JM-579</a>] - Added support for deaf occupant in MUC rooms.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-583'>JM-583</a>] - Added support for disabling the roster service.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-581'>JM-581</a>] - Added mechanism to provide the display name to use for remote shared contacts.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-577'>JM-577</a>] - Allowed to have multiple incoming server connections when using server dialback.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-592'>JM-592</a>] - Optimized shared groups performance by not executing many queries to the backend store.</li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-569'>JM-569</a>] - Fixed high CPU consumption when SASL authentication fails.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-573'>JM-573</a>] - Fixed memory leak when new connections were closed before finishing authentication.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-574'>JM-574</a>] - Fixed deadlock when writing data to a socket.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-586'>JM-586</a>] - Fixed leaking of database cursors.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-588'>JM-588</a>] - Fixed error in shared groups when remote shared contact matched username of local group user.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-589'>JM-589</a>] - Fixed error in shared groups when remote shared contact was added and local rosters were in memory.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-591'>JM-591</a>] - Roser items were being created in the db for shared contacts when subscription type changed.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-590'>JM-590</a>] - Roster items are no longer created when receiving an unsubscribe request from an unknown user.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-584'>JM-584</a>] - Fixed possible incorrect presence of contact that belongs to a shared group.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-587'>JM-587</a>] - Replaced buggy Base64 implementation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-571'>JM-571</a>] - File Transfer Proxy was not being removed from disco when disabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-575'>JM-575</a>] - The correct account type for anonymous users is now returned.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-576'>JM-576</a>] - Fixed exception when connection gets closed while doing SASL authentication.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-578'>JM-578</a>] - Fixed LdapManager.setPosixMode to persist setting with correct name.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-580'>JM-580</a>] - Auditor was not able to resume logging after an error happened creating the audit file.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-582'>JM-582</a>] - Packet interceptors per user was not checking if user was a local user.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-585'>JM-585</a>] - IQOfflineMessagesHandler was using wrong date format.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-570'>JM-570</a>] - Closing a PreparedStatement twice was raising an error in Sybase jdbc driver.</li>
+</ul>
+
+<p>
 <b>2.5.0</b> -- February 16, 2006
 <p>
 

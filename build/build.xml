@@ -310,7 +310,6 @@
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class"
                      excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class,org/jivesoftware/wildfire/launcher/*.class"/>
-            <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${src.dir}" includes="database/*.sql"/>

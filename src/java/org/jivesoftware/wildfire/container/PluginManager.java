@@ -16,19 +16,19 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
+import org.jivesoftware.wildfire.XMPPServer;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
@@ -659,7 +659,7 @@ public class PluginManager {
                     }
                 }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
                 Log.error(e);
             }
         }

@@ -20,13 +20,13 @@
 
 package org.jivesoftware.wildfire.container;
 
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.mortbay.http.SunJsseListener;
-import org.mortbay.http.HttpListener;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.mortbay.http.HttpContext;
+import org.mortbay.http.HttpListener;
+import org.mortbay.http.SunJsseListener;
 import org.mortbay.jetty.Server;
 import org.mortbay.log.Factory;
 import org.mortbay.log.LogImpl;
@@ -135,7 +135,20 @@ public class AdminConsolePlugin implements Plugin {
         try {
             // Configure logging to a file, creating log dir if needed
             System.setProperty("org.apache.commons.logging.LogFactory", "org.mortbay.log.Factory");
-            File logDir = new File(JiveGlobals.getHomeDirectory(), "logs");
+            File logDir = null;
+            String logDirectory = JiveGlobals.getXMLProperty("log.directory");
+            // Check if the "log.directory" was defined
+            if (logDirectory != null) {
+                // Remove last separator character (if any)
+                if (!logDirectory.endsWith(File.separator)) {
+                    logDirectory = logDirectory + File.separator;
+                }
+                logDir = new File(logDirectory);
+            }
+            else {
+                // Create log file in the default directory
+                logDir = new File(JiveGlobals.getHomeDirectory(), "logs");
+            }
             if (!logDir.exists()) {
                 logDir.mkdirs();
             }

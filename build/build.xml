@@ -380,6 +380,8 @@
                 <include name="help/**/*.*"/>
             </fileset>
             <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
+            <!-- Include compiled pages of the admin console -->
+            <lib dir="${target.dir}/plugins/admin/webapp/WEB-INF/lib"/>
         </war>
         <!-- Create a Wildfire home -->
         <copy todir="${war.dest.dir}/wildfireHome">

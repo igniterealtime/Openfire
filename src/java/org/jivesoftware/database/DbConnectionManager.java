@@ -180,6 +180,101 @@ public class DbConnectionManager {
         }
     }
 
+    /** Closes a result set. This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      ResultSet rs = null;
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          rs = pstmt.executeQuery();
+     *          ....
+     *      }
+     *      catch (SQLException sqle) {
+     *          Log.error(sqle);
+     *      }
+     *      finally {
+     *          ConnectionManager.closeResultSet(rs);
+     *          ConnectionManager.closePreparedStatement(pstmt);
+     *      }
+     * } </pre>
+     */
+    public static void closeResultSet(ResultSet rs) {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Closes a prepared statement. This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          ....
+     *      }
+     *      catch (SQLException sqle) {
+     *          Log.error(sqle);
+     *      }
+     *      finally {
+     *          ConnectionManager.closePreparedStatement(pstmt);
+     *      }
+     * } </pre>
+     *
+     * @param pstmt the prepared statement.
+     */
+    public static void closePreparedStatement(PreparedStatement pstmt) {
+        try {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Closes a result set, prepared statement and database connection (returning the connection to
+     * the connection pool). This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     * Connection con = null;
+     * PrepatedStatment pstmt = null;
+     * ResultSet rs = null;
+     * try {
+     *     con = ConnectionManager.getConnection();
+     *     pstmt = con.prepareStatement("select * from blah");
+     *     rs = psmt.executeQuery();
+     *     ....
+     * }
+     * catch (SQLException sqle) {
+     *     Log.error(sqle);
+     * }
+     * finally {
+     *     ConnectionManager.closeConnection(rs, pstmt, con);
+     * }</pre>
+     *
+     * @param pstmt the prepared statement.
+     * @param con the connection.
+     */
+    public static void closeConnection(ResultSet rs, PreparedStatement pstmt, Connection con) {
+        closeResultSet(rs);
+        closePreparedStatement(pstmt);
+        closeConnection(con);
+    }
+
     /**
      * Closes a prepared statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of

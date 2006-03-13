@@ -30,6 +30,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
@@ -307,6 +308,15 @@ public class OutgoingServerSession extends Session {
                 }
                 // Something went wrong so close the connection and try server dialback over
                 // a plain connection
+                if (connection != null) {
+                    connection.close();
+                }
+            }
+            catch (SSLHandshakeException e) {
+                Log.debug("Handshake error while creating secured outgoing session to remote " +
+                        "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
+                        ")", e);
+                // Close the connection
                 if (connection != null) {
                     connection.close();
                 }

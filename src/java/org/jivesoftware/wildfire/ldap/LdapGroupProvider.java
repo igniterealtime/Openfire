@@ -11,14 +11,14 @@
 
 package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.wildfire.group.GroupProvider;
-import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.group.GroupNotFoundException;
+import org.jivesoftware.wildfire.group.GroupProvider;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -82,7 +82,8 @@ public class LdapGroupProvider implements GroupProvider {
         String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
         String searchFilter = "(&" + filter + "(" +
                 manager.getGroupNameField() + "=" + group + "))";
-        Collection<Group> groups = populateGroups(searchForGroups(searchFilter, standardAttributes));
+        Collection<Group> groups =
+                populateGroups(searchForGroups(searchFilter, standardAttributes));
         if (groups.size() > 1) {
             // If multiple groups found, throw exception.
             throw new GroupNotFoundException("Too many groups with name " + group + " were found.");
@@ -111,11 +112,12 @@ public class LdapGroupProvider implements GroupProvider {
      * Always throws an UnsupportedOperationException because
      * LDAP groups are read-only.
      *
-     * @param name the group name.
+     * @param name        the group name.
      * @param description the group description.
      * @throws UnsupportedOperationException when called.
      */
-    public void setDescription(String name, String description) throws UnsupportedOperationException {
+    public void setDescription(String name, String description)
+            throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
@@ -195,14 +197,13 @@ public class LdapGroupProvider implements GroupProvider {
      * Always throws an UnsupportedOperationException because LDAP groups
      * are read-only.
      *
-     * @param groupName name of a group.
-     * @param user the JID of the user to add
+     * @param groupName     name of a group.
+     * @param user          the JID of the user to add
      * @param administrator true if is an administrator.
      * @throws UnsupportedOperationException when called.
      */
     public void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException
-    {
+            throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
@@ -210,14 +211,13 @@ public class LdapGroupProvider implements GroupProvider {
      * Always throws an UnsupportedOperationException because LDAP groups
      * are read-only.
      *
-     * @param groupName the naame of a group.
-     * @param user the JID of the user with new privileges
+     * @param groupName     the naame of a group.
+     * @param user          the JID of the user with new privileges
      * @param administrator true if is an administrator.
      * @throws UnsupportedOperationException when called.
      */
     public void updateMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException
-    {
+            throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
@@ -226,7 +226,7 @@ public class LdapGroupProvider implements GroupProvider {
      * are read-only.
      *
      * @param groupName the name of a group.
-     * @param user the JID of the user to delete.
+     * @param user      the JID of the user to delete.
      * @throws UnsupportedOperationException when called.
      */
     public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
@@ -254,8 +254,8 @@ public class LdapGroupProvider implements GroupProvider {
         if (manager.isDebugEnabled()) {
             Log.debug("Trying to find all groups in the system.");
         }
-        DirContext ctx;
-        NamingEnumeration<SearchResult> answer = null;
+        DirContext ctx = null;
+        NamingEnumeration<SearchResult> answer;
         try {
             ctx = manager.getContext();
             if (manager.isDebugEnabled()) {
@@ -272,13 +272,23 @@ public class LdapGroupProvider implements GroupProvider {
             if (manager.isDebugEnabled()) {
                 Log.debug("... search finished");
             }
+
+            return answer;
         }
         catch (Exception e) {
             if (manager.isDebugEnabled()) {
                 Log.debug("Error while searching for groups.", e);
             }
+            return null;
         }
-        return answer;
+        finally {
+            if (ctx != null) {
+                try {
+                    ctx.close();
+                }
+                catch (Exception ex) { /* do nothing */ }
+            }
+        }
     }
 
     /**
@@ -292,115 +302,124 @@ public class LdapGroupProvider implements GroupProvider {
         if (manager.isDebugEnabled()) {
             Log.debug("Starting to populate groups with users.");
         }
-
-        TreeMap<String, Group> groups = new TreeMap<String, Group>();
-
-        DirContext ctx;
+        DirContext ctx = null;
         try {
-            ctx = manager.getContext();
-        }
-        catch (Exception e) {
-            return new ArrayList<Group>();
-        }
+            TreeMap<String, Group> groups = new TreeMap<String, Group>();
 
-        SearchControls ctrls = new SearchControls();
-        ctrls.setReturningAttributes(new String[]{manager.getUsernameField()});
-        ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-
-        String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
-        XMPPServer server = XMPPServer.getInstance();
-        String serverName = server.getServerInfo().getName();
-
-        while (answer.hasMoreElements()) {
-            String name = "";
             try {
-                Attributes a = answer.nextElement().getAttributes();
-                String description;
-                try {
-                    name = ((String) ((a.get(manager.getGroupNameField())).get()));
-                    description = ((String) ((a.get(manager.getGroupDescriptionField())).get()));
-                }
-                catch (Exception e) {
-                    description = "";
-                }
-                TreeSet<JID> members = new TreeSet<JID>();
-                Attribute member = a.get(manager.getGroupMemberField());
-                NamingEnumeration ne = member.getAll();
-                while (ne.hasMore()) {
-                    String username = (String) ne.next();
-                    if (!manager.isPosixMode()) {   //userName is full dn if not posix
-                        try {
-                            // Get the CN using LDAP
-                            LdapName ldapname = new LdapName(username);
-                            String ldapcn = ldapname.get(ldapname.size() - 1);
-
-                            // We have to do a new search to find the username field
-
-                            String combinedFilter = "(&(" + ldapcn + ")" + userSearchFilter + ")";
-                            NamingEnumeration usrAnswer = ctx.search("", combinedFilter, ctrls);
-                            if (usrAnswer.hasMoreElements()) {
-                                username = (String) ((SearchResult) usrAnswer.next()).getAttributes().get(
-                                        manager.getUsernameField()).get();
-                            }
-                            else {
-                                throw new UserNotFoundException();
-                            }
-                        }
-                        catch (Exception e) {
-                            if (manager.isDebugEnabled()) {
-                                Log.debug("Error populating user with DN: " + username, e);
-                            }
-                        }
-                    }
-                    // A search filter may have been defined in the LdapUserProvider.
-                    // Therefore, we have to try to load each user we found to see if
-                    // it passes the filter.
-                    try {
-                        JID userJID;
-                        // Create JID of local user if JID does not match a component's JID
-                        if (!username.contains(serverName)) {
-                            // In order to lookup a username from the manager, the username
-                            // must be a properly escaped JID node.
-                            String escapedUsername = JID.escapeNode(username);
-                            userManager.getUser(escapedUsername);
-                            // No exception, so the user must exist. Add the user as a group
-                            // member using the escaped username.
-                            userJID = server.createJID(escapedUsername, null);
-                        }
-                        else {
-                            // This is a JID of a component or node of a server's component
-                            userJID = new JID(username);
-                        }
-                        members.add(userJID);
-                    }
-                    catch (UserNotFoundException e) {
-                        if (manager.isDebugEnabled()) {
-                            Log.debug("User not found: " + username);
-                        }
-                    }
-                }
-                if (manager.isDebugEnabled()) {
-                    Log.debug("Adding group \"" + name + "\" with " + members.size() + " members.");
-                }
-                Group g = new Group(name, description, members, new ArrayList<JID>());
-                groups.put(name, g);
+                ctx = manager.getContext();
             }
             catch (Exception e) {
-                if (manager.isDebugEnabled()) {
-                    Log.debug("Error while populating group, " + name + ".", e);
+                return new ArrayList<Group>();
+            }
+
+            SearchControls ctrls = new SearchControls();
+            ctrls.setReturningAttributes(new String[]{manager.getUsernameField()});
+            ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+            String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
+            XMPPServer server = XMPPServer.getInstance();
+            String serverName = server.getServerInfo().getName();
+
+            while (answer.hasMoreElements()) {
+                String name = "";
+                try {
+                    Attributes a = answer.nextElement().getAttributes();
+                    String description;
+                    try {
+                        name = ((String) ((a.get(manager.getGroupNameField())).get()));
+                        description =
+                                ((String) ((a.get(manager.getGroupDescriptionField())).get()));
+                    }
+                    catch (Exception e) {
+                        description = "";
+                    }
+                    TreeSet<JID> members = new TreeSet<JID>();
+                    Attribute member = a.get(manager.getGroupMemberField());
+                    NamingEnumeration ne = member.getAll();
+                    while (ne.hasMore()) {
+                        String username = (String) ne.next();
+                        if (!manager.isPosixMode()) {   //userName is full dn if not posix
+                            try {
+                                // Get the CN using LDAP
+                                LdapName ldapname = new LdapName(username);
+                                String ldapcn = ldapname.get(ldapname.size() - 1);
+
+                                // We have to do a new search to find the username field
+
+                                String combinedFilter =
+                                        "(&(" + ldapcn + ")" + userSearchFilter + ")";
+                                NamingEnumeration usrAnswer = ctx.search("", combinedFilter, ctrls);
+                                if (usrAnswer.hasMoreElements()) {
+                                    username = (String) ((SearchResult) usrAnswer.next())
+                                            .getAttributes().get(
+                                            manager.getUsernameField()).get();
+                                }
+                                else {
+                                    throw new UserNotFoundException();
+                                }
+                            }
+                            catch (Exception e) {
+                                if (manager.isDebugEnabled()) {
+                                    Log.debug("Error populating user with DN: " + username, e);
+                                }
+                            }
+                        }
+                        // A search filter may have been defined in the LdapUserProvider.
+                        // Therefore, we have to try to load each user we found to see if
+                        // it passes the filter.
+                        try {
+                            JID userJID;
+                            // Create JID of local user if JID does not match a component's JID
+                            if (!username.contains(serverName)) {
+                                // In order to lookup a username from the manager, the username
+                                // must be a properly escaped JID node.
+                                String escapedUsername = JID.escapeNode(username);
+                                userManager.getUser(escapedUsername);
+                                // No exception, so the user must exist. Add the user as a group
+                                // member using the escaped username.
+                                userJID = server.createJID(escapedUsername, null);
+                            }
+                            else {
+                                // This is a JID of a component or node of a server's component
+                                userJID = new JID(username);
+                            }
+                            members.add(userJID);
+                        }
+                        catch (UserNotFoundException e) {
+                            if (manager.isDebugEnabled()) {
+                                Log.debug("User not found: " + username);
+                            }
+                        }
+                    }
+                    if (manager.isDebugEnabled()) {
+                        Log.debug("Adding group \"" + name + "\" with " + members.size() +
+                                " members.");
+                    }
+                    Group g = new Group(name, description, members, new ArrayList<JID>());
+                    groups.put(name, g);
+                }
+                catch (Exception e) {
+                    if (manager.isDebugEnabled()) {
+                        Log.debug("Error while populating group, " + name + ".", e);
+                    }
                 }
             }
-        }
-        if (manager.isDebugEnabled()) {
-            Log.debug("Finished populating group(s) with users.");
-        }
-        try {
-            ctx.close();
-        }
-        catch (Exception e) {
-            // Ignore.
-        }
+            if (manager.isDebugEnabled()) {
+                Log.debug("Finished populating group(s) with users.");
+            }
 
-        return groups.values();
+            return groups.values();
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            }
+            catch (Exception e) {
+                // Ignore.
+            }
+        }
     }
 }

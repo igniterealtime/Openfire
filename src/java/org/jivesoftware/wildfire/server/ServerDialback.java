@@ -469,7 +469,7 @@ class ServerDialback {
                     return valid;
                 }
                 catch (Exception e) {
-                    Log.warn("Error verifying key", e);
+                    Log.warn("Error verifying key of remote server: " + hostname, e);
                     // Send a <remote-connection-failed/> stream error condition
                     // and terminate both the XML stream and the underlying
                     // TCP connection

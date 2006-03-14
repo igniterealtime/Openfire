@@ -131,10 +131,10 @@ The following parameters can be passed into the request:<p>
 </table><p>
 
 
-<p><b>Sample HTML</b><p>
+<p><b>Sample HTML</b></p>
 
-The following example is the simplest form of calling the service to display 
-default presence images. The server name and user must be customized for your deployment:
+<p>The following example is the simplest form of calling the service to display
+default presence images. The server name and user must be customized for your deployment:</p>
 
 <ul>
 <form>
@@ -143,8 +143,8 @@ default presence images. The server name and user must be customized for your de
 </form>
 </ul>
 
-This example requests a user's presence by the user "jsmith" and specifies 
-custom images that should be used to display the user's presence:
+<p>This example requests a user's presence by the user "jsmith" and specifies
+custom images that should be used to display the user's presence:</p>
 
 <ul>
 <form>
@@ -154,7 +154,7 @@ custom images that should be used to display the user's presence:
 </form>
 </ul>
 
-This example requests the presence of a user in XML format:
+<p>This example requests the presence of a user in XML format:</p>
 
 <ul>
 <form>
@@ -162,6 +162,37 @@ This example requests the presence of a user in XML format:
 </textarea>
 </form>
 </ul>
+
+<p><b>Working With Firewalls</b></p>
+
+<p>Because the presence plugin runs within the Wildfire admin console web container, users
+behind firewalls may have problems seeing the presence icons. For example, if the Wildfire
+admin console runs on the default port of 9090 and a user is only allowed to receive HTTP traffic
+on port 80, then a web request like the following won't work:</p>
+<ul>
+    <tt>&lt;img src="http://www.example.com:9090/plugins/presence/status?jid=jsmith@example.com"&gt;</tt>
+</ul>
+
+<p>One solution for Apache users is to use mod_rewrite, mod_proxy and mod_proxy_http to serve
+traffic for the plugin on port 80. Sample Apache configuration entries for performing this mapping
+are below. Essentially, we make Apache intercept all requests for the presence plugin on port 80 and
+then proxy a real connection to the HTTP server on port 9090.
+</p>
+
+<table border="0" cellspacing="1" cellpadding="3" bgcolor="#999999">
+    <tr>
+        <td width="1" align="left" bgcolor="#dddddd" valign="top"><font color="#555555"><pre>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br></pre></font></td>
+        <td align="left" bgcolor="#ffffff" valign="top"><pre>&lt;virtualhost *:80&gt;
+
+  servername example.com
+  ....
+  ProxyVia On
+  RewriteEngine On
+  RewriteConf %{REQUEST_URI} ^/plugins/presence/status
+  RewriteRule ^/(.*) http://example.com:9090/$1 [P]
+&lt;/virtualhost&gt;
+</pre></td></tr></table>
+
 
 </body>
 </html>

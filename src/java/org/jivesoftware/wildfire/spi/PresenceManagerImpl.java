@@ -14,7 +14,6 @@ package org.jivesoftware.wildfire.spi;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
@@ -26,6 +25,7 @@ import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -51,6 +51,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     private SessionManager sessionManager;
     private UserManager userManager;
+    private RosterManager rosterManager;
     private XMPPServer server;
     private PacketDeliverer deliverer;
     private PresenceUpdateHandler presenceUpdateHandler;
@@ -182,19 +183,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public void handleProbe(Presence packet) throws UnauthorizedException {
         String username = packet.getTo().getNode();
-        // Check for a cached roster:
-        Roster roster = (Roster)CacheManager.getCache("username2roster").get(username);
-        if (roster == null) {
-            synchronized(username.intern()) {
-                roster = (Roster)CacheManager.getCache("username2roster").get(username);
-                if (roster == null) {
-                    // Not in cache so load a new one:
-                    roster = new Roster(username);
-                    CacheManager.getCache("username2roster").put(username, roster);
-                }
-            }
-        }
         try {
+            Roster roster = rosterManager.getRoster(username);
             RosterItem item = roster.getRosterItem(packet.getFrom());
             if (item.getSubStatus() == RosterItem.SUB_FROM
                     || item.getSubStatus() == RosterItem.SUB_BOTH) {
@@ -225,21 +215,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException {
-        // Check that the probee is a valid user
-        userManager.getUser(probee);
-        // Check for a cached roster:
-        Roster roster = (Roster)CacheManager.getCache("username2roster").get(probee);
-        if (roster == null) {
-            synchronized(probee.intern()) {
-                roster = (Roster)CacheManager.getCache("username2roster").get(probee);
-                if (roster == null) {
-                    // Not in cache so load a new one:
-                    roster = new Roster(probee);
-                    CacheManager.getCache("username2roster").put(probee, roster);
-                }
-            }
-        }
-        RosterItem item = roster.getRosterItem(prober);
+        RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
         if (item.getSubStatus() == RosterItem.SUB_FROM
                 || item.getSubStatus() == RosterItem.SUB_BOTH) {
             return true;
@@ -252,65 +228,57 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             if (server.isLocal(probee)) {
                 // If the probee is a local user then don't send a probe to the contact's server.
                 // But instead just send the contact's presence to the prober
-                if (userManager.isRegisteredUser(probee.getNode())) {
-                    Collection<ClientSession> sessions =
-                            sessionManager.getSessions(probee.getNode());
-                    if (sessions.isEmpty()) {
-                        // If the probee is not online then try to retrieve his last unavailable
-                        // presence which may contain particular information and send it to the
-                        // prober
+                Collection<ClientSession> sessions = sessionManager.getSessions(probee.getNode());
+                if (sessions.isEmpty()) {
+                    // If the probee is not online then try to retrieve his last unavailable
+                    // presence which may contain particular information and send it to the
+                    // prober
+                    String presenceXML =
+                            userManager.getUserProperty(probee.getNode(), LAST_PRESENCE_PROP);
+                    if (presenceXML != null) {
                         try {
-                            User probeeUser = userManager.getUser(probee.getNode());
-                            String presenceXML = probeeUser.getProperties().get(LAST_PRESENCE_PROP);
-                            if (presenceXML != null) {
-                                try {
-                                    // Parse the element
-                                    Document element = DocumentHelper.parseText(presenceXML);
-                                    // Create the presence from the parsed element
-                                    Presence presencePacket = new Presence(element.getRootElement());
-                                    presencePacket.setFrom(probee.toBareJID());
-                                    presencePacket.setTo(prober);
-                                    // Check if default privacy list of the probee blocks the
-                                    // outgoing presence
-                                    PrivacyList list = PrivacyListManager.getInstance()
-                                            .getDefaultPrivacyList(probee.getNode());
-                                    if (list == null || !list.shouldBlockPacket(presencePacket)) {
-                                        // Send the presence to the prober
-                                        deliverer.deliver(presencePacket);
-                                    }
-                                }
-                                catch (Exception e) {
-                                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                                }
-
-                            }
-                        }
-                        catch (UserNotFoundException e) {
-                        }
-                    }
-                    else {
-                        // The contact is online so send to the prober all the resources where the
-                        // probee is connected
-                        for (ClientSession session : sessions) {
-                            // Create presence to send from probee to prober
-                            Presence presencePacket = session.getPresence().createCopy();
-                            presencePacket.setFrom(session.getAddress());
+                            // Parse the element
+                            Document element = DocumentHelper.parseText(presenceXML);
+                            // Create the presence from the parsed element
+                            Presence presencePacket = new Presence(element.getRootElement());
+                            presencePacket.setFrom(probee.toBareJID());
                             presencePacket.setTo(prober);
-                            // Check if a privacy list of the probee blocks the outgoing presence
-                            PrivacyList list = session.getActiveList();
-                            list = list == null ? session.getDefaultList() : list;
-                            if (list != null) {
-                                if (list.shouldBlockPacket(presencePacket)) {
-                                    // Default list blocked outgoing presence so skip this session
-                                    continue;
-                                }
-                            }
-                            try {
+                            // Check if default privacy list of the probee blocks the
+                            // outgoing presence
+                            PrivacyList list = PrivacyListManager.getInstance()
+                                    .getDefaultPrivacyList(probee.getNode());
+                            if (list == null || !list.shouldBlockPacket(presencePacket)) {
+                                // Send the presence to the prober
                                 deliverer.deliver(presencePacket);
                             }
-                            catch (Exception e) {
-                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                        }
+                        catch (Exception e) {
+                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                        }
+                    }
+                }
+                else {
+                    // The contact is online so send to the prober all the resources where the
+                    // probee is connected
+                    for (ClientSession session : sessions) {
+                        // Create presence to send from probee to prober
+                        Presence presencePacket = session.getPresence().createCopy();
+                        presencePacket.setFrom(session.getAddress());
+                        presencePacket.setTo(prober);
+                        // Check if a privacy list of the probee blocks the outgoing presence
+                        PrivacyList list = session.getActiveList();
+                        list = list == null ? session.getDefaultList() : list;
+                        if (list != null) {
+                            if (list.shouldBlockPacket(presencePacket)) {
+                                // Default list blocked outgoing presence so skip this session
+                                continue;
                             }
+                        }
+                        try {
+                            deliverer.deliver(presencePacket);
+                        }
+                        catch (Exception e) {
+                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                         }
                     }
                 }
@@ -385,6 +353,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
+        rosterManager = server.getRosterManager();
     }
 
     public Component getPresenceComponent(JID probee) {

@@ -11,20 +11,20 @@
 
 package org.jivesoftware.wildfire.user;
 
-import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.event.UserEventDispatcher;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.wildfire.roster.Roster;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Encapsulates information about a user. New users are created using
@@ -40,6 +40,8 @@ public class User implements Cacheable {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveUserProp WHERE username=?";
+    private static final String LOAD_PROPERTY =
+        "SELECT propValue FROM jiveUserProp WHERE username=? AND name=?";
     private static final String DELETE_PROPERTY =
         "DELETE FROM jiveUserProp WHERE username=? AND name=?";
     private static final String UPDATE_PROPERTY =
@@ -54,6 +56,41 @@ public class User implements Cacheable {
     private Date modificationDate;
 
     private Map<String,String> properties = null;
+
+    /**
+     * Returns the value of the specified property for the given username. This method is
+     * an optimization to avoid loading a user to get a specific property.
+     *
+     * @param username the username of the user to get a specific property value.
+     * @param propertyName the name of the property to return its value.
+     * @return the value of the specified property for the given username.
+     */
+    public static String getPropertyValue(String username, String propertyName) {
+        String propertyValue = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, propertyName);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                propertyValue = rs.getString(1);
+            }
+            rs.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+        return propertyValue;
+    }
 
     /**
      * Constructs a new user. All arguments can be <tt>null</tt> except the username.

@@ -295,9 +295,18 @@ public class Roster implements Cacheable {
         // If the item only had shared groups before this update then make it persistent
         if (item.isShared() && item.getID() == 0) {
             // Do nothing if item is only shared and it is using the default user name
-            String defaultContactName = UserNameManager.getUserName(item.getJid());
-            if (item.isOnlyShared() && defaultContactName.equals(item.getNickname())) {
-                return;
+            if (item.isOnlyShared()) {
+                String defaultContactName = null;
+                try {
+                    defaultContactName = UserNameManager.getUserName(item.getJid());
+                }
+                catch (UserNotFoundException e) {
+                    // Cannot update a roster item for a local user that does not exist
+                    defaultContactName = item.getNickname();
+                }
+                if (defaultContactName.equals(item.getNickname())) {
+                    return;
+                }
             }
             try {
                 rosterItemProvider.createItem(username, item);

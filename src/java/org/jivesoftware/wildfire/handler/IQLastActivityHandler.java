@@ -7,6 +7,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -28,6 +29,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
 
     private IQHandlerInfo info;
     private PresenceManager presenceManager;
+    private RosterManager rosterManager;
 
     public IQLastActivityHandler() {
         super("XMPP Last Activity Handler");
@@ -47,12 +49,12 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         }
 
         try {
-            User user = UserManager.getInstance().getUser(username);
-            RosterItem item = user.getRoster().getRosterItem(packet.getFrom());
+            RosterItem item = rosterManager.getRoster(username).getRosterItem(packet.getFrom());
             // Check that the user requesting this information is subscribed to the user's presence
             if (item.getSubStatus() == RosterItem.SUB_FROM ||
                     item.getSubStatus() == RosterItem.SUB_BOTH) {
                 if (sessionManager.getSessions(username).isEmpty()) {
+                    User user = UserManager.getInstance().getUser(username);
                     // The user is offline so answer the user's "last available time and the
                     // status message of the last unavailable presence received from the user"
                     long lastActivityTime = presenceManager.getLastActivity(user);
@@ -81,8 +83,8 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:last");
         return features.iterator();
     }
@@ -90,5 +92,6 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
     public void initialize(XMPPServer server) {
         super.initialize(server);
         presenceManager = server.getPresenceManager();
+        rosterManager = server.getRosterManager();
     }
 }

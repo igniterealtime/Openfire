@@ -391,7 +391,10 @@ public class LdapGroupProvider implements GroupProvider {
                                 // In order to lookup a username from the manager, the username
                                 // must be a properly escaped JID node.
                                 String escapedUsername = JID.escapeNode(username);
-                                userManager.getUser(escapedUsername);
+                                if (!escapedUsername.equals(username)) {
+                                    // Check if escaped username is valid
+                                    userManager.getUser(escapedUsername);
+                                }
                                 // No exception, so the user must exist. Add the user as a group
                                 // member using the escaped username.
                                 userJID = server.createJID(escapedUsername, null);

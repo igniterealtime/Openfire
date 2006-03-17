@@ -12,13 +12,13 @@
 package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 
-import javax.mail.Store;
-import javax.mail.Session;
 import javax.mail.NoSuchProviderException;
+import javax.mail.Session;
+import javax.mail.Store;
 import java.util.Properties;
 
 /**
@@ -80,7 +80,9 @@ public class POP3AuthProvider implements AuthProvider {
             int maxSize = JiveGlobals.getXMLProperty("pop3.authCache.size", 512*1024);
             long maxLifetime = (long)JiveGlobals.getXMLProperty("pop3.authCache.maxLifetime",
 								(int)JiveConstants.HOUR);
-            authCache = new Cache("POP3 Auth Cache", maxSize, maxLifetime);
+            String cacheName = "POP3 Authentication";
+            CacheManager.initializeCache(cacheName, "pop3", maxSize, maxLifetime);
+            authCache = CacheManager.getCache(cacheName);
         }
 
         useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl"));

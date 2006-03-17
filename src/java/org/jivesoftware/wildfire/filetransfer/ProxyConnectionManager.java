@@ -8,7 +8,7 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
@@ -32,8 +32,7 @@ import java.util.concurrent.Future;
  */
 public class ProxyConnectionManager {
 
-    private Map<String, ProxyTransfer> connectionMap =
-            new Cache("File Transfer Cache", -1, 1000 * 60 * 10);
+    private Map<String, ProxyTransfer> connectionMap;
 
     private final Object connectionLock = new Object();
 
@@ -43,6 +42,9 @@ public class ProxyConnectionManager {
     private int proxyPort;
 
     public ProxyConnectionManager() {
+        String cacheName = "File Transfer";
+        CacheManager.initializeCache(cacheName, "filetransfer", -1, 1000 * 60 * 10);
+        connectionMap = CacheManager.getCache(cacheName);
     }
 
     /*

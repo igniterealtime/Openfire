@@ -45,9 +45,9 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        CacheManager.initializeCache("group", 128 * 1024);
-        CacheManager.initializeCache("group member", 32 * 1024);
-        groupCache = CacheManager.getCache("group");
+        String cacheName = "Group";
+        CacheManager.initializeCache(cacheName, "group", 128 * 1024);
+        groupCache = CacheManager.getCache(cacheName);
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
                 "org.jivesoftware.wildfire.group.DefaultGroupProvider");
@@ -165,6 +165,7 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
+        // TODO: add/use caching
         Collection<Group> groups = provider.getGroups();
         // Add to cache and ensure correct identity
         groups = cacheAndEnsureIdentity(groups);

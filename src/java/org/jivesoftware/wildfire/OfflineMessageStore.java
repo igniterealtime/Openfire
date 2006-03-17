@@ -82,7 +82,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public OfflineMessageStore() {
         super("Offline Message Store");
         dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
-        sizeCache = new Cache("Offline Message Size Cache", 1024*100, JiveConstants.HOUR*12);
+        String cacheName = "Offline Message Size";
+        CacheManager.initializeCache(cacheName, "offlinemessage", 1024*100, JiveConstants.HOUR*12);
+        sizeCache = CacheManager.getCache(cacheName);
     }
 
     /**

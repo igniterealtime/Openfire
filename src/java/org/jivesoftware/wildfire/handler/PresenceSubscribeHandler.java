@@ -11,13 +11,13 @@
 
 package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -79,6 +79,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private XMPPServer localServer;
     private PacketDeliverer deliverer;
     private PresenceManager presenceManager;
+    private RosterManager rosterManager;
     private UserManager userManager;
 
     public PresenceSubscribeHandler() {
@@ -185,17 +186,10 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         Roster roster = null;
         if (localServer.isLocal(address) && userManager.isRegisteredUser(address.getNode())) {
             username = address.getNode();
-            // Check for a cached roster:
-            roster = (Roster)CacheManager.getCache("username2roster").get(username);
-            if (roster == null) {
-                synchronized(address.toString().intern()) {
-                    roster = (Roster)CacheManager.getCache("username2roster").get(username);
-                    if (roster == null) {
-                        // Not in cache so load a new one:
-                        roster = new Roster(username);
-                        CacheManager.getCache("username2roster").put(username, roster);
-                    }
-                }
+            try {
+                roster = rosterManager.getRoster(username);
+            }
+            catch (UserNotFoundException e) {
             }
         }
         return roster;
@@ -454,6 +448,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
         presenceManager = server.getPresenceManager();
+        rosterManager = server.getRosterManager();
         userManager = server.getUserManager();
     }
 }

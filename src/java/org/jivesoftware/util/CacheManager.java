@@ -9,7 +9,9 @@
 
 package org.jivesoftware.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Centralized management of caches. Caches are essential for performance and scalability.
@@ -36,10 +38,13 @@ public class CacheManager {
      * where CACHE_NAME is the name of the cache.
      *
      * @param name the name of the cache to initialize.
+     * @param propertiesName  the properties file name prefix where settings for the cache
+     *                        are stored. The name is will be prefixed by "cache." before it is
+     *                        looked up.
      * @param size the size the cache can grow to, in bytes.
      */
-    public static Cache initializeCache(String name, int size) {
-        return initializeCache(name, size, DEFAULT_EXPIRATION_TIME);
+    public static Cache initializeCache(String name, String propertiesName, int size) {
+        return initializeCache(name, propertiesName, size, DEFAULT_EXPIRATION_TIME);
     }
 
     /**
@@ -55,14 +60,19 @@ public class CacheManager {
      * where CACHE_NAME is the name of the cache.
      *
      * @param name the name of the cache to initialize.
-     * @param size the size the cache can grow to, in bytes.
+     * @param propertiesName  the properties file name prefix where settings for the cache are
+     *                        stored. The name is will be prefixed by "cache." before it is
+     *                        looked up.
+     * @param size the size  the cache can grow to, in bytes.
+     * @param expirationTime the default max lifetime of the cache, in milliseconds.
      */
-    public static Cache initializeCache(String name, int size, long expirationTime) {
+    public static Cache initializeCache(String name, String propertiesName, int size,
+            long expirationTime) {
         Cache cache = caches.get(name);
         if (cache == null) {
             size = JiveGlobals.getIntProperty("cache." + name + ".size", size);
-            expirationTime = (long)JiveGlobals.getIntProperty("cache." + name + ".expirationTime",
-                    (int)expirationTime);
+            expirationTime = (long) JiveGlobals.getIntProperty(
+                    "cache." + propertiesName + ".expirationTime", (int) expirationTime);
             caches.put(name, new Cache(name, size, expirationTime));
         }
         return cache;
@@ -78,5 +88,14 @@ public class CacheManager {
      */
     public static Cache getCache(String name) {
         return caches.get(name);
+    }
+
+    /**
+     * Returns the list of caches being managed by this manager.
+     *
+     * @return the list of caches being managed by this manager.
+     */
+    public static Collection<Cache> getCaches() {
+        return caches.values();
     }
 }

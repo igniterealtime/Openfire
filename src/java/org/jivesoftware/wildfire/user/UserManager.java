@@ -34,18 +34,24 @@ import java.util.Set;
  */
 public class UserManager implements IQResultListener {
 
+    /**
+     * Cache of local users.
+     */
     private static Cache userCache;
+    /**
+     * Cache if a local or remote user exists.
+     */
     private static Cache registeredUsersCache;
     private static UserProvider provider;
     private static UserManager instance = new UserManager();
 
     static {
         // Initialize caches.
-        CacheManager.initializeCache("userCache", 512 * 1024);
-        CacheManager.initializeCache("registeredUsersCache", 512 * 1024);
-        CacheManager.initializeCache("username2roster", 512 * 1024);
-        userCache = CacheManager.getCache("userCache");
-        registeredUsersCache = CacheManager.getCache("registeredUsersCache");
+        CacheManager.initializeCache("User", "userCache", 512 * 1024);
+        CacheManager.initializeCache("Users Existence", "registeredUsersCache", 512 * 1024);
+        CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
+        userCache = CacheManager.getCache("User");
+        registeredUsersCache = CacheManager.getCache("Users Existence");
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.wildfire.user.DefaultUserProvider");

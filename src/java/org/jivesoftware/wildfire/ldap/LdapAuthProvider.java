@@ -11,12 +11,9 @@
 
 package org.jivesoftware.wildfire.ldap;
 
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.AuthProvider;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -48,7 +45,9 @@ public class LdapAuthProvider implements AuthProvider {
             int maxSize = JiveGlobals.getXMLProperty("ldap.authCache.size", 512*1024);
             long maxLifetime = (long)JiveGlobals.getXMLProperty("ldap.authCache.maxLifetime",
                     (int)JiveConstants.HOUR * 2);
-            authCache = new Cache("LDAP Auth Cache", maxSize, maxLifetime);
+            String cacheName = "LDAP Authentication";
+            CacheManager.initializeCache(cacheName, "ldap", maxSize, maxLifetime);
+            authCache = CacheManager.getCache(cacheName);
         }
     }
 

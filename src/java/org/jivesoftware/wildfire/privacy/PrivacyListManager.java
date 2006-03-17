@@ -28,8 +28,9 @@ public class PrivacyListManager {
 
     private PrivacyListManager() {
         // Create the cache of privacy lists
-        CacheManager.initializeCache("listsCache", 512 * 1024);
-        listsCache = CacheManager.getCache("listsCache");
+        String cacheName = "Privacy Lists";
+        CacheManager.initializeCache(cacheName, "listsCache",512 * 1024);
+        listsCache = CacheManager.getCache(cacheName);
     }
 
     /**

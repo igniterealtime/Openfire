@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
@@ -60,8 +61,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
      * Cache for a day discovered information of remote servers. The local server will try
      * to discover if remote servers support multicast service.
      */
-    private Cache cache =
-            new Cache("MulticastRouter Remote Domains Cache", 128 * 1024, JiveConstants.DAY);
+    private Cache cache;
     /**
      * Packets that include recipients that belong to remote servers are not processed by
      * the main thread since extra work is required. This variable holds the list of packets
@@ -85,6 +85,10 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
 
     public MulticastRouter() {
         super("Multicast Packet Router");
+
+        String cacheName = "Multicast service";
+        CacheManager.initializeCache(cacheName, "multicast", 128 * 1024, JiveConstants.DAY);
+        cache = CacheManager.getCache(cacheName);
     }
 
     public void route(Packet packet) {

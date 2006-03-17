@@ -59,8 +59,9 @@ public class VCardManager {
     }
 
     private VCardManager() {
-        CacheManager.initializeCache("vcardCache", 512 * 1024);
-        vcardCache = CacheManager.getCache("vcardCache");
+        String cacheName = "VCard";
+        CacheManager.initializeCache(cacheName, "vcardCache", 512 * 1024);
+        vcardCache = CacheManager.getCache(cacheName);
     }
 
     /**

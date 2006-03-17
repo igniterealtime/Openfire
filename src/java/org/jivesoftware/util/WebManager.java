@@ -21,7 +21,7 @@ import org.jivesoftware.wildfire.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * A utility bean for Wildfire admin console pages.
@@ -352,5 +352,17 @@ public class WebManager extends WebBean {
                 user.getProperties().put(property, toStore);
             }
         }
+    }
+
+    public Cache[] getCaches() {
+        List<Cache> caches = new ArrayList<Cache>(CacheManager.getCaches());
+        Collections.sort(caches, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                Cache cache1 = (Cache)o1;
+                Cache cache2 = (Cache)o2;
+                return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
+            }
+        });
+        return caches.toArray(new Cache[]{});
     }
 }

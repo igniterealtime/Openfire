@@ -322,6 +322,13 @@ public class LdapManager {
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);
             }
+            if (connectionPoolEnabled) {
+                env.put("com.sun.jndi.ldap.connect.pool", "true");
+            }
+            if (followReferrals) {
+                env.put(Context.REFERRAL, "follow");
+            }
+
             if (debug) {
                 Log.debug("Created context values, attempting to create context...");
             }
@@ -357,6 +364,12 @@ public class LdapManager {
                     }
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
+                    }
+                    if (connectionPoolEnabled) {
+                        env.put("com.sun.jndi.ldap.connect.pool", "true");
+                    }
+                    if (followReferrals) {
+                        env.put(Context.REFERRAL, "follow");
                     }
                     if (debug) {
                         Log.debug("Created context values, attempting to create context...");
@@ -493,7 +506,17 @@ public class LdapManager {
                 throw new UserNotFoundException("LDAP username lookup for " + username +
                         " matched multiple entries.");
             }
-            return userDN;
+            //All other methods assume that userDN is not a full LDAP string.
+            //However if a referal was followed this is not the case.  The
+            //following code converts a referral back to a "partial" LDAP string.
+            if (userDN.startsWith("ldap://")) {
+                userDN = userDN.replace("," + baseDN, "");
+                userDN = userDN.substring(userDN.lastIndexOf("/") + 1);
+                return userDN;
+            }
+            else {
+                return userDN;
+            }
         }
         catch (Exception e) {
             if (debug) {

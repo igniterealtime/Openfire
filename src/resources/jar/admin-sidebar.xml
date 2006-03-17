@@ -28,6 +28,11 @@
                     url="server-locale.jsp"
                     description="${sidebar.server-locale.descr}" />
 
+            <!-- System Cache -->
+            <item id="system-cache" name="${sidebar.system-cache}"
+                    url="system-cache.jsp"
+                    description="${sidebar.system-cache.descr}" />
+
             <!-- Database -->
             <item id="server-db" name="${sidebar.server-db}"
                     url="server-db.jsp"

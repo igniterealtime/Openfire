@@ -108,6 +108,7 @@
     // decimal formatter for cache values
     DecimalFormat mbFormat = new DecimalFormat("#0.00");
     DecimalFormat percentFormat = new DecimalFormat("#0.0");
+    percentFormat.setNegativePrefix("");
 %>
 
 <%  if (doClearCache) { %>

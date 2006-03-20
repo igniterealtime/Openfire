@@ -1,8 +1,5 @@
-REM // $RCSfile$
 REM // $Revision: 795 $
 REM // $Date: 2005-01-06 07:44:42 -0300 (Thu, 06 Jan 2005) $
-
-REM // upgrades from Wildfire 2.0.x to 2.1.0
 
 REM // jiveGroup: Recreate table from scratch
 DROP TABLE jiveGroup;

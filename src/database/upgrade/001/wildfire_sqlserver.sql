@@ -1,8 +1,5 @@
-/* $RCSfile$ */
-/* $Revision: 840 $                           */
-/* $Date: 2005-01-10 01:30:06 -0300 (Mon, 10 Jan 2005) $               */
-
-/* upgrades from Wildfire 2.0.x to 2.1.0 */
+/* $Revision: 840 $                                         */
+/* $Date: 2005-01-10 01:30:06 -0300 (Mon, 10 Jan 2005) $    */
 
 /* jiveGroup: Recreate table from scratch */
 DROP TABLE jiveGroup;

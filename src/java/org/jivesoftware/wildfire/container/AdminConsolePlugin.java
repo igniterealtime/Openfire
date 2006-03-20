@@ -231,9 +231,9 @@ public class AdminConsolePlugin implements Plugin {
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
         }
         else {
-            String msg = listening + ":\n" +
+            String msg = listening + ":" + System.getProperty("line.separator") +
                     "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
-                    port + "\n" +
+                    port + System.getProperty("line.separator") +
                     "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
                     securePort;
             Log.info(msg);

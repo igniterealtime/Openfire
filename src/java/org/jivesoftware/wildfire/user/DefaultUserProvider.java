@@ -12,19 +12,23 @@
 package org.jivesoftware.wildfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.vcard.VCardManager;
 
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-
 /**
  * Default implementation of the UserProvider interface, which reads and writes data
- * from the <tt>jiveUser</tt> database table.
+ * from the <tt>jiveUser</tt> database table.<p>
+ *
+ * Passwords can be stored as plain text, or encrypted using Blowfish. The
+ * encryption/decryption key is stored as the Wildfire property <tt>passwordKey</tt>,
+ * which is automatically created on first-time use. It's critical that the password key
+ * not be changed once created, or existing passwords will be lost. By default
+ * passwords will be stored encrypted. Plain-text password storage can be enabled
+ * by setting the Wildfire property <tt>user.usePlainPassword</tt> to <tt>true</tt>.
  *
  * @author Matt Tucker
  */
@@ -37,8 +41,8 @@ public class DefaultUserProvider implements UserProvider {
     private static final String ALL_USERS =
             "SELECT username FROM jiveUser";
     private static final String INSERT_USER =
-            "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
-            "VALUES (?,?,?,?,?,?)";
+            "INSERT INTO jiveUser (username,password,encryptedPassword,name,email,creationDate,modificationDate) " +
+            "VALUES (?,?,?,?,?,?,?)";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM jiveUserProp WHERE username=?";
     private static final String DELETE_USER =
@@ -52,9 +56,33 @@ public class DefaultUserProvider implements UserProvider {
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE jiveUser SET modificationDate=? WHERE username=?";
     private static final String LOAD_PASSWORD =
-            "SELECT password FROM jiveUser WHERE username=?";
+            "SELECT password,encryptedPassword FROM jiveUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser SET password=? WHERE username=?";
+            "UPDATE jiveUser SET password=?, encryptedPassword=? WHERE username=?";
+
+    private static Blowfish cipher = null;
+
+    private static synchronized Blowfish getCipher() {
+        if (cipher != null) {
+            return cipher;
+        }
+        // Get the password key, stored as a database property. Obviously,
+        // protecting your database is critical for making the
+        // encryption fully secure.
+        String keyString;
+        try {
+            keyString = JiveGlobals.getProperty("passwordKey");
+            if (keyString == null) {
+                keyString = StringUtils.randomString(15);
+                JiveGlobals.setProperty("passwordKey", keyString);
+            }
+            cipher = new Blowfish(keyString);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        return cipher;
+    }
 
     public User loadUser(String username) throws UserNotFoundException {
         Connection con = null;
@@ -100,6 +128,16 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
+
+            // Determine if the password should be stored as plain text or encrypted.
+            boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
+            String encryptedPassword = null;
+            if (!usePlainPassword) {
+                encryptedPassword = getCipher().encryptString(password);
+                // Set password to null so that it's inserted that way.
+                password = null;
+            }
+
             Date now = new Date();
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -107,21 +145,32 @@ public class DefaultUserProvider implements UserProvider {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(INSERT_USER);
                 pstmt.setString(1, username);
-                pstmt.setString(2, password);
-                if (name == null) {
+                if (password == null) {
+                    pstmt.setNull(2, Types.VARCHAR);
+                }
+                else {
+                    pstmt.setString(2, password);
+                }
+                if (encryptedPassword == null) {
                     pstmt.setNull(3, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(3, name);
+                    pstmt.setString(3, encryptedPassword);
                 }
-                if (email == null) {
+                if (name == null) {
                     pstmt.setNull(4, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(4, email);
+                    pstmt.setString(4, name);
                 }
-                pstmt.setString(5, StringUtils.dateToMillis(now));
+                if (email == null) {
+                    pstmt.setNull(5, Types.VARCHAR);
+                }
+                else {
+                    pstmt.setString(5, email);
+                }
                 pstmt.setString(6, StringUtils.dateToMillis(now));
+                pstmt.setString(7, StringUtils.dateToMillis(now));
                 pstmt.execute();
             }
             catch (Exception e) {
@@ -150,7 +199,9 @@ public class DefaultUserProvider implements UserProvider {
             try {
                 VCardManager.getInstance().deleteVCard(username);
             }
-            catch (UnsupportedOperationException e) {}
+            catch (UnsupportedOperationException e) {
+                // Ignore.
+            }
             // Delete all of the users's extended properties
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
@@ -223,7 +274,7 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
@@ -252,7 +303,7 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public void setName(String username, String name) throws UserNotFoundException {
@@ -370,7 +421,14 @@ public class DefaultUserProvider implements UserProvider {
             if (!rs.next()) {
                 throw new UserNotFoundException(username);
             }
-            return rs.getString(1);
+            String plainText = rs.getString(1);
+            String encrypted = rs.getString(2);
+            if (encrypted != null) {
+                return getCipher().decryptString(encrypted);
+            }
+            else {
+                return plainText;
+            }
         }
         catch (SQLException sqle) {
             throw new UserNotFoundException(sqle);
@@ -388,12 +446,30 @@ public class DefaultUserProvider implements UserProvider {
             // Reject the operation since the provider is read-only
             throw new UnsupportedOperationException();
         }
+
+        // Determine if the password should be stored as plain text or encrypted.
+        boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
+        String encryptedPassword = null;
+        if (!usePlainPassword) {
+            encryptedPassword = getCipher().encryptString(password);
+            // Set password to null so that it's inserted that way.
+            password = null;
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PASSWORD);
-            pstmt.setString(1, password);
+            if (password == null) {
+                pstmt.setNull(1, Types.VARCHAR);
+            }
+            else {
+                pstmt.setString(1, password);
+            }
+            if (encryptedPassword == null) {
+                pstmt.setNull(2, Types.VARCHAR);
+            }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -474,7 +550,7 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
@@ -543,7 +619,7 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public boolean isReadOnly() {

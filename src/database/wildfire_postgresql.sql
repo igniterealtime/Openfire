@@ -1,4 +1,3 @@
--- $RCSfile$
 -- $Revision: 1650 $
 -- $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
@@ -6,7 +5,8 @@
 
 CREATE TABLE jiveUser (
   username              VARCHAR(32)     NOT NULL,
-  password              VARCHAR(32)     NOT NULL,
+  password              VARCHAR(32),
+  encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
@@ -111,8 +111,9 @@ CREATE TABLE jiveProperty (
 
 
 CREATE TABLE jiveVersion (
-  majorVersion  INTEGER  NOT NULL,
-  minorVersion  INTEGER  NOT NULL
+  name     VARCHAR(50)  NOT NULL,
+  version  INTEGER  NOT NULL,
+  CONSTRAINT jiveVersion_pk PRIMARY KEY (name)
 );
 
 CREATE TABLE jiveExtComponentConf (
@@ -210,7 +211,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 5);
+INSERT INTO jiveVersion (name, version) VALUES ("wildfire", 6);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

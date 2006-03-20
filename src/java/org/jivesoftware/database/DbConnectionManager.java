@@ -15,13 +15,9 @@ package org.jivesoftware.database;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -32,7 +28,7 @@ import java.sql.Statement;
 /**
  * Central manager of database connections. All methods are static so that they
  * can be easily accessed throughout the classes in the database package.<p>
- * <p/>
+ *
  * This class also provides a set of utility methods that abstract out
  * operations that may not work on all databases such as setting the max number
  * or rows that a query should return.
@@ -42,20 +38,16 @@ import java.sql.Statement;
  */
 public class DbConnectionManager {
 
+    private static final String CHECK_VERSION_OLD =
+            "SELECT minorVersion FROM jiveVersion";
     private static final String CHECK_VERSION =
-            "SELECT majorVersion, minorVersion FROM jiveVersion";
+            "SELECT version FROM jiveVersion WHERE name=?";
 
     /**
-     * Database schema major version. The schema version corresponds to the
-     * product release version, but may not exactly match in the case that
-     * the product version has advanced without schema changes.
+     * Database schema version.
      */
-    private static final int CURRENT_MAJOR_VERSION = 2;
+    private static final int DATABASE_VERSION = 6;
 
-    /**
-     * Database schema minor version.
-     */
-    private static final int CURRENT_MINOR_VERSION = 5;
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -455,9 +447,8 @@ public class DbConnectionManager {
                     upgradeDatabase(con);
                 }
                 catch (Exception e) {
-                    Log.error("Database upgrade failed. Please manually upgrade your database.", e);
-                    System.out.println("Database upgrade failed. Please manually upgrade your " +
-                            "database.");
+                    Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"), e);
+                    System.out.println(LocaleUtils.getLocalizedString("upgrade.database.failure"));
                 }
             }
             catch (Exception e) {
@@ -805,26 +796,33 @@ public class DbConnectionManager {
      * @throws SQLException if an error occured.
      */
     private static boolean upgradeDatabase(Connection con) throws Exception {
-        int majorVersion;
-        int minorVersion;
+        int version = 0;
         PreparedStatement pstmt = null;
         try {
             pstmt = con.prepareStatement(CHECK_VERSION);
+            pstmt.setString(1, "wildfire");
             ResultSet rs = pstmt.executeQuery();
-            // If no results, assume the version is 2.0.
-            if (!rs.next()) {
-                majorVersion = 2;
-                minorVersion = 0;
-            }
-            majorVersion = rs.getInt(1);
-            minorVersion = rs.getInt(2);
+            rs.next();
+            version = rs.getInt(1);
             rs.close();
         }
         catch (SQLException sqle) {
-            // If the table doesn't exist, an error will be thrown. Therefore
-            // assume the version is 2.0.
-            majorVersion = 2;
-            minorVersion = 0;
+            // Releases of Wildfire before 2.6.0 stored a major and minor version
+            // number so the normal check for version can fail. Check for the
+            // version using the old format in that case.
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                pstmt = con.prepareStatement(CHECK_VERSION_OLD);
+                ResultSet rs = pstmt.executeQuery();
+                rs.next();
+                version = rs.getInt(1);
+                rs.close();
+            }
+            catch (SQLException sqle2) {
+                // Must be database version 0.
+            }
         }
         finally {
             try {
@@ -836,44 +834,34 @@ public class DbConnectionManager {
                 Log.error(e);
             }
         }
-        if (majorVersion == CURRENT_MAJOR_VERSION && minorVersion == CURRENT_MINOR_VERSION) {
+        if (version == DATABASE_VERSION) {
             return false;
         }
         // The database is an old version that needs to be upgraded.
-        Log.info("Found old database schema (" + majorVersion + "." + minorVersion + "). " +
-                "Upgrading to latest schema.");
-        System.out.println("Found old database schema (" + majorVersion + "." +
-                minorVersion + "). " + "Upgrading to latest schema.");
+        Log.info(LocaleUtils.getLocalizedString("upgrade.database.old_schema"));
+        System.out.println(LocaleUtils.getLocalizedString("upgrade.database.old_schema"));
         if (databaseType == DatabaseType.unknown) {
-            Log.info("Warning: database type unknown. You must manually upgrade your database.");
-            System.out.println("Warning: database type unknown. You must manually upgrade your " +
-                    "database.");
+            Log.info(LocaleUtils.getLocalizedString("upgrade.database.unknown_db"));
+            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.unknown_db"));
             return false;
         }
         else if (databaseType == DatabaseType.interbase) {
-            Log.info("Warning: automatic upgrades of Interbase are not supported. You " +
-                    "must manually upgrade your database.");
-            System.out.println("Warning: automatic upgrades of Interbase are not supported. You " +
-                    "must manually upgrade your database.");
+            Log.info(LocaleUtils.getLocalizedString("upgrade.database.interbase_db"));
+            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.interbase_db"));
             return false;
         }
+
         // Run all upgrade scripts until we're up to the latest schema.
-        for (int i = minorVersion; i < CURRENT_MINOR_VERSION; i++) {
+        for (int i = version+1; i <= DATABASE_VERSION; i++) {
             BufferedReader in = null;
             Statement stmt;
             try {
-                // Resource will be like "/database/upgrade/2.0_to_2.1/wildfire_hsqldb.sql"
-                String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
-                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i + 1) + "/wildfire_" +
+                // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
+                String resourceName = "/database/upgrade/" + i + "/wildfire_" +
                         databaseType + ".sql";
                 InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
                 if (resource == null) {
-                    Log.info("Warning: Make sure that database was not modified for release: " +
-                            CURRENT_MAJOR_VERSION + "." + (i + 1) + ". Upgrade script not found: " +
-                            resourceName);
-                    System.out.println("Warning: Make sure that database was not modified for " +
-                            "release: " + CURRENT_MAJOR_VERSION + "." + (i + 1) +
-                            ". Upgrade script not found: " + resourceName);
+                    // If the resource is null, the specific upgrade number is not available.
                     continue;
                 }
                 in = new BufferedReader(new InputStreamReader(resource));
@@ -901,16 +889,15 @@ public class DbConnectionManager {
                         stmt.close();
                     }
                 }
+                // If the version is greater than 6, automatically update the version information.
+                // Previous to version 6, the upgrade scripts set the version themselves.
+                if (version > 6) {
+                    stmt = con.createStatement();
+                    stmt.execute("UPDATE jiveVersion SET version=" + i + " WHERE name='wildfire'");
+                    stmt.close();
+                }
             }
             finally {
-                try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
                 if (in != null) {
                     try {
                         in.close();
@@ -921,8 +908,8 @@ public class DbConnectionManager {
                 }
             }
         }
-        Log.info("Database upgraded successfully.");
-        System.out.println("Database upgraded successfully.");
+        Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
+        System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
         return true;
     }
 

@@ -11,13 +11,8 @@
 
 package org.jivesoftware.wildfire.auth;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.DefaultUserProvider;
 
 /**
  * Default AuthProvider implementation. It authenticates against the <tt>jiveUser</tt>
@@ -30,40 +25,32 @@ import java.sql.SQLException;
  */
 public class DefaultAuthProvider implements AuthProvider {
 
-    private static final String AUTHORIZE =
-        "SELECT username FROM jiveUser WHERE username=? AND password=?";
-    private static final String SELECT_PASSWORD =
-        "SELECT password FROM jiveUser WHERE username=?";
+    private DefaultUserProvider userProvider;
+
+    /**
+     * Constructs a new DefaultAuthProvider.
+     */
+    public DefaultAuthProvider() {
+        // Create a new default user provider since we need it to get the
+        // user's password. We always create our own user provider because
+        // we don't know what user provider is configured for the system and
+        // the contract of this class is to authenticate against the jiveUser
+        // database table.
+        userProvider = new DefaultUserProvider();
+    }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        Connection con = null;
-        PreparedStatement pstmt = null;
         try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(AUTHORIZE);
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            ResultSet rs = pstmt.executeQuery();
-            // If the query has no results, the username and password
-            // did not match a user record. Therefore, throw an exception.
-            if (!rs.next()) {
+            if (!password.equals(userProvider.getPassword(username))) {
                 throw new UnauthorizedException();
             }
-            rs.close();
         }
-        catch (SQLException e) {
-            Log.error("Exception in DbAuthProvider", e);
+        catch (UserNotFoundException unfe) {
             throw new UnauthorizedException();
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
         }
         // Got this far, so the user must be authorized.
     }
@@ -73,36 +60,15 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        Connection con = null;
-        PreparedStatement pstmt = null;
         try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(SELECT_PASSWORD);
-            pstmt.setString(1, username);
-
-            ResultSet rs = pstmt.executeQuery();
-
-            // If the query had no results, the username and password
-            // did not match a user record. Therefore, throw an exception.
-            if (!rs.next()) {
-                throw new UnauthorizedException();
-            }
-            String pass = rs.getString(1);
-            String anticipatedDigest = AuthFactory.createDigest(token, pass);
+            String password = userProvider.getPassword(username);
+            String anticipatedDigest = AuthFactory.createDigest(token, password);
             if (!digest.equalsIgnoreCase(anticipatedDigest)) {
                 throw new UnauthorizedException();
             }
-            rs.close();
         }
-        catch (SQLException e) {
-            Log.error("Exception in DbAuthProvider", e);
+        catch (UserNotFoundException unfe) {
             throw new UnauthorizedException();
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
         }
         // Got this far, so the user must be authorized.
     }

@@ -9,9 +9,9 @@
 <h1>Wildfire Database Schema Guide</h1>
 <h2>Introduction</h2>
 <p>
-This document outlines the data type conventions and tables in the Jive
-Wildfire 2.1 database schema. Some information, like column indexes and foreign keys, is
-omitted. For this, please read the individual schema of the database you're interested in.
+This document outlines the data type conventions and tables in the Wildfire database schema.
+Some information, like column indexes and foreign keys, is omitted. For this, please read
+the individual schema of the database you're interested in.
 <br>
 </p>
 <h2>Data Type Conventions</h2>
@@ -49,6 +49,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#jiveRosterGroups">jiveRosterGroups</a> </li>
   <li><a href="#jivePrivacy">jivePrivacyList</a> </li>
   <li><a href="#jiveVCard">jiveVCard</a> </li>
+  <li><a href="#jiveVersion">jiveVersion</a> </li>
   <li><a href="#jiveProperty">jiveProperty</a><br>
   </li>
   <li><a href="#jiveExtComponentConf">jiveExtComponentConf</a> </li>
@@ -326,7 +327,13 @@ Key)<br>
       <td>password</td>
       <td>VARCHAR</td>
       <td>32</td>
-      <td>Password Data (plain-text or MD5 hash depending on settings)</td>
+      <td>Plain-text password data</td>
+    </tr>
+      <tr>
+      <td>encryptedPassword</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Encrypted password data (default)</td>
     </tr>
     <tr>
       <td>name</td>
@@ -585,6 +592,36 @@ roster)</th>
       <td>TEXT</td>
       <td>n/a</td>
       <td>Value of the vCard entry</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="jiveVersion"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">jiveVersion (contains product version information)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Name of the item that version information is being tracked for (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>version</td>
+      <td>INTEGER</td>
+      <td>n/a</td>
+      <td>The version number</td>
     </tr>
   </tbody>
 </table>

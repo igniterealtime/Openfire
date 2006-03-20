@@ -254,7 +254,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(2, 5, 1, Version.ReleaseStatus.Release, -1);
+        version = new Version(2, 6, 0, Version.ReleaseStatus.Beta, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -502,8 +502,8 @@ public class XMPPServer {
             if (isRestartable()) {
                 try {
                     Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
-                    Method stopMethod = wrapperClass.getMethod("stop", new Class[]{Integer.TYPE});
-                    stopMethod.invoke(null, new Object[]{0});
+                    Method stopMethod = wrapperClass.getMethod("stop", Integer.TYPE);
+                    stopMethod.invoke(null, 0);
                 }
                 catch (Exception e) {
                     Log.error("Could not stop container", e);
@@ -530,7 +530,7 @@ public class XMPPServer {
     }
 
     public boolean isRestartable() {
-        boolean restartable = false;
+        boolean restartable;
         try {
             restartable = Class.forName(WRAPPER_CLASSNAME) != null;
         }
@@ -548,7 +548,7 @@ public class XMPPServer {
      * @return true if the server is running in standalone mode.
      */
     public boolean isStandAlone() {
-        boolean standalone = false;
+        boolean standalone;
         try {
             standalone = Class.forName(STARTER_CLASSNAME) != null;
         }
@@ -595,7 +595,7 @@ public class XMPPServer {
      * We do the verification by checking for the Wildfire config file in
      * the config dir of jiveHome.
      *
-     * @param homeGuess      a guess at the path to the home directory.
+     * @param homeGuess a guess at the path to the home directory.
      * @param jiveConfigName the name of the config file to check.
      * @return a file pointing to the home directory or null if the
      *         home directory guess was wrong.
@@ -603,22 +603,18 @@ public class XMPPServer {
      *                                       directory provided
      */
     private File verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
-        File realHome = null;
-        File guess = new File(homeGuess);
-        File configFileGuess = new File(guess, jiveConfigName);
-        if (configFileGuess.exists()) {
-            realHome = guess;
-        }
-        File wildfireHome = new File(guess, jiveConfigName);
-        if (!wildfireHome.exists()) {
+        File wildfireHome = new File(homeGuess);
+        File configFile = new File(wildfireHome, jiveConfigName);
+        if (!configFile.exists()) {
             throw new FileNotFoundException();
         }
-
-        try {
-            return new File(realHome.getCanonicalPath());
-        }
-        catch (Exception ex) {
-            throw new FileNotFoundException();
+        else {
+            try {
+                return new File(wildfireHome.getCanonicalPath());
+            }
+            catch (Exception ex) {
+                throw new FileNotFoundException();
+            }
         }
     }
 

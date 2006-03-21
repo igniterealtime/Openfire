@@ -301,6 +301,17 @@ public class SASLAuthentication {
 
         if (hostname != null  && hostname.length() > 0) {
             hostname = StringUtils.decodeBase64(hostname);
+            // Check if cerificate validation is disabled for s2s
+            if (session instanceof IncomingServerSession) {
+                // Flag that indicates if certificates of the remote server should be validated.
+                // Disabling certificate validation is not recommended for production environments.
+                boolean verify =
+                        JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
+                if (!verify) {
+                    authenticationSuccessful(hostname);
+                    return true;
+                }
+            }
             // Check that hostname matches the one provided in a certificate
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
                 if (TLSStreamHandler.getPeerIdentities((X509Certificate) certificate)

@@ -223,6 +223,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return presences.get(subscriber);
     }
 
+    public PubSubEngine getPubSubEngine() {
+        return engine;
+    }
+
     public String getServiceName() {
         return serviceName;
     }
@@ -371,8 +375,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     JiveGlobals.getBooleanProperty("xmpp.pubsub.default.notify.retract", true));
             collectionDefaultConfiguration.setPresenceBasedDelivery(JiveGlobals.getBooleanProperty(
                     "xmpp.pubsub.default.presenceBasedDelivery", false));
-            collectionDefaultConfiguration.setSendItemSubscribe(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.sendItemSubscribe", false));
             collectionDefaultConfiguration.setSubscriptionEnabled(JiveGlobals.getBooleanProperty(
                     "xmpp.pubsub.default.subscriptionEnabled", true));
             leafDefaultConfiguration.setReplyPolicy(null);
@@ -397,8 +399,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             rootCollectionNode.addOwner(creatorJID);
             // Save new root node
             rootCollectionNode.saveToDB();
-            // Add the new root node to the list of available nodes
-            addNode(rootCollectionNode);
         }
         else {
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
@@ -419,8 +419,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         super.stop();
         // Remove the route to this service
         routingTable.removeRoute(getAddress());
-        // TODO this
-        //savePublishedItems();
+        // Stop the pubsub engine. This will gives us the chance to
+        // save queued items to the database.
+        engine.shutdown();
     }
 
     public Iterator<DiscoServerItem> getItems() {

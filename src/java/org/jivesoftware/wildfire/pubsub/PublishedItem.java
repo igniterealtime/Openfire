@@ -31,7 +31,8 @@ import java.util.Date;
 public class PublishedItem {
 
     /**
-     * JID of the entity that published the item to the node.
+     * JID of the entity that published the item to the node. This is the full JID
+     * of the publisher.
      */
     private JID publisher;
     /**
@@ -111,6 +112,17 @@ public class PublishedItem {
     }
 
     /**
+     * Returns a textual representation of the payload or <tt>null</tt> if no payload
+     * was specified with the item.
+     *
+     * @return a textual representation of the payload or null if no payload was specified
+     *         with the item.
+     */
+    public String getPayloadXML() {
+        return payloadXML;
+    }
+
+    /**
      * Sets the payload included when publishing the item. A published item may or may not
      * have a payload. Transient nodes that are configured to not broadcast payloads may allow
      * published items to have no payload.
@@ -141,5 +153,20 @@ public class PublishedItem {
             return true;
         }
         return payloadXML.contains(keyword);
+    }
+
+    /**
+     * Returns true if the user that is trying to delete an item is allowed to delete it.
+     * Only the publisher or node admins (i.e. owners and sysadmins) are allowed to delete items.
+     *
+     * @param user the full JID of the user trying to delete the item.
+     * @return true if the user that is trying to delete an item is allowed to delete it.
+     */
+    public boolean canDelete(JID user) {
+        if (publisher.equals(user) || publisher.toBareJID().equals(user.toBareJID()) ||
+                node.isAdmin(user)) {
+            return true;
+        }
+        return false;
     }
 }

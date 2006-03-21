@@ -18,7 +18,6 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
 
 import java.util.*;
 
@@ -48,6 +47,10 @@ public class LeafNode extends Node {
      */
     private int maxPayloadSize;
     /**
+     * Flag that indicates whether to send items to new subscribers.
+     */
+    private boolean sendItemSubscribe;
+    /**
      * List of items that were published to the node and that are still active. If the node is
      * not configured to persist items then the last published item will be kept. The list is
      * sorted cronologically.
@@ -64,6 +67,7 @@ public class LeafNode extends Node {
         this.persistPublishedItems = defaultConfiguration.isPersistPublishedItems();
         this.maxPublishedItems = defaultConfiguration.getMaxPublishedItems();
         this.maxPayloadSize = defaultConfiguration.getMaxPayloadSize();
+        this.sendItemSubscribe = defaultConfiguration.isSendItemSubscribe();
     }
 
     void configure(FormField field) {
@@ -78,11 +82,15 @@ public class LeafNode extends Node {
             values = field.getValues();
             maxPayloadSize = values.size() > 0 ? Integer.parseInt(values.get(0)) : 5120;
         }
+        else if ("pubsub#send_item_subscribe".equals(field.getVariable())) {
+            values = field.getValues();
+            booleanValue = (values.size() > 0 ? values.get(0) : "1");
+            sendItemSubscribe = "1".equals(booleanValue);
+        }
     }
 
     void postConfigure(DataForm completedForm) {
         List<String> values;
-        // TODO Remove stored published items based on the new max items
         if (!persistPublishedItems) {
             // Always save the last published item when not configured to use persistent items
             maxPublishedItems = 1;
@@ -94,12 +102,30 @@ public class LeafNode extends Node {
                 maxPublishedItems = values.size() > 0 ? Integer.parseInt(values.get(0)) : 50;
             }
         }
+        // Remove stored published items based on the new max items
+        while (!publishedItems.isEmpty() && maxPublishedItems > publishedItems.size()) {
+            PublishedItem removedItem = publishedItems.remove(0);
+            itemsByID.remove(removedItem.getID());
+            // Add the removed item to the queue of items to delete from the database. The
+            // queue is going to be processed by another thread
+            service.getPubSubEngine().queueItemToRemove(removedItem);
+        }
+
     }
 
     protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
         FormField formField = form.addField();
+        formField.setVariable("pubsub#send_item_subscribe");
+        if (isEditing) {
+            formField.setType(FormField.Type.boolean_type);
+            formField.setLabel(
+                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
+        }
+        formField.addValue(sendItemSubscribe);
+
+        formField = form.addField();
         formField.setVariable("pubsub#persist_items");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
@@ -157,14 +183,17 @@ public class LeafNode extends Node {
      *         item to this node.
      */
     public boolean isItemRequired() {
-        return isPersistPublishedItems() || isDeliverPayloads();
+        return isPersistPublishedItems() || isPayloadDelivered();
     }
 
     /**
-     * Sends event notifications to subscribers for the new published event. The published
-     * event may or may not include an item. When the node is not persistent and does not
-     * require payloads then an item is not going to be created nore included in
-     * the event notification.<p>
+     * Publishes the list of items to the node. Event notifications will be sent to subscribers
+     * for the new published event. The published event may or may not include an item. When the
+     * node is not persistent and does not require payloads then an item is not going to be created
+     * nore included in the event notification.<p>
+     *
+     * When an affiliate has many subscriptions to the node, the affiliate will get a
+     * notification for each set of items that affected the same list of subscriptions.<p>
      *
      * When an item is included in the published event then a new {@link PublishedItem} is
      * going to be created and added to the list of published item. Each published item will
@@ -174,58 +203,57 @@ public class LeafNode extends Node {
      *
      * For performance reasons the newly added published items and the deleted items (if any)
      * are saved to the database using a background thread. Sending event notifications to
-     * node subscribers may also use another thread to ensure good performance.
+     * node subscribers may also use another thread to ensure good performance.<p>
      *
-     * @param originalIQ the IQ packet used by the publisher to publish the item.
-     * @param itemID the ID of the item or null if none was published.
-     * @param payload the payload of the new published item or null if none was published.
+     * @param publisher the full JID of the user that sent the new published event.
+     * @param itemElements list of dom4j elements that contain info about the published items.
      */
-    public void sendEventNotification(IQ originalIQ, String itemID, Element payload) {
-        PublishedItem newItem = null;
+    public void publishItems(JID publisher, List<Element> itemElements) {
+        List<PublishedItem> newPublishedItems = new ArrayList<PublishedItem>();
         if (isItemRequired()) {
-            // Create a published item from the published data and add it to the node (and the db)
-            synchronized (publishedItems) {
-                // Make sure that the published item has an ID and that it's unique in the node
-                if (itemID == null) {
-                    itemID = StringUtils.randomString(15);
-                }
-                while (itemsByID.get(itemID) != null) {
-                    itemID = StringUtils.randomString(15);
-                }
+            String itemID;
+            Element payload;
+            PublishedItem newItem = null;
+            for (Element item : itemElements) {
+                itemID = item.attributeValue("id");
+                List entries = item.elements();
+                payload = entries.isEmpty() ? null : (Element) entries.get(0);
+                // Create a published item from the published data and add it to the node and the db
+                synchronized (publishedItems) {
+                    // Make sure that the published item has an ID and that it's unique in the node
+                    if (itemID == null) {
+                        itemID = StringUtils.randomString(15);
+                    }
+                    while (itemsByID.get(itemID) != null) {
+                        itemID = StringUtils.randomString(15);
+                    }
 
-                // Create a new published item
-                newItem = new PublishedItem(this, originalIQ.getFrom(), itemID, new Date());
-                newItem.setPayload(payload);
+                    // Create a new published item
+                    newItem = new PublishedItem(this, publisher, itemID, new Date());
+                    newItem.setPayload(payload);
+                    // Add the new item to the list of published items
+                    newPublishedItems.add(newItem);
 
-                // Add the published item to the list of items to persist (using another thread)
-                while (!publishedItems.isEmpty() && maxPublishedItems >= publishedItems.size()) {
-                    PublishedItem removedItem = publishedItems.remove(0);
-                    itemsByID.remove(removedItem.getID());
-                    // TODO Add removed item to the queue of items to delete from the database
+                    // Add the published item to the list of items to persist (using another thread)
+                    // but check that we don't exceed the limit. Remove oldest items if required.
+                    while (!publishedItems.isEmpty() && maxPublishedItems >= publishedItems.size()) {
+                        PublishedItem removedItem = publishedItems.remove(0);
+                        itemsByID.remove(removedItem.getID());
+                        // Add the removed item to the queue of items to delete from the database. The
+                        // queue is going to be processed by another thread
+                        service.getPubSubEngine().queueItemToRemove(removedItem);
+                    }
+                    addPublishedItem(newItem);
+                    // Add the new published item to the queue of items to add to the database. The
+                    // queue is going to be processed by another thread
+                    service.getPubSubEngine().queueItemToAdd(newItem);
                 }
-                addPublishedItem(newItem);
-                // TODO Add new published item to the queue of items to add to the database
             }
         }
-
-        // Return success operation
-        service.send(IQ.createResultIQ(originalIQ));
 
         // Build event notification packet to broadcast to subscribers
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-        Element items = event.addElement("items");
-        items.addAttribute("node", nodeID);
-        if (newItem != null) {
-            // Add item information to the event notification if an item was published
-            Element item = items.addElement("item");
-            if (isItemRequired()) {
-                item.addAttribute("id", newItem.getID());
-            }
-            if (deliverPayloads) {
-                item.add(newItem.getPayload().createCopy());
-            }
-        }
         // Broadcast event notification to subscribers and parent node subscribers
         Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
@@ -236,7 +264,54 @@ public class LeafNode extends Node {
         }
         // TODO Use another thread for this (if # of subscribers is > X)????
         for (NodeAffiliate affiliate : affiliatesToNotify) {
-            affiliate.sendEventNotification(message, this, newItem);
+            affiliate.sendPublishedNotifications(message, event, this, newPublishedItems);
+        }
+    }
+
+    /**
+     * Deletes the list of published items from the node. Event notifications may be sent to
+     * subscribers for the deleted items. When an affiliate has many subscriptions to the node,
+     * the affiliate will get a notification for each set of items that affected the same list
+     * of subscriptions.<p>
+     *
+     * For performance reasons the deleted published items are saved to the database
+     * using a background thread. Sending event notifications to node subscribers may
+     * also use another thread to ensure good performance.<p>
+     *
+     * @param toDelete list of items that were deleted from the node.
+     */
+    public void deleteItems(List<PublishedItem> toDelete) {
+        synchronized (publishedItems) {
+            for (PublishedItem item : toDelete) {
+                // Remove items to delete from memory
+                publishedItems.remove(item);
+                // Update fast look up cache of published items
+                itemsByID.remove(item.getID());
+            }
+        }
+        // Remove deleted items from the database
+        for (PublishedItem item : toDelete) {
+            service.getPubSubEngine().queueItemToRemove(item);
+        }
+        if (isNotifiedOfRetract()) {
+            // Broadcast notification deletion to subscribers
+            // Build packet to broadcast to subscribers
+            Message message = new Message();
+            Element event =
+                    message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+            // Send notification that items have been deleted to subscribers and parent node
+            // subscribers
+            Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
+            // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
+            for (CollectionNode parentNode : getParents()) {
+                for (NodeSubscription subscription : parentNode.getSubscriptions()) {
+                    affiliatesToNotify.add(subscription.getAffiliate());
+                }
+            }
+            // TODO Use another thread for this (if # of subscribers is > X)????
+            for (NodeAffiliate affiliate : affiliatesToNotify) {
+                affiliate.sendDeletionNotifications(message, event, this, toDelete);
+            }
         }
     }
 
@@ -279,6 +354,15 @@ public class LeafNode extends Node {
         }
     }
 
+    /**
+     * Returns true if the last published item is going to be sent to new subscribers.
+     *
+     * @return true if the last published item is going to be sent to new subscribers.
+     */
+    public boolean isSendItemSubscribe() {
+        return sendItemSubscribe;
+    }
+
     void setMaxPayloadSize(int maxPayloadSize) {
         this.maxPayloadSize = maxPayloadSize;
     }
@@ -289,6 +373,10 @@ public class LeafNode extends Node {
 
     void setMaxPublishedItems(int maxPublishedItems) {
         this.maxPublishedItems = maxPublishedItems;
+    }
+
+    void setSendItemSubscribe(boolean sendItemSubscribe) {
+        this.sendItemSubscribe = sendItemSubscribe;
     }
 
     /**
@@ -313,7 +401,7 @@ public class LeafNode extends Node {
         if (toDelete != null) {
             // Delete purged items from the database
             for (PublishedItem item : toDelete) {
-                PubSubPersistenceManager.removePublishedItem(service, this, item);
+                service.getPubSubEngine().queueItemToRemove(item);
             }
             // Broadcast purge notification to subscribers
             // Build packet to broadcast to subscribers
@@ -325,5 +413,4 @@ public class LeafNode extends Node {
             broadcastSubscribers(message, false);
         }
     }
-
 }

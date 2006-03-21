@@ -70,7 +70,7 @@ public class DefaultNodeConfiguration {
     /**
      * Flag that indicates whether to send items to new subscribers.
      */
-    private boolean sendItemSubscribe;
+    private boolean sendItemSubscribe = false;
     /**
      * Publisher model that specifies who is allowed to publish items to the node.
      */

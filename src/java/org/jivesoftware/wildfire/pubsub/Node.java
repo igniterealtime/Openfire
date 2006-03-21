@@ -72,10 +72,6 @@ public abstract class Node {
      */
     protected boolean presenceBasedDelivery;
     /**
-     * Flag that indicates whether to send items to new subscribers.
-     */
-    protected boolean sendItemSubscribe;
-    /**
      * Publisher model that specifies who is allowed to publish items to the node.
      */
     protected PublisherModel publisherModel = PublisherModel.open;
@@ -163,6 +159,15 @@ public abstract class Node {
      */
     protected Map<String, NodeSubscription> subscriptionsByID =
             new ConcurrentHashMap<String, NodeSubscription>();
+    /**
+     * Map that contains the current subscriptions to the node. This map should be used only
+     * when node is not configured to allow multiple subscriptions. When multiple subscriptions
+     * is not allowed the subscriptions can be searched by the subscriber JID. Otherwise searches
+     * should be done using the subscription ID.
+     * Key: Subscriber full JID, Value: the subscription.
+     */
+    protected Map<String, NodeSubscription> subscriptionsByJID =
+            new ConcurrentHashMap<String, NodeSubscription>();
 
     Node(PubSubService service, CollectionNode parent, String nodeID, JID creator) {
         this.service = service;
@@ -177,7 +182,6 @@ public abstract class Node {
                 service.getDefaultNodeConfiguration(!isCollectionNode());
         this.subscriptionEnabled = defaultConfiguration.isSubscriptionEnabled();
         this.deliverPayloads = defaultConfiguration.isDeliverPayloads();
-        this.sendItemSubscribe = defaultConfiguration.isSendItemSubscribe();
         this.notifyConfigChanges = defaultConfiguration.isNotifyConfigChanges();
         this.notifyDelete = defaultConfiguration.isNotifyDelete();
         this.notifyRetract = defaultConfiguration.isNotifyRetract();
@@ -341,14 +345,14 @@ public abstract class Node {
         return subscription;
     }
 
+    /**
+     * Removes all subscriptions owned by the specified entity.
+     *
+     * @param owner the owner of the subscriptions to be cancelled.
+     */
     private void removeSubscriptions(JID owner) {
         for (NodeSubscription subscription : getSubscriptions(owner)) {
-            // Remove the existing subscription from the list in memory
-            subscriptionsByID.remove(subscription.getID());
-            if (savedToDB) {
-                // Remove the subscription from the database
-                PubSubPersistenceManager.removeSubscription(service, this, subscription);
-            }
+            cancelSubscription(subscription);
         }
     }
 
@@ -359,8 +363,9 @@ public abstract class Node {
      * notifications in different resources (or even JIDs).
      *
      * @param owner the owner of the subscriptions.
+     * @return the list of subscriptions owned by the specified user.
      */
-    Collection<NodeSubscription> getSubscriptions(JID owner) {
+    public Collection<NodeSubscription> getSubscriptions(JID owner) {
         Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
         for (NodeSubscription subscription : subscriptionsByID.values()) {
             if (owner.equals(subscription.getOwner())) {
@@ -396,6 +401,14 @@ public abstract class Node {
         return null;
     }
 
+    /**
+     * Returns a collection with the JID of the node owners. Entities that are node owners have
+     * an affiliation of {@link NodeAffiliate.Affiliation#owner}. Owners are allowed to purge
+     * and delete the node. Moreover, owners may also get The collection can be modified
+     * since it represents a snapshot.
+     *
+     * @return a collection with the JID of the node owners.
+     */
     public Collection<JID> getOwners() {
         Collection<JID> jids = new ArrayList<JID>();
         for (NodeAffiliate affiliate : affiliates) {
@@ -406,6 +419,15 @@ public abstract class Node {
         return jids;
     }
 
+    /**
+     * Returns a collection with the JID of the enitities with an affiliation of
+     * {@link NodeAffiliate.Affiliation#publisher}. When using the publisher model
+     * {@link org.jivesoftware.wildfire.pubsub.models.OpenPublisher} anyone may publish
+     * to the node so this collection may be empty or may not contain the complete list
+     * of publishers. The returned collection can be modified since it represents a snapshot.
+     *
+     * @return a collection with the JID of the enitities with an affiliation of publishers.
+     */
     public Collection<JID> getPublishers() {
         Collection<JID> jids = new ArrayList<JID>();
         for (NodeAffiliate affiliate : affiliates) {
@@ -416,6 +438,15 @@ public abstract class Node {
         return jids;
     }
 
+    /**
+     * Changes the node configuration based on the completed data form. Only owners or
+     * sysadmins are allowed to change the node configuration. The completed data form
+     * cannot remove all node owners. An exception is going to be thrown if the new form
+     * tries to leave the node without owners.
+     *
+     * @param completedForm the completed data form.
+     * @throws NotAcceptableException if completed data form tries to leave the node without owners.
+     */
     public void configure(DataForm completedForm) throws NotAcceptableException {
         if (DataForm.Type.cancel.equals(completedForm.getType())) {
             // Existing node configuration is applied (i.e. nothing is changed)
@@ -444,8 +475,7 @@ public abstract class Node {
 
             for (FormField field : completedForm.getFields()) {
                 if ("FORM_TYPE".equals(field.getVariable())) {
-                    // Ignore this variable
-                    continue;
+                    // Do nothing
                 }
                 else if ("pubsub#deliver_payloads".equals(field.getVariable())) {
                     values = field.getValues();
@@ -471,11 +501,6 @@ public abstract class Node {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
                     presenceBasedDelivery = "1".equals(booleanValue);
-                }
-                else if ("pubsub#send_item_subscribe".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    sendItemSubscribe = "1".equals(booleanValue);
                 }
                 else if ("pubsub#subscribe".equals(field.getVariable())) {
                     values = field.getValues();
@@ -577,13 +602,13 @@ public abstract class Node {
             if (ownersSent) {
                 // Calculate owners to remove and remove them from the DB
                 Collection<JID> oldOwners = getOwners();
-                oldOwners.remove(owners);
+                oldOwners.removeAll(owners);
                 for (JID jid : oldOwners) {
                     removeOwner(jid);
                 }
 
                 // Calculate new owners and add them to the DB
-                owners.remove(getOwners());
+                owners.removeAll(getOwners());
                 for (JID jid : owners) {
                     addOwner(jid);
                 }
@@ -602,13 +627,13 @@ public abstract class Node {
                 }
                 // Calculate publishers to remove and remove them from the DB
                 Collection<JID> oldPublishers = getPublishers();
-                oldPublishers.remove(publishers);
+                oldPublishers.removeAll(publishers);
                 for (JID jid : oldPublishers) {
                     removePublisher(jid);
                 }
 
                 // Calculate new publishers and add them to the DB
-                publishers.remove(getPublishers());
+                publishers.removeAll(getPublishers());
                 for (JID jid : publishers) {
                     addPublisher(jid);
                 }
@@ -646,8 +671,13 @@ public abstract class Node {
      */
     abstract void postConfigure(DataForm completedForm);
 
+    /**
+     * The node configuration has changed. If this is the first time the node is configured
+     * after it was created (i.e. is not yet persistent) then do nothing. Otherwise, send
+     * a notification to the node subscribers informing that the configuration has changed.
+     */
     private void nodeConfigurationChanged() {
-        if (!notifyConfigChanges || !savedToDB) {
+        if (!isNotifiedOfConfigChanges() || !savedToDB) {
             // Do nothing if node was just created and configure or if notification
             // of config changes is disabled
             return;
@@ -683,6 +713,15 @@ public abstract class Node {
         return form;
     }
 
+    /**
+     * Adds the required form fields to the specified form. When editing is true the field type
+     * and a label is included in each fields. The form being completed will contain the current
+     * node configuration. This information can be used for editing the node or for notifing that
+     * the node configuration has changed.
+     *
+     * @param form the form containing the node configuration.
+     * @param isEditing true when the form will be used to edit the node configuration.
+     */
     protected void addFormFields(DataForm form, boolean isEditing) {
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -729,15 +768,6 @@ public abstract class Node {
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.deliver_payloads"));
         }
         formField.addValue(deliverPayloads);
-
-        formField = form.addField();
-        formField.setVariable("pubsub#send_item_subscribe");
-        if (isEditing) {
-            formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(
-                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
-        }
-        formField.addValue(sendItemSubscribe);
 
         formField = form.addField();
         formField.setVariable("pubsub#notify_config");
@@ -914,6 +944,11 @@ public abstract class Node {
         return form;
     }
 
+    /**
+     * Returns true if this node is the root node of the pubsub service.
+     *
+     * @return true if this node is the root node of the pubsub service.
+     */
     public boolean isRootCollectionNode() {
         return service.getRootCollectionNode() == this;
     }
@@ -930,6 +965,12 @@ public abstract class Node {
         return true;
     }
 
+    /**
+     * Returns true if this node is a node container. Node containers may only contain nodes
+     * but are not allowed to get items published.
+     *
+     * @return true if this node is a node container.
+     */
     public boolean isCollectionNode() {
         return false;
     }
@@ -978,15 +1019,34 @@ public abstract class Node {
         return false;
     }
 
+    /**
+     * Returns the unique identifier for a node within the context of a pubsub service.
+     *
+     * @return the unique identifier for a node within the context of a pubsub service.
+     */
     public String getNodeID() {
         return nodeID;
     }
 
+    /**
+     * Returns the name of the node. The node may not have a configured name. The node's
+     * name can be changed by submiting a completed data form.
+     *
+     * @return the name of the node.
+     */
     public String getName() {
         return name;
     }
 
-    public boolean isDeliverPayloads() {
+    /**
+     * Returns true if event notifications will include payloads. Payloads are included when
+     * publishing new items. However, new items may not always include a payload depending
+     * on the node configuration. Nodes can be configured to not deliver payloads for performance
+     * reasons.
+     *
+     * @return true if event notifications will include payloads.
+     */
+    public boolean isPayloadDelivered() {
         return deliverPayloads;
     }
 
@@ -994,42 +1054,97 @@ public abstract class Node {
         return replyPolicy;
     }
 
-    public boolean isNotifyConfigChanges() {
+    /**
+     * Returns true if subscribers will be notified when the node configuration changes.
+     *
+     * @return true if subscribers will be notified when the node configuration changes.
+     */
+    public boolean isNotifiedOfConfigChanges() {
         return notifyConfigChanges;
     }
 
-    public boolean isNotifyDelete() {
+    /**
+     * Returns true if subscribers will be notified when the node is deleted.
+     *
+     * @return true if subscribers will be notified when the node is deleted.
+     */
+    public boolean isNotifiedOfDelete() {
         return notifyDelete;
     }
 
-    public boolean isNotifyRetract() {
+    /**
+     * Returns true if subscribers will be notified when items are removed from the node.
+     *
+     * @return true if subscribers will be notified when items are removed from the node.
+     */
+    public boolean isNotifiedOfRetract() {
         return notifyRetract;
     }
 
+    /**
+     * Returns true if notifications are going to be delivered to available users only.
+     *
+     * @return true if notifications are going to be delivered to available users only.
+     */
     public boolean isPresenceBasedDelivery() {
+        // TODO Use this variable somewhere :)
         return presenceBasedDelivery;
     }
 
+    /**
+     * Returns true if the last published item is going to be sent to new subscribers.
+     *
+     * @return true if the last published item is going to be sent to new subscribers.
+     */
     public boolean isSendItemSubscribe() {
-        return sendItemSubscribe;
+        return false;
     }
 
+    /**
+     * Returns the publisher model that specifies who is allowed to publish items to the node.
+     *
+     * @return the publisher model that specifies who is allowed to publish items to the node.
+     */
     public PublisherModel getPublisherModel() {
         return publisherModel;
     }
 
+    /**
+     * Returns true if users are allowed to subscribe and unsubscribe.
+     *
+     * @return true if users are allowed to subscribe and unsubscribe.
+     */
     public boolean isSubscriptionEnabled() {
         return subscriptionEnabled;
     }
 
+    /**
+     * Returns true if new subscriptions should be configured to be active. Inactive
+     * subscriptions will not get event notifications. However, subscribers will be
+     * notified when a node is deleted no matter the subscription status.
+     *
+     * @return true if new subscriptions should be configured to be active.
+     */
     public boolean isSubscriptionConfigurationRequired() {
         return subscriptionConfigurationRequired;
     }
 
+    /**
+     * Returns the access model that specifies who is allowed to subscribe and retrieve items.
+     *
+     * @return the access model that specifies who is allowed to subscribe and retrieve items.
+     */
     public AccessModel getAccessModel() {
         return accessModel;
     }
 
+    /**
+     * Returns the roster group(s) allowed to subscribe and retrieve items. This information
+     * is going to be used only when using the
+     * {@link org.jivesoftware.wildfire.pubsub.models.RosterAccess} access model.
+     *
+     * @return the roster group(s) allowed to subscribe and retrieve items.
+     */
     public Collection<String> getRosterGroupsAllowed() {
         return rosterGroupsAllowed;
     }
@@ -1042,42 +1157,102 @@ public abstract class Node {
         return replyTo;
     }
 
+    /**
+     * Returns the type of payload data to be provided at the node. Usually specified by the
+     * namespace of the payload (if any).
+     *
+     * @return the type of payload data to be provided at the node.
+     */
     public String getPayloadType() {
         return payloadType;
     }
 
+    /**
+     * Returns the URL of an XSL transformation which can be applied to payloads in order
+     * to generate an appropriate message body element.
+     *
+     * @return the URL of an XSL transformation which can be applied to payloads.
+     */
     public String getBodyXSLT() {
         return bodyXSLT;
     }
 
+    /**
+     * Returns the URL of an XSL transformation which can be applied to the payload format
+     * in order to generate a valid Data Forms result that the client could display
+     * using a generic Data Forms rendering engine.
+     *
+     * @return the URL of an XSL transformation which can be applied to the payload format.
+     */
     public String getDataformXSLT() {
         return dataformXSLT;
     }
 
+    /**
+     * Returns the datetime when the node was created.
+     *
+     * @return the datetime when the node was created.
+     */
     public Date getCreationDate() {
         return creationDate;
     }
 
+    /**
+     * Returns the last date when the ndoe's configuration was modified.
+     *
+     * @return the last date when the ndoe's configuration was modified.
+     */
     public Date getModificationDate() {
         return modificationDate;
     }
 
+    /**
+     * Returns the JID of the node creator. This is usually the sender's full JID of the
+     * IQ packet used for creating the node.
+     *
+     * @return the JID of the node creator.
+     */
     public JID getCreator() {
         return creator;
     }
 
+    /**
+     * Returns the description of the node. This information is really optional and can be
+     * modified by submiting a completed data form with the new node configuration.
+     *
+     * @return the description of the node.
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * Returns the default language of the node. This information is really optional and can be
+     * modified by submiting a completed data form with the new node configuration.
+     *
+     * @return the default language of the node.
+     */
     public String getLanguage() {
         return language;
     }
 
+    /**
+     * Returns the JIDs of those to contact with questions. This information is not used by
+     * the pubsub service. It is meant to be "discovered" by users and redirect any question
+     * to the returned people to contact.
+     *
+     * @return the JIDs of those to contact with questions.
+     */
     public Collection<JID> getContacts() {
         return contacts;
     }
 
+    /**
+     * Returns the list of nodes contained by this node. Only {@link CollectionNode} may
+     * contain other nodes.
+     *
+     * @return the list of nodes contained by this node.
+     */
     public Collection<Node> getNodes() {
         return Collections.emptyList();
     }
@@ -1107,7 +1282,15 @@ public abstract class Node {
         return parents;
     }
 
-    void setDeliverPayloads(boolean deliverPayloads) {
+    /**
+     * Sets whether event notifications will include payloads. Payloads are included when
+     * publishing new items. However, new items may not always include a payload depending
+     * on the node configuration. Nodes can be configured to not deliver payloads for performance
+     * reasons.
+     *
+     * @param deliverPayloads true if event notifications will include payloads.
+     */
+    void setPayloadDelivered(boolean deliverPayloads) {
         this.deliverPayloads = deliverPayloads;
     }
 
@@ -1115,15 +1298,32 @@ public abstract class Node {
         this.replyPolicy = replyPolicy;
     }
 
-    void setNotifyConfigChanges(boolean notifyConfigChanges) {
+    /**
+     * Sets whether subscribers will be notified when the node configuration changes.
+     *
+     * @param notifyConfigChanges true if subscribers will be notified when the node
+     *        configuration changes.
+     */
+    void setNotifiedOfConfigChanges(boolean notifyConfigChanges) {
         this.notifyConfigChanges = notifyConfigChanges;
     }
 
-    void setNotifyDelete(boolean notifyDelete) {
+    /**
+     * Sets whether subscribers will be notified when the node is deleted.
+     *
+     * @param notifyDelete true if subscribers will be notified when the node is deleted.
+     */
+    void setNotifiedOfDelete(boolean notifyDelete) {
         this.notifyDelete = notifyDelete;
     }
 
-    void setNotifyRetract(boolean notifyRetract) {
+    /**
+     * Sets whether subscribers will be notified when items are removed from the node.
+     *
+     * @param notifyRetract true if subscribers will be notified when items are removed from
+     *        the node.
+     */
+    void setNotifiedOfRetract(boolean notifyRetract) {
         this.notifyRetract = notifyRetract;
     }
 
@@ -1131,24 +1331,56 @@ public abstract class Node {
         this.presenceBasedDelivery = presenceBasedDelivery;
     }
 
-    void setSendItemSubscribe(boolean sendItemSubscribe) {
-        this.sendItemSubscribe = sendItemSubscribe;
-    }
-
+    /**
+     * Sets the publisher model that specifies who is allowed to publish items to the node.
+     *
+     * @param publisherModel the publisher model that specifies who is allowed to publish items
+     *        to the node.
+     */
     void setPublisherModel(PublisherModel publisherModel) {
         this.publisherModel = publisherModel;
     }
 
+    /**
+     * Sets whether users are allowed to subscribe and unsubscribe.
+     *
+     * @param subscriptionEnabled true if users are allowed to subscribe and unsubscribe.
+     */
     void setSubscriptionEnabled(boolean subscriptionEnabled) {
         this.subscriptionEnabled = subscriptionEnabled;
     }
 
+    /**
+     * Sets whether new subscriptions should be configured to be active. Inactive
+     * subscriptions will not get event notifications. However, subscribers will be
+     * notified when a node is deleted no matter the subscription status.
+     *
+     * @param subscriptionConfigurationRequired true if new subscriptions should be
+     *        configured to be active.
+     */
     void setSubscriptionConfigurationRequired(boolean subscriptionConfigurationRequired) {
         this.subscriptionConfigurationRequired = subscriptionConfigurationRequired;
     }
 
+    /**
+     * Sets the access model that specifies who is allowed to subscribe and retrieve items.
+     *
+     * @param accessModel the access model that specifies who is allowed to subscribe and
+     *        retrieve items.
+     */
     void setAccessModel(AccessModel accessModel) {
         this.accessModel = accessModel;
+    }
+
+    /**
+     * Sets the roster group(s) allowed to subscribe and retrieve items. This information
+     * is going to be used only when using the
+     * {@link org.jivesoftware.wildfire.pubsub.models.RosterAccess} access model.
+     *
+     * @param rosterGroupsAllowed the roster group(s) allowed to subscribe and retrieve items.
+     */
+    void setRosterGroupsAllowed(Collection<String> rosterGroupsAllowed) {
+        this.rosterGroupsAllowed = rosterGroupsAllowed;
     }
 
     void setReplyRooms(Collection<JID> replyRooms) {
@@ -1159,14 +1391,34 @@ public abstract class Node {
         this.replyTo = replyTo;
     }
 
+    /**
+     * Sets the type of payload data to be provided at the node. Usually specified by the
+     * namespace of the payload (if any).
+     *
+     * @param payloadType the type of payload data to be provided at the node.
+     */
     void setPayloadType(String payloadType) {
         this.payloadType = payloadType;
     }
 
+    /**
+     * Sets the URL of an XSL transformation which can be applied to payloads in order
+     * to generate an appropriate message body element.
+     *
+     * @param bodyXSLT the URL of an XSL transformation which can be applied to payloads.
+     */
     void setBodyXSLT(String bodyXSLT) {
         this.bodyXSLT = bodyXSLT;
     }
 
+    /**
+     * Sets the URL of an XSL transformation which can be applied to the payload format
+     * in order to generate a valid Data Forms result that the client could display
+     * using a generic Data Forms rendering engine.
+     *
+     * @param dataformXSLT the URL of an XSL transformation which can be applied to the
+     *        payload format.
+     */
     void setDataformXSLT(String dataformXSLT) {
         this.dataformXSLT = dataformXSLT;
     }
@@ -1179,34 +1431,68 @@ public abstract class Node {
         }
     }
 
+    /**
+     * Sets the datetime when the node was created.
+     *
+     * @param creationDate the datetime when the node was created.
+     */
     void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
 
+    /**
+     * Sets the last date when the ndoe's configuration was modified.
+     *
+     * @param modificationDate the last date when the ndoe's configuration was modified.
+     */
     void setModificationDate(Date modificationDate) {
         this.modificationDate = modificationDate;
     }
 
+    /**
+     * Sets the description of the node. This information is really optional and can be
+     * modified by submiting a completed data form with the new node configuration.
+     *
+     * @param description the description of the node.
+     */
     void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * Sets the default language of the node. This information is really optional and can be
+     * modified by submiting a completed data form with the new node configuration.
+     *
+     * @param language the default language of the node.
+     */
     void setLanguage(String language) {
         this.language = language;
     }
 
+    /**
+     * Sets the name of the node. The node may not have a configured name. The node's
+     * name can be changed by submiting a completed data form.
+     *
+     * @param name the name of the node.
+     */
     void setName(String name) {
         this.name = name;
     }
 
-    void setRosterGroupsAllowed(Collection<String> rosterGroupsAllowed) {
-        this.rosterGroupsAllowed = rosterGroupsAllowed;
-    }
-
+    /**
+     * Sets the JIDs of those to contact with questions. This information is not used by
+     * the pubsub service. It is meant to be "discovered" by users and redirect any question
+     * to the returned people to contact.
+     *
+     * @param contacts the JIDs of those to contact with questions.
+     */
     void setContacts(Collection<JID> contacts) {
         this.contacts = contacts;
     }
 
+    /**
+     * Saves the node configuration to the backend store.
+     */
     public void saveToDB() {
         // Make the room persistent
         if (!savedToDB) {
@@ -1221,6 +1507,8 @@ public abstract class Node {
             for (NodeSubscription subscription : subscriptionsByID.values()) {
                 PubSubPersistenceManager.saveSubscription(service, this, subscription, true);
             }
+            // Add the new node to the list of available nodes
+            service.addNode(this);
         }
         else {
             PubSubPersistenceManager.updateNode(service, this);
@@ -1233,6 +1521,7 @@ public abstract class Node {
 
     void addSubscription(NodeSubscription subscription) {
         subscriptionsByID.put(subscription.getID(), subscription);
+        subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
 
     /**
@@ -1242,20 +1531,19 @@ public abstract class Node {
      * If the node allows multiple subscriptions and this message is sent then an
      * IllegalStateException exception is going to be thrown.
      *
-     * @param subscriptionJID the JID of the entity that receives event notifications.
+     * @param subscriberJID the JID of the entity that receives event notifications.
      * @return the subscription whose subscription JID matches the specified JID or <tt>null</tt>
      *         if none was found.
      * @throws IllegalStateException If this message was used when the node supports multiple
      *         subscriptions.
      */
-    NodeSubscription getSubscription(JID subscriptionJID) {
+    NodeSubscription getSubscription(JID subscriberJID) {
         // Check that node does not support multiple subscriptions
         if (isMultipleSubscriptionsEnabled()) {
-            throw new IllegalStateException(
-                    "Multiple subscriptions is enabled so subscriptions should be retrieved using subID.");
+            throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +
+                    "should be retrieved using subID.");
         }
-        // TODO implement this
-        return null;
+        return subscriptionsByJID.get(subscriberJID.toString());
     }
 
     /**
@@ -1290,10 +1578,11 @@ public abstract class Node {
             }
             // TODO Update child nodes to use the root node or the parent node of this node as the new parent node
             for (Node node : getNodes()) {
-                //node.set
+                //node.changeParent(parent);
             }
+            // TODO Leaf nodes should remove queued items from the pubsub engine (subclass should do this work)
             // Broadcast delete notification to subscribers (if enabled)
-            if (notifyDelete) {
+            if (isNotifiedOfDelete()) {
                 // Build packet to broadcast to subscribers
                 Message message = new Message();
                 Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
@@ -1302,9 +1591,12 @@ public abstract class Node {
                 // Send notification that the node was deleted
                 broadcastSubscribers(message, true);
             }
+            // Remove the node from memory
+            service.removeNode(getNodeID());
             // Clear collections in memory (clear them after broadcast was sent)
             affiliates.clear();
             subscriptionsByID.clear();
+            subscriptionsByJID.clear();
             return true;
         }
         return false;
@@ -1316,7 +1608,7 @@ public abstract class Node {
      *
      * @param iqRequest IQ request sent by an owner of the node.
      */
-    public void sendAffiliatedEntities(IQ iqRequest) {
+    void sendAffiliatedEntities(IQ iqRequest) {
         IQ reply = IQ.createResultIQ(iqRequest);
         Element childElement = iqRequest.getChildElement().createCopy();
         reply.setChildElement(childElement);
@@ -1341,6 +1633,15 @@ public abstract class Node {
         service.broadcast(this, message, jids);
     }
 
+    /**
+     * Sends an event notification to the specified subscriber. The event notification may
+     * include information about the affected subscriptions.
+     *
+     * @param subscriberJID the subscriber JID that will get the notification.
+     * @param notification the message to send to the subscriber.
+     * @param subIDs the list of affected subscription IDs or null when node does not
+     *        allow multiple subscriptions.
+     */
     protected void sendEventNotification(JID subscriberJID, Message notification,
             Collection<String> subIDs) {
         Element headers = null;
@@ -1367,8 +1668,14 @@ public abstract class Node {
      * Creates a new subscription and possibly a new affiliate if the owner of the subscription
      * does not have any existing affiliation with the node. The new subscription might require
      * to be authorized by a node owner to be active. If new subscriptions are required to be
-     * configured before being active then the subscription state would be "unconfigured".
+     * configured before being active then the subscription state would be "unconfigured".<p>
      *
+     * The originalIQ parameter may be <tt>null</tt> when using this API internally. When no
+     * IQ packet was sent then no IQ result will be sent to the sender. The rest of the
+     * functionality is the same.
+     *
+     * @param originalIQ the IQ packet sent by the entity to subscribe to the node or
+     *        null when using this API internally.
      * @param owner the JID of the affiliate.
      * @param subscriber the JID where event notifications are going to be sent.
      * @param authorizationRequired true if the new subscriptions needs to be authorized by
@@ -1376,8 +1683,8 @@ public abstract class Node {
      * @param options the data form with the subscription configuration or null if subscriber
      *        didn't provide a configuration.
      */
-    void createSubscription(IQ originalIQ, JID owner, JID subscriber, boolean authorizationRequired,
-            DataForm options) {
+    public void createSubscription(IQ originalIQ, JID owner, JID subscriber,
+            boolean authorizationRequired, DataForm options) {
         // Create a new affiliation if required
         if (getAffiliate(owner) == null) {
             addNoneAffiliation(owner);
@@ -1395,9 +1702,11 @@ public abstract class Node {
         // Create new subscription
         NodeSubscription subscription = addSubscription(owner, subscriber, subState, options);
 
-        // Reply with subscription and affiliation status indicating if subscription
-        // must be configured
-        subscription.sendSubscriptionState(originalIQ);
+        if (originalIQ != null) {
+            // Reply with subscription and affiliation status indicating if subscription
+            // must be configured (only when subscription was made through an IQ packet)
+            subscription.sendSubscriptionState(originalIQ);
+        }
 
         // Send last published item (if node is leaf node and subscription status is ok)
         if (isSendItemSubscribe()) {
@@ -1415,9 +1724,10 @@ public abstract class Node {
      *
      * @param subscription the subscription to cancel.
      */
-    void cancelSubscription(NodeSubscription subscription) {
+    public void cancelSubscription(NodeSubscription subscription) {
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
+        subscriptionsByJID.remove(subscription.getJID().toString());
         // Check if user has affiliation of type "none" and there are no more subscriptions
         NodeAffiliate affiliate = subscription.getAffiliate();
         if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.none &&
@@ -1438,6 +1748,7 @@ public abstract class Node {
      * published items are not persistent then item ID is not used. In this case a <tt>null</tt>
      * value will always be returned.
      *
+     * @param itemID the ID of the item to retrieve.
      * @return the PublishedItem whose ID matches the specified item ID or null if none was found.
      */
     public PublishedItem getPublishedItem(String itemID) {
@@ -1460,6 +1771,7 @@ public abstract class Node {
      * the node. The returned collection cannot be modified. Collection nodes does not
      * support publishing of items so an empty list will be returned in that case.
      *
+     * @param recentItems number of recent items to retrieve.
      * @return a list of PublishedItem with the most recent N items published to
      *         the node.
      */

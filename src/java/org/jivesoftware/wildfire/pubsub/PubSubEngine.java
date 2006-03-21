@@ -14,19 +14,18 @@ package org.jivesoftware.wildfire.pubsub;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.pubsub.models.AccessModel;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Collection;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A PubSubEngine is responsible for handling packets sent to the pub-sub service.
@@ -36,6 +35,32 @@ import java.util.ArrayList;
 public class PubSubEngine {
 
     private PubSubService service;
+    /**
+     * The time to elapse between each execution of the maintenance process. Default
+     * is 2 minutes.
+     */
+    private int items_task_timeout = 2 * 60 * 1000;
+    /**
+     * The number of items to save on each run of the maintenance process.
+     */
+    private int items_batch_size = 50;
+    /**
+     * Queue that holds the items that need to be added to the database.
+     */
+    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>();
+    /**
+     * Queue that holds the items that need to be deleted from the database.
+     */
+    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>();
+    /**
+     * Task that saves or deletes published items from the database.
+     */
+    private PublishedItemTask publishedItemTask;
+
+    /**
+     * Timer to save published items to the database or remove deleted or old items.
+     */
+    private Timer timer = new Timer("PubSub maintenance");
 
     /**
      * The packet router for the server.
@@ -45,6 +70,11 @@ public class PubSubEngine {
     public PubSubEngine(PubSubService pubSubService, PacketRouter router) {
         this.service = pubSubService;
         this.router = router;
+
+        // Save or delete published items from the database every 2 minutes starting in
+        // 2 minutes (default values)
+        publishedItemTask = new PublishedItemTask();
+        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
     }
 
     /**
@@ -69,7 +99,7 @@ public class PubSubEngine {
             Element action = childElement.element("publish");
             if (action != null) {
                 // Entity publishes an item
-                publishItemToNode(iq, action);
+                publishItemsToNode(iq, action);
                 return true;
             }
             action = childElement.element("subscribe");
@@ -116,7 +146,8 @@ public class PubSubEngine {
             }
             action = childElement.element("retract");
             if (action != null) {
-                // TODO Entity deletes an item
+                // Entity deletes an item
+                deleteItems(iq, action);
                 return true;
             }
             // Unknown action requested
@@ -202,7 +233,7 @@ public class PubSubEngine {
         // See "Handling Notification-Related Errors" section
     }
 
-    private void publishItemToNode(IQ iq, Element publishElement) {
+    private void publishItemsToNode(IQ iq, Element publishElement) {
         String nodeID = publishElement.attributeValue("node");
         Node node = null;
         if (nodeID == null) {
@@ -241,18 +272,10 @@ public class PubSubEngine {
         }
 
         LeafNode leafNode = (LeafNode) node;
-        Element item = publishElement.element("item");
-        List entries = null;
-        Element payload = null;
-        String itemID = null;
-        if (item != null) {
-            entries = item.elements();
-            payload = entries.isEmpty() ? null : (Element) entries.get(0);
-            itemID = item.attributeValue("id");
-        }
+        Iterator itemElements = publishElement.elementIterator("item");
 
         // Check that an item was included if node persist items or includes payload
-        if (item == null && leafNode.isItemRequired()) {
+        if (!itemElements.hasNext() && leafNode.isItemRequired()) {
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "item-required", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
@@ -260,30 +283,115 @@ public class PubSubEngine {
         }
         // Check that no item was included if node doesn't persist items and doesn't
         // includes payload
-        if (item != null && !leafNode.isItemRequired()) {
+        if (itemElements.hasNext() && !leafNode.isItemRequired()) {
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "item-forbidden", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
-        // Check that a payload was included if node is configured to include payload
-        // in notifications
-        if (payload == null && leafNode.isDeliverPayloads()) {
+        List<Element> items = new ArrayList<Element>();
+        List entries = null;
+        Element payload = null;
+        while (itemElements.hasNext()) {
+            Element item = (Element) itemElements.next();
+            entries = item.elements();
+            payload = entries.isEmpty() ? null : (Element) entries.get(0);
+            // Check that a payload was included if node is configured to include payload
+            // in notifications
+            if (payload == null && leafNode.isPayloadDelivered()) {
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "payload-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
+            // Check that the payload (if any) contains only one child element
+            if (entries.size() > 1) {
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
+            items.add(item);
+        }
+
+        // Return success operation
+        router.route(IQ.createResultIQ(iq));
+        // Publish item and send event notifications to subscribers
+        leafNode.publishItems(from, items);
+    }
+
+    private void deleteItems(IQ iq, Element retractElement) {
+        String nodeID = retractElement.attributeValue("node");
+        Node node = null;
+        if (nodeID == null) {
+            // No node was specified. Return bad_request error
             Element pubsubError = DocumentHelper.createElement(QName.get(
-                    "payload-required", "http://jabber.org/protocol/pubsub#errors"));
-            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                    "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.item_not_found, pubsubError);
             return;
         }
-        // Check that the payload (if any) contains only one child element
-        if (entries.size() > 1) {
+        else {
+            // Look for the specified node
+            node = service.getNode(nodeID);
+            if (node == null) {
+                // Node does not exist. Return item-not-found error
+                sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+                return;
+            }
+        }
+        // Get the items to delete
+        Iterator itemElements = retractElement.elementIterator("item");
+        if (!itemElements.hasNext()) {
+            // TODO Confirm that at least one item should be present in the retract element. Waiting for stpeter confirmation.
             Element pubsubError = DocumentHelper.createElement(QName.get(
-                    "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
+                    "item-required", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
 
-        // Publish item and send event notifications to subscribers
-        leafNode.sendEventNotification(iq, itemID, payload);
+        if (node.isCollectionNode()) {
+            // TODO Is this the correct error to return???
+            // Cannot delete items from a collection node. Return an error.
+            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+            return;
+        }
+        LeafNode leafNode = (LeafNode) node;
+
+        if (!leafNode.isItemRequired()) {
+            // TODO JEP specifies to return this error if node is not persisting items but this checking makes more sense. Waiting for stpeter confirmation.
+            // Cannot delete items from a leaf node that doesn't handle itemIDs. Return an error.
+            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+            return;
+        }
+
+        List<PublishedItem> items = new ArrayList<PublishedItem>();
+        while (itemElements.hasNext()) {
+            Element itemElement = (Element) itemElements.next();
+            String itemID = itemElement.attributeValue("id");
+            // TODO Return an error if no id was specified?
+            if (itemID != null) {
+                PublishedItem item = node.getPublishedItem(itemID);
+                if (item == null) {
+                    // ItemID does not exist. Return item-not-found error
+                    sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+                    return;
+                }
+                else {
+                    if (item.canDelete(iq.getFrom())) {
+                        items.add(item);
+                    }
+                    else {
+                        // Publisher does not have sufficient privileges to delete this item
+                        sendErrorPacket(iq, PacketError.Condition.not_authorized, null);
+                        return;
+                    }
+                }
+            }
+        }
+        // Send reply with success
+        router.route(IQ.createResultIQ(iq));
+        // Delete items and send subscribers a notification
+        leafNode.deleteItems(items);
     }
 
     private void subscribeNode(IQ iq, Element childElement, Element subscribeElement) {
@@ -623,18 +731,8 @@ public class PubSubEngine {
 
         Element formElement = optionsElement.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
-            boolean wasUnconfigured = subscription.isConfigurationPending();
             // Change the subscription configuration based on the completed form
-            subscription.configure(new DataForm(formElement));
-            // Return success response
-            router.route(IQ.createResultIQ(iq));
-            // Send last published item if subscription is now configured (and authorized)
-            if (wasUnconfigured && !subscription.isConfigurationPending()) {
-                PublishedItem lastItem = node.getLastPublishedItem();
-                if (lastItem != null) {
-                    subscription.sendLastPublishedItem(lastItem);
-                }
-            }
+            subscription.configure(iq, new DataForm(formElement));
         }
         else {
             // No data form was included so return bad request error
@@ -931,8 +1029,6 @@ public class PubSubEngine {
                     else {
                         newNode.saveToDB();
                     }
-                    // Add the new node to the list of available nodes
-                    service.addNode(newNode);
                 }
                 else {
                     conflict = true;
@@ -1060,8 +1156,6 @@ public class PubSubEngine {
 
         // Delete the node
         if (node.delete()) {
-            // Remove the node from memory
-            service.removeNode(node.getNodeID());
             // Return that node was deleted successfully
             router.route(IQ.createResultIQ(iq));
         }
@@ -1209,4 +1303,122 @@ public class PubSubEngine {
         }
         return completedForm;
     }
+
+    public void shutdown() {
+        // Stop te maintenance processes
+        timer.cancel();
+        // Delete from the database items contained in the itemsToDelete queue
+        PublishedItem entry = null;
+        while (!itemsToDelete.isEmpty()) {
+            entry = itemsToDelete.poll();
+            if (entry != null) {
+                PubSubPersistenceManager.removePublishedItem(service, entry);
+            }
+        }
+        // Save to the database items contained in the itemsToAdd queue
+        while (!itemsToAdd.isEmpty()) {
+            entry = itemsToAdd.poll();
+            if (entry != null) {
+                PubSubPersistenceManager.createPublishedItem(service, entry);
+            }
+        }
+    }
+
+    /*******************************************************************************
+     * Methods related to PubSub maintenance tasks. Such as
+     * saving or deleting published items.
+     ******************************************************************************/
+
+    /**
+     * Schedules the maintenance task for repeated <i>fixed-delay execution</i>,
+     * beginning after the specified delay.  Subsequent executions take place
+     * at approximately regular intervals separated by the specified period.
+     *
+     * @param timeout the new frequency of the maintenance task.
+     */
+    void setPublishedItemTaskTimeout(int timeout) {
+        if (this.items_task_timeout == timeout) {
+            return;
+        }
+        // Cancel the existing task because the timeout has changed
+        if (publishedItemTask != null) {
+            publishedItemTask.cancel();
+        }
+        this.items_task_timeout = timeout;
+        // Create a new task and schedule it with the new timeout
+        publishedItemTask = new PublishedItemTask();
+        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
+    }
+
+    /**
+     * Adds the item to the queue of items to remove from the database. The queue is going
+     * to be processed by another thread.
+     *
+     * @param removedItem the item to remove from the database.
+     */
+    void queueItemToRemove(PublishedItem removedItem) {
+        // Remove the removed item from the queue of items to add to the database
+        if (!itemsToAdd.remove(removedItem)) {
+            // The item is already present in the database so add the removed item
+            // to the queue of items to delete from the database
+            itemsToDelete.add(removedItem);
+        }
+    }
+
+    /**
+     * Adds the item to the queue of items to add to the database. The queue is going
+     * to be processed by another thread.
+     *
+     * @param newItem the item to add to the database.
+     */
+    void queueItemToAdd(PublishedItem newItem) {
+        itemsToAdd.add(newItem);
+    }
+
+    /**
+     * Cancels any queued operation for the specified list of items. This operation is
+     * usually required when a node was deleted so any pending operation of the node items
+     * should be cancelled.
+     *
+     * @param items the list of items to remove the from queues.
+     */
+    void cancelQueuedItems(Collection<PublishedItem> items) {
+        for (PublishedItem item : items) {
+            itemsToAdd.remove(item);
+            itemsToDelete.remove(item);
+        }
+    }
+
+    private class PublishedItemTask extends TimerTask {
+        public void run() {
+            try {
+                PublishedItem entry = null;
+                boolean success = false;
+                // Delete from the database items contained in the itemsToDelete queue
+                for (int index = 0; index <= items_batch_size && !itemsToDelete.isEmpty(); index++) {
+                    entry = itemsToDelete.poll();
+                    if (entry != null) {
+                        success = PubSubPersistenceManager.removePublishedItem(service, entry);
+                        if (!success) {
+                            itemsToDelete.add(entry);
+                        }
+                    }
+                }
+                // Save to the database items contained in the itemsToAdd queue
+                for (int index = 0; index <= items_batch_size && !itemsToAdd.isEmpty(); index++) {
+                    entry = itemsToAdd.poll();
+                    if (entry != null) {
+                        success = PubSubPersistenceManager.createPublishedItem(service, entry);
+                        if (!success) {
+                            itemsToAdd.add(entry);
+                        }
+                    }
+                }
+            }
+            catch (Throwable e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        }
+    }
+
 }

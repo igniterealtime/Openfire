@@ -154,7 +154,7 @@ public class PubSubPersistenceManager {
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));
             pstmt.setString(5, StringUtils.dateToMillis(node.getModificationDate()));
             pstmt.setString(6, node.getParent() != null ? node.getParent().getNodeID() : null);
-            pstmt.setInt(7, (node.isDeliverPayloads() ? 1 : 0));
+            pstmt.setInt(7, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
                 pstmt.setInt(8, ((LeafNode) node).getMaxPayloadSize());
                 pstmt.setInt(9, (((LeafNode) node).isPersistPublishedItems() ? 1 : 0));
@@ -165,9 +165,9 @@ public class PubSubPersistenceManager {
                 pstmt.setInt(9, 0);
                 pstmt.setInt(10, 0);
             }
-            pstmt.setInt(11, (node.isNotifyConfigChanges() ? 1 : 0));
-            pstmt.setInt(12, (node.isNotifyDelete() ? 1 : 0));
-            pstmt.setInt(13, (node.isNotifyRetract() ? 1 : 0));
+            pstmt.setInt(11, (node.isNotifiedOfConfigChanges() ? 1 : 0));
+            pstmt.setInt(12, (node.isNotifiedOfDelete() ? 1 : 0));
+            pstmt.setInt(13, (node.isNotifiedOfRetract() ? 1 : 0));
             pstmt.setInt(14, (node.isPresenceBasedDelivery() ? 1 : 0));
             pstmt.setInt(15, (node.isSendItemSubscribe() ? 1 : 0));
             pstmt.setString(16, node.getPublisherModel().getName());
@@ -228,7 +228,7 @@ public class PubSubPersistenceManager {
             pstmt = con.prepareStatement(UPDATE_NODE);
             pstmt.setString(1, StringUtils.dateToMillis(node.getModificationDate()));
             pstmt.setString(2, node.getParent() != null ? node.getParent().getNodeID() : null);
-            pstmt.setInt(3, (node.isDeliverPayloads() ? 1 : 0));
+            pstmt.setInt(3, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
                 pstmt.setInt(4, ((LeafNode) node).getMaxPayloadSize());
                 pstmt.setInt(5, (((LeafNode) node).isPersistPublishedItems() ? 1 : 0));
@@ -239,9 +239,9 @@ public class PubSubPersistenceManager {
                 pstmt.setInt(5, 0);
                 pstmt.setInt(6, 0);
             }
-            pstmt.setInt(7, (node.isNotifyConfigChanges() ? 1 : 0));
-            pstmt.setInt(8, (node.isNotifyDelete() ? 1 : 0));
-            pstmt.setInt(9, (node.isNotifyRetract() ? 1 : 0));
+            pstmt.setInt(7, (node.isNotifiedOfConfigChanges() ? 1 : 0));
+            pstmt.setInt(8, (node.isNotifiedOfDelete() ? 1 : 0));
+            pstmt.setInt(9, (node.isNotifiedOfRetract() ? 1 : 0));
             pstmt.setInt(10, (node.isPresenceBasedDelivery() ? 1 : 0));
             pstmt.setInt(11, (node.isSendItemSubscribe() ? 1 : 0));
             pstmt.setString(12, node.getPublisherModel().getName());
@@ -433,17 +433,17 @@ public class PubSubPersistenceManager {
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));
-            node.setDeliverPayloads(rs.getInt(6) == 1);
+            node.setPayloadDelivered(rs.getInt(6) == 1);
             if (leaf) {
                 ((LeafNode) node).setMaxPayloadSize(rs.getInt(7));
                 ((LeafNode) node).setPersistPublishedItems(rs.getInt(8) == 1);
                 ((LeafNode) node).setMaxPublishedItems(rs.getInt(9));
+                ((LeafNode) node).setSendItemSubscribe(rs.getInt(14) == 1);
             }
-            node.setNotifyConfigChanges(rs.getInt(10) == 1);
-            node.setNotifyDelete(rs.getInt(11) == 1);
-            node.setNotifyRetract(rs.getInt(12) == 1);
+            node.setNotifiedOfConfigChanges(rs.getInt(10) == 1);
+            node.setNotifiedOfDelete(rs.getInt(11) == 1);
+            node.setNotifiedOfRetract(rs.getInt(12) == 1);
             node.setPresenceBasedDelivery(rs.getInt(13) == 1);
-            node.setSendItemSubscribe(rs.getInt(14) == 1);
             node.setPublisherModel(PublisherModel.valueOf(rs.getString(15)));
             node.setSubscriptionEnabled(rs.getInt(16) == 1);
             node.setSubscriptionConfigurationRequired(rs.getInt(17) == 1);
@@ -789,23 +789,29 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Removes the specified published item from the DB.
+     * Creates and stores the published item in the database.
      *
      * @param service the pubsub service that is hosting the node.
-     * @param node The node where the published item was published.
-     * @param item The published item to delete.
+     * @param item The published item to save.
+     * @return true if the item was successfully saved to the database.
      */
-    public static void removePublishedItem(PubSubService service, Node node, PublishedItem item) {
+    public static boolean createPublishedItem(PubSubService service, PublishedItem item) {
+        boolean success = false;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             // Remove the published item from the database
-            pstmt = con.prepareStatement(DELETE_ITEM);
+            pstmt = con.prepareStatement(ADD_ITEM);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, item.getNode().getNodeID());
             pstmt.setString(3, item.getID());
+            pstmt.setString(4, item.getPublisher().toString());
+            pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
+            pstmt.setString(6, item.getPayloadXML());
             pstmt.executeUpdate();
+            // Set that the item was successfully saved to the database
+            success = true;
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -816,6 +822,41 @@ public class PubSubPersistenceManager {
             try {if (con != null) {con.close();}}
             catch (Exception e) {Log.error(e);}
         }
+        return success;
+    }
+
+    /**
+     * Removes the specified published item from the DB.
+     *
+     * @param service the pubsub service that is hosting the node.
+     * @param item The published item to delete.
+     * @return true if the item was successfully deleted from the database.
+     */
+    public static boolean removePublishedItem(PubSubService service, PublishedItem item) {
+        boolean success = false;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            // Remove the published item from the database
+            pstmt = con.prepareStatement(DELETE_ITEM);
+            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(2, item.getNode().getNodeID());
+            pstmt.setString(3, item.getID());
+            pstmt.executeUpdate();
+            // Set that the item was successfully deleted from the database
+            success = true;
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try {if (pstmt != null) {pstmt.close();}}
+            catch (Exception e) {Log.error(e);}
+            try {if (con != null) {con.close();}}
+            catch (Exception e) {Log.error(e);}
+        }
+        return success;
     }
 
     /**
@@ -1032,13 +1073,13 @@ public class PubSubPersistenceManager {
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim())));
-            node.setDeliverPayloads(rs.getInt(5) == 1);
+            node.setPayloadDelivered(rs.getInt(5) == 1);
             node.setMaxPayloadSize(rs.getInt(6));
             node.setPersistPublishedItems(rs.getInt(7) == 1);
             node.setMaxPublishedItems(rs.getInt(8));
-            node.setNotifyConfigChanges(rs.getInt(9) == 1);
-            node.setNotifyDelete(rs.getInt(10) == 1);
-            node.setNotifyRetract(rs.getInt(11) == 1);
+            node.setNotifiedOfConfigChanges(rs.getInt(9) == 1);
+            node.setNotifiedOfDelete(rs.getInt(10) == 1);
+            node.setNotifiedOfRetract(rs.getInt(11) == 1);
             node.setPresenceBasedDelivery(rs.getInt(12) == 1);
             node.setSendItemSubscribe(rs.getInt(13) == 1);
             node.setPublisherModel(Node.PublisherModel.valueOf(rs.getString(14)));

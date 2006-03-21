@@ -175,4 +175,13 @@ public interface PubSubService {
      *         in RFC 3921.
      */
     String getShowPresence(JID subscriber);
+
+    /**
+     * Returns the pubsub engine responsible for handling packets sent to the pub-sub service.
+     * The engine is the actual place where the pubsub magic happens like creating nodes,
+     * publishing items or subscribing to nodes.
+     *
+     * @return the pubsub engine responsible for handling packets sent to the pub-sub service.
+     */
+    PubSubEngine getPubSubEngine();
 }

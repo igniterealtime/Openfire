@@ -128,6 +128,7 @@ public class CollectionNode extends Node {
     }
 
     void removeChildNode(Node child) {
+        // TODO Send notification to subscribers?
         nodes.remove(child.getNodeID());
     }
 

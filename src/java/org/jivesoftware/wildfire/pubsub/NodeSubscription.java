@@ -384,6 +384,37 @@ public class NodeSubscription {
         this.savedToDB = savedToDB;
     }
 
+    /**
+     * Configures the subscription based on the sent {@link DataForm} included in the IQ
+     * packet sent by the subscriber. If the subscription was pending of configuration
+     * then the last published item is going to be sent to the subscriber.<p>
+     *
+     * The originalIQ parameter may be <tt>null</tt> when using this API internally. When no
+     * IQ packet was sent then no IQ result will be sent to the sender. The rest of the
+     * functionality is the same.
+     *
+     * @param originalIQ the IQ packet sent by the subscriber to configure his subscription or
+     *        null when using this API internally.
+     * @param options the data form containing the new subscription configuration.
+     */
+    public void configure(IQ originalIQ, DataForm options) {
+        boolean wasUnconfigured = isConfigurationPending();
+        // Change the subscription configuration based on the completed form
+        configure(options);
+        if (originalIQ != null) {
+            // Return success response
+            service.send(IQ.createResultIQ(originalIQ));
+        }
+        // Send last published item if subscription is now configured (and authorized)
+        if (wasUnconfigured && !isConfigurationPending() && node.isSendItemSubscribe()) {
+            PublishedItem lastItem = node.getLastPublishedItem();
+            if (lastItem != null) {
+                sendLastPublishedItem(lastItem);
+            }
+        }
+
+    }
+
     void configure(DataForm options) {
         List<String> values;
         String booleanValue;
@@ -473,7 +504,7 @@ public class NodeSubscription {
      *
      * @return data form used by the subscriber to edit the subscription configuration.
      */
-    DataForm getConfigurationForm() {
+    public DataForm getConfigurationForm() {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.subscription.title"));
         List<String> params = new ArrayList<String>();
@@ -701,7 +732,7 @@ public class NodeSubscription {
                 if (((LeafNode) node).isItemRequired()) {
                     item.addAttribute("id", publishedItem.getID());
                 }
-                if ((forceToIncludePayload || node.isDeliverPayloads()) &&
+                if ((forceToIncludePayload || node.isPayloadDelivered()) &&
                         publishedItem.getPayload() != null) {
                     item.add(publishedItem.getPayload().createCopy());
                 }
@@ -736,7 +767,7 @@ public class NodeSubscription {
         if (((LeafNode) node).isItemRequired()) {
             item.addAttribute("id", publishedItem.getID());
         }
-        if (node.isDeliverPayloads() && publishedItem.getPayload() != null) {
+        if (node.isPayloadDelivered() && publishedItem.getPayload() != null) {
             item.add(publishedItem.getPayload().createCopy());
         }
         // Add a message body (if required)

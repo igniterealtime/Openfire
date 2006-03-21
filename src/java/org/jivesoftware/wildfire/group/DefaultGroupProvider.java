@@ -49,9 +49,9 @@ public class DefaultGroupProvider implements GroupProvider {
         "DELETE FROM jiveGroup WHERE groupName=?";
     private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
      private static final String LOAD_ADMINS =
-        "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupName=?";
+        "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupName=? ORDER BY username";
     private static final String LOAD_MEMBERS =
-        "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=?";
+        "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=? ORDER BY username";
     private static final String LOAD_GROUP =
         "SELECT description FROM jiveGroup WHERE groupName=?";
     private static final String REMOVE_USER =

@@ -269,7 +269,17 @@ public class Cache<K, V> implements Map<K, V> {
                 }
 
                 public V next() {
-                    return it.next().object;
+                    if(it.hasNext()) {
+                        CacheObject<V> object = it.next();
+                        if(object == null) {
+                            return null;
+                        } else {
+                            return object.object;
+                        }
+                    }
+                    else {
+                        throw new NoSuchElementException();
+                    }
                 }
 
                 public void remove() {
@@ -353,15 +363,34 @@ public class Cache<K, V> implements Map<K, V> {
         // maximum defined age.
         deleteExpiredEntries();
 
-        int objectSize = calculateSize(value);
-        CacheObject cacheObject = new CacheObject(value, objectSize);
-        return map.containsValue(cacheObject);
+        if(value == null) {
+            return containsNullValue();
+        }
+
+        Iterator it = values().iterator();
+        while(it.hasNext()) {
+            if(value.equals(it.next())) {
+                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsNullValue() {
+        Iterator it = values().iterator();
+        while(it.hasNext()) {
+            if(it.next() == null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Set entrySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
+        // TODO Make this work right
 
         return Collections.unmodifiableSet(map.entrySet());
     }

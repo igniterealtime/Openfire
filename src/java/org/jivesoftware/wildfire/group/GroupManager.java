@@ -210,14 +210,16 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        Collection<Group> groups = userGroupCache.get(globalGroupKey);
-        if (groups == null) {
-            groups = provider.getGroups();
-            // Add to cache and ensure correct identity
-            groups = cacheAndEnsureIdentity(groups);
-            userGroupCache.put(globalGroupKey, groups);
+        synchronized (globalGroupKey) {
+            Collection<Group> groups = userGroupCache.get(globalGroupKey);
+            if (groups == null) {
+                groups = provider.getGroups();
+                // Add to cache and ensure correct identity
+                groups = cacheAndEnsureIdentity(groups);
+                userGroupCache.put(globalGroupKey, groups);
+            }
+            return groups;
         }
-        return groups;
     }
 
     /**
@@ -258,14 +260,17 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        Collection<Group> groups = userGroupCache.get(user);
-        if (groups == null) {
-            groups = provider.getGroups(user);
-            // Add to cache and ensure correct identity
-            groups = cacheAndEnsureIdentity(groups);
-            userGroupCache.put(user.toString(), groups);
+        String userID = user.toString();
+        synchronized (userID.intern()) {
+            Collection<Group> groups = userGroupCache.get(userID);
+            if (groups == null) {
+                groups = provider.getGroups(user);
+                // Add to cache and ensure correct identity
+                groups = cacheAndEnsureIdentity(groups);
+                userGroupCache.put(userID, groups);
+            }
+            return groups;
         }
-        return groups;
     }
 
     /**

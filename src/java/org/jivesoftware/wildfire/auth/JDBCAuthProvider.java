@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.auth;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.auth.*;
 import org.jivesoftware.wildfire.user.*;
 
 import java.sql.DriverManager;
@@ -197,7 +196,6 @@ public class JDBCAuthProvider implements AuthProvider {
         catch (UserNotFoundException unfe) {
             try {
                 Log.debug("Automatically creating new user account for " + username);
-                UserProvider provider = UserManager.getUserProvider();
                 UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
                         null, null);
             }

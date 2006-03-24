@@ -27,6 +27,8 @@ import javax.naming.directory.*;
 import javax.naming.ldap.LdapName;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as read-only so any set
@@ -336,6 +338,12 @@ public class LdapGroupProvider implements GroupProvider {
             String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
             XMPPServer server = XMPPServer.getInstance();
             String serverName = server.getServerInfo().getName();
+            // Build 3 groups.
+            // group 1: uid=
+            // group 2: rest of the text until first comma
+            // group 3: rest of the text
+            Pattern pattern =
+                    Pattern.compile("(?i)(^" + manager.getUsernameField() + "=)([^,]+)(.+)");
 
             while (answer.hasMoreElements()) {
                 String name = "";
@@ -354,25 +362,34 @@ public class LdapGroupProvider implements GroupProvider {
                     Attribute member = a.get(manager.getGroupMemberField());
                     NamingEnumeration ne = member.getAll();
                     while (ne.hasMore()) {
-                        String username = (String)ne.next();
+                        String username = (String) ne.next();
                         if (!manager.isPosixMode()) {   //userName is full dn if not posix
                             try {
-                                // Get the CN using LDAP
-                                LdapName ldapname = new LdapName(username);
-                                String ldapcn = ldapname.get(ldapname.size() - 1);
-
-                                // We have to do a new search to find the username field
-
-                                String combinedFilter =
-                                        "(&(" + ldapcn + ")" + userSearchFilter + ")";
-                                NamingEnumeration usrAnswer = ctx.search("", combinedFilter, ctrls);
-                                if (usrAnswer.hasMoreElements()) {
-                                    username = (String)((SearchResult)usrAnswer.next())
-                                            .getAttributes().get(
-                                            manager.getUsernameField()).get();
+                                // LdapName will not generate spaces around an '='
+                                // (according to the docs)
+                                Matcher matcher = pattern.matcher(username);
+                                if (matcher.matches() && matcher.groupCount() == 3) {
+                                    // The username is in the DN, no additional search needed
+                                    username = matcher.group(2);
                                 }
                                 else {
-                                    throw new UserNotFoundException();
+                                    // We have to do a new search to find the username field
+
+                                    // Get the CN using LDAP
+                                    LdapName ldapname = new LdapName(username);
+                                    String ldapcn = ldapname.get(ldapname.size() - 1);
+                                    String combinedFilter =
+                                            "(&(" + ldapcn + ")" + userSearchFilter + ")";
+                                    NamingEnumeration usrAnswer =
+                                            ctx.search("", combinedFilter, ctrls);
+                                    if (usrAnswer.hasMoreElements()) {
+                                        username = (String) ((SearchResult) usrAnswer.next())
+                                                .getAttributes().get(
+                                                manager.getUsernameField()).get();
+                                    }
+                                    else {
+                                        throw new UserNotFoundException();
+                                    }
                                 }
                             }
                             catch (Exception e) {

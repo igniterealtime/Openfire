@@ -12,20 +12,20 @@
 package org.jivesoftware.wildfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.event.GroupEventDispatcher;
 import org.xmpp.packet.JID;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.io.*;
 
 /**
  * Groups organize users into a single entity for easier management.<p>
@@ -48,6 +48,9 @@ public class Group implements Cacheable {
         "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupName=?";
     private static final String INSERT_PROPERTY =
         "INSERT INTO jiveGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
+    private static final String LOAD_SHARED_GROUPS =
+        "SELECT groupName FROM jiveGroupProp WHERE name='sharedRoster.showInRoster' " +
+        "AND propValue IS NOT NULL AND propValue <> 'nobody'";
 
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
@@ -57,6 +60,36 @@ public class Group implements Cacheable {
     private Map<String, String> properties;
     private Set<JID> members;
     private Set<JID> administrators;
+
+    /**
+     * Returns the name of the groups that are shared groups.
+     *
+     * @return the name of the groups that are shared groups.
+     */
+    static Set<String> getSharedGroupsNames() {
+        Set<String> groupNames = new HashSet<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                groupNames.add(rs.getString(1));
+            }
+            rs.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+        return groupNames;
+    }
 
     /**
      * Constructs a new group. Note: this constructor is intended for implementors of the
@@ -384,10 +417,6 @@ public class Group implements Cacheable {
                         }
                     }
                 }
-
-                // Remove the cache item for the groups that the user is in.
-                groupManager.groupCache.remove(user);
-
                 return true;
             }
             return false;

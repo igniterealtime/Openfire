@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -257,6 +258,10 @@ public class DefaultGroupProvider implements GroupProvider {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+    }
+
+    public Collection<Group> getGroups(Set<String> groupNames) {
         return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
     }
 

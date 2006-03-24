@@ -259,7 +259,7 @@ public class Roster implements Cacheable {
             throws UserAlreadyExistsException, SharedGroupException {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
-            Collection<Group> sharedGroups = GroupManager.getInstance().getGroups();
+            Collection<Group> sharedGroups = GroupManager.getInstance().getSharedGroups();
             for (String group : groups) {
                 for (Group sharedGroup : sharedGroups) {
                     if (group.equals(sharedGroup.getProperties().get("sharedRoster.displayName"))) {

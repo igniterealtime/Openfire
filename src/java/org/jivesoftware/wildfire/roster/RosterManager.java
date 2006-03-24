@@ -46,7 +46,7 @@ import java.util.*;
  */
 public class RosterManager extends BasicModule implements GroupEventListener {
 
-    private Cache rosterCache = null;
+    private Cache<String, Roster> rosterCache = null;
     private XMPPServer server;
     private RoutingTable routingTable;
 
@@ -81,10 +81,10 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if (rosterCache == null) {
             throw new UserNotFoundException("Could not load caches");
         }
-        Roster roster = (Roster)rosterCache.get(username);
+        Roster roster = rosterCache.get(username);
         if (roster == null) {
             synchronized(username.intern()) {
-                roster = (Roster)rosterCache.get(username);
+                roster = rosterCache.get(username);
                 if (roster == null) {
                     // Not in cache so load a new one:
                     roster = new Roster(username);
@@ -165,7 +165,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
      */
     public Collection<Group> getSharedGroups(User user) {
         Collection<Group> answer = new HashSet<Group>();
-        Collection<Group> groups = GroupManager.getInstance().getGroups();
+        Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
         for (Group group : groups) {
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
             if ("onlyGroup".equals(showInRoster)) {
@@ -559,7 +559,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
     private Collection<Group> getVisibleGroups(Group groupToCheck) {
         Collection<Group> answer = new HashSet<Group>();
-        Collection<Group> groups = GroupManager.getInstance().getGroups();
+        Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
         for (Group group : groups) {
             if (group.equals(groupToCheck)) {
                 continue;

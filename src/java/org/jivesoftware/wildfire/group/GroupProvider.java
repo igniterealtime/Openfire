@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.group;
 import org.xmpp.packet.JID;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Provider interface for groups. Users that wish to integrate with
@@ -102,6 +103,13 @@ public interface GroupProvider {
      * @return the Collection of all groups.
      */
     Collection<Group> getGroups();
+
+    /**
+     * Returns the Collection of groups for the specified groups names.
+     *
+     * @return the Collection with the requested groups.
+     */
+    Collection<Group> getGroups(Set<String> groupNames);
 
     /**
      * Returns the Collection of all groups in the system.

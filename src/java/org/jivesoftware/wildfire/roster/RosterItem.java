@@ -322,7 +322,7 @@ public class RosterItem implements Cacheable {
             }
 
             // Remove shared groups from the param
-            Collection<Group> existingGroups = GroupManager.getInstance().getGroups();
+            Collection<Group> existingGroups = GroupManager.getInstance().getSharedGroups();
             for (Iterator<String> it=groups.iterator(); it.hasNext();) {
                 String groupName = it.next();
                 try {

@@ -18,10 +18,7 @@ import org.jivesoftware.wildfire.event.GroupEventListener;
 import org.jivesoftware.wildfire.user.User;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Manages groups.
@@ -33,8 +30,10 @@ public class GroupManager {
 
     Cache<String, Group> groupCache;
     Cache<String, Collection<Group>> userGroupCache;
-    // Holds the place for the global group in the global gruop cache
+    // Holds the cache key for the global group in the users groups cache
     private final String globalGroupKey = "ALL GROUPS";
+    // Holds the cache key for the shared groups in the users groups cache
+    private final String sharedGroupsKey = "SHARED GROUPS";
     private GroupProvider provider;
 
     private static GroupManager instance = new GroupManager();
@@ -217,6 +216,25 @@ public class GroupManager {
                 // Add to cache and ensure correct identity
                 groups = cacheAndEnsureIdentity(groups);
                 userGroupCache.put(globalGroupKey, groups);
+            }
+            return groups;
+        }
+    }
+
+    /**
+     * Returns an unmodifiable Collection of all shared groups in the system.
+     *
+     * @return an unmodifiable Collection of all shared groups.
+     */
+    public Collection<Group> getSharedGroups() {
+        synchronized (sharedGroupsKey) {
+            Collection<Group> groups = userGroupCache.get(sharedGroupsKey);
+            if (groups == null) {
+                Set<String> groupsNames = Group.getSharedGroupsNames();
+                groups = provider.getGroups(groupsNames);
+                // Add to cache and ensure correct identity
+                groups = cacheAndEnsureIdentity(groups);
+                userGroupCache.put(sharedGroupsKey, groups);
             }
             return groups;
         }

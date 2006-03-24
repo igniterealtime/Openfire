@@ -168,6 +168,55 @@ public class LdapGroupProvider implements GroupProvider {
         }
     }
 
+    public Collection<Group> getGroups(Set<String> groupNames) {
+        if (groupNames.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Collection<Group> groups = new ArrayList<Group>(groupNames.size());
+
+        String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
+        // Instead of loading all groups at once which may not work for super big collections
+        // of group names, we are going to make many queries and load by 10 groups at onces
+        Collection<String> searchFilters = new ArrayList<String>(groupNames.size());
+        List<String> names = new ArrayList<String>(groupNames);
+        int i = 0;
+        int range = 10;
+        do {
+            List<String> subset = names.subList(i, Math.min(i + range, groupNames.size()));
+
+            if (subset.size() == 1) {
+                String searchFilter = "(&" + filter + "(" +
+                        manager.getGroupNameField() + "=" + subset.get(0) + "))";
+                searchFilters.add(searchFilter);
+            }
+            else {
+                StringBuilder sb = new StringBuilder(300);
+                sb.append("(&").append(filter).append("(|");
+                for (String groupName : subset) {
+                    sb.append("(").append(manager.getGroupNameField()).append("=");
+                    sb.append(groupName).append(")");
+                }
+                sb.append("))");
+                searchFilters.add(sb.toString());
+            }
+            // Increment counter to get next range
+            i = i + range;
+        }
+        while (groupNames.size() > i);
+
+        // Perform all required queries to load all requested groups
+        for (String searchFilter : searchFilters) {
+            try {
+                groups.addAll(populateGroups(searchForGroups(searchFilter, standardAttributes)));
+            }
+            catch (NamingException e) {
+                Log.error("Error populating groups from LDAP", e);
+                return Collections.emptyList();
+            }
+        }
+        return new ArrayList<Group>(groups);
+    }
+
     public Collection<Group> getGroups(int start, int num) {
         // Get an enumeration of all groups in the system
         String searchFilter = MessageFormat.format(manager.getGroupSearchFilter(), "*");

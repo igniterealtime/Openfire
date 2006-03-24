@@ -14,12 +14,14 @@ package org.jivesoftware.wildfire.group;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.wildfire.event.GroupEventListener;
 import org.jivesoftware.wildfire.user.User;
 import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Manages groups.
@@ -29,7 +31,10 @@ import java.util.Collections;
  */
 public class GroupManager {
 
-    Cache groupCache;
+    Cache<String, Group> groupCache;
+    Cache<String, Collection<Group>> userGroupCache;
+    // Holds the place for the global group in the global gruop cache
+    private final String globalGroupKey = "ALL GROUPS";
     private GroupProvider provider;
 
     private static GroupManager instance = new GroupManager();
@@ -48,17 +53,53 @@ public class GroupManager {
         String cacheName = "Group";
         CacheManager.initializeCache(cacheName, "group", 128 * 1024);
         groupCache = CacheManager.getCache(cacheName);
+
+        // A cache for all groups and groups related to a particular user
+        cacheName = "User Group Cache";
+        CacheManager.initializeCache(cacheName, "userGroup", 128 * 1024, 1000 * 60 * 60 * 3);
+        userGroupCache = CacheManager.getCache(cacheName);
+
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
                 "org.jivesoftware.wildfire.group.DefaultGroupProvider");
         try {
             Class c = ClassUtils.forName(className);
-            provider = (GroupProvider)c.newInstance();
+            provider = (GroupProvider) c.newInstance();
         }
         catch (Exception e) {
             Log.error("Error loading group provider: " + className, e);
             provider = new DefaultGroupProvider();
         }
+
+        GroupEventDispatcher.addListener(new GroupEventListener() {
+            public void groupCreated(Group group, Map params) {
+                userGroupCache.clear();
+            }
+
+            public void groupDeleting(Group group, Map params) {
+                userGroupCache.clear();
+            }
+
+            public void groupModified(Group group, Map params) {
+                /* Ignore */
+            }
+
+            public void memberAdded(Group group, Map params) {
+                userGroupCache.clear();
+            }
+
+            public void memberRemoved(Group group, Map params) {
+                userGroupCache.clear();
+            }
+
+            public void adminAdded(Group group, Map params) {
+                userGroupCache.clear();
+            }
+
+            public void adminRemoved(Group group, Map params) {
+                userGroupCache.clear();
+            }
+        });
     }
 
     /**
@@ -70,7 +111,7 @@ public class GroupManager {
      */
     public Group createGroup(String name) throws GroupAlreadyExistsException {
         synchronized (name.intern()) {
-            Group newGroup = null;
+            Group newGroup;
             try {
                 getGroup(name);
                 // The group already exists since now exception, so:
@@ -97,11 +138,11 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name) throws GroupNotFoundException {
-        Group group = (Group)groupCache.get(name);
+        Group group = groupCache.get(name);
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
             synchronized (name.intern()) {
-                group = (Group)groupCache.get(name);
+                group = groupCache.get(name);
                 // If ID wan't found in cache, load it up and put it there.
                 if (group == null) {
                     group = provider.getGroup(name);
@@ -147,6 +188,7 @@ public class GroupManager {
                 group.getMembers().remove(userJID);
             }
         }
+        userGroupCache.clear();
     }
 
     /**
@@ -155,8 +197,11 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
-        // TODO: add caching
-        return provider.getGroupCount();
+        Collection<Group> groups = userGroupCache.get(globalGroupKey);
+        if(groups == null) {
+            return provider.getGroupCount();
+        }
+        return groups.size();
     }
 
     /**
@@ -165,10 +210,13 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        // TODO: add/use caching
-        Collection<Group> groups = provider.getGroups();
-        // Add to cache and ensure correct identity
-        groups = cacheAndEnsureIdentity(groups);
+        Collection<Group> groups = userGroupCache.get(globalGroupKey);
+        if (groups == null) {
+            groups = provider.getGroups();
+            // Add to cache and ensure correct identity
+            groups = cacheAndEnsureIdentity(groups);
+            userGroupCache.put(globalGroupKey, groups);
+        }
         return groups;
     }
 
@@ -210,9 +258,13 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        Collection<Group> groups = provider.getGroups(user);
-        // Add to cache and ensure correct identity
-        groups = cacheAndEnsureIdentity(groups);
+        Collection<Group> groups = userGroupCache.get(user);
+        if (groups == null) {
+            groups = provider.getGroups(user);
+            // Add to cache and ensure correct identity
+            groups = cacheAndEnsureIdentity(groups);
+            userGroupCache.put(user.toString(), groups);
+        }
         return groups;
     }
 
@@ -237,7 +289,7 @@ public class GroupManager {
         Collection<Group> answer = new ArrayList<Group>(groups.size());
         for (Group group : groups) {
             synchronized (group.getName().intern()) {
-                Group existingGroup = (Group) groupCache.get(group.getName());
+                Group existingGroup = groupCache.get(group.getName());
                 if (existingGroup == null) {
                     // Add loaded group to the cache
                     groupCache.put(group.getName(), group);

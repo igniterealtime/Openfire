@@ -453,7 +453,9 @@ public class XMLProperties {
         try {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
-            writer.write(document.asXML());
+            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
+            xmlWriter.write(document);
         }
         catch (Exception e) {
             Log.error(e);
@@ -554,12 +556,12 @@ public class XMLProperties {
     /**
      * Copies data from an input stream to an output stream
      *
-     * @param in  The stream to copy data from
-     * @param out The stream to copy data to
-     * @throws IOException if there's trouble during the copy
+     * @param in the stream to copy data from.
+     * @param out the stream to copy data to.
+     * @throws IOException if there's trouble during the copy.
      */
     private static void copy(InputStream in, OutputStream out) throws IOException {
-        // do not allow other threads to whack on in or out during copy
+        // Do not allow other threads to intrude on streams during copy.
         synchronized (in) {
             synchronized (out) {
                 byte[] buffer = new byte[256];

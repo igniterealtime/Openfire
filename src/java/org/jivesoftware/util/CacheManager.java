@@ -73,7 +73,8 @@ public class CacheManager {
             size = JiveGlobals.getIntProperty("cache." + name + ".size", size);
             expirationTime = (long) JiveGlobals.getIntProperty(
                     "cache." + propertiesName + ".expirationTime", (int) expirationTime);
-            caches.put(name, new Cache(name, size, expirationTime));
+            cache = new Cache(name, size, expirationTime);
+            caches.put(name, cache);
         }
         return cache;
     }

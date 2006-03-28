@@ -11,11 +11,11 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.wildfire.ConnectionManager;
-import org.jivesoftware.wildfire.ServerPort;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.ConnectionManager;
+import org.jivesoftware.wildfire.ServerPort;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -134,7 +134,7 @@ public class SocketAcceptThread extends Thread {
                             ie);
                 }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.accept"), e);
             }
         }

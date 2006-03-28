@@ -11,11 +11,11 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.wildfire.ConnectionManager;
-import org.jivesoftware.wildfire.ServerPort;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.ConnectionManager;
+import org.jivesoftware.wildfire.ServerPort;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -165,7 +165,7 @@ public class SSLSocketAcceptThread extends Thread {
                     shutdown();
                 }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
                 if (notTerminated) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
                 }

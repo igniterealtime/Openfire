@@ -11,8 +11,8 @@
 package org.jivesoftware.wildfire.commands;
 
 import org.dom4j.Element;
-import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 
@@ -107,9 +107,10 @@ public abstract class AdHocCommand {
      *
      * @param data the gathered data through the command stages or <tt>null</tt> if the
      *        command does not have stages.
-     * @return a reported data or note element with the answer of the execution.
+     * @param command the command element to be sent to the command requester with a reported
+     *        data result or note element with the answer of the execution.
      */
-    public abstract Element execute(SessionData data);
+    public abstract void execute(SessionData data, Element command);
 
     /**
      * Adds to the command element the data form or notes required by the current stage. The
@@ -154,9 +155,7 @@ public abstract class AdHocCommand {
      * Increments the stage number by one and adds to the command element the new data form and
      * new allowed actions that the user might perform.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
     public void addNextStageInformation(SessionData data, Element command) {
@@ -171,12 +170,10 @@ public abstract class AdHocCommand {
     }
 
     /**
-     * Decrements the stage number by one and adds to the command the  data form and allowed
+     * Decrements the stage number by one and adds to the command the data form and allowed
      * actions that the user might perform of the previous stage.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
     public void addPreviousStageInformation(SessionData data, Element command) {

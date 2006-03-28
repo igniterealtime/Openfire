@@ -10,6 +10,8 @@
 
 package org.jivesoftware.wildfire.commands;
 
+import org.xmpp.packet.JID;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,11 +24,12 @@ import java.util.Map;
  *
  * @author Gaston Dombiak
  */
-class SessionData {
+public class SessionData {
 
     private long creationStamp;
 
     private String id;
+    private JID owner;
 
     /**
      * Map that keeps the association of variables and values obtained in each stage.
@@ -47,25 +50,35 @@ class SessionData {
      */
     private int stage;
 
-    public SessionData(String sessionid) {
+    SessionData(String sessionid, JID owner) {
         this.id = sessionid;
         this.creationStamp = System.currentTimeMillis();
-        this.stage = 0;
+        this.stage = -1;
+        this.owner = owner;
     }
 
     public String getId() {
         return id;
     }
 
+    /**
+     * Returns the JID of the entity that is executing the command.
+     *
+     * @return the JID of the entity that is executing the command.
+     */
+    public JID getOwner() {
+        return owner;
+    }
+
     public long getCreationStamp() {
         return creationStamp;
     }
 
-    public AdHocCommand.Action getExecuteAction() {
+    AdHocCommand.Action getExecuteAction() {
         return executeAction;
     }
 
-    public void setExecuteAction(AdHocCommand.Action executeAction) {
+    void setExecuteAction(AdHocCommand.Action executeAction) {
         this.executeAction = executeAction;
     }
 
@@ -74,7 +87,7 @@ class SessionData {
      *
      * @param allowedActions list of valid actions.
      */
-    public void setAllowedActions(List<AdHocCommand.Action> allowedActions) {
+    void setAllowedActions(List<AdHocCommand.Action> allowedActions) {
         if (allowedActions == null) {
             allowedActions = new ArrayList<AdHocCommand.Action>();
         }
@@ -88,7 +101,7 @@ class SessionData {
      * @param actionName the name of the action to validate.
      * @return true if the specified action is valid in the current stage.
      */
-    public boolean isValidAction(String actionName) {
+    boolean isValidAction(String actionName) {
         for (AdHocCommand.Action action : allowedActions) {
             if (actionName.equals(action.name())) {
                 return true;
@@ -97,7 +110,7 @@ class SessionData {
         return false;
     }
 
-    public void addStageForm(Map<String, List<String>> data) {
+    void addStageForm(Map<String, List<String>> data) {
         stagesData.put(stage, data);
     }
 
@@ -108,7 +121,9 @@ class SessionData {
      */
     public Map<String, List<String>> getData() {
         Map<String, List<String>> data = new HashMap<String, List<String>>();
-        data.putAll((Map<String, List<String>>) stagesData.values());
+        for (Map<String, List<String>> stageData : stagesData.values()) {
+            data.putAll(stageData);
+        }
         return data;
     }
 
@@ -132,7 +147,7 @@ class SessionData {
      *
      * @param stage the current stage where the requester is located.
      */
-    public void setStage(int stage) {
+    void setStage(int stage) {
         this.stage = stage;
     }
 

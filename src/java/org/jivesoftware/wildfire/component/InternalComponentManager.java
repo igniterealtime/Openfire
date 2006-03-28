@@ -12,12 +12,12 @@
 package org.jivesoftware.wildfire.component;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.RoutableChannelHandler;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -311,15 +311,21 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                 if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                     // Add a disco item to the server for the component that supports disco
                     Element identity = childElement.element("identity");
-                    XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
-                            .toBareJID(),
-                            identity.attributeValue("name"));
-                    if (component instanceof ComponentSession.ExternalComponent) {
-                        ComponentSession.ExternalComponent externalComponent =
-                                (ComponentSession.ExternalComponent) component;
-                        externalComponent.setName(identity.attributeValue("name"));
-                        externalComponent.setType(identity.attributeValue("type"));
-                        externalComponent.setCategory(identity.attributeValue("category"));
+                    try {
+                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
+                                .toBareJID(),
+                                identity.attributeValue("name"));
+                        if (component instanceof ComponentSession.ExternalComponent) {
+                            ComponentSession.ExternalComponent externalComponent =
+                                    (ComponentSession.ExternalComponent) component;
+                            externalComponent.setName(identity.attributeValue("name"));
+                            externalComponent.setType(identity.attributeValue("type"));
+                            externalComponent.setCategory(identity.attributeValue("category"));
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.error("Error processing disco packet of external component: " +
+                                packet.toXML(), e);
                     }
                 }
             }

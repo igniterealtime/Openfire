@@ -147,7 +147,7 @@ public class IQPrivacyHandler extends IQHandler
         }
         // Add the active list (only if there is an active list for the session)
         ClientSession session = sessionManager.getSession(from);
-        if  (session.getActiveList() != null) {
+        if  (session != null && session.getActiveList() != null) {
             childElement.addElement("active")
                     .addAttribute("name", session.getActiveList().getName());
         }
@@ -215,8 +215,10 @@ public class IQPrivacyHandler extends IQHandler
         if (list != null) {
             // Get the user session
             ClientSession session = sessionManager.getSession(from);
-            // Set the new active list for this session
-            session.setActiveList(list);
+            if (session != null) {
+                // Set the new active list for this session
+                session.setActiveList(list);
+            }
         }
         else {
             // List not found

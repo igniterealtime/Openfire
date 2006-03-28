@@ -324,8 +324,8 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                         }
                     }
                     catch (Exception e) {
-                        Log.error("Error processing disco packet of external component: " +
-                                packet.toXML(), e);
+                        Log.error("Error processing disco packet of component: " + component +
+                                " - " + packet.toXML(), e);
                     }
                 }
             }

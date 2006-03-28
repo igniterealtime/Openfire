@@ -255,10 +255,21 @@ public class SASLAuthentication {
         }
     }
 
-    private boolean doPlainAuthentication(Element doc) {
+    private boolean doPlainAuthentication(Element doc)
+            throws DocumentException, IOException, XmlPullParserException {
         String username = "";
         String password = "";
         String response = doc.getTextTrim();
+        if (response == null || response.length() == 0) {
+            // No info was provided so send a challenge to get it
+            sendChallenge(new byte[0]);
+            // Get the next answer since we are not done yet
+            doc = reader.parseDocument().getRootElement();
+            if (doc != null && doc.getTextTrim().length() > 0) {
+                response = doc.getTextTrim();
+            }
+        }
+
         if (response != null && response.length() > 0) {
             // Parse data and obtain username & password
             String data = StringUtils.decodeBase64(response);

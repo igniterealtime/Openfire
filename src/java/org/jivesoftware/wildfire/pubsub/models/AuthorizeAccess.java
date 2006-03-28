@@ -11,14 +11,14 @@
 
 package org.jivesoftware.wildfire.pubsub.models;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.wildfire.pubsub.Node;
-import org.jivesoftware.wildfire.pubsub.NodeSubscription;
 import org.jivesoftware.wildfire.pubsub.NodeAffiliate;
+import org.jivesoftware.wildfire.pubsub.NodeSubscription;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
-import org.dom4j.QName;
 
 /**
  * Subscription requests must be approved and only subscribers may retrieve items.
@@ -43,7 +43,7 @@ public class AuthorizeAccess extends AccessModel {
         // Any subscription of this entity that was approved will give him access
         // to retrieve the node items
         for (NodeSubscription subscription : nodeAffiliate.getSubscriptions()) {
-            if (subscription.isApproved()) {
+            if (subscription.isActive()) {
                 return true;
             }
         }

@@ -449,13 +449,6 @@ public class DefaultNodeConfiguration {
         formField.addValue(deliverPayloads);
 
         formField = form.addField();
-        formField.setVariable("pubsub#send_item_subscribe");
-        formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(
-                LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
-        formField.addValue(sendItemSubscribe);
-
-        formField = form.addField();
         formField.setVariable("pubsub#notify_config");
         formField.setType(FormField.Type.boolean_type);
         formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_config"));
@@ -480,6 +473,13 @@ public class DefaultNodeConfiguration {
         formField.addValue(presenceBasedDelivery);
 
         if (leaf) {
+            formField = form.addField();
+            formField.setVariable("pubsub#send_item_subscribe");
+            formField.setType(FormField.Type.boolean_type);
+            formField.setLabel(
+                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
+            formField.addValue(sendItemSubscribe);
+
             formField = form.addField();
             formField.setVariable("pubsub#persist_items");
             formField.setType(FormField.Type.boolean_type);

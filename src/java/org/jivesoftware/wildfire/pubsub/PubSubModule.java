@@ -28,7 +28,6 @@ import org.jivesoftware.wildfire.disco.DiscoItemsProvider;
 import org.jivesoftware.wildfire.disco.DiscoServerItem;
 import org.jivesoftware.wildfire.disco.ServerItemsProvider;
 import org.jivesoftware.wildfire.forms.DataForm;
-import org.jivesoftware.wildfire.forms.FormField;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.wildfire.pubsub.models.AccessModel;
@@ -462,7 +461,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             Element identity = DocumentHelper.createElement("identity");
             identity.addAttribute("category", "pubsub");
             identity.addAttribute("name", "Publish-Subscribe service");
-            identity.addAttribute("type", "generic");
+            identity.addAttribute("type", "service");
 
             identities.add(identity);
         }
@@ -485,26 +484,32 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (name == null && node == null) {
             // Answer the features of the PubSub service
             features.add("http://jabber.org/protocol/pubsub");
-            // Collection nodes are supported
-            features.add("http://jabber.org/protocol/pubsub#collections");
+            if (isCollectionNodesSupported()) {
+                // Collection nodes are supported
+                features.add("http://jabber.org/protocol/pubsub#collections");
+            }
             // Configuration of node options is supported
             features.add("http://jabber.org/protocol/pubsub#config-node");
-            // Configuration of node options is supported
-            features.add("http://jabber.org/protocol/pubsub#config-node");
+            // Simultaneous creation and configuration of nodes is supported
+            features.add("http://jabber.org/protocol/pubsub#create-and-configure");
             // Creation of nodes is supported
             features.add("http://jabber.org/protocol/pubsub#create-nodes");
-            // Any publisher (not only the originating publisher) may delete an item
-            features.add("http://jabber.org/protocol/pubsub#delete-any");
             // Deletion of nodes is supported
             features.add("http://jabber.org/protocol/pubsub#delete-nodes");
-            // Creation of instant nodes is supported
-            features.add("http://jabber.org/protocol/pubsub#instant-nodes");
+            // TODO Retrieval of pending subscription approvals is supported
+            //features.add("http://jabber.org/protocol/pubsub#get-pending");
+            if (isInstantNodeSupported()) {
+                // Creation of instant nodes is supported
+                features.add("http://jabber.org/protocol/pubsub#instant-nodes");
+            }
             // Publishers may specify item identifiers
             features.add("http://jabber.org/protocol/pubsub#item-ids");
-            // Time-based subscriptions are supported
+            // TODO Time-based subscriptions are supported (clean up thread missing, rest is supported)
             //features.add("http://jabber.org/protocol/pubsub#leased-subscription");
             // Node meta-data is supported
             features.add("http://jabber.org/protocol/pubsub#meta-data");
+            // Node owners may modify affiliations
+            features.add("http://jabber.org/protocol/pubsub#modify-affiliations");
             // A single entity may subscribe to a node multiple times
             features.add("http://jabber.org/protocol/pubsub#multi-subscribe");
             // The outcast affiliation is supported
@@ -513,6 +518,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#persistent-items");
             // Presence-based delivery of event notifications is supported
             features.add("http://jabber.org/protocol/pubsub#presence-notifications");
+            // Publishing items is supported (note: not valid for collection nodes)
+            features.add("http://jabber.org/protocol/pubsub#publish");
             // The publisher affiliation is supported
             features.add("http://jabber.org/protocol/pubsub#publisher-affiliation");
             // Purging of nodes is supported
@@ -527,12 +534,16 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#subscribe");
             // Configuration of subscription options is supported
             features.add("http://jabber.org/protocol/pubsub#subscription-options");
+            // Default access model for nodes created on the service
+            String modelName = getDefaultNodeConfiguration(true).getAccessModel().getName();
+            features.add("http://jabber.org/protocol/pubsub#default_access_model_" + modelName);
+
         }
         else if (name == null && node != null) {
             // Answer the features of a given node
-            // TODO lock the node while gathering this info???
             Node pubNode = getNode(node);
             if (node != null && canDiscoverNode(pubNode)) {
+                // Answer the features of the PubSub service
                 features.add("http://jabber.org/protocol/pubsub");
             }
         }
@@ -542,35 +553,21 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
-            // TODO lock the node while gathering this info???
             Node pubNode = getNode(node);
             if (node != null && canDiscoverNode(pubNode)) {
+                // Get the metadata data form
+                org.xmpp.forms.DataForm metadataForm = pubNode.getMetadataForm();
+
+                // Convert Whack data form into old data form format (will go away someday)
                 XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
-
-                XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-                field.setType(FormField.TYPE_HIDDEN);
-                field.addValue("http://jabber.org/protocol/muc#roominfo");
-                dataForm.addField(field);
-
-                field = new XFormFieldImpl("muc#roominfo_description");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc"));
-                //field.addValue(room.getDescription());
-                dataForm.addField(field);
-
-                field = new XFormFieldImpl("muc#roominfo_subject");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
-                //field.addValue(room.getSubject());
-                dataForm.addField(field);
-
-                field = new XFormFieldImpl("muc#roominfo_occupants");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
-                //field.addValue(Integer.toString(room.getOccupantsCount()));
-                dataForm.addField(field);
-
-                field = new XFormFieldImpl("x-muc#roominfo_creationdate");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
-                //field.addValue(dateFormatter.format(room.getCreationDate()));
-                dataForm.addField(field);
+                for (org.xmpp.forms.FormField formField : metadataForm.getFields()) {
+                    XFormFieldImpl field = new XFormFieldImpl(formField.getVariable());
+                    field.setLabel(formField.getLabel());
+                    for (String value : formField.getValues()) {
+                        field.addValue(value);
+                    }
+                    dataForm.addField(field);
+                }
 
                 return dataForm;
             }
@@ -592,13 +589,14 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public Iterator<Element> getItems(String name, String node, JID senderJID) {
         List<Element> answer = new ArrayList<Element>();
+        String serviceDomain = getServiceDomain();
         if (name == null && node == null) {
             Element item;
-            // Answer all public nodes as items
-            for (Node pubNode : nodes.values()) {
+            // Answer all first level nodes
+            for (Node pubNode : rootCollectionNode.getNodes()) {
                 if (canDiscoverNode(pubNode)) {
                     item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", getServiceDomain());
+                    item.addAttribute("jid", serviceDomain);
                     item.addAttribute("node", pubNode.getNodeID());
                     item.addAttribute("name", pubNode.getName());
                     answer.add(item);
@@ -614,7 +612,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
                             item = DocumentHelper.createElement("item");
-                            item.addAttribute("jid", getServiceDomain());
+                            item.addAttribute("jid", serviceDomain);
                             item.addAttribute("node", nestedNode.getNodeID());
                             item.addAttribute("name", nestedNode.getName());
                             answer.add(item);
@@ -626,11 +624,15 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     Element item;
                     for (PublishedItem publishedItem : ((LeafNode) pubNode).getPublishedItems()) {
                         item = DocumentHelper.createElement("item");
-                        item.addAttribute("jid", getServiceDomain());
+                        item.addAttribute("jid", serviceDomain);
                         item.addAttribute("name", publishedItem.getID());
                         answer.add(item);
                     }
                 }
+            }
+            else {
+                // Answer null to indicate that specified item was not found
+                return null;
             }
         }
         return answer.iterator();
@@ -680,7 +682,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     private boolean canDiscoverNode(Node pubNode) {
-        return false;  //TODO this
+        return true;
     }
 
     /**

@@ -37,7 +37,7 @@ public class OnlySubscribers extends PublisherModel {
         }
         // Grant access if at least one subscription of this user was approved
         for (NodeSubscription subscription : nodeAffiliate.getSubscriptions()) {
-            if (subscription.isApproved()) {
+            if (subscription.isActive()) {
                 return true;
             }
         }

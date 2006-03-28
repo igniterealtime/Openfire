@@ -18,6 +18,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.commands.AdHocCommandManager;
 import org.jivesoftware.wildfire.pubsub.models.AccessModel;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.forms.DataForm;
@@ -35,6 +36,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class PubSubEngine {
 
     private PubSubService service;
+    /**
+     * Manager that keeps the list of ad-hoc commands and processing command requests.
+     */
+    private AdHocCommandManager manager;
     /**
      * The time to elapse between each execution of the maintenance process. Default
      * is 2 minutes.
@@ -70,7 +75,9 @@ public class PubSubEngine {
     public PubSubEngine(PubSubService pubSubService, PacketRouter router) {
         this.service = pubSubService;
         this.router = router;
-
+        // Initialize the ad-hoc commands manager to use for this pubsub service
+        manager = new AdHocCommandManager();
+        manager.addCommand(new PendingSubscriptionsCommand(service));
         // Save or delete published items from the database every 2 minutes starting in
         // 2 minutes (default values)
         publishedItemTask = new PublishedItemTask();
@@ -211,6 +218,11 @@ public class PubSubEngine {
             sendErrorPacket(iq, PacketError.Condition.bad_request, null);
             return true;
         }
+        else if ("http://jabber.org/protocol/commands".equals(namespace)) {
+            // Process ad-hoc command
+            IQ reply = manager.process(iq);
+            router.route(reply);
+        }
         return false;
     }
 
@@ -224,13 +236,53 @@ public class PubSubEngine {
     }
 
     /**
-     * Handles Message packets sent to the pubsub service.
+     * Handles Message packets sent to the pubsub service. Messages may be of type error
+     * when an event notification was sent to a susbcriber whose address is no longer available.<p>
+     *
+     * Answers to authorization requests sent to node owners to approve pending subscriptions
+     * will also be processed by this method.
      *
      * @param message the Message packet sent to the pubsub service.
      */
     public void process(Message message) {
         // TODO Process Messages of type error to identify possible subscribers that no longer exist
-        // See "Handling Notification-Related Errors" section
+        if (message.getType() == Message.Type.error) {
+            // See "Handling Notification-Related Errors" section
+        }
+        else if (message.getType() == Message.Type.normal) {
+            // Check that this is an answer to an authorization request
+            DataForm authForm = (DataForm) message.getExtension("x", "jabber:x:data");
+            if (authForm != null && authForm.getType() == DataForm.Type.submit) {
+                String formType = authForm.getField("FORM_TYPE").getValues().get(0);
+                // Check that completed data form belongs to an authorization request
+                if ("http://jabber.org/protocol/pubsub#subscribe_authorization".equals(formType)) {
+                    String nodeID = authForm.getField("pubsub#node").getValues().get(0);
+                    String subID = authForm.getField("pubsub#subid").getValues().get(0);
+                    String allow = authForm.getField("pubsub#allow").getValues().get(0);
+                    boolean approved;
+                    if ("1".equals(allow) || "true".equals(allow)) {
+                        approved = true;
+                    }
+                    else if ("0".equals(allow) || "false".equals(allow)) {
+                        approved = false;
+                    }
+                    else {
+                        // Unknown allow value. Ignore completed form
+                        Log.warn("Invalid allow value in completed authorization form: " +
+                                message.toXML());
+                        return;
+                    }
+                    // Approve or cancel the pending subscription to the node
+                    Node node = service.getNode(nodeID);
+                    if (node != null) {
+                        NodeSubscription subscription = node.getSubscription(subID);
+                        if (subscription != null) {
+                            node.approveSubscription(subscription, approved);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void publishItemsToNode(IQ iq, Element publishElement) {
@@ -1322,6 +1374,8 @@ public class PubSubEngine {
                 PubSubPersistenceManager.createPublishedItem(service, entry);
             }
         }
+        // Stop executing ad-hoc commands
+        manager.stop();
     }
 
     /*******************************************************************************

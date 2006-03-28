@@ -11,9 +11,9 @@
 
 package org.jivesoftware.wildfire.pubsub;
 
+import org.dom4j.Element;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.dom4j.Element;
 
 import java.util.*;
 
@@ -86,7 +86,7 @@ public class NodeAffiliate {
             for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
                 // Add items information
                 Element items = event.addElement("items");
-                items.addAttribute("node", node.getNodeID());
+                items.addAttribute("node", getNode().getNodeID());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
                     // Add item information to the event notification
                     Element item = items.addElement("item");
@@ -95,6 +95,11 @@ public class NodeAffiliate {
                     }
                     if (node.isPayloadDelivered()) {
                         item.add(publishedItem.getPayload().createCopy());
+                    }
+                    // Add leaf node information if affiliated node and node
+                    // where the item was published are different
+                    if (node != getNode()) {
+                        item.addAttribute("node", node.getNodeID());
                     }
                 }
                 // Send the event notification

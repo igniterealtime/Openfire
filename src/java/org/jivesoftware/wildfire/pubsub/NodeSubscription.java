@@ -12,14 +12,14 @@
 package org.jivesoftware.wildfire.pubsub;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.FastDateFormat;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
 import org.xmpp.packet.Presence;
 
 import java.text.ParseException;
@@ -77,11 +77,6 @@ public class NodeSubscription {
      */
     private State state;
     /**
-     * Flag that indicates if configuration is required by the node and is still pending to
-     * be configured by the subscriber.
-     */
-    private boolean configurationPending = false;
-    /**
      * Flag indicating whether an entity wants to receive or has disabled notifications.
      */
     private boolean deliverNotifications = true;
@@ -130,9 +125,7 @@ public class NodeSubscription {
      */
     private boolean savedToDB = false;
 
-    // TODO Do not send event notifications (e.g. node purge, node deleted) to unconfigured subscriptions ????
-    // TODO Send last published item when a subscription is authorized. We may need to move this logic to another place
-    // TODO Implement presence subscription from the node to the subscriber to figure out if event notifications can be sent 
+    // TODO Implement presence subscription from the node to the subscriber to figure out if event notifications can be sent
 
     static {
         dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
@@ -158,11 +151,6 @@ public class NodeSubscription {
         this.owner = owner;
         this.state = state;
         this.id = id;
-
-        if (node.isSubscriptionConfigurationRequired()) {
-            // Subscription configuration is required and it's still pending
-            setConfigurationPending(true);
-        }
     }
 
     /**
@@ -224,23 +212,25 @@ public class NodeSubscription {
 
     /**
      * Returns true if configuration is required by the node and is still pending to
-     * be configured by the subscriber. Otherwise return false.
+     * be configured by the subscriber. Otherwise return false. Once a subscription is
+     * configured it might need to be approved by a node owner to become active.
      *
      * @return true if configuration is required by the node and is still pending to
      *         be configured by the subscriber.
      */
     public boolean isConfigurationPending() {
-        return configurationPending;
+        return state == State.unconfigured;
     }
 
     /**
-     * Returns true if the subscription was approved by a node owner. Nodes that don't
-     * require node owners to approve subscription assume that all subscriptions are approved.
+     * Returns true if the subscription needs to be approved by a node owner to become
+     * active. Until the subscription is not activated the subscriber will not receive
+     * event notifications.
      *
-     * @return true if the subscription was approved by a node owner.
+     * @return true if the subscription needs to be approved by a node owner to become active.
      */
-    public boolean isApproved() {
-        return State.subscribed == state;
+    public boolean isAuthorizationPending() {
+        return state == State.pending;
     }
 
     /**
@@ -340,10 +330,6 @@ public class NodeSubscription {
         return keyword;
     }
 
-    void setConfigurationPending(boolean configurationPending) {
-        this.configurationPending = configurationPending;
-    }
-
     void setShouldDeliverNotifications(boolean deliverNotifications) {
         this.deliverNotifications = deliverNotifications;
     }
@@ -405,14 +391,22 @@ public class NodeSubscription {
             // Return success response
             service.send(IQ.createResultIQ(originalIQ));
         }
-        // Send last published item if subscription is now configured (and authorized)
-        if (wasUnconfigured && !isConfigurationPending() && node.isSendItemSubscribe()) {
-            PublishedItem lastItem = node.getLastPublishedItem();
-            if (lastItem != null) {
-                sendLastPublishedItem(lastItem);
+
+        if (wasUnconfigured) {
+            // If subscription is pending then send notification to node owners
+            // asking to approve the now configured subscription
+            if (isAuthorizationPending()) {
+                sendAuthorizationRequest();
+            }
+
+            // Send last published item (if node is leaf node and subscription status is ok)
+            if (node.isSendItemSubscribe() && isActive()) {
+                PublishedItem lastItem = node.getLastPublishedItem();
+                if (lastItem != null) {
+                    sendLastPublishedItem(lastItem);
+                }
             }
         }
-
     }
 
     void configure(DataForm options) {
@@ -488,8 +482,13 @@ public class NodeSubscription {
                 fieldExists = false;
             }
             if (fieldExists) {
-                // Mark that the subscription has been configured
-                setConfigurationPending(false);
+                // Subscription has been configured so set the next state
+                if (node.getAccessModel().isAuthorizationRequired()) {
+                    state = State.pending;
+                }
+                else {
+                    state = State.subscribed;
+                }
             }
         }
         if (savedToDB) {
@@ -641,6 +640,32 @@ public class NodeSubscription {
     }
 
     /**
+     * Returns true if node events such as configuration changed or node purged can be
+     * sent to the subscriber.
+     *
+     * @return true if node events such as configuration changed or node purged can be
+     *         sent to the subscriber.
+     */
+    boolean canSendNodeEvents() {
+        // Check if the subscription is active
+        if (!isActive()) {
+            return false;
+        }
+        // Check if delivery of notifications is disabled
+        if (!shouldDeliverNotifications()) {
+            return false;
+        }
+        // Check if delivery is subject to presence-based policy
+        if (!getPresenceStates().isEmpty()) {
+            String show = service.getShowPresence(jid);
+            if (show == null || !getPresenceStates().contains(show)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Returns true if the published item matches the keyword filter specified in
      * the subscription. If no keyword was specified then answer true.
      *
@@ -662,9 +687,9 @@ public class NodeSubscription {
      *
      * @return true if the subscription is active.
      */
-    private boolean isActive() {
+    public boolean isActive() {
         // Check if subscription is approved and configured (if required)
-        if (!isApproved() || this.isConfigurationPending()) {
+        if (state != State.subscribed) {
             return false;
         }
         // Check if the subscription has expired
@@ -806,6 +831,56 @@ public class NodeSubscription {
 
     public String toString() {
         return super.toString() + " - JID: " + getJID() + " - State: " + getState().name();
+    }
+
+    /**
+     * The subscription has been approved by a node owner. The subscription is now active so
+     * the subscriber is now allowed to get event notifications.
+     */
+    void approved() {
+        if (state == State.subscribed) {
+            // Do nothing
+            return;
+        }
+        state = State.subscribed;
+
+        if (savedToDB) {
+            // Update the subscription in the backend store
+            PubSubPersistenceManager.saveSubscription(service, node, this, false);
+        }
+
+        // Send last published item (if node is leaf node and subscription status is ok)
+        if (node.isSendItemSubscribe() && isActive()) {
+            PublishedItem lastItem = node.getLastPublishedItem();
+            if (lastItem != null) {
+                sendLastPublishedItem(lastItem);
+            }
+        }
+    }
+
+    /**
+     * Sends an request to authorize the pending subscription to the specified owner.
+     *
+     * @param owner the JID of the user that will get the authorization request.
+     */
+    public void sendAuthorizationRequest(JID owner) {
+        Message authRequest = new Message();
+        authRequest.addExtension(node.getAuthRequestForm(this));
+        authRequest.setTo(owner);
+        authRequest.setFrom(service.getAddress());
+        // Send authentication request to node owners
+        service.send(authRequest);
+    }
+
+    /**
+     * Sends an request to authorize the pending subscription to all owners. The first
+     * answer sent by a owner will be processed. Rest of the answers will be discarded.
+     */
+    public void sendAuthorizationRequest() {
+        Message authRequest = new Message();
+        authRequest.addExtension(node.getAuthRequestForm(this));
+        // Send authentication request to node owners
+        service.broadcast(node, authRequest, node.getOwners());
     }
 
     /**

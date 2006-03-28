@@ -203,10 +203,15 @@ public abstract class Node {
         Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
         if (subscriptions.isEmpty()) {
             // User does not have a subscription with the node so create a default one
-            addSubscription(jid, jid, NodeSubscription.State.subscribed, null);
+            createSubscription(null, jid, jid, false, null);
         }
         else {
-            // TODO Approve any pending subscription
+            // Approve any pending subscription
+            for (NodeSubscription subscription : getSubscriptions(jid)) {
+                if (subscription.isAuthorizationPending()) {
+                    subscription.approved();
+                }
+            }
         }
     }
 
@@ -232,10 +237,15 @@ public abstract class Node {
         Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
         if (subscriptions.isEmpty()) {
             // User does not have a subscription with the node so create a default one
-            addSubscription(jid, jid, NodeSubscription.State.subscribed, null);
+            createSubscription(null, jid, jid, false, null);
         }
         else {
-            // TODO Approve any pending subscription
+            // Approve any pending subscription
+            for (NodeSubscription subscription : getSubscriptions(jid)) {
+                if (subscription.isAuthorizationPending()) {
+                    subscription.approved();
+                }
+            }
         }
     }
 
@@ -325,24 +335,6 @@ public abstract class Node {
             // Remove the affiliate from the database
             PubSubPersistenceManager.removeAffiliation(service, this, affiliate);
         }
-    }
-
-    private NodeSubscription addSubscription(JID owner, JID jid, NodeSubscription.State subscribed,
-            DataForm options) {
-        // Generate a subscription ID (override even if one was sent by the client)
-        String id = StringUtils.randomString(40);
-        NodeSubscription subscription = new NodeSubscription(service, this, owner, jid, subscribed, id);
-        // Configure the subscription with the specified configuration (if any)
-        if (options != null) {
-            subscription.configure(options);
-        }
-        addSubscription(subscription);
-
-        if (savedToDB) {
-            // Add the new subscription to the database
-            PubSubPersistenceManager.saveSubscription(service, this, subscription, true);
-        }
-        return subscription;
     }
 
     /**
@@ -694,8 +686,53 @@ public abstract class Node {
             item.add(getConfigurationChangeForm().getElement());
         }
         // Send notification that the node configuration has changed
-        broadcastSubscribers(message, false);
+        broadcastNodeEvent(message, false);
     }
+
+    /**
+     * Returns the data form to be included in the authorization request to be sent to
+     * node owners when a new subscription needs to be approved.
+     *
+     * @param subscription the new subscription that needs to be approved.
+     * @return the data form to be included in the authorization request.
+     */
+    DataForm getAuthRequestForm(NodeSubscription subscription) {
+        DataForm form = new DataForm(DataForm.Type.form);
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.authorization.title"));
+        form.addInstruction(
+                LocaleUtils.getLocalizedString("pubsub.form.authorization.instruction"));
+
+        FormField formField = form.addField();
+        formField.setVariable("FORM_TYPE");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue("http://jabber.org/protocol/pubsub#subscribe_authorization");
+
+        formField = form.addField();
+        formField.setVariable("pubsub#subid");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue(subscription.getID());
+
+        formField = form.addField();
+        formField.setVariable("pubsub#node");
+        formField.setType(FormField.Type.text_single);
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.node"));
+        formField.addValue(getNodeID());
+
+        formField = form.addField();
+        formField.setVariable("pusub#subscriber_jid");
+        formField.setType(FormField.Type.jid_single);
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.subscriber"));
+        formField.addValue(subscription.getJID().toString());
+
+        formField = form.addField();
+        formField.setVariable("pubsub#allow");
+        formField.setType(FormField.Type.boolean_type);
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.allow"));
+        formField.addValue(Boolean.FALSE);
+
+        return form;
+    }
+
 
     /**
      * Returns a data form used by the owner to edit the node configuration.
@@ -708,6 +745,12 @@ public abstract class Node {
         List<String> params = new ArrayList<String>();
         params.add(getNodeID());
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.conf.instruction", params));
+
+        FormField formField = form.addField();
+        formField.setVariable("FORM_TYPE");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue("http://jabber.org/protocol/pubsub#node_config");
+
         // Add the form fields and configure them for edition
         addFormFields(form, true);
         return form;
@@ -724,11 +767,6 @@ public abstract class Node {
      */
     protected void addFormFields(DataForm form, boolean isEditing) {
         FormField formField = form.addField();
-        formField.setVariable("FORM_TYPE");
-        formField.setType(FormField.Type.hidden);
-        formField.addValue("http://jabber.org/protocol/pubsub#node_config");
-
-        formField = form.addField();
         formField.setVariable("pubsub#title");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
@@ -938,9 +976,30 @@ public abstract class Node {
      */
     private DataForm getConfigurationChangeForm() {
         DataForm form = new DataForm(DataForm.Type.result);
+        FormField formField = form.addField();
+        formField.setVariable("FORM_TYPE");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue("http://jabber.org/protocol/pubsub#node_config");
         // Add the form fields and configure them for notification
         // (i.e. no label or options are included)
         addFormFields(form, false);
+        return form;
+    }
+
+    /**
+     * Returns a data form containing the node configuration that is going to be used for
+     * service discovery.
+     *
+     * @return a data form with the node configuration.
+     */
+    public DataForm getMetadataForm() {
+        DataForm form = new DataForm(DataForm.Type.result);
+        FormField formField = form.addField();
+        formField.setVariable("FORM_TYPE");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue("http://jabber.org/protocol/pubsub#meta-data");
+        // Add the form fields
+        addFormFields(form, true);
         return form;
     }
 
@@ -1589,7 +1648,7 @@ public abstract class Node {
                 Element items = event.addElement("delete");
                 items.addAttribute("node", nodeID);
                 // Send notification that the node was deleted
-                broadcastSubscribers(message, true);
+                broadcastNodeEvent(message, true);
             }
             // Remove the node from memory
             service.removeNode(getNodeID());
@@ -1622,10 +1681,17 @@ public abstract class Node {
         }
     }
 
-    protected void broadcastSubscribers(Message message, boolean includeAll) {
+    /**
+     * Broadcasts a node event to subscribers of the node.
+     *
+     * @param message the message containing the node event.
+     * @param includeAll true if all subscribers will be notified no matter their
+     *        subscriptions status or configuration.
+     */
+    protected void broadcastNodeEvent(Message message, boolean includeAll) {
         Collection<JID> jids = new ArrayList<JID>();
         for (NodeSubscription subscription : subscriptionsByID.values()) {
-            if (includeAll || subscription.isApproved()) {
+            if (includeAll || subscription.canSendNodeEvents()) {
                 jids.add(subscription.getJID());
             }
         }
@@ -1655,8 +1721,7 @@ public abstract class Node {
             }
         }
 
-        notification.setTo(subscriberJID);
-        service.send(notification);
+        service.sendNotification(this, notification, subscriberJID);
 
         if (headers != null) {
             // Remove the added child element that includes subscription IDs information
@@ -1699,8 +1764,21 @@ public abstract class Node {
             // User has to configure the subscription to make it active
             subState = NodeSubscription.State.unconfigured;
         }
+        // Generate a subscription ID (override even if one was sent by the client)
+        String id = StringUtils.randomString(40);
         // Create new subscription
-        NodeSubscription subscription = addSubscription(owner, subscriber, subState, options);
+        NodeSubscription subscription =
+                new NodeSubscription(service, this, owner, subscriber, subState, id);
+        // Configure the subscription with the specified configuration (if any)
+        if (options != null) {
+            subscription.configure(options);
+        }
+        addSubscription(subscription);
+
+        if (savedToDB) {
+            // Add the new subscription to the database
+            PubSubPersistenceManager.saveSubscription(service, this, subscription, true);
+        }
 
         if (originalIQ != null) {
             // Reply with subscription and affiliation status indicating if subscription
@@ -1708,8 +1786,14 @@ public abstract class Node {
             subscription.sendSubscriptionState(originalIQ);
         }
 
+        // If subscription is pending then send notification to node owners asking to approve
+        // new subscription
+        if (subscription.isAuthorizationPending()) {
+            subscription.sendAuthorizationRequest();
+        }
+
         // Send last published item (if node is leaf node and subscription status is ok)
-        if (isSendItemSubscribe()) {
+        if (isSendItemSubscribe() && subscription.isActive()) {
             PublishedItem lastItem = getLastPublishedItem();
             if (lastItem != null) {
                 subscription.sendLastPublishedItem(lastItem);
@@ -1779,6 +1863,28 @@ public abstract class Node {
         return Collections.emptyList();
     }
 
+    /**
+     * Returns a list with the subscriptions to the node that are pending to be approved by
+     * a node owner. If the node is not using the access model
+     * {@link org.jivesoftware.wildfire.pubsub.models.AuthorizeAccess} then the result will
+     * be an empty collection.
+     *
+     * @return a list with the subscriptions to the node that are pending to be approved by
+     *         a node owner.
+     */
+    public Collection<NodeSubscription> getPendingSubscriptions() {
+        if (accessModel.isAuthorizationRequired()) {
+            List<NodeSubscription> pendingSubscriptions = new ArrayList<NodeSubscription>();
+            for (NodeSubscription subscription : subscriptionsByID.values()) {
+                if (subscription.isAuthorizationPending()) {
+                    pendingSubscriptions.add(subscription);
+                }
+            }
+            return pendingSubscriptions;
+        }
+        return Collections.emptyList();
+    }
+
     public String toString() {
         return super.toString() + " - ID: " + getNodeID();
     }
@@ -1793,6 +1899,30 @@ public abstract class Node {
      */
     public PublishedItem getLastPublishedItem() {
         return null;
+    }
+
+    /**
+     * Approves or cancels a subscriptions that was pending to be approved by a node owner.
+     * Subscriptions that were not approved will be deleted. Approved subscriptions will be
+     * activated (i.e. will be able to receive event notifications) as long as the subscriber
+     * is not required to configure the subscription.
+     *
+     * @param subscription the subscriptions that was approved or rejected.
+     * @param approved true when susbcription was approved. Otherwise the subscription was rejected.
+     */
+    public void approveSubscription(NodeSubscription subscription, boolean approved) {
+        if (!subscription.isAuthorizationPending()) {
+            // Do nothing if the subscription is no longer pending
+            return;
+        }
+        if (approved) {
+            // Mark that the subscription to the node has been approved
+            subscription.approved();
+        }
+        else  {
+            // Cancel the subscription to the node
+            cancelSubscription(subscription);
+        }
     }
 
     /**

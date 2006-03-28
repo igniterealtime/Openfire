@@ -77,16 +77,16 @@ public class PubSubPersistenceManager {
             "DELETE FROM pubsubAffiliation WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_SUBSCRIPTIONS =
-            "SELECT nodeID, id, jid, owner, state, confPending, deliver, digest, " +
-            "digest_frequency, expire, includeBody, showValues, subscriptionType, " +
-            "subscriptionDepth, keyword FROM pubsubSubscription WHERE serviceID=? ORDER BY nodeID";
+            "SELECT nodeID, id, jid, owner, state, deliver, digest, digest_frequency, " +
+            "expire, includeBody, showValues, subscriptionType, subscriptionDepth, " +
+            "keyword FROM pubsubSubscription WHERE serviceID=? ORDER BY nodeID";
     private static final String ADD_SUBSCRIPTION =
             "INSERT INTO pubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
-            "confPending, deliver, digest, digest_frequency, expire, includeBody, showValues, " +
+            "deliver, digest, digest_frequency, expire, includeBody, showValues, " +
             "subscriptionType, subscriptionDepth, keyword) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBSCRIPTION =
-            "UPDATE pubsubSubscription SET owner=?, state=?, confPending=? deliver=?, digest=?, " +
+            "UPDATE pubsubSubscription SET owner=?, state=?, deliver=?, digest=?, " +
             "digest_frequency=?, expire=?, includeBody=?, showValues=?, subscriptionType=?, " +
             "subscriptionDepth=?, keyword=? WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_SUBSCRIPTION =
@@ -94,6 +94,9 @@ public class PubSubPersistenceManager {
     private static final String DELETE_SUBSCRIPTIONS =
             "DELETE FROM pubsubSubscription WHERE serviceID=? AND nodeID=?";
 
+    private static final String LOAD_ALL_ITEMS =
+            "SELECT id,jid,creationDate,payload,nodeID FROM pubsubItem " +
+            "WHERE serviceID=? ORDER BY creationDate";
     private static final String LOAD_ITEMS =
             "SELECT id,jid,creationDate,payload FROM pubsubItem " +
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
@@ -383,6 +386,17 @@ public class PubSubPersistenceManager {
                 loadSubscriptions(service, nodes, rs);
             }
             rs.close();
+
+            // TODO We may need to optimize memory consumption and load items on-demand
+            // Load published items of all nodes
+            pstmt = con.prepareStatement(LOAD_ALL_ITEMS);
+            pstmt.setString(1, service.getServiceID());
+            rs = pstmt.executeQuery();
+            // Add to each node the correspondiding subscriptions
+            while(rs.next()) {
+                loadItems(nodes, rs);
+            }
+            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -509,24 +523,59 @@ public class PubSubPersistenceManager {
             NodeSubscription.State state = NodeSubscription.State.valueOf(rs.getString(5));
             NodeSubscription subscription =
                     new NodeSubscription(service, node, owner, subscriber, state, subID);
-            subscription.setConfigurationPending(rs.getInt(6) == 1);
-            subscription.setShouldDeliverNotifications(rs.getInt(7) == 1);
-            subscription.setUsingDigest(rs.getInt(8) == 1);
-            subscription.setDigestFrequency(rs.getInt(9));
-            if (rs.getString(10) != null) {
-                subscription.setExpire(new Date(Long.parseLong(rs.getString(10).trim())));
+            subscription.setShouldDeliverNotifications(rs.getInt(6) == 1);
+            subscription.setUsingDigest(rs.getInt(7) == 1);
+            subscription.setDigestFrequency(rs.getInt(8));
+            if (rs.getString(9) != null) {
+                subscription.setExpire(new Date(Long.parseLong(rs.getString(9).trim())));
             }
-            subscription.setIncludingBody(rs.getInt(11) == 1);
-            subscription.setPresenceStates(decodeWithComma(rs.getString(12)));
-            subscription.setType(NodeSubscription.Type.valueOf(rs.getString(13)));
-            subscription.setDepth(rs.getInt(14));
-            subscription.setKeyword(rs.getString(15));
+            subscription.setIncludingBody(rs.getInt(10) == 1);
+            subscription.setPresenceStates(decodeWithComma(rs.getString(11)));
+            subscription.setType(NodeSubscription.Type.valueOf(rs.getString(12)));
+            subscription.setDepth(rs.getInt(13));
+            subscription.setKeyword(rs.getString(14));
             // Indicate the subscription that is has already been saved to the database
             subscription.setSavedToDB(true);
             node.addSubscription(subscription);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
+        }
+    }
+
+    private static void loadItems(Map<String, Node> nodes, ResultSet rs) {
+        SAXReader xmlReader = null;
+        try {
+            // Get a sax reader from the pool
+            xmlReader = xmlReaders.take();
+
+            String nodeID = rs.getString(5);
+            LeafNode node = (LeafNode) nodes.get(nodeID);
+            if (node == null) {
+                Log.warn("Published Item found for a non-existent node: " + nodeID);
+                return;
+            }
+            String itemID = rs.getString(1);
+            JID publisher = new JID(rs.getString(2));
+            Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
+            // Create the item
+            PublishedItem item = new PublishedItem(node, publisher, itemID, creationDate);
+            // Add the extra fields to the published item
+            if (rs.getString(4) != null) {
+                item.setPayload(
+                        xmlReader.read(new StringReader(rs.getString(4))).getRootElement());
+            }
+            // Add the published item to the node
+            node.addPublishedItem(item);
+        }
+        catch (Exception sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            // Return the sax reader to the pool
+            if (xmlReader != null) {
+                xmlReaders.add(xmlReader);
+            }
         }
     }
 
@@ -638,22 +687,21 @@ public class PubSubPersistenceManager {
                 pstmt.setString(4, subscription.getJID().toString());
                 pstmt.setString(5, subscription.getOwner().toString());
                 pstmt.setString(6, subscription.getState().name());
-                pstmt.setInt(7, (subscription.isConfigurationPending() ? 1 : 0));
-                pstmt.setInt(8, (subscription.shouldDeliverNotifications() ? 1 : 0));
-                pstmt.setInt(9, (subscription.isUsingDigest() ? 1 : 0));
-                pstmt.setInt(10, subscription.getDigestFrequency());
+                pstmt.setInt(7, (subscription.shouldDeliverNotifications() ? 1 : 0));
+                pstmt.setInt(8, (subscription.isUsingDigest() ? 1 : 0));
+                pstmt.setInt(9, subscription.getDigestFrequency());
                 Date expireDate = subscription.getExpire();
                 if (expireDate == null) {
-                    pstmt.setString(11, null);
+                    pstmt.setString(10, null);
                 }
                 else {
-                    pstmt.setString(11, StringUtils.dateToMillis(expireDate));
+                    pstmt.setString(10, StringUtils.dateToMillis(expireDate));
                 }
-                pstmt.setInt(12, (subscription.isIncludingBody() ? 1 : 0));
-                pstmt.setString(13, encodeWithComma(subscription.getPresenceStates()));
-                pstmt.setString(14, subscription.getType().name());
-                pstmt.setInt(15, subscription.getDepth());
-                pstmt.setString(16, subscription.getKeyword());
+                pstmt.setInt(11, (subscription.isIncludingBody() ? 1 : 0));
+                pstmt.setString(12, encodeWithComma(subscription.getPresenceStates()));
+                pstmt.setString(13, subscription.getType().name());
+                pstmt.setInt(14, subscription.getDepth());
+                pstmt.setString(15, subscription.getKeyword());
                 pstmt.executeUpdate();
                 // Indicate the subscription that is has been saved to the database
                 subscription.setSavedToDB(true);
@@ -672,25 +720,24 @@ public class PubSubPersistenceManager {
                     pstmt = con.prepareStatement(UPDATE_SUBSCRIPTION);
                     pstmt.setString(1, subscription.getOwner().toString());
                     pstmt.setString(2, subscription.getState().name());
-                    pstmt.setInt(3, (subscription.isConfigurationPending() ? 1 : 0));
-                    pstmt.setInt(4, (subscription.shouldDeliverNotifications() ? 1 : 0));
-                    pstmt.setInt(5, (subscription.isUsingDigest() ? 1 : 0));
-                    pstmt.setInt(6, subscription.getDigestFrequency());
+                    pstmt.setInt(3, (subscription.shouldDeliverNotifications() ? 1 : 0));
+                    pstmt.setInt(4, (subscription.isUsingDigest() ? 1 : 0));
+                    pstmt.setInt(5, subscription.getDigestFrequency());
                     Date expireDate = subscription.getExpire();
                     if (expireDate == null) {
-                        pstmt.setString(7, null);
+                        pstmt.setString(6, null);
                     }
                     else {
-                        pstmt.setString(7, StringUtils.dateToMillis(expireDate));
+                        pstmt.setString(6, StringUtils.dateToMillis(expireDate));
                     }
-                    pstmt.setInt(8, (subscription.isIncludingBody() ? 1 : 0));
-                    pstmt.setString(9, encodeWithComma(subscription.getPresenceStates()));
-                    pstmt.setString(10, subscription.getType().name());
-                    pstmt.setInt(11, subscription.getDepth());
-                    pstmt.setString(12, subscription.getKeyword());
-                    pstmt.setString(13, service.getServiceID());
-                    pstmt.setString(14, node.getNodeID());
-                    pstmt.setString(15, subscription.getID());
+                    pstmt.setInt(7, (subscription.isIncludingBody() ? 1 : 0));
+                    pstmt.setString(8, encodeWithComma(subscription.getPresenceStates()));
+                    pstmt.setString(9, subscription.getType().name());
+                    pstmt.setInt(10, subscription.getDepth());
+                    pstmt.setString(11, subscription.getKeyword());
+                    pstmt.setString(12, service.getServiceID());
+                    pstmt.setString(13, node.getNodeID());
+                    pstmt.setString(14, subscription.getID());
                     pstmt.executeUpdate();
                 }
             }

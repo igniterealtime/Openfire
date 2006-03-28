@@ -35,6 +35,13 @@ import java.util.Collection;
 public interface PubSubService {
 
     /**
+     * Returns the XMPP address of the service.
+     *
+     * @return the XMPP address of the service.
+     */
+    JID getAddress();
+
+    /**
      * Returns a String that uniquely identifies this pubsub service. This information is
      * being used when storing node information in the database so it's possible to have
      * nodes with the same ID but under different pubsub services.

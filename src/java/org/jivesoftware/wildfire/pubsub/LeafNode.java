@@ -103,7 +103,7 @@ public class LeafNode extends Node {
             }
         }
         // Remove stored published items based on the new max items
-        while (!publishedItems.isEmpty() && maxPublishedItems > publishedItems.size()) {
+        while (!publishedItems.isEmpty() && publishedItems.size() > maxPublishedItems) {
             PublishedItem removedItem = publishedItems.remove(0);
             itemsByID.remove(removedItem.getID());
             // Add the removed item to the queue of items to delete from the database. The
@@ -236,7 +236,8 @@ public class LeafNode extends Node {
 
                     // Add the published item to the list of items to persist (using another thread)
                     // but check that we don't exceed the limit. Remove oldest items if required.
-                    while (!publishedItems.isEmpty() && maxPublishedItems >= publishedItems.size()) {
+                    while (!publishedItems.isEmpty() && publishedItems.size() >= maxPublishedItems)
+                    {
                         PublishedItem removedItem = publishedItems.remove(0);
                         itemsByID.remove(removedItem.getID());
                         // Add the removed item to the queue of items to delete from the database. The
@@ -410,7 +411,7 @@ public class LeafNode extends Node {
             Element items = event.addElement("purge");
             items.addAttribute("node", nodeID);
             // Send notification that the node configuration has changed
-            broadcastSubscribers(message, false);
+            broadcastNodeEvent(message, false);
         }
     }
 }

@@ -77,6 +77,12 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void addComponent(String subdomain, Component component) throws ComponentException {
+        // Check that the requested subdoman is not taken by another component
+        Component existingComponent = components.get(subdomain);
+        if (existingComponent != null && existingComponent != component) {
+            throw new ComponentException("Domain already taken by another component");
+        }
+        // Register that the domain is now taken by the component
         components.put(subdomain, component);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);

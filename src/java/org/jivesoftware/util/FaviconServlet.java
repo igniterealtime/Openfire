@@ -11,6 +11,11 @@
 
 package org.jivesoftware.util;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -30,22 +35,30 @@ import java.net.URLConnection;
  * servlet can be used when getting a favicon can take some time so pages can use this
  * servlet as the image source to let the page load quickly and get the favicon images
  * as they are available.<p>
- *
+ * <p/>
  * This servlet expects the web application to have the <tt>images/server_16x16.gif</tt>
  * file that is used when no favicon is found.
  *
  * @author Gaston Dombiak
  */
 public class FaviconServlet extends HttpServlet {
+
     /**
      * The content-type of the images to return.
      */
     private static final String CONTENT_TYPE = "image/jpeg";
     private byte[] defaultBytes;
+    private HttpClient client;
 
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        // Create a pool of HTTP connections to use to get the favicons
+        client = new HttpClient(new MultiThreadedHttpConnectionManager());
+        HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
+        params.setConnectionTimeout(500);
+        params.setSoTimeout(500);
+        // Load the default favicon to use when no favicon was found of a remote host
         try {
             URL resource = config.getServletContext().getResource("/images/server_16x16.gif");
             defaultBytes = getImage(resource.toString());
@@ -66,6 +79,8 @@ public class FaviconServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String host = request.getParameter("host");
+        // Check special cases where we need to change host to get a favicon
+        host = "gmail.com".equals(host) ? "google.com" : host;
 
         byte[] bytes = getImage(host, defaultBytes);
         if (bytes != null) {
@@ -110,26 +125,38 @@ public class FaviconServlet extends HttpServlet {
 
     private byte[] getImage(String url) {
         try {
-            URLConnection urlConnection = new URL(url).openConnection();
-            urlConnection.setReadTimeout(1000);
+            // Try to get the fiveicon from the url using an HTTP connection from the pool
+            // that also allows to configure timeout values (e.g. connect and get data)
+            GetMethod get = new GetMethod(url);
+            client.executeMethod(get);
+            return get.getResponseBody();
+        }
+        catch (Exception e) {
+            // Something failed (probably a method not supported) so try the old stye now
+            try {
+                URLConnection urlConnection = new URL(url).openConnection();
+                urlConnection.setReadTimeout(1000);
 
-            urlConnection.connect();
-            DataInputStream di = new DataInputStream(urlConnection.getInputStream());
+                urlConnection.connect();
+                DataInputStream di = new DataInputStream(urlConnection.getInputStream());
 
-            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteStream);
+                ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(byteStream);
 
-            int len;
-            byte[] b = new byte[1024];
-            while ((len = di.read(b)) != -1) {
-                out.write(b, 0, len);
+                int len;
+                byte[] b = new byte[1024];
+                while ((len = di.read(b)) != -1) {
+                    out.write(b, 0, len);
+                }
+                di.close();
+                out.flush();
+
+                return byteStream.toByteArray();
             }
-            di.close();
-            out.flush();
-
-            return byteStream.toByteArray();
-        } catch (IOException e) {
-            return null;
+            catch (IOException ioe) {
+                // We failed again so return null
+                return null;
+            }
         }
     }
 

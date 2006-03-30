@@ -216,14 +216,23 @@ public abstract class Node {
     }
 
     /**
-     * Removes the owner affiliation of the specified entity JID. If the user was an owner
-     * of this node then the user will not have any affiliation with the node.
+     * Removes the owner affiliation of the specified entity JID. If the user that is
+     * no longer an owner was subscribed to the node then his affiliation will be of
+     * type {@link NodeAffiliate.Affiliation#none}.
      *
      * @param jid the JID of the user being removed as a node owner.
      */
     public void removeOwner(JID jid) {
-        removeAffiliation(jid, NodeAffiliate.Affiliation.owner);
-        removeSubscriptions(jid);
+        // Get the current affiliation of the specified JID
+        NodeAffiliate affiliate = getAffiliate(jid);
+        if (affiliate.getSubscriptions().isEmpty()) {
+            removeAffiliation(jid, NodeAffiliate.Affiliation.owner);
+            removeSubscriptions(jid);
+        }
+        else {
+            // The user has subscriptions so change affiliation to NONE
+            addNoneAffiliation(jid);
+        }
     }
 
     /**
@@ -250,14 +259,23 @@ public abstract class Node {
     }
 
     /**
-     * Removes the publisher affiliation of the specified entity JID. If the user was a publisher
-     * of this node then the user will not have any affiliation with the node.
+     * Removes the publisher affiliation of the specified entity JID. If the user that is
+     * no longer a publisher was subscribed to the node then his affiliation will be of
+     * type {@link NodeAffiliate.Affiliation#none}.
      *
      * @param jid the JID of the user being removed as a node publisher.
      */
     public void removePublisher(JID jid) {
-        removeAffiliation(jid, NodeAffiliate.Affiliation.publisher);
-        removeSubscriptions(jid);
+        // Get the current affiliation of the specified JID
+        NodeAffiliate affiliate = getAffiliate(jid);
+        if (affiliate.getSubscriptions().isEmpty()) {
+            removeAffiliation(jid, NodeAffiliate.Affiliation.publisher);
+            removeSubscriptions(jid);
+        }
+        else {
+            // The user has subscriptions so change affiliation to NONE
+            addNoneAffiliation(jid);
+        }
     }
 
     /**
@@ -321,9 +339,8 @@ public abstract class Node {
     private void removeAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
         // Get the current affiliation of the specified JID
         NodeAffiliate affiliate = getAffiliate(jid);
-        // Check if the user already has the same affiliation
+        // Check if the current affiliatin of the user is the one to remove
         if (affiliate != null && affiliation == affiliate.getAffiliation()) {
-            // TODO If user has subscriptions then change affiliation to NONE
             removeAffiliation(affiliate);
         }
     }
@@ -440,6 +457,8 @@ public abstract class Node {
      * @throws NotAcceptableException if completed data form tries to leave the node without owners.
      */
     public void configure(DataForm completedForm) throws NotAcceptableException {
+        boolean wasPresenceBased = isPresenceBasedDelivery();
+
         if (DataForm.Type.cancel.equals(completedForm.getType())) {
             // Existing node configuration is applied (i.e. nothing is changed)
         }
@@ -456,7 +475,9 @@ public abstract class Node {
                     try {
                         owners.add(new JID(value));
                     }
-                    catch (Exception e) {}
+                    catch (Exception e) {
+                        // Do nothing
+                    }
                 }
             }
 
@@ -543,7 +564,9 @@ public abstract class Node {
                         try {
                             contacts.add(new JID(value));
                         }
-                        catch (Exception e) {}
+                        catch (Exception e) {
+                            // Do nothing
+                        }
                     }
                 }
                 else if ("pubsub#description".equals(field.getVariable())) {
@@ -571,7 +594,9 @@ public abstract class Node {
                         try {
                             replyRooms.add(new JID(value));
                         }
-                        catch (Exception e) {}
+                        catch (Exception e) {
+                            // Do nothing
+                        }
                     }
                 }
                 else if ("pubsub#replyto".equals(field.getVariable())) {
@@ -581,7 +606,9 @@ public abstract class Node {
                         try {
                             replyTo.add(new JID(value));
                         }
-                        catch (Exception e) {}
+                        catch (Exception e) {
+                            // Do nothing
+                        }
                     }
                 }
                 else {
@@ -615,7 +642,9 @@ public abstract class Node {
                     try {
                         publishers.add(new JID(value));
                     }
-                    catch (Exception e) {}
+                    catch (Exception e) {
+                        // Do nothing
+                    }
                 }
                 // Calculate publishers to remove and remove them from the DB
                 Collection<JID> oldPublishers = getPublishers();
@@ -643,6 +672,16 @@ public abstract class Node {
         }
         // Store the new or updated node in the backend store
         saveToDB();
+
+        // Check if we need to subscribe or unsubscribe from affiliate presences
+        if (wasPresenceBased != isPresenceBasedDelivery()) {
+            if (isPresenceBasedDelivery()) {
+                addPresenceSubscriptions();
+            }
+            else {
+                cancelPresenceSubscriptions();
+            }
+        }
     }
 
     /**
@@ -1146,7 +1185,6 @@ public abstract class Node {
      * @return true if notifications are going to be delivered to available users only.
      */
     public boolean isPresenceBasedDelivery() {
-        // TODO Use this variable somewhere :)
         return presenceBasedDelivery;
     }
 
@@ -1556,7 +1594,7 @@ public abstract class Node {
         // Make the room persistent
         if (!savedToDB) {
             PubSubPersistenceManager.createNode(service, this);
-            // Set that the now is now in the DB
+            // Set that the node is now in the DB
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
             for (NodeAffiliate affialiate : affiliates) {
@@ -1568,6 +1606,10 @@ public abstract class Node {
             }
             // Add the new node to the list of available nodes
             service.addNode(this);
+            // Notify the parent (if any) that a new node has been added
+            if (parent != null) {
+                parent.childNodeAdded(this);
+            }
         }
         else {
             PubSubPersistenceManager.updateNode(service, this);
@@ -1628,7 +1670,6 @@ public abstract class Node {
      * @return true if the node was successfully deleted.
      */
     public boolean delete() {
-        // TODO Should we lock the object to prevent simultaneous edition, publishing, etc.????
         // Delete node from the database
         if (PubSubPersistenceManager.removeNode(service, this)) {
             // Remove this node from the parent node (if any)
@@ -1650,6 +1691,12 @@ public abstract class Node {
                 // Send notification that the node was deleted
                 broadcastNodeEvent(message, true);
             }
+            // Notify the parent (if any) that the node has been removed from the parent node
+            if (parent != null) {
+                parent.childNodeDeleted(this);
+            }
+            // Remove presence subscription when node was deleted.
+            cancelPresenceSubscriptions();
             // Remove the node from memory
             service.removeNode(getNodeID());
             // Clear collections in memory (clear them after broadcast was sent)
@@ -1659,6 +1706,33 @@ public abstract class Node {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Unsubscribe from affiliates presences if node is only sending notifications to
+     * only users or only unsubscribe from those subscribers that configured their
+     * subscription to send notifications based on their presence show value.
+     */
+    private void addPresenceSubscriptions() {
+        for (NodeAffiliate affiliate : affiliates) {
+            if (affiliate.getAffiliation() != NodeAffiliate.Affiliation.outcast &&
+                    (isPresenceBasedDelivery() || (!affiliate.getSubscriptions().isEmpty()))) {
+                service.presenceSubscriptionRequired(this, affiliate.getJID());
+            }
+        }
+    }
+
+    /**
+     * Unsubscribe from affiliates presences if node is only sending notifications to
+     * only users or only unsubscribe from those subscribers that configured their
+     * subscription to send notifications based on their presence show value.
+     */
+    private void cancelPresenceSubscriptions() {
+        for (NodeSubscription subscription : getSubscriptions()) {
+            if (isPresenceBasedDelivery() || !subscription.getPresenceStates().isEmpty()) {
+                service.presenceSubscriptionNotRequired(this, subscription.getOwner());
+            }
+        }
     }
 
     /**
@@ -1756,13 +1830,13 @@ public abstract class Node {
         }
         // Figure out subscription status
         NodeSubscription.State subState = NodeSubscription.State.subscribed;
-        if (authorizationRequired) {
-            // Node owner needs to authorize subscription request so status is pending
-            subState = NodeSubscription.State.pending;
-        }
-        else if (isSubscriptionConfigurationRequired()) {
+        if (isSubscriptionConfigurationRequired()) {
             // User has to configure the subscription to make it active
             subState = NodeSubscription.State.unconfigured;
+        }
+        else if (authorizationRequired && !isAdmin(owner)) {
+            // Node owner needs to authorize subscription request so status is pending
+            subState = NodeSubscription.State.pending;
         }
         // Generate a subscription ID (override even if one was sent by the client)
         String id = StringUtils.randomString(40);
@@ -1799,6 +1873,16 @@ public abstract class Node {
                 subscription.sendLastPublishedItem(lastItem);
             }
         }
+
+        // Check if we need to subscribe to the presence of the owner
+        if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).size() == 1) {
+            if (subscription.getPresenceStates().isEmpty()) {
+                // Subscribe to the owner's presence since the node is only sending events to
+                // online subscribers and this is the first subscription of the user and the
+                // subscription is not filtering notifications based on presence show values.
+                service.presenceSubscriptionRequired(this, owner);
+            }
+        }
     }
 
     /**
@@ -1822,6 +1906,10 @@ public abstract class Node {
         if (savedToDB) {
             // Remove the subscription from the database
             PubSubPersistenceManager.removeSubscription(service, this, subscription);
+        }
+        // Check if we need to unsubscribe from the presence of the owner
+        if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {
+            service.presenceSubscriptionNotRequired(this, subscription.getOwner());
         }
     }
 
@@ -1937,6 +2025,6 @@ public abstract class Node {
         /**
          * Dynamically specify a replyto of the item publisher.
          */
-        publisher;
+        publisher
     }
 }

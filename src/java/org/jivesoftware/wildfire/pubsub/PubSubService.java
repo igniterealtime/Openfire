@@ -173,15 +173,17 @@ public interface PubSubService {
     DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType);
 
     /**
-     * Returns the show value of the last know presence of the specified subscriber. If the user
-     * is offline then a <tt>null</tt> value is returned. Available show status is represented
+     * Returns the show values of the last know presence of all connected resources of the
+     * specified subscriber. When the subscriber JID is a bare JID then the answered collection
+     * will have many entries one for each connected resource. Moreover, if the user
+     * is offline then an empty collectin is returned. Available show status is represented
      * by a <tt>online</tt> value. The rest of the possible show values as defined in RFC 3921.
      *
      * @param subscriber the JID of the subscriber. This is not the JID of the affiliate.
-     * @return null when offline, online when user if available or show values as defined
-     *         in RFC 3921.
+     * @return an empty collection when offline. Otherwise, a collection with the show value
+     *         of each connected resource.
      */
-    String getShowPresence(JID subscriber);
+    Collection<String> getShowPresences(JID subscriber);
 
     /**
      * Returns the pubsub engine responsible for handling packets sent to the pub-sub service.
@@ -191,4 +193,23 @@ public interface PubSubService {
      * @return the pubsub engine responsible for handling packets sent to the pub-sub service.
      */
     PubSubEngine getPubSubEngine();
+
+    /**
+     * Requests the pubsub service to subscribe to the presence of the user. If the service
+     * has already subscribed to the user's presence then do nothing.
+     *
+     * @param node the node that originated the subscription request.
+     * @param user the JID of the affiliate to subscribe to his presence.
+     */
+    void presenceSubscriptionRequired(Node node, JID user);
+
+    /**
+     * Requests the pubsub service to unsubscribe from the presence of the user. If the service
+     * was not subscribed to the user's presence or any node still requires to be subscribed to
+     * the user presence then do nothing.
+     *
+     * @param node the node that originated the unsubscription request.
+     * @param user the JID of the affiliate to unsubscribe from his presence.
+     */
+    void presenceSubscriptionNotRequired(Node node, JID user);
 }

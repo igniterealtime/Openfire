@@ -49,8 +49,8 @@ import java.util.*;
  */
 public class NodeSubscription {
 
-    private static SimpleDateFormat dateFormat;
-    private static FastDateFormat fastDateFormat;
+    private static final SimpleDateFormat dateFormat;
+    private static final FastDateFormat fastDateFormat;
     /**
      * Reference to the publish and subscribe service.
      */
@@ -412,6 +412,9 @@ public class NodeSubscription {
     void configure(DataForm options) {
         List<String> values;
         String booleanValue;
+
+        boolean wasUsingPresence = !presenceStates.isEmpty();
+
         // Remove this field from the form
         options.removeField("FORM_TYPE");
         // Process and remove specific collection node fields
@@ -471,7 +474,9 @@ public class NodeSubscription {
                     try {
                         presenceStates.add(value);
                     }
-                    catch (Exception e) {}
+                    catch (Exception e) {
+                        // Do nothing
+                    }
                 }
             }
             else if ("x-pubsub#keywords".equals(field.getVariable())) {
@@ -483,7 +488,7 @@ public class NodeSubscription {
             }
             if (fieldExists) {
                 // Subscription has been configured so set the next state
-                if (node.getAccessModel().isAuthorizationRequired()) {
+                if (node.getAccessModel().isAuthorizationRequired() && !node.isAdmin(owner)) {
                     state = State.pending;
                 }
                 else {
@@ -494,6 +499,15 @@ public class NodeSubscription {
         if (savedToDB) {
             // Update the subscription in the backend store
             PubSubPersistenceManager.saveSubscription(service, node, this, false);
+        }
+        // Check if the service needs to subscribe or unsubscribe from the owner presence
+        if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
+            if (presenceStates.isEmpty()) {
+                service.presenceSubscriptionNotRequired(node, owner);
+            }
+            else {
+                service.presenceSubscriptionRequired(node, owner);
+            }
         }
     }
 
@@ -601,21 +615,9 @@ public class NodeSubscription {
      * @return true if an event notification can be sent to the subscriber for the specified
      *         published item.
      */
-    boolean canSendEventNotification(LeafNode leafNode, PublishedItem publishedItem) {
-        // Check if the subscription is active
-        if (!isActive()) {
+    boolean canSendPublicationEvent(LeafNode leafNode, PublishedItem publishedItem) {
+        if (!canSendEvents()) {
             return false;
-        }
-        // Check if delivery of notifications is disabled
-        if (!shouldDeliverNotifications()) {
-            return false;
-        }
-        // Check if delivery is subject to presence-based policy
-        if (!getPresenceStates().isEmpty()) {
-            String show = service.getShowPresence(jid);
-            if (show == null || !getPresenceStates().contains(show)) {
-                return false;
-            }
         }
         // Check that any defined keyword was matched (applies only if an item was published)
         if (publishedItem != null && !isKeywordMatched(publishedItem)) {
@@ -640,6 +642,39 @@ public class NodeSubscription {
     }
 
     /**
+     * Returns true if an event notification can be sent to the subscriber of the collection
+     * node for a newly created node that was associated to the collection node or a child
+     * node that was deleted. The subscription has to be of type {@link Type#nodes}.
+     *
+     * @param originatingNode the node that was added or deleted from the collection node.
+     * @return true if an event notification can be sent to the subscriber of the collection
+     *         node.
+     */
+    boolean canSendChildNodeEvent(Node originatingNode) {
+        // Check that this is a subscriber to a collection node
+        if (!node.isCollectionNode()) {
+            return false;
+        }
+
+        if (!canSendEvents()) {
+            return false;
+        }
+        // Check that subscriber is using type "nodes"
+        if (Type.nodes != type) {
+            return false;
+        }
+        // Check if added/deleted node is a first-level child of the subscribed node
+        if (getDepth() == 1 && !node.isChildNode(originatingNode)) {
+            return false;
+        }
+        // Check if added/deleted node is a descendant child of the subscribed node
+        if (getDepth() == 0 && !node.isDescendantNode(originatingNode)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Returns true if node events such as configuration changed or node purged can be
      * sent to the subscriber.
      *
@@ -647,6 +682,17 @@ public class NodeSubscription {
      *         sent to the subscriber.
      */
     boolean canSendNodeEvents() {
+        return canSendEvents();
+    }
+
+    /**
+     * Returns true if events in general can be sent. This method checks basic
+     * conditions common to all type of event notifications (e.g. item was published,
+     * node configuration has changed, new child node was added to collection node, etc.).
+     *
+     * @return true if events in general can be sent.
+     */
+    private boolean canSendEvents() {
         // Check if the subscription is active
         if (!isActive()) {
             return false;
@@ -657,8 +703,15 @@ public class NodeSubscription {
         }
         // Check if delivery is subject to presence-based policy
         if (!getPresenceStates().isEmpty()) {
-            String show = service.getShowPresence(jid);
-            if (show == null || !getPresenceStates().contains(show)) {
+            Collection<String> shows = service.getShowPresences(jid);
+            if (shows.isEmpty() || Collections.disjoint(getPresenceStates(), shows)) {
+                return false;
+            }
+        }
+        // Check if node is only sending events when user is online
+        if (node.isPresenceBasedDelivery()) {
+            // Check that user is online
+            if (service.getShowPresences(jid).isEmpty()) {
                 return false;
             }
         }
@@ -732,42 +785,6 @@ public class NodeSubscription {
     }
 
     /**
-     * Sends an IQ result with the list of items published to the node to the subscriber. The
-     * items to include in the result is subject to the subscription configuration. If the
-     * subscription is still pending to be approved or unconfigured then no items will be included.
-     *
-     * @param originalRequest the IQ packet sent by the subscriber to get the node items.
-     * @param publishedItems the list of published items to send to the subscriber.
-     * @param forceToIncludePayload true if the item payload should be include if one exists. When
-     *        false the decision is up to the node.
-     */
-    void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems,
-            boolean forceToIncludePayload) {
-        IQ result = IQ.createResultIQ(originalRequest);
-        Element childElement = originalRequest.getChildElement().createCopy();
-        result.setChildElement(childElement);
-        Element items = childElement.element("items");
-        if (isActive()) {
-            for (PublishedItem publishedItem : publishedItems) {
-                // Check if this published item can be included in the result
-                if (!isKeywordMatched(publishedItem)) {
-                    continue;
-                }
-                Element item = items.addElement("item");
-                if (((LeafNode) node).isItemRequired()) {
-                    item.addAttribute("id", publishedItem.getID());
-                }
-                if ((forceToIncludePayload || node.isPayloadDelivered()) &&
-                        publishedItem.getPayload() != null) {
-                    item.add(publishedItem.getPayload().createCopy());
-                }
-            }
-        }
-        // Send the result
-        service.send(result);
-    }
-
-    /**
      * Sends an event notification for the last published item to the subscriber. If
      * the subscription has not yet been authorized or is pending to be configured then
      * no notification is going to be sent.<p>
@@ -779,7 +796,7 @@ public class NodeSubscription {
      */
     void sendLastPublishedItem(PublishedItem publishedItem) {
         // Check if the published item can be sent to the subscriber
-        if (!canSendEventNotification(publishedItem.getNode(), publishedItem)) {
+        if (!canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
             return;
         }
         // Send event notification to the subscriber
@@ -910,7 +927,7 @@ public class NodeSubscription {
          * An entity is subscribed to a node. The node will send all event notifications
          * (and, if configured, payloads) to the entity while it is in this state.
          */
-        subscribed;
+        subscribed
     }
 
     public static enum Type {
@@ -922,6 +939,6 @@ public class NodeSubscription {
         /**
          * Receive notification of new nodes only.
          */
-        nodes;
+        nodes
     }
 }

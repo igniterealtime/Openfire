@@ -12,9 +12,11 @@
 package org.jivesoftware.wildfire.pubsub;
 
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.forms.FormField;
 import org.xmpp.forms.DataForm;
 import org.jivesoftware.util.LocaleUtils;
+import org.dom4j.Element;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,10 +51,6 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    // TODO Send event notification when a new child node is added (section 9.2)
-    // TODO Add checking that max number of leaf nodes has been reached
-    // TODO Add checking that verifies that user that is associating leaf node with collection node is allowed
-
     CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
         super(service, parentNode, nodeID, creator);
         // Configure node with default values (get them from the pubsub service)
@@ -77,7 +75,9 @@ public class CollectionNode extends Node {
                 try {
                     associationTrusted.add(new JID(value));
                 }
-                catch (Exception e) {}
+                catch (Exception e) {
+                    // Do nothing
+                }
             }
         }
         else if ("pubsub#leaf_nodes_max".equals(field.getVariable())) {
@@ -123,13 +123,94 @@ public class CollectionNode extends Node {
         formField.addValue(maxLeafNodes);
     }
 
+    /**
+     * Adds a child node to the list of child nodes. The new child node may just have been
+     * created or just restored from the database. This method will not trigger notifications
+     * to node subscribers since the node could be a node that has just been loaded from the
+     * database.
+     *
+     * @param child the node to add to the list of child nodes.
+     */
     void addChildNode(Node child) {
         nodes.put(child.getNodeID(), child);
     }
 
+
+    /**
+     * Removes a child node from the list of child nodes. This method will not trigger
+     * notifications to node subscribers.
+     *
+     * @param child the node to remove from the list of child nodes.
+     */
     void removeChildNode(Node child) {
-        // TODO Send notification to subscribers?
         nodes.remove(child.getNodeID());
+    }
+
+    /**
+     * Notification that a new node was created and added to this node. Trigger notifications
+     * to node subscribers whose subscription type is {@link NodeSubscription.Type#nodes} and
+     * have the proper depth.
+     *
+     * @param child the newly created node that was added to this node.
+     */
+    void childNodeAdded(Node child) {
+        // Build packet to broadcast to subscribers
+        Message message = new Message();
+        Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+        Element item = event.addElement("items").addElement("item");
+        item.addAttribute("id", child.getNodeID());
+        if (deliverPayloads) {
+            item.add(child.getMetadataForm().getElement());
+        }
+        // Broadcast event notification to subscribers
+        broadcastCollectionNodeEvent(child, message);
+    }
+
+    /**
+     * Notification that a child node was deleted from this node. Trigger notifications
+     * to node subscribers whose subscription type is {@link NodeSubscription.Type#nodes} and
+     * have the proper depth.
+     *
+     * @param child the deleted node that was removed from this node.
+     */
+    void childNodeDeleted(Node child) {
+        // Build packet to broadcast to subscribers
+        Message message = new Message();
+        Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+        event.addElement("delete").addAttribute("node", child.getNodeID());
+        // Broadcast event notification to subscribers
+        broadcastCollectionNodeEvent(child, message);
+    }
+
+    private void broadcastCollectionNodeEvent(Node child, Message notification) {
+        // Get affected subscriptions (of this node and all parent nodes)
+        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        subscriptions.addAll(getSubscriptions(child));
+        for (CollectionNode parentNode : getParents()) {
+            subscriptions.addAll(parentNode.getSubscriptions(child));
+        }
+        // TODO Possibly use a thread pool for sending packets (based on the jids size)
+        for (NodeSubscription subscription : subscriptions) {
+            service.sendNotification(subscription.getNode(), notification, subscription.getJID());
+        }
+    }
+
+    /**
+     * Returns a collection with the subscriptions to this node that should be notified
+     * that a new child was added or deleted.
+     *
+     * @param child the added or deleted child.
+     * @return a collection with the subscriptions to this node that should be notified
+     *         that a new child was added or deleted.
+     */
+    private Collection<NodeSubscription> getSubscriptions(Node child) {
+        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        for (NodeSubscription subscription : getSubscriptions()) {
+            if (subscription.canSendChildNodeEvent(child)) {
+                subscriptions.add(subscription);
+            }
+        }
+        return subscriptions;
     }
 
     public boolean isCollectionNode() {
@@ -233,6 +314,54 @@ public class CollectionNode extends Node {
     }
 
     /**
+     * Returns true if the specified user is allowed to associate a leaf node with this
+     * node. The decision is taken based on the association policy that the node is
+     * using.
+     *
+     * @param user the user trying to associate a leaf node with this node.
+     * @return true if the specified user is allowed to associate a leaf node with this
+     *         node.
+     */
+    public boolean isAssociationAllowed(JID user) {
+        if (associationPolicy == LeafNodeAssociationPolicy.all) {
+            // Anyone is allowed to associate leaf nodes with this node
+            return true;
+        }
+        else if (associationPolicy == LeafNodeAssociationPolicy.owners) {
+            // Only owners or sysadmins are allowed to associate leaf nodes with this node
+            return isAdmin(user);
+        }
+        else {
+            // Owners, sysadmins and a whitelist of usres are allowed to
+            // associate leaf nodes with this node
+            return isAdmin(user) || associationTrusted.contains(user);
+        }
+    }
+
+    /**
+     * Returns true if the max number of leaf nodes associated with this node has
+     * reached to the maximum allowed.
+     *
+     * @return true if the max number of leaf nodes associated with this node has
+     *         reached to the maximum allowed.
+     */
+    public boolean isMaxLeafNodeReached() {
+        if (maxLeafNodes < 0) {
+            // There is no maximum limit
+            return false;
+        }
+        // Count number of child leaf nodes
+        int counter = 0;
+        for (Node node : getNodes()) {
+            if (!node.isCollectionNode()) {
+                counter = counter + 1;
+            }
+        }
+        // Compare count with maximum allowed
+        return counter >= maxLeafNodes;
+    }
+
+    /**
      * Policy that defines who may associate leaf nodes with a collection.
      */
     public static enum LeafNodeAssociationPolicy {
@@ -248,6 +377,6 @@ public class CollectionNode extends Node {
         /**
          * Only those on a whitelist may associate leaf nodes with the collection.
          */
-        whitelist;
+        whitelist
     }
 }

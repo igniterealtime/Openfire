@@ -520,6 +520,11 @@ public class PubSubPersistenceManager {
             String subID = rs.getString(2);
             JID subscriber = new JID(rs.getString(3));
             JID owner = new JID(rs.getString(4));
+            if (node.getAffiliate(owner) == null) {
+                Log.warn("Subscription found for a non-existent affiliate: " + owner +
+                        " in node: " + nodeID);
+                return;
+            }
             NodeSubscription.State state = NodeSubscription.State.valueOf(rs.getString(5));
             NodeSubscription subscription =
                     new NodeSubscription(service, node, owner, subscriber, state, subID);
@@ -603,23 +608,13 @@ public class PubSubPersistenceManager {
                 pstmt.executeUpdate();
             }
             else {
-                if (NodeAffiliate.Affiliation.none == affiliate.getAffiliation()) {
-                    // Remove the affiliate from the table of node affiliates
-                    pstmt = con.prepareStatement(DELETE_AFFILIATION);
-                    pstmt.setString(1, service.getServiceID());
-                    pstmt.setString(2, node.getNodeID());
-                    pstmt.setString(3, affiliate.getJID().toString());
-                    pstmt.executeUpdate();
-                }
-                else {
-                    // Update the affiliate's data in the backend store
-                    pstmt = con.prepareStatement(UPDATE_AFFILIATION);
-                    pstmt.setString(1, affiliate.getAffiliation().name());
-                    pstmt.setString(2, service.getServiceID());
-                    pstmt.setString(3, node.getNodeID());
-                    pstmt.setString(4, affiliate.getJID().toString());
-                    pstmt.executeUpdate();
-                }
+                // Update the affiliate's data in the backend store
+                pstmt = con.prepareStatement(UPDATE_AFFILIATION);
+                pstmt.setString(1, affiliate.getAffiliation().name());
+                pstmt.setString(2, service.getServiceID());
+                pstmt.setString(3, node.getNodeID());
+                pstmt.setString(4, affiliate.getJID().toString());
+                pstmt.executeUpdate();
             }
         }
         catch (SQLException sqle) {

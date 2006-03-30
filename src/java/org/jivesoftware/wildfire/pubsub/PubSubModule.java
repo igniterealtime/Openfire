@@ -103,9 +103,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     /**
      * Keep a registry of the presence's show value of users that subscribed to a node of
-     * the pubsub service. The Map will have a value only for only users.
+     * the pubsub service and for which the node only delivers notifications for online users
+     * or node subscriptions deliver events based on the user presence show value. Offline
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * is full JID of connected resource and value is show value of the last received presence.
      */
-    private Map<JID, String> presences = new ConcurrentHashMap<JID, String>();
+    private Map<String, Map<String, String>> barePresences =
+            new ConcurrentHashMap<String, Map<String, String>>();
 
     public PubSubModule() {
         super("Publish Subscribe Service");
@@ -216,10 +220,40 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return collectionDefaultConfiguration;
     }
 
-    public String getShowPresence(JID subscriber) {
-        // TODO Implement subscribe to presence and update registry of show values.
-        // TODO Remove presence subscription when user removed his subscription or the node was deleted.
-        return presences.get(subscriber);
+    public Collection<String> getShowPresences(JID subscriber) {
+        Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+        if (fullPresences == null) {
+            // User is offline so return empty list
+            return Collections.emptyList();
+        }
+        if (subscriber.getResource() == null) {
+            // Subscriber used bared JID so return show value of all connected resources
+            return fullPresences.values();
+        }
+        else {
+            // Look for the show value using the full JID
+            String show = fullPresences.get(subscriber.toString());
+            if (show == null) {
+                // User at the specified resource is offline so return empty list
+                return Collections.emptyList();
+            }
+            // User is connected at specified resource so answer list with presence show value
+            return Arrays.asList(show);
+        }
+    }
+
+    public void presenceSubscriptionNotRequired(Node node, JID user) {
+        // TODO Implement this
+    }
+
+    public void presenceSubscriptionRequired(Node node, JID user) {
+        Map<String, String> fullPresences = barePresences.get(user.toString());
+        if (fullPresences == null || fullPresences.isEmpty()) {
+            Presence subscription = new Presence(Presence.Type.subscribe);
+            subscription.setTo(user);
+            subscription.setFrom(getAddress());
+            send(subscription);
+        }
     }
 
     public PubSubEngine getPubSubEngine() {
@@ -251,7 +285,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         sysadmins.add(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = (String[])sysadmins.toArray(jids);
+        jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
     }
 
@@ -259,7 +293,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         sysadmins.remove(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = (String[])sysadmins.toArray(jids);
+        jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
     }
 
@@ -277,7 +311,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         allowedToCreate.add(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = (String[])allowedToCreate.toArray(jids);
+        jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
     }
 
@@ -286,7 +320,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         allowedToCreate.remove(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = (String[])allowedToCreate.toArray(jids);
+        jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
     }
 
@@ -408,6 +442,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         super.start();
         // Add the route to this service
         routingTable.addRoute(getAddress(), this);
+        // TODO Probe presences of users that this service has subscribed to
         ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
@@ -576,8 +611,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
-        if (name == null && node == node) {
-            // We always have info about the MUC service
+        if (name == null && node == null) {
+            // We always have info about the Pubsub service
             return true;
         }
         else if (name == null && node != null) {
@@ -622,7 +657,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 else {
                     // This is a leaf node so answer the published items which exist on the service
                     Element item;
-                    for (PublishedItem publishedItem : ((LeafNode) pubNode).getPublishedItems()) {
+                    for (PublishedItem publishedItem : pubNode.getPublishedItems()) {
                         item = DocumentHelper.createElement("item");
                         item.addAttribute("jid", serviceDomain);
                         item.addAttribute("name", publishedItem.getID());

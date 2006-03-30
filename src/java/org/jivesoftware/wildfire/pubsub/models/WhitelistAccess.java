@@ -30,6 +30,10 @@ public class WhitelistAccess extends AccessModel {
     }
 
     public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+        // Let node owners and sysadmins always subcribe to the node
+        if (node.isAdmin(owner)) {
+            return true;
+        }
         // User is in the whitelist if he has an affiliation and it is not of type outcast
         NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
         return nodeAffiliate != null &&

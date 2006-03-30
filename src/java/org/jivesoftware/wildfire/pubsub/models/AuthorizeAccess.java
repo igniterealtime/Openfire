@@ -35,6 +35,10 @@ public class AuthorizeAccess extends AccessModel {
     }
 
     public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+        // Let node owners and sysadmins always get node items
+        if (node.isAdmin(owner)) {
+            return true;
+        }
         NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
         if  (nodeAffiliate == null) {
             // This is an unknown entity to the node so deny access

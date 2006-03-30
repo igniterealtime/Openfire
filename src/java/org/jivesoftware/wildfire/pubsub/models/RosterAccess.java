@@ -38,8 +38,16 @@ public class RosterAccess extends AccessModel {
     }
 
     public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+        // Let node owners and sysadmins always subcribe to the node
+        if (node.isAdmin(owner)) {
+            return true;
+        }
         // Get the only owner of the node
         JID nodeOwner = node.getOwners().iterator().next();
+        // Give access to the owner of the roster :)
+        if (nodeOwner.toBareJID().equals(owner.toBareJID())) {
+            return true;
+        }
         // Get the roster of the node owner
         XMPPServer server = XMPPServer.getInstance();
         // Check that the node owner is a local user
@@ -64,6 +72,7 @@ public class RosterAccess extends AccessModel {
                 }
             }
             catch (UserNotFoundException e) {
+                // Do nothing
             }
         }
         else {

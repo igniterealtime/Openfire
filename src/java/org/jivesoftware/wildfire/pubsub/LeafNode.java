@@ -18,6 +18,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.IQ;
 
 import java.util.*;
 
@@ -55,10 +56,10 @@ public class LeafNode extends Node {
      * not configured to persist items then the last published item will be kept. The list is
      * sorted cronologically.
      */
-    protected List<PublishedItem> publishedItems = new ArrayList<PublishedItem>();
+    protected final List<PublishedItem> publishedItems = new ArrayList<PublishedItem>();
     protected Map<String, PublishedItem> itemsByID = new HashMap<String, PublishedItem>();
 
-    // TODO Add checking of max payload size
+    // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
     LeafNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
         super(service, parentNode, nodeID, creator);
@@ -213,7 +214,7 @@ public class LeafNode extends Node {
         if (isItemRequired()) {
             String itemID;
             Element payload;
-            PublishedItem newItem = null;
+            PublishedItem newItem;
             for (Element item : itemElements) {
                 itemID = item.attributeValue("id");
                 List entries = item.elements();
@@ -314,6 +315,35 @@ public class LeafNode extends Node {
                 affiliate.sendDeletionNotifications(message, event, this, toDelete);
             }
         }
+    }
+
+    /**
+     * Sends an IQ result with the list of items published to the node. Item ID and payload
+     * may be included in the result based on the node configuration.
+     *
+     * @param originalRequest the IQ packet sent by a subscriber (or anyone) to get the node items.
+     * @param publishedItems the list of published items to send to the subscriber.
+     * @param forceToIncludePayload true if the item payload should be include if one exists. When
+     *        false the decision is up to the node.
+     */
+    void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems,
+            boolean forceToIncludePayload) {
+        IQ result = IQ.createResultIQ(originalRequest);
+        Element childElement = originalRequest.getChildElement().createCopy();
+        result.setChildElement(childElement);
+        Element items = childElement.element("items");
+        for (PublishedItem publishedItem : publishedItems) {
+            Element item = items.addElement("item");
+            if (isItemRequired()) {
+                item.addAttribute("id", publishedItem.getID());
+            }
+            if ((forceToIncludePayload || isPayloadDelivered()) &&
+                    publishedItem.getPayload() != null) {
+                item.add(publishedItem.getPayload().createCopy());
+            }
+        }
+        // Send the result
+        service.send(result);
     }
 
     public PublishedItem getPublishedItem(String itemID) {

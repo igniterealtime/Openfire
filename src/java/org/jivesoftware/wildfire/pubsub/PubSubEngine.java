@@ -245,9 +245,18 @@ public class PubSubEngine {
      * @param message the Message packet sent to the pubsub service.
      */
     public void process(Message message) {
-        // TODO Process Messages of type error to identify possible subscribers that no longer exist
         if (message.getType() == Message.Type.error) {
-            // See "Handling Notification-Related Errors" section
+            // Process Messages of type error to identify possible subscribers that no longer exist
+            if (message.getError().getType() == PacketError.Type.cancel) {
+                // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
+                JID owner = new JID(message.getFrom().toBareJID());
+                // Terminate the subscription of the entity to all nodes hosted at the service
+               cancelAllSubscriptions(owner);
+            }
+            else if (message.getError().getType() == PacketError.Type.auth) {
+                // TODO Queue the message to be sent again later (will retry a few times and
+                // will be discarded when the retry limit is reached)
+            }
         }
         else if (message.getType() == Message.Type.normal) {
             // Check that this is an answer to an authorization request
@@ -256,30 +265,8 @@ public class PubSubEngine {
                 String formType = authForm.getField("FORM_TYPE").getValues().get(0);
                 // Check that completed data form belongs to an authorization request
                 if ("http://jabber.org/protocol/pubsub#subscribe_authorization".equals(formType)) {
-                    String nodeID = authForm.getField("pubsub#node").getValues().get(0);
-                    String subID = authForm.getField("pubsub#subid").getValues().get(0);
-                    String allow = authForm.getField("pubsub#allow").getValues().get(0);
-                    boolean approved;
-                    if ("1".equals(allow) || "true".equals(allow)) {
-                        approved = true;
-                    }
-                    else if ("0".equals(allow) || "false".equals(allow)) {
-                        approved = false;
-                    }
-                    else {
-                        // Unknown allow value. Ignore completed form
-                        Log.warn("Invalid allow value in completed authorization form: " +
-                                message.toXML());
-                        return;
-                    }
-                    // Approve or cancel the pending subscription to the node
-                    Node node = service.getNode(nodeID);
-                    if (node != null) {
-                        NodeSubscription subscription = node.getSubscription(subID);
-                        if (subscription != null) {
-                            node.approveSubscription(subscription, approved);
-                        }
-                    }
+                    // Process the answer to the authorization request
+                    processAuthorizationAnswer(authForm, message);
                 }
             }
         }
@@ -287,7 +274,7 @@ public class PubSubEngine {
 
     private void publishItemsToNode(IQ iq, Element publishElement) {
         String nodeID = publishElement.attributeValue("node");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // No node was specified. Return bad_request error
             Element pubsubError = DocumentHelper.createElement(QName.get(
@@ -342,8 +329,8 @@ public class PubSubEngine {
             return;
         }
         List<Element> items = new ArrayList<Element>();
-        List entries = null;
-        Element payload = null;
+        List entries;
+        Element payload;
         while (itemElements.hasNext()) {
             Element item = (Element) itemElements.next();
             entries = item.elements();
@@ -374,7 +361,7 @@ public class PubSubEngine {
 
     private void deleteItems(IQ iq, Element retractElement) {
         String nodeID = retractElement.attributeValue("node");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // No node was specified. Return bad_request error
             Element pubsubError = DocumentHelper.createElement(QName.get(
@@ -448,7 +435,7 @@ public class PubSubEngine {
 
     private void subscribeNode(IQ iq, Element childElement, Element subscribeElement) {
         String nodeID = subscribeElement.attributeValue("node");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // Entity subscribes to root collection node
             node = service.getRootCollectionNode();
@@ -568,7 +555,7 @@ public class PubSubEngine {
     private void unsubscribeNode(IQ iq, Element unsubscribeElement) {
         String nodeID = unsubscribeElement.attributeValue("node");
         String subID = unsubscribeElement.attributeValue("subid");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // Entity unsubscribes from root collection node
             node = service.getRootCollectionNode();
@@ -582,7 +569,7 @@ public class PubSubEngine {
                 return;
             }
         }
-        NodeSubscription subscription = null;
+        NodeSubscription subscription;
         if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
@@ -647,7 +634,7 @@ public class PubSubEngine {
     private void getSubscriptionConfiguration(IQ iq, Element childElement, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // Entity requests subscription options of root collection node
             node = service.getRootCollectionNode();
@@ -661,7 +648,7 @@ public class PubSubEngine {
                 return;
             }
         }
-        NodeSubscription subscription = null;
+        NodeSubscription subscription;
         if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
@@ -719,7 +706,7 @@ public class PubSubEngine {
     private void configureSubscription(IQ iq, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
-        Node node = null;
+        Node node;
         if (nodeID == null) {
             // Entity submits new subscription options of root collection node
             node = service.getRootCollectionNode();
@@ -733,7 +720,7 @@ public class PubSubEngine {
                 return;
             }
         }
-        NodeSubscription subscription = null;
+        NodeSubscription subscription;
         if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
@@ -855,8 +842,8 @@ public class PubSubEngine {
 
     private void getPublishedItems(IQ iq, Element itemsElement) {
         String nodeID = itemsElement.attributeValue("node");
-        String subID = itemsElement.attributeValue("subid");
-        Node node = null;
+        //String subID = itemsElement.attributeValue("subid");
+        Node node;
         if (nodeID == null) {
             // Entity subscribes to root collection node
             node = service.getRootCollectionNode();
@@ -889,8 +876,15 @@ public class PubSubEngine {
                     accessModel.getSubsriptionErrorDetail());
             return;
         }
-        // Get the user's subscription
-        NodeSubscription subscription = null;
+        // Check that the requester is not an outcast
+        NodeAffiliate affiliate = node.getAffiliate(owner);
+        if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
+            sendErrorPacket(iq, PacketError.Condition.forbidden, null);
+            return;
+        }
+
+        /*// Get the user's subscription
+        NodeSubscription subscription;
         if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
@@ -909,18 +903,9 @@ public class PubSubEngine {
                     return;
                 }
             }
-        }
-        else {
-            subscription = node.getSubscription(subscriberJID);
-            if (subscription == null) {
-                // TODO Current version does not allow anyone to get published items. A subscription should exist.
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.not_authorized, pubsubError);
-                return;
-            }
-        }
+        }*/
 
+        LeafNode leafNode = (LeafNode) node;
         // Get list of items to send to the user
         boolean forceToIncludePayload = false;
         List<PublishedItem> items = null;
@@ -939,13 +924,13 @@ public class PubSubEngine {
         }
         if (max_items != null) {
             // Get the N most recent published items
-            items = node.getPublishedItems(recentItems);
+            items = leafNode.getPublishedItems(recentItems);
         }
         else {
             List requestedItems = itemsElement.elements("item");
             if (requestedItems.isEmpty()) {
                 // Get all the active items that were published to the node
-                items = node.getPublishedItems();
+                items = leafNode.getPublishedItems();
             }
             else {
                 // Indicate that payload should be included (if exists) no matter
@@ -955,7 +940,7 @@ public class PubSubEngine {
                 for (Iterator it = requestedItems.iterator(); it.hasNext();) {
                     Element element = (Element) it.next();
                     String itemID = element.attributeValue("id");
-                    PublishedItem item = node.getPublishedItem(itemID);
+                    PublishedItem item = leafNode.getPublishedItem(itemID);
                     if (item != null) {
                         items.add(item);
                     }
@@ -963,7 +948,7 @@ public class PubSubEngine {
             }
         }
         // Send items to the user
-        subscription.sendPublishedItems(iq, items, forceToIncludePayload);
+        leafNode.sendPublishedItems(iq, items, forceToIncludePayload);
     }
 
     private void createNode(IQ iq, Element childElement, Element createElement) {
@@ -1057,6 +1042,23 @@ public class PubSubEngine {
             return;
         }
 
+        if (parentNode != null && !collectionType) {
+            // Check if requester is allowed to add a new leaf child node to the parent node
+            if (!parentNode.isAssociationAllowed(from)) {
+                // User is not allowed to add child leaf node to parent node. Return an error.
+                sendErrorPacket(iq, PacketError.Condition.forbidden, null);
+                return;
+            }
+            // Check if number of child leaf nodes has not been exceeded
+            if (parentNode.isMaxLeafNodeReached()) {
+                // Max number of child leaf nodes has been reached. Return an error.
+                Element pubsubError = DocumentHelper.createElement(QName.get("max-nodes-exceeded",
+                        "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.conflict, pubsubError);
+                return;
+            }
+        }
+
         // Create and configure the node
         boolean conflict = false;
         Node newNode = null;
@@ -1100,7 +1102,6 @@ public class PubSubEngine {
                     elem.addElement("create").addAttribute("node", newNode.getNodeID());
                 }
                 router.route(reply);
-                // TODO Trigger notifications that parent has new child
             }
         }
         catch (NotAcceptableException e) {
@@ -1282,6 +1283,52 @@ public class PubSubEngine {
     }
 
     /**
+     * Terminates the subscription of the specified entity to all nodes hosted at the service.
+     * The affiliation with the node will be removed if the entity was not a node owner or
+     * publisher.
+     *
+     * @param user the entity that no longer exists.
+     */
+    private void cancelAllSubscriptions(JID user) {
+        for (Node node : service.getNodes()) {
+            NodeAffiliate affiliate = node.getAffiliate(user);
+            if (affiliate == null) {
+                continue;
+            }
+            for (NodeSubscription subscription : affiliate.getSubscriptions()) {
+                // Cancel subscription
+                node.cancelSubscription(subscription);
+            }
+        }
+    }
+
+    private void processAuthorizationAnswer(DataForm authForm, Message message) {
+        String nodeID = authForm.getField("pubsub#node").getValues().get(0);
+        String subID = authForm.getField("pubsub#subid").getValues().get(0);
+        String allow = authForm.getField("pubsub#allow").getValues().get(0);
+        boolean approved;
+        if ("1".equals(allow) || "true".equals(allow)) {
+            approved = true;
+        }
+        else if ("0".equals(allow) || "false".equals(allow)) {
+            approved = false;
+        }
+        else {
+            // Unknown allow value. Ignore completed form
+            Log.warn("Invalid allow value in completed authorization form: " + message.toXML());
+            return;
+        }
+        // Approve or cancel the pending subscription to the node
+        Node node = service.getNode(nodeID);
+        if (node != null) {
+            NodeSubscription subscription = node.getSubscription(subID);
+            if (subscription != null) {
+                node.approveSubscription(subscription, approved);
+            }
+        }
+    }
+
+    /**
      * Generate a conflict packet to indicate that the nickname being requested/used is already in
      * use by another user.
      *
@@ -1315,7 +1362,7 @@ public class PubSubEngine {
      */
     private DataForm getSentConfigurationForm(Element configureElement) {
         DataForm completedForm = null;
-        FormField formField = null;
+        FormField formField;
         Element formElement = configureElement.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
             completedForm = new DataForm(formElement);
@@ -1360,7 +1407,7 @@ public class PubSubEngine {
         // Stop te maintenance processes
         timer.cancel();
         // Delete from the database items contained in the itemsToDelete queue
-        PublishedItem entry = null;
+        PublishedItem entry;
         while (!itemsToDelete.isEmpty()) {
             entry = itemsToDelete.poll();
             if (entry != null) {
@@ -1446,8 +1493,8 @@ public class PubSubEngine {
     private class PublishedItemTask extends TimerTask {
         public void run() {
             try {
-                PublishedItem entry = null;
-                boolean success = false;
+                PublishedItem entry;
+                boolean success;
                 // Delete from the database items contained in the itemsToDelete queue
                 for (int index = 0; index <= items_batch_size && !itemsToDelete.isEmpty(); index++) {
                     entry = itemsToDelete.poll();

@@ -37,21 +37,20 @@ public class UserManager implements IQResultListener {
     /**
      * Cache of local users.
      */
-    private static Cache userCache;
+    private static Cache<String, User> userCache;
     /**
      * Cache if a local or remote user exists.
      */
-    private static Cache registeredUsersCache;
+    private static Cache<String, Boolean> registeredUsersCache;
     private static UserProvider provider;
     private static UserManager instance = new UserManager();
 
     static {
         // Initialize caches.
-        CacheManager.initializeCache("User", "userCache", 512 * 1024);
-        CacheManager.initializeCache("Users Existence", "registeredUsersCache", 512 * 1024);
+        userCache = CacheManager.initializeCache("User", "userCache", 512 * 1024);
+        registeredUsersCache =
+                CacheManager.initializeCache("Users Existence", "registeredUsersCache", 512 * 1024);
         CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
-        userCache = CacheManager.getCache("User");
-        registeredUsersCache = CacheManager.getCache("Users Existence");
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.wildfire.user.DefaultUserProvider");
@@ -164,10 +163,10 @@ public class UserManager implements IQResultListener {
     public User getUser(String username) throws UserNotFoundException {
         // Make sure that the username is valid.
         username = username.trim().toLowerCase();
-        User user = (User) userCache.get(username);
+        User user = userCache.get(username);
         if (user == null) {
-            synchronized(username.intern()) {
-                user = (User) userCache.get(username);
+            synchronized (username.intern()) {
+                user = userCache.get(username);
                 if (user == null) {
                     user = provider.loadUser(username);
                     userCache.put(username, user);
@@ -262,7 +261,7 @@ public class UserManager implements IQResultListener {
      */
     public String getUserProperty(String username, String propertyName) {
         username = username.trim().toLowerCase();
-        User user = (User) userCache.get(username);
+        User user = userCache.get(username);
         if (user == null) {
             return User.getPropertyValue(username, propertyName);
         }
@@ -283,7 +282,7 @@ public class UserManager implements IQResultListener {
             return false;
         }
         // Look up in the cache
-        Boolean isRegistered = (Boolean) registeredUsersCache.get(username);
+        Boolean isRegistered = registeredUsersCache.get(username);
         if (isRegistered == null) {
             // No information is cached so check user identity and cache it
             try {
@@ -296,7 +295,7 @@ public class UserManager implements IQResultListener {
             // Cache "discovered" information
             registeredUsersCache.put(username, isRegistered);
         }
-        return isRegistered.booleanValue();
+        return isRegistered;
     }
 
     /**
@@ -308,17 +307,17 @@ public class UserManager implements IQResultListener {
      * @return true if the specified JID belongs to a local or remote registered user.
      */
     public boolean isRegisteredUser(JID user) {
-        Boolean isRegistered = null;
+        Boolean isRegistered;
         XMPPServer server = XMPPServer.getInstance();
         if (server.isLocal(user)) {
-            isRegistered = (Boolean) registeredUsersCache.get(user.getNode());
+            isRegistered = registeredUsersCache.get(user.getNode());
         }
         else {
             // Look up in the cache using the full JID
-            isRegistered = (Boolean) registeredUsersCache.get(user.toString());
+            isRegistered = registeredUsersCache.get(user.toString());
             if (isRegistered == null) {
                 // Check if the bare JID of the user is cached
-                isRegistered = (Boolean) registeredUsersCache.get(user.toBareJID());
+                isRegistered = registeredUsersCache.get(user.toBareJID());
             }
         }
 
@@ -352,10 +351,12 @@ public class UserManager implements IQResultListener {
                     try {
                         user.toBareJID().intern().wait(600000);
                     }
-                    catch (InterruptedException e) {}
+                    catch (InterruptedException e) {
+                        // Do nothing
+                    }
                 }
                 // Get the discovered result
-                isRegistered = (Boolean) registeredUsersCache.get(user.toBareJID());
+                isRegistered = registeredUsersCache.get(user.toBareJID());
                 if (isRegistered == null) {
                     // Disco failed for some reason (i.e. we timed out before getting a result)
                     // so assume that user is not anonymous and cache result
@@ -364,7 +365,7 @@ public class UserManager implements IQResultListener {
                 }
             }
         }
-        return isRegistered.booleanValue();
+        return isRegistered;
     }
 
     public void receivedAnswer(IQ packet) {

@@ -94,7 +94,8 @@ public class SessionManager extends BasicModule {
      * list of IncomingServerSession that will keep each session created by a remote server to
      * this server.
      */
-    private Map<String, List<IncomingServerSession>> incomingServerSessions = new ConcurrentHashMap<String, List<IncomingServerSession>>();
+    private final Map<String, List<IncomingServerSession>> incomingServerSessions =
+            new ConcurrentHashMap<String, List<IncomingServerSession>>();
 
     /**
      * The sessions contained in this Map are server sessions originated from this server to remote
@@ -163,7 +164,7 @@ public class SessionManager extends BasicModule {
      */
     private class SessionMap {
         private Map<String,ClientSession> resources = new ConcurrentHashMap<String,ClientSession>();
-        private LinkedList<String> priorityList = new LinkedList<String>();
+        private final LinkedList<String> priorityList = new LinkedList<String>();
 
         /**
          * Add a session to the manager.
@@ -521,12 +522,11 @@ public class SessionManager extends BasicModule {
     /**
      * Add a new session to be managed.
      */
-    public boolean addSession(ClientSession session) {
-        boolean success = false;
+    public void addSession(ClientSession session) {
         String username = session.getAddress().getNode();
-        SessionMap resources = null;
+        SessionMap resources;
 
-        synchronized(username.intern()) {
+        synchronized (username.intern()) {
             resources = sessions.get(username);
             if (resources == null) {
                 resources = new SessionMap();
@@ -535,14 +535,10 @@ public class SessionManager extends BasicModule {
             resources.addSession(session);
             // Remove the pre-Authenticated session but remember to use the temporary ID as the key
             preAuthenticatedSessions.remove(session.getStreamID().toString());
-            
-            // Fire session created event.
-            SessionEventDispatcher.dispatchEvent(session,
-                    SessionEventDispatcher.EventType.session_created);
-            
-            success = true;
         }
-        return success;
+        // Fire session created event.
+        SessionEventDispatcher
+                .dispatchEvent(session, SessionEventDispatcher.EventType.session_created);
     }
 
     /**
@@ -561,7 +557,7 @@ public class SessionManager extends BasicModule {
         }
         else {
             // A non-anonymous session is now available
-            Session defaultSession = null;
+            Session defaultSession;
             try {
                 SessionMap sessionMap = sessions.get(session.getUsername());
                 if (sessionMap == null) {
@@ -594,7 +590,7 @@ public class SessionManager extends BasicModule {
      */
     private void broadcastPresenceToOtherResource(ClientSession session)
             throws UserNotFoundException {
-        Presence presence = null;
+        Presence presence;
         Collection<ClientSession> availableSession;
         SessionMap sessionMap = sessions.get(session.getUsername());
         if (sessionMap != null) {
@@ -801,7 +797,7 @@ public class SessionManager extends BasicModule {
         if (from == null) {
             return null;
         }
-        return getSession(from.toString(), from.getNode(), from.getDomain(), from.getResource());
+        return getSession(from.getNode(), from.getDomain(), from.getResource());
     }
 
     /**
@@ -815,36 +811,6 @@ public class SessionManager extends BasicModule {
      * @return the <code>Session</code> associated with the JID data.
      */
     public ClientSession getSession(String username, String domain, String resource) {
-        // Return null if the JID's data belongs to a foreign server. If the server is
-        // shutting down then serverName will be null so answer null too in this case.
-        if (serverName == null || !serverName.equals(domain)) {
-            return null;
-        }
-        // Build a JID represention based on the given JID data
-        StringBuilder buf = new StringBuilder(40);
-        if (username != null) {
-            username = username.toLowerCase();
-            buf.append(username).append("@");
-        }
-        buf.append(domain);
-        if (resource != null) {
-            buf.append("/").append(resource);
-        }
-        return getSession(buf.toString(), username, domain, resource);
-    }
-
-    /**
-     * Returns the session responsible for this JID data. The returned Session may have never sent
-     * an available presence (thus not have a route) or could be a Session that hasn't
-     * authenticated yet (i.e. preAuthenticatedSessions).
-     *
-     * @param jid the full representation of the JID.
-     * @param username the username of the JID.
-     * @param domain the username of the JID.
-     * @param resource the username of the JID.
-     * @return the <code>Session</code> associated with the JID data.
-     */
-    private ClientSession getSession(String jid, String username, String domain, String resource) {
         // Return null if the JID's data belongs to a foreign server. If the server is
         // shutting down then serverName will be null so answer null too in this case.
         if (serverName == null || !serverName.equals(domain)) {
@@ -1174,7 +1140,7 @@ public class SessionManager extends BasicModule {
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
         for (SessionMap sessionMap : sessions.values()) {
-            ((SessionMap) sessionMap).broadcast(packet);
+            sessionMap.broadcast(packet);
         }
 
         for (Session session : anonymousSessions.values()) {
@@ -1209,7 +1175,7 @@ public class SessionManager extends BasicModule {
         if (session == null || serverName == null) {
             return;
         }
-        SessionMap sessionMap = null;
+        SessionMap sessionMap;
         if (anonymousSessions.containsValue(session)) {
             anonymousSessions.remove(session.getAddress().getResource());
             sessionCount--;
@@ -1231,11 +1197,12 @@ public class SessionManager extends BasicModule {
                         if (sessionMap.isEmpty()) {
                             sessions.remove(username);
                         }
-                        
-                        // Fire session event.
-                        SessionEventDispatcher.dispatchEvent(session,
-                                SessionEventDispatcher.EventType.session_destroyed);
                     }
+                }
+                if (sessionMap != null) {
+                    // Fire session event.
+                    SessionEventDispatcher.dispatchEvent(session,
+                            SessionEventDispatcher.EventType.session_destroyed);
                 }
             }
         }

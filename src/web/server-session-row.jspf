@@ -3,21 +3,19 @@
   -	$Date$
 --%>
 
-<%@ page import="java.net.URLEncoder,
-                 org.jivesoftware.util.JiveGlobals,
-                 java.util.Date,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.wildfire.server.IncomingServerSession,
+                 java.net.URLEncoder,
                  java.util.Calendar,
-                 javax.swing.*,
-                 java.net.URL"%>
-<%@ page import="org.jivesoftware.wildfire.server.IncomingServerSession"%>
+                 java.util.Date"%>
 
-<%--
-  - This page is meant to be included in other pages. It assumes 4 variables:
-  -     * 'host', the name of the remote server
-  -     * 'inSession', an  IncomingServerSession object
-  -     * 'outSession', an OutgoingServerSession object
-  -     * 'count', an int representing the row number we're on.
---%>
+ <%--
+   - This page is meant to be included in other pages. It assumes 4 variables:
+   -     * 'host', the name of the remote server
+   -     * 'inSession', an  IncomingServerSession object
+   -     * 'outSession', an OutgoingServerSession object
+   -     * 'count', an int representing the row number we're on.
+ --%>
 
 <%  // Show the secured icon only if ALL sessions are secure
     boolean isSecured = true;
@@ -38,16 +36,7 @@
     <td width="47%" nowrap>
         <table cellpadding="0" cellspacing="0" border="0">
             <tr>
-            <%  Object content = null;
-                try {
-                    content = new  URL("http://"+host+"/favicon.ico").openConnection().getContent();
-                }
-                catch (Exception e) {}
-                if (content != null) { %>
-                    <td width="1%" ><img src="http://<%=host%>/favicon.ico" width="16" height="16"></td>
-                <% } else { %>
-                    <td width="1%" ><img src="images/server_16x16.gif" width="16" height="16"></td>
-                <% } %>
+            <td width="1%" ><img src="getFavicon?host=<%=host%>" width="16" height="16"></td>
             <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= host %></a></td>
             </tr>
         </table>

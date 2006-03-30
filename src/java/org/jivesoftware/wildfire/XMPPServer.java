@@ -34,6 +34,7 @@ import org.jivesoftware.wildfire.handler.*;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.wildfire.net.MulticastDNSService;
+import org.jivesoftware.wildfire.pubsub.PubSubModule;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
 import org.jivesoftware.wildfire.transport.TransportHandler;
@@ -411,6 +412,7 @@ public class XMPPServer {
         loadModule(AdHocCommandHandler.class.getName());
         loadModule(IQPrivacyHandler.class.getName());
         loadModule(FileTransferProxy.class.getName());
+        loadModule(PubSubModule.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

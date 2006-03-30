@@ -14,16 +14,11 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 /**
  * Central manager of database connections. All methods are static so that they
@@ -46,7 +41,7 @@ public class DbConnectionManager {
     /**
      * Database schema version.
      */
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
 
     private static ConnectionProvider connectionProvider;

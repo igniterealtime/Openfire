@@ -83,7 +83,9 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         }
         Roster roster = rosterCache.get(username);
         if (roster == null) {
-            synchronized(username.intern()) {
+            // Synchronize using a unique key so that other threads loading the User
+            // and not the Roster cannot produce a deadlock
+            synchronized ((username + " ro").intern()) {
                 roster = rosterCache.get(username);
                 if (roster == null) {
                     // Not in cache so load a new one:
@@ -554,7 +556,9 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 handler.process(presence);
             }
         }
-        catch (UnauthorizedException e) {}
+        catch (UnauthorizedException e) {
+            // Do nothing
+        }
     }
 
     private Collection<Group> getVisibleGroups(Group groupToCheck) {

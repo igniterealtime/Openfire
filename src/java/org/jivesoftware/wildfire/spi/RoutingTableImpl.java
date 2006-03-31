@@ -11,21 +11,19 @@
 
 package org.jivesoftware.wildfire.spi;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * <p>Uses simple hashtables for table storage.</p>
- * <p>Leaves in the tree are indicated by a PacketHandler, while branches are stored in hashtables.
+ * <p>Uses simple Maps for table storage.</p>
+ * <p>Leaves in the tree are indicated by a PacketHandler, while branches are stored in Maps.
  * Traverse the tree according to an XMPPAddress' fields (host -> name -> resource) and when you
  * hit a PacketHandler, you have found the handler for that node and all sub-nodes. </p>
  *
@@ -38,10 +36,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      */
     private Map routes = new ConcurrentHashMap();
 
-    /**
-     * locks access to the routing tale
-     */
-    private ReadWriteLock routeLock = new ReentrantReadWriteLock();
     private String serverName;
     private InternalComponentManager componentManager;
 
@@ -55,27 +49,37 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         String nodeJID = node.getNode() == null ? "" : node.getNode();
         String resourceJID = node.getResource() == null ? "" : node.getResource();
 
-        routeLock.writeLock().lock();
-        try {
-            if (destination instanceof ClientSession) {
-                Object nameRoutes = routes.get(node.getDomain());
-                if (nameRoutes == null) {
-                    nameRoutes = new Hashtable();
-                    routes.put(node.getDomain(), nameRoutes);
+        if (destination instanceof ClientSession) {
+            Object nameRoutes = routes.get(node.getDomain());
+            if (nameRoutes == null) {
+                // No route to the requested domain. Create a new entry in the table
+                synchronized (node.getDomain().intern()) {
+                    // Check again if a route exists now that we have a lock
+                    nameRoutes = routes.get(node.getDomain());
+                    if (nameRoutes == null) {
+                        // Still nothing so create a new entry in the map for domain
+                        nameRoutes = new ConcurrentHashMap();
+                        routes.put(node.getDomain(), nameRoutes);
+                    }
                 }
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
-                if (resourceRoutes == null) {
-                    resourceRoutes = new Hashtable();
-                    ((Hashtable)nameRoutes).put(nodeJID, resourceRoutes);
+            }
+            // Check if there is something associated with the node of the JID
+            Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
+            if (resourceRoutes == null) {
+                // Nothing was found so create a new entry for this node (a.k.a. user)
+                synchronized (nodeJID.intern()) {
+                    resourceRoutes = ((Map) nameRoutes).get(nodeJID);
+                    if (resourceRoutes == null) {
+                        resourceRoutes = new ConcurrentHashMap();
+                        ((Map) nameRoutes).put(nodeJID, resourceRoutes);
+                    }
                 }
-                ((Hashtable)resourceRoutes).put(resourceJID, destination);
             }
-            else {
-                routes.put(node.getDomain(), destination);
-            }
+            // Add the connected resource to the node's Map
+            ((Map) resourceRoutes).put(resourceJID, destination);
         }
-        finally {
-            routeLock.writeLock().unlock();
+        else {
+            routes.put(node.getDomain(), destination);
         }
     }
 
@@ -99,19 +103,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             return OutgoingSessionPromise.getInstance();
         }
 
-        routeLock.readLock().lock();
         try {
             Object nameRoutes = routes.get(domain);
             if (nameRoutes instanceof ChannelHandler) {
-                route = (RoutableChannelHandler)nameRoutes;
+                route = (RoutableChannelHandler) nameRoutes;
             }
             else if (nameRoutes != null) {
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(node);
+                Object resourceRoutes = ((Map) nameRoutes).get(node);
                 if (resourceRoutes instanceof ChannelHandler) {
-                    route = (RoutableChannelHandler)resourceRoutes;
+                    route = (RoutableChannelHandler) resourceRoutes;
                 }
                 else if (resourceRoutes != null) {
-                    route = (RoutableChannelHandler) ((Hashtable)resourceRoutes).get(resource);
+                    route = (RoutableChannelHandler) ((Map) resourceRoutes).get(resource);
                 }
                 else {
                     route = null;
@@ -120,11 +123,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         catch (Exception e) {
             if (Log.isDebugEnabled()) {
-                Log.debug("Route not found for JID: "+ jid, e);
+                Log.debug("Route not found for JID: " + jid, e);
             }
-        }
-        finally {
-            routeLock.readLock().unlock();
         }
 
         return route;
@@ -140,50 +140,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
 
         LinkedList list = null;
-        routeLock.readLock().lock();
-        try {
-            if (node == null || node.getDomain() == null) {
+        Object nameRoutes = routes.get(node.getDomain());
+        if (nameRoutes != null) {
+            if (nameRoutes instanceof ChannelHandler) {
                 list = new LinkedList();
-                getRoutes(list, routes);
+                list.add(nameRoutes);
+            }
+            else if (node.getNode() == null) {
+                list = new LinkedList();
+                getRoutes(list, (Map) nameRoutes);
             }
             else {
-                Object nameRoutes = routes.get(node.getDomain());
-                if (nameRoutes != null) {
-                    if (nameRoutes instanceof ChannelHandler) {
+                Object resourceRoutes = ((Map) nameRoutes).get(node.getNode());
+                if (resourceRoutes != null) {
+                    if (resourceRoutes instanceof ChannelHandler) {
                         list = new LinkedList();
-                        list.add(nameRoutes);
+                        list.add(resourceRoutes);
                     }
-                    else if (node.getNode() == null) {
+                    else if (node.getResource() == null || node.getResource().length() == 0) {
                         list = new LinkedList();
-                        getRoutes(list, (Hashtable)nameRoutes);
+                        getRoutes(list, (Map) resourceRoutes);
                     }
                     else {
-                        Object resourceRoutes =
-                                ((Hashtable)nameRoutes).get(node.getNode());
-                        if (resourceRoutes != null) {
-                            if (resourceRoutes instanceof ChannelHandler) {
-                                list = new LinkedList();
-                                list.add(resourceRoutes);
-                            }
-                            else if (node.getResource() == null || node.getResource().length() == 0) {
-                                list = new LinkedList();
-                                getRoutes(list, (Hashtable)resourceRoutes);
-                            }
-                            else {
-                                Object entry =
-                                        ((Hashtable)resourceRoutes).get(node.getResource());
-                                if (entry != null) {
-                                    list = new LinkedList();
-                                    list.add(entry);
-                                }
-                            }
+                        Object entry = ((Map) resourceRoutes).get(node.getResource());
+                        if (entry != null) {
+                            list = new LinkedList();
+                            list.add(entry);
                         }
                     }
                 }
             }
-        }
-        finally {
-            routeLock.readLock().unlock();
         }
         if (list == null) {
             return Collections.EMPTY_LIST.iterator();
@@ -194,10 +180,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     }
 
     /**
-     * <p>Recursive method to iterate through the given table (and any embedded tables)
-     * and stuff non-Hashtable values into the given list.</p>
-     * <p>There should be no recursion problems since
-     * the routing table is at most 3 levels deep.</p>
+     * Recursive method to iterate through the given table (and any embedded map)
+     * and stuff non-Map values into the given list.<p>
+     *
+     * There should be no recursion problems since the routing table is at most 3 levels deep.
      *
      * @param list  The list to stuff entries into
      * @param table The hashtable who's values should be entered into the list
@@ -206,8 +192,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         Iterator entryIter = table.values().iterator();
         while (entryIter.hasNext()) {
             Object entry = entryIter.next();
-            if (entry instanceof Hashtable) {
-                getRoutes(list, (Hashtable)entry);
+            if (entry instanceof ConcurrentHashMap) {
+                getRoutes(list, (Map)entry);
             }
             else {
                 // Do not include the same entry many times. This could be the case when the same 
@@ -220,7 +206,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     }
 
     public ChannelHandler getBestRoute(JID node) {
-        ChannelHandler route = route = getRoute(node);
+        ChannelHandler route = getRoute(node);
         if (route == null) {
             // Try looking for a route based on the bare JID
             String nodeJID = node.getNode() == null ? "" : node.getNode();
@@ -235,25 +221,23 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         String nodeJID = node.getNode() == null ? "" : node.getNode();
         String resourceJID = node.getResource() == null ? "" : node.getResource();
 
-        routeLock.writeLock().lock();
         try {
             Object nameRoutes = routes.get(node.getDomain());
-            if (nameRoutes instanceof Hashtable) {
-                Object resourceRoutes = ((Hashtable)nameRoutes).get(nodeJID);
-                if (resourceRoutes instanceof Hashtable) {
+            if (nameRoutes instanceof ConcurrentHashMap) {
+                Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
+                if (resourceRoutes instanceof ConcurrentHashMap) {
                     // Remove the requested resource for this user
-                    route = (ChannelHandler) ((Hashtable)resourceRoutes).remove(resourceJID);
-                    if (((Hashtable)resourceRoutes).isEmpty()) {
-                        ((Hashtable)nameRoutes).remove(nodeJID);
-                        if (((Hashtable)nameRoutes).isEmpty()) {
+                    route = (ChannelHandler) ((Map) resourceRoutes).remove(resourceJID);
+                    if (((Map) resourceRoutes).isEmpty()) {
+                        ((Map) nameRoutes).remove(nodeJID);
+                        if (((Map) nameRoutes).isEmpty()) {
                             routes.remove(node.getDomain());
-
                         }
                     }
                 }
                 else {
                     // Remove the unique route to this node
-                    ((Hashtable)nameRoutes).remove(nodeJID);
+                    ((Map) nameRoutes).remove(nodeJID);
                 }
             }
             else if (nameRoutes != null) {
@@ -267,9 +251,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         catch (Exception e) {
             Log.error("Error removing route", e);
-        }
-        finally {
-            routeLock.writeLock().unlock();
         }
         return route;
     }

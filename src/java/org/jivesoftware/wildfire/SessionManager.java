@@ -488,6 +488,10 @@ public class SessionManager extends BasicModule {
             List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
             if (sessions != null) {
                 sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    // Remove key since there are no more sessions associated
+                    incomingServerSessions.remove(hostname);
+                }
             }
         }
     }

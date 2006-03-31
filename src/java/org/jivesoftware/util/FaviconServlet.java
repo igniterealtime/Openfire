@@ -35,7 +35,7 @@ import java.net.URLConnection;
  * servlet can be used when getting a favicon can take some time so pages can use this
  * servlet as the image source to let the page load quickly and get the favicon images
  * as they are available.<p>
- * <p/>
+ *
  * This servlet expects the web application to have the <tt>images/server_16x16.gif</tt>
  * file that is used when no favicon is found.
  *
@@ -47,8 +47,18 @@ public class FaviconServlet extends HttpServlet {
      * The content-type of the images to return.
      */
     private static final String CONTENT_TYPE = "image/jpeg";
+    /**
+     * Bytes of the default favicon to return when one was not found on a host.
+     */
     private byte[] defaultBytes;
+    /**
+     * Pool of HTTP connections to use to get the favicons
+     */
     private HttpClient client;
+    /**
+     * Cache the domains that a favicon was not found.
+     */
+    private Cache<String, Boolean> missesCache;
 
 
     public void init(ServletConfig config) throws ServletException {
@@ -66,6 +76,8 @@ public class FaviconServlet extends HttpServlet {
         catch (MalformedURLException e) {
             e.printStackTrace();
         }
+        // Initialize caches.
+        missesCache = CacheManager.initializeCache("Favicon misses", "favicon", 512 * 1024);
     }
 
     /**
@@ -115,8 +127,15 @@ public class FaviconServlet extends HttpServlet {
      * @return the image bytes found, otherwise null.
      */
     private byte[] getImage(String host, byte[] defaultImage) {
+        // Check if there is cached information for the requested domain
+        if (missesCache.get(host) != null) {
+            // Domain does not have a favicon so return default icon
+            return defaultImage;
+        }
         byte[] bytes = getImage("http://" + host + "/favicon.ico");
         if (bytes == null) {
+            // Cache that the requested domain does not have a favicon
+            missesCache.put(host, Boolean.TRUE);
             // Return byte of default icon
             bytes = defaultImage;
         }
@@ -128,8 +147,16 @@ public class FaviconServlet extends HttpServlet {
             // Try to get the fiveicon from the url using an HTTP connection from the pool
             // that also allows to configure timeout values (e.g. connect and get data)
             GetMethod get = new GetMethod(url);
-            client.executeMethod(get);
-            return get.getResponseBody();
+            get.setFollowRedirects(true);
+            int response = client.executeMethod(get);
+            if (response < 400) {
+                // Check that the response was successful. Should we also filter 30* code?
+                return get.getResponseBody();
+            }
+            else {
+                // Remote server returned an error so return null
+                return null;
+            }
         }
         catch (IllegalStateException e) {
             // Something failed (probably a method not supported) so try the old stye now

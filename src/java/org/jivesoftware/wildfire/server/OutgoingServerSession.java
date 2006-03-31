@@ -321,6 +321,14 @@ public class OutgoingServerSession extends Session {
                     connection.close();
                 }
             }
+            catch (XmlPullParserException e) {
+                Log.warn("Error creating secured outgoing session to remote server: " + hostname +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                // Close the connection
+                if (connection != null) {
+                    connection.close();
+                }
+            }
             catch (Exception e) {
                 Log.error("Error creating secured outgoing session to remote server: " + hostname +
                         "(DNS lookup: " + realHostname + ":" + realPort + ")", e);

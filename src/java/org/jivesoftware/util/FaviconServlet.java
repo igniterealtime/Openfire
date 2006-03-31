@@ -131,7 +131,7 @@ public class FaviconServlet extends HttpServlet {
             client.executeMethod(get);
             return get.getResponseBody();
         }
-        catch (Exception e) {
+        catch (IllegalStateException e) {
             // Something failed (probably a method not supported) so try the old stye now
             try {
                 URLConnection urlConnection = new URL(url).openConnection();
@@ -157,6 +157,10 @@ public class FaviconServlet extends HttpServlet {
                 // We failed again so return null
                 return null;
             }
+        }
+        catch (IOException ioe) {
+            // We failed again so return null
+            return null;
         }
     }
 

@@ -39,7 +39,7 @@ public class DefaultUserProvider implements UserProvider {
     private static final String USER_COUNT =
             "SELECT count(*) FROM jiveUser";
     private static final String ALL_USERS =
-            "SELECT username FROM jiveUser";
+            "SELECT username FROM jiveUser ORDER BY username";
     private static final String INSERT_USER =
             "INSERT INTO jiveUser (username,password,encryptedPassword,name,email,creationDate,modificationDate) " +
             "VALUES (?,?,?,?,?,?,?)";

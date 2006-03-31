@@ -76,9 +76,18 @@ public class AdminConsolePlugin implements Plugin {
             jetty.removeContext(context);
             loadListeners();
 
-            // Add web-app
-            context = jetty.addWebApplication("/",
+            // Add web-app. Check to see if we're in development mode. If so, we don't
+            // add the normal web-app location, but the web-app in the project directory.
+            if (Boolean.getBoolean("developmentMode")) {
+                System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
+                context = jetty.addWebApplication("/",
+                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
+                            File.separator + "web");
+            }
+            else {
+                context = jetty.addWebApplication("/",
                     pluginDir.getAbsoluteFile() + File.separator + "webapp");
+            }
             context.setWelcomeFiles(new String[]{"index.jsp"});
 
             jetty.start();
@@ -169,9 +178,18 @@ public class AdminConsolePlugin implements Plugin {
 
             loadListeners();
 
-            // Add web-app
-            context = jetty.addWebApplication("/",
+            // Add web-app. Check to see if we're in development mode. If so, we don't
+            // add the normal web-app location, but the web-app in the project directory.
+            if (Boolean.getBoolean("developmentMode")) {
+                System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
+                context = jetty.addWebApplication("/",
+                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
+                            File.separator + "web");
+            }
+            else {
+                context = jetty.addWebApplication("/",
                     pluginDir.getAbsoluteFile() + File.separator + "webapp");
+            }
             context.setWelcomeFiles(new String[]{"index.jsp"});
 
             jetty.start();

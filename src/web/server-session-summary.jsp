@@ -8,13 +8,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.server.IncomingServerSession,
-                 org.jivesoftware.wildfire.server.OutgoingServerSession"
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.Session,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.server.OutgoingServerSession,
+                 java.util.*"
     errorPage="error.jsp"
 %>
 
@@ -95,6 +93,7 @@
 
 <%  } %>
 
+<p>
 <fmt:message key="server.session.summary.active" />: <b><%= hostnames.size() %></b>
 
 <%  if (numPages > 1) { %>
@@ -113,6 +112,7 @@
     <%  } %>
 
 </select>
+</p>
 
 <%  if (numPages > 1) { %>
 

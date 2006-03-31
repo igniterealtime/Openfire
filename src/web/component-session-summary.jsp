@@ -9,14 +9,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 java.net.URLEncoder,
-                 org.jivesoftware.wildfire.component.ComponentSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.Session,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.component.ComponentSession,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.ArrayList"%>
+<%@ page import="java.util.Calendar"%>
+<%@ page import="java.util.Collection"%>
+<%@ page import="java.util.Date"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -84,6 +88,7 @@
 
 <%  } %>
 
+<p>
 <fmt:message key="component.session.summary.active" />: <b><%= sessions.size() %></b>
 
 <%  if (numPages > 1) { %>
@@ -102,6 +107,7 @@
     <%  } %>
 
 </select>
+</p>
 
 <%  if (numPages > 1) { %>
 

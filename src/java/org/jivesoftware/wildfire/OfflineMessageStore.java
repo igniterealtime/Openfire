@@ -59,7 +59,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM jiveOffline WHERE username=? AND creationDate=?";
 
-    private Cache sizeCache;
+    private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
 
     /**
@@ -82,9 +82,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public OfflineMessageStore() {
         super("Offline Message Store");
         dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
-        String cacheName = "Offline Message Size";
-        CacheManager.initializeCache(cacheName, "offlinemessage", 1024*100, JiveConstants.HOUR*12);
-        sizeCache = CacheManager.getCache(cacheName);
+        sizeCache = CacheManager.initializeCache("Offline Message Size", "offlinemessage",
+                1024 * 100, JiveConstants.HOUR * 12);
     }
 
     /**
@@ -139,7 +138,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
         // Update the cached size if it exists.
         if (sizeCache.containsKey(username)) {
-            int size = (Integer)sizeCache.get(username);
+            int size = sizeCache.get(username);
             size += msgXML.length();
             sizeCache.put(username, size);
         }
@@ -190,7 +189,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             }
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error retrieving offline messages of username: " + username, e);
         }
         finally {
             // Return the sax reader to the pool
@@ -237,7 +236,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             rs.close();
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error retrieving offline messages of username: " + username +
+                    " creationDate: " + creationDate, e);
         }
         finally {
             // Return the sax reader to the pool
@@ -267,7 +267,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error deleting offline messages of username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -307,7 +307,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error deleting offline messages of username: " + username +
+                    " creationDate: " + creationDate, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -327,7 +328,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public int getSize(String username) {
         // See if the size is cached.
         if (sizeCache.containsKey(username)) {
-            return (Integer)sizeCache.get(username);
+            return sizeCache.get(username);
         }
         int size = 0;
         Connection con = null;

@@ -56,8 +56,8 @@ public class FaviconServlet extends HttpServlet {
         // Create a pool of HTTP connections to use to get the favicons
         client = new HttpClient(new MultiThreadedHttpConnectionManager());
         HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
-        params.setConnectionTimeout(500);
-        params.setSoTimeout(500);
+        params.setConnectionTimeout(2000);
+        params.setSoTimeout(2000);
         // Load the default favicon to use when no favicon was found of a remote host
         try {
             URL resource = config.getServletContext().getResource("/images/server_16x16.gif");
@@ -159,7 +159,7 @@ public class FaviconServlet extends HttpServlet {
             }
         }
         catch (IOException ioe) {
-            // We failed again so return null
+            // We failed so return null
             return null;
         }
     }

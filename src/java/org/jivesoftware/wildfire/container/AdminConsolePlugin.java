@@ -1,21 +1,11 @@
 /**
-
- * $RCSfile$
-
  * $Revision: 3034 $
-
  * $Date: 2005-11-04 21:02:33 -0300 (Fri, 04 Nov 2005) $
-
  *
-
- * Copyright (C) 2004 Jive Software. All rights reserved.
-
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
-
  * This software is published under the terms of the GNU Public License (GPL),
-
  * a copy of which is included in this distribution.
-
  */
 
 package org.jivesoftware.wildfire.container;
@@ -164,15 +154,21 @@ public class AdminConsolePlugin implements Plugin {
             File logFile = new File(logDir, "admin-console.log");
             OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
             logSink.start();
-            LogImpl log = (LogImpl) Factory.getFactory().getInstance("");
-            // Ignore INFO logs unless debugging turned on.
-            if (!Log.isDebugEnabled()) {
-                log.setVerbose(-1);
+            // In some cases, commons-logging settings can be stomped by other
+            // libraries in the classpath. Make sure that hasn't happened before
+            // setting configuration.
+            Object logImpl = Factory.getFactory().getInstance("");
+            if (logImpl instanceof LogImpl) {
+                LogImpl log = (LogImpl)logImpl;
+                // Ignore INFO logs unless debugging turned on.
+                if (!Log.isDebugEnabled()) {
+                    log.setVerbose(-1);
+                }
+                else {
+                    log.setVerbose(1);
+                }
+                log.add(logSink);
             }
-            else {
-                log.setVerbose(1);
-            }
-            log.add(logSink);
 
             jetty = new Server();
 

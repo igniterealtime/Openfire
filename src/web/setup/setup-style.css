@@ -10,9 +10,6 @@ PRE, TT {
     font-size : 100%;
     font-family : courier new, monospaced;
 }
-LABEL {
-    font-weight : bold;
-}
 A {}
 A:link {
     color : #039;
@@ -36,6 +33,7 @@ A:active {
     font-size : 1.3em;
     color : #ffffff;
     background-color : #369;
+    background: url(../images/setup-header.png)
 }
 .jive-setup-footer {
     text-align : center;
@@ -50,9 +48,25 @@ A:active {
 .jive-setup-error-text {
     color : #f00;
 }
-.jive-setup-sidebar {
-    border : 1px #ccc solid;
-    background-color : #eee;
+.jive-setup-sidebar-top {
+    color : #fff;
+    text-align : center;
+    padding : 6px;
+    background-color : #336699;
+    background-image: url(../images/setup-sidebar-top.gif);
+    background-position : top center;
+    background-repeat : no-repeat;
+}
+.jive-setup-sidebar-bottom {
+    color : #000;
+    padding : 6px;
+    background-color : #D3E9FF;
+    background-image: url(../images/setup-sidebar-bottom.gif);
+    background-position : bottom center;
+    background-repeat : no-repeat;
+}
+.jive-setup-sidebar-bottom A:visited {
+    color : #000;
 }
 .jive-setup-header .jive-info {
     color : #333;

@@ -151,19 +151,13 @@
                 };
             %>
 
-            <table bgcolor="#cccccc" cellpadding="0" cellspacing="0" border="0" width="200">
-            <tr><td>
-            <table bgcolor="#cccccc" cellpadding="3" cellspacing="1" border="0" width="200">
-            <tr bgcolor="#eeeeee">
-                <td align="center">
-                    <span style="padding:6px">
-                    <b><fmt:message key="setup.sidebar.title" /></b>
-                    </span>
-                </td>
-            </tr>
-            <tr bgcolor="#ffffff">
-                <td>
-                    <table cellpadding="5" cellspacing="0" border="0" width="100%">
+
+        <div style="width:200px;">
+            <div class="jive-setup-sidebar-top">
+                <b><fmt:message key="setup.sidebar.title" /></b>
+            </div>
+            <div class="jive-setup-sidebar-bottom">
+            <table cellpadding="5" cellspacing="0" border="0">
                     <%  for (int i=0; i<items.length; i++) { %>
                         <tr>
                         <%  if (INCOMPLETE.equals(items[i])) { %>
@@ -191,12 +185,10 @@
                         </tr>
                     <%  } %>
                     <tr><td colspan="2"><br><br><br><br></td></tr>
-                    </table>
-                </td>
-            </tr>
-            </table>
-            </td></tr>
-            </table>
+                </table>
+            </div>
+        </div>
+
         </td>
         <td width="1%" nowrap><img src="../images/blank.gif" width="15" height="1" border="0" alt=""></td>
     <%  } %>

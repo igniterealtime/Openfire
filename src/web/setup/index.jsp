@@ -102,7 +102,7 @@
              id="loc01" />
         </td>
         <td colspan="2">
-            <label for="loc01">Czech</label> (cs_CZ)
+            <label for="loc01"><b>Czech</b> (cs_CZ)</label>
         </td>
     </tr>
     <tr>
@@ -111,7 +111,7 @@
              id="loc02" />
         </td>
         <td colspan="2">
-            <label for="loc02">Deutsch</label> (de)
+            <label for="loc02"><b>Deutsch</b> (de)</label>
         </td>
     </tr>
     <tr>
@@ -120,7 +120,7 @@
              id="loc03" />
         </td>
         <td colspan="2">
-            <label for="loc03">English</label> (en)
+            <label for="loc03"><b>English</b> (en)</label>
         </td>
     </tr>
     <tr>
@@ -129,7 +129,7 @@
              id="loc04" />
         </td>
         <td colspan="2">
-            <label for="loc04">Espa&ntilde;ol</label> (es)
+            <label for="loc04"><b>Espa&ntilde;ol</b> (es)</label>
         </td>
     </tr>
     <tr>
@@ -138,7 +138,7 @@
              id="loc05" />
         </td>
         <td colspan="2">
-            <label for="loc05">Fran&ccedil;ais</label> (fr)
+            <label for="loc05"><b>Fran&ccedil;ais</b> (fr)</label>
         </td>
     </tr>
     <tr>
@@ -147,7 +147,7 @@
              id="loc06" />
         </td>
         <td colspan="2">
-            <label for="loc06">Nederlands</label> (nl)
+            <label for="loc06"><b>Nederlands</b> (nl)</label>
         </td>
     </tr>
     <tr>
@@ -156,7 +156,7 @@
              id="loc07" />
         </td>
         <td colspan="2">
-            <label for="loc07">Polski</label> (pl_PL)
+            <label for="loc07"><b>Polski</b> (pl_PL)</label>
         </td>
     </tr>
     <tr>
@@ -165,7 +165,7 @@
              id="loc08" />
         </td>
         <td colspan="2">
-            <label for="loc08">Portugu&ecirc;s Brasileiro</label> (pt_BR)
+            <label for="loc08"><b>Portugu&ecirc;s Brasileiro</b> (pt_BR)</label>
         </td>
     </tr>
     <tr>
@@ -177,7 +177,7 @@
             <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="../images/language_zh_CN.gif" border="0" /></a>
         </td>
         <td>
-            <label for="loc09">Simplified Chinese</label> (zh_CN)
+            <label for="loc09"><b>Simplified Chinese</b> (zh_CN)</label>
         </td>
     </tr>
 </tbody>

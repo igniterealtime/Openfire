@@ -597,7 +597,7 @@
 
         <!-- Copy bin dir -->
         <copy todir="${prepare.out.dir}">
-            <fileset dir="${src.dir}" includes="bin/**/*" excludes="bin/wildfire-dev.*"/>
+            <fileset dir="${src.dir}" includes="bin/**/*" />
         </copy>
         <fixcrlf srcdir="${prepare.out.dir}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
 
@@ -682,6 +682,10 @@
         <ant antfile="${basedir}/build/build.xml" target="-prepare">
             <property name="prepare.out.dir" value="${release.out.dir}"/>
         </ant>
+
+        <!-- Remove the development scripts -->
+        <delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
+        <delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
 
         <!-- Pack200 processing on JAR files in lib dir -->
 

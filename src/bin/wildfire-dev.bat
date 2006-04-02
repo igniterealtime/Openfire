@@ -6,6 +6,9 @@ REM # $Revision: 1102 $
 REM # $Date: 2005-03-07 22:36:48 -0300 (Mon, 07 Mar 2005) $
 REM #
 
+REM # Starts Wildfire in development mode, which means that JSP pages in the admin console will be compiled dynamically 
+REM # out of the web src directory. This makes it much easier to admin console development.
+
 if "%JAVA_HOME%" == "" goto javaerror
 if not exist "%JAVA_HOME%\bin\java.exe" goto javaerror
 goto run

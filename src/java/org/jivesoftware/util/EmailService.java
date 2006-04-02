@@ -179,8 +179,8 @@ public class EmailService {
             try {
                 String encoding = MimeUtility.mimeCharset("iso-8859-1");
                 MimeMessage message = createMimeMessage();
-                Address to   = null;
-                Address from = null;
+                Address to;
+                Address from;
 
                 if (toName != null) {
                     to = new InternetAddress(toEmail, toName, encoding);
@@ -254,7 +254,7 @@ public class EmailService {
 
     /**
      * Sends a collection of email messages. This method differs from
-     * {@link #sendMessages(Collection<MimeMessage>)} in that messages are sent
+     * {@link #sendMessages(Collection)} in that messages are sent
      * before this method returns rather than queueing the messages to be sent later.
      *
      * @param messages

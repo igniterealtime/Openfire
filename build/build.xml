@@ -597,7 +597,7 @@
 
         <!-- Copy bin dir -->
         <copy todir="${prepare.out.dir}">
-            <fileset dir="${src.dir}" includes="bin/**/*"/>
+            <fileset dir="${src.dir}" includes="bin/**/*" excludes="bin/wildfire-dev.*"/>
         </copy>
         <fixcrlf srcdir="${prepare.out.dir}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
 

@@ -142,7 +142,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
-     * permissions as a room owner. 
+     * permissions as a room owner.
      */
     private List<String> sysadmins = new CopyOnWriteArrayList<String>();
 
@@ -967,7 +967,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
-        if (name == null && node == node) {
+        if (name == null && node == null) {
             // We always have info about the MUC service
             return true;
         }

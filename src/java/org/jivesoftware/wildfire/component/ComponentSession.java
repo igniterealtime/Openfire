@@ -12,11 +12,11 @@ package org.jivesoftware.wildfire.component;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.Component;
@@ -27,6 +27,8 @@ import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Represents a session between the server and a component.
@@ -180,7 +182,7 @@ public class ComponentSession extends Session {
                 writer.flush();
                 // Bind the domain to this component
                 ExternalComponent component = ((ComponentSession) session).getExternalComponent();
-                component.setSubdomain(subdomain);
+                component.setInitialSubdomain(subdomain);
                 InternalComponentManager.getInstance().addComponent(subdomain, component);
                 Log.debug("[ExComp] External component was registered SUCCESSFULLY with domain: " +
                         domain);
@@ -229,7 +231,15 @@ public class ComponentSession extends Session {
         private String name = "";
         private String type = "";
         private String category = "";
-        private String subdomain;
+        /**
+         * Subdomain used when creating the initial connection.
+         */
+        private String initialSubdomain;
+        /**
+         * List of subdomains that were binded for this component. The list will include
+         * the initial subdomain.
+         */
+        private Collection<String> subdomains = new ArrayList<String>();
 
         public void processPacket(Packet packet) {
             if (conn != null && !conn.isClosed()) {
@@ -271,12 +281,21 @@ public class ComponentSession extends Session {
             this.category = category;
         }
 
-        public String getSubdomain() {
-            return subdomain;
+        public String getInitialSubdomain() {
+            return initialSubdomain;
         }
 
-        public void setSubdomain(String subdomain) {
-            this.subdomain = subdomain;
+        public void setInitialSubdomain(String initialSubdomain) {
+            this.initialSubdomain = initialSubdomain;
+            addSubdomain(initialSubdomain);
+        }
+
+        public void addSubdomain(String subdomain) {
+            subdomains.add(subdomain);
+        }
+
+        public Collection<String> getSubdomains() {
+            return subdomains;
         }
 
         public void initialize(JID jid, ComponentManager componentManager) {
@@ -286,6 +305,10 @@ public class ComponentSession extends Session {
         }
 
         public void shutdown() {
+        }
+
+        public String toString() {
+            return super.toString() + " - subdomains: " + subdomains;
         }
     }
 }

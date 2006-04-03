@@ -1,12 +1,12 @@
 package org.jivesoftware.wildfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.component.ExternalComponentConfiguration.Permission;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -325,10 +325,13 @@ public class ExternalComponentManager {
      */
     public static void setPermissionPolicy(PermissionPolicy policy) {
         JiveGlobals.setProperty("xmpp.component.permission", policy.toString());
-        // Check if the connected component can remain connected to the server
+        // Check if connected components can remain connected to the server
         for (ComponentSession session : SessionManager.getInstance().getComponentSessions()) {
-            if (!canAccess(session.getExternalComponent().getSubdomain())) {
-                session.getConnection().close();
+            for (String domain : session.getExternalComponent().getSubdomains()) {
+                if (!canAccess(domain)) {
+                    session.getConnection().close();
+                    break;
+                }
             }
         }
     }
@@ -357,6 +360,6 @@ public class ExternalComponentManager {
          * Only the XMPP entities listed in the <b>allowed list</b> are able to connect to
          * the server.
          */
-        whitelist;
+        whitelist
     }
 }

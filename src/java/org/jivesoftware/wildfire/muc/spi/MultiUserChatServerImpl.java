@@ -138,13 +138,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can 
      * create a room. 
      */
-    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<String>();
+    private List<String> allowedToCreate = new CopyOnWriteArrayList<String>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
      * permissions as a room owner. 
      */
-    private Collection<String> sysadmins = new CopyOnWriteArrayList<String>();
+    private List<String> sysadmins = new CopyOnWriteArrayList<String>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
@@ -341,8 +341,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     private void logConversation() {
-        ConversationLogEntry entry = null;
-        boolean success = false;
+        ConversationLogEntry entry;
+        boolean success;
         for (int index = 0; index <= log_batch_size && !logQueue.isEmpty(); index++) {
             entry = logQueue.poll();
             if (entry != null) {
@@ -359,7 +359,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * saving all the conversation log entries before the service becomes unavailable.
      */
     private void logAllConversation() {
-        ConversationLogEntry entry = null;
+        ConversationLogEntry entry;
         while (!logQueue.isEmpty()) {
             entry = logQueue.poll();
             if (entry != null) {
@@ -392,7 +392,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
-        MUCRoom room = null;
+        MUCRoom room;
         synchronized (roomName.intern()) {
             room = rooms.get(roomName);
             if (room == null) {
@@ -493,7 +493,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }
-        MUCUser user = null;
+        MUCUser user;
         synchronized (userjid.toString().intern()) {
             user = users.get(userjid);
             if (user == null) {
@@ -599,9 +599,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     public void addSysadmin(String userJID) {
         sysadmins.add(userJID.trim().toLowerCase());
+        // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
+        ArrayList<String> tempList = new ArrayList<String>(sysadmins);
+        Collections.sort(tempList);
+        sysadmins = new CopyOnWriteArrayList<String>(tempList);
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = (String[])sysadmins.toArray(jids);
+        jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
     }
 
@@ -609,7 +613,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         sysadmins.remove(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = (String[])sysadmins.toArray(jids);
+        jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.muc.sysadmin.jid", fromArray(jids));
     }
 
@@ -651,9 +655,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
         // variable there is no need to restart the service
         allowedToCreate.add(userJID.trim().toLowerCase());
+        // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
+        ArrayList<String> tempList = new ArrayList<String>(allowedToCreate);
+        Collections.sort(tempList);
+        allowedToCreate = new CopyOnWriteArrayList<String>(tempList);
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = (String[])allowedToCreate.toArray(jids);
+        jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.muc.create.jid", fromArray(jids));
     }
 
@@ -663,7 +671,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         allowedToCreate.remove(userJID.trim().toLowerCase());
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = (String[])allowedToCreate.toArray(jids);
+        jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.muc.create.jid", fromArray(jids));
     }
 
@@ -678,8 +686,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         String[] jids;
         if (property != null) {
             jids = property.split(",");
-            for (int i = 0; i < jids.length; i++) {
-                sysadmins.add(jids[i].trim().toLowerCase());
+            for (String jid : jids) {
+                sysadmins.add(jid.trim().toLowerCase());
             }
         }
         allowToDiscoverLockedRooms =
@@ -690,8 +698,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         property = JiveGlobals.getProperty("xmpp.muc.create.jid");
         if (property != null) {
             jids = property.split(",");
-            for (int i = 0; i < jids.length; i++) {
-                allowedToCreate.add(jids[i].trim().toLowerCase());
+            for (String jid : jids) {
+                allowedToCreate.add(jid.trim().toLowerCase());
             }
         }
         String value = JiveGlobals.getProperty("xmpp.muc.tasks.user.timeout");

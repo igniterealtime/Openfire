@@ -229,6 +229,10 @@ public class SocketConnection implements Connection {
         return socket.getInetAddress();
     }
 
+    public int getPort() {
+        return socket.getPort();
+    }
+
     public Writer getWriter() {
         return writer;
     }

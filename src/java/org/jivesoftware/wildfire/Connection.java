@@ -49,21 +49,28 @@ public interface Connection {
      */
     public InetAddress getInetAddress() throws UnknownHostException;
 
-     /**
-      * Returns the Writer used to send data to the connection. The writer should be
-      * used with caution. In the majority of cases, the {@link #deliver(Packet)}
-      * method should be used to send data instead of using the writer directly.
-      * You must synchronize on the writer before writing data to it to ensure
-      * data consistency:
-      *
-      * <pre>
-      * Writer writer = connection.getWriter();
-      * synchronized(writer) {
-      *     // write data....
-      * }</pre>
-      *
-      * @return the Writer for this connection.
-      */
+    /**
+     * Returns the port that the connection uses.
+     *
+     * @return the port that the connection uses.
+     */
+    public int getPort();
+
+    /**
+     * Returns the Writer used to send data to the connection. The writer should be
+     * used with caution. In the majority of cases, the {@link #deliver(Packet)}
+     * method should be used to send data instead of using the writer directly.
+     * You must synchronize on the writer before writing data to it to ensure
+     * data consistency:
+     *
+     * <pre>
+     *  Writer writer = connection.getWriter();
+     * synchronized(writer) {
+     *     // write data....
+     * }</pre>
+     *
+     * @return the Writer for this connection.
+     */
     public Writer getWriter();
 
     /**
@@ -254,7 +261,7 @@ public interface Connection {
          * compression is not available. Entities that request a compression negotiation
          * will get a stream error and their connections will be closed.
          */
-        disabled;
+        disabled
     }
 
     /**
@@ -278,6 +285,6 @@ public interface Connection {
          * TLS is not available. Entities that request a TLS negotiation will get a stream
          * error and their connections will be closed.
          */
-        disabled;
+        disabled
     }
 }

@@ -59,6 +59,11 @@ public class ComponentSocketReader extends SocketReader {
                 reply.add(new PacketError(PacketError.Condition.bad_request).getElement());
                 connection.deliverRawText(reply.asXML());
             }
+            else if (extraDomain.equals(initialDomain)) {
+                // Component is binding initial domain that is already registered
+                // Send confirmation that the new domain has been registered
+                connection.deliverRawText("<bind/>");
+            }
             else if (extraDomain.endsWith(initialDomain)) {
                 // Only accept subdomains under the initial registered domain
                 if (component.getSubdomains().contains(extraDomain)) {

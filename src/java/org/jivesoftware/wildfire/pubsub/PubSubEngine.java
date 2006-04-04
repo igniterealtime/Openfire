@@ -18,6 +18,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServerListener;
 import org.jivesoftware.wildfire.commands.AdHocCommandManager;
 import org.jivesoftware.wildfire.pubsub.models.AccessModel;
 import org.jivesoftware.wildfire.user.UserManager;
@@ -26,6 +28,7 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -40,6 +43,15 @@ public class PubSubEngine {
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
     private AdHocCommandManager manager;
+    /**
+     * Keep a registry of the presence's show value of users that subscribed to a node of
+     * the pubsub service and for which the node only delivers notifications for online users
+     * or node subscriptions deliver events based on the user presence show value. Offline
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * is full JID of connected resource and value is show value of the last received presence.
+     */
+    private Map<String, Map<String, String>> barePresences =
+            new ConcurrentHashMap<String, Map<String, String>>();
     /**
      * The time to elapse between each execution of the maintenance process. Default
      * is 2 minutes.
@@ -204,8 +216,13 @@ public class PubSubEngine {
             }
             action = childElement.element("entities");
             if (action != null) {
-                // Owner requests all affiliated entities
-                getAffiliatedEntities(iq, action);
+                if (IQ.Type.get == iq.getType()) {
+                    // Owner requests all affiliated entities
+                    getAffiliatedEntities(iq, action);
+                }
+                else {
+                    modifyAffiliations(iq, action);
+                }
                 return true;
             }
             action = childElement.element("purge");
@@ -227,12 +244,37 @@ public class PubSubEngine {
     }
 
     /**
-     * Handles Presence packets sent to the pubsub service.
+     * Handles Presence packets sent to the pubsub service. Only process available and not
+     * available presences.
      *
      * @param presence the Presence packet sent to the pubsub service.
      */
     public void process(Presence presence) {
-        // TODO Handle received presence of users the service has subscribed
+        if (presence.isAvailable()) {
+            JID subscriber = presence.getFrom();
+            Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+            if (fullPresences == null) {
+                synchronized (subscriber.toBareJID().intern()) {
+                    fullPresences = barePresences.get(subscriber.toBareJID());
+                    if (fullPresences == null) {
+                        fullPresences = new ConcurrentHashMap<String, String>();
+                        barePresences.put(subscriber.toBareJID(), fullPresences);
+                    }
+                }
+            }
+            Presence.Show show = presence.getShow();
+            fullPresences.put(subscriber.toString(), show == null ? "online" : show.name());
+        }
+        else if (presence.getType() == Presence.Type.unavailable) {
+            JID subscriber = presence.getFrom();
+            Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+            if (fullPresences != null) {
+                fullPresences.remove(subscriber.toString());
+                if (fullPresences.isEmpty()) {
+                    barePresences.remove(subscriber.toBareJID());
+                }
+            }
+        }
     }
 
     /**
@@ -523,7 +565,7 @@ public class PubSubEngine {
                     }
                 }
             }
-            if (nodeAffiliate != null && isNodeType) {
+            if (nodeAffiliate != null) {
                 for (NodeSubscription subscription : nodeAffiliate.getSubscriptions()) {
                     if (isNodeType) {
                         // User is requesting a subscription of type "nodes"
@@ -955,7 +997,7 @@ public class PubSubEngine {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(from)) {
+        if (!service.canCreateNode(from) || !UserManager.getInstance().isRegisteredUser(from)) {
             // The user is not allowed to create nodes so return an error
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
@@ -1206,6 +1248,11 @@ public class PubSubEngine {
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
         }
+        if (node.isRootCollectionNode()) {
+            // Root collection node cannot be deleted. Return not-allowed error
+            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+            return;
+        }
 
         // Delete the node
         if (node.delete()) {
@@ -1282,6 +1329,132 @@ public class PubSubEngine {
         node.sendAffiliatedEntities(iq);
     }
 
+    private void modifyAffiliations(IQ iq, Element entitiesElement) {
+        String nodeID = entitiesElement.attributeValue("node");
+        if (nodeID == null) {
+            // NodeID was not provided. Return bad-request error.
+            sendErrorPacket(iq, PacketError.Condition.bad_request, null);
+            return;
+        }
+        Node node = service.getNode(nodeID);
+        if (node == null) {
+            // Node does not exist. Return item-not-found error.
+            sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+            return;
+        }
+        if (!node.isAdmin(iq.getFrom())) {
+            // Requesting entity is prohibited from getting affiliates list. Return forbidden error.
+            sendErrorPacket(iq, PacketError.Condition.forbidden, null);
+            return;
+        }
+
+        IQ reply = IQ.createResultIQ(iq);
+        Collection<JID> invalidAffiliates = new ArrayList<JID>();
+
+        // Process modifications or creations of affiliations and subscriptions.
+        for (Iterator it = entitiesElement.elementIterator("entity"); it.hasNext();) {
+            Element entity = (Element) it.next();
+            JID subscriber = new JID(entity.attributeValue("jid"));
+            // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
+            JID owner = new JID(subscriber.toBareJID());
+            String newAffiliation = entity.attributeValue("affiliation");
+            String subStatus = entity.attributeValue("subscription");
+            String subID = entity.attributeValue("subid");
+            if (newAffiliation != null) {
+                // Get current affiliation of this user (if any)
+                NodeAffiliate affiliate = node.getAffiliate(owner);
+
+                // Check that we are not removing the only owner of the node
+                if (affiliate != null && !affiliate.getAffiliation().name().equals(newAffiliation)) {
+                    // Trying to modify an existing affiliation
+                    if (affiliate.getAffiliation() == NodeAffiliate.Affiliation.owner &&
+                            node.getOwners().size() == 1) {
+                        // Trying to remove the unique owner of the node. Include in error answer.
+                        invalidAffiliates.add(owner);
+                        continue;
+                    }
+                }
+
+                // Owner is setting affiliations for new entities or modifying
+                // existing affiliations
+                if ("owner".equals(newAffiliation)) {
+                    node.addOwner(owner);
+                }
+                else if ("publisher".equals(newAffiliation)) {
+                    node.addPublisher(owner);
+                }
+                else if ("none".equals(newAffiliation)) {
+                    node.addNoneAffiliation(owner);
+                }
+                else  {
+                    node.addOutcast(owner);
+                }
+            }
+            // Process subscriptions changes
+            if (subStatus != null) {
+                // Get current subscription (if any)
+                NodeSubscription subscription = null;
+                if (node.isMultipleSubscriptionsEnabled()) {
+                    if (subID != null) {
+                        subscription = node.getSubscription(subID);
+                    }
+                }
+                else {
+                    subscription = node.getSubscription(subscriber);
+                }
+                if ("none".equals(subStatus) && subscription != null) {
+                    // Owner is cancelling an existing subscription
+                    node.cancelSubscription(subscription);
+                }
+                else if ("subscribed".equals(subStatus)) {
+                    if (subscription != null) {
+                        // Owner is approving a subscription (i.e. making active)
+                        node.approveSubscription(subscription, true);
+                    }
+                    else {
+                        // Owner is creating a subscription for an entity to the node
+                        node.createSubscription(null, owner, subscriber, false, null);
+                    }
+                }
+            }
+        }
+
+        // Process invalid entities that tried to remove node owners. Send original affiliation
+        // of the invalid entities.
+        if (!invalidAffiliates.isEmpty()) {
+            reply.setError(PacketError.Condition.not_acceptable);
+            Element child =
+                    reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub#owner");
+            Element entities = child.addElement("entities");
+            if (!node.isRootCollectionNode()) {
+                entities.addAttribute("node", node.getNodeID());
+            }
+            for (JID affiliateJID : invalidAffiliates) {
+                NodeAffiliate affiliate = node.getAffiliate(affiliateJID);
+                Collection<NodeSubscription> subscriptions = affiliate.getSubscriptions();
+                if (subscriptions.isEmpty()) {
+                    Element entity = entities.addElement("entity");
+                    entity.addAttribute("jid", affiliate.getJID().toString());
+                    entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+                    entity.addAttribute("subscription", "none");
+                }
+                else {
+                    for (NodeSubscription subscription : subscriptions) {
+                        Element entity = entities.addElement("entity");
+                        entity.addAttribute("jid", subscription.getJID().toString());
+                        entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+                        entity.addAttribute("subscription", subscription.getState().name());
+                        if (node.isMultipleSubscriptionsEnabled()) {
+                            entity.addAttribute("subid", subscription.getID());
+                        }
+                    }
+                }
+            }
+        }
+        // Send reply
+        router.route(reply);
+    }
+
     /**
      * Terminates the subscription of the specified entity to all nodes hosted at the service.
      * The affiliation with the node will be removed if the entity was not a node owner or
@@ -1334,7 +1507,7 @@ public class PubSubEngine {
      *
      * @param packet the packet to be bounced.
      */
-    private void sendErrorPacket(IQ packet, PacketError.Condition error, Element pubsubError) {
+    void sendErrorPacket(IQ packet, PacketError.Condition error, Element pubsubError) {
         IQ reply = IQ.createResultIQ(packet);
         reply.setChildElement(packet.getChildElement().createCopy());
         reply.setError(error);
@@ -1403,6 +1576,29 @@ public class PubSubEngine {
         return completedForm;
     }
 
+    public void start() {
+        // Probe presences of users that this service has subscribed to (once the server
+        // has started)
+        XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+            public void serverStarted() {
+                Set<JID> affiliates = new HashSet<JID>();
+                for (Node node : service.getNodes()) {
+                    affiliates.addAll(node.getPresenceBasedSubscribers());
+                }
+                for (JID jid : affiliates) {
+                    // Send probe presence
+                    Presence subscription = new Presence(Presence.Type.probe);
+                    subscription.setTo(jid);
+                    subscription.setFrom(service.getAddress());
+                    service.send(subscription);
+                }
+            }
+
+            public void serverStopping() {
+            }
+        });
+    }
+
     public void shutdown() {
         // Stop te maintenance processes
         timer.cancel();
@@ -1423,6 +1619,89 @@ public class PubSubEngine {
         }
         // Stop executing ad-hoc commands
         manager.stop();
+    }
+
+    /*******************************************************************************
+     * Methods related to presence subscriptions to subscribers' presence.
+     ******************************************************************************/
+
+    /**
+     * Returns the show values of the last know presence of all connected resources of the
+     * specified subscriber. When the subscriber JID is a bare JID then the answered collection
+     * will have many entries one for each connected resource. Moreover, if the user
+     * is offline then an empty collectin is returned. Available show status is represented
+     * by a <tt>online</tt> value. The rest of the possible show values as defined in RFC 3921.
+     *
+     * @param subscriber the JID of the subscriber. This is not the JID of the affiliate.
+     * @return an empty collection when offline. Otherwise, a collection with the show value
+     *         of each connected resource.
+     */
+    public Collection<String> getShowPresences(JID subscriber) {
+        Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+        if (fullPresences == null) {
+            // User is offline so return empty list
+            return Collections.emptyList();
+        }
+        if (subscriber.getResource() == null) {
+            // Subscriber used bared JID so return show value of all connected resources
+            return fullPresences.values();
+        }
+        else {
+            // Look for the show value using the full JID
+            String show = fullPresences.get(subscriber.toString());
+            if (show == null) {
+                // User at the specified resource is offline so return empty list
+                return Collections.emptyList();
+            }
+            // User is connected at specified resource so answer list with presence show value
+            return Arrays.asList(show);
+        }
+    }
+
+    /**
+     * Requests the pubsub service to subscribe to the presence of the user. If the service
+     * has already subscribed to the user's presence then do nothing.
+     *
+     * @param node the node that originated the subscription request.
+     * @param user the JID of the affiliate to subscribe to his presence.
+     */
+    public void presenceSubscriptionNotRequired(Node node, JID user) {
+        // Check that no node is requiring to be subscribed to this user
+        for (Node hostedNode : service.getNodes()) {
+            if (hostedNode.isPresenceBasedDelivery(user)) {
+                // Do not unsubscribe since presence subscription is still required
+                return;
+            }
+        }
+        // Unscribe from the user presence
+        Presence subscription = new Presence(Presence.Type.unsubscribe);
+        subscription.setTo(user);
+        subscription.setFrom(service.getAddress());
+        service.send(subscription);
+    }
+
+    /**
+     * Requests the pubsub service to unsubscribe from the presence of the user. If the service
+     * was not subscribed to the user's presence or any node still requires to be subscribed to
+     * the user presence then do nothing.
+     *
+     * @param node the node that originated the unsubscription request.
+     * @param user the JID of the affiliate to unsubscribe from his presence.
+     */
+    public void presenceSubscriptionRequired(Node node, JID user) {
+        Map<String, String> fullPresences = barePresences.get(user.toString());
+        if (fullPresences == null || fullPresences.isEmpty()) {
+            Presence subscription = new Presence(Presence.Type.subscribe);
+            subscription.setTo(user);
+            subscription.setFrom(service.getAddress());
+            service.send(subscription);
+            // Sending subscription requests based on received presences may generate
+            // that a sunscription request is sent to an offline user (since offline
+            // presences are not stored in "barePresences"). However, this not optimal
+            // algorithm shouldn't bother the user since the user's server should reply
+            // when already subscribed to the user's presence instead of asking the user
+            // to accept the subscription request
+        }
     }
 
     /*******************************************************************************

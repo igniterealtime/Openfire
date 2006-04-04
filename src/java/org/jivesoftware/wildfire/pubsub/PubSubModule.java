@@ -101,16 +101,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      */
     private PubSubEngine engine = null;
 
-    /**
-     * Keep a registry of the presence's show value of users that subscribed to a node of
-     * the pubsub service and for which the node only delivers notifications for online users
-     * or node subscriptions deliver events based on the user presence show value. Offline
-     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
-     * is full JID of connected resource and value is show value of the last received presence.
-     */
-    private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<String, Map<String, String>>();
-
     public PubSubModule() {
         super("Publish Subscribe Service");
     }
@@ -179,7 +169,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             }
         }
         else {
-            //  TODO Handle unknown namespace
+            // Unknown namespace requested so return error to sender
+            engine.sendErrorPacket(iq, PacketError.Condition.service_unavailable, null);
         }
     }
 
@@ -193,7 +184,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // The user is not allowed to create nodes
             return false;
         }
-        // TODO Check that the user is not an anonymous user
         return true;
     }
 
@@ -221,39 +211,15 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public Collection<String> getShowPresences(JID subscriber) {
-        Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
-        if (fullPresences == null) {
-            // User is offline so return empty list
-            return Collections.emptyList();
-        }
-        if (subscriber.getResource() == null) {
-            // Subscriber used bared JID so return show value of all connected resources
-            return fullPresences.values();
-        }
-        else {
-            // Look for the show value using the full JID
-            String show = fullPresences.get(subscriber.toString());
-            if (show == null) {
-                // User at the specified resource is offline so return empty list
-                return Collections.emptyList();
-            }
-            // User is connected at specified resource so answer list with presence show value
-            return Arrays.asList(show);
-        }
+        return engine.getShowPresences(subscriber);
     }
 
     public void presenceSubscriptionNotRequired(Node node, JID user) {
-        // TODO Implement this
+        engine.presenceSubscriptionNotRequired(node, user);
     }
 
     public void presenceSubscriptionRequired(Node node, JID user) {
-        Map<String, String> fullPresences = barePresences.get(user.toString());
-        if (fullPresences == null || fullPresences.isEmpty()) {
-            Presence subscription = new Presence(Presence.Type.subscribe);
-            subscription.setTo(user);
-            subscription.setFrom(getAddress());
-            send(subscription);
-        }
+        engine.presenceSubscriptionRequired(node, user);
     }
 
     public PubSubEngine getPubSubEngine() {
@@ -442,7 +408,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         super.start();
         // Add the route to this service
         routingTable.addRoute(getAddress(), this);
-        // TODO Probe presences of users that this service has subscribed to
+        // Start the pubsub engine
+        engine.start();
         ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
@@ -500,10 +467,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
             identities.add(identity);
         }
-        else if (name == null && node != null) {
+        else if (name == null) {
             // Answer the identity of a given node
             Node pubNode = getNode(node);
-            if (node != null && canDiscoverNode(pubNode)) {
+            if (canDiscoverNode(pubNode)) {
                 Element identity = DocumentHelper.createElement("identity");
                 identity.addAttribute("category", "pubsub");
                 identity.addAttribute("type", pubNode.isCollectionNode() ? "collection" : "leaf");
@@ -531,8 +498,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#create-nodes");
             // Deletion of nodes is supported
             features.add("http://jabber.org/protocol/pubsub#delete-nodes");
-            // TODO Retrieval of pending subscription approvals is supported
-            //features.add("http://jabber.org/protocol/pubsub#get-pending");
+            // Retrieval of pending subscription approvals is supported
+            features.add("http://jabber.org/protocol/pubsub#get-pending");
             if (isInstantNodeSupported()) {
                 // Creation of instant nodes is supported
                 features.add("http://jabber.org/protocol/pubsub#instant-nodes");
@@ -574,10 +541,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#default_access_model_" + modelName);
 
         }
-        else if (name == null && node != null) {
+        else if (name == null) {
             // Answer the features of a given node
             Node pubNode = getNode(node);
-            if (node != null && canDiscoverNode(pubNode)) {
+            if (canDiscoverNode(pubNode)) {
                 // Answer the features of the PubSub service
                 features.add("http://jabber.org/protocol/pubsub");
             }
@@ -589,7 +556,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (name == null && node != null) {
             // Answer the extended info of a given node
             Node pubNode = getNode(node);
-            if (node != null && canDiscoverNode(pubNode)) {
+            if (canDiscoverNode(pubNode)) {
                 // Get the metadata data form
                 org.xmpp.forms.DataForm metadataForm = pubNode.getMetadataForm();
 
@@ -615,7 +582,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // We always have info about the Pubsub service
             return true;
         }
-        else if (name == null && node != null) {
+        else if (name == null) {
             // We only have info if the node exists
             return hasNode(node);
         }
@@ -638,7 +605,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 }
             }
         }
-        else if (name == null && node != null) {
+        else if (name == null) {
             Node pubNode = getNode(node);
             if (pubNode != null && canDiscoverNode(pubNode)) {
                 if (pubNode.isCollectionNode()) {

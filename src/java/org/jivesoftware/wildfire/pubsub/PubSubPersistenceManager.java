@@ -152,11 +152,11 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_NODE);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));
             pstmt.setString(5, StringUtils.dateToMillis(node.getModificationDate()));
-            pstmt.setString(6, node.getParent() != null ? node.getParent().getNodeID() : null);
+            pstmt.setString(6, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(7, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
                 pstmt.setInt(8, ((LeafNode) node).getMaxPayloadSize());
@@ -230,7 +230,7 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_NODE);
             pstmt.setString(1, StringUtils.dateToMillis(node.getModificationDate()));
-            pstmt.setString(2, node.getParent() != null ? node.getParent().getNodeID() : null);
+            pstmt.setString(2, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(3, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
                 pstmt.setInt(4, ((LeafNode) node).getMaxPayloadSize());
@@ -278,7 +278,7 @@ public class PubSubPersistenceManager {
                 pstmt.setInt(29, 0);
             }
             pstmt.setString(30, service.getServiceID());
-            pstmt.setString(31, node.getNodeID());
+            pstmt.setString(31, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -308,28 +308,28 @@ public class PubSubPersistenceManager {
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_NODE);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             pstmt.close();
 
             // Remove published items of the node being deleted
             pstmt = con.prepareStatement(DELETE_ITEMS);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             pstmt.close();
 
             // Remove all affiliates from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             pstmt.close();
 
             // Remove users that were subscribed to the node
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTIONS);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -420,11 +420,11 @@ public class PubSubPersistenceManager {
 
     private static void loadNode(PubSubService service, Map<String, Node> loadedNodes,
             ResultSet rs) {
-        Node node = null;
+        Node node;
         try {
-            String nodeID = rs.getString(1);
+            String nodeID = decodeNodeID(rs.getString(1));
             boolean leaf = rs.getInt(2) == 1;
-            String parent = rs.getString(5);
+            String parent = decodeNodeID(rs.getString(5));
             JID creator = new JID(rs.getString(24));
             CollectionNode parentNode = null;
             if (parent != null) {
@@ -488,12 +488,11 @@ public class PubSubPersistenceManager {
         catch (SQLException sqle) {
             Log.error(sqle);
         }
-        return;
     }
 
     private static void loadAffiliations(Map<String, Node> nodes, ResultSet rs) {
         try {
-            String nodeID = rs.getString(1);
+            String nodeID = decodeNodeID(rs.getString(1));
             Node node = nodes.get(nodeID);
             if (node == null) {
                 Log.warn("Affiliations found for a non-existent node: " + nodeID);
@@ -511,7 +510,7 @@ public class PubSubPersistenceManager {
     private static void loadSubscriptions(PubSubService service, Map<String, Node> nodes,
             ResultSet rs) {
         try {
-            String nodeID = rs.getString(1);
+            String nodeID = decodeNodeID(rs.getString(1));
             Node node = nodes.get(nodeID);
             if (node == null) {
                 Log.warn("Subscription found for a non-existent node: " + nodeID);
@@ -554,7 +553,7 @@ public class PubSubPersistenceManager {
             // Get a sax reader from the pool
             xmlReader = xmlReaders.take();
 
-            String nodeID = rs.getString(5);
+            String nodeID = decodeNodeID(rs.getString(5));
             LeafNode node = (LeafNode) nodes.get(nodeID);
             if (node == null) {
                 Log.warn("Published Item found for a non-existent node: " + nodeID);
@@ -602,7 +601,7 @@ public class PubSubPersistenceManager {
                 // Add the user to the generic affiliations table
                 pstmt = con.prepareStatement(ADD_AFFILIATION);
                 pstmt.setString(1, service.getServiceID());
-                pstmt.setString(2, node.getNodeID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, affiliate.getJID().toString());
                 pstmt.setString(4, affiliate.getAffiliation().name());
                 pstmt.executeUpdate();
@@ -612,7 +611,7 @@ public class PubSubPersistenceManager {
                 pstmt = con.prepareStatement(UPDATE_AFFILIATION);
                 pstmt.setString(1, affiliate.getAffiliation().name());
                 pstmt.setString(2, service.getServiceID());
-                pstmt.setString(3, node.getNodeID());
+                pstmt.setString(3, encodeNodeID(node.getNodeID()));
                 pstmt.setString(4, affiliate.getJID().toString());
                 pstmt.executeUpdate();
             }
@@ -644,7 +643,7 @@ public class PubSubPersistenceManager {
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATION);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.executeUpdate();
         }
@@ -677,7 +676,7 @@ public class PubSubPersistenceManager {
                 // Add the subscription of the user to the database
                 pstmt = con.prepareStatement(ADD_SUBSCRIPTION);
                 pstmt.setString(1, service.getServiceID());
-                pstmt.setString(2, node.getNodeID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, subscription.getID());
                 pstmt.setString(4, subscription.getJID().toString());
                 pstmt.setString(5, subscription.getOwner().toString());
@@ -706,7 +705,7 @@ public class PubSubPersistenceManager {
                     // Remove the subscription of the user from the table
                     pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
                     pstmt.setString(1, service.getServiceID());
-                    pstmt.setString(2, node.getNodeID());
+                    pstmt.setString(2, encodeNodeID(node.getNodeID()));
                     pstmt.setString(2, subscription.getID());
                     pstmt.executeUpdate();
                 }
@@ -731,7 +730,7 @@ public class PubSubPersistenceManager {
                     pstmt.setInt(10, subscription.getDepth());
                     pstmt.setString(11, subscription.getKeyword());
                     pstmt.setString(12, service.getServiceID());
-                    pstmt.setString(13, node.getNodeID());
+                    pstmt.setString(13, encodeNodeID(node.getNodeID()));
                     pstmt.setString(14, subscription.getID());
                     pstmt.executeUpdate();
                 }
@@ -764,7 +763,7 @@ public class PubSubPersistenceManager {
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.executeUpdate();
         }
@@ -796,7 +795,7 @@ public class PubSubPersistenceManager {
             // Get published items of the specified node
             pstmt = con.prepareStatement(LOAD_ITEMS);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
             ResultSet rs = pstmt.executeQuery();
             // Rebuild loaded published items
             while(rs.next()) {
@@ -846,7 +845,7 @@ public class PubSubPersistenceManager {
             // Remove the published item from the database
             pstmt = con.prepareStatement(ADD_ITEM);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, item.getNode().getNodeID());
+            pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.setString(4, item.getPublisher().toString());
             pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
@@ -883,7 +882,7 @@ public class PubSubPersistenceManager {
             // Remove the published item from the database
             pstmt = con.prepareStatement(DELETE_ITEM);
             pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, item.getNode().getNodeID());
+            pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.executeUpdate();
             // Set that the item was successfully deleted from the database
@@ -1079,14 +1078,14 @@ public class PubSubPersistenceManager {
         PreparedStatement pstmt = null;
         try {
             pstmt = con.prepareStatement(LOAD_NODE);
-            pstmt.setString(1, nodeID);
+            pstmt.setString(1, encodeNodeID(nodeID));
             ResultSet rs = pstmt.executeQuery();
             if (!rs.next()) {
                 // No node was found for the specified nodeID so return null
                 return null;
             }
             boolean leaf = rs.getInt(1) == 1;
-            String parent = rs.getString(4);
+            String parent = decodeNodeID(rs.getString(4));
             JID creator = new JID(rs.getString(20));
             CollectionNode parentNode = null;
             if (parent != null) {
@@ -1159,7 +1158,7 @@ public class PubSubPersistenceManager {
             pstmt.close();
 
             pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
-            pstmt.setString(1, node.getNodeID());
+            pstmt.setString(1, encodeNodeID(node.getNodeID()));
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 NodeAffiliate affiliate = new NodeAffiliate(new JID(rs.getString(1)));
@@ -1247,5 +1246,23 @@ public class PubSubPersistenceManager {
             decodedStrings.add(tokenizer.nextToken());
         }
         return decodedStrings;
+    }
+
+    private static String encodeNodeID(String nodeID) {
+        if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle &&
+                "".equals(nodeID)) {
+            // Oracle stores empty strings as null so return a string with a space
+            return " ";
+        }
+        return nodeID;
+    }
+
+    private static String decodeNodeID(String nodeID) {
+        if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle &&
+                " ".equals(nodeID)) {
+            // Oracle stores empty strings as null so convert them back to empty strings
+            return "";
+        }
+        return nodeID;
     }
 }

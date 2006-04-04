@@ -125,8 +125,6 @@ public class NodeSubscription {
      */
     private boolean savedToDB = false;
 
-    // TODO Implement presence subscription from the node to the subscriber to figure out if event notifications can be sent
-
     static {
         dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));

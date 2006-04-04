@@ -197,9 +197,10 @@ public abstract class Node {
      * to become a node owner.
      *
      * @param jid the JID of the user being added as a node owner.
+     * @return the newly created or modified affiliation to the node.
      */
-    public void addOwner(JID jid) {
-        addAffiliation(jid, NodeAffiliate.Affiliation.owner);
+    public NodeAffiliate addOwner(JID jid) {
+        NodeAffiliate nodeAffiliate = addAffiliation(jid, NodeAffiliate.Affiliation.owner);
         Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
         if (subscriptions.isEmpty()) {
             // User does not have a subscription with the node so create a default one
@@ -213,6 +214,7 @@ public abstract class Node {
                 }
             }
         }
+        return nodeAffiliate;
     }
 
     /**
@@ -240,9 +242,10 @@ public abstract class Node {
      * to become a node publisher.
      *
      * @param jid the JID of the user being added as a node publisher.
+     * @return the newly created or modified affiliation to the node.
      */
-    public void addPublisher(JID jid) {
-        addAffiliation(jid, NodeAffiliate.Affiliation.publisher);
+    public NodeAffiliate addPublisher(JID jid) {
+        NodeAffiliate nodeAffiliate = addAffiliation(jid, NodeAffiliate.Affiliation.publisher);
         Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
         if (subscriptions.isEmpty()) {
             // User does not have a subscription with the node so create a default one
@@ -256,6 +259,7 @@ public abstract class Node {
                 }
             }
         }
+        return nodeAffiliate;
     }
 
     /**
@@ -283,9 +287,10 @@ public abstract class Node {
      * to become a none affiliate. Affiliates of type none are allowed to subscribe to the node.
      *
      * @param jid the JID of the user with affiliation "none".
+     * @return the newly created or modified affiliation to the node.
      */
-    public void addNoneAffiliation(JID jid) {
-        addAffiliation(jid, NodeAffiliate.Affiliation.none);
+    public NodeAffiliate addNoneAffiliation(JID jid) {
+        return addAffiliation(jid, NodeAffiliate.Affiliation.none);
     }
 
     /**
@@ -293,11 +298,13 @@ public abstract class Node {
      * able to publish or subscribe to the node. Existing subscriptions will be deleted.
      *
      * @param jid the JID of the user that is no longer able to publish or subscribe to the node.
+     * @return the newly created or modified affiliation to the node.
      */
-    public void addOutcast(JID jid) {
-        addAffiliation(jid, NodeAffiliate.Affiliation.outcast);
+    public NodeAffiliate addOutcast(JID jid) {
+        NodeAffiliate nodeAffiliate = addAffiliation(jid, NodeAffiliate.Affiliation.outcast);
         // Delete existing subscriptions
         removeSubscriptions(jid);
+        return nodeAffiliate;
     }
 
     /**
@@ -309,14 +316,14 @@ public abstract class Node {
         removeAffiliation(jid, NodeAffiliate.Affiliation.outcast);
     }
 
-    private void addAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
+    private NodeAffiliate addAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
         boolean created = false;
         // Get the current affiliation of the specified JID
         NodeAffiliate affiliate = getAffiliate(jid);
         // Check if the user already has the same affiliation
         if (affiliate != null && affiliation == affiliate.getAffiliation()) {
             // Do nothing since the user already has the expected affiliation
-            return;
+            return affiliate;
         }
         else if (affiliate != null) {
             // Update existing affiliation with new affiliation type
@@ -334,6 +341,7 @@ public abstract class Node {
             // Add or update the affiliate in the database
             PubSubPersistenceManager.saveAffiliation(service, this, affiliate, created);
         }
+        return affiliate;
     }
 
     private void removeAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
@@ -1189,6 +1197,67 @@ public abstract class Node {
     }
 
     /**
+     * Returns true if notifications to the specified user will be delivered when the
+     * user is online.
+     *
+     * @param user the JID of the affiliate that has to be subscribed to the node.
+     * @return true if notifications are going to be delivered when the user is online.
+     */
+    public boolean isPresenceBasedDelivery(JID user) {
+        Collection<NodeSubscription> subscriptions = getSubscriptions(user);
+        if (!subscriptions.isEmpty()) {
+            if (presenceBasedDelivery) {
+                // Node sends notifications only to only users so return true
+                return true;
+            }
+            else {
+                // Check if there is a subscription configured to only send notifications
+                // based on the user presence
+                for (NodeSubscription subscription : subscriptions) {
+                    if (!subscription.getPresenceStates().isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // User is not subscribed to the node so presence subscription is not required
+        return false;
+    }
+
+    /**
+     * Returns the JID of the affiliates that are receiving notifications based on their
+     * presence status.
+     *
+     * @return the JID of the affiliates that are receiving notifications based on their
+     *         presence status.
+     */
+    Collection<JID> getPresenceBasedSubscribers() {
+        Collection<JID> affiliatesJID = new ArrayList<JID>();
+        if (presenceBasedDelivery) {
+            // Add JID of all affiliates that are susbcribed to the node
+            for (NodeAffiliate affiliate : affiliates) {
+                if (!affiliate.getSubscriptions().isEmpty()) {
+                    affiliatesJID.add(affiliate.getJID());
+                }
+            }
+        }
+        else {
+            // Add JID of those affiliates that have a subscription that only wants to be
+            // notified based on the subscriber presence
+            for (NodeAffiliate affiliate : affiliates) {
+                Collection<NodeSubscription> subscriptions = affiliate.getSubscriptions();
+                for (NodeSubscription subscription : subscriptions) {
+                    if (!subscription.getPresenceStates().isEmpty()) {
+                        affiliatesJID.add(affiliate.getJID());
+                        break;
+                    }
+                }
+            }
+        }
+        return affiliatesJID;
+    }
+
+    /**
      * Returns true if the last published item is going to be sent to new subscribers.
      *
      * @return true if the last published item is going to be sent to new subscribers.
@@ -1676,11 +1745,7 @@ public abstract class Node {
             if (parent != null) {
                 parent.removeChildNode(this);
             }
-            // TODO Update child nodes to use the root node or the parent node of this node as the new parent node
-            for (Node node : getNodes()) {
-                //node.changeParent(parent);
-            }
-            // TODO Leaf nodes should remove queued items from the pubsub engine (subclass should do this work)
+            deletingNode();
             // Broadcast delete notification to subscribers (if enabled)
             if (isNotifiedOfDelete()) {
                 // Build packet to broadcast to subscribers
@@ -1706,6 +1771,38 @@ public abstract class Node {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Notification message indicating that the node is being deleted. Subclasses should
+     * implement this method to delete any subclass specific information.
+     */
+    protected abstract void deletingNode();
+
+    /**
+     * Changes the parent node of this node. The node ID of the node will not be modified
+     * based on the new parent so pubsub implementations where node ID has a semantic
+     * meaning will end up affecting the meaning of the node hierarchy and possibly messing
+     * up the meaning of the hierarchy.<p>
+     *
+     * No notifications are sent due to the new parent adoption process.
+     *
+     * @param newParent the new parent node of this node.
+     */
+    protected void changeParent(CollectionNode newParent) {
+        if (parent != null) {
+            // Remove this node from the current parent node
+            parent.removeChildNode(this);
+        }
+        // Set the new parent of this node
+        parent = newParent;
+        if (parent != null) {
+            // Add this node to the new parent node
+            parent.addChildNode(this);
+        }
+        if (savedToDB) {
+            PubSubPersistenceManager.updateNode(service, this);
+        }
     }
 
     /**
@@ -1746,12 +1843,25 @@ public abstract class Node {
         Element childElement = iqRequest.getChildElement().createCopy();
         reply.setChildElement(childElement);
 
-        for (NodeSubscription subscription : subscriptionsByID.values()) {
-            Element entity = childElement.addElement("entity");
-            entity.addAttribute("jid", subscription.getJID().toString());
-            entity.addAttribute("affiliation", subscription.getAffiliate().getAffiliation().name());
-            entity.addAttribute("subscription", subscription.getState().name());
-            entity.addAttribute("subid", subscription.getID());
+        for (NodeAffiliate affiliate : affiliates) {
+            Collection<NodeSubscription> subscriptions = affiliate.getSubscriptions();
+            if (subscriptions.isEmpty()) {
+                Element entity = childElement.addElement("entity");
+                entity.addAttribute("jid", affiliate.getJID().toString());
+                entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+                entity.addAttribute("subscription", "none");
+            }
+            else {
+                for (NodeSubscription subscription : subscriptions) {
+                    Element entity = childElement.addElement("entity");
+                    entity.addAttribute("jid", subscription.getJID().toString());
+                    entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+                    entity.addAttribute("subscription", subscription.getState().name());
+                    if (isMultipleSubscriptionsEnabled()) {
+                        entity.addAttribute("subid", subscription.getID());
+                    }
+                }
+            }
         }
     }
 

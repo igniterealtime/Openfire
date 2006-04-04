@@ -182,6 +182,13 @@ public class CollectionNode extends Node {
         broadcastCollectionNodeEvent(child, message);
     }
 
+    protected void deletingNode() {
+        // Update child nodes to use the parent node of this node as the new parent node
+        for (Node node : getNodes()) {
+            node.changeParent(parent);
+        }
+    }
+
     private void broadcastCollectionNodeEvent(Node child, Message notification) {
         // Get affected subscriptions (of this node and all parent nodes)
         Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();

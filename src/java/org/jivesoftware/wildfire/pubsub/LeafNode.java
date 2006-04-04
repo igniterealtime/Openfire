@@ -103,15 +103,16 @@ public class LeafNode extends Node {
                 maxPublishedItems = values.size() > 0 ? Integer.parseInt(values.get(0)) : 50;
             }
         }
-        // Remove stored published items based on the new max items
-        while (!publishedItems.isEmpty() && publishedItems.size() > maxPublishedItems) {
-            PublishedItem removedItem = publishedItems.remove(0);
-            itemsByID.remove(removedItem.getID());
-            // Add the removed item to the queue of items to delete from the database. The
-            // queue is going to be processed by another thread
-            service.getPubSubEngine().queueItemToRemove(removedItem);
+        synchronized (publishedItems) {
+            // Remove stored published items based on the new max items
+            while (!publishedItems.isEmpty() && publishedItems.size() > maxPublishedItems) {
+                PublishedItem removedItem = publishedItems.remove(0);
+                itemsByID.remove(removedItem.getID());
+                // Add the removed item to the queue of items to delete from the database. The
+                // queue is going to be processed by another thread
+                service.getPubSubEngine().queueItemToRemove(removedItem);
+            }
         }
-
     }
 
     protected void addFormFields(DataForm form, boolean isEditing) {
@@ -150,6 +151,19 @@ public class LeafNode extends Node {
         }
         formField.addValue(maxPayloadSize);
 
+    }
+
+    protected void deletingNode() {
+        synchronized (publishedItems) {
+            // Remove stored published items
+            while (!publishedItems.isEmpty()) {
+                PublishedItem removedItem = publishedItems.remove(0);
+                itemsByID.remove(removedItem.getID());
+                // Add the removed item to the queue of items to delete from the database. The
+                // queue is going to be processed by another thread
+                service.getPubSubEngine().queueItemToRemove(removedItem);
+            }
+        }
     }
 
     void addPublishedItem(PublishedItem item) {

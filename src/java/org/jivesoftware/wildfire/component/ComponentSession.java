@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents a session between the server and a component.
@@ -182,7 +183,6 @@ public class ComponentSession extends Session {
                 writer.flush();
                 // Bind the domain to this component
                 ExternalComponent component = ((ComponentSession) session).getExternalComponent();
-                component.setInitialSubdomain(subdomain);
                 InternalComponentManager.getInstance().addComponent(subdomain, component);
                 Log.debug("[ExComp] External component was registered SUCCESSFULLY with domain: " +
                         domain);
@@ -232,14 +232,10 @@ public class ComponentSession extends Session {
         private String type = "";
         private String category = "";
         /**
-         * Subdomain used when creating the initial connection.
-         */
-        private String initialSubdomain;
-        /**
          * List of subdomains that were binded for this component. The list will include
          * the initial subdomain.
          */
-        private Collection<String> subdomains = new ArrayList<String>();
+        private List<String> subdomains = new ArrayList<String>();
 
         public void processPacket(Packet packet) {
             if (conn != null && !conn.isClosed()) {
@@ -282,15 +278,13 @@ public class ComponentSession extends Session {
         }
 
         public String getInitialSubdomain() {
-            return initialSubdomain;
+            if (subdomains.isEmpty()) {
+                return null;
+            }
+            return subdomains.get(0);
         }
 
-        public void setInitialSubdomain(String initialSubdomain) {
-            this.initialSubdomain = initialSubdomain;
-            addSubdomain(initialSubdomain);
-        }
-
-        public void addSubdomain(String subdomain) {
+        private void addSubdomain(String subdomain) {
             subdomains.add(subdomain);
         }
 
@@ -299,6 +293,7 @@ public class ComponentSession extends Session {
         }
 
         public void initialize(JID jid, ComponentManager componentManager) {
+            addSubdomain(jid.toString());
         }
 
         public void start() {

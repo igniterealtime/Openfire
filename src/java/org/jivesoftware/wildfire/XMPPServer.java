@@ -50,6 +50,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -94,6 +95,11 @@ public class XMPPServer {
      * All modules loaded by this server
      */
     private Map<Class, Module> modules = new HashMap<Class, Module>();
+
+    /**
+     * Listeners that will be notified when the server has started or is about to be stopped.
+     */
+    private List<XMPPServerListener> listeners = new CopyOnWriteArrayList<XMPPServerListener>();
 
     /**
      * Location of the home directory. All configuration files should be
@@ -250,6 +256,26 @@ public class XMPPServer {
         return admins;
     }
 
+    /**
+     * Adds a new server listener that will be notified when the server has been started
+     * or is about to be stopped.
+     *
+     * @param listener the new server listener to add.
+     */
+    public void addServerListener(XMPPServerListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes a server listener that was being notified when the server was being started
+     * or was about to be stopped.
+     *
+     * @param listener the server listener to remove.
+     */
+    public void removeServerListener(XMPPServerListener listener) {
+        listeners.remove(listener);
+    }
+
     private void initialize() throws FileNotFoundException {
         locateWildfire();
 
@@ -362,6 +388,10 @@ public class XMPPServer {
 
             startDate = new Date();
             stopDate = null;
+            // Notify server listeners that the server has been started
+            for (XMPPServerListener listener : listeners) {
+                listener.serverStarted();
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -753,6 +783,10 @@ public class XMPPServer {
      * Makes a best effort attempt to shutdown the server
      */
     private void shutdownServer() {
+        // Notify server listeners that the server is about to be stopped
+        for (XMPPServerListener listener : listeners) {
+            listener.serverStopping();
+        }
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;

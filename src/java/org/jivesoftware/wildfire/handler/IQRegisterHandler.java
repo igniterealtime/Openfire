@@ -14,6 +14,8 @@ package org.jivesoftware.wildfire.handler;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
@@ -27,8 +29,6 @@ import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -237,12 +237,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
                 }
                 else {
-                    String username = null;
+                    String username;
                     String password = null;
                     String email = null;
                     String name = null;
-                    User newUser = null;
-                    XDataFormImpl registrationForm = null;
+                    User newUser;
+                    XDataFormImpl registrationForm;
                     FormField field;
 
                     Element formElement = iqElement.element("x");
@@ -308,23 +308,18 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         else {
                             User user = userManager.getUser(session.getUsername());
-                            if (user != null) {
-                                if (user.getUsername().equalsIgnoreCase(username)) {
-                                    if (password != null && password.trim().length() > 0) {
-                                        user.setPassword(password);
-                                    }
-                                    if (!onlyPassword) {
-                                        user.setEmail(email);
-                                    }
-                                    newUser = user;
+                            if (user.getUsername().equalsIgnoreCase(username)) {
+                                if (password != null && password.trim().length() > 0) {
+                                    user.setPassword(password);
                                 }
-                                else {
-                                    // An admin can create new accounts when logged in.
-                                    newUser = userManager.createUser(username, password, null, email);
+                                if (!onlyPassword) {
+                                    user.setEmail(email);
                                 }
+                                newUser = user;
                             }
                             else {
-                                throw new UnauthorizedException();
+                                // An admin can create new accounts when logged in.
+                                newUser = userManager.createUser(username, password, null, email);
                             }
                         }
                     }
@@ -380,7 +375,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply.setError(PacketError.Condition.not_allowed);
             }
             catch (Exception e) {
-                // Some unexpected error happened so return an internal_server_error 
+                // Some unexpected error happened so return an internal_server_error
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.internal_server_error);
@@ -416,8 +411,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:register");
         return features.iterator();
     }

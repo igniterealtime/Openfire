@@ -1295,10 +1295,11 @@ public class SessionManager extends BasicModule {
         public void onConnectionClose(Object handback) {
             ComponentSession session = (ComponentSession)handback;
             try {
-                // Unbind the domain for this external component
-                String domain = session.getAddress().getDomain();
-                String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
-                InternalComponentManager.getInstance().removeComponent(subdomain);
+                // Unbind registered domains for this external component
+                for (String domain : session.getExternalComponent().getSubdomains()) {
+                    String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
+                    InternalComponentManager.getInstance().removeComponent(subdomain);
+                }
             }
             catch (Exception e) {
                 // Can't do anything about this problem...

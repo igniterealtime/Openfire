@@ -80,7 +80,8 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         // Check that the requested subdoman is not taken by another component
         Component existingComponent = components.get(subdomain);
         if (existingComponent != null && existingComponent != component) {
-            throw new ComponentException("Domain already taken by another component");
+            throw new ComponentException(
+                    "Domain already taken by another component: " + existingComponent);
         }
         // Register that the domain is now taken by the component
         components.put(subdomain, component);
@@ -317,6 +318,10 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                 if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                     // Add a disco item to the server for the component that supports disco
                     Element identity = childElement.element("identity");
+                    if (identity == null) {
+                        // Do nothing since there are no identities in the disco#info packet
+                        return;
+                    }
                     try {
                         XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
                                 .toBareJID(),

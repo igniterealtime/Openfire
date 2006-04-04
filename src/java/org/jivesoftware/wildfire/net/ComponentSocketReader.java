@@ -74,7 +74,13 @@ public class ComponentSocketReader extends SocketReader {
                 }
                 else {
                     try {
-                        InternalComponentManager.getInstance().addComponent(extraDomain, component);
+                        // Get the requested subdomain
+                        String subdomain = extraDomain;
+                        int index = extraDomain.indexOf(serverName);
+                        if (index > -1) {
+                            subdomain = extraDomain.substring(0, index -1);
+                        }
+                        InternalComponentManager.getInstance().addComponent(subdomain, component);
                         // Send confirmation that the new domain has been registered
                         connection.deliverRawText("<bind/>");
                     }

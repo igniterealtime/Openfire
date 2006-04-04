@@ -55,7 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider {
 
-    private HashMap entities = new HashMap();
+    private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
     private List<Element> serverItems = new ArrayList<Element>();
     private Map<String, DiscoItemsProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoItemsProvider>();
@@ -115,7 +115,6 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     item.setQName(new QName(item.getName(), queryElement.getNamespace()));
                     queryElement.add(item.createCopy());
                 }
-                ;
             }
             else {
                 // If the DiscoItemsProvider has no items for the requested name and node 
@@ -142,7 +141,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      *         or null if none was found.
      */
     private DiscoItemsProvider getProvider(String name) {
-        return (DiscoItemsProvider)entities.get(name);
+        return entities.get(name);
     }
 
     /**
@@ -223,7 +222,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param jid the jid of the component.
      * @param name the discovered name of the component.
      */
-    public void addComponentItem(String jid, String name) {
+    public synchronized void addComponentItem(String jid, String name) {
         // A component may send his disco#info many times and we only want to have one item
         // for the component so remove any element under the requested jid
         removeComponentItem(jid);
@@ -241,7 +240,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      *
      * @param jid the jid of the component being removed.
      */
-    public void removeComponentItem(String jid) {
+    public synchronized void removeComponentItem(String jid) {
         for (Iterator<Element> it = serverItems.iterator(); it.hasNext();) {
             if (jid.equals(it.next().attributeValue("jid"))) {
                 it.remove();
@@ -264,8 +263,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        List<String> features = new ArrayList<String>();
         features.add("http://jabber.org/protocol/disco#items");
         // TODO Comment out this line when publishing of client items is implemented
         //features.add("http://jabber.org/protocol/disco#publish");
@@ -273,7 +272,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     }
 
     private DiscoItemsProvider getServerItemsProvider() {
-        DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
+        return new DiscoItemsProvider() {
             public Iterator<Element> getItems(String name, String node, JID senderJID) {
                 if (node != null) {
                     // Check if there is a provider for the requested node
@@ -308,6 +307,5 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                 }
             }
         };
-        return discoItemsProvider;
     }
 }

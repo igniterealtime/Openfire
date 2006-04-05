@@ -49,10 +49,6 @@
     int curPage = (start/range) + 1;
 %>             
 
-<p>
-<fmt:message key="group.summary.list_group" />
-</p>
-
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
     <div class="jive-success">
@@ -69,7 +65,7 @@
 <%  } %>
 
 <p>
-<fmt:message key="group.summary.total_group" /> <%= webManager.getGroupManager().getGroupCount() %>
+<fmt:message key="group.summary.total_group" /> <b><%= webManager.getGroupManager().getGroupCount() %></b>
 <%  if (numPages > 1) { %>
 
     , <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>

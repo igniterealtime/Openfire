@@ -102,7 +102,7 @@
 
             <%  if (numPages > 1) { %>
 
-                - <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
+                -- <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
             <%  } %>
 
@@ -123,7 +123,7 @@
                 ]
 
             <%  } %>
-            - <fmt:message key="session.summary.sessions_per_page" />:
+            -- <fmt:message key="session.summary.sessions_per_page" />:
             <select size="1" name="range" onchange="this.form.submit();">
 
                 <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
@@ -152,9 +152,6 @@
 </tbody>
 </table>
 <br>
-<p>
-<fmt:message key="session.summary.info" />
-</p>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

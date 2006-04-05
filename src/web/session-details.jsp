@@ -176,33 +176,33 @@
                 if (show == Presence.Show.away) {
             %>
 
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <fmt:message key="session.details.away" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.chat) {
             %>
-                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="Available to Chat">
+                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <fmt:message key="session.details.chat_available" /> <%= statusTxt %>
             <%
                 } else if (show == Presence.Show.dnd) {
             %>
 
-                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="Do not Disturb">
+                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <fmt:message key="session.details.not_disturb" /> <%= statusTxt %>
 
             <%
                 } else if (show == null) {
             %>
 
-                <img src="images/im_available.gif" width="16" height="16" border="0" title="Online">
+                <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />" alt="<fmt:message key="session.details.online" />">
                 <fmt:message key="session.details.online" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.xa) {
             %>
 
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="Extended Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%

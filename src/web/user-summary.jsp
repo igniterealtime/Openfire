@@ -56,10 +56,6 @@
     int curPage = (start/range) + 1;
 %>
 
-<p>
-<fmt:message key="user.summary.info" />
-</p>
-
 <style type="text/css">
 .jive-current {
     font-weight : bold;
@@ -84,7 +80,7 @@
 
 <p>
 <fmt:message key="user.summary.total_user" />:
-<%= LocaleUtils.getLocalizedNumber(webManager.getUserManager().getUserCount()) %> --
+<b><%= LocaleUtils.getLocalizedNumber(webManager.getUserManager().getUserCount()) %></b> --
 
 <%  if (numPages > 1) { %>
 
@@ -94,7 +90,7 @@
 <%  } %>
 <fmt:message key="user.summary.sorted" />
 
-- <fmt:message key="user.summary.users_per_page" />:
+-- <fmt:message key="user.summary.users_per_page" />:
 <select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
     <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
@@ -189,19 +185,19 @@
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.available" />">
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.chat_available" />">
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.away" />">
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.extended" />">
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.not_disturb" />">
+                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <% } %>
 
             <%  } else { %>

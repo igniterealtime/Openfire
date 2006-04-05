@@ -257,10 +257,10 @@ public class LdapGroupProvider implements GroupProvider {
         String username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
         if (!manager.isPosixMode()) {
             try {
-                username = manager.findUserDN(username) + "," +
-                        manager.getBaseDN();
+                username = manager.findUserDN(username) + "," + manager.getBaseDN();
             }
             catch (Exception e) {
+                Log.error("Could not find user in LDAP " + username);
                 return new ArrayList<Group>();
             }
         }

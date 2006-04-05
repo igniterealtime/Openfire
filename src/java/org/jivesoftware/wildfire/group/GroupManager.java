@@ -49,13 +49,11 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        String cacheName = "Group";
-        CacheManager.initializeCache(cacheName, "group", 128 * 1024);
-        groupCache = CacheManager.getCache(cacheName);
+        groupCache = CacheManager.initializeCache("Group", "group", 512 * 1024);
 
         // A cache for all groups and groups related to a particular user
-        cacheName = "User Group Cache";
-        CacheManager.initializeCache(cacheName, "userGroup", 128 * 1024, 1000 * 60 * 60 * 3);
+        String cacheName = "User Group Cache";
+        CacheManager.initializeCache(cacheName, "userGroup", 512 * 1024, 1000 * 60 * 60 * 3);
         userGroupCache = CacheManager.getCache(cacheName);
 
         // Load a group provider.

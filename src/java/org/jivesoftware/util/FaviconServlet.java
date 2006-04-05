@@ -77,7 +77,7 @@ public class FaviconServlet extends HttpServlet {
             e.printStackTrace();
         }
         // Initialize caches.
-        missesCache = CacheManager.initializeCache("Favicon misses", "favicon", 512 * 1024);
+        missesCache = CacheManager.initializeCache("Favicon misses", "favicon", 128 * 1024);
     }
 
     /**

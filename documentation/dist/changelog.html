@@ -69,6 +69,52 @@ Wildfire Changelog
 </div>
 
 <p>
+<b>2.6.0</b> -- April 6, 2006
+<p>
+
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-291'>JM-291</a>] - Encrypted passwords are now stored in the db. <b>(21 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-613'>JM-613</a>] - Added support for JEP-0060: Publish-Subscribe. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-298'>JM-298</a>] - Audit log now rolls over based on date. <b>(12 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-599'>JM-599</a>] - Improved performance by avoiding queries to load users.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-607'>JM-607</a>] - Improved performance by avoiding executing queries to LDAP.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-608'>JM-608</a>] - Improved performance when detecting which groups are shared groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-621'>JM-621</a>] - Improved performance by avoiding using locks in RoutingTable (server core).</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-605'>JM-605</a>] - Improved performance by caching groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-606'>JM-606</a>] - Added JDBC Authentication provider.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-600'>JM-600</a>] - Added support for managing system caches from the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-624'>JM-624</a>] - Allowed external components to bind more than one domain.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-603'>JM-603</a>] - Improved db upgrade process.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-609'>JM-609</a>] - Refactored Ad-hoc commands so that services can also offer ad-hoc commands.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-597'>JM-597</a>] - Improved LDAPGroupProvider Exception Handling.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-625'>JM-625</a>] - Added support for XMPPServer listeners.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-620'>JM-620</a>] - Added development mode for web.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-623'>JM-623</a>] - Exposed port in connection object.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-614'>JM-614</a>] - Updated third-party libraries.</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-615'>JM-615</a>] - Fixed deadlock when loading users and rosters.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-621'>JM-621</a>] - Fixed deadlock in RoutingTable.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-495'>JM-495</a>] - Server session tab was loading very slow.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-596'>JM-596</a>] - LDAP connections were not being closed correctly.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-601'>JM-601</a>] - LDAP referrals were not being respected while verifying authentication.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-604'>JM-604</a>] - SASL EXTERNAL for s2s was not checking if certificate validation was disabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-611'>JM-611</a>] - PLAIN SASL authentication was not accepting empty auth packets.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-627'>JM-627</a>] - Null SASL responses were not being padded.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-610'>JM-610</a>] - Fixed NPE in privacy list when user session no longer exists.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-612'>JM-612</a>] - Registering new internal components was not checking that component domain is not taken.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-618'>JM-618</a>] - Remote server count was wrong.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-619'>JM-619</a>] - Names of users were not being sorted when loading from database.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-622'>JM-622</a>] - Admin console was failing to startup on unexpected log impl.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-626'>JM-626</a>] - Several instances of the same disco#item could appear in the server's disco#items.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-628'>JM-628</a>] - Pretty printing of wildfire.xml file was not always working.</li>
+</ul>
+
+<p>
 <b>2.5.1</b> -- March 9, 2006
 <p>
 

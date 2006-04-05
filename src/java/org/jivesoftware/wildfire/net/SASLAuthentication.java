@@ -338,9 +338,13 @@ public class SASLAuthentication {
 
     private void sendChallenge(byte[] challenge) {
         StringBuilder reply = new StringBuilder(250);
+        String challenge_b64 = StringUtils.encodeBase64(challenge).trim();
+        if ("".equals(challenge_b64)) {
+            challenge_b64 = "="; // Must be padded if null
+        }
         reply.append(
                 "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        reply.append(StringUtils.encodeBase64(challenge).trim());
+        reply.append(challenge_b64);
         reply.append("</challenge>");
         connection.deliverRawText(reply.toString());
     }

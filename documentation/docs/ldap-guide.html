@@ -112,14 +112,14 @@
         </li>
     <li>ldap.adminPassword -- the password for the directory administrator.</li>
     <li>ldap.usernameField -- the field name that the username lookups will be performed on. If
-            this property is not set,
-            the default value is <tt>uid</tt></li>
+            this property is not set, the default value is <tt>uid</tt>. Active Directory users
+            should try the default value <tt>sAMAccountName</tt>.</li>
     <li>ldap.nameField -- the field name that holds the user's name. If this property is not
-            set, the default value is
-            <tt>cn</tt></li>
+            set, the default value is <tt>cn</tt>. Active Directory users should use the default value
+            <tt>displayName</tt>.</li>
     <li>ldap.emailField -- the field name that holds the user's email address. If this property
-            is not set,
-            the default value is <tt>mail</tt>.</li>
+            is not set, the default value is <tt>mail</tt>. Active Directory users should use the
+            the default value <tt>mail</tt>.</li>
      <li>ldap.searchFields -- the LDAP fields that will be used for user searches. If
         this property is not set, the username, name, and email fields will be searched. An example
         value for this field is "Username/uid,Name/cname". That searches the uid and cname fields

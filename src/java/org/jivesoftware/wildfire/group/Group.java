@@ -128,7 +128,8 @@ public class Group implements Cacheable {
      * @param name the name for the group.
      */
     public void setName(String name) {
-        if (provider.isReadOnly()) {
+        if (name == this.name || name.equals(this.name) || provider.isReadOnly()) {
+            // Do nothing
             return;
         }
         try {
@@ -169,6 +170,11 @@ public class Group implements Cacheable {
      * @param description the description of the group.
      */
     public void setDescription(String description) {
+        if (description == this.description || description.equals(this.description) ||
+                provider.isReadOnly()) {
+            // Do nothing
+            return;
+        }
         try {
             String originalDescription = this.description;
             provider.setDescription(name, description);

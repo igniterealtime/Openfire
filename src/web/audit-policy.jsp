@@ -9,16 +9,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.audit.AuditManager,
-                   org.jivesoftware.util.*,
-                   java.util.*,
-                 java.io.File,
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                   org.jivesoftware.wildfire.XMPPServer,
+                   org.jivesoftware.wildfire.audit.AuditManager,
+                 org.jivesoftware.wildfire.user.UserNotFoundException,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.wildfire.user.UserNotFoundException"
+                 java.io.File"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+<%@ page import="java.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
@@ -44,8 +43,9 @@
     boolean auditXPath = ParamUtils.getBooleanParameter(request,"auditXPath");
     String newXpathQuery = ParamUtils.getParameter(request,"newXpathQuery");
     String[] xpathQuery = ParamUtils.getParameters(request,"xpathQuery");
-    String maxCount = ParamUtils.getParameter(request,"maxCount");
-    String maxSize = ParamUtils.getParameter(request,"maxSize");
+    String maxTotalSize = ParamUtils.getParameter(request,"maxTotalSize");
+    String maxFileSize = ParamUtils.getParameter(request,"maxFileSize");
+    String maxDays = ParamUtils.getParameter(request,"maxDays");
     String logTimeout = ParamUtils.getParameter(request,"logTimeout");
     String logDir = ParamUtils.getParameter(request,"logDir");
     String ignore = ParamUtils.getParameter(request,"ignore");
@@ -70,14 +70,19 @@
         }
         */
         try {
-            auditManager.setMaxFileCount(Integer.parseInt(maxCount));
+            auditManager.setMaxTotalSize(Integer.parseInt(maxTotalSize));
         } catch (Exception e){
-            errors.put("maxCount","maxCount");
+            errors.put("maxTotalSize","maxTotalSize");
         }
         try {
-            auditManager.setMaxFileSize(Integer.parseInt(maxSize));
+            auditManager.setMaxFileSize(Integer.parseInt(maxFileSize));
         } catch (Exception e){
-            errors.put("maxSize","maxSize");
+            errors.put("maxFileSize","maxFileSize");
+        }
+        try {
+            auditManager.setMaxDays(Integer.parseInt(maxDays));
+        } catch (Exception e){
+            errors.put("maxDays","maxDays");
         }
         try {
             auditManager.setLogTimeout(Integer.parseInt(logTimeout) * 1000);
@@ -150,8 +155,9 @@
         auditPresence = auditManager.isAuditPresence();
         auditIQ = auditManager.isAuditIQ();
         auditXPath = auditManager.isAuditXPath();
-        maxCount = Integer.toString(auditManager.getMaxFileCount());
-        maxSize = Integer.toString(auditManager.getMaxFileSize());
+        maxTotalSize = Integer.toString(auditManager.getMaxTotalSize());
+        maxFileSize = Integer.toString(auditManager.getMaxFileSize());
+        maxDays = Integer.toString(auditManager.getMaxDays());
         logTimeout = Integer.toString(auditManager.getLogTimeout() / 1000);
         logDir = auditManager.getLogDir();
         StringBuilder ignoreList = new StringBuilder();
@@ -227,13 +233,13 @@
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.maxfile_size" />
+                        <fmt:message key="audit.policy.maxtotal_size" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="maxSize"
-                         value="<%= ((maxSize != null) ? maxSize : "") %>">
+                        <input type="text" size="15" maxlength="50" name="maxTotalSize"
+                         value="<%= ((maxTotalSize != null) ? maxTotalSize : "") %>">
 
-                    <%  if (errors.get("maxSize") != null) { %>
+                    <%  if (errors.get("maxTotalSize") != null) { %>
 
                         <span class="jive-error-text">
                         <fmt:message key="audit.policy.validnumber" />
@@ -245,13 +251,31 @@
                 </tr>
                 <tr valign="top">
                     <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.maxfile_number" />
+                        <fmt:message key="audit.policy.maxfile_size" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="maxCount"
-                         value="<%= ((maxCount != null) ? maxCount : "") %>">
+                        <input type="text" size="15" maxlength="50" name="maxFileSize"
+                         value="<%= ((maxFileSize != null) ? maxFileSize : "") %>">
 
-                        <%  if (errors.get("maxCount") != null) { %>
+                    <%  if (errors.get("maxFileSize") != null) { %>
+
+                        <span class="jive-error-text">
+                        <fmt:message key="audit.policy.validnumber" />
+                        </span>
+
+                    <%  } %>
+
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <fmt:message key="audit.policy.maxdays_number" />
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="15" maxlength="50" name="maxDays"
+                         value="<%= ((maxDays != null) ? maxDays : "") %>">
+
+                        <%  if (errors.get("maxDays") != null) { %>
 
                             <span class="jive-error-text">
                             <fmt:message key="audit.policy.validnumber" />

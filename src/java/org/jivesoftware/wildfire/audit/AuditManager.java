@@ -55,6 +55,24 @@ public interface AuditManager {
     Auditor getAuditor();
 
     /**
+     * Returns the maximum size in megabytes that all audit log files may have. When the
+     * limit is reached oldest audit log files will be removed until total size is under
+     * the limit.
+     *
+     * @return the maximum size of all audit logs in megabytes.
+     */
+    int getMaxTotalSize();
+
+    /**
+     * Sets the maximum size in megabytes that all audit log files may have. When the
+     * limit is reached oldest audit log files will be removed until total size is under
+     * the limit.
+     *
+     * @param size the maximum size of all audit logs in megabytes.
+     */
+    void setMaxTotalSize(int size);
+
+    /**
      * Obtain the maximum size of audit log files in megabytes.
      * Logs that exceed the max size will be rolled over to another
      * file.
@@ -71,23 +89,22 @@ public interface AuditManager {
     void setMaxFileSize(int size);
 
     /**
-     * Obtain the maximum number of audit files to create. Audit files that
-     * exceed the maximum file size will be rolled over to new files.
-     * If there are more log files than the max file count, then the
-     * oldest log file is overwritten.
+     * Returns the maximum number of days to keep audit information. Once the limit
+     * has been reached audit files that contain information that exceed the limit
+     * will be deleted.
      *
-     * @return the maximum number of audit files that will be created
+     * @return the maximum number of days to keep audit information
      *         or -1 for unlimited
      */
-    int getMaxFileCount();
+    int getMaxDays();
 
     /**
-     * Set the maximum number of audit files to create.
+     * Set the the maximum number of days to keep audit information.
      *
-     * @param count the maximum number of audit files that will be
-     *              created or -1 for unlimited
+     * @param count the maximum number of days to keep audit information
+     *        or -1 for unlimited
      */
-    void setMaxFileCount(int count);
+    void setMaxDays(int count);
 
     /**
      * Returns the time in milliseconds between successive executions of the task that will save

@@ -13,9 +13,7 @@ package org.jivesoftware.wildfire.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.Auditor;
@@ -35,13 +33,38 @@ public class AuditorImpl implements Auditor {
     private File currentAuditFile;
     private Writer writer;
     private org.jivesoftware.util.XMLWriter xmlWriter;
-    private int maxSize;
-    private long maxCount;
+    /**
+     * Limit date used to detect when we need to rollover files. This date will be
+     * configured as the last second of the day.
+     */
+    private Date currentDateLimit;
+    /**
+     * Max size in bytes that all audit log files may have. When the limit is reached
+     * oldest audit log files will be removed until total size is under the limit.
+     */
+    private int maxTotalSize;
+    /**
+     * Max size in bytes that each audit log file may have. Once the limit has been
+     * reached a new audit file will be created.
+     */
+    private int maxFileSize;
+    /**
+     * Max number of days to keep audit information. Once the limit has been reached
+     * audit files that contain information that exceed the limit will be deleted.
+     */
+    private int maxDays;
+    /**
+     * Flag that indicates if packets can still be accepted to be saved to the audit log.
+     */
     private boolean closed = false;
     /**
      * Directoty (absolute path) where the audit files will be saved.
      */
     private String logDir;
+    /**
+     * File (or better say directory) of the folder that contains the audit logs.
+     */
+    private File baseFolder;
 
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
@@ -53,9 +76,42 @@ public class AuditorImpl implements Auditor {
      */
     private Timer timer = new Timer("Auditor");
     private SaveQueuedPacketsTask saveQueuedPacketsTask;
+    private FastDateFormat dateFormat;
 
     public AuditorImpl(AuditManager manager) {
         auditManager = manager;
+        dateFormat = FastDateFormat.getInstance("yyyyMMdd", TimeZone.getTimeZone("UTC"));
+    }
+
+    protected void setMaxValues(int totalSize, int fileSize, int days) {
+        maxTotalSize = totalSize * 1024*1024;
+        maxFileSize = fileSize * 1024*1024;
+        maxDays = days;
+    }
+
+    public void setLogTimeout(int logTimeout) {
+        // Cancel any existing task because the timeout has changed
+        if (saveQueuedPacketsTask != null) {
+            saveQueuedPacketsTask.cancel();
+        }
+        // Create a new task and schedule it with the new timeout
+        saveQueuedPacketsTask = new SaveQueuedPacketsTask();
+        timer.schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
+
+    }
+
+    public void setLogDir(String logDir) {
+        this.logDir = logDir;
+        // Create and catch file of the base folder that will contain audit files
+        baseFolder = new File(logDir);
+        // Create the folder if it does not exist
+        if (!baseFolder.exists()) {
+            baseFolder.mkdir();
+        }
+    }
+
+    public int getQueuedPacketsNumber() {
+        return logQueue.size();
     }
 
     public void audit(Packet packet, Session session) {
@@ -78,7 +134,16 @@ public class AuditorImpl implements Auditor {
         }
     }
 
+    private void writePacket(Packet packet, Session session) {
+        if (!closed) {
+            // Add to the logging queue this new entry that will be saved later
+            logQueue.add(new AuditPacket(packet.createCopy(), session));
+        }
+    }
+
     public void stop() {
+        // Stop queuing packets since we are being stopped
+        closed = true;
         // Stop the scheduled task for saving queued packets to the XML file
         timer.cancel();
         // Save all remaining queued packets to the XML file
@@ -93,6 +158,7 @@ public class AuditorImpl implements Auditor {
                 writer.write("</jive>");
                 xmlWriter.close();
                 writer = null;
+                xmlWriter = null;
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -100,72 +166,151 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void writePacket(Packet packet, Session session) {
-        if (!closed) {
-            // Add to the logging queue this new entry that will be saved later
-            logQueue.add(new AuditPacket(packet.createCopy(), session));
+    private void prepareAuditFile(Date auditDate) throws IOException {
+        ensureMaxTotalSize();
+
+        // Rotate file if: we just started, current file size exceeded limit or date has changed
+        if (currentAuditFile == null || currentAuditFile.length() > maxFileSize ||
+                xmlWriter == null || currentDateLimit == null || auditDate.after(currentDateLimit))
+        {
+            createAuditFile(auditDate);
         }
     }
 
-    private void prepareAuditFile() throws IOException {
-        if (currentAuditFile == null || currentAuditFile.length() > maxSize || xmlWriter == null) {
-            rotateFiles();
+    /**
+     * Ensures that max total size limit is not exceeded. If total size of audit files
+     * exceed the limit then oldest audit files will be removed until total size does
+     * not exceed limit.
+     */
+    private void ensureMaxTotalSize() {
+        // Get list of existing audit files
+        FilenameFilter filter = new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith("jive.audit-") && name.endsWith(".log");
+            }
+        };
+        File[] files = baseFolder.listFiles(filter);
+        long totalLength = 0;
+        for (File file : files) {
+            totalLength = totalLength + file.length();
+        }
+        // Check if total size has been exceeded
+        if (totalLength > maxTotalSize) {
+            // Sort files by name (chronological order)
+            List<File> sortedFiles = new ArrayList<File>(Arrays.asList(files));
+            Collections.sort(sortedFiles, new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    return ((File)o1).getName().compareTo(((File)o2).getName());
+                }
+            });
+            // Delete as many old files as required to be under the limit
+            while (totalLength > maxTotalSize && !sortedFiles.isEmpty()) {
+                File fileToDelete = sortedFiles.remove(0);
+                totalLength = totalLength - fileToDelete.length();
+                if (fileToDelete.equals(currentAuditFile)) {
+                    // Close current file
+                    close();
+                }
+                // Delete oldest file
+                fileToDelete.delete();
+            }
         }
     }
 
-    protected void setMaxValues(int size, int count) {
-        maxSize = size * 1024*1024;
-        maxCount = count;
-    }
-
-    public void setLogTimeout(int logTimeout) {
-        // Cancel any existing task because the timeout has changed
-        if (saveQueuedPacketsTask != null) {
-            saveQueuedPacketsTask.cancel();
+    /**
+     * Deletes old audit files that exceeded the max number of days limit.
+     */
+    private void ensureMaxDays() {
+        if (maxDays == -1) {
+            // Do nothing since we don't have any limit
+            return;
         }
-        // Create a new task and schedule it with the new timeout
-        saveQueuedPacketsTask = new SaveQueuedPacketsTask();
-        timer.schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
 
+        // Set limit date after which we need to delete old audit files
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, maxDays * -1);
+
+        final String oldestFile =
+                "jive.audit-" + dateFormat.format(calendar.getTime()) + "-000.log";
+
+        // Get list of audit files to delete
+        FilenameFilter filter = new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith("jive.audit-") && name.endsWith(".log") &&
+                        name.compareTo(oldestFile) < 0;
+            }
+        };
+        File[] files = baseFolder.listFiles(filter);
+        // Delete old audit files
+        for (File fileToDelete : files) {
+            if (fileToDelete.equals(currentAuditFile)) {
+                // Close current file
+                close();
+            }
+            fileToDelete.delete();
+        }
     }
 
-    public void setLogDir(String logDir) {
-        this.logDir = logDir;
-    }
-
-    public int getQueuedPacketsNumber() {
-        return logQueue.size();
-    }
-
-    private void rotateFiles() throws IOException {
+    private void createAuditFile(Date auditDate) throws IOException {
         close();
-        int i;
+        if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
+            // Set limit date after which we need to rollover the audit file (based on the date)
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(auditDate);
+            calendar.set(Calendar.HOUR, 23);
+            calendar.set(Calendar.MINUTE, 59);
+            calendar.set(Calendar.SECOND, 59);
+            calendar.set(Calendar.MILLISECOND, 999);
+            currentDateLimit = calendar.getTime();
+        }
+
+        final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
+        // Get list of existing audit files
+        FilenameFilter filter = new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(filePrefix) && name.endsWith(".log");
+            }
+        };
+        File[] files = baseFolder.listFiles(filter);
+        if (files.length == 0) {
+            // This is the first audit file for the day
+            currentAuditFile = new File(logDir, filePrefix + "000.log");
+        }
+        else {
+            // Search the last index used for the day
+            File lastFile = files[files.length - 1];
+            StringTokenizer tokenizer = new StringTokenizer(lastFile.getName(), "-.");
+            // Skip "jive"
+            tokenizer.nextToken();
+            // Skip "audit"
+            tokenizer.nextToken();
+            // Skip "date"
+            tokenizer.nextToken();
+            int index = Integer.parseInt(tokenizer.nextToken()) + 1;
+            if (index > 999) {
+                Log.warn("Failed to created audit file. Max limit of 999 files has been reached " +
+                        "for the date: " + dateFormat.format(auditDate));
+                return;
+            }
+            currentAuditFile = new File(logDir,
+                    filePrefix + StringUtils.zeroPadString(Integer.toString(index), 3) + ".log");
+        }
+
+
         // Find the next available log file name
-        for (i = 0; maxCount < 1 || i < maxCount; i++) {
-            currentAuditFile = new File(logDir, "jive.audit-" + i + ".log");
+        /*for (int i = 0; i < 1000; i++) {
+            currentAuditFile = new File(logDir,
+                    filePrefix + StringUtils.zeroPadString(Integer.toString(i), 3) + ".log");
             if (!currentAuditFile.exists()) {
                 break;
             }
         }
-        // Two edge cases, i == 0 (no log files exist) and i == MAX_FILE_COUNT
-        // If i == 0 then the loop above has already set currentAuditFile to
-        // the correct file name, so we only need to setup a file name if i != 0
-        if (i != 0) {
-            if (i == maxCount) {
-                // We need to delete the last in the series to make room for the next file
-                // the currentAuditFile should be pointing at the last legitimate
-                // file name in the series (i < MAX_FILE_COUNT) so we just delete it
-                // so the previous file can be rotated to it
-                currentAuditFile.delete();
-            }
-            // Rotate the files
-            for (i--; i >= 0; i--) {
-                String previousName = "jive.audit-" + i + ".log";
-                File previousFile = new File(logDir, previousName);
-                previousFile.renameTo(currentAuditFile);
-                currentAuditFile = new File(logDir, previousName);
-            }
-        }
+
+        if (currentAuditFile == null) {
+            Log.warn("Audit log not create since there are more than 999 files for the date: " +
+                    dateFormat.format(auditDate));
+            return;
+        }*/
 
         writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8"));
         writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
@@ -173,11 +318,14 @@ public class AuditorImpl implements Auditor {
     }
 
     /**
-     * Saves the queued entries to an XML file.
+     * Saves the queued entries to an XML file and checks that very old files are deleted.
      */
     private class SaveQueuedPacketsTask extends TimerTask {
         public void run() {
             try {
+                // Ensure that saved audit logs are not too old
+                ensureMaxDays();
+                // Save queued packets to the audit logs
                 saveQueuedPackets();
             }
             catch (Throwable e) {
@@ -191,7 +339,7 @@ public class AuditorImpl implements Auditor {
         logQueue.drainTo(packets);
         for (AuditPacket auditPacket : packets) {
             try {
-                prepareAuditFile();
+                prepareAuditFile(auditPacket.getCreationDate());
                 Element element = auditPacket.getElement();
                 // Protect against null elements.
                 if (element != null) {
@@ -228,9 +376,11 @@ public class AuditorImpl implements Auditor {
         private static DocumentFactory docFactory = DocumentFactory.getInstance();
 
         private Element element;
+        private Date creationDate;
 
         public AuditPacket(Packet packet, Session session) {
             element = docFactory.createElement("packet", "http://www.jivesoftware.org");
+            creationDate = new Date();
             if (session.getStreamID() != null) {
                 element.addAttribute("streamID", session.getStreamID().toString());
             }
@@ -256,7 +406,7 @@ public class AuditorImpl implements Auditor {
                     element.addAttribute("status", "unknown");
                     break;
             }
-            element.addAttribute("timestamp", JiveGlobals.formatDateTime(new Date()));
+            element.addAttribute("timestamp", JiveGlobals.formatDateTime(creationDate));
             element.add(packet.getElement());
         }
 
@@ -267,6 +417,16 @@ public class AuditorImpl implements Auditor {
          */
         public Element getElement() {
             return element;
+        }
+
+        /**
+         * Returns the date when the packet was audited. This is the time when the
+         * packet was queued to be saved.
+         *
+         * @return the date when the packet was audited.
+         */
+        public Date getCreationDate() {
+            return creationDate;
         }
     }
 }

@@ -11,6 +11,7 @@
 
 package org.jivesoftware.wildfire.audit.spi;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.audit.AuditManager;
@@ -18,9 +19,8 @@ import org.jivesoftware.wildfire.audit.Auditor;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
-import org.jivesoftware.util.JiveGlobals;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 import java.io.File;
 import java.util.*;
@@ -37,13 +37,27 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private boolean auditXPath;
     private List xpath = new LinkedList();
     private AuditorImpl auditor = null;
-    private int maxSize;
-    private int maxCount;
+    /**
+     * Max size in bytes that all audit log files may have. When the limit is reached
+     * oldest audit log files will be removed until total size is under the limit.
+     */
+    private int maxTotalSize;
+    /**
+     * Max size in bytes that each audit log file may have. Once the limit has been
+     * reached a new audit file will be created.
+     */
+    private int maxFileSize;
+    /**
+     * Max number of days to keep audit information. Once the limit has been reached
+     * audit files that contain information that exceed the limit will be deleted.
+     */
+    private int maxDays;
     private int logTimeout;
     private String logDir;
     private Collection<String> ignoreList = new ArrayList<String>();
+    private static final int MAX_TOTAL_SIZE = 1000;
     private static final int MAX_FILE_SIZE = 10;
-    private static final int MAX_FILE_COUNT = 10;
+    private static final int MAX_DAYS = -1;
     private static final int DEFAULT_LOG_TIMEOUT = 120000;
     private AuditorInterceptor interceptor;
 
@@ -74,14 +88,40 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         return auditor;
     }
 
+    public int getMaxTotalSize() {
+        return maxTotalSize;
+    }
+
+    public void setMaxTotalSize(int size) {
+        maxTotalSize = size;
+        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        JiveGlobals.setProperty("xmpp.audit.totalsize", Integer.toString(size));
+    }
+
     public int getMaxFileSize() {
-        return maxSize;
+        return maxFileSize;
     }
 
     public void setMaxFileSize(int size) {
-        maxSize = size;
-        auditor.setMaxValues(maxSize, maxCount);
-        JiveGlobals.setProperty("xmpp.audit.maxsize", Integer.toString(size));
+        maxFileSize = size;
+        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        JiveGlobals.setProperty("xmpp.audit.filesize", Integer.toString(size));
+    }
+
+    public int getMaxDays() {
+        return maxDays;
+    }
+
+    public void setMaxDays(int count) {
+        if (count < -1) {
+            count = -1;
+        }
+        if (count == 0) {
+            count = 1;
+        }
+        maxDays = count;
+        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        JiveGlobals.setProperty("xmpp.audit.days", Integer.toString(count));
     }
 
     public int getLogTimeout() {
@@ -102,16 +142,6 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         this.logDir = logDir;
         auditor.setLogDir(logDir);
         JiveGlobals.setProperty("xmpp.audit.logdir", logDir);
-    }
-
-    public int getMaxFileCount() {
-        return maxCount;
-    }
-
-    public void setMaxFileCount(int count) {
-        maxCount = count;
-        auditor.setMaxValues(maxSize, maxCount);
-        JiveGlobals.setProperty("xmpp.audit.maxcount", Integer.toString(count));
     }
 
     public boolean isAuditMessage() {
@@ -208,8 +238,9 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
 //        for (int i = 0; i < filters.length; i++) {
 //            xpath.add(filters[i]);
 //        }
-        maxSize = JiveGlobals.getIntProperty("xmpp.audit.maxsize", MAX_FILE_SIZE);
-        maxCount = JiveGlobals.getIntProperty("xmpp.audit.maxcount", MAX_FILE_COUNT);
+        maxTotalSize = JiveGlobals.getIntProperty("xmpp.audit.totalsize", MAX_TOTAL_SIZE);
+        maxFileSize = JiveGlobals.getIntProperty("xmpp.audit.filesize", MAX_FILE_SIZE);
+        maxDays = JiveGlobals.getIntProperty("xmpp.audit.days", MAX_DAYS);
         logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
         logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
                 File.separator + "logs");
@@ -222,9 +253,9 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         }
 
         auditor = new AuditorImpl(this);
-        auditor.setMaxValues(maxSize, maxCount);
-        auditor.setLogTimeout(logTimeout);
+        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
         auditor.setLogDir(logDir);
+        auditor.setLogTimeout(logTimeout);
 
         interceptor = new AuditorInterceptor();
         if (enabled) {

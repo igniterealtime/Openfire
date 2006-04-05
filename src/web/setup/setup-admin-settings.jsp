@@ -33,7 +33,8 @@
     }
 %>
 
-<%  // Get parameters
+<%
+    // Get parameters
     String password = ParamUtils.getParameter(request,"password");
     String email = ParamUtils.getParameter(request,"email");
     String newPassword = ParamUtils.getParameter(request,"newPassword");
@@ -74,11 +75,7 @@
         // if no errors, continue:
         if (errors.size() == 0) {
             try {
-                // Get the service
-                UserManager userManager = UserManager.getInstance();
-
-                User adminUser = userManager.getUser("admin");
-
+                User adminUser = UserManager.getInstance().getUser("admin");
                 adminUser.setPassword(newPassword);
                 if (email != null) {
                     adminUser.setEmail(email);
@@ -187,13 +184,27 @@ function checkClick() {
 
 <%  } %>
 
+<%
+    // Get the current email address, if there is one.
+    String currentEmail = "";
+    try {
+        User adminUser = UserManager.getInstance().getUser("admin");
+        if (adminUser.getEmail() != null) {
+            currentEmail = adminUser.getEmail();
+        }
+    }
+    catch (Exception e) {
+        // Ignore.
+    }
+%>
+
 <tr valign="top">
     <td class="jive-label">
         <fmt:message key="setup.admin.settings.email" />
     </td>
     <td>
         <input type="text" name="email" size="40" maxlength="150"
-         value="<%= ((email!=null) ? email : "") %>"><br>
+         value="<%= ((email!=null) ? email : currentEmail) %>"><br>
 
         <%  if (errors.get("email") != null) { %>
             <span class="jive-error-text">

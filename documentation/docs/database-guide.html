@@ -24,9 +24,7 @@ following:
 </p>
 <pre>long currentDate = new Date().getTime();</pre>
 <p>
-Boolean values are always represented a numeric values: 0 for false and
-1 for
-true.
+Boolean values are always represented a numeric values: 0 for false and 1 for true.
 </p>
 <h2>Database Tables</h2>
 <p>
@@ -59,7 +57,13 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#mucRoomProp">mucRoomProp</a> </li>
   <li><a href="#mucAffiliation">mucAffiliation</a> </li>
   <li><a href="#mucMember">mucMember</a> </li>
-  <li><a href="#mucConversationLog">mucConversationLog</a> </li>
+  <li><a href="#mucConversationLog">mucConversationLog</a><br>
+  </li>
+  <li><a href="#pubsubNode">pubsubNode</a> </li>
+  <li><a href="#pubsubAffiliation">pubsubAffiliation</a> </li>
+  <li><a href="#pubsubItem">pubsubItem</a> </li>
+  <li><a href="#pubsubSubscription">pubsubSubscription</a> </li>
+  <li><a href="#pubsubDefaultConf">pubsubDefaultConf</a> </li>
 </ul>
 <br>
 
@@ -1030,6 +1034,558 @@ roster)</th>
       <td>TEXT</td>
       <td>n/a</td>
       <td>Body of the message</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubNode"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubNode (nodes of the pubsub service)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>leaf</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the node is a leaf or collection node</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+    <tr>
+      <td>parent</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the parent node (if any)</td>
+    </tr>
+      <tr>
+        <td>deliverPayloads</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether payloads are included in notifications</td>
+      </tr>
+      <tr>
+        <td>maxPayloadSize</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max size of the payload in bytes</td>
+      </tr>
+      <tr>
+        <td>persistItems</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether the node will persist published items</td>
+      </tr>
+      <tr>
+        <td>maxItems</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max number of items to persist</td>
+      </tr>
+      <tr>
+        <td>notifyConfigChanges</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node configuration has changed</td>
+      </tr>
+      <tr>
+        <td>notifyDelete</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node is deleted</td>
+      </tr>
+      <tr>
+        <td>notifyRetract</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when published items are deleted</td>
+      </tr>
+    <tr>
+      <td>presenceBased</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send notifications to only users only</td>
+    </tr>
+    <tr>
+      <td>sendItemSubscribe</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send last published item to new subscribers</td>
+    </tr>
+    <tr>
+      <td>publisherModel</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Publisher model used by the node</td>
+    </tr>
+    <tr>
+      <td>subscriptionEnabled</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether subscriptions are allowed</td>
+    </tr>
+    <tr>
+      <td>configSubscription</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether new subscriptions must be configured to become active</td>
+    </tr>
+    <tr>
+      <td>contacts</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>List of JIDs of the users to contact for questions</td>
+    </tr>
+    <tr>
+      <td>rosterGroups</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Roster group(s) of the node owner allowed to subscribe and retrieve items</td>
+    </tr>
+    <tr>
+      <td>accessModel</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Access model used by the node</td>
+    </tr>
+    <tr>
+      <td>payloadType</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Type of payload data to be provided at the node</td>
+    </tr>
+    <tr>
+      <td>bodyXSLT</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>URL of an XSLT for transforming the payload format into a message body</td>
+    </tr>
+    <tr>
+      <td>dataformXSLT</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>URL of an XSLT for transforming the payload format into Data Forms result</td>
+    </tr>
+    <tr>
+      <td>creator</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the entity that created the node</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Description of the node</td>
+    </tr>
+    <tr>
+      <td>language</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Default language of the node</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Name of the node</td>
+    </tr>
+    <tr>
+      <td>replyPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines whether owners or publisher should receive replies to items</td>
+    </tr>
+    <tr>
+      <td>replyRooms</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>List of multi-user chat rooms to specify for replyroom</td>
+    </tr>
+    <tr>
+      <td>replyTo</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>List of JID(s) to specify for replyto</td>
+    </tr>
+    <tr>
+      <td>associationPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines who may associate leaf nodes with a collection</td>
+    </tr>
+    <tr>
+      <td>associationTrusted</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Users are allowed to associate leaf nodes with this collection node</td>
+    </tr>
+    <tr>
+      <td>maxLeafNodes</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Max number of leaf nodes that a collection node might have</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubAffiliation"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubAffiliation (node affiliates)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the affiliate (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>affiliation</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Type of affiliation</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubItem"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubItem (items published to nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+      <tr class="primary-key">
+      <td>id</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the published item (unique per node) (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the publisher</td>
+    </tr>
+      <tr>
+        <td>creationDate</td>
+        <td>VARCHAR</td>
+        <td>15</td>
+        <td>Creation Date</td>
+      </tr>
+      <tr>
+        <td>payload</td>
+        <td>TEXT</td>
+        <td>n/a</td>
+        <td>XML of the payload included in the published item</td>
+      </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubSubscription"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubSubscription (subscriptions to nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>id</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the subscription (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>Address to receive notifications</td>
+    </tr>
+    <tr>
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the affiliate that owns the subscription</td>
+    </tr>
+    <tr>
+      <td>state</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>State of the subscription (in the workflow)</td>
+    </tr>
+      <tr>
+        <td>deliver</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether notifications are enabled or not</td>
+      </tr>
+      <tr>
+        <td>digest</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+          <td>Flag indicating whether an entity wants to receive digests of notifications</td>
+      </tr>
+      <tr>
+        <td>digest_frequency</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Minimum number of milliseconds between sending any two notification digests</td>
+      </tr>
+      <tr>
+        <td>expire</td>
+        <td>VARCHAR</td>
+        <td>15</td>
+        <td>Date at which a leased subscription will end or has ended</td>
+      </tr>
+      <tr>
+        <td>includeBody</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether an entity wants to receive a message body in addition to the payload format</td>
+      </tr>
+      <tr>
+        <td>showValues</td>
+        <td>VARCHAR</td>
+        <td>30</td>
+        <td>Presence states for which an entity wants to receive notifications</td>
+      </tr>
+    <tr>
+      <td>subscriptionType</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Whether subscriber is subscribed to items or nodes (collection nodes only)</td>
+    </tr>
+      <tr>
+        <td>subscriptionDepth</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Receive notification from children up to certain depth (collection nodes only)</td>
+      </tr>
+    <tr>
+      <td>keyword</td>
+      <td>VARCHAR</td>
+      <td>200</td>
+      <td>Keyword that the event needs to match</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubDefaultConf"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubDefaultConf (default configuration of nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>leaf</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether configuration belongs to a leaf or collection node (Primary Key)</td>
+    </tr>
+      <tr>
+        <td>deliverPayloads</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether payloads are included in notifications</td>
+      </tr>
+      <tr>
+        <td>maxPayloadSize</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max size of the payload in bytes</td>
+      </tr>
+      <tr>
+        <td>persistItems</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether the node will persist published items</td>
+      </tr>
+      <tr>
+        <td>maxItems</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max number of items to persist</td>
+      </tr>
+      <tr>
+        <td>notifyConfigChanges</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node configuration has changed</td>
+      </tr>
+      <tr>
+        <td>notifyDelete</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node is deleted</td>
+      </tr>
+      <tr>
+        <td>notifyRetract</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when published items are deleted</td>
+      </tr>
+    <tr>
+      <td>presenceBased</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send notifications to only users only</td>
+    </tr>
+    <tr>
+      <td>sendItemSubscribe</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send last published item to new subscribers</td>
+    </tr>
+    <tr>
+      <td>publisherModel</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Publisher model used by the node</td>
+    </tr>
+    <tr>
+      <td>subscriptionEnabled</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether subscriptions are allowed</td>
+    </tr>
+    <tr>
+      <td>accessModel</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Access model used by the node</td>
+    </tr>
+    <tr>
+      <td>language</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Default language of the node</td>
+    </tr>
+    <tr>
+      <td>replyPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines whether owners or publisher should receive replies to items</td>
+    </tr>
+    <tr>
+      <td>associationPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines who may associate leaf nodes with a collection</td>
+    </tr>
+    <tr>
+      <td>maxLeafNodes</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Max number of leaf nodes that a collection node might have</td>
     </tr>
   </tbody>
 </table>

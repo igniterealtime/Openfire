@@ -179,7 +179,8 @@ public class PubSubEngine {
                 String nodeID = action.attributeValue("node");
                 if (nodeID == null) {
                     // if user is not sysadmin then return nodeid-required error
-                    if (!service.isServiceAdmin(iq.getFrom())) {
+                    if (!service.isServiceAdmin(iq.getFrom()) ||
+                            !service.isCollectionNodesSupported()) {
                         // Configure elements must have a node attribute so answer an error
                         Element pubsubError = DocumentHelper.createElement(QName.get(
                                 "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
@@ -321,7 +322,7 @@ public class PubSubEngine {
             // No node was specified. Return bad_request error
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
-            sendErrorPacket(iq, PacketError.Condition.item_not_found, pubsubError);
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
         else {
@@ -408,7 +409,7 @@ public class PubSubEngine {
             // No node was specified. Return bad_request error
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
-            sendErrorPacket(iq, PacketError.Condition.item_not_found, pubsubError);
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
         else {
@@ -423,7 +424,6 @@ public class PubSubEngine {
         // Get the items to delete
         Iterator itemElements = retractElement.elementIterator("item");
         if (!itemElements.hasNext()) {
-            // TODO Confirm that at least one item should be present in the retract element. Waiting for stpeter confirmation.
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "item-required", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
@@ -431,17 +431,21 @@ public class PubSubEngine {
         }
 
         if (node.isCollectionNode()) {
-            // TODO Is this the correct error to return???
             // Cannot delete items from a collection node. Return an error.
-            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+            Element pubsubError = DocumentHelper.createElement(QName.get(
+                    "unsupported", "http://jabber.org/protocol/pubsub#errors"));
+            pubsubError.addAttribute("feature", "persistent-items");
+            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
             return;
         }
         LeafNode leafNode = (LeafNode) node;
 
         if (!leafNode.isItemRequired()) {
-            // TODO JEP specifies to return this error if node is not persisting items but this checking makes more sense. Waiting for stpeter confirmation.
             // Cannot delete items from a leaf node that doesn't handle itemIDs. Return an error.
-            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+            Element pubsubError = DocumentHelper.createElement(QName.get(
+                    "unsupported", "http://jabber.org/protocol/pubsub#errors"));
+            pubsubError.addAttribute("feature", "persistent-items");
+            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
             return;
         }
 
@@ -449,7 +453,6 @@ public class PubSubEngine {
         while (itemElements.hasNext()) {
             Element itemElement = (Element) itemElements.next();
             String itemID = itemElement.attributeValue("id");
-            // TODO Return an error if no id was specified?
             if (itemID != null) {
                 PublishedItem item = node.getPublishedItem(itemID);
                 if (item == null) {
@@ -463,10 +466,17 @@ public class PubSubEngine {
                     }
                     else {
                         // Publisher does not have sufficient privileges to delete this item
-                        sendErrorPacket(iq, PacketError.Condition.not_authorized, null);
+                        sendErrorPacket(iq, PacketError.Condition.forbidden, null);
                         return;
                     }
                 }
+            }
+            else {
+                // No item ID was specified so return a bad_request error
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "item-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
             }
         }
         // Send reply with success
@@ -479,8 +489,17 @@ public class PubSubEngine {
         String nodeID = subscribeElement.attributeValue("node");
         Node node;
         if (nodeID == null) {
-            // Entity subscribes to root collection node
-            node = service.getRootCollectionNode();
+            if (service.isCollectionNodesSupported()) {
+                // Entity subscribes to root collection node
+                node = service.getRootCollectionNode();
+            }
+            else {
+                // Service does not have a root collection node so return a nodeid-required error
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
         }
         else {
             // Look for the specified node
@@ -599,8 +618,17 @@ public class PubSubEngine {
         String subID = unsubscribeElement.attributeValue("subid");
         Node node;
         if (nodeID == null) {
-            // Entity unsubscribes from root collection node
-            node = service.getRootCollectionNode();
+            if (service.isCollectionNodesSupported()) {
+                // Entity unsubscribes from root collection node
+                node = service.getRootCollectionNode();
+            }
+            else {
+                // Service does not have a root collection node so return a nodeid-required error
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
         }
         else {
             // Look for the specified node
@@ -678,8 +706,17 @@ public class PubSubEngine {
         String subID = optionsElement.attributeValue("subid");
         Node node;
         if (nodeID == null) {
-            // Entity requests subscription options of root collection node
-            node = service.getRootCollectionNode();
+            if (service.isCollectionNodesSupported()) {
+                // Entity requests subscription options of root collection node
+                node = service.getRootCollectionNode();
+            }
+            else {
+                // Service does not have a root collection node so return a nodeid-required error
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
         }
         else {
             // Look for the specified node
@@ -750,8 +787,17 @@ public class PubSubEngine {
         String subID = optionsElement.attributeValue("subid");
         Node node;
         if (nodeID == null) {
-            // Entity submits new subscription options of root collection node
-            node = service.getRootCollectionNode();
+            if (service.isCollectionNodesSupported()) {
+                // Entity submits new subscription options of root collection node
+                node = service.getRootCollectionNode();
+            }
+            else {
+                // Service does not have a root collection node so return a nodeid-required error
+                Element pubsubError = DocumentHelper.createElement(QName.get(
+                        "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                return;
+            }
         }
         else {
             // Look for the specified node
@@ -884,11 +930,14 @@ public class PubSubEngine {
 
     private void getPublishedItems(IQ iq, Element itemsElement) {
         String nodeID = itemsElement.attributeValue("node");
-        //String subID = itemsElement.attributeValue("subid");
+        String subID = itemsElement.attributeValue("subid");
         Node node;
         if (nodeID == null) {
-            // Entity subscribes to root collection node
-            node = service.getRootCollectionNode();
+            // User must specify a leaf node ID so return a nodeid-required error
+            Element pubsubError = DocumentHelper.createElement(QName.get(
+                    "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+            return;
         }
         else {
             // Look for the specified node
@@ -925,8 +974,8 @@ public class PubSubEngine {
             return;
         }
 
-        /*// Get the user's subscription
-        NodeSubscription subscription;
+        // Get the user's subscription
+        NodeSubscription subscription = null;
         if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
@@ -945,7 +994,15 @@ public class PubSubEngine {
                     return;
                 }
             }
-        }*/
+        }
+
+
+        if (subscription != null && !subscription.isActive()) {
+            Element pubsubError = DocumentHelper.createElement(
+                    QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.not_authorized, pubsubError);
+            return;
+        }
 
         LeafNode leafNode = (LeafNode) node;
         // Get list of items to send to the user
@@ -966,15 +1023,16 @@ public class PubSubEngine {
         }
         if (max_items != null) {
             // Get the N most recent published items
-            items = leafNode.getPublishedItems(recentItems);
+            items = new ArrayList<PublishedItem>(leafNode.getPublishedItems(recentItems));
         }
         else {
             List requestedItems = itemsElement.elements("item");
             if (requestedItems.isEmpty()) {
                 // Get all the active items that were published to the node
-                items = leafNode.getPublishedItems();
+                items = new ArrayList<PublishedItem>(leafNode.getPublishedItems());
             }
             else {
+                items = new ArrayList<PublishedItem>();
                 // Indicate that payload should be included (if exists) no matter
                 // the node configuration
                 forceToIncludePayload = true;
@@ -989,6 +1047,18 @@ public class PubSubEngine {
                 }
             }
         }
+
+        if (subscription != null && subscription.getKeyword() != null) {
+            // Filter items that do not match the subscription keyword
+            for (Iterator<PublishedItem> it = items.iterator(); it.hasNext();) {
+                PublishedItem item = it.next();
+                if (!subscription.isKeywordMatched(item)) {
+                    // Remove item that does not match keyword
+                    it.remove();
+                }
+            }
+        }
+
         // Send items to the user
         leafNode.sendPublishedItems(iq, items, forceToIncludePayload);
     }

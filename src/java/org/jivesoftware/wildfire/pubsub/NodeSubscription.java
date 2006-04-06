@@ -724,7 +724,7 @@ public class NodeSubscription {
      * @return true if the published item matches the keyword filter specified in
      *         the subscription.
      */
-    private boolean isKeywordMatched(PublishedItem publishedItem) {
+    boolean isKeywordMatched(PublishedItem publishedItem) {
         // Check if keyword was defined and it was not matched
         if (keyword != null && keyword.length() > 0 && !publishedItem.containsKeyword(keyword)) {
             return false;

@@ -183,7 +183,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             element.addAttribute("node", discoItem.getNode());
             element.addAttribute("name", discoItem.getName());
             // Add the element to the list of items related to the server
-            serverItems.add(element);
+            addComponentItem(discoItem.getJID(), discoItem.getName());
             
             // Add the new item as a valid entity that could receive info and items disco requests
             String host = new JID(discoItem.getJID()).getDomain();

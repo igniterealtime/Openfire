@@ -75,7 +75,7 @@ CREATE TABLE pubsubSubscription (
   subscriptionType    VARCHAR(10)   NOT NULL,
   subscriptionDepth   TINYINT       NOT NULL,
   keyword             VARCHAR(200)  NULL,
-  PRIMARY KEY (serviceID, nodeID, id, jid(70))
+  PRIMARY KEY (serviceID, nodeID, id)
 );
 
 CREATE TABLE pubsubDefaultConf (

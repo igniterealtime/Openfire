@@ -177,13 +177,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         DiscoServerItem discoItem;
         for (Iterator it = provider.getItems(); it.hasNext();) {
             discoItem = (DiscoServerItem)it.next();
-            // Create a new element based on the provided DiscoItem
-            Element element = DocumentHelper.createElement("item");
-            element.addAttribute("jid", discoItem.getJID());
-            element.addAttribute("node", discoItem.getNode());
-            element.addAttribute("name", discoItem.getName());
             // Add the element to the list of items related to the server
-            addComponentItem(discoItem.getJID(), discoItem.getName());
+            addComponentItem(discoItem.getJID(), discoItem.getNode(), discoItem.getName());
             
             // Add the new item as a valid entity that could receive info and items disco requests
             String host = new JID(discoItem.getJID()).getDomain();
@@ -222,7 +217,19 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param jid the jid of the component.
      * @param name the discovered name of the component.
      */
-    public synchronized void addComponentItem(String jid, String name) {
+    public void addComponentItem(String jid, String name) {
+        addComponentItem(jid, null, name);
+    }
+
+    /**
+     * Registers a new disco item for a component. The jid attribute of the item will match the jid
+     * of the component and the name should be the name of the component discovered using disco.
+     *
+     * @param jid the jid of the component.
+     * @param node the node that complements the jid address.
+     * @param name the discovered name of the component.
+     */
+    public synchronized void addComponentItem(String jid, String node, String name) {
         // A component may send his disco#info many times and we only want to have one item
         // for the component so remove any element under the requested jid
         removeComponentItem(jid);
@@ -230,6 +237,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // Create a new element based on the provided DiscoItem
         Element element = DocumentHelper.createElement("item");
         element.addAttribute("jid", jid);
+        element.addAttribute("node", node);
         element.addAttribute("name", name);
         // Add the element to the list of items related to the server
         serverItems.add(element);

@@ -159,12 +159,17 @@ as described above to control the server rather than the graphical launcher.</p>
 
 <h3>Custom Parameters</h3>
 
-<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime environment of Wildfire. You can do this by creating vmoptions files in the bin/ directory of your Wildfire installation. For the Windows service, you'd create a new text file called wildfire-service.exe.vmoptions. Each parameter to the VM should be on a new line of the file. For example, to set the minimum and max VM heap size to 256 MB, you'd use:
+<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize
+    the runtime environment of Wildfire. You can do this by creating vmoptions files in the bin/
+    directory of your Wildfire installation. For the Windows service, you'd create a new text
+    file called wildfire-service.vmoptions. Each parameter to the VM should be on a new line of
+    the file. For example, to set the minimum heap size to 512 MB and max VM heap size to 1024 MB, you'd use:
 
-<pre>-Xms256m
--Xmx256m</pre>
+<pre>-Xms512m
+-Xmx1024m</pre>
 
-To create parameters for the normal launcher, create a file called wildfired.exe.vmoptions (since the wildfire.exe launcher invokes the wildfired.exe executable to actually start the server).</p>
+To create parameters for the normal launcher, create a file called wildfired.vmoptions (since
+    the wildfire.exe launcher invokes the wildfired.exe executable to actually start the server).</p>
 
 <h2><a name="unix">Running Wildfire in Linux/Unix</a></h2>
 

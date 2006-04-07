@@ -11,5 +11,5 @@ CREATE TABLE jiveVersion (
 INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 6);
 
 -- Make password column accept null, add encrypted password column.
-ALTER TABLE jiveUser ALTER COLUMN password NULL;
+ALTER TABLE jiveuser ALTER COLUMN "password" DROP NOT NULL;
 ALTER TABLE jiveUser ADD COLUMN encryptedPassword VARCHAR(255);

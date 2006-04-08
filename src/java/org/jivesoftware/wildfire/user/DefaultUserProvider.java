@@ -250,6 +250,11 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public Collection<User> getUsers() {
+        Collection<String> usernames = getUsernames();
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+    }
+
+    public Collection<String> getUsernames() {
         List<String> usernames = new ArrayList<String>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -274,7 +279,7 @@ public class DefaultUserProvider implements UserProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return usernames;
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
@@ -470,7 +475,10 @@ public class DefaultUserProvider implements UserProvider {
             if (encryptedPassword == null) {
                 pstmt.setNull(2, Types.VARCHAR);
             }
-            pstmt.setString(2, username);
+            else {
+                pstmt.setString(2, encryptedPassword);
+            }
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

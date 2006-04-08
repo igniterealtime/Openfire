@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire.user;
 
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -72,6 +72,14 @@ public interface UserProvider {
      * @return an unmodifiable Collection of all users.
      */
     public Collection<User> getUsers();
+
+
+    /**
+     * Returns an unmodifiable Collection of usernames of all users in the system.
+     *
+     * @return an unmodifiable Collection of all usernames in the system.
+     */
+    public Collection<String> getUsernames();
 
     /**
      * Returns an unmodifiable Collections of users in the system within the

@@ -11,10 +11,10 @@
 
 package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.wildfire.user.*;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.*;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -152,6 +152,11 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public Collection<User> getUsers() {
+        Collection<String> usernames = getUsernames();
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+    }
+
+    public Collection<String> getUsernames() {
         List<String> usernames = new ArrayList<String>();
         LdapContext ctx = null;
         try {
@@ -194,7 +199,7 @@ public class LdapUserProvider implements UserProvider {
         if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
             Collections.sort(usernames);
         }
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return usernames;
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {

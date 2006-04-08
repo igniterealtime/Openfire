@@ -35,6 +35,8 @@
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("session-summary", DEFAULT_RANGE));
     int refresh = ParamUtils.getIntParameter(request,"refresh",webManager.getRefreshValue("session-summary", 0));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
+    int order = ParamUtils.getIntParameter(request, "order",
+            webManager.getPageProperty("session-summary", "console.order", SessionResultFilter.ASCENDING));
     String jid = ParamUtils.getParameter(request,"jid");
 
     if (request.getParameter("range") != null) {
@@ -43,6 +45,10 @@
 
     if (request.getParameter("refresh") != null) {
         webManager.setRefreshValue("session-summary", refresh);
+    }
+
+    if (request.getParameter("order") != null) {
+        webManager.setPageProperty("session-summary", "console.order", order);
     }
 
     // Get the user manager
@@ -153,12 +159,52 @@
 </table>
 <br>
 
+ <%  // Get the iterator of sessions, print out session info if any exist.
+    SessionResultFilter filter = SessionResultFilter.createDefaultSessionFilter();
+    filter.setSortOrder(order);
+    filter.setStartIndex(start);
+    filter.setNumResults(range);
+    Collection<ClientSession> sessions = sessionManager.getSessions(filter);
+%>
+
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap><fmt:message key="session.details.name" /></th>
+        <th nowrap>
+        <%
+            if (filter.getSortField() == SessionResultFilter.SORT_USER) {
+                if (filter.getSortOrder() == SessionResultFilter.DESCENDING) {
+        %>
+        <table border="0"><tr valign="middle"><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
+        <fmt:message key="session.details.name" /></a>
+        </th><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
+        <img src="images/sort_descending.gif" border="0" width="16" height="16" alt=""></a>
+        </th></tr></table></div>
+        <%
+                }
+                else {
+        %>
+        <table border="0"><tr valign="middle"><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
+        <fmt:message key="session.details.name" /></a>
+        </th><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
+        <img src="images/sort_ascending.gif" width="16" height="16" border="0" alt=""></a>
+        </th></tr></table></div>
+        <%
+                }
+            }
+            else {
+        %>
+            <fmt:message key="session.details.name" />
+        <%
+            }
+        %>
+        </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
@@ -167,11 +213,7 @@
     </tr>
 </thead>
 <tbody>
-    <%  // Get the iterator of sessions, print out session info if any exist.
-        SessionResultFilter filter = new SessionResultFilter();
-        filter.setStartIndex(start);
-        filter.setNumResults(range);
-        Collection<ClientSession> sessions = sessionManager.getSessions(filter);
+    <%
         if (sessions.isEmpty()) {
     %>
         <tr>

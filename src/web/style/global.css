@@ -286,6 +286,14 @@ PRE, TT {
     font-size : 8pt;
     font-weight : bold;
 }
+.jive-table TH TABLE TH {
+    border-right : none;
+    border-bottom : none;
+}
+.jive-table TH TABLE TH a {
+    text-decoration : none;
+    color: #000;
+}
 .jive-table TR TD {
     border-bottom : 1px #ccc solid;
 }

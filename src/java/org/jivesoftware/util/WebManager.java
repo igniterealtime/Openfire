@@ -301,7 +301,7 @@ public class WebManager extends WebBean {
         setPageProperty(pageName, "console.refresh", newValue);
     }
 
-    private int getPageProperty(String pageName, String property, int defaultValue) {
+    public int getPageProperty(String pageName, String property, int defaultValue) {
         User user = getUser();
         if (user != null) {
             String values = user.getProperties().get(property);

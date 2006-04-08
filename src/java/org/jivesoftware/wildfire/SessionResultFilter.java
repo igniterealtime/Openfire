@@ -1,9 +1,8 @@
 /**
- * $RCSfile$
  * $Revision: 580 $
  * $Date: 2004-12-01 18:46:33 -0300 (Wed, 01 Dec 2004) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,21 +14,18 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
- * <p>Filters and sorts lists of sessions.</p>
- * <p>This allows for a very
- * rich set of possible queries that can be run on session data. Some examples
- * are: "Show all sessions started during the last hour by a
- * certain user".
- * </p><p>
+ * Filters and sorts lists of sessions. This allows for a very rich set of possible
+ * queries that can be run on session data. Some examples are: "Show all sessions
+ * started during the last hour by a certain user".<p>
+ *
  * The class also supports pagination of results with the setStartIndex(int)
  * and setNumResults(int) methods. If the start index is not set, it will
  * begin at index 0 (the start of results). If the number of results is not set,
- * it will be unbounded and return as many results as available.
- * </p><p>
- * Factory methods to create common queries are provided for convenience.
- * </p>
+ * it will be unbounded and return as many results as available.<p>
  *
- * @author Iain Shigeoka
+ * Factory methods to create common queries are provided for convenience.
+ *
+ * @author Matt Tucker
  */
 public class SessionResultFilter {
 
@@ -50,7 +46,7 @@ public class SessionResultFilter {
     // Result limit search criteria
     // ############################################################
     /**
-     * <p>Represents no result limit (infinite results).</p>
+     * Represents no result limit (infinite results).
      */
     public static final int NO_RESULT_LIMIT = -1;
 
@@ -58,7 +54,7 @@ public class SessionResultFilter {
     // Packet limit search criteria
     // ############################################################
     /**
-     * <p>Represents no result limit (infinite results).</p>
+     * Represents no result limit (infinite results).
      */
     public static final long NO_PACKET_LIMIT = -1;
     // ############################################################
@@ -71,8 +67,8 @@ public class SessionResultFilter {
     public static final int SORT_NUM_SERVER_PACKETS = 4;
 
     /**
-     * <p>Creates a default SessionResultFilter: no filtering with results sorted
-     * by user.</p>
+     * Creates a default SessionResultFilter: no filtering with results sorted
+     * by user (ascending).
      */
     public static SessionResultFilter createDefaultSessionFilter() {
         SessionResultFilter resultFilter = new SessionResultFilter();
@@ -140,7 +136,7 @@ public class SessionResultFilter {
     /**
      * Sets the date that represents the lower boundary for sessions to
      * be selected by the result filter. If this value is not set the results filter will
-     * be unbounded for the earliest creation date selected.<p>
+     * be unbounded for the earliest creation date selected.
      *
      * @param creationDateRangeMin Date representing the filter lowest value of
      *                             the creation date to be selected.
@@ -155,7 +151,7 @@ public class SessionResultFilter {
      * and the results filter will be unbounded for the latest creation date selected.
      *
      * @return a Date representing the filter highest value of the creation date to be
-     *         selected.
+     *      selected.
      */
     public Date getCreationDateRangeMax() {
         return creationDateRangeMax;
@@ -167,7 +163,7 @@ public class SessionResultFilter {
      * filter will be unbounded for the latest creation date selected.
      *
      * @param creationDateRangeMax Date representing the filter lowest value of
-     *                             the creation date range.
+     *      the creation date range.
      */
     public void setCreationDateRangeMax(Date creationDateRangeMax) {
         this.creationDateRangeMax = creationDateRangeMax;
@@ -180,7 +176,7 @@ public class SessionResultFilter {
      * last activity date selected.
      *
      * @return a Date representing the filter lowest value of the last activity date
-     *         range.
+     *      range.
      */
     public Date getLastActivityDateRangeMin() {
         return lastActivityDateRangeMin;
@@ -192,7 +188,7 @@ public class SessionResultFilter {
      * filter will be unbounded for the earliest last activity date selected.
      *
      * @param lastActivityDateRangeMin Date representing the filter lowest value of
-     *                                 the last activity date to be selected.
+     *      the last activity date to be selected.
      */
     public void setLastActivityDateRangeMin(Date lastActivityDateRangeMin) {
         this.lastActivityDateRangeMin = lastActivityDateRangeMin;
@@ -204,7 +200,7 @@ public class SessionResultFilter {
      * and the results filter will be unbounded for the latest activity date selected.
      *
      * @return a Date representing the filter highest value of the last activity date to be
-     *         selected.
+     *      selected.
      */
     public Date getLastActivityDateRangeMax() {
         return lastActivityDateRangeMax;
@@ -216,105 +212,107 @@ public class SessionResultFilter {
      * be unbounded for the latest activity date selected.
      *
      * @param lastActivityDateRangeMax Date representing the filter lowest value of
-     *                                 the last activity date range.
+     *      the last activity date range.
      */
     public void setLastActivityDateRangeMax(Date lastActivityDateRangeMax) {
         this.lastActivityDateRangeMax = lastActivityDateRangeMax;
     }
 
     /**
-     * <p>Get a lower boundary on client packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>A value of NO_PACKET_LIMIT will be returned if
-     * there is lower packet limit.</p>
+     * Returns the lower boundary on client packets for sessions to be selected
+     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
+     * there is no lower packet limit.
      *
-     * @return The upper limit of client packets allowed for sessions to meet this filter requirement
+     * @return the lower limit of client packets allowed for sessions to meet this
+     *      filter requirement.
      */
     public long getClientPacketRangeMin() {
         return clientPacketRangeMin;
     }
 
     /**
-     * <p>Set an lower boundary on client packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>If this value is not set
-     * the results filter will have no lower bounds for client packets selected.</p>
+     * Sets the lower boundary on client packets for sessions to be selected
+     * by the result filter. If this value is not set (using the value
+     * {@link #NO_PACKET_LIMIT}), the results filter will have no lower bounds
+     * for client packets selected.
      *
-     * @param max The lower limit of client packets allowed for sessions to meet this filter requirement
+     * @param min the lower limit of client packets allowed for sessions to meet
+     *      this filter requirement.
      */
-    public void setClientPacketRangeMin(long max) {
-        this.clientPacketRangeMin = max;
+    public void setClientPacketRangeMin(long min) {
+        this.clientPacketRangeMin = min;
     }
 
     /**
-     * <p>Get an upper boundary on client packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>A value of NO_PACKET_LIMIT will be returned if
-     * there is upper packet limit.</p>
+     * Returns the upper boundary on client packets for sessions to be selected
+     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
+     * there is no upper packet limit.
      *
-     * @return The upper limit of client packets allowed for sessions to meet this filter requirement
+     * @return the upper limit of client packets allowed for sessions to meet this
+     *      filter requirement.
      */
     public long getClientPacketRangeMax() {
         return clientPacketRangeMax;
     }
 
     /**
-     * <p>Set an upper boundary on client packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>If this value is not set
-     * the results filter will have no upper bounds
-     * for client packets selected.</p>
+     * Sets the upper boundary on client packets for sessions to be selected
+     * by the result filter. If this value is not set (using the value
+     * {@link #NO_PACKET_LIMIT}), the results filter will have no upper bounds
+     * for client packets selected.
      *
-     * @param max The upper limit of client packets allowed for sessions to meet this filter requirement
+     * @param max the upper limit of client packets allowed for sessions to meet
+     *      this filter requirement.
      */
     public void setClientPacketRangeMax(long max) {
         this.clientPacketRangeMax = max;
     }
 
     /**
-     * <p>Get a lower boundary on server packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>A value of NO_PACKET_LIMIT will be returned if
-     * there is lower packet limit.</p>
+     * Returns the lower boundary on server packets for sessions to be selected
+     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
+     * there is no lower packet limit.
      *
-     * @return The upper limit of server packets allowed for sessions to meet this filter requirement
+     * @return the lower limit of server packets allowed for sessions to meet this
+     *      filter requirement.
      */
     public long getServerPacketRangeMin() {
         return serverPacketRangeMin;
     }
 
     /**
-     * <p>Set an lower boundary on server packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>If this value is not set
-     * the results filter will have no lower bounds for server packets selected.</p>
+     * Sets the lower boundary on server packets for sessions to be selected
+     * by the result filter. If this value is not set (using the value
+     * {@link #NO_PACKET_LIMIT}), the results filter will have no lower bounds
+     * for server packets selected.
      *
-     * @param max The lower limit of server packets allowed for sessions to meet this filter requirement
+     * @param min the lower limit of server packets allowed for sessions to meet
+     *      this filter requirement.
      */
-    public void setServerPacketRangeMin(long max) {
-        this.serverPacketRangeMin = max;
+    public void setServerPacketRangeMin(long min) {
+        this.serverPacketRangeMin = min;
     }
 
     /**
-     * <p>Get an upper boundary on server packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>A value of NO_PACKET_LIMIT will be returned if
-     * there is upper packet limit.</p>
+     * Returns the upper boundary on server packets for sessions to be selected
+     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
+     * there is no upper packet limit.
      *
-     * @return The upper limit of server packets allowed for sessions to meet this filter requirement
+     * @return the upper limit of server packets allowed for sessions to meet this
+     *      filter requirement.
      */
     public long getServerPacketRangeMax() {
         return serverPacketRangeMax;
     }
 
     /**
-     * <p>Set an upper boundary on server packets for sessions to be
-     * selected by the result filter.</p>
-     * <p>If this value is not set
-     * the results filter will have no upper bounds
-     * for server packets selected.</p>
+     * Sets the upper boundary on server packets for sessions to be selected
+     * by the result filter. If this value is not set (using the value
+     * {@link #NO_PACKET_LIMIT}), the results filter will have no upper bounds
+     * for server packets selected.
      *
-     * @param max The upper limit of server packets allowed for sessions to meet this filter requirement
+     * @param max the upper limit of server packets allowed for sessions to meet
+     *      this filter requirement.
      */
     public void setServerPacketRangeMax(long max) {
         this.serverPacketRangeMax = max;
@@ -416,29 +414,22 @@ public class SessionResultFilter {
     }
 
     /**
-     * <p>Obtains a comparator that will sort a standard sorted set according
-     * to this filter's sort order.</p>
+     * Returns a comparator that will sort a standard sorted set according
+     * to this filter's sort order.
      *
-     * @return A comparator that sorts Sessions matching the sort order for this filter.
+     * @return a comparator that sorts Sessions matching the sort order for this filter.
      */
     public Comparator<Session> getSortComparator() {
         return new SessionComparator();
     }
 
     /**
-     * <p>Compares sessions according to sort fields.</p>
+     * Compares sessions according to sort fields.
      *
      * @author Iain Shigeoka
      */
     private class SessionComparator implements Comparator {
 
-        /**
-         * <p>Compare two sessions according to sort order.</p>
-         *
-         * @param o1 The first session to compare
-         * @param o2 The second session to compare
-         * @return a negative integer, zero, or a positive integer as the first argument is less than, equal to, or greater than the second.
-         */
         public int compare(Object o1, Object o2) {
             Session lhs = (Session)o1;
             Session rhs = (Session)o2;
@@ -489,45 +480,33 @@ public class SessionResultFilter {
      * Rounds the given date down to the nearest specified second. The following
      * table shows sample input and expected output values: (Note, only
      * the time portion of the date is shown for brevity) <p>
-     * <p/>
+     *
      * <table border="1">
-     * <tr>
-     * <th>Date</th><th>Seconds</th><th>Result</th>
-     * </tr>
-     * <tr>
-     * <td>1:37.48</td><td>5</td><td>1:37.45</td>
-     * </tr>
-     * <tr>
-     * <td>1:37.48</td><td>10</td><td>1:37.40</td>
-     * </tr>
-     * <tr>
-     * <td>1:37.48</td><td>30</td><td>1:37.30</td>
-     * </tr>
-     * <tr>
-     * <td>1:37.48</td><td>60</td><td>1:37.00</td>
-     * </tr>
-     * <tr>
-     * <td>1:37.48</td><td>120</td><td>1:36.00</td>
-     * </tr>
+     * <tr><th>Date</th><th>Seconds</th><th>Result</th></tr>
+     * <tr><td>1:37.48</td><td>5</td><td>1:37.45</td></tr>
+     * <tr><td>1:37.48</td><td>10</td><td>1:37.40</td></tr>
+     * <tr><td>1:37.48</td><td>30</td><td>1:37.30</td</tr>
+     * <tr><td>1:37.48</td><td>60</td><td>1:37.00</td></tr>
+     * <tr><td>1:37.48</td><td>120</td><td>1:36.00</td></tr>
      * </table><p>
-     * <p/>
+     *
      * This method is useful when calculating the last post in
      * a forum or the number of new messages from a given date. Using a rounded
      * date allows Jive to internally cache the results of the date query.
      * Here's an example that shows the last posted message in a forum accurate
-     * to the last 60 seconds: <p>
-     * <p/>
-     * <code>
-     * SessionResultFilter filter = new SessionResultFilter(); <br>
-     * filter.setSortOrder(SessionResultFilter.DESCENDING); <br>
-     * filter.setSortField(JiveGlobals.SORT_CREATION_DATE); <br>
-     * <b>filter.setCreationDateRangeMin(SessionResultFilter.roundDate(forum.getModificationDate(), 60));</b> <br>
-     * filter.setNumResults(1); <br>
-     * Iterator messages = forum.messages(filter); <br>
-     * ForumMessage lastPost = (ForumMessage)messages.next(); <br>
-     * </code><p>
+     * to the last 60 seconds:<p>
      *
-     * @param date    the <tt>Date</tt> we want to round.
+     * <pre>
+     * SessionResultFilter filter = new SessionResultFilter();
+     * filter.setSortOrder(SessionResultFilter.DESCENDING);
+     * filter.setSortField(JiveGlobals.SORT_CREATION_DATE);
+     * <b>filter.setCreationDateRangeMin(SessionResultFilter.roundDate(forum.getModificationDate(), 60));</b>
+     * filter.setNumResults(1);
+     * Iterator messages = forum.messages(filter);
+     * ForumMessage lastPost = (ForumMessage)messages.next();
+     * </pre>
+     *
+     * @param date the <tt>Date</tt> we want to round.
      * @param seconds the number of seconds we want to round the date to.
      * @return the given date, rounded down to the nearest specified number of seconds.
      */
@@ -538,7 +517,7 @@ public class SessionResultFilter {
     /**
      * Rounds the given date down to the nearest specfied second.
      *
-     * @param date    the date (as a long) that we want to round.
+     * @param date the date (as a long) that we want to round.
      * @param seconds the number of seconds we want to round the date to.
      * @return the given date (as a long), rounded down to the nearest
      *         specified number of seconds.
@@ -547,46 +526,63 @@ public class SessionResultFilter {
         return date - (date % (1000 * seconds));
     }
 
-    /**
-     * Clones a SessionResultFilter
-     */
-    public Object clone() {
-        SessionResultFilter clonedFilter = new SessionResultFilter();
-        clonedFilter.setCreationDateRangeMax(getCreationDateRangeMax());
-        clonedFilter.setCreationDateRangeMin(getCreationDateRangeMin());
-        clonedFilter.setLastActivityDateRangeMax(getLastActivityDateRangeMax());
-        clonedFilter.setLastActivityDateRangeMin(getLastActivityDateRangeMin());
-        clonedFilter.setNumResults(getNumResults());
-        clonedFilter.setSortField(getSortField());
-        clonedFilter.setSortOrder(getSortOrder());
-        clonedFilter.setStartIndex(getStartIndex());
-        clonedFilter.setUsername(getUsername());
-        return clonedFilter;
-    }
-
     public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
         if (object != null && object instanceof SessionResultFilter) {
             SessionResultFilter o = (SessionResultFilter)object;
-            return
-                    sortField == o.sortField &&
-                    sortOrder == o.sortOrder &&
-                    startIndex == o.startIndex &&
-                    numResults == o.numResults &&
-                    username == o.username &&
-                    ((creationDateRangeMin == null && o.creationDateRangeMin == null) ||
-                    creationDateRangeMin.equals(o.creationDateRangeMin)) &&
-                    ((creationDateRangeMax == null && o.creationDateRangeMax == null) ||
-                    creationDateRangeMax.equals(o.creationDateRangeMax)) &&
-                    ((lastActivityDateRangeMin == null && o.lastActivityDateRangeMin == null) ||
-                    lastActivityDateRangeMin.equals(o.lastActivityDateRangeMin)) &&
-                    ((lastActivityDateRangeMax == null && o.lastActivityDateRangeMax == null) ||
-                    lastActivityDateRangeMax.equals(o.lastActivityDateRangeMax));
+            if (sortField != o.sortField) {
+                return false;
+            }
+            if (sortOrder != o.sortOrder) {
+                return false;
+            }
+            if (numResults != o.numResults) {
+                return false;
+            }
+            if (!compare(username, o.username)) {
+                return false;
+            }
+
+            if (!compare(creationDateRangeMin, o.creationDateRangeMin)) {
+                return false;
+            }
+            if (!compare(creationDateRangeMax, o.creationDateRangeMax)) {
+                return false;
+            }
+            if (!compare(lastActivityDateRangeMin, o.lastActivityDateRangeMin)) {
+                return false;
+            }
+            if (!compare(lastActivityDateRangeMax, o.lastActivityDateRangeMax)) {
+                return false;
+            }
+            // All checks passed, so equal.
+            return true;
         }
         else {
             return false;
         }
+    }
+
+    /**
+     * Returns true if two objects are equal. This is a helper method
+     * to assist with the case that one or both objects are <tt>null</tt>;
+     * if both objects are <tt>null</tt> then they're considered equal.
+     *
+     * @param one the first object.
+     * @param two the second object.
+     * @return true if the objects are equal.
+     */
+    private static boolean compare (Object one, Object two) {
+        if (one == null && two != null) {
+            return false;
+        }
+        else if (one != null) {
+            if (!one.equals(two)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

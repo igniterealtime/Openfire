@@ -52,8 +52,8 @@ public class PresenceAccess extends AccessModel {
                 Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
                 RosterItem item = roster.getRosterItem(owner);
                 // Check that the subscriber is subscribe to the node owner's presence
-                return RosterItem.SUB_BOTH == item.getSubStatus() ||
-                        RosterItem.SUB_FROM == item.getSubStatus();
+                return item != null && (RosterItem.SUB_BOTH == item.getSubStatus() ||
+                        RosterItem.SUB_FROM == item.getSubStatus());
             }
             catch (UserNotFoundException e) {
                 return false;

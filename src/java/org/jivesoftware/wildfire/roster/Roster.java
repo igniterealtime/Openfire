@@ -22,7 +22,9 @@ import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
-import org.jivesoftware.wildfire.user.*;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNameManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -79,16 +81,8 @@ public class Roster implements Cacheable {
         this.username = username;
 
         // Get the shared groups of this user
-        Collection<Group> sharedGroups = null;
-        Collection<Group> userGroups = null;
-        try {
-            User rosterUser = UserManager.getInstance().getUser(getUsername());
-            sharedGroups = rosterManager.getSharedGroups(rosterUser);
-            userGroups = GroupManager.getInstance().getGroups(getUserJID());
-        }
-        catch (UserNotFoundException e) {
-            sharedGroups = new ArrayList<Group>();
-        }
+        Collection<Group> sharedGroups = rosterManager.getSharedGroups(username);
+        Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());;
 
         // Add RosterItems that belong to the personal roster
         rosterItemProvider =  RosterItemProvider.getInstance();
@@ -111,7 +105,7 @@ public class Roster implements Cacheable {
         for (JID jid : sharedUsers.keySet()) {
             try {
                 Collection<Group> itemGroups = new ArrayList<Group>();
-                String nickname = UserNameManager.getUserName(jid);
+                String nickname = "";
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname , null);
                 // Add the shared groups to the new roster item
@@ -142,7 +136,16 @@ public class Roster implements Cacheable {
                         item.setSubStatus(RosterItem.SUB_FROM);
                     }
                 }
-                rosterItems.put(item.getJid().toBareJID(), item);
+                // Set nickname and store in memory only if subscription type is not FROM.
+                // Roster items with subscription type FROM that exist only because of shared
+                // groups will be recreated on demand in #getRosterItem(JID) and #isRosterItem()
+                // but will never be stored in memory nor in the database. This is an important
+                // optimization to reduce objects in memory and avoid loading users in memory
+                // to get their nicknames that will never be shown
+                if (item.getSubStatus() != RosterItem.SUB_FROM) {
+                    item.setNickname(UserNameManager.getUserName(jid));
+                    rosterItems.put(item.getJid().toBareJID(), item);
+                }
             }
             catch (UserNotFoundException e) {
                 Log.error("Groups (" + sharedUsers.get(jid) + ") include non-existent username (" +
@@ -159,25 +162,21 @@ public class Roster implements Cacheable {
      * @return true if the specified user is a member of the roster, false otherwise.
      */
     public boolean isRosterItem(JID user) {
-        return rosterItems.containsKey(user.toBareJID());
+        // Optimization: Check if the contact has a FROM subscription due to shared groups
+        // (only when not present in the rosterItems collection)
+        return rosterItems.containsKey(user.toBareJID()) || getImplicitRosterItem(user) != null;
     }
 
     /**
-     * Returns a collection of users in this roster.
+     * Returns a collection of users in this roster.<p>
+     *
+     * Note: Roster items with subscription type FROM that exist only because of shared groups
+     * are not going to be returned.
      *
      * @return a collection of users in this roster.
      */
     public Collection<RosterItem> getRosterItems() {
         return Collections.unmodifiableCollection(rosterItems.values());
-    }
-
-    /**
-     * Returns the total number of users in the roster.
-     *
-     * @return the number of online users in the roster.
-     */
-    public int getTotalRosterItemCount() {
-        return rosterItems.size();
     }
 
     /**
@@ -191,9 +190,56 @@ public class Roster implements Cacheable {
     public RosterItem getRosterItem(JID user) throws UserNotFoundException {
         RosterItem item = rosterItems.get(user.toBareJID());
         if (item == null) {
-            throw new UserNotFoundException(user.toBareJID());
+            // Optimization: Check if the contact has a FROM subscription due to shared groups
+            item = getImplicitRosterItem(user);
+            if (item == null) {
+                throw new UserNotFoundException(user.toBareJID());
+            }
         }
         return item;
+    }
+
+    /**
+     * Returns a roster item if the specified user has a subscription of type FROM to this
+     * user and the susbcription only exists due to some shared groups or otherwise
+     * <tt>null</tt>. This method assumes that this user does not have a subscription to
+     * the contact. In other words, this method will not check if there should be a subscription
+     * of type TO ot BOTH.
+     *
+     * @param user the contact to check if he is subscribed to the presence of this user.
+     * @return a roster item if the specified user has a subscription of type FROM to this
+     *         user and the susbcription only exists due to some shared groups or otherwise null.
+     */
+    private RosterItem getImplicitRosterItem(JID user) {
+        // Get the groups of this user
+        Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
+        Collection<Group> sharedGroups = new ArrayList<Group>(userGroups.size());
+        // Check if there is a public shared group. That means that anyone can see this user.
+        for (Group group : userGroups) {
+            if (rosterManager.isPulicSharedGroup(group)) {
+                return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
+                        RosterItem.RECV_NONE, "", null);
+            }
+            else if (rosterManager.isSharedGroup(group)) {
+                // This is a shared group that can be seen only by group members or
+                // (maybe) by other groups
+                sharedGroups.add(group);
+            }
+        }
+        if (!sharedGroups.isEmpty()) {
+            // Check if any group of contact may see a shared group of this user
+            Collection<Group> contactGroups = GroupManager.getInstance().getGroups(user);
+            if (contactGroups == null) {
+                return null;
+            }
+            for (Group sharedGroup : sharedGroups) {
+                if (rosterManager.isSharedGroupVisible(sharedGroup, contactGroups)) {
+                    return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
+                            RosterItem.RECV_NONE, "", null);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -517,7 +563,8 @@ public class Roster implements Cacheable {
             for (JID jid : users) {
                 // Add the user to the answer if the user doesn't belong to the personal roster
                 // (since we have already added the user to the answer)
-                if (!isRosterItem(jid) && !userJID.equals(jid)) {
+                boolean isRosterItem = rosterItems.containsKey(jid.toBareJID());
+                if (!isRosterItem && !userJID.equals(jid)) {
                     List<Group> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
                         groups = new ArrayList<Group>();
@@ -681,11 +728,19 @@ public class Roster implements Cacheable {
             }
         }
 
-        // Brodcast to all the user resources of the updated roster item
-        broadcast(item, true);
-        // Probe the presence of the new group user
-        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
-            probePresence(item.getJid());
+        // Optimization: Check if we do not need to keep the item in memory
+        if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
+            // Remove from memory and do nothing else
+            rosterItems.remove(item.getJid().toBareJID());
+        }
+        else {
+            // Brodcast to all the user resources of the updated roster item
+            broadcast(item, true);
+            // Probe the presence of the new group user
+            if (item.getSubStatus() == RosterItem.SUB_BOTH ||
+                    item.getSubStatus() == RosterItem.SUB_TO) {
+                probePresence(item.getJid());
+            }
         }
     }
 
@@ -778,11 +833,19 @@ public class Roster implements Cacheable {
                 }
             }
         }
-        // Brodcast to all the user resources of the updated roster item
-        broadcast(item, true);
-        // Probe the presence of the new group user
-        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
-            probePresence(item.getJid());
+        // Optimization: Check if we do not need to keep the item in memory
+        if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
+            // Remove from memory and do nothing else
+            rosterItems.remove(item.getJid().toBareJID());
+        }
+        else {
+            // Brodcast to all the user resources of the updated roster item
+            broadcast(item, true);
+            // Probe the presence of the new group user
+            if (item.getSubStatus() == RosterItem.SUB_BOTH ||
+                    item.getSubStatus() == RosterItem.SUB_TO) {
+                probePresence(item.getJid());
+            }
         }
     }
 

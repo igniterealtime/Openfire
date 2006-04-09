@@ -25,7 +25,6 @@ import org.jivesoftware.wildfire.event.GroupEventListener;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
@@ -162,16 +161,16 @@ public class RosterManager extends BasicModule implements GroupEventListener {
      * belongs to a Group that may see a Group that whose members may include the Group in their
      * rosters.
      *
-     * @param user the user to return his shared groups.
+     * @param username the username of the user to return his shared groups.
      * @return a collection with all the groups that the user may include in his roster.
      */
-    public Collection<Group> getSharedGroups(User user) {
+    public Collection<Group> getSharedGroups(String username) {
         Collection<Group> answer = new HashSet<Group>();
         Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
         for (Group group : groups) {
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
             if ("onlyGroup".equals(showInRoster)) {
-                if (group.isUser(user.getUsername())) {
+                if (group.isUser(username)) {
                     // The user belongs to the group so add the group to the answer
                     answer.add(group);
                 }
@@ -179,7 +178,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                     // Check if the user belongs to a group that may see this group
                     Collection<Group> groupList = parseGroups(group.getProperties().get("sharedRoster.groupList"));
                     for (Group groupInList : groupList) {
-                        if (groupInList.isUser(user.getUsername())) {
+                        if (groupInList.isUser(username)) {
                             answer.add(group);
                         }
                     }
@@ -330,6 +329,42 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         if ("onlyGroup".equals(showInRoster) || "everybody".equals(showInRoster)) {
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the specified Group may be seen by all users in the system. The decision
+     * is made based on the group properties that are configurable through the Admin Console.
+     *
+     * @param group the group to check if it may be seen by all users in the system.
+     * @return true if the specified Group may be seen by all users in the system.
+     */
+    public boolean isPulicSharedGroup(Group group) {
+        String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if ("everybody".equals(showInRoster)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if a shared group may be seen by any of the specified groups. The groups
+     * contained in the collection may or may not be a shared groups.
+     *
+     * @param sharedGroup the shared group to check its visibility.
+     * @param groups the groups to check if any of them can see the shared group.
+     * @return true if any of the specified groups can see the shared group.
+     */
+    public boolean isSharedGroupVisible(Group sharedGroup, Collection<Group> groups) {
+        Map<String, String> properties = sharedGroup.getProperties();
+        String showInRoster = properties.get("sharedRoster.showInRoster");
+        if ("everybody".equals(showInRoster)) {
+            return true;
+        }
+        if ("onlyGroup".equals(showInRoster) ) {
+            Collection<Group> visibleGroups = parseGroups(properties.get("sharedRoster.groupList"));
+            return !Collections.disjoint(visibleGroups, groups);
         }
         return false;
     }
@@ -661,8 +696,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         // Check if anyone can see this shared group
         if ("everybody".equals(showInRoster)) {
             // Add all users in the system
-            for (User user : UserManager.getInstance().getUsers()) {
-                users.add(server.createJID(user.getUsername(), null));
+            for (String username : UserManager.getInstance().getUsernames()) {
+                users.add(server.createJID(username, null));
             }
             // Add all logged users. We don't need to add all users in the system since only the
             // logged ones will be affected.
@@ -698,8 +733,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             // in the system since they all need to be in the roster with subscription "from"
             if (group.isUser(roster.getUsername())) {
                 // Add all users in the system
-                for (User user : UserManager.getInstance().getUsers()) {
-                    users.add(server.createJID(user.getUsername(),null));
+                for (String username : UserManager.getInstance().getUsernames()) {
+                    users.add(server.createJID(username, null));
                 }
             }
         }

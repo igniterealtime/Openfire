@@ -195,6 +195,15 @@ public class UserManager implements IQResultListener {
     }
 
     /**
+     * Returns an unmodifiable Collection of usernames of all users in the system.
+     *
+     * @return an unmodifiable Collection of all usernames in the system.
+     */
+    public Collection<String> getUsernames() {
+        return provider.getUsernames();
+    }
+
+    /**
      * Returns an unmodifiable Collection of all users starting at <tt>startIndex</tt>
      * with the given number of results. This is useful to support pagination in a GUI
      * where you may only want to display a certain number of results per page. It is

@@ -56,8 +56,9 @@ public class RosterAccess extends AccessModel {
                 Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
                 RosterItem item = roster.getRosterItem(owner);
                 // Check that the subscriber is subscribe to the node owner's presence
-                boolean isSubscribed = RosterItem.SUB_BOTH == item.getSubStatus() ||
-                        RosterItem.SUB_FROM == item.getSubStatus();
+                boolean isSubscribed = item != null && (
+                        RosterItem.SUB_BOTH == item.getSubStatus() ||
+                                RosterItem.SUB_FROM == item.getSubStatus());
                 if (isSubscribed) {
                     // Get list of groups where the contact belongs
                     List<String> contactGroups = new ArrayList<String>(item.getGroups());

@@ -202,16 +202,31 @@ public class RosterManager extends BasicModule implements GroupEventListener {
      */
     private Collection<Group> parseGroups(String groupNames) {
         Collection<Group> answer = new HashSet<Group>();
+        for (String groupName : parseGroupNames(groupNames)) {
+            try {
+                answer.add(GroupManager.getInstance().getGroup(groupName));
+            }
+            catch (GroupNotFoundException e) {
+                // Do nothing. Silently ignore the invalid reference to the group
+            }
+        }
+        return answer;
+    }
+
+    /**
+     * Returns a collection of Groups obtained by parsing a comma delimited String with the name
+     * of groups.
+     *
+     * @param groupNames a comma delimited string with group names.
+     * @return a collection of Groups obtained by parsing a comma delimited String with the name
+     *         of groups.
+     */
+    private Collection<String> parseGroupNames(String groupNames) {
+        Collection<String> answer = new HashSet<String>();
         if (groupNames != null) {
             StringTokenizer tokenizer = new StringTokenizer(groupNames, ",");
             while (tokenizer.hasMoreTokens()) {
-                String groupName = tokenizer.nextToken();
-                try {
-                    answer.add(GroupManager.getInstance().getGroup(groupName));
-                }
-                catch (GroupNotFoundException e) {
-                    // Do nothing. Silently ignore the invalid reference to the group
-                }
+                answer.add(tokenizer.nextToken());
             }
         }
         return answer;
@@ -362,9 +377,14 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if ("everybody".equals(showInRoster)) {
             return true;
         }
-        if ("onlyGroup".equals(showInRoster) ) {
-            Collection<Group> visibleGroups = parseGroups(properties.get("sharedRoster.groupList"));
-            return !Collections.disjoint(visibleGroups, groups);
+        if ("onlyGroup".equals(showInRoster) && !groups.isEmpty()) {
+            Collection<String> groupNames = new ArrayList<String>(groups.size());
+            for (Group group : groups) {
+                groupNames.add(group.getName());
+            }
+            Collection<String> visibleGroups =
+                    parseGroupNames(properties.get("sharedRoster.groupList"));
+            return !Collections.disjoint(visibleGroups, groupNames);
         }
         return false;
     }
@@ -606,9 +626,9 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
             if ("onlyGroup".equals(showInRoster)) {
                 // Check if the user belongs to a group that may see this group
-                Collection<Group> groupList = parseGroups(group.getProperties().get(
-                        "sharedRoster.groupList"));
-                if (groupList.contains(groupToCheck)) {
+                Collection<String> groupList =
+                        parseGroupNames(group.getProperties().get("sharedRoster.groupList"));
+                if (groupList.contains(groupToCheck.getName())) {
                     answer.add(group);
                 }
             }

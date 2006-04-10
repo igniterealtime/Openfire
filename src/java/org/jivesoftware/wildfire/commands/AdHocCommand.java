@@ -82,8 +82,9 @@ public abstract class AdHocCommand {
     public abstract String getCode();
 
     /**
-     * Returns the default label used for describing this commmand. Admins can later use
-     * {@link #setLabel(String)} to set a new label and reset to the default value at any time.
+     * Returns the default label used for describing this commmand. This information is usually
+     * used when returning commands as disco#items. Admins can later use {@link #setLabel(String)}
+     * to set a new label and reset to the default value at any time.
      *
      * @return the default label used for describing this commmand.
      */
@@ -229,7 +230,7 @@ public abstract class AdHocCommand {
         /**
          * The command has been canceled. The command session has ended.
          */
-        canceled;
+        canceled
     }
 
     public enum Action {
@@ -257,6 +258,6 @@ public abstract class AdHocCommand {
         /**
          * The command should be completed (if possible).
          */
-        complete;
+        complete
     }
 }

@@ -75,6 +75,11 @@ public class DefaultUserProvider implements UserProvider {
             if (keyString == null) {
                 keyString = StringUtils.randomString(15);
                 JiveGlobals.setProperty("passwordKey", keyString);
+                // Check to make sure that setting the property worked. It won't work,
+                // for example, when in setup mode.
+                if (!keyString.equals(JiveGlobals.getProperty("passwordKey"))) {
+                    return null;
+                }
             }
             cipher = new Blowfish(keyString);
         }
@@ -133,9 +138,12 @@ public class DefaultUserProvider implements UserProvider {
             boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
             String encryptedPassword = null;
             if (!usePlainPassword) {
-                encryptedPassword = getCipher().encryptString(password);
-                // Set password to null so that it's inserted that way.
-                password = null;
+                Blowfish cipher = getCipher();
+                if (cipher != null) {
+                    encryptedPassword = cipher.encryptString(password);
+                    // Set password to null so that it's inserted that way.
+                    password = null;
+                }
             }
 
             Date now = new Date();
@@ -429,11 +437,12 @@ public class DefaultUserProvider implements UserProvider {
             String plainText = rs.getString(1);
             String encrypted = rs.getString(2);
             if (encrypted != null) {
-                return getCipher().decryptString(encrypted);
+                Blowfish cipher = getCipher();
+                if (cipher != null) {
+                    return cipher.decryptString(encrypted);
+                }
             }
-            else {
-                return plainText;
-            }
+            return plainText;
         }
         catch (SQLException sqle) {
             throw new UserNotFoundException(sqle);
@@ -456,9 +465,12 @@ public class DefaultUserProvider implements UserProvider {
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
         String encryptedPassword = null;
         if (!usePlainPassword) {
-            encryptedPassword = getCipher().encryptString(password);
-            // Set password to null so that it's inserted that way.
-            password = null;
+            Blowfish cipher = getCipher();
+            if (cipher != null) {
+                encryptedPassword = cipher.encryptString(password);
+                // Set password to null so that it's inserted that way.
+                password = null;
+            }
         }
 
         Connection con = null;

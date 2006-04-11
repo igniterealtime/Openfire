@@ -18,6 +18,8 @@ import org.jivesoftware.wildfire.SharedGroupException;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
+import org.jivesoftware.wildfire.user.UserNameManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -220,6 +222,15 @@ public class RosterItem implements Cacheable {
      * @param subStatus The subscription status of the item
      */
     public void setSubStatus(SubType subStatus) {
+        // Optimization: Load user only if we need to set the nickname of the roster item
+        if ("".equals(nickname) && (subStatus == SUB_BOTH || subStatus == SUB_TO)) {
+            try {
+                nickname = UserNameManager.getUserName(jid);
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing
+            }
+        }
         this.subStatus = subStatus;
     }
 

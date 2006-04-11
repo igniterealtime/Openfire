@@ -151,6 +151,12 @@ public class PubSubEngine {
                 unsubscribeNode(iq, action);
                 return true;
             }
+            action = childElement.element("subscriptions");
+            if (action != null) {
+                // Entity requests all current subscriptions
+                getSubscriptions(iq, childElement);
+                return true;
+            }
             action = childElement.element("affiliations");
             if (action != null) {
                 // Entity requests all current affiliations
@@ -867,30 +873,61 @@ public class PubSubEngine {
         }
     }
 
+    private void getSubscriptions(IQ iq, Element childElement) {
+        // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
+        JID owner = new JID(iq.getFrom().toBareJID());
+        // Collect subscriptions of owner for all nodes at the service
+        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        for (Node node : service.getNodes()) {
+            subscriptions.addAll(node.getSubscriptions(owner));
+        }
+        // Create reply to send
+        IQ reply = IQ.createResultIQ(iq);
+        Element replyChildElement = childElement.createCopy();
+        reply.setChildElement(replyChildElement);
+        if (subscriptions.isEmpty()) {
+            // User does not have any affiliation or subscription with the pubsub service
+            reply.setError(PacketError.Condition.item_not_found);
+        }
+        else {
+            Element affiliationsElement = replyChildElement.element("subscriptions");
+            // Add information about subscriptions including existing affiliations
+            for (NodeSubscription subscription : subscriptions) {
+                Element subElement = affiliationsElement.addElement("subscription");
+                Node node = subscription.getNode();
+                NodeAffiliate nodeAffiliate = subscription.getAffiliate();
+                // Do not include the node id when node is the root collection node
+                if (!node.isRootCollectionNode()) {
+                    subElement.addAttribute("node", node.getNodeID());
+                }
+                subElement.addAttribute("jid", subscription.getJID().toString());
+                subElement.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
+                subElement.addAttribute("subscription", subscription.getState().name());
+                if (node.isMultipleSubscriptionsEnabled()) {
+                    subElement.addAttribute("subid", subscription.getID());
+                }
+            }
+        }
+        // Send reply
+        router.route(reply);
+    }
+
     private  void getAffiliations(IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = new JID(iq.getFrom().toBareJID());
-        // Collect subscriptions (and implicit affiliations) or affiliations for
-        // which a subscription does not exists (e.g. outcast user)
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        // Collect affiliations of owner for all nodes at the service
         Collection<NodeAffiliate> affiliations = new ArrayList<NodeAffiliate>();
         for (Node node : service.getNodes()) {
-            Collection<NodeSubscription> nodeSubscriptions = node.getSubscriptions(owner);
-            if (!nodeSubscriptions.isEmpty()) {
-                subscriptions.addAll(nodeSubscriptions);
-            }
-            else {
-                NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
-                if (nodeAffiliate != null) {
-                    affiliations.add(nodeAffiliate);
-                }
+            NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
+            if (nodeAffiliate != null) {
+                affiliations.add(nodeAffiliate);
             }
         }
         // Create reply to send
         IQ reply = IQ.createResultIQ(iq);
         Element replyChildElement = childElement.createCopy();
         reply.setChildElement(replyChildElement);
-        if (subscriptions.isEmpty() && affiliations.isEmpty()) {
+        if (affiliations.isEmpty()) {
             // User does not have any affiliation or subscription with the pubsub service
             reply.setError(PacketError.Condition.item_not_found);
         }
@@ -898,30 +935,13 @@ public class PubSubEngine {
             Element affiliationsElement = replyChildElement.element("affiliations");
             // Add information about affiliations without subscriptions
             for (NodeAffiliate affiliate : affiliations) {
-                Element entity = affiliationsElement.addElement("entity");
+                Element affiliateElement = affiliationsElement.addElement("affiliation");
                 // Do not include the node id when node is the root collection node
                 if (!affiliate.getNode().isRootCollectionNode()) {
-                    entity.addAttribute("node", affiliate.getNode().getNodeID());
+                    affiliateElement.addAttribute("node", affiliate.getNode().getNodeID());
                 }
-                entity.addAttribute("jid", affiliate.getJID().toString());
-                entity.addAttribute("affiliation", affiliate.getAffiliation().name());
-                entity.addAttribute("subscription", NodeSubscription.State.none.name());
-            }
-            // Add information about subscriptions including existing affiliations
-            for (NodeSubscription subscription : subscriptions) {
-                Element entity = affiliationsElement.addElement("entity");
-                Node node = subscription.getNode();
-                NodeAffiliate nodeAffiliate = subscription.getAffiliate();
-                // Do not include the node id when node is the root collection node
-                if (!node.isRootCollectionNode()) {
-                    entity.addAttribute("node", node.getNodeID());
-                }
-                entity.addAttribute("jid", subscription.getJID().toString());
-                entity.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
-                entity.addAttribute("subscription", subscription.getState().name());
-                if (node.isMultipleSubscriptionsEnabled()) {
-                    entity.addAttribute("subid", subscription.getID());
-                }
+                affiliateElement.addAttribute("jid", affiliate.getJID().toString());
+                affiliateElement.addAttribute("affiliation", affiliate.getAffiliation().name());
             }
         }
         // Send reply

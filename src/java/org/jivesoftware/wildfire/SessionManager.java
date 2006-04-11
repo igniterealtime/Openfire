@@ -45,7 +45,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class SessionManager extends BasicModule {
 
-    private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
 
     private PresenceUpdateHandler presenceHandler;
@@ -847,6 +846,12 @@ public class SessionManager extends BasicModule {
         return session;
     }
 
+    /**
+     * Returns a list that contains all client sessions connected to the server. The list
+     * contains sessions of anonymous and non-anonymous users.
+     *
+     * @return a list that contains all client sessions connected to the server.
+     */
     public Collection<ClientSession> getSessions() {
         List<ClientSession> allSessions = new ArrayList<ClientSession>();
         copyUserSessions(allSessions);
@@ -1057,16 +1062,34 @@ public class SessionManager extends BasicModule {
         return sessionList;
     }
 
-    public int getTotalSessionCount() {
-        return sessionCount;
-    }
-
+    /**
+     * Returns number of client sessions that are connected to the server. Anonymous users
+     * are included too.
+     *
+     * @return number of client sessions that are connected to the server.
+     */
     public int getSessionCount() {
         int sessionCount = 0;
         for (String username : getSessionUsers()) {
             sessionCount += getSessionCount(username);
         }
         sessionCount += anonymousSessions.size();
+        return sessionCount;
+    }
+
+    /**
+     * Returns number of client sessions that are available. Anonymous users
+     * are included too.
+     *
+     * @return number of client sessions that are available.
+     */
+    public int getActiveSessionCount() {
+        int sessionCount = 0;
+        for (ClientSession session : getSessions()) {
+            if (session.getPresence().isAvailable()) {
+                sessionCount++;
+            }
+        }
         return sessionCount;
     }
 
@@ -1182,8 +1205,7 @@ public class SessionManager extends BasicModule {
         SessionMap sessionMap;
         if (anonymousSessions.containsValue(session)) {
             anonymousSessions.remove(session.getAddress().getResource());
-            sessionCount--;
-            
+
             // Fire session event.
             SessionEventDispatcher.dispatchEvent(session,
                     SessionEventDispatcher.EventType.anonymous_session_destroyed);
@@ -1197,7 +1219,6 @@ public class SessionManager extends BasicModule {
                     sessionMap = sessions.get(username);
                     if (sessionMap != null) {
                         sessionMap.removeSession(session);
-                        sessionCount--;
                         if (sessionMap.isEmpty()) {
                             sessions.remove(username);
                         }

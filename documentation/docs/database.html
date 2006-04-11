@@ -61,7 +61,7 @@ Choose your database from the list below for setup details:
 
 	<p><b>Setup Instructions</b><p>
 	<ol>
-		<li>Make sure that you are using MySQL 3.23.2 or later (4.x recommended).
+		<li>Make sure that you are using MySQL 4.1.18 or later (5.x recommended) <a href="#note1">&sup1;</a>.
 		<li>Create a database for the Wildfire tables:<br>
 	    <code>mysqladmin create [databaseName]</code><br>
 	    (note: "databaseName" can be something like 'wildfire')
@@ -74,6 +74,11 @@ Choose your database from the list below for setup details:
 		<li>Start the Wildfire setup tool, and use the appropriate JDBC connection
 			settings.
 	</ol>
+
+    <p><a name="note1">&sup1;</a> Character fields larger than 255 are not supported by versions prior
+    to MySQL 4.1.18. If you cannot upgrade MySQL to the latest version, you will then need to change the
+    database scripts. In particular, replace VARCHAR(1024) with VARCHAR(255) and VARCHAR(4000) with TEXT
+    in the resources/database/wildfire_mysql.sql script.</p>
 	
     <p><b>Character Encoding Issues</b><p>
     

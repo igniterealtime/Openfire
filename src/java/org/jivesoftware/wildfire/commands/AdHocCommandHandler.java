@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.commands.admin.*;
 import org.jivesoftware.wildfire.disco.*;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.handler.IQHandler;
@@ -179,7 +180,11 @@ public class AdHocCommandHandler extends IQHandler
 
     private void addDefaultCommands() {
         // TODO Complete when out of the box commands are implemented
-        //addCommand(new TimeCommand());
+        addCommand(new GetNumberActiveUsers());
+        addCommand(new GetNumberOnlineUsers());
+        addCommand(new GetNumberUserSessions());
+        addCommand(new GetListActiveUsers());
+        addCommand(new GetUsersPresence());
     }
 
     private void startCommand(AdHocCommand command) {

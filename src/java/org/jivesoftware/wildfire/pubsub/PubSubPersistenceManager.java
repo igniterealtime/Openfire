@@ -1200,6 +1200,9 @@ public class PubSubPersistenceManager {
     }
 
     private static Collection<JID> decodeJIDs(String jids) {
+        if (jids == null) {
+            return Collections.emptyList();
+        }
         Collection<JID> decodedJIDs = new ArrayList<JID>();
         StringTokenizer tokenizer = new StringTokenizer(jids, ",");
         while (tokenizer.hasMoreTokens()) {

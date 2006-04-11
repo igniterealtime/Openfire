@@ -77,7 +77,7 @@
 <ul>
 <table border="0">
     <tr>
-    <td><a href="<%= url %>"><img src="../images/arrow_right_blue.png" width="24" height="24" alt="" border="0"></a></td>
+    <td><a href="<%= url %>"><img src="../images/arrow_right_blue.gif" width="24" height="24" alt="" border="0"></a></td>
     <td><a href="<%= url %>"><fmt:message key="setup.finished.login" /></a></td>
     </tr>
 </table>

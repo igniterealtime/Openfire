@@ -9,107 +9,61 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 
 import java.net.Socket;
+import java.io.IOException;
 import java.util.concurrent.Future;
 
 /**
- * Tracks the different connections related to a file transfer. There are two connections, the
+ * Tracks the different connections related to a proxy file transfer. There are two connections, the
  * initiator and the target and when both connections are completed the transfer can begin.
  */
-public class ProxyTransfer implements Cacheable {
+public interface ProxyTransfer extends Cacheable, FileTransferProgress {
+    /**
+     * Returns the fully qualified JID of the initiator of the file transfer.
+     *
+     * @return Returns the fully qualified JID of the initiator of the file transfer.
+     */
+    public String getInitiator();
 
-    private String initiatorJID;
+    public void setInitiatorSocket(Socket initiatorSocket);
 
-    private Socket initiatorSocket;
+    public Socket getInitiatorSocket();
 
-    private Socket targetSocket;
+    public void setTargetSocket(Socket targetSocket);
 
-    private String targetJID;
+    public Socket getTargetSocket();
 
-    private String transferDigest;
+    public void setTarget(String target);
 
-    private String transferSession;
-    
-    private Future<?> future;
+    public String getTarget();
 
-    public ProxyTransfer(String transferDigest, Socket targetSocket) {
-        this.transferDigest = transferDigest;
-        this.targetSocket = targetSocket;
-    }
+    public void setTransferDigest(String digest);
 
-    public String getInitiatorJID() {
-        return initiatorJID;
-    }
+    public String getTransferDigest();
 
-    public void setInitiatorJID(String initiatorJID) {
-        this.initiatorJID = initiatorJID;
-    }
+    public String getSessionID();
 
-    public Socket getInitiatorSocket() {
-        return initiatorSocket;
-    }
-
-    public void setInitiatorSocket(Socket initiatorSocket) {
-        this.initiatorSocket = initiatorSocket;
-    }
-
-    public Socket getTargetSocket() {
-        return targetSocket;
-    }
-
-    public void setTargetSocket(Socket targetSocket) {
-        this.targetSocket = targetSocket;
-    }
-
-    public String getTargetJID() {
-        return targetJID;
-    }
-
-    public void setTargetJID(String targetJID) {
-        this.targetJID = targetJID;
-    }
-
-    public String getTransferDigest() {
-        return transferDigest;
-    }
-
-    public void setTransferDigest(String transferDigest) {
-        this.transferDigest = transferDigest;
-    }
-
-    public String getTransferSession() {
-        return transferSession;
-    }
-
-    public void setTransferSession(String transferSession) {
-        this.transferSession = transferSession;
-    }
+    public void setSessionID(String streamID);
 
     /**
      * Returns true if the Bytestream is ready to be activated and the transfer can begin.
      *
      * @return Returns true if the Bytestream is ready to be activated.
      */
-    public boolean isActivatable() {
-        return ((initiatorSocket != null) && (targetSocket != null));
-    }
+    public boolean isActivatable();
 
-    public void setTransferFuture(Future<?> future) {
-        this.future = future;
-    }
+    public long getAmountTransfered();
 
-    public int getCachedSize() {
-        // Approximate the size of the object in bytes by calculating the size
-        // of each field.
-        int size = 0;
-        size += CacheSizes.sizeOfObject();              // overhead of object
-        size += CacheSizes.sizeOfString(initiatorJID);
-        size += CacheSizes.sizeOfString(targetJID);
-        size += CacheSizes.sizeOfString(transferDigest);
-        size += CacheSizes.sizeOfString(transferSession);
-        return size;
-    }
+    public int getCachedSize();
+
+    public void setTransferFuture(Future<?> future);
+
+    /**
+     * Transfers the file from the initiator to the target.
+     */
+    public void doTransfer() throws IOException;
+
+    void setInitiator(String s);
 }

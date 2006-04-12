@@ -1,7 +1,9 @@
 /**
- * $Revision$
- * $Date$
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
+ * $RCSfile$
+ * $Revision: 1217 $
+ * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
+ *
+ * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -10,6 +12,10 @@ package org.jivesoftware.wildfire.filetransfer;
 
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer;
 import org.xmpp.packet.JID;
 
 import java.io.*;
@@ -39,12 +45,24 @@ public class ProxyConnectionManager {
     private ExecutorService executor = Executors.newCachedThreadPool();
 
     private Future<?> socketProcess;
+
     private int proxyPort;
 
-    public ProxyConnectionManager() {
+    private FileTransferManager transferManager;
+
+    private String className;
+
+    static long amountTransfered = 0;
+
+    public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
         CacheManager.initializeCache(cacheName, "filetransfer", -1, 1000 * 60 * 10);
         connectionMap = CacheManager.getCache(cacheName);
+
+        className = JiveGlobals.getProperty("provider.transfer.proxy",
+                "org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer");
+
+        transferManager = manager;
     }
 
     /*
@@ -64,7 +82,7 @@ public class ProxyConnectionManager {
 
         socketProcess = executor.submit(new Runnable() {
             public void run() {
-                ServerSocket serverSocket = null;
+                ServerSocket serverSocket;
                 try {
                     serverSocket = new ServerSocket(port);
                 }
@@ -72,7 +90,7 @@ public class ProxyConnectionManager {
                     Log.error("Error creating server socket", e);
                     return;
                 }
-                while (serverSocket != null) {
+                while (serverSocket.isBound()) {
                     final Socket socket;
                     try {
                         socket = serverSocket.accept();
@@ -89,6 +107,12 @@ public class ProxyConnectionManager {
                             catch (IOException ie) {
                                 Log.error("Error processing file transfer proxy connection",
                                         ie);
+                                try {
+                                    socket.close();
+                                }
+                                catch (IOException e) {
+                                    /* Do Nothing */
+                                }
                             }
                         }
                     });
@@ -140,42 +164,69 @@ public class ProxyConnectionManager {
         out.write(cmd);
 
         String responseDigest = processIncomingSocks5Message(in);
-        cmd = createOutgoingSocks5Message(0, responseDigest);
-
-        synchronized (connectionLock) {
-            ProxyTransfer transfer = connectionMap.get(responseDigest);
-            if (transfer == null) {
-                connectionMap.put(responseDigest, new ProxyTransfer(responseDigest, connection));
+        try {
+            synchronized (connectionLock) {
+                ProxyTransfer transfer = connectionMap.get(responseDigest);
+                if (transfer == null) {
+                    transfer = createProxyTransfer(responseDigest, connection);
+                    transferManager.registerProxyTransfer(responseDigest, transfer);
+                    connectionMap.put(responseDigest, transfer);
+                }
+                else {
+                    transfer.setInitiatorSocket(connection);
+                }
             }
-            else {
-                transfer.setInitiatorSocket(connection);
-            }
+            cmd = createOutgoingSocks5Message(0, responseDigest);
+            out.write(cmd);
         }
-
-        if (!connection.isConnected()) {
-            throw new IOException("Socket closed by remote user");
+        catch (UnauthorizedException eu) {
+            cmd = createOutgoingSocks5Message(2, responseDigest);
+            out.write(cmd);
+            throw new IOException("Illegal proxy transfer");
         }
-        out.write(cmd);
     }
 
-    private String processIncomingSocks5Message(InputStream in)
-            throws IOException {
+    private ProxyTransfer createProxyTransfer(String transferDigest, Socket initiatorSocket) {
+        ProxyTransfer provider;
+        try {
+            Class c = ClassUtils.forName(className);
+            provider = (ProxyTransfer) c.newInstance();
+        }
+        catch (Exception e) {
+            Log.error("Error loading proxy transfer provider: " + className, e);
+            provider = new DefaultProxyTransfer();
+        }
+
+        provider.setTransferDigest(transferDigest);
+        provider.setTargetSocket(initiatorSocket);
+        return provider;
+    }
+
+    private static String processIncomingSocks5Message(InputStream in)
+            throws IOException
+    {
         // read the version and command
         byte[] cmd = new byte[5];
-        in.read(cmd, 0, 5);
+        int read = in.read(cmd, 0, 5);
+        if (read != 5) {
+            throw new IOException("Error reading Socks5 version and command");
+        }
 
         // read the digest
         byte[] addr = new byte[cmd[4]];
-        in.read(addr, 0, addr.length);
+        read = in.read(addr, 0, addr.length);
+        if (read != addr.length) {
+            throw new IOException("Error reading provided address");
+        }
         String digest = new String(addr);
 
-        in.read();
-        in.read();
+        read = in.read();
+        read = in.read();
 
         return digest;
     }
 
-    private byte[] createOutgoingSocks5Message(int cmd, String digest) {
+    private static byte[] createOutgoingSocks5Message(int cmd, String digest) {
         byte addr[] = digest.getBytes();
 
         byte[] data = new byte[7 + addr.length];
@@ -202,9 +253,9 @@ public class ProxyConnectionManager {
      * packet after both parties have connected to the proxy.
      *
      * @param initiator The initiator or sender of the file transfer.
-     * @param target    The target or reciever of the file transfer.
-     * @param sid       The sessionid the uniquely identifies the transfer between
-     *                  the two participants.
+     * @param target The target or reciever of the file transfer.
+     * @param sid The sessionid the uniquely identifies the transfer between
+     * the two participants.
      * @throws IllegalArgumentException This exception is thrown when the activated transfer does
      *                                  not exist or is missing one or both of the realted sockets.
      */
@@ -222,13 +273,13 @@ public class ProxyConnectionManager {
             throw new IllegalArgumentException("Transfer doesn't exist or is missing parameters");
         }
 
-        transfer.setInitiatorJID(initiator.toString());
-        transfer.setTargetJID(target.toString());
-        transfer.setTransferSession(sid);
+        transfer.setInitiator(initiator.toString());
+        transfer.setTarget(target.toString());
+        transfer.setSessionID(sid);
         transfer.setTransferFuture(executor.submit(new Runnable() {
             public void run() {
                 try {
-                    transfer(transfer);
+                    transfer.doTransfer();
                 }
                 catch (IOException e) {
                     Log.error("Error during file transfer", e);
@@ -240,40 +291,18 @@ public class ProxyConnectionManager {
         }));
     }
 
-    private void transfer(ProxyTransfer transfer) throws IOException {
-        InputStream in = transfer.getInitiatorSocket().getInputStream();
-        OutputStream out = transfer.getTargetSocket().getOutputStream();
-        final byte[] b = new byte[1000];
-        int count = 0;
-        int amountWritten = 0;
-
-        count = in.read(b);
-        while (count != -1) {
-
-            // write to the output stream
-            out.write(b, 0, count);
-
-            amountWritten += count;
-
-            // read more bytes from the input stream
-            count = in.read(b);
-        }
-
-        transfer.getInitiatorSocket().close();
-        transfer.getTargetSocket().close();
-    }
-
     /**
      * Creates the digest needed for a byte stream. It is the SHA1(sessionID +
      * initiator + target).
      *
      * @param sessionID The sessionID of the stream negotiation
      * @param initiator The inititator of the stream negotiation
-     * @param target    The target of the stream negotiation
+     * @param target The target of the stream negotiation
      * @return SHA-1 hash of the three parameters
      */
-    private String createDigest(final String sessionID, final JID initiator,
-            final JID target) {
+    public static String createDigest(final String sessionID, final JID initiator,
+                               final JID target)
+    {
         return hash(sessionID + initiator.getNode()
                 + "@" + initiator.getDomain() + "/"
                 + initiator.getResource()

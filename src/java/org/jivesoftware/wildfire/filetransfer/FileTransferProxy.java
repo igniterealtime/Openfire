@@ -1,6 +1,7 @@
 /**
- * $Revision $
- * $Date $
+ * $RCSfile$
+ * $Revision: 1217 $
+ * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
  * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
@@ -15,12 +16,13 @@ import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.filetransfer.spi.DefaultFileTransferManager;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.disco.DiscoInfoProvider;
-import org.jivesoftware.wildfire.disco.DiscoItemsProvider;
-import org.jivesoftware.wildfire.disco.DiscoServerItem;
-import org.jivesoftware.wildfire.disco.ServerItemsProvider;
+import org.jivesoftware.wildfire.disco.*;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -54,12 +56,14 @@ public class FileTransferProxy extends BasicModule
     private PacketRouter router;
     private String proxyIP;
     private ProxyConnectionManager connectionManager;
+    private FileTransferManager transferManager;
 
 
     public FileTransferProxy() {
         super("SOCKS5 file transfer proxy");
 
         info = new IQHandlerInfo("query", NAMESPACE);
+        InterceptorManager.getInstance().addInterceptor(new FileTransferInterceptor());
     }
 
     public boolean handleIQ(IQ packet) throws UnauthorizedException {
@@ -147,8 +151,12 @@ public class FileTransferProxy extends BasicModule
         catch (UnknownHostException e) {
             Log.error("Couldn't discover local host", e);
         }
+        transferManager = getFileTransferManager();
+        connectionManager = new ProxyConnectionManager(transferManager);
+    }
 
-        connectionManager = new ProxyConnectionManager();
+    private FileTransferManager getFileTransferManager() {
+        return new DefaultFileTransferManager();
     }
 
     public void start() {
@@ -157,8 +165,9 @@ public class FileTransferProxy extends BasicModule
         if (isEnabled()) {
             connectionManager.processConnections(getProxyPort());
             routingTable.addRoute(getAddress(), this);
-            XMPPServer.getInstance().getIQDiscoItemsHandler()
-                    .addComponentItem(getAddress().toString(), "Socks 5 Bytestreams Proxy");
+            XMPPServer server = XMPPServer.getInstance();
+
+            server.getIQDiscoItemsHandler().addComponentItem(getAddress().toString(), "Socks 5 Bytestreams Proxy");
         }
         else {
             XMPPServer.getInstance().getIQDiscoItemsHandler()
@@ -292,6 +301,32 @@ public class FileTransferProxy extends BasicModule
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                 reply.setError(PacketError.Condition.feature_not_implemented);
                 router.route(reply);
+            }
+        }
+    }
+
+    /**
+     * Interceptor to grab and validate file transfer meta information.
+     */
+    private class FileTransferInterceptor implements PacketInterceptor {
+        public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
+                throws PacketRejectedException {
+            // We only want packets recieved by the server
+            if (!processed && incoming && packet instanceof IQ) {
+                IQ iq = (IQ) packet;
+                Element childElement = iq.getChildElement();
+                String namespace = childElement.getNamespaceURI();
+                if ("http://jabber.org/protocol/si".equals(namespace)) {
+                    // If this is a set, check the feature offer
+                    if (iq.getType().equals(IQ.Type.set)) {
+                        JID from = iq.getFrom();
+                        JID to = iq.getTo();
+                        String packetID = iq.getID();
+                        if (!transferManager.acceptIncomingFileTransferRequest(packetID, from, to, childElement)) {
+                            throw new PacketRejectedException();
+                        }
+                    }
+                }
             }
         }
     }

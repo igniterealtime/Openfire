@@ -219,7 +219,7 @@ public class FileTransferProxy extends BasicModule
         return new JID(null, getServiceDomain(), null);
     }
 
-    public Iterator getItems() {
+    public Iterator<DiscoServerItem> getItems() {
         ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
 
         items.add(new DiscoServerItem() {
@@ -285,7 +285,7 @@ public class FileTransferProxy extends BasicModule
         // Check if the packet is a disco request or a packet with namespace iq:register
         if (packet instanceof IQ) {
             if (handleIQ((IQ) packet)) {
-                return;
+                // Do nothing
             }
             else {
                 IQ reply = IQ.createResultIQ((IQ) packet);

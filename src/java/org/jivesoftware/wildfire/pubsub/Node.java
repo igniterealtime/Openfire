@@ -562,7 +562,7 @@ public abstract class Node {
                     // Get the new list of roster group(s) allowed to subscribe and retrieve items
                     rosterGroupsAllowed = new ArrayList<String>();
                     for (String value : field.getValues()) {
-                        rosterGroupsAllowed.add(value);
+                        addAllowedRosterGroup(value);
                     }
                 }
                 else if ("pubsub#contact".equals(field.getVariable())) {
@@ -570,7 +570,7 @@ public abstract class Node {
                     contacts = new ArrayList<JID>();
                     for (String value : field.getValues()) {
                         try {
-                            contacts.add(new JID(value));
+                            addContact(new JID(value));
                         }
                         catch (Exception e) {
                             // Do nothing
@@ -600,7 +600,7 @@ public abstract class Node {
                     replyRooms = new ArrayList<JID>();
                     for (String value : field.getValues()) {
                         try {
-                            replyRooms.add(new JID(value));
+                            addReplyRoom(new JID(value));
                         }
                         catch (Exception e) {
                             // Do nothing
@@ -612,7 +612,7 @@ public abstract class Node {
                     replyTo = new ArrayList<JID>();
                     for (String value : field.getValues()) {
                         try {
-                            replyTo.add(new JID(value));
+                            addReplyTo(new JID(value));
                         }
                         catch (Exception e) {
                             // Do nothing
@@ -1312,15 +1312,34 @@ public abstract class Node {
      * @return the roster group(s) allowed to subscribe and retrieve items.
      */
     public Collection<String> getRosterGroupsAllowed() {
-        return rosterGroupsAllowed;
+        return Collections.unmodifiableCollection(rosterGroupsAllowed);
+    }
+
+    /**
+     * Adds a new roster group that is allowed to subscribe and retrieve items.
+     * The new roster group is not going to be added to the database. Instead it is just
+     * kept in memory.
+     *
+     * @param groupName the new roster group that is allowed to subscribe and retrieve items.
+     */
+    void addAllowedRosterGroup(String groupName) {
+        rosterGroupsAllowed.add(groupName);
     }
 
     public Collection<JID> getReplyRooms() {
-        return replyRooms;
+        return Collections.unmodifiableCollection(replyRooms);
+    }
+
+    void addReplyRoom(JID roomJID) {
+        replyRooms.add(roomJID);
     }
 
     public Collection<JID> getReplyTo() {
-        return replyTo;
+        return Collections.unmodifiableCollection(replyTo);
+    }
+
+    void addReplyTo(JID entity) {
+        replyTo.add(entity);
     }
 
     /**
@@ -1410,7 +1429,16 @@ public abstract class Node {
      * @return the JIDs of those to contact with questions.
      */
     public Collection<JID> getContacts() {
-        return contacts;
+        return Collections.unmodifiableCollection(contacts);
+    }
+
+    /**
+     * Adds a new user as a candidate to answer questions about the node.
+     *
+     * @param user the JID of the new user.
+     */
+    void addContact(JID user) {
+        contacts.add(user);
     }
 
     /**

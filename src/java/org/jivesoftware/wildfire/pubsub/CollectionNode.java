@@ -73,7 +73,7 @@ public class CollectionNode extends Node {
             associationTrusted = new ArrayList<JID>();
             for (String value : field.getValues()) {
                 try {
-                    associationTrusted.add(new JID(value));
+                    addAssociationTrusted(new JID(value));
                 }
                 catch (Exception e) {
                     // Do nothing
@@ -276,7 +276,18 @@ public class CollectionNode extends Node {
      * @return the users that are allowed to associate leaf nodes with this collection node.
      */
     public Collection<JID> getAssociationTrusted() {
-        return associationTrusted;
+        return Collections.unmodifiableCollection(associationTrusted);
+    }
+
+    /**
+     * Adds a new trusted user that is allowed to associate leaf nodes with this collection node.
+     * The new user is not going to be added to the database. Instead it is just kept in memory.
+     *
+     * @param user the new trusted user that is allowed to associate leaf nodes with this
+     *        collection node.
+     */
+    void addAssociationTrusted(JID user) {
+        associationTrusted.add(user);
     }
 
     /**

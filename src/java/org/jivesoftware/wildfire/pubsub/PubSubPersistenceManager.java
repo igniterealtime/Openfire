@@ -39,30 +39,44 @@ public class PubSubPersistenceManager {
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
             "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
-            "subscriptionEnabled, configSubscription, contacts, rosterGroups, accessModel, " +
-            "payloadType, bodyXSLT, dataformXSLT, creator, description, language, name, " +
-            "replyPolicy, replyRooms, replyTo, associationPolicy, associationTrusted, " +
-            "maxLeafNodes FROM pubsubNode WHERE serviceID=? ORDER BY nodeID";
+            "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
+            "bodyXSLT, dataformXSLT, creator, description, language, name, " +
+            "replyPolicy, associationPolicy, maxLeafNodes FROM pubsubNode " +
+            "WHERE serviceID=? ORDER BY nodeID";
     private static final String UPDATE_NODE =
             "UPDATE pubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
             "maxPayloadSize=?, persistItems=?, maxItems=?, " +
             "notifyConfigChanges=?, notifyDelete=?, notifyRetract=?, presenceBased=?, " +
             "sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?, configSubscription=?, " +
-            "contacts=?, rosterGroups=?, accessModel=?, payloadType=?, bodyXSLT=?, " +
-            "dataformXSLT=?, description=?, language=?, name=?, replyPolicy=?, replyRooms=?, " +
-            "replyTo=?, associationPolicy=?, associationTrusted=?, maxLeafNodes=? " +
+            "accessModel=?, payloadType=?, bodyXSLT=?, dataformXSLT=?, description=?, " +
+            "language=?, name=?, replyPolicy=?, associationPolicy=?, maxLeafNodes=? " +
             "WHERE serviceID=? AND nodeID=?";
     private static final String ADD_NODE =
             "INSERT INTO pubsubNode (serviceID, nodeID, leaf, creationDate, modificationDate, " +
             "parent, deliverPayloads, maxPayloadSize, persistItems, maxItems, " +
             "notifyConfigChanges, notifyDelete, notifyRetract, presenceBased, " +
             "sendItemSubscribe, publisherModel, subscriptionEnabled, configSubscription, " +
-            "accessModel, contacts, rosterGroups, payloadType, bodyXSLT, dataformXSLT, " +
-            "creator, description, language, name, replyPolicy, replyRooms, replyTo, " +
-            "associationPolicy, associationTrusted, maxLeafNodes) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            "accessModel, payloadType, bodyXSLT, dataformXSLT, creator, description, " +
+            "language, name, replyPolicy, associationPolicy, maxLeafNodes) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DELETE_NODE =
             "DELETE FROM pubsubNode WHERE serviceID=? AND nodeID=?";
+
+    private static final String LOAD_NODES_JIDS =
+            "SELECT nodeID, jid, associationType FROM pubsubNodeJIDs WHERE serviceID=?";
+    private static final String ADD_NODE_JIDS =
+            "INSERT INTO pubsubNodeJIDs (serviceID, nodeID, jid, associationType) " +
+            "VALUES (?,?,?,?)";
+    private static final String DELETE_NODE_JIDS =
+            "DELETE FROM pubsubNodeJIDs WHERE serviceID=? AND nodeID=?";
+
+    private static final String LOAD_NODES_GROUPS =
+            "SELECT nodeID, rosterGroup FROM pubsubNodeGroups WHERE serviceID=?";
+    private static final String ADD_NODE_GROUPS =
+            "INSERT INTO pubsubNodeGroups (serviceID, nodeID, rosterGroup) " +
+            "VALUES (?,?,?)";
+    private static final String DELETE_NODE_GROUPS =
+            "DELETE FROM pubsubNodeGroups WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_AFFILIATIONS =
             "SELECT nodeID,jid,affiliation FROM pubsubAffiliation WHERE serviceID=? " +
@@ -148,8 +162,9 @@ public class PubSubPersistenceManager {
     public static void createNode(PubSubService service, Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getConnection();
+            con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(ADD_NODE);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
@@ -177,43 +192,40 @@ public class PubSubPersistenceManager {
             pstmt.setInt(17, (node.isSubscriptionEnabled() ? 1 : 0));
             pstmt.setInt(18, (node.isSubscriptionConfigurationRequired() ? 1 : 0));
             pstmt.setString(19, node.getAccessModel().getName());
-            pstmt.setString(20, encodeJIDs(node.getContacts()));
-            pstmt.setString(21, encodeGroups(node.getRosterGroupsAllowed()));
-            pstmt.setString(22, node.getPayloadType());
-            pstmt.setString(23, node.getBodyXSLT());
-            pstmt.setString(24, node.getDataformXSLT());
-            pstmt.setString(25, node.getCreator().toString());
-            pstmt.setString(26, node.getDescription());
-            pstmt.setString(27, node.getLanguage());
-            pstmt.setString(28, node.getName());
+            pstmt.setString(20, node.getPayloadType());
+            pstmt.setString(21, node.getBodyXSLT());
+            pstmt.setString(22, node.getDataformXSLT());
+            pstmt.setString(23, node.getCreator().toString());
+            pstmt.setString(24, node.getDescription());
+            pstmt.setString(25, node.getLanguage());
+            pstmt.setString(26, node.getName());
             if (node.getReplyPolicy() != null) {
-                pstmt.setString(29, node.getReplyPolicy().name());
+                pstmt.setString(27, node.getReplyPolicy().name());
             }
             else {
-                pstmt.setString(29, null);
+                pstmt.setString(27, null);
             }
-            pstmt.setString(30, encodeJIDs(node.getReplyRooms()));
-            pstmt.setString(31, encodeJIDs(node.getReplyTo()));
             if (node.isCollectionNode()) {
-                pstmt.setString(32, ((CollectionNode)node).getAssociationPolicy().name());
-                pstmt.setString(33, encodeJIDs(((CollectionNode)node).getAssociationTrusted()));
-                pstmt.setInt(34, ((CollectionNode)node).getMaxLeafNodes());
+                pstmt.setString(28, ((CollectionNode)node).getAssociationPolicy().name());
+                pstmt.setInt(29, ((CollectionNode)node).getMaxLeafNodes());
             }
             else {
-                pstmt.setString(32, null);
-                pstmt.setString(33, null);
-                pstmt.setInt(34, 0);
+                pstmt.setString(28, null);
+                pstmt.setInt(29, 0);
             }
             pstmt.executeUpdate();
+
+            // Save associated JIDs and roster groups
+            saveAssociatedElements(con, node, service);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
+            abortTransaction = true;
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
             catch (Exception e) {Log.error(e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
 
@@ -226,8 +238,9 @@ public class PubSubPersistenceManager {
     public static void updateNode(PubSubService service, Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getConnection();
+            con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(UPDATE_NODE);
             pstmt.setString(1, StringUtils.dateToMillis(node.getModificationDate()));
             pstmt.setString(2, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
@@ -250,45 +263,107 @@ public class PubSubPersistenceManager {
             pstmt.setString(12, node.getPublisherModel().getName());
             pstmt.setInt(13, (node.isSubscriptionEnabled() ? 1 : 0));
             pstmt.setInt(14, (node.isSubscriptionConfigurationRequired() ? 1 : 0));
-            pstmt.setString(15, encodeJIDs(node.getContacts()));
-            pstmt.setString(16, encodeGroups(node.getRosterGroupsAllowed()));
-            pstmt.setString(17, node.getAccessModel().getName());
-            pstmt.setString(18, node.getPayloadType());
-            pstmt.setString(19, node.getBodyXSLT());
-            pstmt.setString(20, node.getDataformXSLT());
-            pstmt.setString(21, node.getDescription());
-            pstmt.setString(22, node.getLanguage());
-            pstmt.setString(23, node.getName());
+            pstmt.setString(15, node.getAccessModel().getName());
+            pstmt.setString(16, node.getPayloadType());
+            pstmt.setString(17, node.getBodyXSLT());
+            pstmt.setString(18, node.getDataformXSLT());
+            pstmt.setString(19, node.getDescription());
+            pstmt.setString(20, node.getLanguage());
+            pstmt.setString(21, node.getName());
             if (node.getReplyPolicy() != null) {
-                pstmt.setString(24, node.getReplyPolicy().name());
+                pstmt.setString(22, node.getReplyPolicy().name());
             }
             else {
-                pstmt.setString(24, null);
+                pstmt.setString(22, null);
             }
-            pstmt.setString(25, encodeJIDs(node.getReplyRooms()));
-            pstmt.setString(26, encodeJIDs(node.getReplyTo()));
             if (node.isCollectionNode()) {
-                pstmt.setString(27, ((CollectionNode) node).getAssociationPolicy().name());
-                pstmt.setString(28, encodeJIDs(((CollectionNode) node).getAssociationTrusted()));
-                pstmt.setInt(29, ((CollectionNode) node).getMaxLeafNodes());
+                pstmt.setString(23, ((CollectionNode) node).getAssociationPolicy().name());
+                pstmt.setInt(24, ((CollectionNode) node).getMaxLeafNodes());
             }
             else {
-                pstmt.setString(27, null);
-                pstmt.setString(28, null);
-                pstmt.setInt(29, 0);
+                pstmt.setString(23, null);
+                pstmt.setInt(24, 0);
             }
-            pstmt.setString(30, service.getServiceID());
-            pstmt.setString(31, encodeNodeID(node.getNodeID()));
+            pstmt.setString(25, service.getServiceID());
+            pstmt.setString(26, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
+
+            // Remove existing JIDs associated with the the node
+            pstmt = con.prepareStatement(DELETE_NODE_JIDS);
+            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.executeUpdate();
+            pstmt.close();
+
+            // Remove roster groups associated with the the node being deleted
+            pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
+            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.executeUpdate();
+            pstmt.close();
+            pstmt = null;
+
+            // Save associated JIDs and roster groups
+            saveAssociatedElements(con, node, service);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
+            abortTransaction = true;
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
             catch (Exception e) {Log.error(e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+        }
+    }
+
+    private static void saveAssociatedElements(Connection con, Node node,
+            PubSubService service) throws SQLException {
+        // Add new JIDs associated with the the node
+        PreparedStatement pstmt = con.prepareStatement(ADD_NODE_JIDS);
+        try {
+            for (JID jid : node.getContacts()) {
+                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                pstmt.setString(3, jid.toString());
+                pstmt.setString(4, "contacts");
+                pstmt.executeUpdate();
+            }
+            for (JID jid : node.getReplyRooms()) {
+                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                pstmt.setString(3, jid.toString());
+                pstmt.setString(4, "replyRooms");
+                pstmt.executeUpdate();
+            }
+            for (JID jid : node.getReplyTo()) {
+                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                pstmt.setString(3, jid.toString());
+                pstmt.setString(4, "replyTo");
+                pstmt.executeUpdate();
+            }
+            if (node.isCollectionNode()) {
+                for (JID jid : ((CollectionNode) node).getAssociationTrusted()) {
+                    pstmt.setString(1, service.getServiceID());
+                    pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                    pstmt.setString(3, jid.toString());
+                    pstmt.setString(4, "associationTrusted");
+                    pstmt.executeUpdate();
+                }
+            }
+            pstmt.close();
+            // Add new roster groups associated with the the node
+            pstmt = con.prepareStatement(ADD_NODE_GROUPS);
+            for (String groupName : node.getRosterGroupsAllowed()) {
+                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                pstmt.setString(3, groupName);
+                pstmt.executeUpdate();
+            }
+        }
+        finally {
+            pstmt.close();
         }
     }
 
@@ -307,6 +382,20 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getTransactionConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_NODE);
+            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.executeUpdate();
+            pstmt.close();
+
+            // Remove JIDs associated with the the node being deleted
+            pstmt = con.prepareStatement(DELETE_NODE_JIDS);
+            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.executeUpdate();
+            pstmt.close();
+
+            // Remove roster groups associated with the the node being deleted
+            pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
@@ -362,6 +451,28 @@ public class PubSubPersistenceManager {
             // Rebuild all loaded nodes
             while(rs.next()) {
                 loadNode(service, nodes, rs);
+            }
+            rs.close();
+            pstmt.close();
+
+            // Get JIDs associated with all nodes
+            pstmt = con.prepareStatement(LOAD_NODES_JIDS);
+            pstmt.setString(1, service.getServiceID());
+            rs = pstmt.executeQuery();
+            // Add to each node the associated JIDs
+            while(rs.next()) {
+                loadAssociatedJIDs(nodes, rs);
+            }
+            rs.close();
+            pstmt.close();
+
+            // Get roster groups associateds with all nodes
+            pstmt = con.prepareStatement(LOAD_NODES_GROUPS);
+            pstmt.setString(1, service.getServiceID());
+            rs = pstmt.executeQuery();
+            // Add to each node the associated Groups
+            while(rs.next()) {
+                loadAssociatedGroups(nodes, rs);
             }
             rs.close();
             pstmt.close();
@@ -425,7 +536,7 @@ public class PubSubPersistenceManager {
             String nodeID = decodeNodeID(rs.getString(1));
             boolean leaf = rs.getInt(2) == 1;
             String parent = decodeNodeID(rs.getString(5));
-            JID creator = new JID(rs.getString(24));
+            JID creator = new JID(rs.getString(22));
             CollectionNode parentNode = null;
             if (parent != null) {
                 // Check if the parent has already been loaded
@@ -461,25 +572,20 @@ public class PubSubPersistenceManager {
             node.setPublisherModel(PublisherModel.valueOf(rs.getString(15)));
             node.setSubscriptionEnabled(rs.getInt(16) == 1);
             node.setSubscriptionConfigurationRequired(rs.getInt(17) == 1);
-            node.setContacts(decodeJIDs(rs.getString(18)));
-            node.setRosterGroupsAllowed(decodeGroups(rs.getString(19)));
-            node.setAccessModel(AccessModel.valueOf(rs.getString(20)));
-            node.setPayloadType(rs.getString(21));
-            node.setBodyXSLT(rs.getString(22));
-            node.setDataformXSLT(rs.getString(23));
-            node.setDescription(rs.getString(25));
-            node.setLanguage(rs.getString(26));
-            node.setName(rs.getString(27));
-            if (rs.getString(28) != null) {
-                node.setReplyPolicy(Node.ItemReplyPolicy.valueOf(rs.getString(28)));
+            node.setAccessModel(AccessModel.valueOf(rs.getString(18)));
+            node.setPayloadType(rs.getString(19));
+            node.setBodyXSLT(rs.getString(20));
+            node.setDataformXSLT(rs.getString(21));
+            node.setDescription(rs.getString(23));
+            node.setLanguage(rs.getString(24));
+            node.setName(rs.getString(25));
+            if (rs.getString(26) != null) {
+                node.setReplyPolicy(Node.ItemReplyPolicy.valueOf(rs.getString(26)));
             }
-            node.setReplyRooms(decodeJIDs(rs.getString(29)));
-            node.setReplyTo(decodeJIDs(rs.getString(30)));
             if (!leaf) {
                 ((CollectionNode) node).setAssociationPolicy(
-                        CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(31)));
-                ((CollectionNode) node).setAssociationTrusted(decodeJIDs(rs.getString(32)));
-                ((CollectionNode) node).setMaxLeafNodes(rs.getInt(33));
+                        CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27)));
+                ((CollectionNode) node).setMaxLeafNodes(rs.getInt(28));
             }
 
             // Add the load to the list of loaded nodes
@@ -487,6 +593,49 @@ public class PubSubPersistenceManager {
         }
         catch (SQLException sqle) {
             Log.error(sqle);
+        }
+    }
+
+    private static void loadAssociatedJIDs(Map<String, Node> nodes, ResultSet rs) {
+        try {
+            String nodeID = decodeNodeID(rs.getString(1));
+            Node node = nodes.get(nodeID);
+            if (node == null) {
+                Log.warn("JID associated to a non-existent node: " + nodeID);
+                return;
+            }
+            JID jid = new JID(rs.getString(2));
+            String associationType = rs.getString(3);
+            if ("contacts".equals(associationType)) {
+                node.addContact(jid);
+            }
+            else if ("replyRooms".equals(associationType)) {
+                node.addReplyRoom(jid);
+            }
+            else if ("replyTo".equals(associationType)) {
+                node.addReplyTo(jid);
+            }
+            else if ("associationTrusted".equals(associationType)) {
+                ((CollectionNode) node).addAssociationTrusted(jid);
+            }
+        }
+        catch (Exception ex) {
+            Log.error(ex);
+        }
+    }
+
+    private static void loadAssociatedGroups(Map<String, Node> nodes, ResultSet rs) {
+        try {
+            String nodeID = decodeNodeID(rs.getString(1));
+            Node node = nodes.get(nodeID);
+            if (node == null) {
+                Log.warn("Roster Group associated to a non-existent node: " + nodeID);
+                return;
+            }
+            node.addAllowedRosterGroup(rs.getString(2));
+        }
+        catch (SQLException ex) {
+            Log.error(ex);
         }
     }
 
@@ -1188,49 +1337,6 @@ public class PubSubPersistenceManager {
         return node;
     }*/
 
-    private static String encodeJIDs(Collection<JID> jids) {
-        StringBuilder sb = new StringBuilder(90);
-        for (JID jid : jids) {
-            sb.append(jid.toString()).append(",");
-        }
-        if (!jids.isEmpty()) {
-            sb.setLength(sb.length()-1);
-        }
-        return sb.toString();
-    }
-
-    private static Collection<JID> decodeJIDs(String jids) {
-        if (jids == null) {
-            return Collections.emptyList();
-        }
-        Collection<JID> decodedJIDs = new ArrayList<JID>();
-        StringTokenizer tokenizer = new StringTokenizer(jids, ",");
-        while (tokenizer.hasMoreTokens()) {
-            decodedJIDs.add(new JID(tokenizer.nextToken()));
-        }
-        return decodedJIDs;
-    }
-
-    private static String encodeGroups(Collection<String> groups) {
-        StringBuilder sb = new StringBuilder(90);
-        for (String group : groups) {
-            sb.append(group).append("\u2008");
-        }
-        if (!groups.isEmpty()) {
-            sb.setLength(sb.length()-1);
-        }
-        return sb.toString();
-    }
-
-    private static Collection<String> decodeGroups(String groups) {
-        Collection<String> decodedGroups = new ArrayList<String>();
-        StringTokenizer tokenizer = new StringTokenizer(groups, "\u2008");
-        while (tokenizer.hasMoreTokens()) {
-            decodedGroups.add(tokenizer.nextToken());
-        }
-        return decodedGroups;
-    }
-
     private static String encodeWithComma(Collection<String> strings) {
         StringBuilder sb = new StringBuilder(90);
         for (String group : strings) {
@@ -1239,12 +1345,16 @@ public class PubSubPersistenceManager {
         if (!strings.isEmpty()) {
             sb.setLength(sb.length()-1);
         }
+        else {
+            // Add a blank so an empty string is never replaced with NULL (oracle...arggg!!!)
+            sb.append(" ");
+        }
         return sb.toString();
     }
 
     private static Collection<String> decodeWithComma(String strings) {
         Collection<String> decodedStrings = new ArrayList<String>();
-        StringTokenizer tokenizer = new StringTokenizer(strings, ",");
+        StringTokenizer tokenizer = new StringTokenizer(strings.trim(), ",");
         while (tokenizer.hasMoreTokens()) {
             decodedStrings.add(tokenizer.nextToken());
         }

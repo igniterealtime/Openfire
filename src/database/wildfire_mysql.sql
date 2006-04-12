@@ -211,29 +211,39 @@ CREATE TABLE pubsubNode (
   publisherModel      VARCHAR(15)   NOT NULL,
   subscriptionEnabled TINYINT       NOT NULL,
   configSubscription  TINYINT       NOT NULL,
-  contacts            VARCHAR(4000) NULL,
-  rosterGroups        VARCHAR(4000) NULL,
   accessModel         VARCHAR(10)   NOT NULL,
   payloadType         VARCHAR(100)  NULL,
   bodyXSLT            VARCHAR(100)  NULL,
   dataformXSLT        VARCHAR(100)  NULL,
-  creator             VARCHAR(1024) NOT NULL,
+  creator             VARCHAR(255) NOT NULL,
   description         VARCHAR(255)  NULL,
   language            VARCHAR(255)  NULL,
   name                VARCHAR(50)   NULL,
   replyPolicy         VARCHAR(15)   NULL,
-  replyRooms          VARCHAR(4000) NULL,
-  replyTo             VARCHAR(1024) NULL,
   associationPolicy   VARCHAR(15)   NULL,
-  associationTrusted  VARCHAR(4000) NULL,
   maxLeafNodes        INTEGER       NULL,
   PRIMARY KEY (serviceID, nodeID)
+);
+
+CREATE TABLE pubsubNodeJIDs (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(255)  NOT NULL,
+  associationType     VARCHAR(20)   NOT NULL,
+  PRIMARY KEY (serviceID, nodeID, jid(70))
+);
+
+CREATE TABLE pubsubNodeGroups (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  rosterGroup         VARCHAR(100)   NOT NULL,
+  INDEX pubsubNodeGroups_idx (serviceID, nodeID)
 );
 
 CREATE TABLE pubsubAffiliation (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
   affiliation         VARCHAR(10)   NOT NULL,
   PRIMARY KEY (serviceID, nodeID, jid(70))
 );
@@ -242,7 +252,7 @@ CREATE TABLE pubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   payload             TEXT          NULL,
   PRIMARY KEY (serviceID, nodeID, id)
@@ -252,15 +262,15 @@ CREATE TABLE pubsubSubscription (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
-  owner               VARCHAR(1024) NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
+  owner               VARCHAR(255) NOT NULL,
   state               VARCHAR(15)   NOT NULL,
   deliver             TINYINT       NOT NULL,
   digest              TINYINT       NOT NULL,
   digest_frequency    TINYINT       NOT NULL,
   expire              CHAR(15)      NULL,
   includeBody         TINYINT       NOT NULL,
-  showValues          VARCHAR(30)   NOT NULL,
+  showValues          VARCHAR(30)   NULL,
   subscriptionType    VARCHAR(10)   NOT NULL,
   subscriptionDepth   TINYINT       NOT NULL,
   keyword             VARCHAR(200)  NULL,

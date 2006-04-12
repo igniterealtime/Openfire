@@ -224,8 +224,6 @@ CREATE TABLE pubsubNode (
   publisherModel      NVARCHAR(15)   NOT NULL,
   subscriptionEnabled INT            NOT NULL,
   configSubscription  INT            NOT NULL,
-  contacts            NVARCHAR(4000) NULL,
-  rosterGroups        NVARCHAR(4000) NULL,
   accessModel         NVARCHAR(10)   NOT NULL,
   payloadType         NVARCHAR(100)  NULL,
   bodyXSLT            NVARCHAR(100)  NULL,
@@ -235,13 +233,25 @@ CREATE TABLE pubsubNode (
   language            NVARCHAR(255)  NULL,
   name                NVARCHAR(50)   NULL,
   replyPolicy         NVARCHAR(15)   NULL,
-  replyRooms          NVARCHAR(4000) NULL,
-  replyTo             NVARCHAR(1024) NULL,
   associationPolicy   NVARCHAR(15)   NULL,
-  associationTrusted  NVARCHAR(4000) NULL,
   maxLeafNodes        INT            NULL,
   CONSTRAINT pubsubNode_pk PRIMARY KEY (serviceID, nodeID)
 );
+
+CREATE TABLE pubsubNodeJIDs (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  jid                 NVARCHAR(1024) NOT NULL,
+  associationType     NVARCHAR(20)   NOT NULL,
+  CONSTRAINT pubsubJID_pk PRIMARY KEY (serviceID, nodeID, jid)
+);
+
+CREATE TABLE pubsubNodeGroups (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  rosterGroup         NVARCHAR(100)  NOT NULL
+);
+CREATE INDEX pubsubNodeGroups_idx ON pubsubNodeGroups (serviceID, nodeID);
 
 CREATE TABLE pubsubAffiliation (
   serviceID           NVARCHAR(100)  NOT NULL,

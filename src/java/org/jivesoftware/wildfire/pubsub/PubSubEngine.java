@@ -246,6 +246,7 @@ public class PubSubEngine {
             // Process ad-hoc command
             IQ reply = manager.process(iq);
             router.route(reply);
+            return true;
         }
         return false;
     }

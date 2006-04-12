@@ -435,7 +435,8 @@ public class LeafNode extends Node {
         synchronized (publishedItems) {
             if (publishedItems.size() > 1) {
                 // Remove all items except the last one
-                toDelete = publishedItems.subList(0, publishedItems.size() - 1);
+                toDelete = new ArrayList<PublishedItem>(
+                        publishedItems.subList(0, publishedItems.size() - 1));
                 // Remove items to delete from memory
                 publishedItems.removeAll(toDelete);
                 // Update fast look up cache of published items

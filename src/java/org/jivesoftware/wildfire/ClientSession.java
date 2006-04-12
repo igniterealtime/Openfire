@@ -341,7 +341,7 @@ public class ClientSession extends Session {
                 buf.append(iter.next());
             }
             while (iter.hasNext()) {
-                buf.append(", ").append((String)iter.next());
+                buf.append(", ").append(iter.next());
             }
             JiveGlobals.setProperty("xmpp.client.login.allowed", buf.toString());
         }

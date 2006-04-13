@@ -41,15 +41,15 @@ public class UserManager implements IQResultListener {
     /**
      * Cache if a local or remote user exists.
      */
-    private static Cache<String, Boolean> registeredUsersCache;
+    private static Cache<String, Boolean> remoteUsersCache;
     private static UserProvider provider;
     private static UserManager instance = new UserManager();
 
     static {
         // Initialize caches.
         userCache = CacheManager.initializeCache("User", "userCache", 512 * 1024);
-        registeredUsersCache =
-                CacheManager.initializeCache("Users Existence", "registeredUsersCache", 512 * 1024);
+        remoteUsersCache =
+                CacheManager.initializeCache("Remote Users Existence", "remoteUsersCache", 512 * 1024);
         CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
@@ -290,21 +290,13 @@ public class UserManager implements IQResultListener {
         if (username == null || "".equals(username)) {
             return false;
         }
-        // Look up in the cache
-        Boolean isRegistered = registeredUsersCache.get(username);
-        if (isRegistered == null) {
-            // No information is cached so check user identity and cache it
-            try {
-                getUser(username);
-                isRegistered = Boolean.TRUE;
-            }
-            catch (UserNotFoundException e) {
-                isRegistered = Boolean.FALSE;
-            }
-            // Cache "discovered" information
-            registeredUsersCache.put(username, isRegistered);
+        try {
+            getUser(username);
+            return true;
         }
-        return isRegistered;
+        catch (UserNotFoundException e) {
+            return false;
+        }
     }
 
     /**
@@ -316,65 +308,55 @@ public class UserManager implements IQResultListener {
      * @return true if the specified JID belongs to a local or remote registered user.
      */
     public boolean isRegisteredUser(JID user) {
-        Boolean isRegistered;
         XMPPServer server = XMPPServer.getInstance();
         if (server.isLocal(user)) {
-            isRegistered = registeredUsersCache.get(user.getNode());
+            try {
+                getUser(user.getNode());
+                return true;
+            }
+            catch (UserNotFoundException e) {
+                return false;
+            }
         }
         else {
             // Look up in the cache using the full JID
-            isRegistered = registeredUsersCache.get(user.toString());
+            Boolean isRegistered = remoteUsersCache.get(user.toString());
             if (isRegistered == null) {
                 // Check if the bare JID of the user is cached
-                isRegistered = registeredUsersCache.get(user.toBareJID());
-            }
-        }
-
-        if (isRegistered == null) {
-            // No information is cached so check user identity and cache it
-            if (server.isLocal(user)) {
-                // User belongs to local user so no disco is used in this case
-                try {
-                    getUser(user.getNode());
-                    isRegistered = Boolean.TRUE;
-                }
-                catch (UserNotFoundException e) {
-                    isRegistered = Boolean.FALSE;
-                }
-                // Cache "discovered" information
-                registeredUsersCache.put(user.getNode(), isRegistered);
-            }
-            else {
-                // A disco#info is going to be sent to the bare JID of the user. This packet
-                // is going to be handled by the remote server.
-                IQ iq = new IQ(IQ.Type.get);
-                iq.setFrom(server.getServerInfo().getName());
-                iq.setTo(user.toBareJID());
-                iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
-                // Send the disco#info request to the remote server. The reply will be
-                // processed by the IQResultListener (interface that this class implements)
-                server.getIQRouter().addIQResultListener(iq.getID(), this);
-                synchronized (user.toBareJID().intern()) {
-                    server.getIQRouter().route(iq);
-                    // Wait for the reply to be processed. Time out in 10 minutes.
-                    try {
-                        user.toBareJID().intern().wait(600000);
-                    }
-                    catch (InterruptedException e) {
-                        // Do nothing
-                    }
-                }
-                // Get the discovered result
-                isRegistered = registeredUsersCache.get(user.toBareJID());
+                isRegistered = remoteUsersCache.get(user.toBareJID());
                 if (isRegistered == null) {
-                    // Disco failed for some reason (i.e. we timed out before getting a result)
-                    // so assume that user is not anonymous and cache result
-                    isRegistered = Boolean.FALSE;
-                    registeredUsersCache.put(user.toString(), isRegistered);
+                    // No information is cached so check user identity and cache it
+                    // A disco#info is going to be sent to the bare JID of the user. This packet
+                    // is going to be handled by the remote server.
+                    IQ iq = new IQ(IQ.Type.get);
+                    iq.setFrom(server.getServerInfo().getName());
+                    iq.setTo(user.toBareJID());
+                    iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                    // Send the disco#info request to the remote server. The reply will be
+                    // processed by the IQResultListener (interface that this class implements)
+                    server.getIQRouter().addIQResultListener(iq.getID(), this);
+                    synchronized (user.toBareJID().intern()) {
+                        server.getIQRouter().route(iq);
+                        // Wait for the reply to be processed. Time out in 10 minutes.
+                        try {
+                            user.toBareJID().intern().wait(600000);
+                        }
+                        catch (InterruptedException e) {
+                            // Do nothing
+                        }
+                    }
+                    // Get the discovered result
+                    isRegistered = remoteUsersCache.get(user.toBareJID());
+                    if (isRegistered == null) {
+                        // Disco failed for some reason (i.e. we timed out before getting a result)
+                        // so assume that user is not anonymous and cache result
+                        isRegistered = Boolean.FALSE;
+                        remoteUsersCache.put(user.toString(), isRegistered);
+                    }
                 }
             }
+            return isRegistered;
         }
-        return isRegistered;
     }
 
     public void receivedAnswer(IQ packet) {
@@ -394,7 +376,7 @@ public class UserManager implements IQResultListener {
             }
         }
         // Update cache of remote registered users
-        registeredUsersCache.put(from.toBareJID(), isRegistered);
+        remoteUsersCache.put(from.toBareJID(), isRegistered);
 
         // Wake up waiting thread
         synchronized (from.toBareJID().intern()) {

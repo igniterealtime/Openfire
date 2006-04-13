@@ -229,7 +229,10 @@ public class FileTransferProxy extends BasicModule
     }
 
     public Iterator<DiscoServerItem> getItems() {
-        ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+        if(!isEnabled()) {
+            return null;
+        }
+        List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
 
         items.add(new DiscoServerItem() {
             public String getJID() {

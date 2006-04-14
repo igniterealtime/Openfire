@@ -625,8 +625,8 @@ public abstract class SocketReader implements Runnable {
             // Close the underlying connection
             connection.close();
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to bad_namespace_prefix in stream header. Connection: " +
-                    connection);
+            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: " +
+                    xpp.getNamespace(null) + ". Connection: " + connection);
         }
     }
 

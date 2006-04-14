@@ -181,7 +181,7 @@ public abstract class SocketReader implements Runnable {
 
             String tag = doc.getName();
             if ("message".equals(tag)) {
-                Message packet = null;
+                Message packet;
                 try {
                     packet = new Message(doc);
                 }
@@ -198,7 +198,7 @@ public abstract class SocketReader implements Runnable {
                 processMessage(packet);
             }
             else if ("presence".equals(tag)) {
-                Presence packet = null;
+                Presence packet;
                 try {
                     packet = new Presence(doc);
                 }
@@ -242,7 +242,7 @@ public abstract class SocketReader implements Runnable {
                 processPresence(packet);
             }
             else if ("iq".equals(tag)) {
-                IQ packet = null;
+                IQ packet;
                 try {
                     packet = getIQ(doc);
                 }

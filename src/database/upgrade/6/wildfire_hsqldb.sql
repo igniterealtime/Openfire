@@ -1,7 +1,7 @@
-# $Revision:  $
-# $Date:  $
+// $Revision:  $
+// $Date:  $
 
-# Update the jiveVersion table to new definition.
+// Update the jiveVersion table to new definition.
 DROP TABLE jiveVersion;
 CREATE TABLE jiveVersion (
   name  varchar(50)  NOT NULL,
@@ -10,6 +10,6 @@ CREATE TABLE jiveVersion (
 );
 INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 6);
 
-# Make password column accept null, add encrypted password column.
+// Make password column accept null, add encrypted password column.
 ALTER TABLE jiveUser ALTER COLUMN password VARCHAR(32);
 ALTER TABLE jiveUser ADD COLUMN encryptedPassword VARCHAR(255) BEFORE name;

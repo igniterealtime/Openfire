@@ -884,14 +884,6 @@ public class DbConnectionManager {
                         stmt.close();
                     }
                 }
-                // If the upgrade script's version is greater than 6, automatically update the
-                // version information. Previous to version 6, the upgrade scripts set the version
-                // themselves.
-                if (i >= 6) {
-                    stmt = con.createStatement();
-                    stmt.execute("UPDATE jiveVersion SET version=" + i + " WHERE name='wildfire'");
-                    stmt.close();
-                }
             }
             finally {
                 if (in != null) {

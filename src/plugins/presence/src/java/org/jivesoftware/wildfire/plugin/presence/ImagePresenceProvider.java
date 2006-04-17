@@ -92,7 +92,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
             writeImageContent(request.getParameter(presenceType), defaultImage, response);
         }
         else if (images != null) {
-            writeImageContent(images.replace("--IMAGE--", presenceType), defaultImage, response);
+            response.sendRedirect(images.replace("--IMAGE--", presenceType));
         }
         else {
             writeImageContent(null, defaultImage, response);

@@ -100,3 +100,4 @@ CREATE TABLE pubsubDefaultConf (
   CONSTRAINT pubsubDefConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
+UPDATE jiveVersion set version=7 where name = 'wildfire';

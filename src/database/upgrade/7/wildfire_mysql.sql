@@ -99,3 +99,5 @@ CREATE TABLE pubsubDefaultConf (
   maxLeafNodes        INTEGER       NOT NULL,
   PRIMARY KEY (serviceID, leaf)
 );
+
+UPDATE jiveVersion set version=7 where name = 'wildfire';

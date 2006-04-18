@@ -245,6 +245,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 recipientRoster.deleteRosterItem(sender, true);
             }
             catch (UserNotFoundException e) {
+                // Do nothing
             }
         }
         else {

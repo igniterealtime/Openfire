@@ -203,7 +203,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i + 3 < len && input[i + 1] == 'b' && input[i + 2] == 'r' && input[i + 3] == '>') {
@@ -250,7 +249,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i > last) {
@@ -425,7 +423,7 @@ public class StringUtils {
     public static String encodeBase64(String data) {
         byte[] bytes = null;
         try {
-            bytes = data.getBytes("ISO-8859-1");
+            bytes = data.getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException uee) {
             Log.error(uee);
@@ -453,14 +451,8 @@ public class StringUtils {
      * @param data a base64 encoded String to decode.
      * @return the decoded String.
      */
-    public static String decodeBase64(String data) {
-        byte [] bytes = Base64.decode(data);
-        try {
-            return new String(bytes, "UTF-8");
-        }
-        catch (UnsupportedEncodingException uee) {
-            return new String(bytes);
-        }
+    public static byte[] decodeBase64(String data) {
+        return Base64.decode(data);
     }
 
     /**
@@ -754,7 +746,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i > last) {

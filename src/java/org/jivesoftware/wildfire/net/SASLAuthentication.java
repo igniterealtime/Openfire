@@ -165,8 +165,7 @@ public class SASLAuthentication {
                                 byte[] token = new byte[0];
                                 if (doc.isTextOnly()) {
                                     // If auth request includes a value then validate it
-                                    token = StringUtils.decodeBase64(doc.getText())
-                                            .getBytes(CHARSET);
+                                    token = StringUtils.decodeBase64(doc.getText());
                                     if (token == null) {
                                         token = new byte[0];
                                     }
@@ -190,7 +189,7 @@ public class SASLAuthentication {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
                             try {
-                                byte[] data = StringUtils.decodeBase64(response).getBytes(CHARSET);
+                                byte[] data = StringUtils.decodeBase64(response);
                                 if (data == null) {
                                     data = new byte[0];
                                 }
@@ -272,7 +271,7 @@ public class SASLAuthentication {
 
         if (response != null && response.length() > 0) {
             // Parse data and obtain username & password
-            String data = StringUtils.decodeBase64(response);
+            String data = new String(StringUtils.decodeBase64(response), CHARSET);
             StringTokenizer tokens = new StringTokenizer(data, "\0");
             if (tokens.countTokens() > 2) {
                 // Skip the "authorization identity"
@@ -311,7 +310,7 @@ public class SASLAuthentication {
         }
 
         if (hostname != null  && hostname.length() > 0) {
-            hostname = StringUtils.decodeBase64(hostname);
+            hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
             // Check if cerificate validation is disabled for s2s
             if (session instanceof IncomingServerSession) {
                 // Flag that indicates if certificates of the remote server should be validated.
@@ -373,7 +372,7 @@ public class SASLAuthentication {
         // Give a number of retries before closing the connection
         Integer retries = (Integer) session.getSessionData("authRetries");
         if (retries == null) {
-            retries = new Integer(1);
+            retries = 1;
         }
         else {
             retries = retries + 1;

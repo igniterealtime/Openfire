@@ -1195,26 +1195,21 @@ public class SessionManager extends BasicModule {
      * @param session the session.
      */
     public void removeSession(ClientSession session) {
-        // TODO: Requires better error checking to ensure the session count is maintained
-        // TODO: properly (removal actually does remove).
         // Do nothing if session is null or if the server is shutting down. Note: When the server
         // is shutting down the serverName will be null.
         if (session == null || serverName == null) {
             return;
         }
-        SessionMap sessionMap;
-        if (anonymousSessions.containsValue(session)) {
-            anonymousSessions.remove(session.getAddress().getResource());
-
+        if (anonymousSessions.remove(session.getAddress().getResource()) != null) {
             // Fire session event.
             SessionEventDispatcher.dispatchEvent(session,
                     SessionEventDispatcher.EventType.anonymous_session_destroyed);
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
-            if (session.getAddress() != null &&
-                    userManager.isRegisteredUser(session.getAddress().getNode())) {
-                String username = session.getAddress().getNode();
+            String username = session.getAddress().getNode();
+            if (session.getAddress() != null && userManager.isRegisteredUser(username)) {
+                SessionMap sessionMap;
                 synchronized (username.intern()) {
                     sessionMap = sessions.get(username);
                     if (sessionMap != null) {
@@ -1231,18 +1226,16 @@ public class SessionManager extends BasicModule {
                 }
             }
         }
+        // Remove the session from the pre-Authenticated sessions list (if present)
+        preAuthenticatedSessions.remove(session.getAddress().getResource());
         // If the user is still available then send an unavailable presence
         Presence presence = session.getPresence();
-        if (presence == null || presence.isAvailable()) {
+        if (presence.isAvailable()) {
             Presence offline = new Presence();
             offline.setFrom(session.getAddress());
             offline.setTo(new JID(null, serverName, null));
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
-        }
-        else if (preAuthenticatedSessions.containsValue(session)) {
-            // Remove the session from the pre-Authenticated sessions list
-            preAuthenticatedSessions.remove(session.getAddress().getResource());
         }
     }
 

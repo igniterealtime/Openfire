@@ -94,9 +94,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             Presence.Type type = presence.getType();
             try {
                 Roster senderRoster = getRoster(senderJID);
-                boolean senderSubChanged = false;
                 if (senderRoster != null) {
-                    senderSubChanged = manageSub(recipientJID, true, type, senderRoster);
+                    manageSub(recipientJID, true, type, senderRoster);
                 }
                 Roster recipientRoster = getRoster(recipientJID);
                 boolean recipientSubChanged = false;
@@ -182,7 +181,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @return The roster or null if the address is not managed on the server
      */
     private Roster getRoster(JID address) {
-        String username = null;
+        String username;
         Roster roster = null;
         if (localServer.isLocal(address) && userManager.isRegisteredUser(address.getNode())) {
             username = address.getNode();
@@ -190,6 +189,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 roster = rosterManager.getRoster(username);
             }
             catch (UserNotFoundException e) {
+                // Do nothing
             }
         }
         return roster;
@@ -209,9 +209,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             throws UserAlreadyExistsException, SharedGroupException
     {
         RosterItem item = null;
-        RosterItem.AskType oldAsk = null;
+        RosterItem.AskType oldAsk;
         RosterItem.SubType oldSub = null;
-        RosterItem.RecvType oldRecv = null;
+        RosterItem.RecvType oldRecv;
         try {
             if (roster.isRosterItem(target)) {
                 item = roster.getRosterItem(target);
@@ -254,16 +254,17 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * <li>'new state' table: the changed item values</li>
      * </ul>
      */
-    private static Hashtable stateTable = new Hashtable();
+    private static Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>> stateTable =
+            new Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>>();
 
     static {
-        Hashtable subrTable;
-        Hashtable subsTable;
-        Hashtable sr;
+        Hashtable<Presence.Type, Change> subrTable;
+        Hashtable<Presence.Type, Change> subsTable;
+        Hashtable<String,Map<Presence.Type, Change>> sr;
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_NONE, sr);
@@ -292,9 +293,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if item requested subscription and we're denying request
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, null, null));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_FROM, sr);
@@ -327,9 +328,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if owner requested subscription and item is denying request
         subrTable.put(Presence.Type.unsubscribed, new Change(null, null, RosterItem.ASK_NONE));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_TO, sr);
@@ -359,9 +360,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Setting subscription to none
         subrTable.put(Presence.Type.unsubscribed, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_NONE));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_BOTH, sr);
@@ -426,16 +427,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param isSending True if the roster owner of the item is sending the new state change request
      */
     private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
-        Map srTable = (Map)stateTable.get(item.getSubStatus());
-        Map changeTable = (Map)srTable.get(isSending ? "send" : "recv");
-        Change change = (Change)changeTable.get(action);
-        boolean modified = false;
+        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(item.getSubStatus());
+        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
+        Change change = changeTable.get(action);
         if (change.newAsk != null && change.newAsk != item.getAskStatus()) {
             item.setAskStatus(change.newAsk);
         }
         if (change.newSub != null && change.newSub != item.getSubStatus()) {
             item.setSubStatus(change.newSub);
-            modified = true;
         }
         if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
             item.setRecvStatus(change.newRecv);

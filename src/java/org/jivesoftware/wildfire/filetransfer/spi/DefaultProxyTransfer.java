@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
+ * $Revision: 3762 $
+ * $Date: 2006-04-12 18:07:15 -0500 (Mon, 12 Apr 2005) $
  *
  * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
@@ -42,6 +42,8 @@ public class DefaultProxyTransfer implements ProxyTransfer {
     private Future<?> future;
 
     private long amountWritten;
+
+    private static final int BUFFER_SIZE = 8000;
 
     public DefaultProxyTransfer() { }
 
@@ -122,7 +124,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         InputStream in = getInitiatorSocket().getInputStream();
         OutputStream out = new ProxyOutputStream(getTargetSocket().getOutputStream());
 
-        final byte[] b = new byte[1000];
+        final byte[] b = new byte[BUFFER_SIZE];
         int count = 0;
         amountWritten = 0;
 
@@ -157,8 +159,6 @@ public class DefaultProxyTransfer implements ProxyTransfer {
     }
 
     static class ProxyOutputStream extends DataOutputStream {
-
-
         public ProxyOutputStream(OutputStream out) {
             super(out);
         }

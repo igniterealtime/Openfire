@@ -160,7 +160,10 @@ class ServerDialback {
             stream.append(" xmlns=\"jabber:server\"");
             stream.append(" xmlns:db=\"jabber:server:dialback\">");
             connection.deliverRawText(stream.toString());
-            stream = null;
+
+            // Set a read timeout (of 5 seconds) so we don't keep waiting forever
+            int soTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(5000);
 
             XMPPPacketReader reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);
@@ -172,6 +175,8 @@ class ServerDialback {
                 eventType = xpp.next();
             }
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+                // Restore default timeout
+                socket.setSoTimeout(soTimeout);
                 String id = xpp.getAttributeValue("", "id");
                 OutgoingServerSocketReader socketReader = new OutgoingServerSocketReader(reader);
                 if (authenticateDomain(socketReader, domain, hostname, id)) {
@@ -249,7 +254,6 @@ class ServerDialback {
             sb.append(key);
             sb.append("</db:result>");
             connection.deliverRawText(sb.toString());
-            sb = null;
 
             // Process the answer from the Receiving Server
             try {
@@ -357,7 +361,6 @@ class ServerDialback {
                     String verifyFROM = doc.attributeValue("from");
                     String id = doc.attributeValue("id");
                     Log.debug("AS - Connection closed for host: " + verifyFROM + " id: " + id);
-                    sb = null;
                     return null;
                 }
                 else {
@@ -506,7 +509,7 @@ class ServerDialback {
     private boolean verifyKey(String key, String streamID, String recipient, String hostname,
             String host, int port) throws IOException, XmlPullParserException,
             RemoteConnectionFailedException {
-        XMPPPacketReader reader = null;
+        XMPPPacketReader reader;
         Writer writer = null;
         // Establish a TCP connection back to the domain name asserted by the Originating Server
         Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
@@ -534,7 +537,6 @@ class ServerDialback {
             stream.append(" xmlns:db=\"jabber:server:dialback\">");
             writer.write(stream.toString());
             writer.flush();
-            stream = null;
 
             // Get the answer from the Authoritative Server
             XmlPullParser xpp = reader.getXPPParser();
@@ -553,7 +555,6 @@ class ServerDialback {
                 sb.append("</db:verify>");
                 writer.write(sb.toString());
                 writer.flush();
-                sb = null;
 
                 try {
                     Element doc = reader.parseDocument().getRootElement();
@@ -625,6 +626,7 @@ class ServerDialback {
                 socket.close();
             }
             catch (IOException ioe) {
+                // Do nothing
             }
         }
         return false;

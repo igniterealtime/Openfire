@@ -275,6 +275,10 @@ public class OutgoingServerSession extends Session {
                 openingStream.append(" version=\"1.0\">");
                 connection.deliverRawText(openingStream.toString());
 
+                // Set a read timeout (of 5 seconds) so we don't keep waiting forever
+                int soTimeout = socket.getSoTimeout();
+                socket.setSoTimeout(5000);
+
                 XMPPPacketReader reader = new XMPPPacketReader();
                 reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
                         CHARSET));
@@ -288,6 +292,8 @@ public class OutgoingServerSession extends Session {
 
                 // Check if the remote server is XMPP 1.0 compliant
                 if (serverVersion != null && decodeVersion(serverVersion)[0] >= 1) {
+                    // Restore default timeout
+                    socket.setSoTimeout(soTimeout);
                     // Get the stream features
                     Element features = reader.parseDocument().getRootElement();
                     // Check if TLS is enabled
@@ -353,7 +359,7 @@ public class OutgoingServerSession extends Session {
         Log.debug("OS - Indicating we want TLS to " + hostname);
         connection.deliverRawText("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
 
-        MXParser xpp = (MXParser) reader.getXPPParser();
+        MXParser xpp = reader.getXPPParser();
         // Wait for the <proceed> response
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
@@ -561,7 +567,7 @@ public class OutgoingServerSession extends Session {
         try {
             if (packet instanceof IQ) {
                 IQ reply = new IQ();
-                reply.setID(((IQ) packet).getID());
+                reply.setID(packet.getID());
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
@@ -597,6 +603,7 @@ public class OutgoingServerSession extends Session {
             }
         }
         catch (UnauthorizedException e) {
+            // Do nothing
         }
         catch (Exception e) {
             Log.warn("Error returning error to sender. Original packet: " + packet, e);

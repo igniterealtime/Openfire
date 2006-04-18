@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Plugin configuration for the broadcast plugin.
+-->
+<plugin>
+    <class>org.jivesoftware.wildfire.plugin.BroadcastPlugin</class>
+    <name>Broadcast</name>
+    <description>Broadcasts messages to users.</description>
+    <author>Jive Software</author>
+    <version>1.5.0</version>
+    <date>3/6/2006</date>
+    <url>http://www.jivesoftware.org</url>
+    <minServerVersion>2.4.0</minServerVersion>
+</plugin>

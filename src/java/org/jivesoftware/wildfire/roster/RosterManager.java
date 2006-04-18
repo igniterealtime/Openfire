@@ -372,12 +372,15 @@ public class RosterManager extends BasicModule implements GroupEventListener {
      * @return true if any of the specified groups can see the shared group.
      */
     public boolean isSharedGroupVisible(Group sharedGroup, Collection<Group> groups) {
+        if (groups.isEmpty()) {
+            return false;
+        }
         Map<String, String> properties = sharedGroup.getProperties();
         String showInRoster = properties.get("sharedRoster.showInRoster");
         if ("everybody".equals(showInRoster)) {
             return true;
         }
-        if ("onlyGroup".equals(showInRoster) && !groups.isEmpty()) {
+        if ("onlyGroup".equals(showInRoster)) {
             Collection<String> groupNames = new ArrayList<String>(groups.size());
             for (Group group : groups) {
                 groupNames.add(group.getName());

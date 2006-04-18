@@ -82,7 +82,7 @@ public class Roster implements Cacheable {
 
         // Get the shared groups of this user
         Collection<Group> sharedGroups = rosterManager.getSharedGroups(username);
-        Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());;
+        Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
 
         // Add RosterItems that belong to the personal roster
         rosterItemProvider =  RosterItemProvider.getInstance();
@@ -217,8 +217,11 @@ public class Roster implements Cacheable {
         // Check if there is a public shared group. That means that anyone can see this user.
         for (Group group : userGroups) {
             if (rosterManager.isPulicSharedGroup(group)) {
-                return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
-                        RosterItem.RECV_NONE, "", null);
+                // Only local users may see public shared groups
+                if (server.isLocal(user)) {
+                    return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
+                            RosterItem.RECV_NONE, "", null);
+                }
             }
             else if (rosterManager.isSharedGroup(group)) {
                 // This is a shared group that can be seen only by group members or
@@ -227,11 +230,8 @@ public class Roster implements Cacheable {
             }
         }
         if (!sharedGroups.isEmpty()) {
-            // Check if any group of contact may see a shared group of this user
+            // Check if any group of the contact may see a shared group of this user
             Collection<Group> contactGroups = GroupManager.getInstance().getGroups(user);
-            if (contactGroups == null) {
-                return null;
-            }
             for (Group sharedGroup : sharedGroups) {
                 if (rosterManager.isSharedGroupVisible(sharedGroup, contactGroups)) {
                     return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
@@ -342,7 +342,7 @@ public class Roster implements Cacheable {
         if (item.isShared() && item.getID() == 0) {
             // Do nothing if item is only shared and it is using the default user name
             if (item.isOnlyShared()) {
-                String defaultContactName = null;
+                String defaultContactName;
                 try {
                     defaultContactName = UserNameManager.getUserName(item.getJid());
                 }
@@ -942,7 +942,7 @@ public class Roster implements Cacheable {
                 // Update the subscription of the item **based on the item groups**
                 if (item.isOnlyShared()) {
                     Collection<Group> userGroups =
-                            userGroups = GroupManager.getInstance().getGroups(getUserJID());
+                            GroupManager.getInstance().getGroups(getUserJID());
                     // Set subscription type to BOTH if the roster user belongs to a shared group
                     // that is mutually visible with a shared group of the new roster item
                     if (rosterManager
@@ -985,7 +985,7 @@ public class Roster implements Cacheable {
             if (userJID.equals(user)) {
                 continue;
             }
-            RosterItem item = null;
+            RosterItem item;
             try {
                 // Get the RosterItem for the *local* user to add
                 item = getRosterItem(user);

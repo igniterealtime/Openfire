@@ -254,15 +254,23 @@ public class LdapGroupProvider implements GroupProvider {
 
     public Collection<Group> getGroups(JID user) {
         XMPPServer server = XMPPServer.getInstance();
-        String username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
+        String username;
         if (!manager.isPosixMode()) {
+            // Check if the user exists (only if user is a local user)
+            if (!server.isLocal(user)) {
+                return Collections.emptyList();
+            }
+            username = JID.unescapeNode(user.getNode());
             try {
                 username = manager.findUserDN(username) + "," + manager.getBaseDN();
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);
-                return new ArrayList<Group>();
+                return Collections.emptyList();
             }
+        }
+        else {
+            username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
         }
 
         String filter = MessageFormat.format(manager.getGroupSearchFilter(), username);

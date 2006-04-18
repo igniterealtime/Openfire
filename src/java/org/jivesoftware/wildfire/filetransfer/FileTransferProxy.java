@@ -318,6 +318,9 @@ public class FileTransferProxy extends BasicModule
             if (!processed && incoming && packet instanceof IQ) {
                 IQ iq = (IQ) packet;
                 Element childElement = iq.getChildElement();
+                if(childElement == null) {
+                    return;
+                }
                 String namespace = childElement.getNamespaceURI();
                 if ("http://jabber.org/protocol/si".equals(namespace)) {
                     // If this is a set, check the feature offer

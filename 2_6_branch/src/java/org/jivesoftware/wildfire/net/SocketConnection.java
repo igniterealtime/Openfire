@@ -393,12 +393,13 @@ public class SocketConnection implements Connection {
      */
     boolean checkHealth() {
         // Check that the sending operation is still active
-        if (writeStarted > -1 && System.currentTimeMillis() - writeStarted >
+        long writeTimestamp = writeStarted;
+        if (writeTimestamp > -1 && System.currentTimeMillis() - writeTimestamp >
                 JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
             // Close the socket
             if (Log.isDebugEnabled()) {
                 Log.debug("Closing connection: " + this + " that started sending data at: " +
-                        new Date(writeStarted));
+                        new Date(writeTimestamp));
             }
             forceClose();
             return true;

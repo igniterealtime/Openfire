@@ -69,6 +69,27 @@ Wildfire Changelog
 </div>
 
 <p>
+<b>2.6.2</b> -- April 20, 2006
+<p>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-648'>JM-648</a>] - Server-to-server thread pool was getting exhausted when remote servers were unresponsive.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-650'>JM-650</a>] - Fixed concurrency problem that was closing active connections by mistake.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-642'>JM-642</a>] - Deleting a user was not removing all references from memory.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-646'>JM-646</a>] - Fixed error when searching for groups of a non-local user when using LDAP.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-571'>JM-571</a>] - File transfer proxy was not being removed from service discovery when disabled. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-638'>JM-638</a>] - Unhandled exceptions while processing IQ packets were not always returning IQ errors.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-639'>JM-639</a>] - Fixed ConcurrentModificationException while purging a pubsub node.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-640'>JM-640</a>] - A "service-not-implemented" error was being returned after an ad-hoc command was handled by pubsub.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-641'>JM-641</a>] - Modified pubsub tables so that all supported databases may correctly run the database scripts.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-644'>JM-644</a>] - Allowed Base64 decoding that doesn't encode bytes as String.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-645'>JM-645</a>] - Fixed recursivity error in SessionManager when searching for best route.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-647'>JM-647</a>] - Sometimes users were remaining as room occupants when using shared groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-649'>JM-649</a>] - Increased proxy file transfer buffer size.</li>
+</ul>
+
+<p>
 <b>2.6.1</b> -- April 11, 2006
 <p>
 

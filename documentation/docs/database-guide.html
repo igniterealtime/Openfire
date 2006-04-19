@@ -60,6 +60,8 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
   <li><a href="#mucConversationLog">mucConversationLog</a><br>
   </li>
   <li><a href="#pubsubNode">pubsubNode</a> </li>
+  <li><a href="#pubsubNodeJIDs">pubsubNodeJIDs</a> </li>
+  <li><a href="#pubsubNodeGroups">pubsubNodeGroups</a> </li>
   <li><a href="#pubsubAffiliation">pubsubAffiliation</a> </li>
   <li><a href="#pubsubItem">pubsubItem</a> </li>
   <li><a href="#pubsubSubscription">pubsubSubscription</a> </li>
@@ -1162,18 +1164,6 @@ roster)</th>
       <td>Flag indicating whether new subscriptions must be configured to become active</td>
     </tr>
     <tr>
-      <td>contacts</td>
-      <td>TEXT</td>
-      <td>n/a</td>
-      <td>List of JIDs of the users to contact for questions</td>
-    </tr>
-    <tr>
-      <td>rosterGroups</td>
-      <td>TEXT</td>
-      <td>n/a</td>
-      <td>Roster group(s) of the node owner allowed to subscribe and retrieve items</td>
-    </tr>
-    <tr>
       <td>accessModel</td>
       <td>VARCHAR</td>
       <td>10</td>
@@ -1228,34 +1218,94 @@ roster)</th>
       <td>Policy that defines whether owners or publisher should receive replies to items</td>
     </tr>
     <tr>
-      <td>replyRooms</td>
-      <td>TEXT</td>
-      <td>n/a</td>
-      <td>List of multi-user chat rooms to specify for replyroom</td>
-    </tr>
-    <tr>
-      <td>replyTo</td>
-      <td>VARCHAR</td>
-      <td>1024</td>
-      <td>List of JID(s) to specify for replyto</td>
-    </tr>
-    <tr>
       <td>associationPolicy</td>
       <td>VARCHAR</td>
       <td>15</td>
       <td>Policy that defines who may associate leaf nodes with a collection</td>
     </tr>
     <tr>
-      <td>associationTrusted</td>
-      <td>TEXT</td>
-      <td>n/a</td>
-      <td>Users are allowed to associate leaf nodes with this collection node</td>
-    </tr>
-    <tr>
       <td>maxLeafNodes</td>
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Max number of leaf nodes that a collection node might have</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubNodeJIDs"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubNodeJIDs (JIDs associated with nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the entity (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>associationType</td>
+      <td>VARCHAR</td>
+      <td>20</td>
+      <td>Type of association with the node</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="pubsubNodeGroups"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">pubsubNodeGroups (Roster groups associated with nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node</td>
+    </tr>
+    <tr>
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node</td>
+    </tr>
+    <tr>
+      <td>rosterGroup</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Roster group of the node owner allowed to subscribe and retrieve items</td>
     </tr>
   </tbody>
 </table>

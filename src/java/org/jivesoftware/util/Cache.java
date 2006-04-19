@@ -527,6 +527,10 @@ public class Cache<K, V> implements Map<K, V> {
             long[] array = (long[])object;
             return CacheSizes.sizeOfObject() + array.length * CacheSizes.sizeOfLong();
         }
+        else if (object instanceof byte[]) {
+            byte [] array = (byte[])object;
+            return CacheSizes.sizeOfObject() + array.length;
+        }
         // Default behavior -- serialize the object to determine its size.
         else {
             int size = 1;

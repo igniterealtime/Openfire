@@ -22,10 +22,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -46,7 +43,7 @@ public class FaviconServlet extends HttpServlet {
     /**
      * The content-type of the images to return.
      */
-    private static final String CONTENT_TYPE = "image/jpeg";
+    private static final String CONTENT_TYPE = "image/x-icon";
     /**
      * Bytes of the default favicon to return when one was not found on a host.
      */
@@ -58,8 +55,11 @@ public class FaviconServlet extends HttpServlet {
     /**
      * Cache the domains that a favicon was not found.
      */
-    private Cache<String, Boolean> missesCache;
-
+    private Cache<String, Integer> missesCache;
+    /**
+     * Cache the favicons that we've found.
+     */
+    private Cache<String, byte[]> hitsCache;
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -77,19 +77,21 @@ public class FaviconServlet extends HttpServlet {
             e.printStackTrace();
         }
         // Initialize caches.
-        missesCache = CacheManager.initializeCache("Favicon misses", "favicon", 128 * 1024);
+        missesCache = CacheManager.initializeCache("Favicon misses", "faviconMisses", 128 * 1024);
+        hitsCache = CacheManager.initializeCache("Favicon hits", "faviconHits", 128 * 1024);
     }
 
     /**
      * Retrieve the image based on it's name.
      *
-     * @param request  the httpservletrequest.
+     * @param request the httpservletrequest.
      * @param response the httpservletresponse.
      * @throws javax.servlet.ServletException
      * @throws java.io.IOException
      */
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException
+    {
         String host = request.getParameter("host");
         // Check special cases where we need to change host to get a favicon
         host = "gmail.com".equals(host) ? "google.com" : host;
@@ -127,17 +129,32 @@ public class FaviconServlet extends HttpServlet {
      * @return the image bytes found, otherwise null.
      */
     private byte[] getImage(String host, byte[] defaultImage) {
-        // Check if there is cached information for the requested domain
-        if (missesCache.get(host) != null) {
+        // If we've already attempted to get the favicon twice and failed,
+        // return the default image.
+        if (missesCache.get(host) != null && missesCache.get(host) > 1) {
             // Domain does not have a favicon so return default icon
             return defaultImage;
         }
+        // See if we've cached the favicon.
+        if (hitsCache.containsKey(host)) {
+            return hitsCache.get(host);
+        }
         byte[] bytes = getImage("http://" + host + "/favicon.ico");
         if (bytes == null) {
-            // Cache that the requested domain does not have a favicon
-            missesCache.put(host, Boolean.TRUE);
+            // Cache that the requested domain does not have a favicon. Check if this
+            // is the first cache miss or the second.
+            if (missesCache.get(host) != null) {
+                missesCache.put(host, 2);
+            }
+            else {
+                missesCache.put(host, 1);
+            }
             // Return byte of default icon
             bytes = defaultImage;
+        }
+        // Cache the favicon.
+        else {
+            hitsCache.put(host, bytes);
         }
         return bytes;
     }

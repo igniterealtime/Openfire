@@ -1,10 +1,10 @@
-REM // $Revision: 1650 $
-REM // $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
+-- $Revision: 1650 $
+-- $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
-REM // Update jiveVersion to JM 2.2
+-- Update jiveVersion to JM 2.2
 UPDATE jiveVersion SET majorVersion=2, minorVersion=2;
 
-REM // jiveExtComponentConf: Create new table
+-- jiveExtComponentConf: Create new table
 CREATE TABLE jiveExtComponentConf (
   subdomain             VARCHAR2(255)    NOT NULL,
   secret                VARCHAR2(255),
@@ -12,7 +12,7 @@ CREATE TABLE jiveExtComponentConf (
   CONSTRAINT jiveExtComponentConf_pk PRIMARY KEY (subdomain)
 );
 
-REM // jiveRemoteServerConf: Create new table
+-- jiveRemoteServerConf: Create new table
 CREATE TABLE jiveRemoteServerConf (
   domain                VARCHAR2(255)    NOT NULL,
   remotePort            INTEGER,
@@ -20,7 +20,7 @@ CREATE TABLE jiveRemoteServerConf (
   CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
 );
 
-REM // mucRoomProp: Create new table
+-- mucRoomProp: Create new table
 CREATE TABLE mucRoomProp (
   roomID                INT             NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE mucRoomProp (
   CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
-REM // mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegister".
+-- mucRoom: Add new columns: "useReservedNick", "canChangeNick" and "canRegister".
 ALTER TABLE mucRoom ADD useReservedNick INTEGER NULL;
 ALTER TABLE mucRoom ADD canChangeNick INTEGER NULL;
 ALTER TABLE mucRoom ADD canRegister INTEGER NULL;
@@ -37,7 +37,7 @@ ALTER TABLE mucRoom MODIFY useReservedNick INTEGER NOT NULL;
 ALTER TABLE mucRoom MODIFY canChangeNick INTEGER NOT NULL;
 ALTER TABLE mucRoom MODIFY canRegister INTEGER NOT NULL;
 
-REM // jiveVCard: Recreate table from scratch
+-- jiveVCard: Recreate table from scratch
 DROP TABLE jiveVCard;
 CREATE TABLE jiveVCard (
   username              VARCHAR2(32)    NOT NULL,

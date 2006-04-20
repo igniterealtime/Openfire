@@ -1,14 +1,14 @@
-REM // $Revision:  $
-REM // $Date:  $
+-- $Revision:  $
+-- $Date:  $
 
-REM // Drop old columns of pubSubNode
+-- Drop old columns of pubSubNode
 ALTER TABLE pubsubNode DROP COLUMN contacts;
 ALTER TABLE pubsubNode DROP COLUMN rosterGroups;
 ALTER TABLE pubsubNode DROP COLUMN replyRooms;
 ALTER TABLE pubsubNode DROP COLUMN replyTo;
 ALTER TABLE pubsubNode DROP COLUMN associationTrusted;
 
-REM // Add new pubsub tables
+-- Add new pubsub tables
 CREATE TABLE pubsubNodeJIDs (
   serviceID           VARCHAR2(100)  NOT NULL,
   nodeID              VARCHAR2(100)  NOT NULL,

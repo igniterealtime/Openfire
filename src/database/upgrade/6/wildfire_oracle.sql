@@ -1,7 +1,7 @@
-REM // $Revision: 795 $
-REM // $Date: 2005-01-06 07:44:42 -0300 (Thu, 06 Jan 2005) $
+-- $Revision: 795 $
+-- $Date: 2005-01-06 07:44:42 -0300 (Thu, 06 Jan 2005) $
 
-REM // Update the jiveVersion table to new definition.
+-- Update the jiveVersion table to new definition.
 DROP TABLE jiveVersion;
 CREATE TABLE jiveVersion (
   name     VARCHAR2(50)  NOT NULL,
@@ -10,6 +10,6 @@ CREATE TABLE jiveVersion (
 );
 INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 6);
 
-REM // Make password column accept null, add encrypted password column.
+-- Make password column accept null, add encrypted password column.
 ALTER TABLE jiveUser MODIFY password VARCHAR2(32) NULL;
 ALTER TABLE jiveUser ADD encryptedPassword VARCHAR(255);

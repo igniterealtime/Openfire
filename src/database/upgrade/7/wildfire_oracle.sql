@@ -1,7 +1,7 @@
-REM // $Revision:  $
-REM // $Date:  $
+-- $Revision:  $
+-- $Date:  $
 
-REM // Create PubSub Tables
+-- Create PubSub Tables
 
 CREATE TABLE pubsubNode (
   serviceID           VARCHAR2(100)  NOT NULL,

@@ -1,5 +1,5 @@
-REM // $Revision: 1650 $
-REM // $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
+-- $Revision: 1650 $
+-- $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE jiveUser (
   username              VARCHAR2(32)     NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE jivePrivacyList (
 );
 CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
 
-REM // MUC Tables
+-- MUC Tables
 
 CREATE TABLE mucRoom(
   roomID              INT           NOT NULL,
@@ -196,7 +196,7 @@ CREATE TABLE mucConversationLog (
 );
 CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 
-REM // PubSub Tables
+-- PubSub Tables
 
 CREATE TABLE pubsubNode (
   serviceID           VARCHAR2(100)  NOT NULL,
@@ -305,14 +305,14 @@ CREATE TABLE pubsubDefaultConf (
   CONSTRAINT pubsubDefConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
-REM // Finally, insert default table values.
+-- Finally, insert default table values.
 
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 7);
+INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 8);
 
-REM // Entry for admin user
+-- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

@@ -1,10 +1,10 @@
-REM // $Revision:  $
-REM // $Date:  $
+-- $Revision:  $
+-- $Date:  $
 
-REM // Update jiveVersion to Wildfire 2.5
+-- Update jiveVersion to Wildfire 2.5
 UPDATE jiveVersion SET majorVersion=2, minorVersion=5;
 
-REM // jivePrivacyList: Create new table
+-- jivePrivacyList: Create new table
 CREATE TABLE jivePrivacyList (
   username              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,

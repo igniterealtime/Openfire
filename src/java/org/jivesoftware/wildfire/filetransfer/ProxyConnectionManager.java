@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
+ * $Revision: 3762 $
+ * $Date: 2006-04-12 18:07:15 -0500 (Mon, 12 Apr 2005) $
  *
  * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
@@ -56,7 +56,7 @@ public class ProxyConnectionManager {
 
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
-        CacheManager.initializeCache(cacheName, "filetransfer", -1, 1000 * 60 * 10);
+        CacheManager.initializeCache(cacheName, "fileproxytransfer", -1, 1000 * 60 * 10);
         connectionMap = CacheManager.getCache(cacheName);
 
         className = JiveGlobals.getProperty("provider.transfer.proxy",

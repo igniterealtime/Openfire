@@ -10,12 +10,15 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.CacheSizes;
+
 /**
  * Contains all of the meta information associated with a file transfer.
  *
  * @author Alexander Wenckus
  */
-public class FileTransfer {
+public class FileTransfer implements Cacheable {
     private String sessionID;
 
     private String initiator;
@@ -95,5 +98,20 @@ public class FileTransfer {
 
     public void setProgress(FileTransferProgress progress) {
         this.progress = progress;
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();              // overhead of object
+        size += CacheSizes.sizeOfString(initiator);
+        size += CacheSizes.sizeOfString(target);
+        size += CacheSizes.sizeOfString(sessionID);
+        size += CacheSizes.sizeOfString(fileName);
+        size += CacheSizes.sizeOfString(mimeType);
+        size += CacheSizes.sizeOfLong();  // File size
+        size += CacheSizes.sizeOfObject(); // Progress
+        return size;
     }
 }

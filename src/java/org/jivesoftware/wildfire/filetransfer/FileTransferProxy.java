@@ -31,10 +31,7 @@ import org.xmpp.packet.PacketError;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Manages the transfering of files between two remote entities on the jabber network.
@@ -167,11 +164,10 @@ public class FileTransferProxy extends BasicModule
             routingTable.addRoute(getAddress(), this);
             XMPPServer server = XMPPServer.getInstance();
 
-            server.getIQDiscoItemsHandler().addComponentItem(getAddress().toString(), "Socks 5 Bytestreams Proxy");
+            server.getIQDiscoItemsHandler().addServerItemsProvider(this);
         }
         else {
-            XMPPServer.getInstance().getIQDiscoItemsHandler()
-                    .removeComponentItem(getAddress().toString());
+            XMPPServer.getInstance().getIQDiscoItemsHandler().removeServerItemsProvider(this);
         }
     }
 
@@ -229,10 +225,10 @@ public class FileTransferProxy extends BasicModule
     }
 
     public Iterator<DiscoServerItem> getItems() {
-        if(!isEnabled()) {
-            return null;
-        }
         List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+        if(!isEnabled()) {
+            return items.iterator();
+        }
 
         items.add(new DiscoServerItem() {
             public String getJID() {

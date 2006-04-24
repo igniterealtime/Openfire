@@ -12,6 +12,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/registration/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/search/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/userImportExport/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugins/userservice/src/java" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/src/plugins/enterprise" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

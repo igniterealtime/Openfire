@@ -78,7 +78,14 @@ public class PluginManager {
      */
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
-        executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 15, TimeUnit.SECONDS);
+        // See if we're in development mode. If so, check for new plugins once every 5 seconds.
+        // Otherwise, default to every 30 seconds.
+        if (Boolean.getBoolean("developmentMode")) {
+            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
+        }
+        else {
+            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 30, TimeUnit.SECONDS);
+        }
     }
 
     /**
@@ -150,7 +157,7 @@ public class PluginManager {
             return;
         }
         Log.debug("Loading plugin " + pluginDir.getName());
-        Plugin plugin = null;
+        Plugin plugin;
         try {
             File pluginConfig = new File(pluginDir, "plugin.xml");
             if (pluginConfig.exists()) {
@@ -339,8 +346,8 @@ public class PluginManager {
                     // Modify all the URL's in the XML so that they are passed through
                     // the plugin servlet correctly.
                     List urls = adminElement.selectNodes("//@url");
-                    for (int i = 0; i < urls.size(); i++) {
-                        Attribute attr = (Attribute)urls.get(i);
+                    for (Object url : urls) {
+                        Attribute attr = (Attribute) url;
                         attr.setValue("plugins/" + pluginName + "/" + attr.getValue());
                     }
                     AdminConsole.addModel(pluginName, adminElement);
@@ -566,8 +573,7 @@ public class PluginManager {
                     return;
                 }
 
-                for (int i = 0; i < jars.length; i++) {
-                    File jarFile = jars[i];
+                for (File jarFile : jars) {
                     String pluginName = jarFile.getName().substring(0,
                             jarFile.getName().length() - 4).toLowerCase();
                     // See if the JAR has already been exploded.
@@ -651,8 +657,7 @@ public class PluginManager {
                 }
 
                 // Load all plugins that need to be loaded.
-                for (int i = 0; i < dirs.length; i++) {
-                    File dirFile = dirs[i];
+                for (File dirFile : dirs) {
                     // If the plugin hasn't already been started, start it.
                     if (dirFile.exists() && !plugins.containsKey(dirFile.getName())) {
                         loadPlugin(dirFile);
@@ -693,7 +698,7 @@ public class PluginManager {
                         FileOutputStream out = new FileOutputStream(entryFile);
                         InputStream zin = zipFile.getInputStream(entry);
                         byte[] b = new byte[512];
-                        int len = 0;
+                        int len;
                         while ((len = zin.read(b)) != -1) {
                             out.write(b, 0, len);
                         }
@@ -703,7 +708,6 @@ public class PluginManager {
                     }
                 }
                 zipFile.close();
-                zipFile = null;
             }
             catch (Exception e) {
                 Log.error(e);
@@ -716,8 +720,8 @@ public class PluginManager {
         public boolean deleteDir(File dir) {
             if (dir.isDirectory()) {
                 String[] children = dir.list();
-                for (int i = 0; i < children.length; i++) {
-                    boolean success = deleteDir(new File(dir, children[i]));
+                for (String file : children) {
+                    boolean success = deleteDir(new File(dir, file));
                     if (!success) {
                         return false;
                     }

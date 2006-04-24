@@ -43,7 +43,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 public interface Module {
 
     /**
-     * <p>Obtain the name of the module for display in administration interfaces.</p>
+     * Returns the name of the module for display in administration interfaces.
      *
      * @return The name of the module.
      */

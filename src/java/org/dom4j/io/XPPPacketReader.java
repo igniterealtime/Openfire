@@ -63,7 +63,7 @@ public class XPPPacketReader {
 
 
     /**
-     * <p>Reads a Document from the given <code>File</code></p>
+     * <p>Reads a Document from the given <code>File</code></p>.
      *
      * @param file is the <code>File</code> to read from.
      * @return the newly created Document instance

@@ -29,6 +29,7 @@ import org.xmpp.packet.PacketError;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * IQDiscoInfoHandler is responsible for handling disco#info requests. This class holds a map with
@@ -53,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IQDiscoInfoHandler extends IQHandler {
 
     private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
-    private List<String> serverFeatures = new ArrayList<String>();
+    private Set<String> serverFeatures = new CopyOnWriteArraySet<String>();
     private Map<String, DiscoInfoProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
@@ -65,7 +66,7 @@ public class IQDiscoInfoHandler extends IQHandler {
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
-        serverFeatures.add("http://jabber.org/protocol/disco#info");
+        addServerFeature("http://jabber.org/protocol/disco#info");
         // Initialize the user identity and features collections (optimization to avoid creating
         // the same objects for each response)
         Element userIdentity = DocumentHelper.createElement("identity");
@@ -105,7 +106,7 @@ public class IQDiscoInfoHandler extends IQHandler {
             Element iq = packet.getChildElement();
             String node = iq.attributeValue("node");
             //String node = metaData.getProperty("query:node");
-            
+
             // Check if we have information about the requested name and node
             if (infoProvider.hasInfo(name, node, packet.getFrom())) {
                 reply.setChildElement(iq.createCopy());
@@ -119,7 +120,7 @@ public class IQDiscoInfoHandler extends IQHandler {
                     identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
                     queryElement.add((Element)identity.clone());
                 }
-                
+
                 // Add to the reply all the features provided by the DiscoInfoProvider
                 Iterator features = infoProvider.getFeatures(name, node, packet.getFrom());
                 while (features.hasNext()) {
@@ -214,8 +215,29 @@ public class IQDiscoInfoHandler extends IQHandler {
      */
     private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
         for (Iterator<String> it = provider.getFeatures(); it.hasNext();) {
-            serverFeatures.add(it.next());
+            addServerFeature(it.next());
         }
+    }
+
+    /**
+     * Adds one specific feature to the information returned whenever a disco for information is
+     * made against the server.
+     *
+     * @param namespace the namespace identifying the new server feature.
+     * @return true if the new feature was successfully added.
+     */
+    public boolean addServerFeature(String namespace) {
+        return serverFeatures.add(namespace);
+    }
+
+    /**
+     * Removes a feature from the information returned whenever a disco for information is
+     * made against the server.
+     *
+     * @param namespace the namespace of the feature to be removed.
+     */
+    public void removeServerFeature(String namespace) {
+        serverFeatures.remove(namespace);
     }
 
     public void initialize(XMPPServer server) {
@@ -237,7 +259,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      */
     private DiscoInfoProvider getServerInfoProvider() {
         DiscoInfoProvider discoInfoProvider = new DiscoInfoProvider() {
-            ArrayList<Element> identities = new ArrayList<Element>();
+            final ArrayList<Element> identities = new ArrayList<Element>();
 
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {

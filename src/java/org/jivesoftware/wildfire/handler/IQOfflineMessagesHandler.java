@@ -13,8 +13,8 @@ package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.*;
@@ -42,7 +42,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
     private static final String NAMESPACE = "http://jabber.org/protocol/offline";
 
-    private SimpleDateFormat dateFormat;
+    final private SimpleDateFormat dateFormat =
+            new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
     private IQDiscoItemsHandler itemsHandler;
@@ -54,7 +55,6 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     public IQOfflineMessagesHandler() {
         super("Flexible Offline Message Retrieval Handler");
         info = new IQHandlerInfo("offline", NAMESPACE);
-        dateFormat = new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
@@ -119,7 +119,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return info;
     }
 
-    public Iterator getFeatures() {
+    public Iterator<String> getFeatures() {
         ArrayList<String> features = new ArrayList<String>();
         features.add(NAMESPACE);
         return features.iterator();

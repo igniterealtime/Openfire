@@ -39,6 +39,7 @@ import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
 import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.vcard.VCardManager;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -420,6 +421,7 @@ public class XMPPServer {
         loadModule(TransportHandler.class.getName());
         loadModule(OfflineMessageStrategy.class.getName());
         loadModule(OfflineMessageStore.class.getName());
+        loadModule(VCardManager.class.getName());
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());

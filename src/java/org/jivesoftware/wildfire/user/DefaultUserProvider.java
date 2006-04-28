@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.vcard.VCardManager;
 
 import java.sql.*;
 import java.util.*;
@@ -203,13 +202,6 @@ public class DefaultUserProvider implements UserProvider {
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
         try {
-            // Delete all of the users's vcard properties
-            try {
-                VCardManager.getInstance().deleteVCard(username);
-            }
-            catch (UnsupportedOperationException e) {
-                // Ignore.
-            }
             // Delete all of the users's extended properties
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);

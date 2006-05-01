@@ -173,7 +173,8 @@ public class Group implements Cacheable {
     public void setDescription(String description) {
         if (description == this.description ||
                 (description != null && description.equals(this.description)) ||
-                provider.isReadOnly()) {
+                provider.isReadOnly())
+        {
             // Do nothing
             return;
         }

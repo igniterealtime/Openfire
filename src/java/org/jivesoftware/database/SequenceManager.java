@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages sequences of unique ID's that get stored in the database. Database support for sequences
  * varies widely; some don't use them at all. Instead, we handle unique ID generation with a
- * combination VM/database solution.<p>
- * <p/>
+ * combination VM/database solution.<p/>
+ *
  * A special table in the database doles out blocks of unique ID's to each
  * virtual machine that interacts with Jive. This has the following consequences:
  * <ul>
@@ -34,8 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <li>The order of unique id's may not correspond to the creation date of objects.
  * <li>There can be gaps in ID's after server restarts since blocks will get "lost" if the block
  * size is greater than 1.
- * </ul><p>
- * <p/>
+ * </ul><p/>
+ *
  * Each sequence type that this class manages has a different block size value. Objects that aren't
  * created often have a block size of 1, while frequently created objects such as entries and
  * comments have larger block sizes.
@@ -83,22 +83,19 @@ public class SequenceManager {
 
     /**
      * Returns the next id for an object that has defined the annotation {@link JiveID}.
-     * The JiveID annotation value is the synonymous for the type integer.
-     * <p/>
+     * The JiveID annotation value is the synonymous for the type integer.<p/>
+     *
      * The annotation JiveID should contain the id type for the object (the same number you would
-     * use to call nextID(int type))
-     * <p/>
-     * Example class definition:
-     * <p/>
+     * use to call nextID(int type)). Example class definition:
      * <code>
      * \@JiveID(10)
      * public class MyClass {
-     * <p/>
+     *
      * }
      * </code>
      *
-     * @param o object that has annotation JiveID
-     * @return the next int
+     * @param o object that has annotation JiveID.
+     * @return the next unique ID.
      * @throws IllegalArgumentException If the object passed in does not defined {@link JiveID}
      */
     public static long nextID(Object o) {
@@ -114,11 +111,12 @@ public class SequenceManager {
     }
 
     /**
-     * Used to set the blocksize of a given SequenceManager. If no SequenceManager has been registered
-     * for the type we will verify the type is valid and then create a new sequence manager for it.
+     * Used to set the blocksize of a given SequenceManager. If no SequenceManager has
+     * been registered for the type, the type is verified as valid and then a new
+     * sequence manager is created.
      *
-     * @param type      the type of unique id
-     * @param blockSize how many blocks of ids we should
+     * @param type the type of unique id.
+     * @param blockSize how many blocks of ids we should.
      */
     public static void setBlockSize(int type, int blockSize) {
         if (managers.containsKey(type)) {
@@ -138,7 +136,7 @@ public class SequenceManager {
      * Creates a new DbSequenceManager.
      *
      * @param seqType the type of sequence.
-     * @param size    the number of id's to "checkout" at a time.
+     * @param size the number of id's to "checkout" at a time.
      */
     public SequenceManager(int seqType, int size) {
         managers.put(seqType, this);
@@ -245,6 +243,7 @@ public class SequenceManager {
                 Thread.sleep(75);
             }
             catch (InterruptedException ie) {
+                // Ignore.
             }
             getNextBlock(count - 1);
         }
@@ -265,5 +264,4 @@ public class SequenceManager {
             DbConnectionManager.closeConnection(pstmt, null);
         }
     }
-
 }

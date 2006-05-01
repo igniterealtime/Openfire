@@ -481,10 +481,8 @@
             <!-- Add admins first -->
 <%
             int memberCount = group.getMembers().size() + group.getAdmins().size();
-            Iterator<JID> members = group.getMembers().iterator();
-            Iterator<JID> admins = group.getAdmins().iterator();
-%>
-<%
+            boolean showUpdateButtons = memberCount > 0;
+            boolean showRemoteJIDsWarning = false;
             if (memberCount == 0) {
 %>
                 <tr>
@@ -497,22 +495,24 @@
                 </tr>
 <%
             }
-%>
-<%
-            boolean showUpdateButtons = memberCount > 0;
-            boolean showRemoteJIDsWarning = false;
-            while (admins.hasNext()) {
-                JID jid = (JID)admins.next();
-                boolean isLocal = webManager.getXMPPServer().isLocal(jid);
-                User user = null;
-                if (isLocal) {
-                    try {
-                        user = userManager.getUser(jid.getNode());
+            else {
+                // Sort the list of members.
+                ArrayList<JID> allMembers = new ArrayList<JID>(memberCount);
+                allMembers.addAll(group.getMembers());
+                Collection<JID> admins = group.getAdmins();
+                allMembers.addAll(admins);
+                Collections.sort(allMembers);
+                for (JID jid:allMembers) {
+                    boolean isLocal = webManager.getXMPPServer().isLocal(jid);
+                    User user = null;
+                    if (isLocal) {
+                        try {
+                            user = userManager.getUser(jid.getNode());
+                        }
+                        catch (UserNotFoundException unfe) {
+                            // Ignore.
+                        }
                     }
-                    catch (UserNotFoundException unfe) {
-                        // Ignore.
-                    }
-                }
 %>
                 <tr>
                     <td width="1%">
@@ -547,72 +547,15 @@
                     <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
                     <% } %>
                     <td align="center">
-                        <input type="checkbox" name="admin" value="<%= jid %>" checked>
+                        <input type="checkbox" name="admin" value="<%= jid %>" <% if (admins.contains(jid)) { %>checked<% } %>>
                     </td>
                     <td align="center">
                         <input type="checkbox" name="delete" value="<%= jid %>">
                     </td>
                 </tr>
 <%
-            }
-%>
-<%
-            while (members.hasNext()) {
-                JID jid = (JID)members.next();
-                boolean isLocal = webManager.getXMPPServer().isLocal(jid);
-                User user = null;
-                if (isLocal) {
-                    try {
-                        user = userManager.getUser(jid.getNode());
-                    }
-                    catch (UserNotFoundException unfe) {
-                        // Ignore.
-                    }
                 }
-%>
-                <tr>
-                    <td width="1%">
-                     <%  if (user != null && presenceManager.isAvailable(user)) {
-                            Presence presence = presenceManager.getPresence(user);
-                    %>
-                        <% if (presence.getShow() == null) { %>
-                        <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.available" />">
-                        <% } %>
-                        <% if (presence.getShow() == Presence.Show.chat) { %>
-                        <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.chat_available" />">
-                        <% } %>
-                        <% if (presence.getShow() == Presence.Show.away) { %>
-                        <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.away" />">
-                        <% } %>
-                        <% if (presence.getShow() == Presence.Show.xa) { %>
-                        <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.extended" />">
-                        <% } %>
-                        <% if (presence.getShow() == Presence.Show.dnd) { %>
-                        <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.not_disturb" />">
-                        <% } %>
-
-                    <%  } else { %>
-
-                    <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.offline" />">
-
-                    <%  } %>
-                    </td>
-                    <% if (user != null) { %>
-                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
-                    <% } else { %>
-                    <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
-                    <% } %>
-                    <td align="center">
-                        <input type="checkbox" name="admin" value="<%= jid %>">
-                    </td>
-                    <td align="center">
-                        <input type="checkbox" name="delete" value="<%= jid %>">
-                    </td>
-                </tr>
-<%
             }
-%>
-<%
             if (showUpdateButtons) {
 %>
                 <tr>

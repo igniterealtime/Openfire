@@ -106,8 +106,8 @@
 
 <p><fmt:message key="user.create.info" /></p>
 
-<c:set var="submit" value="${param.create}"/>
-<c:set var="errors" value="${errors}"/>
+<%--<c:set var="submit" value="${param.create}"/>--%>
+<%--<c:set var="errors" value="${errors}"/>--%>
 
 <%  if (!errors.isEmpty()) { %>
 

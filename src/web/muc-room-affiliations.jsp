@@ -204,7 +204,9 @@
             </tr>
         <%  }
             else {
-                for (String user : room.getOwners()) {
+                ArrayList<String> owners = new ArrayList<String>(room.getOwners());
+                Collections.sort(owners);
+                for (String user : owners) {
         %>
             <tr>
                 <td>&nbsp;</td>
@@ -232,7 +234,9 @@
             </tr>
         <%  }
             else {
-                for (String user : room.getAdmins()) {
+                ArrayList<String> admins = new ArrayList<String>(room.getAdmins());
+                Collections.sort(admins);
+                for (String user : admins) {
         %>
             <tr>
                 <td>&nbsp;</td>
@@ -260,7 +264,9 @@
             </tr>
         <%  }
             else {
-                for (String user : room.getMembers()) {
+                ArrayList<String> members = new ArrayList<String>(room.getMembers());
+                Collections.sort(members);
+                for (String user : members) {
                     String nickname = room.getReservedNickname(user);
                     nickname = (nickname == null ? "" : " (" + nickname + ")");
         %>
@@ -290,7 +296,9 @@
             </tr>
         <%  }
             else {
-                for (String user : room.getOutcasts()) {
+                ArrayList<String> outcasts = new ArrayList<String>(room.getOutcasts());
+                Collections.sort(outcasts);
+                for (String user : outcasts) {
         %>
             <tr>
                 <td>&nbsp;</td>

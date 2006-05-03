@@ -997,7 +997,7 @@ public class PubSubEngine {
 
         // Get the user's subscription
         NodeSubscription subscription = null;
-        if (node.isMultipleSubscriptionsEnabled()) {
+        if (node.isMultipleSubscriptionsEnabled() && !node.getSubscriptions(owner).isEmpty()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(

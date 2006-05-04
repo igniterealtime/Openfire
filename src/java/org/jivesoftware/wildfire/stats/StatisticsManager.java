@@ -12,7 +12,7 @@ package org.jivesoftware.wildfire.stats;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Stores statistics being tracked by the server.
@@ -24,7 +24,7 @@ public class StatisticsManager {
         return instance;
     }
 
-    private final Map<String, Statistic> statistics = new HashMap<String, Statistic>();
+    private final Map<String, Statistic> statistics = new ConcurrentHashMap<String, Statistic>();
 
     private StatisticsManager() {}
 
@@ -53,6 +53,15 @@ public class StatisticsManager {
      */
     public Collection<Statistic> getAllStatistics() {
         return statistics.values();
+    }
+
+    /**
+     * Removes a statistic from the server.
+     *
+     * @param statKey The key of the stat to be removed.
+     */
+    public void removeStatistic(String statKey) {
+        statistics.remove(statKey);
     }
 
 }

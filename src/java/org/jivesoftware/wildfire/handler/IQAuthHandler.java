@@ -195,7 +195,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     if (conn != null) {
                         // Send a stream:error before closing the connection
                         StreamError error = new StreamError(StreamError.Condition.conflict);
-                        conn.getWriter().write(error.toXML());
+                        conn.deliverRawText(error.toXML());
                         conn.close();
                     }
                 }

@@ -12,14 +12,14 @@
 package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.Element;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.stringprep.Stringprep;
-import org.jivesoftware.stringprep.StringprepException;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
@@ -95,7 +95,7 @@ public class IQBindHandler extends IQHandler {
                 // If a session already exists with the requested JID, then check to see
                 // if we should kick it off or refuse the new connection
                 if (sessionManager.isActiveRoute(username, resource)) {
-                    ClientSession oldSession = null;
+                    ClientSession oldSession;
                     try {
                         String domain = localServer.getServerInfo().getName();
                         oldSession = sessionManager.getSession(username, domain, resource);
@@ -107,7 +107,7 @@ public class IQBindHandler extends IQHandler {
                             if (conn != null) {
                                 // Kick out the old connection that is conflicting with the new one
                                 StreamError error = new StreamError(StreamError.Condition.conflict);
-                                conn.getWriter().write(error.toXML());
+                                conn.deliverRawText(error.toXML());
                                 conn.close();
                             }
                         }

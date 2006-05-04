@@ -17,6 +17,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.net.SocketConnection;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.Component;
@@ -53,21 +54,13 @@ public class ComponentSession extends Session {
      * @return a newly created session between the server and a component.
      */
     public static Session createSession(String serverName, XMPPPacketReader reader,
-            Connection connection) throws UnauthorizedException, IOException,
+            SocketConnection connection) throws UnauthorizedException, IOException,
             XmlPullParserException
     {
         XmlPullParser xpp = reader.getXPPParser();
-        Session session;
         String domain = xpp.getAttributeValue("", "to");
 
         Log.debug("[ExComp] Starting registration of new external component for domain: " + domain);
-
-        // Get the requested subdomain
-        String subdomain = domain;
-        int index = domain.indexOf(serverName);
-        if (index > -1) {
-            subdomain = domain.substring(0, index -1);
-        }
 
         Writer writer = connection.getWriter();
         // Default answer header in case of an error
@@ -92,6 +85,13 @@ public class ComponentSession extends Session {
             // Close the underlying connection
             connection.close();
             return null;
+        }
+
+        // Get the requested subdomain
+        String subdomain = domain;
+        int index = domain.indexOf(serverName);
+        if (index > -1) {
+            subdomain = domain.substring(0, index -1);
         }
         // Check that an external component for the specified subdomain may connect to this server
         if (!ExternalComponentManager.canAccess(subdomain)) {
@@ -132,7 +132,7 @@ public class ComponentSession extends Session {
         }
 
         // Create a ComponentSession for the external component
-        session = SessionManager.getInstance().createComponentSession(connection);
+        Session session = SessionManager.getInstance().createComponentSession(connection);
         // Set the bind address as the address of the session
         session.setAddress(new JID(null, domain , null));
 
@@ -165,11 +165,7 @@ public class ComponentSession extends Session {
                 Log.debug("[ExComp] Incorrect handshake for component with domain: " + domain);
                 //  The credentials supplied by the initiator are not valid (answer an error
                 // and close the connection)
-                sb = new StringBuilder();
-                // Include the conflict error in the response
-                StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                sb.append(error.toXML());
-                writer.write(sb.toString());
+                writer.write(new StreamError(StreamError.Condition.not_authorized).toXML());
                 writer.flush();
                 // Close the underlying connection
                 connection.close();

@@ -14,7 +14,6 @@ package org.jivesoftware.wildfire;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
 
-import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -48,30 +47,6 @@ public interface Connection {
      * @return the InetAddress describing the underlying connection properties.
      */
     public InetAddress getInetAddress() throws UnknownHostException;
-
-    /**
-     * Returns the port that the connection uses.
-     *
-     * @return the port that the connection uses.
-     */
-    public int getPort();
-
-    /**
-     * Returns the Writer used to send data to the connection. The writer should be
-     * used with caution. In the majority of cases, the {@link #deliver(Packet)}
-     * method should be used to send data instead of using the writer directly.
-     * You must synchronize on the writer before writing data to it to ensure
-     * data consistency:
-     *
-     * <pre>
-     *  Writer writer = connection.getWriter();
-     * synchronized(writer) {
-     *     // write data....
-     * }</pre>
-     *
-     * @return the Writer for this connection.
-     */
-    public Writer getWriter();
 
     /**
      * Close this session including associated socket connection. The order of
@@ -199,13 +174,6 @@ public interface Connection {
     CompressionPolicy getCompressionPolicy();
 
     /**
-     * Sets whether compression is enabled or is disabled.
-     *
-     * @param compressionPolicy whether Compression is enabled or is disabled.
-     */
-    void setCompressionPolicy(CompressionPolicy compressionPolicy);
-
-    /**
      * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
      * are required to secure their connections or otherwise their connections will be closed.
      * On the other hand, when TLS is disabled clients are not allowed to secure their connections
@@ -215,37 +183,6 @@ public interface Connection {
      * @return whether TLS is mandatory, optional or is disabled.
      */
     TLSPolicy getTlsPolicy();
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
-     * last case.
-     *
-     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
-     */
-    void setTlsPolicy(TLSPolicy tlsPolicy);
-
-    /**
-     * Returns the number of milliseconds a connection has to be idle to be closed. Sending
-     * stanzas to the client is not considered as activity. We are only considering the
-     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
-     * to the server.
-     *
-     * @return the number of milliseconds a connection has to be idle to be closed.
-     */
-    long getIdleTimeout();
-
-    /**
-     * Sets the number of milliseconds a connection has to be idle to be closed. Sending
-     * stanzas to the client is not considered as activity. We are only considering the
-     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
-     * to the server.
-     *
-     * @param timeout the number of milliseconds a connection has to be idle to be closed.
-     */
-    void setIdleTimeout(long timeout);
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

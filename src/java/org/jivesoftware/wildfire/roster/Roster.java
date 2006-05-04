@@ -336,7 +336,10 @@ public class Roster implements Cacheable {
     public void updateRosterItem(RosterItem item) throws UserNotFoundException {
         if (rosterItems.putIfAbsent(item.getJid().toBareJID(), item) == null) {
             rosterItems.remove(item.getJid().toBareJID());
-            throw new UserNotFoundException(item.getJid().toBareJID());
+            if (item.getSubStatus() != RosterItem.SUB_NONE) {
+                throw new UserNotFoundException(item.getJid().toBareJID());
+            }
+            return;
         }
         // If the item only had shared groups before this update then make it persistent
         if (item.isShared() && item.getID() == 0) {
@@ -366,9 +369,11 @@ public class Roster implements Cacheable {
             rosterItemProvider.updateItem(username, item);
         }
         // broadcast roster update
-        //if (item.getAskStatus() != RosterItem.ASK_NONE) {
+        // Do not push items with a state of "None + Pending In"
+        if (item.getSubStatus() != RosterItem.SUB_NONE ||
+                item.getAskStatus() != RosterItem.ASK_SUBSCRIBE) {
             broadcast(item, true);
-        //}
+        }
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
             probePresence(item.getJid());
         }*/
@@ -477,9 +482,11 @@ public class Roster implements Cacheable {
                             " with no displayName");
                 }
             }
-            //if (item.getAskStatus() != RosterItem.ASK_NONE) {
+            // Do not push items with a state of "None + Pending In"
+            if (item.getSubStatus() != RosterItem.SUB_NONE ||
+                    item.getAskStatus() != RosterItem.ASK_SUBSCRIBE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
-            //}
+            }
         }
         return roster;
     }

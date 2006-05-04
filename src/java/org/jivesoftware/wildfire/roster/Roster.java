@@ -247,10 +247,11 @@ public class Roster implements Cacheable {
      * address as an existing item.
      *
      * @param user the item to add to the roster.
+     * @param push     True if the new item must be push to the user
      */
-    public RosterItem createRosterItem(JID user) throws UserAlreadyExistsException,
+    public RosterItem createRosterItem(JID user, boolean push) throws UserAlreadyExistsException,
             SharedGroupException {
-        return createRosterItem(user, null, null);
+        return createRosterItem(user, null, null, push);
     }
 
     /**
@@ -259,11 +260,12 @@ public class Roster implements Cacheable {
      *
      * @param user     the item to add to the roster.
      * @param nickname The nickname for the roster entry (can be null)
+     * @param push     True if the new item must be push to the user
      * @param groups   The list of groups to assign this roster item to (can be null)
      */
-    public RosterItem createRosterItem(JID user, String nickname, List<String> groups)
+    public RosterItem createRosterItem(JID user, String nickname, List<String> groups, boolean push)
             throws UserAlreadyExistsException, SharedGroupException {
-        RosterItem item = provideRosterItem(user, nickname, groups);
+        RosterItem item = provideRosterItem(user, nickname, groups, push);
         rosterItems.put(item.getJid().toBareJID(), item);
         return item;
     }
@@ -277,7 +279,7 @@ public class Roster implements Cacheable {
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, SharedGroupException {
-        RosterItem rosterItem = provideRosterItem(item);
+        RosterItem rosterItem = provideRosterItem(item, true);
         rosterItems.put(item.getJID().toBareJID(), rosterItem);
     }
 
@@ -285,12 +287,13 @@ public class Roster implements Cacheable {
      * <p>Generate a new RosterItem for use with createRosterItem.<p>
      *
      * @param item The item to copy settings for the new item in this roster
+     * @param push     True if the new item must be push to the user
      * @return The newly created roster items ready to be stored by the Roster item's hash table
      */
-    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item)
+    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item, boolean push)
             throws UserAlreadyExistsException, SharedGroupException {
         return provideRosterItem(item.getJID(), item.getName(),
-                new ArrayList<String>(item.getGroups()));
+                new ArrayList<String>(item.getGroups()), push);
     }
 
     /**
@@ -299,10 +302,11 @@ public class Roster implements Cacheable {
      * @param user     The roster jid address to create the roster item for
      * @param nickname The nickname to assign the item (or null for none)
      * @param groups   The groups the item belongs to (or null for none)
+     * @param push     True if the new item must be push to the user
      * @return The newly created roster items ready to be stored by the Roster item's hash table
      */
-    protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups)
-            throws UserAlreadyExistsException, SharedGroupException {
+    protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups,
+            boolean push) throws UserAlreadyExistsException, SharedGroupException {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
             Collection<Group> sharedGroups = GroupManager.getInstance().getSharedGroups();
@@ -321,8 +325,10 @@ public class Roster implements Cacheable {
 
         RosterItem rosterItem = rosterItemProvider.createItem(username, new RosterItem(item));
 
-        // Broadcast the roster push to the user
-        broadcast(roster);
+        if (push) {
+            // Broadcast the roster push to the user
+            broadcast(roster);
+        }
 
         return rosterItem;
     }
@@ -371,7 +377,7 @@ public class Roster implements Cacheable {
         // broadcast roster update
         // Do not push items with a state of "None + Pending In"
         if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                item.getAskStatus() != RosterItem.ASK_SUBSCRIBE) {
+                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
             broadcast(item, true);
         }
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
@@ -484,7 +490,7 @@ public class Roster implements Cacheable {
             }
             // Do not push items with a state of "None + Pending In"
             if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                    item.getAskStatus() != RosterItem.ASK_SUBSCRIBE) {
+                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
             }
         }
@@ -608,7 +614,7 @@ public class Roster implements Cacheable {
      * @param optimize true indicates that items that exists only because of a shared
      *                 group with subscription status FROM will not be sent
      */
-    void broadcast(RosterItem item, boolean optimize) {
+    public void broadcast(RosterItem item, boolean optimize) {
         // Do not broadcast items with status FROM that exist only because of shared groups
         if (optimize && item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
             return;

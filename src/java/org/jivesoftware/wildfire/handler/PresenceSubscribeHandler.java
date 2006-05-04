@@ -212,6 +212,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         RosterItem.AskType oldAsk;
         RosterItem.SubType oldSub = null;
         RosterItem.RecvType oldRecv;
+        boolean newItem = false;
         try {
             if (roster.isRosterItem(target)) {
                 item = roster.getRosterItem(target);
@@ -223,7 +224,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // an unknown user
                     return false;
                 }
-                item = roster.createRosterItem(target);
+                item = roster.createRosterItem(target, false);
+                newItem = true;
             }
             // Get a snapshot of the item state
             oldAsk = item.getAskStatus();
@@ -235,6 +237,13 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             if (oldAsk != item.getAskStatus() || oldSub != item.getSubStatus() ||
                     oldRecv != item.getRecvStatus()) {
                 roster.updateRosterItem(item);
+            }
+            else if (newItem) {
+                // Do not push items with a state of "None + Pending In"
+                if (item.getSubStatus() != RosterItem.SUB_NONE ||
+                        item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                    roster.broadcast(item, false);
+                }
             }
         }
         catch (UserNotFoundException e) {

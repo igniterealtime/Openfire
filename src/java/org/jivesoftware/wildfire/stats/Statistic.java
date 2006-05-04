@@ -51,10 +51,9 @@ public interface Statistic {
     public String getUnits();
 
     /**
-     * @param timePeriod The time in seconds since the last sample occured.
-     * @return Returns the sample of data for the timeperiod
+     * @return Returns the sample of data.
      */
-    public double sample(long timePeriod);
+    public double sample();
 
     public enum Type {
 
@@ -64,8 +63,8 @@ public interface Statistic {
          */
         RATE,
         /**
-         * Specifies a count over a specific time period. An example would be
-         * the average of how many users were in MultiUserChat rooms over the last 60 seconds.
+         * Specifies a count at a specific time period. An example would be the
+         * number of users in MultiUserChat at this second.
          */
         COUNT
     }

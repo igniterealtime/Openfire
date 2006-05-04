@@ -201,10 +201,6 @@ public class TLSStreamHandler {
         else if (needClientAuth) {
             tlsEngine.setNeedClientAuth(true);
         }
-
-        while (!initialHSComplete) {
-            initialHSComplete = doHandshake(null);
-        }
     }
 
     public InputStream getInputStream(){
@@ -213,6 +209,12 @@ public class TLSStreamHandler {
 
     public OutputStream getOutputStream(){
         return writer.getOutputStream();
+    }
+
+    void start() throws IOException {
+        while (!initialHSComplete) {
+            initialHSComplete = doHandshake(null);
+        }
     }
 
     private boolean doHandshake(SelectionKey sk) throws IOException {

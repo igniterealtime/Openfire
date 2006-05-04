@@ -672,9 +672,7 @@ public abstract class SocketReader implements Runnable {
                     "Closing connection : " + connection);
             return false;
         }
-        // Client requested to secure the connection using TLS
-        connection.deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
-        // Negotiate TLS.
+        // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
             connection.startTLS(false, null);
         }

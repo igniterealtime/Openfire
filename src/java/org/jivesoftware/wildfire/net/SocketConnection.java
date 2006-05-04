@@ -65,7 +65,8 @@ public class SocketConnection implements Connection {
      */
     private long idleTimeout = -1;
 
-    private Map<ConnectionCloseListener, Object> listeners = new HashMap<ConnectionCloseListener, Object>();
+    final private Map<ConnectionCloseListener, Object> listeners =
+            new HashMap<ConnectionCloseListener, Object>();
 
     private Socket socket;
     private SocketReader socketReader;
@@ -149,7 +150,15 @@ public class SocketConnection implements Connection {
     public void startTLS(boolean clientMode, String remoteServer) throws IOException {
         if (!secure) {
             secure = true;
+            // Prepare for TLS
             tlsStreamHandler = new TLSStreamHandler(socket, clientMode, remoteServer, session instanceof IncomingServerSession);
+            if (!clientMode) {
+                // Indicate the client that the server is ready to negotiate TLS
+                deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+            }
+            // Start handshake
+            tlsStreamHandler.start();
+            // Use new wrapped writers
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
@@ -229,10 +238,30 @@ public class SocketConnection implements Connection {
         return socket.getInetAddress();
     }
 
+    /**
+     * Returns the port that the connection uses.
+     *
+     * @return the port that the connection uses.
+     */
     public int getPort() {
         return socket.getPort();
     }
 
+    /**
+     * Returns the Writer used to send data to the connection. The writer should be
+     * used with caution. In the majority of cases, the {@link #deliver(Packet)}
+     * method should be used to send data instead of using the writer directly.
+     * You must synchronize on the writer before writing data to it to ensure
+     * data consistency:
+     *
+     * <pre>
+     *  Writer writer = connection.getWriter();
+     * synchronized(writer) {
+     *     // write data....
+     * }</pre>
+     *
+     * @return the Writer for this connection.
+     */
     public Writer getWriter() {
         return writer;
     }
@@ -256,6 +285,15 @@ public class SocketConnection implements Connection {
         return tlsPolicy;
     }
 
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
+     */
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         this.tlsPolicy = tlsPolicy;
     }
@@ -264,6 +302,11 @@ public class SocketConnection implements Connection {
         return compressionPolicy;
     }
 
+    /**
+     * Sets whether compression is enabled or is disabled.
+     *
+     * @param compressionPolicy whether Compression is enabled or is disabled.
+     */
     public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
         this.compressionPolicy = compressionPolicy;
     }
@@ -272,6 +315,14 @@ public class SocketConnection implements Connection {
         return idleTimeout;
     }
 
+    /**
+     * Sets the number of milliseconds a connection has to be idle to be closed. Sending
+     * stanzas to the client is not considered as activity. We are only considering the
+     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
+     * to the server.
+     *
+     * @param timeout the number of milliseconds a connection has to be idle to be closed.
+     */
     public void setIdleTimeout(long timeout) {
         this.idleTimeout = timeout;
     }
@@ -353,7 +404,9 @@ public class SocketConnection implements Connection {
                         }
                         writer.flush();
                     }
-                    catch (IOException e) {}
+                    catch (IOException e) {
+                        // Do nothing
+                    }
                     finally {
                         // Register that we finished sending data on the connection
                         writeFinished();

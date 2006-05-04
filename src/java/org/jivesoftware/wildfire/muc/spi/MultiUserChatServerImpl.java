@@ -1239,8 +1239,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public double sample(long timePeriod) {
-                int received = inMessages.getAndSet(0);
-                return received/timePeriod;
+                return inMessages.getAndSet(0);
             }
         };
         StatisticsManager.getInstance().addStatistic(statistic);
@@ -1270,8 +1269,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public double sample(long timePeriod) {
-                long received = outMessages.getAndSet(0);
-                return received/timePeriod;
+                return outMessages.getAndSet(0);
             }
         };
         StatisticsManager.getInstance().addStatistic(statistic);

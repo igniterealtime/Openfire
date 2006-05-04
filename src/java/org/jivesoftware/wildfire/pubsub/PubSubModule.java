@@ -512,6 +512,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#meta-data");
             // Node owners may modify affiliations
             features.add("http://jabber.org/protocol/pubsub#modify-affiliations");
+            // Node owners may manage subscriptions.
+            features.add("http://jabber.org/protocol/pubsub#manage-subscriptions");
             // A single entity may subscribe to a node multiple times
             features.add("http://jabber.org/protocol/pubsub#multi-subscribe");
             // The outcast affiliation is supported
@@ -530,8 +532,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#retract-items");
             // Retrieval of current affiliations is supported
             features.add("http://jabber.org/protocol/pubsub#retrieve-affiliations");
+            // Retrieval of default node configuration is supported.
+            features.add("http://jabber.org/protocol/pubsub#retrieve-default");
             // Item retrieval is supported
             features.add("http://jabber.org/protocol/pubsub#retrieve-items");
+            // Retrieval of current subscriptions is supported.
+            features.add("http://jabber.org/protocol/pubsub#retrieve-subscriptions");
             // Subscribing and unsubscribing are supported
             features.add("http://jabber.org/protocol/pubsub#subscribe");
             // Configuration of subscription options is supported

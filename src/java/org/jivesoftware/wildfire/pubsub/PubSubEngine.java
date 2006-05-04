@@ -221,14 +221,25 @@ public class PubSubEngine {
                 deleteNode(iq, action);
                 return true;
             }
-            action = childElement.element("entities");
+            action = childElement.element("subscriptions");
             if (action != null) {
                 if (IQ.Type.get == iq.getType()) {
                     // Owner requests all affiliated entities
-                    getAffiliatedEntities(iq, action);
+                    getNodeSubscriptions(iq, action);
                 }
                 else {
-                    modifyAffiliations(iq, action);
+                    modifyNodeSubscriptions(iq, action);
+                }
+                return true;
+            }
+            action = childElement.element("affiliations");
+            if (action != null) {
+                if (IQ.Type.get == iq.getType()) {
+                    // Owner requests all affiliated entities
+                    getNodeAffiliations(iq, action);
+                }
+                else {
+                    modifyNodeAffiliations(iq, action);
                 }
                 return true;
             }
@@ -1397,8 +1408,8 @@ public class PubSubEngine {
         router.route(IQ.createResultIQ(iq));
     }
 
-    private void getAffiliatedEntities(IQ iq, Element affiliatedElement) {
-        String nodeID = affiliatedElement.attributeValue("node");
+    private void getNodeSubscriptions(IQ iq, Element affiliationsElement) {
+        String nodeID = affiliationsElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
             sendErrorPacket(iq, PacketError.Condition.bad_request, null);
@@ -1416,11 +1427,94 @@ public class PubSubEngine {
             return;
         }
 
-        // Ask the node to send the list of affiliated entities to the owner
-        node.sendAffiliatedEntities(iq);
+        // Ask the node to send the list of subscriptions to the owner
+        node.sendSubscriptions(iq);
     }
 
-    private void modifyAffiliations(IQ iq, Element entitiesElement) {
+    private void modifyNodeSubscriptions(IQ iq, Element entitiesElement) {
+        String nodeID = entitiesElement.attributeValue("node");
+        if (nodeID == null) {
+            // NodeID was not provided. Return bad-request error.
+            sendErrorPacket(iq, PacketError.Condition.bad_request, null);
+            return;
+        }
+        Node node = service.getNode(nodeID);
+        if (node == null) {
+            // Node does not exist. Return item-not-found error.
+            sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+            return;
+        }
+        if (!node.isAdmin(iq.getFrom())) {
+            // Requesting entity is prohibited from getting affiliates list. Return forbidden error.
+            sendErrorPacket(iq, PacketError.Condition.forbidden, null);
+            return;
+        }
+
+        IQ reply = IQ.createResultIQ(iq);
+
+        // Process modifications or creations of affiliations and subscriptions.
+        for (Iterator it = entitiesElement.elementIterator("subscription"); it.hasNext();) {
+            Element entity = (Element) it.next();
+            JID subscriber = new JID(entity.attributeValue("jid"));
+            // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
+            JID owner = new JID(subscriber.toBareJID());
+            String subStatus = entity.attributeValue("subscription");
+            String subID = entity.attributeValue("subid");
+            // Process subscriptions changes
+            // Get current subscription (if any)
+            NodeSubscription subscription = null;
+            if (node.isMultipleSubscriptionsEnabled()) {
+                if (subID != null) {
+                    subscription = node.getSubscription(subID);
+                }
+            }
+            else {
+                subscription = node.getSubscription(subscriber);
+            }
+            if ("none".equals(subStatus) && subscription != null) {
+                // Owner is cancelling an existing subscription
+                node.cancelSubscription(subscription);
+            }
+            else if ("subscribed".equals(subStatus)) {
+                if (subscription != null) {
+                    // Owner is approving a subscription (i.e. making active)
+                    node.approveSubscription(subscription, true);
+                }
+                else {
+                    // Owner is creating a subscription for an entity to the node
+                    node.createSubscription(null, owner, subscriber, false, null);
+                }
+            }
+        }
+
+        // Send reply
+        router.route(reply);
+    }
+
+    private void getNodeAffiliations(IQ iq, Element affiliationsElement) {
+        String nodeID = affiliationsElement.attributeValue("node");
+        if (nodeID == null) {
+            // NodeID was not provided. Return bad-request error.
+            sendErrorPacket(iq, PacketError.Condition.bad_request, null);
+            return;
+        }
+        Node node = service.getNode(nodeID);
+        if (node == null) {
+            // Node does not exist. Return item-not-found error.
+            sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+            return;
+        }
+        if (!node.isAdmin(iq.getFrom())) {
+            // Requesting entity is prohibited from getting affiliates list. Return forbidden error.
+            sendErrorPacket(iq, PacketError.Condition.forbidden, null);
+            return;
+        }
+
+        // Ask the node to send the list of affiliations to the owner
+        node.sendAffiliations(iq);
+    }
+
+    private void modifyNodeAffiliations(IQ iq, Element entitiesElement) {
         String nodeID = entitiesElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
@@ -1442,71 +1536,38 @@ public class PubSubEngine {
         IQ reply = IQ.createResultIQ(iq);
         Collection<JID> invalidAffiliates = new ArrayList<JID>();
 
-        // Process modifications or creations of affiliations and subscriptions.
-        for (Iterator it = entitiesElement.elementIterator("entity"); it.hasNext();) {
-            Element entity = (Element) it.next();
-            JID subscriber = new JID(entity.attributeValue("jid"));
-            // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-            JID owner = new JID(subscriber.toBareJID());
-            String newAffiliation = entity.attributeValue("affiliation");
-            String subStatus = entity.attributeValue("subscription");
-            String subID = entity.attributeValue("subid");
-            if (newAffiliation != null) {
-                // Get current affiliation of this user (if any)
-                NodeAffiliate affiliate = node.getAffiliate(owner);
+        // Process modifications or creations of affiliations
+        for (Iterator it = entitiesElement.elementIterator("affiliation"); it.hasNext();) {
+            Element affiliation = (Element) it.next();
+            JID owner = new JID(affiliation.attributeValue("jid"));
+            String newAffiliation = affiliation.attributeValue("affiliation");
+            // Get current affiliation of this user (if any)
+            NodeAffiliate affiliate = node.getAffiliate(owner);
 
-                // Check that we are not removing the only owner of the node
-                if (affiliate != null && !affiliate.getAffiliation().name().equals(newAffiliation)) {
-                    // Trying to modify an existing affiliation
-                    if (affiliate.getAffiliation() == NodeAffiliate.Affiliation.owner &&
-                            node.getOwners().size() == 1) {
-                        // Trying to remove the unique owner of the node. Include in error answer.
-                        invalidAffiliates.add(owner);
-                        continue;
-                    }
-                }
-
-                // Owner is setting affiliations for new entities or modifying
-                // existing affiliations
-                if ("owner".equals(newAffiliation)) {
-                    node.addOwner(owner);
-                }
-                else if ("publisher".equals(newAffiliation)) {
-                    node.addPublisher(owner);
-                }
-                else if ("none".equals(newAffiliation)) {
-                    node.addNoneAffiliation(owner);
-                }
-                else  {
-                    node.addOutcast(owner);
+            // Check that we are not removing the only owner of the node
+            if (affiliate != null && !affiliate.getAffiliation().name().equals(newAffiliation)) {
+                // Trying to modify an existing affiliation
+                if (affiliate.getAffiliation() == NodeAffiliate.Affiliation.owner &&
+                        node.getOwners().size() == 1) {
+                    // Trying to remove the unique owner of the node. Include in error answer.
+                    invalidAffiliates.add(owner);
+                    continue;
                 }
             }
-            // Process subscriptions changes
-            if (subStatus != null) {
-                // Get current subscription (if any)
-                NodeSubscription subscription = null;
-                if (node.isMultipleSubscriptionsEnabled()) {
-                    if (subID != null) {
-                        subscription = node.getSubscription(subID);
-                    }
-                }
-                else {
-                    subscription = node.getSubscription(subscriber);
-                }
-                if ("none".equals(subStatus) && subscription != null) {
-                    // Owner is cancelling an existing subscription
-                    node.cancelSubscription(subscription);
-                }
-                else if ("subscribed".equals(subStatus)) {
-                    if (subscription != null) {
-                        // Owner is approving a subscription (i.e. making active)
-                        node.approveSubscription(subscription, true);
-                    }
-                    else {
-                        // Owner is creating a subscription for an entity to the node
-                        node.createSubscription(null, owner, subscriber, false, null);
-                    }
-                }
+
+            // Owner is setting affiliations for new entities or modifying
+            // existing affiliations
+            if ("owner".equals(newAffiliation)) {
+                node.addOwner(owner);
+            }
+            else if ("publisher".equals(newAffiliation)) {
+                node.addPublisher(owner);
+            }
+            else if ("none".equals(newAffiliation)) {
+                node.addNoneAffiliation(owner);
+            }
+            else  {
+                node.addOutcast(owner);
             }
         }
 
@@ -1516,30 +1577,15 @@ public class PubSubEngine {
             reply.setError(PacketError.Condition.not_acceptable);
             Element child =
                     reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub#owner");
-            Element entities = child.addElement("entities");
+            Element entities = child.addElement("affiliations");
             if (!node.isRootCollectionNode()) {
                 entities.addAttribute("node", node.getNodeID());
             }
             for (JID affiliateJID : invalidAffiliates) {
                 NodeAffiliate affiliate = node.getAffiliate(affiliateJID);
-                Collection<NodeSubscription> subscriptions = affiliate.getSubscriptions();
-                if (subscriptions.isEmpty()) {
-                    Element entity = entities.addElement("entity");
-                    entity.addAttribute("jid", affiliate.getJID().toString());
-                    entity.addAttribute("affiliation", affiliate.getAffiliation().name());
-                    entity.addAttribute("subscription", "none");
-                }
-                else {
-                    for (NodeSubscription subscription : subscriptions) {
-                        Element entity = entities.addElement("entity");
-                        entity.addAttribute("jid", subscription.getJID().toString());
-                        entity.addAttribute("affiliation", affiliate.getAffiliation().name());
-                        entity.addAttribute("subscription", subscription.getState().name());
-                        if (node.isMultipleSubscriptionsEnabled()) {
-                            entity.addAttribute("subid", subscription.getID());
-                        }
-                    }
-                }
+                Element entity = entities.addElement("affiliation");
+                entity.addAttribute("jid", affiliate.getJID().toString());
+                entity.addAttribute("affiliation", affiliate.getAffiliation().name());
             }
         }
         // Send reply

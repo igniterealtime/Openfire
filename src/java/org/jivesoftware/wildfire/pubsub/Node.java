@@ -1861,33 +1861,48 @@ public abstract class Node {
     }
 
     /**
-     * Sends the list of affiliated entities with the node to the owner that sent the IQ
+     * Sends the list of affiliations with the node to the owner that sent the IQ
      * request.
      *
      * @param iqRequest IQ request sent by an owner of the node.
      */
-    void sendAffiliatedEntities(IQ iqRequest) {
+    void sendAffiliations(IQ iqRequest) {
         IQ reply = IQ.createResultIQ(iqRequest);
         Element childElement = iqRequest.getChildElement().createCopy();
         reply.setChildElement(childElement);
 
         for (NodeAffiliate affiliate : affiliates) {
-            Collection<NodeSubscription> subscriptions = affiliate.getSubscriptions();
-            if (subscriptions.isEmpty()) {
-                Element entity = childElement.addElement("entity");
-                entity.addAttribute("jid", affiliate.getJID().toString());
-                entity.addAttribute("affiliation", affiliate.getAffiliation().name());
-                entity.addAttribute("subscription", "none");
+            if (affiliate.getAffiliation() == NodeAffiliate.Affiliation.none) {
+                continue;
             }
-            else {
-                for (NodeSubscription subscription : subscriptions) {
-                    Element entity = childElement.addElement("entity");
-                    entity.addAttribute("jid", subscription.getJID().toString());
-                    entity.addAttribute("affiliation", affiliate.getAffiliation().name());
-                    entity.addAttribute("subscription", subscription.getState().name());
-                    if (isMultipleSubscriptionsEnabled()) {
-                        entity.addAttribute("subid", subscription.getID());
-                    }
+            Element entity = childElement.addElement("affiliation");
+            entity.addAttribute("jid", affiliate.getJID().toString());
+            entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+        }
+    }
+
+    /**
+     * Sends the list of subscriptions with the node to the owner that sent the IQ
+     * request.
+     *
+     * @param iqRequest IQ request sent by an owner of the node.
+     */
+    void sendSubscriptions(IQ iqRequest) {
+        IQ reply = IQ.createResultIQ(iqRequest);
+        Element childElement = iqRequest.getChildElement().createCopy();
+        reply.setChildElement(childElement);
+
+        for (NodeAffiliate affiliate : affiliates) {
+            for (NodeSubscription subscription : affiliate.getSubscriptions()) {
+                if (subscription.isAuthorizationPending()) {
+                    continue;
+                }
+                Element entity = childElement.addElement("subscription");
+                entity.addAttribute("jid", subscription.getJID().toString());
+                //entity.addAttribute("affiliation", affiliate.getAffiliation().name());
+                entity.addAttribute("subscription", subscription.getState().name());
+                if (isMultipleSubscriptionsEnabled()) {
+                    entity.addAttribute("subid", subscription.getID());
                 }
             }
         }

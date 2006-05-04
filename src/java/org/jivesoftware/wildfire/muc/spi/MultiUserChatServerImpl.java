@@ -1148,7 +1148,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
             }
 
-            public double sample(long timePeriod) {
+            public double sample() {
                 return getNumberChatRooms();
             }
         };
@@ -1178,7 +1178,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.label");
             }
 
-            public double sample(long timePeriod) {
+            public double sample() {
                 return getNumberRoomOccupants();
             }
         };
@@ -1208,7 +1208,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return LocaleUtils.getLocalizedString("muc.stats.users.label");
             }
 
-            public double sample(long timePeriod) {
+            public double sample() {
                 return getNumberConnectedUsers();
             }
         };
@@ -1238,7 +1238,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.label");
             }
 
-            public double sample(long timePeriod) {
+            public double sample() {
                 return inMessages.getAndSet(0);
             }
         };
@@ -1268,7 +1268,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.label");
             }
 
-            public double sample(long timePeriod) {
+            public double sample() {
                 return outMessages.getAndSet(0);
             }
         };

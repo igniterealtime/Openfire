@@ -83,6 +83,13 @@ public interface MUCUser extends ChannelHandler {
     void removeRole(String roomName);
 
     /**
+     * Returns true if the user is currently present in one or more rooms.
+     *
+     * @return true if the user is currently present in one or more rooms.
+     */
+    boolean isJoined();
+
+    /**
      * Get time (in milliseconds from System currentTimeMillis()) since last packet.
      *
      * @return The time when the last packet was sent from this user

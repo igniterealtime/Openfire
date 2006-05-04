@@ -844,7 +844,7 @@ public class MUCRoomImpl implements MUCRoom {
         }
         if (isLogEnabled()) {
             MUCRole senderRole = null;
-            JID senderAddress = null;
+            JID senderAddress;
             if (message.getTo() != null && message.getTo().getResource() != null) {
                 senderRole = occupants.get(message.getTo().getResource());
             }
@@ -859,6 +859,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Log the conversation
             server.logConversation(this, message, senderAddress);
         }
+        server.messageBroadcastedTo(occupants.size());
     }
 
     /**

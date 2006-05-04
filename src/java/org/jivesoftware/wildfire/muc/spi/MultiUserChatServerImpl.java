@@ -29,6 +29,8 @@ import org.jivesoftware.wildfire.forms.FormField;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.wildfire.muc.*;
+import org.jivesoftware.wildfire.stats.Statistic;
+import org.jivesoftware.wildfire.stats.StatisticsManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
@@ -37,6 +39,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -59,6 +63,17 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     private static final FastDateFormat dateFormatter = FastDateFormat
             .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
+
+    /**
+     * Statistics keys
+     */
+    private static final String roomsStatKey = "muc_rooms";
+    private static final String occupantsStatKey = "muc_occupants";
+    private static final String usersStatKey = "muc_users";
+    private static final String incomingStatKey = "muc_incoming";
+    private static final String outgoingStatKey = "muc_outgoing";
+
+
     /**
      * The time to elapse between clearing of idle chat users.
      */
@@ -166,6 +181,17 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
      */
     private final long cleanup_frequency = 60 * 60 * 1000;
+
+    /**
+     * Total number of received messages in all rooms since the last reset. The counter
+     * is reset each time the Statistic makes a sampling.
+     */
+    private AtomicInteger inMessages = new AtomicInteger(0);
+    /**
+     * Total number of broadcasted messages in all rooms since the last reset. The counter
+     * is reset each time the Statistic makes a sampling.
+     */
+    private AtomicLong outMessages = new AtomicLong(0);
 
     /**
      * Create a new group chat server.
@@ -294,14 +320,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         for (MUCUser user : users.values()) {
             try {
                 if (user.getLastPacketTime() < deadline) {
-                    // Kick the user from all the rooms that he/she had previuosly joined
-                    Iterator<MUCRole> roles = user.getRoles();
                     // If user is not present in any room then remove the user from
                     // the list of users
-                    if (!roles.hasNext()) {
+                    if (!user.isJoined()) {
                         removeUser(user.getAddress());
                         continue;
                     }
+                    // Kick the user from all the rooms that he/she had previuosly joined
+                    Iterator<MUCRole> roles = user.getRoles();
                     MUCRole role;
                     MUCRoom room;
                     Presence kickedPresence;
@@ -781,6 +807,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 router)) {
             rooms.put(room.getName().toLowerCase(), room);
         }
+        // Add statistics
+        addTotalRoomStats();
+        addTotalOccupantsStats();
+        addTotalConnectedUsers();
+        addNumberIncomingMessages();
+        addNumberOutgoingMessages();
     }
 
     public void stop() {
@@ -789,14 +821,67 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         routingTable.removeRoute(getAddress());
         timer.cancel();
         logAllConversation();
+        // Remove the statistics.
+        StatisticsManager.getInstance().removeStatistic(roomsStatKey);
+        StatisticsManager.getInstance().removeStatistic(occupantsStatKey);
+        StatisticsManager.getInstance().removeStatistic(usersStatKey);
+        StatisticsManager.getInstance().removeStatistic(incomingStatKey);
+        StatisticsManager.getInstance().removeStatistic(outgoingStatKey);
+
     }
 
     public long getTotalChatTime() {
         return totalChatTime;
     }
 
+    /**
+     * Retuns the number of existing rooms in the server (i.e. persistent or not,
+     * in memory or not).
+     *
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberChatRooms() {
+        return rooms.size();
+    }
+
+    /**
+     * Retuns the total number of occupants in all rooms in the server.
+     *
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberConnectedUsers() {
+        int total = 0;
+        for (MUCUser user : users.values()) {
+            if (user.isJoined()) {
+                total = total + 1;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Retuns the total number of users that have joined in all rooms in the server.
+     *
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberRoomOccupants() {
+        int total = 0;
+        for (MUCRoom room : rooms.values()) {
+            total = total + room.getOccupantsCount();
+        }
+        return total;
+    }
+
     public void logConversation(MUCRoom room, Message message, JID sender) {
         logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
+    }
+
+    public void messageBroadcastedTo(int numOccupants) {
+        // Increment counter of received messages that where broadcasted by one
+        inMessages.incrementAndGet();
+        // Increment counter of outgoing messages with the number of room occupants
+        // that received the message
+        outMessages.addAndGet(numOccupants);
     }
 
     public Iterator<DiscoServerItem> getItems() {
@@ -1037,5 +1122,158 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
         }
         return buf.toString();
+    }
+
+    /****************** Statistics code ************************/
+    private void addTotalRoomStats() {
+        // Register a statistic.
+        Statistic statistic = new Statistic() {
+            public String getKey() {
+                return roomsStatKey;
+            }
+
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+            }
+
+            public Type getStatType() {
+                return Type.COUNT;
+            }
+
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+            }
+
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+            }
+
+            public double sample(long timePeriod) {
+                return getNumberChatRooms();
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(statistic);
+    }
+
+    private void addTotalOccupantsStats() {
+        // Register a statistic.
+        Statistic statistic = new Statistic() {
+            public String getKey() {
+                return occupantsStatKey;
+            }
+
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
+            }
+
+            public Type getStatType() {
+                return Type.COUNT;
+            }
+
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.description");
+            }
+
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.label");
+            }
+
+            public double sample(long timePeriod) {
+                return getNumberRoomOccupants();
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(statistic);
+    }
+
+    private void addTotalConnectedUsers() {
+        // Register a statistic.
+        Statistic statistic = new Statistic() {
+            public String getKey() {
+                return usersStatKey;
+            }
+
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.name");
+            }
+
+            public Type getStatType() {
+                return Type.COUNT;
+            }
+
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.description");
+            }
+
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.label");
+            }
+
+            public double sample(long timePeriod) {
+                return getNumberConnectedUsers();
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(statistic);
+    }
+
+    private void addNumberIncomingMessages() {
+        // Register a statistic.
+        Statistic statistic = new Statistic() {
+            public String getKey() {
+                return incomingStatKey;
+            }
+
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.name");
+            }
+
+            public Type getStatType() {
+                return Type.RATE;
+            }
+
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.description");
+            }
+
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.label");
+            }
+
+            public double sample(long timePeriod) {
+                int received = inMessages.getAndSet(0);
+                return received/timePeriod;
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(statistic);
+    }
+
+    private void addNumberOutgoingMessages() {
+        // Register a statistic.
+        Statistic statistic = new Statistic() {
+            public String getKey() {
+                return outgoingStatKey;
+            }
+
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.name");
+            }
+
+            public Type getStatType() {
+                return Type.RATE;
+            }
+
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.description");
+            }
+
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.label");
+            }
+
+            public double sample(long timePeriod) {
+                long received = outMessages.getAndSet(0);
+                return received/timePeriod;
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(statistic);
     }
 }

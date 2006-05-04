@@ -11,14 +11,14 @@
 
 package org.jivesoftware.wildfire.muc;
 
-import java.util.List;
-import java.util.Collection;
-
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.JID;
 import org.xmpp.component.Component;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -283,4 +283,12 @@ public interface MultiUserChatServer extends Component {
      * @param sender the real XMPPAddress of the sender (e.g. john@example.org). 
      */
     void logConversation(MUCRoom room, Message message, JID sender);
+
+    /**
+     * Notification message indicating the server that an incoming message was broadcasted
+     * to a given number of occupants.
+     *
+     * @param numOccupants number of occupants that received the message.
+     */
+    void messageBroadcastedTo(int numOccupants);
 }

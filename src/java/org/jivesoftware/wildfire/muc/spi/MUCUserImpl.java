@@ -11,18 +11,20 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.Element;
-
-import org.jivesoftware.wildfire.muc.*;
-import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.PacketException;
+import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.muc.*;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of MUCUser. There will be a MUCUser per user that is connected to one or more 
@@ -72,6 +74,10 @@ public class MUCUserImpl implements MUCUser {
             throw new NotFoundException(roomName);
         }
         return role;
+    }
+
+    public boolean isJoined() {
+        return !roles.isEmpty();
     }
 
     public Iterator<MUCRole> getRoles() {

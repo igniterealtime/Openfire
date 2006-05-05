@@ -244,12 +244,12 @@ public class OutgoingServerSession extends Session {
             int realPort = port;
             Socket socket = new Socket();
             try {
-                Log.debug("OS - Trying to connect to " + hostname + ":" + port);
-
                 // Get the real hostname to connect to using DNS lookup of the specified hostname
                 DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
                 realHostname = address.getHost();
                 realPort = address.getPort();
+                Log.debug("OS - Trying to connect to " + hostname + ":" + port +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
                 // Establish a TCP connection to the Receiving Server
                 socket.connect(new InetSocketAddress(realHostname, realPort),
                         RemoteServerManager.getSocketTimeout());

@@ -139,11 +139,12 @@ class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            Log.debug("OS - Trying to connect to " + hostname + ":" + port);
             // Get the real hostname to connect to using DNS lookup of the specified hostname
             DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
             realHostname = address.getHost();
             realPort = address.getPort();
+            Log.debug("OS - Trying to connect to " + hostname + ":" + port +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
             // Connect to the remote server
             Socket socket = new Socket();
             socket.connect(new InetSocketAddress(realHostname, realPort),
@@ -512,7 +513,8 @@ class ServerDialback {
         XMPPPacketReader reader;
         Writer writer = null;
         // Establish a TCP connection back to the domain name asserted by the Originating Server
-        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
+        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port +
+                        "(DNS lookup: " + host + ":" + port + ")");
         // Connect to the Authoritative server
         Socket socket = new Socket();
         socket.connect(new InetSocketAddress(host, port), RemoteServerManager.getSocketTimeout());

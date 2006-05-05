@@ -193,6 +193,12 @@ public class PluginManager {
                 String webRoot = System.getProperty(webRootKey);
                 String classesDir = System.getProperty(classesDirKey);
                 boolean inDevelopmentMode = webRoot != null && classesDir != null;
+                if(inDevelopmentMode){
+                    final File compilationClassesDir = new File(pluginDir, "classes");
+                    if(!compilationClassesDir.exists()){
+                        compilationClassesDir.mkdir();
+                    }
+                }
 
 
                 if (parentPluginNode != null) {

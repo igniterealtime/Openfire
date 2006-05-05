@@ -19,9 +19,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -39,16 +39,13 @@ class PluginClassLoader {
     private URLClassLoader classLoader;
     private final List<URL> list = new ArrayList<URL>();
 
-
     /**
      * Constructs a plugin loader for the given plugin directory.
      *
-     * @param pluginDir the plugin directory.
      * @throws SecurityException if the created class loader violates
-     *                                     existing security constraints.
+     *                           existing security constraints.
      */
-    public PluginClassLoader(File pluginDir) throws SecurityException {
-        addDirectory(pluginDir);
+    public PluginClassLoader() throws SecurityException {
     }
 
     /**
@@ -56,8 +53,10 @@ class PluginClassLoader {
      * after adding the directory to make the change take effect.
      *
      * @param directory the directory.
+     * @param developmentMode true if the plugin is running in development mode. This resolves classloader conflicts between the deployed plugin
+     * and development classes.
      */
-    public void addDirectory(File directory) {
+    public void addDirectory(File directory, boolean developmentMode) {
         try {
             File classesDir = new File(directory, "classes");
             if (classesDir.exists()) {
@@ -72,7 +71,15 @@ class PluginClassLoader {
             if (jars != null) {
                 for (int i = 0; i < jars.length; i++) {
                     if (jars[i] != null && jars[i].isFile()) {
-                        list.add(jars[i].toURL());
+                        if (developmentMode) {
+                            // Do not add plugin-pluginName.jar to classpath.
+                            if (!jars[i].getName().equals("plugin-" + directory.getName() + ".jar")) {
+                                list.add(jars[i].toURL());
+                            }
+                        }
+                        else {
+                            list.add(jars[i].toURL());
+                        }
                     }
                 }
             }
@@ -82,7 +89,7 @@ class PluginClassLoader {
         }
     }
 
-    public Collection<URL> getURLS(){
+    public Collection<URL> getURLS() {
         return list;
     }
 

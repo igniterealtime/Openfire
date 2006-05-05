@@ -186,12 +186,21 @@ public class PluginManager {
                 // Check to see if this is a child plugin of another plugin. If it is, we
                 // re-use the parent plugin's class loader so that the plugins can interact.
                 Element parentPluginNode = (Element)pluginXML.selectSingleNode("/plugin/parentPlugin");
+
+                String pluginName = pluginDir.getName();
+                String webRootKey = pluginName + ".webRoot";
+                String classesDirKey = pluginName + ".classes";
+                String webRoot = System.getProperty(webRootKey);
+                String classesDir = System.getProperty(classesDirKey);
+                boolean inDevelopmentMode = webRoot != null && classesDir != null;
+
+
                 if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();
                     // See if the parent is already loaded.
                     if (plugins.containsKey(parentPlugin)) {
                         pluginLoader = classloaders.get(getPlugin(parentPlugin));
-                        pluginLoader.addDirectory(pluginDir);
+                        pluginLoader.addDirectory(pluginDir, inDevelopmentMode);
 
                     }
                     else {
@@ -233,37 +242,31 @@ public class PluginManager {
                 }
                 // This is not a child plugin, so create a new class loader.
                 else {
-                    pluginLoader = new PluginClassLoader(pluginDir);
+                    pluginLoader = new PluginClassLoader();
+                    pluginLoader.addDirectory(pluginDir, inDevelopmentMode);
                 }
 
                 // Check to see if development mode is turned on for the plugin. If it is,
                 // configure dev mode.
-                Element developmentNode = (Element)pluginXML.selectSingleNode("/plugin/development");
-                PluginDevEnvironment dev = null;
-                if (developmentNode != null) {
-                    Element webRoot = (Element)developmentNode.selectSingleNode(
-                            "/plugin/development/webRoot");
-                    Element classesDir = (Element)developmentNode.selectSingleNode(
-                            "/plugin/development/classesDir");
 
+                PluginDevEnvironment dev = null;
+                if (inDevelopmentMode) {
                     dev = new PluginDevEnvironment();
 
-                    String wrd = webRoot.getTextTrim();
-                    File webRootDir = new File(wrd);
+                    File webRootDir = new File(webRoot);
                     if (!webRootDir.exists()) {
                         // ok, let's try it relative from this plugin dir?
-                        webRootDir = new File(pluginDir, wrd);
+                        webRootDir = new File(pluginDir, webRoot);
                     }
 
                     if (webRootDir.exists()) {
                         dev.setWebRoot(webRootDir);
                     }
 
-                    String cd = classesDir.getTextTrim();
-                    File classes = new File(cd);
+                    File classes = new File(classesDir);
                     if (!classes.exists()) {
                         // ok, let's try it relative from this plugin dir?
-                        classes = new File(pluginDir, cd);
+                        classes = new File(pluginDir, classesDir);
                     }
 
                     if (classes.exists()) {
@@ -327,7 +330,6 @@ public class PluginManager {
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
-                    String pluginName = pluginDir.getName();
                     if(parentPluginNode != null){
                         pluginName = parentPluginNode.getTextTrim();
                     }

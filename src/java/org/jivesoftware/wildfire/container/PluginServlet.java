@@ -20,14 +20,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xml.sax.SAXException;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.GenericServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServlet;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,6 +31,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.GenericServlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -75,8 +75,7 @@ public class PluginServlet extends HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
-    {
+        throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -118,7 +117,7 @@ public class PluginServlet extends HttpServlet {
         pluginManager = manager;
         if (!webXML.exists()) {
             Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +
-                    " does not exist.");
+                " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -130,7 +129,7 @@ public class PluginServlet extends HttpServlet {
             SAXReader saxReader = new SAXReader(false);
             try {
                 saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                        false);
+                    false);
             }
             catch (SAXException e) {
                 Log.warn("Error setting SAXReader feature", e);
@@ -178,7 +177,7 @@ public class PluginServlet extends HttpServlet {
     public static void unregisterServlets(File webXML) {
         if (!webXML.exists()) {
             Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() +
-                    " does not exist.");
+                " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -187,7 +186,7 @@ public class PluginServlet extends HttpServlet {
         try {
             SAXReader saxReader = new SAXReader(false);
             saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
+                false);
             Document doc = saxReader.read(webXML);
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");
@@ -433,7 +432,7 @@ public class PluginServlet extends HttpServlet {
 
                 try {
                     Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
-                            relativeDir + filename).newInstance();
+                        relativeDir + filename).newInstance();
                     HttpServlet servlet = (HttpServlet)servletInstance;
                     servlet.init(servletConfig);
                     servlet.service(request, response);
@@ -490,8 +489,10 @@ public class PluginServlet extends HttpServlet {
         classpath.append(wildfireLib.getAbsolutePath()).append("//wildfire.jar;");
         classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
         classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
-        classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
 
+        if (pluginEnv.getClassesDir() != null) {
+            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
+        }
         return classpath.toString();
     }
 }

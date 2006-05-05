@@ -24,7 +24,18 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -171,10 +182,10 @@ public class PluginManager {
                     String requiredVersion = minServerVersion.getTextTrim();
                     Version version = XMPPServer.getInstance().getServerInfo().getVersion();
                     String hasVersion = version.getMajor() + "." + version.getMinor() + "." +
-                            version.getMicro();
+                        version.getMicro();
                     if (hasVersion.compareTo(requiredVersion) < 0) {
                         String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
-                                "server version " + requiredVersion;
+                            "server version " + requiredVersion;
                         Log.warn(msg);
                         System.out.println(msg);
                         return;
@@ -192,10 +203,9 @@ public class PluginManager {
                 String classesDirKey = pluginName + ".classes";
                 String webRoot = System.getProperty(webRootKey);
                 String classesDir = System.getProperty(classesDirKey);
-                boolean inDevelopmentMode = webRoot != null && classesDir != null;
-                if(inDevelopmentMode){
+                if (webRoot != null) {
                     final File compilationClassesDir = new File(pluginDir, "classes");
-                    if(!compilationClassesDir.exists()){
+                    if (!compilationClassesDir.exists()) {
                         compilationClassesDir.mkdir();
                     }
                 }
@@ -206,7 +216,7 @@ public class PluginManager {
                     // See if the parent is already loaded.
                     if (plugins.containsKey(parentPlugin)) {
                         pluginLoader = classloaders.get(getPlugin(parentPlugin));
-                        pluginLoader.addDirectory(pluginDir, inDevelopmentMode);
+                        pluginLoader.addDirectory(pluginDir, classesDir != null);
 
                     }
                     else {
@@ -230,7 +240,7 @@ public class PluginManager {
                                 }
                                 else {
                                     String msg = "Ignoring plugin " + pluginDir.getName() + ": parent plugin " +
-                                    parentPlugin + " not present.";
+                                        parentPlugin + " not present.";
                                     Log.warn(msg);
                                     System.out.println(msg);
                                     return;
@@ -249,35 +259,40 @@ public class PluginManager {
                 // This is not a child plugin, so create a new class loader.
                 else {
                     pluginLoader = new PluginClassLoader();
-                    pluginLoader.addDirectory(pluginDir, inDevelopmentMode);
+                    pluginLoader.addDirectory(pluginDir, classesDir != null);
                 }
 
                 // Check to see if development mode is turned on for the plugin. If it is,
                 // configure dev mode.
 
                 PluginDevEnvironment dev = null;
-                if (inDevelopmentMode) {
+                if (webRoot != null || classesDir != null) {
                     dev = new PluginDevEnvironment();
 
-                    File webRootDir = new File(webRoot);
-                    if (!webRootDir.exists()) {
-                        // ok, let's try it relative from this plugin dir?
-                        webRootDir = new File(pluginDir, webRoot);
+                    System.out.println(pluginName + " is running in development mode.");
+                    if (webRoot != null) {
+                        File webRootDir = new File(webRoot);
+                        if (!webRootDir.exists()) {
+                            // ok, let's try it relative from this plugin dir?
+                            webRootDir = new File(pluginDir, webRoot);
+                        }
+
+                        if (webRootDir.exists()) {
+                            dev.setWebRoot(webRootDir);
+                        }
                     }
 
-                    if (webRootDir.exists()) {
-                        dev.setWebRoot(webRootDir);
-                    }
+                    if (classesDir != null) {
+                        File classes = new File(classesDir);
+                        if (!classes.exists()) {
+                            // ok, let's try it relative from this plugin dir?
+                            classes = new File(pluginDir, classesDir);
+                        }
 
-                    File classes = new File(classesDir);
-                    if (!classes.exists()) {
-                        // ok, let's try it relative from this plugin dir?
-                        classes = new File(pluginDir, classesDir);
-                    }
-
-                    if (classes.exists()) {
-                        dev.setClassesDir(classes);
-                        pluginLoader.addURL(classes.getAbsoluteFile().toURL());
+                        if (classes.exists()) {
+                            dev.setClassesDir(classes);
+                            pluginLoader.addURL(classes.getAbsoluteFile().toURL());
+                        }
                     }
                 }
 
@@ -285,7 +300,7 @@ public class PluginManager {
 
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
-                if(parentPluginNode != null){
+                if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();
                     // See if the parent is already loaded.
                     if (plugins.containsKey(parentPlugin)) {
@@ -318,13 +333,13 @@ public class PluginManager {
 
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web.xml");
+                    File.separator + "web.xml");
                 if (webXML.exists()) {
                     PluginServlet.registerServlets(this, plugin, webXML);
                 }
                 // Load any custom-defined servlets.
                 File customWebXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                        File.separator + "web-custom.xml");
+                    File.separator + "web-custom.xml");
                 if (customWebXML.exists()) {
                     PluginServlet.registerServlets(this, plugin, customWebXML);
                 }
@@ -336,14 +351,13 @@ public class PluginManager {
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
-                    if(parentPluginNode != null){
+                    if (parentPluginNode != null) {
                         pluginName = parentPluginNode.getTextTrim();
                     }
 
-
                     // If global images are specified, override their URL.
                     Element imageEl = (Element)adminElement.selectSingleNode(
-                            "/plugin/adminconsole/global/logo-image");
+                        "/plugin/adminconsole/global/logo-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
                     }
@@ -355,7 +369,7 @@ public class PluginManager {
                     // the plugin servlet correctly.
                     List urls = adminElement.selectNodes("//@url");
                     for (Object url : urls) {
-                        Attribute attr = (Attribute) url;
+                        Attribute attr = (Attribute)url;
                         attr.setValue("plugins/" + pluginName + "/" + attr.getValue());
                     }
                     AdminConsole.addModel(pluginName, adminElement);
@@ -400,13 +414,13 @@ public class PluginManager {
         }
 
         File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web.xml");
+            File.separator + "web.xml");
         if (webXML.exists()) {
             AdminConsole.removeModel(pluginName);
             PluginServlet.unregisterServlets(webXML);
         }
         File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web-custom.xml");
+            File.separator + "web-custom.xml");
         if (customWebXML.exists()) {
             PluginServlet.unregisterServlets(customWebXML);
         }
@@ -432,7 +446,7 @@ public class PluginManager {
     /**
      * Loads a class from the classloader of a plugin.
      *
-     * @param plugin the plugin.
+     * @param plugin    the plugin.
      * @param className the name of the class to load.
      * @return the class.
      * @throws ClassNotFoundException if the class was not found.
@@ -440,8 +454,7 @@ public class PluginManager {
      * @throws InstantiationException if the class could not be created.
      */
     public Class loadClass(Plugin plugin, String className) throws ClassNotFoundException,
-            IllegalAccessException, InstantiationException
-    {
+        IllegalAccessException, InstantiationException {
         PluginClassLoader loader = classloaders.get(plugin);
         return loader.loadClass(className);
     }
@@ -452,7 +465,7 @@ public class PluginManager {
      *
      * @param plugin the plugin.
      * @return the plugin dev environment, or <tt>null</tt> if development
-     *      mode is not enabled for the plugin.
+     *         mode is not enabled for the plugin.
      */
     public PluginDevEnvironment getDevEnvironment(Plugin plugin) {
         return pluginDevelopment.get(plugin);
@@ -511,10 +524,11 @@ public class PluginManager {
 
     /**
      * Returns the classloader of a plugin.
+     *
      * @param plugin the plugin.
      * @return the classloader of the plugin.
      */
-    public PluginClassLoader getPluginClassloader(Plugin plugin){
+    public PluginClassLoader getPluginClassloader(Plugin plugin) {
         return classloaders.get(plugin);
     }
 
@@ -583,7 +597,7 @@ public class PluginManager {
 
                 for (File jarFile : jars) {
                     String pluginName = jarFile.getName().substring(0,
-                            jarFile.getName().length() - 4).toLowerCase();
+                        jarFile.getName().length() - 4).toLowerCase();
                     // See if the JAR has already been exploded.
                     File dir = new File(pluginDirectory, pluginName);
                     // If the JAR hasn't been exploded, do so.
@@ -599,7 +613,7 @@ public class PluginManager {
                         int count = 0;
                         while (!deleteDir(dir) && count < 5) {
                             Log.error("Error unloading plugin " + pluginName + ". " +
-                                    "Will attempt again momentarily.");
+                                "Will attempt again momentarily.");
                             Thread.sleep(5000);
                             count++;
                         }
@@ -658,7 +672,7 @@ public class PluginManager {
                     File dir = new File(pluginDirectory, pluginName);
                     while (!deleteDir(dir) && count < 5) {
                         Log.error("Error unloading plugin " + pluginName + ". " +
-                                "Will attempt again momentarily.");
+                            "Will attempt again momentarily.");
                         Thread.sleep(5000);
                         count++;
                     }
@@ -682,8 +696,8 @@ public class PluginManager {
          * isn't a plugin, this method will do nothing.
          *
          * @param pluginName the name of the plugin.
-         * @param file the JAR file
-         * @param dir the directory to extract the plugin to.
+         * @param file       the JAR file
+         * @param dir        the directory to extract the plugin to.
          */
         private void unzipPlugin(String pluginName, File file, File dir) {
             try {

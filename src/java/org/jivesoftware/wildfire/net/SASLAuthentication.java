@@ -34,9 +34,7 @@ import javax.security.sasl.SaslServer;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -60,6 +58,8 @@ public class SASLAuthentication {
     private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
 
     private static Map<String, ElementType> typeMap = new TreeMap<String, ElementType>();
+
+    private static Collection<String> mechanisms = null;
 
     public enum ElementType {
 
@@ -107,21 +107,33 @@ public class SASLAuthentication {
      * @return a string with the valid SASL mechanisms available for the specified session.
      */
     public static String getSASLMechanisms(Session session) {
+        if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder(195);
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         if (session.getConnection().isSecure() && session instanceof IncomingServerSession) {
+            // Server connections dont follow the same rules as clients
             sb.append("<mechanism>EXTERNAL</mechanism>");
         }
         else {
-            // Check if the user provider in use supports passwords retrieval. Accessing to the users
-            // passwords will be required by the CallbackHandler
-            if (UserManager.getUserProvider().supportsPasswordRetrieval()) {
-                sb.append("<mechanism>CRAM-MD5</mechanism>");
-                sb.append("<mechanism>DIGEST-MD5</mechanism>");
-            }
-            sb.append("<mechanism>PLAIN</mechanism>");
-            if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
-                sb.append("<mechanism>ANONYMOUS</mechanism>");
+            for (String mech : getSupportedMechanisms()) {
+                if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
+                    // Check if the user provider in use supports passwords retrieval. Accessing
+                    // to the users passwords will be required by the CallbackHandler
+                    if (!UserManager.getUserProvider().supportsPasswordRetrieval()) {
+                        continue;
+                    }
+                }
+                else if (mech.equals("ANONYMOUS")) {
+                    // Check anonymous is supported
+                    if (!XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                        continue;
+                    }
+                }
+                sb.append("<mechanism>");
+                sb.append(mech);
+                sb.append("</mechanism>");
             }
         }
         sb.append("</mechanisms>");
@@ -140,12 +152,25 @@ public class SASLAuthentication {
                 switch (type) {
                     case AUTH:
                         String mechanism = doc.attributeValue("mechanism");
+                        //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
                         if (mechanism.equalsIgnoreCase("PLAIN")) {
-                            success = doPlainAuthentication(doc);
+                            if (getSupportedMechanisms().contains("PLAIN")) {
+                                success = doPlainAuthentication(doc);
+                            }
+                            else {
+                                // TODO Send auth failed before closing connection
+                                success = false;
+                            }
                             isComplete = true;
                         }
                         else if (mechanism.equalsIgnoreCase("ANONYMOUS")) {
-                            success = doAnonymousAuthentication();
+                            if (getSupportedMechanisms().contains("ANONYMOUS")) {
+                                success = doAnonymousAuthentication();
+                            }
+                            else {
+                                // TODO Send auth failed before closing connection
+                                success = false;
+                            }
                             isComplete = true;
                         }
                         else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
@@ -155,31 +180,43 @@ public class SASLAuthentication {
                         else {
                             // The selected SASL mechanism requires the server to send a challenge
                             // to the client
-                            try {
-                                Map<String, String> props = new TreeMap<String, String>();
-                                props.put(Sasl.QOP, "auth");
-                                SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
-                                        session.getServerName(), props,
-                                        new XMPPCallbackHandler());
-                                // evaluateResponse doesn't like null parameter
-                                byte[] token = new byte[0];
-                                if (doc.isTextOnly()) {
-                                    // If auth request includes a value then validate it
-                                    token = StringUtils.decodeBase64(doc.getText());
-                                    if (token == null) {
-                                        token = new byte[0];
+                            if (getSupportedMechanisms().contains(mechanism)) {
+                                try {
+                                    Map<String, String> props = new TreeMap<String, String>();
+                                    props.put(Sasl.QOP, "auth");
+                                    if (mechanism.equals("GSSAPI")) {
+                                        props.put(Sasl.SERVER_AUTH, "TRUE");
                                     }
-                                }
-                                byte[] challenge = ss.evaluateResponse(token);
-                                // Send the challenge
-                                sendChallenge(challenge);
+                                    SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
+                                            session.getServerName(), props,
+                                            new XMPPCallbackHandler());
+                                    // evaluateResponse doesn't like null parameter
+                                    byte[] token = new byte[0];
+                                    if (doc.isTextOnly()) {
+                                        // If auth request includes a value then validate it
+                                        token = StringUtils.decodeBase64(doc.getTextTrim());
+                                        if (token == null) {
+                                            token = new byte[0];
+                                        }
+                                    }
+                                    byte[] challenge = ss.evaluateResponse(token);
+                                    // Send the challenge
+                                    sendChallenge(challenge);
 
-                                session.setSessionData("SaslServer", ss);
+                                    session.setSessionData("SaslServer", ss);
+                                }
+                                catch (SaslException e) {
+                                    isComplete = true;
+                                    Log.warn("SaslException", e);
+                                    authenticationFailed();
+                                }
                             }
-                            catch (SaslException e) {
+                            else {
+                                // TODO Send auth failed before closing connection
+                                Log.warn("Client wants to do a MECH we don't support: '" +
+                                        mechanism + "'");
                                 isComplete = true;
-                                Log.warn("SaslException", e);
-                                authenticationFailed();
+                                success = false;
                             }
                         }
                         break;
@@ -189,20 +226,27 @@ public class SASLAuthentication {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
                             try {
-                                byte[] data = StringUtils.decodeBase64(response);
-                                if (data == null) {
-                                    data = new byte[0];
-                                }
-
                                 if (ssComplete) {
-                                    authenticationSuccessful(ss.getAuthorizationID());
+                                    authenticationSuccessful(ss.getAuthorizationID(), null);
                                     success = true;
                                     isComplete = true;
                                 }
                                 else {
+                                    byte[] data = StringUtils.decodeBase64(response);
+                                    if (data == null) {
+                                        data = new byte[0];
+                                    }
                                     byte[] challenge = ss.evaluateResponse(data);
-                                    // Send the challenge
-                                    sendChallenge(challenge);
+                                    if (ss.isComplete()) {
+                                        authenticationSuccessful(ss.getAuthorizationID(),
+                                                challenge);
+                                        success = true;
+                                        isComplete = true;
+                                    }
+                                    else {
+                                        // Send the challenge
+                                        sendChallenge(challenge);
+                                    }
                                 }
                             }
                             catch (SaslException e) {
@@ -244,7 +288,7 @@ public class SASLAuthentication {
     private boolean doAnonymousAuthentication() {
         if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
             // Just accept the authentication :)
-            authenticationSuccessful(null);
+            authenticationSuccessful(null, null);
             return true;
         }
         else {
@@ -282,7 +326,7 @@ public class SASLAuthentication {
         }
         try {
             AuthToken token = AuthFactory.authenticate(username, password);
-            authenticationSuccessful(token.getUsername());
+            authenticationSuccessful(token.getUsername(), null);
             return true;
         }
         catch (UnauthorizedException e) {
@@ -318,7 +362,7 @@ public class SASLAuthentication {
                 boolean verify =
                         JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
                 if (!verify) {
-                    authenticationSuccessful(hostname);
+                    authenticationSuccessful(hostname, null);
                     return true;
                 }
             }
@@ -326,7 +370,7 @@ public class SASLAuthentication {
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
                 if (TLSStreamHandler.getPeerIdentities((X509Certificate) certificate)
                         .contains(hostname)) {
-                    authenticationSuccessful(hostname);
+                    authenticationSuccessful(hostname, null);
                     return true;
                 }
             }
@@ -337,6 +381,9 @@ public class SASLAuthentication {
 
     private void sendChallenge(byte[] challenge) {
         StringBuilder reply = new StringBuilder(250);
+        if(challenge == null) {
+            challenge = new byte[0];
+        }
         String challenge_b64 = StringUtils.encodeBase64(challenge).trim();
         if ("".equals(challenge_b64)) {
             challenge_b64 = "="; // Must be padded if null
@@ -348,8 +395,16 @@ public class SASLAuthentication {
         connection.deliverRawText(reply.toString());
     }
 
-    private void authenticationSuccessful(String username) {
-        connection.deliverRawText("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"/>");
+    private void authenticationSuccessful(String username, byte[] successData) {
+        StringBuilder reply = new StringBuilder(80);
+        reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
+        if (successData != null) {
+            reply.append(">").append(successData).append("</success>");
+        }
+        else {
+            reply.append("/>");
+        }
+        connection.deliverRawText(reply.toString());
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((ClientSession) session).setAuthToken(new AuthToken(username));
@@ -382,5 +437,46 @@ public class SASLAuthentication {
             // Close the connection
             connection.close();
         }
+    }
+    
+    public static Collection<String> getSupportedMechanisms() {
+        if (mechanisms == null) {
+            mechanisms = new ArrayList<String>();
+            String available = JiveGlobals.getXMLProperty("sasl.mechs");
+            if (available == null) {
+                mechanisms.add("ANONYMOUS");
+                mechanisms.add("PLAIN");
+                mechanisms.add("DIGEST-MD5");
+                mechanisms.add("CRAM-MD5");
+                return mechanisms;
+            }
+            StringTokenizer st = new StringTokenizer(available, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String mech = st.nextToken().toUpperCase();
+                // Check that the mech is a supported mechansim. Maybe we shouldnt check this and allow any?
+                if(mech.equals("ANONYMOUS") ||
+                  mech.equals("PLAIN") ||
+                  mech.equals("DIGEST-MD5") ||
+                  mech.equals("CRAM-MD5") ||
+                  mech.equals("GSSAPI") ) { 
+                    Log.debug("SASLAuthentication: Added "+mech+" to mech list");
+                    mechanisms.add(mech);
+                }
+            }
+            
+            if(getSupportedMechanisms().contains("GSSAPI")) {
+                if(JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
+                    System.setProperty("java.security.krb5.debug", JiveGlobals.getXMLProperty("sasl.gssapi.debug","false"));
+                    System.setProperty("java.security.auth.login.config",JiveGlobals.getXMLProperty("sasl.gssapi.config"));
+                    System.setProperty("javax.security.auth.useSubjectCredsOnly",JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly","false"));
+                } else {
+                    //Not configured, remove the option.
+                    Log.debug("SASLAuthentication: Removed GSSAPI from mech list");
+                    mechanisms.remove("GSSAPI");
+                }
+            }
+            
+        }
+        return mechanisms;
     }
 }

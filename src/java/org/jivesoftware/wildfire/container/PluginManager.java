@@ -203,12 +203,15 @@ public class PluginManager {
                 String classesDirKey = pluginName + ".classes";
                 String webRoot = System.getProperty(webRootKey);
                 String classesDir = System.getProperty(classesDirKey);
+
                 if (webRoot != null) {
                     final File compilationClassesDir = new File(pluginDir, "classes");
                     if (!compilationClassesDir.exists()) {
                         compilationClassesDir.mkdir();
                     }
+                    compilationClassesDir.deleteOnExit();
                 }
+
 
 
                 if (parentPluginNode != null) {
@@ -403,6 +406,9 @@ public class PluginManager {
         if (plugin == null) {
             return;
         }
+
+        // Remove from dev mode if it exists.
+        pluginDevelopment.remove(plugin);
 
         // See if any child plugins are defined.
         if (parentPluginMap.containsKey(plugin)) {

@@ -1879,6 +1879,8 @@ public abstract class Node {
             entity.addAttribute("jid", affiliate.getJID().toString());
             entity.addAttribute("affiliation", affiliate.getAffiliation().name());
         }
+        // Send reply
+        service.send(reply);
     }
 
     /**
@@ -1906,6 +1908,8 @@ public abstract class Node {
                 }
             }
         }
+        // Send reply
+        service.send(reply);
     }
 
     /**

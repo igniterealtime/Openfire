@@ -96,7 +96,7 @@ public class RosterItem implements Cacheable {
     public static final SubType SUB_BOTH = new SubType("both", 3);
 
     /**
-     * <p>The roster item has no pending subscripton requests.</p>
+     * <p>The roster item has no pending subscription requests.</p>
      */
     public static final AskType ASK_NONE = new AskType("", -1);
     /**

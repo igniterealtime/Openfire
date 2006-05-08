@@ -175,11 +175,16 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      */
     public void addServerItemsProvider(ServerItemsProvider provider) {
         DiscoServerItem discoItem;
-        for (Iterator it = provider.getItems(); it.hasNext();) {
-            discoItem = (DiscoServerItem)it.next();
+        Iterator<DiscoServerItem> items = provider.getItems();
+        if (items == null) {
+            // Do nothing
+            return;
+        }
+        while (items.hasNext()) {
+            discoItem = items.next();
             // Add the element to the list of items related to the server
             addComponentItem(discoItem.getJID(), discoItem.getNode(), discoItem.getName());
-            
+
             // Add the new item as a valid entity that could receive info and items disco requests
             String host = new JID(discoItem.getJID()).getDomain();
             infoHandler.setProvider(host, discoItem.getDiscoInfoProvider());
@@ -194,8 +199,13 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      */
     public void removeServerItemsProvider(ServerItemsProvider provider) {
         DiscoServerItem discoItem;
-        for (Iterator it = provider.getItems(); it.hasNext();) {
-            discoItem = (DiscoServerItem)it.next();
+        Iterator<DiscoServerItem> items = provider.getItems();
+        if (items == null) {
+            // Do nothing
+            return;
+        }
+        while (items.hasNext()) {
+            discoItem = items.next();
             // Remove the item from the server items list
             removeComponentItem(discoItem.getJID());
 

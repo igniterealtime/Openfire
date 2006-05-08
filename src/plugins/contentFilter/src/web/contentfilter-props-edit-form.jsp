@@ -11,6 +11,7 @@
 
 <%
     boolean save = request.getParameter("save") != null;
+    boolean reset = request.getParameter("reset") !=null;
     boolean success = request.getParameter("success") != null;
     
     //filter options
@@ -19,8 +20,10 @@
     String [] filterStatusChecked = ParamUtils.getParameters(request, "filterstatus");
     boolean filterStatusEnabled = filterStatusChecked.length > 0;
  
-    //mask options
-	boolean maskEnabled = ParamUtils.getBooleanParameter(request, "maskenabled");
+    //match options
+    boolean allowOnMatch = ParamUtils.getBooleanParameter(request, "allowonmatch");
+    String [] maskChecked = ParamUtils.getParameters(request, "maskenabled");
+	boolean maskEnabled = maskChecked.length > 0;
    	String mask =  ParamUtils.getParameter(request, "mask");
 
     //rejection options
@@ -92,6 +95,7 @@
 		    plugin.setPatternsEnabled(patternsEnabled);
 		    plugin.setPatterns(patterns);
 		    plugin.setFilterStatusEnabled(filterStatusEnabled);
+		    plugin.setAllowOnMatch(allowOnMatch);
 		    plugin.setMaskEnabled(maskEnabled);
 		    plugin.setMask(mask);
 	        plugin.setViolationNotificationEnabled(notificationEnabled);
@@ -104,6 +108,9 @@
 	        response.sendRedirect("contentfilter-props-edit-form.jsp?success=true");
 	        return;
 	    }
+    } else if (reset) {
+      plugin.reset();
+      response.sendRedirect("contentfilter-props-edit-form.jsp?success=true");
     } else {
         patterns = plugin.getPatterns();
         mask = plugin.getMask();   
@@ -123,6 +130,7 @@
     
     patternsEnabled = plugin.isPatternsEnabled();
     filterStatusEnabled = plugin.isFilterStatusEnabled();
+    allowOnMatch = plugin.isAllowOnMatch();
     maskEnabled = plugin.isMaskEnabled();
     notificationEnabled = plugin.isViolationNotificationEnabled();
     rejectionNotificationEnabled = plugin.isRejectionNotificationEnabled();
@@ -168,7 +176,7 @@ Use the form below to edit content filter settings.<br>
 
 <%  } %>
 
-<form action="contentfilter-props-edit-form.jsp?save" method="post">
+<form action="contentfilter-props-edit-form.jsp" method="post">
 
 <fieldset>
     <legend>Filter</legend>
@@ -229,31 +237,31 @@ Use the form below to edit content filter settings.<br>
 <br><br>
 
 <fieldset>
-    <legend>Content Mask</legend>
+    <legend>On Content Match</legend>
     <div>
     
     <p>
-    Enable this feature to alter packet content when there is a pattern match.
+    Configure this feature to reject or allow (and optionally mask) packet content when there is a match.
     </p>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
     	<tr>
             <td width="1%">
-            <input type="radio" name="maskenabled" value="false" id="not03"
-             <%= ((maskEnabled) ? "" : "checked") %>>
+            <input type="radio" name="allowonmatch" value="false" id="not03"
+             <%= ((allowOnMatch) ? "" : "checked") %>>
             </td>
             <td width="99%">
-                <label for="not01"><b>Disabled</b></label> - Packets will be rejected.
+                <label for="not01"><b>Reject</b></label> - Packets will be rejected.
             </td>
         </tr>
         <tr>
             <td width="1%">
-            <input type="radio" name="maskenabled" value="true" id="not04"
-             <%= ((maskEnabled) ? "checked" : "") %>>
+            <input type="radio" name="allowonmatch" value="true" id="not04"
+             <%= ((allowOnMatch) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="not02"><b>Enabled</b></label> - Packets will be masked.
+                <label for="not02"><b>Allow</b></label> - Packets will be allowed.
             </td>
         </tr>
         <tr>
@@ -268,6 +276,10 @@ Use the form below to edit content filter settings.<br>
 	            <% } %>
 	        </td>
 	    </tr>
+	    <tr>
+		<td>&nbsp;</td>
+        <td><input type="checkbox" name="maskenabled" value="maskenabled" <%= maskEnabled ? "checked" : "" %>>Enable mask.</input></td>
+	</tr>
     </tbody>
     </table>
     </div>
@@ -281,7 +293,7 @@ Use the form below to edit content filter settings.<br>
     
     <p>
     Enable this feature to have the sender notified whenever a packet is rejected.
-    NB: This feature is only operational if "Content Mask" feature is disabled.
+    NB: This feature is only operational if "On Content Match" is set to reject packets.
     </p>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -394,8 +406,12 @@ Use the form below to edit content filter settings.<br>
 
 <br><br>
 
-<input type="submit" value="Save Properties">
+<input type="submit" name="save" value="Save settings">
+<input type="submit" name="reset" value="Restore factory settings*">
 </form>
 
+<br><br>
+
+<em>*Restores the plugin to its factory state, you will lose all changes ever made to this plugin!</em>
 </body>
 </html>

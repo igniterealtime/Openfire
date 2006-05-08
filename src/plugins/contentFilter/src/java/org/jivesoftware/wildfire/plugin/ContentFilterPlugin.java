@@ -117,6 +117,14 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * ignored. The default value is "**".
      */
     public static final String MASK_PROPERTY = "plugin.contentFilter.mask";
+    
+    /**
+     * The expected value is a boolean, if false packets whose contents matches one
+     * of the supplied regular expressions will be rejected, otherwise the packet will
+     * be accepted and may be optionally masked. The default value is false.
+     * @see #MASK_ENABLED_PROPERTY
+     */
+    public static final String ALLOW_ON_MATCH_PROPERTY = "plugin.contentFilter.allow.on.match";
 
     /**
      * the hook into the inteceptor chain
@@ -193,7 +201,12 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
      * the mask to use
      */
     private String mask;
-
+    
+    /**
+     * flag if matching content should be accepted or rejected. 
+     */
+    private boolean allowOnMatch;
+    
     /**
      * violation notification messages will be from this JID
      */
@@ -207,6 +220,37 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         messageRouter = XMPPServer.getInstance().getMessageRouter();
     }
 
+    /**
+     * Restores the plugin defaults.
+     */
+    public void reset() {
+        setViolationNotificationEnabled(false);
+        setViolationContact("admin");
+        setViolationNotificationByIMEnabled(true);
+        setViolationNotificationByEmailEnabled(false);
+        setViolationIncludeOriginalPacketEnabled(false);
+        setRejectionNotificationEnabled(false);
+        setRejectionMessage("Message rejected. This is an automated server response");
+        setPatternsEnabled(false);
+        setPatterns("fox,dog");        
+        setFilterStatusEnabled(false);
+        setMaskEnabled(false);
+        setMask("***");
+        setAllowOnMatch(false);
+    }
+    
+    public boolean isAllowOnMatch() {
+        return allowOnMatch;
+    }
+    
+    public void setAllowOnMatch(boolean allow) {
+        allowOnMatch = allow;
+        JiveGlobals.setProperty(ALLOW_ON_MATCH_PROPERTY, allow ? "true"
+                : "false");
+        
+        changeContentFilterMask();
+    }
+    
     public boolean isMaskEnabled() {
         return maskEnabled;
     }
@@ -227,7 +271,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     }
 
     private void changeContentFilterMask() {
-        if (maskEnabled) {
+        if (allowOnMatch && maskEnabled) {
             contentFilter.setMask(mask);
         } else {
             contentFilter.clearMask();
@@ -398,7 +442,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
             changeContentFilterPatterns();
         }
         catch (PatternSyntaxException e) {
-            Log.warn("Reseting to default patterns of ContentFilterPlugin", e);
+            Log.warn("Resetting to default patterns of ContentFilterPlugin", e);
             // Existing patterns are invalid so reset to default ones
             setPatterns("fox,dog");
         }
@@ -409,11 +453,20 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
         // default to false
         maskEnabled = JiveGlobals.getBooleanProperty(MASK_ENABLED_PROPERTY,
-                false);
+                false);       
 
         // default to "***"
         mask = JiveGlobals.getProperty(MASK_PROPERTY, "***");
-
+        
+        // default to false
+        allowOnMatch = JiveGlobals.getBooleanProperty(
+                ALLOW_ON_MATCH_PROPERTY, false);
+        
+        //v1.2.2 backwards compatibility
+        if (maskEnabled) {
+            allowOnMatch = true;
+        }
+        
         changeContentFilterMask();
     }
 
@@ -460,24 +513,27 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                             + this.violationIncludeOriginalPacketEnabled);
                 }
 
-                // TODO consider spining off a separate thread here,
-                // in high volume situations, it will result in
-                // in faster response and notification is not required
-                // to be real time.
                 sendViolationNotification(original);
             }
 
             // msg will either be rejected silently, rejected with
-            // some notification to sender, or masked.
+            // some notification to sender, or allowed and optionally masked.
+            // allowing a message without masking can be useful if the admin
+            // simply wants to get notified of matches without interrupting
+            // the conversation in the  (spy mode!)
             if (contentMatched) {
-                if (maskEnabled) {
-                    // masking enabled, no further action required
+                
+                if (allowOnMatch) {
+                                        
                     if (Log.isDebugEnabled()) {
-                        Log.debug("Content filter: masked content:"
+                        Log.debug("Content filter: allowed content:"
                                 + packet.toString());
                     }
+                    
+                    // no further action required
+                    
                 } else {
-                    // no masking, msg must be rejected
+                    // msg must be rejected
                     if (Log.isDebugEnabled()) {
                         Log.debug("Content filter: rejecting packet");
                     }
@@ -517,8 +573,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
                     + " to:"
                     + originalMsg.getTo()
                     + ", message was "
-                    + (contentFilter.isMaskingContent() ? "altered."
-                            : "rejected.")
+                    + (allowOnMatch ? "allowed" + (contentFilter.isMaskingContent() ? " and masked." : " but not masked.") : "rejected.")
                     + (violationIncludeOriginalPacketEnabled ? "\nOriginal subject:"
                             + (originalMsg.getSubject() != null ? originalMsg
                                     .getSubject() : "")
@@ -533,8 +588,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
             body = "Disallowed status detected in presence from:"
                     + originalPresence.getFrom()
                     + ", status was "
-                    + (contentFilter.isMaskingContent() ? "altered."
-                            : "rejected.")
+                    + (allowOnMatch ? "allowed" + (contentFilter.isMaskingContent() ? " and masked." : " but not masked.") : "rejected.")
                     + (violationIncludeOriginalPacketEnabled ? "\nOriginal status:"
                             + originalPresence.getStatus()
                             : "");
@@ -559,6 +613,10 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
     private void sendViolationNotificationIM(String subject, String body) {
         Message message = createServerMessage(subject, body);
+        // TODO consider spining off a separate thread here,
+        // in high volume situations, it will result in
+        // in faster response and notification is not required
+        // to be real time.
         messageRouter.route(message);
     }
 
@@ -575,6 +633,8 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
     private void sendViolationNotificationEmail(String subject, String body) {
         try {
             User user = UserManager.getInstance().getUser(violationContact);
+            
+            //this is automatically put on a another thread for execution.
             EmailService.getInstance().sendMessage(user.getName(), user.getEmail(), "Wildfire",
                 "no_reply@" + violationNotificationFrom.getDomain(), subject, body, null);
 

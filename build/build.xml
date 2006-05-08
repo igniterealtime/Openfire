@@ -1173,7 +1173,10 @@
 
     <!-- clean-plugins ========================================================================= -->
     <target name="clean-plugins" description="Cleans all generated plugins">
-        <delete dir="${plugin.dest.dir}"/>
+        <delete includeemptydirs="true">
+            <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*" />
+        </delete>
+        <!--<delete dir="${plugin.dest.dir}"/>-->
         <delete dir="${plugin.dev.dest.dir}"/>
     </target>
 

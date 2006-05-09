@@ -999,6 +999,11 @@
                 <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html, *.gif, *.png"/>
             </copy>
 
+            <!-- Copy the database and i18n file to the target dir, if they exist. -->
+            <!--<copy todir="${plugin.dev.dest.dir}/@{plugin}/target/database" failonerror="false">-->
+                <!--<fileset dir="@{pluginsrc}/@{plugin}/src/database"/>-->
+            <!--</copy>-->
+
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"
                 type="dir" file="@{pluginsrc}/@{plugin}/src/web"/>
@@ -1112,6 +1117,8 @@
                     <include name="classes/**/*.*"/>
                 </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}/src">
+                    <include name="database/**/*.sql"/>
+                    <include name="i18n/*.properties"/>
                     <include name="web/**/*.*"/>
                     <exclude name="web/WEB-INF/web.xml"/>
                     <exclude name="web/**/*.jsp"/>

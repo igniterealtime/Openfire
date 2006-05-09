@@ -11,10 +11,13 @@
 
 package org.jivesoftware.wildfire.server;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.ChannelHandler;
+import org.jivesoftware.wildfire.RoutableChannelHandler;
+import org.jivesoftware.wildfire.RoutingTable;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.*;
 
 import java.util.concurrent.BlockingQueue;
@@ -63,15 +66,16 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     private void init() {
         routingTable = XMPPServer.getInstance().getRoutingTable();
         // Create a pool of threads that will process queued packets.
-        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.outgoing.threads", 20);
+        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.outgoing.max.threads", 20);
+        int queueSize = JiveGlobals.getIntProperty("xmpp.server.outgoing.queue", 50);
         if (maxThreads < 10) {
             // Ensure that the max number of threads in the pool is at least 10
             maxThreads = 10;
         }
         threadPool =
                 new ThreadPoolExecutor(Math.round(maxThreads/4), maxThreads, 60, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(),
-                        new ThreadPoolExecutor.DiscardOldestPolicy());
+                        new LinkedBlockingQueue<Runnable>(queueSize),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
 
         // Start the thread that will consume the queued packets. Each pending packet will
         // be actually processed by a thread of the pool (when available). If an error occurs

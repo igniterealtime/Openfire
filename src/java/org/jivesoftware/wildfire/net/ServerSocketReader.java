@@ -12,12 +12,12 @@
 package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * could be routed at the same time. To avoid creating new threads every time a packet is received
  * each <tt>ServerSocketReader</tt> instance uses a {@link ThreadPoolExecutor}. By default the
  * maximum number of threads that the executor may have is 50. However, this value may be modified
- * by changing the property <b>xmpp.server.processing.threads</b>.
+ * by changing the property <b>xmpp.server.processing.max.threads</b>.
  *
  * @author Gaston Dombiak
  */
@@ -54,10 +54,12 @@ public class ServerSocketReader extends SocketReader {
         super(router, serverName, socket, connection);
         // Create a pool of threads that will process received packets. If more threads are
         // required then the command will be executed on the SocketReader process
-        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.processing.threads", 50);
+        int coreThreads = JiveGlobals.getIntProperty("xmpp.server.processing.core.threads", 2);
+        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.processing.max.threads", 50);
+        int queueSize = JiveGlobals.getIntProperty("xmpp.server.processing.queue", 50);
         threadPool =
-                new ThreadPoolExecutor(1, maxThreads, 60, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(),
+                new ThreadPoolExecutor(coreThreads, maxThreads, 60, TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(queueSize),
                         new ThreadPoolExecutor.CallerRunsPolicy());
     }
 

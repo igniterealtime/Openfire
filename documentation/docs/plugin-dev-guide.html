@@ -37,6 +37,7 @@ plugin directory are as follows:
  |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
  |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
  |- database/       &lt;- Optional database schema files that your plugin needs
+ |- i18n/           &lt;- Optional i18n files to allow for internationalization of plugins.
  |- lib/            &lt;- Libraries (JAR files) your plugin needs
  |- web             &lt;- Resources for Admin Console integration, if any
      |- WEB-INF/
@@ -281,6 +282,16 @@ The following HTML snippet demonstrates a valid page:
 </pre>
 </fieldset>
 
+<h4>Using i18n in your Admin Console Pages</h4>
+<p>
+To use i18n in your own plugin, you must do the following:
+<ul>
+    <li>Add i18n directory to root directory of your plugin.</li>
+    <li>Add each resource file using the %name_of_plugin%_i18n "_" language ".properties" naming convention.</li>
+    <li>To use directly within your jsp, use the LocaleUtils class, and pass in the name of the plugin.<br/><b>Example:&nbsp;</b>&lt;%= LocaleUtils.getLocalizedString("my.title", "myplugin") %&gt;
+    </li>
+</ul>
+</p>
 <h2>Using the Wildfire Build Script</h2>
 
 <p>

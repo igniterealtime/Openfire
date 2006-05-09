@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @author Derek DeMoro
  */
-class PluginClassLoader {
+public class PluginClassLoader {
 
     private URLClassLoader classLoader;
     private final List<URL> list = new ArrayList<URL>();
@@ -58,10 +58,19 @@ class PluginClassLoader {
      */
     public void addDirectory(File directory, boolean developmentMode) {
         try {
+            // Add classes directory to classpath.
             File classesDir = new File(directory, "classes");
             if (classesDir.exists()) {
                 list.add(classesDir.toURL());
             }
+
+            // Add i18n directory to classpath.
+            File i18nDir = new File(directory, "i18n");
+            if(i18nDir.exists()){
+                list.add(i18nDir.toURL());
+            }
+
+            // Add lib directory to classpath.
             File libDir = new File(directory, "lib");
             File[] jars = libDir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
@@ -160,5 +169,13 @@ class PluginClassLoader {
             parent = ClassLoader.getSystemClassLoader();
         }
         return parent;
+    }
+
+    /**
+     * Returns the URLClassloader used.
+     * @return the URLClassLoader used.
+     */
+    public ClassLoader getClassLoader(){
+        return classLoader;
     }
 }

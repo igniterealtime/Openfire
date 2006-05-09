@@ -167,16 +167,14 @@
                 }
                 else {
                     errorBuf.append("<br>").append(
-                            LocaleUtils.getLocalizedString("group.edit.already_user",
-                            JiveGlobals.getLocale(), Arrays.asList(username)));
+                            LocaleUtils.getLocalizedString("group.edit.already_user", Arrays.asList(username)));
                 }
 
             }
             catch (Exception e) {
                 Log.debug("Problem adding new user to existing group", e);
                 errorBuf.append("<br>").append(
-                        LocaleUtils.getLocalizedString("group.edit.inexistent_user",
-                        JiveGlobals.getLocale(), Arrays.asList(username)));
+                        LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
             }
         }
         if (count > 0) {

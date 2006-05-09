@@ -176,6 +176,6 @@ public class OfflineMessageStrategy extends BasicModule {
         /**
          * Messages are stored up to the storage limit, and then silently dropped.
          */
-        store_and_drop;
+        store_and_drop
     }
 }

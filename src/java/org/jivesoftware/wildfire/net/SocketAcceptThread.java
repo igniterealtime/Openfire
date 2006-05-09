@@ -46,6 +46,11 @@ public class SocketAcceptThread extends Thread {
     public static final int DEFAULT_SERVER_PORT = 5269;
 
     /**
+     * The default XMPP port for connection multiplex.
+     */
+    public static final int DEFAULT_MULTIPLEX_PORT = 5262;
+
+    /**
      * Holds information about the port on which the server will listen for connections.
      */
     private ServerPort serverPort;

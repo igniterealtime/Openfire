@@ -10,10 +10,7 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer;
 import org.xmpp.packet.JID;
@@ -21,8 +18,6 @@ import org.xmpp.packet.JID;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -303,49 +298,13 @@ public class ProxyConnectionManager {
     public static String createDigest(final String sessionID, final JID initiator,
                                final JID target)
     {
-        return hash(sessionID + initiator.getNode()
+        return StringUtils.hash(sessionID + initiator.getNode()
                 + "@" + initiator.getDomain() + "/"
                 + initiator.getResource()
                 + target.getNode() + "@"
                 + target.getDomain() + "/"
-                + target.getResource());
+                + target.getResource(), "SHA-1");
     }
-
-    private static MessageDigest digest = null;
-
-    private synchronized static String hash(String data) {
-        if (digest == null) {
-            try {
-                digest = MessageDigest.getInstance("SHA-1");
-            }
-            catch (NoSuchAlgorithmException nsae) {
-                Log.error("Failed to load the SHA-1 MessageDigest. " +
-                        "Jive will be unable to function normally.", nsae);
-            }
-        }
-        // Now, compute hash.
-        try {
-            digest.update(data.getBytes("UTF-8"));
-        }
-        catch (UnsupportedEncodingException e) {
-            Log.error(e);
-        }
-        return encodeHex(digest.digest());
-    }
-
-    private static String encodeHex(byte[] bytes) {
-        StringBuilder hex = new StringBuilder(bytes.length * 2);
-
-        for (int i = 0; i < bytes.length; i++) {
-            if (((int) bytes[i] & 0xff) < 0x10) {
-                hex.append("0");
-            }
-            hex.append(Integer.toString((int) bytes[i] & 0xff, 16));
-        }
-
-        return hex.toString();
-    }
-
 
     public boolean isRunning() {
         return socketProcess != null;

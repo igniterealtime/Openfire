@@ -191,7 +191,7 @@ public abstract class Session implements RoutableChannelHandler {
     }
 
     /**
-     * Obtain the number of packets sent from the client to the server.
+     * Increments the number of packets sent from the client to the server.
      */
     public void incrementClientPacketCount() {
         clientPacketCount++;
@@ -199,7 +199,7 @@ public abstract class Session implements RoutableChannelHandler {
     }
 
     /**
-     * Obtain the number of packets sent from the server to the client.
+     * Increments the number of packets sent from the server to the client.
      */
     public void incrementServerPacketCount() {
         serverPacketCount++;

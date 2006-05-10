@@ -74,7 +74,11 @@ public class SocketConnection implements Connection {
     private Writer writer;
     private AtomicBoolean writing = new AtomicBoolean(false);
 
-    private PacketDeliverer deliverer;
+    /**
+     * Deliverer to use when the connection is closed or was closed when delivering
+     * a packet.
+     */
+    private PacketDeliverer backupDeliverer;
 
     private Session session;
     private boolean secure;
@@ -105,12 +109,12 @@ public class SocketConnection implements Connection {
     /**
      * Create a new session using the supplied socket.
      *
-     * @param deliverer the packet deliverer this connection will use.
+     * @param backupDeliverer the packet deliverer this connection will use when socket is closed.
      * @param socket the socket to represent.
      * @param isSecure true if this is a secure connection.
      * @throws NullPointerException if the socket is null.
      */
-    public SocketConnection(PacketDeliverer deliverer, Socket socket, boolean isSecure)
+    public SocketConnection(PacketDeliverer backupDeliverer, Socket socket, boolean isSecure)
             throws IOException {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
@@ -119,7 +123,7 @@ public class SocketConnection implements Connection {
         this.secure = isSecure;
         this.socket = socket;
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
-        this.deliverer = deliverer;
+        this.backupDeliverer = backupDeliverer;
         xmlSerializer = new XMLSocketWriter(writer, this);
 
         instances.put(this, "");
@@ -384,6 +388,17 @@ public class SocketConnection implements Connection {
         return null;
     }
 
+    /**
+     * Returns the packet deliverer to use when delivering a packet over the socket fails. The
+     * packet deliverer will retry to send the packet using some other connection, will store
+     * the packet offline for later retrieval or will just drop it.
+     *
+     * @return the packet deliverer to use when delivering a packet over the socket fails.
+     */
+    public PacketDeliverer getPacketDeliverer() {
+        return backupDeliverer;
+    }
+
     public void close() {
         boolean wasClosed = false;
         synchronized (this) {
@@ -518,7 +533,7 @@ public class SocketConnection implements Connection {
 
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (isClosed()) {
-            deliverer.deliver(packet);
+            backupDeliverer.deliver(packet);
         }
         else {
             try {
@@ -548,7 +563,7 @@ public class SocketConnection implements Connection {
                     close();
                     // Retry sending the packet again. Most probably if the packet is a
                     // Message it will be stored offline
-                    deliverer.deliver(packet);
+                    backupDeliverer.deliver(packet);
                 }
                 else {
                     // Invoke the interceptors after we have sent the packet

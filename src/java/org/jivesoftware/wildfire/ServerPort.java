@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire;
 
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Represents a port on which the server will listen for connections.
@@ -117,11 +117,22 @@ public class ServerPort {
         return type == Type.component;
     }
 
+    /**
+     * Returns true if connection managers can connect to this port.
+     *
+     * @return true if connection managers can connect to this port.
+     */
+    public boolean isConnectionManagerPort() {
+        return type == Type.connectionManager;
+    }
+
     public static enum Type {
         client,
 
         server,
 
-        component;
+        component,
+
+        connectionManager
     }
 }

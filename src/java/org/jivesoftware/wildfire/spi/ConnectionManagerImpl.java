@@ -11,12 +11,13 @@
 
 package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.net.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
+import org.jivesoftware.wildfire.net.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,6 +33,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private SSLSocketAcceptThread sslSocketThread;
     private SocketAcceptThread componentSocketThread;
     private SocketAcceptThread serverSocketThread;
+    private SocketAcceptThread multiplexerSocketThread;
     private ArrayList<ServerPort> ports;
 
     private SessionManager sessionManager;
@@ -71,6 +73,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
         // Start the port listener for s2s communication
         startServerListener(localIPAddress);
+        // Start the port listener for Connections Multiplexers
+        startMultiplexerListener(localIPAddress);
         // Start the port listener for external components
         startComponentListener(localIPAddress);
         // Start the port listener for clients
@@ -109,6 +113,39 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             serverSocketThread.shutdown();
             ports.remove(serverSocketThread.getServerPort());
             serverSocketThread = null;
+        }
+    }
+
+    private void startMultiplexerListener(String localIPAddress) {
+        // Start multiplexers socket unless it's been disabled.
+        if (isMultiplexerListenerEnabled()) {
+            int port = getMultiplexerListenerPort();
+            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
+                    false, null, ServerPort.Type.connectionManager);
+            try {
+                multiplexerSocketThread = new SocketAcceptThread(this, serverPort);
+                ports.add(serverPort);
+                multiplexerSocketThread.setDaemon(true);
+                multiplexerSocketThread.setPriority(Thread.MAX_PRIORITY);
+                multiplexerSocketThread.start();
+
+                List<String> params = new ArrayList<String>();
+                params.add(Integer.toString(multiplexerSocketThread.getPort()));
+                Log.info(LocaleUtils.getLocalizedString("startup.multiplexer", params));
+            }
+            catch (Exception e) {
+                System.err.println("Error starting multiplexer listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
+    }
+
+    private void stopMultiplexerListener() {
+        if (multiplexerSocketThread != null) {
+            multiplexerSocketThread.shutdown();
+            ports.remove(multiplexerSocketThread.getServerPort());
+            multiplexerSocketThread = null;
         }
     }
 
@@ -222,20 +259,31 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void addSocket(Socket sock, boolean isSecure, ServerPort serverPort)  {
         try {
             // the order of these calls is critical (stupid huh?)
-            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            SocketReader reader = null;
-            String threadName = null;
+            SocketReader reader;
+            String threadName;
             if (serverPort.isClientPort()) {
+                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
                 reader = new ClientSocketReader(router, serverName, sock, conn);
                 threadName = "Client SR - " + reader.hashCode();
             }
             else if (serverPort.isComponentPort()) {
+                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
                 reader = new ComponentSocketReader(router, serverName, sock, conn);
                 threadName = "Component SR - " + reader.hashCode();
             }
-            else {
+            else if (serverPort.isServerPort()) {
+                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
                 reader = new ServerSocketReader(router, serverName, sock, conn);
                 threadName = "Server SR - " + reader.hashCode();
+            }
+            else {
+                // Use the appropriate packeet deliverer for connection managers. The packet
+                // deliverer will be configured with the domain of the connection manager once
+                // the connection manager has finished the handshake.
+                SocketConnection conn =
+                        new SocketConnection(new MultiplexerPacketDeliverer(), sock, isSecure);
+                reader = new ConnectionMultiplexerSocketReader(router, serverName, sock, conn);
+                threadName = "ConnectionMultiplexer SR - " + reader.hashCode();
             }
             Thread thread = new Thread(reader, threadName);
             thread.setDaemon(true);
@@ -339,6 +387,27 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return JiveGlobals.getBooleanProperty("xmpp.server.socket.active", true);
     }
 
+    public void enableMultiplexerListener(boolean enabled) {
+        if (enabled == isMultiplexerListenerEnabled()) {
+            // Ignore new setting
+            return;
+        }
+        if (enabled) {
+            JiveGlobals.setProperty("xmpp.multiplex.socket.active", "true");
+            // Start the port listener for s2s communication
+            startMultiplexerListener(localIPAddress);
+        }
+        else {
+            JiveGlobals.setProperty("xmpp.multiplex.socket.active", "false");
+            // Stop the port listener for s2s communication
+            stopMultiplexerListener();
+        }
+    }
+
+    public boolean isMultiplexerListenerEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.multiplex.socket.active", true);
+    }
+
     public void setClientListenerPort(int port) {
         if (port == getClientListenerPort()) {
             // Ignore new setting
@@ -415,6 +484,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 SocketAcceptThread.DEFAULT_SERVER_PORT);
     }
 
+    public int getMultiplexerListenerPort() {
+        return JiveGlobals.getIntProperty("xmpp.multiplex.socket.port",
+                SocketAcceptThread.DEFAULT_MULTIPLEX_PORT);
+    }
+
     // #####################################################################
     // Module management
     // #####################################################################
@@ -432,6 +506,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopClientListeners();
         stopClientSSLListeners();
         stopComponentListener();
+        stopMultiplexerListener();
         stopServerListener();
         SocketSendingTracker.getInstance().shutdown();
         serverName = null;

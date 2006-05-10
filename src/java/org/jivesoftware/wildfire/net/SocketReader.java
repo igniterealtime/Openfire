@@ -313,8 +313,25 @@ public abstract class SocketReader implements Runnable {
             closeNeverSecuredConnection();
             return false;
         }
-        SASLAuthentication saslAuth = new SASLAuthentication(session, reader);
-        return saslAuth.doHandshake(doc);
+
+        boolean isComplete = false;
+        boolean success = false;
+        while (!isComplete) {
+            SASLAuthentication.Status status = SASLAuthentication.handle(session, doc);
+            if (status == SASLAuthentication.Status.needResponse) {
+                // Get the next answer since we are not done yet
+                doc = reader.parseDocument().getRootElement();
+                if (doc == null) {
+                    // Nothing was read because the connection was closed or dropped
+                    isComplete = true;
+                }
+            }
+            else {
+                isComplete = true;
+                success = status == SASLAuthentication.Status.authenticated;
+            }
+        }
+        return success;
     }
 
     /**

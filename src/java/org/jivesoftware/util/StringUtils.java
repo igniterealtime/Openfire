@@ -335,6 +335,41 @@ public class StringUtils {
      * @return a hashed version of the passed-in String
      */
     public static String hash(String data, String algorithm) {
+        try {
+            return hash(data.getBytes("utf-8"), algorithm);
+        }
+        catch (UnsupportedEncodingException e) {
+            Log.error(e);
+        }
+        return data;
+    }
+
+    /**
+     * Hashes a byte array using the specified algorithm and returns the result as a
+     * String of hexadecimal numbers. This method is synchronized to avoid
+     * excessive MessageDigest object creation. If calling this method becomes
+     * a bottleneck in your code, you may wish to maintain a pool of
+     * MessageDigest objects instead of using this method.
+     * <p/>
+     * A hash is a one-way function -- that is, given an
+     * input, an output is easily computed. However, given the output, the
+     * input is almost impossible to compute. This is useful for passwords
+     * since we can store the hash and a hacker will then have a very hard time
+     * determining the original password.
+     * <p/>
+     * In Jive, every time a user logs in, we simply
+     * take their plain text password, compute the hash, and compare the
+     * generated hash to the stored hash. Since it is almost impossible that
+     * two passwords will generate the same hash, we know if the user gave us
+     * the correct password or not. The only negative to this system is that
+     * password recovery is basically impossible. Therefore, a reset password
+     * method is used instead.
+     *
+     * @param bytes the byte array to compute the hash of.
+     * @param algorithm the name of the algorithm requested.
+     * @return a hashed version of the passed-in String
+     */
+    public static String hash(byte[] bytes, String algorithm) {
         synchronized (algorithm.intern()) {
             MessageDigest digest = digests.get(algorithm);
             if (digest == null) {
@@ -343,18 +378,13 @@ public class StringUtils {
                     digests.put(algorithm, digest);
                 }
                 catch (NoSuchAlgorithmException nsae) {
-                    Log.error("Failed to load the MD5 MessageDigest. " +
+                    Log.error("Failed to load the " + algorithm + " MessageDigest. " +
                             "Jive will be unable to function normally.", nsae);
                     return null;
                 }
             }
             // Now, compute hash.
-            try {
-                digest.update(data.getBytes("utf-8"));
-            }
-            catch (UnsupportedEncodingException e) {
-                Log.error(e);
-            }
+            digest.update(bytes);
             return encodeHex(digest.digest());
         }
     }

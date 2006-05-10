@@ -67,6 +67,10 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <listener>
+         <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
+    </listener>
+
     <servlet>
         <servlet-name>PluginServlet</servlet-name>
         <servlet-class>org.jivesoftware.wildfire.container.PluginServlet</servlet-class>
@@ -78,10 +82,6 @@
         <servlet-class>org.jivesoftware.util.FaviconServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-
-    <listener>
-         <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
-    </listener>
 
     <!--@@JSPC-SERVLETS@@-->
 

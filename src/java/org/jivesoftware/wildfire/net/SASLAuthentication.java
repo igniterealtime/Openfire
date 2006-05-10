@@ -11,9 +11,7 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
@@ -25,13 +23,13 @@ import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.jivesoftware.wildfire.user.UserManager;
-import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -85,18 +83,21 @@ public class SASLAuthentication {
         }
     }
 
-    private SocketConnection connection;
-    private Session session;
-
-    private XMPPPacketReader reader;
-
-    /**
-     *
-     */
-    public SASLAuthentication(Session session, XMPPPacketReader reader) {
-        this.session = session;
-        this.connection = (SocketConnection) session.getConnection();
-        this.reader = reader;
+    public enum Status {
+        /**
+         * Entity needs to respond last challenge. Session is still negotiating
+         * SASL authentication.
+         */
+        needResponse,
+        /**
+         * SASL negotiation has failed. The entity may retry a few times before the connection
+         * is closed.
+         */
+        failed,
+        /**
+         * SASL negotiation has been successful.
+         */
+        authenticated
     }
 
     /**
@@ -140,96 +141,101 @@ public class SASLAuthentication {
         return sb.toString();
     }
 
-    // Do the SASL handshake
-    public boolean doHandshake(Element doc)
-            throws IOException, DocumentException, XmlPullParserException {
-        boolean isComplete = false;
-        boolean success = false;
-
-        while (!isComplete) {
-            if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
-                ElementType type = ElementType.valueof(doc.getName());
-                switch (type) {
-                    case AUTH:
-                        String mechanism = doc.attributeValue("mechanism");
-                        //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
-                        if (mechanism.equalsIgnoreCase("PLAIN")) {
-                            if (getSupportedMechanisms().contains("PLAIN")) {
-                                success = doPlainAuthentication(doc);
+    /**
+     * Handles the SASL authentication packet. The entity may be sending an initial
+     * authentication request or a response to a challenge made by the server. The returned
+     * value indicates whether the authentication has finished either successfully or not or
+     * if the entity is expected to send a response to a challenge.
+     *
+     * @param session the session that is authenticating with the server.
+     * @param doc the stanza sent by the authenticating entity.
+     * @return value that indicates whether the authentication has finished either successfully
+     *         or not or if the entity is expected to send a response to a challenge.
+     * @throws UnsupportedEncodingException If UTF-8 charset is not supported.
+     */
+    public static Status handle(Session session, Element doc) throws UnsupportedEncodingException {
+        Status status;
+        String mechanism;
+        if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
+            ElementType type = ElementType.valueof(doc.getName());
+            switch (type) {
+                case AUTH:
+                    mechanism = doc.attributeValue("mechanism");
+                    // Store the requested SASL mechanism by the client
+                    session.setSessionData("SaslMechanism", mechanism);
+                    //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
+                    if (mechanism.equalsIgnoreCase("PLAIN") &&
+                            getSupportedMechanisms().contains("PLAIN")) {
+                        status = doPlainAuthentication(session, doc);
+                    }
+                    else if (mechanism.equalsIgnoreCase("ANONYMOUS") &&
+                            getSupportedMechanisms().contains("ANONYMOUS")) {
+                        status = doAnonymousAuthentication(session);
+                    }
+                    else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
+                        status = doExternalAuthentication(session, doc);
+                    }
+                    else if (getSupportedMechanisms().contains(mechanism)) {
+                        // The selected SASL mechanism requires the server to send a challenge
+                        // to the client
+                        try {
+                            Map<String, String> props = new TreeMap<String, String>();
+                            props.put(Sasl.QOP, "auth");
+                            if (mechanism.equals("GSSAPI")) {
+                                props.put(Sasl.SERVER_AUTH, "TRUE");
                             }
-                            else {
-                                // TODO Send auth failed before closing connection
-                                success = false;
-                            }
-                            isComplete = true;
-                        }
-                        else if (mechanism.equalsIgnoreCase("ANONYMOUS")) {
-                            if (getSupportedMechanisms().contains("ANONYMOUS")) {
-                                success = doAnonymousAuthentication();
-                            }
-                            else {
-                                // TODO Send auth failed before closing connection
-                                success = false;
-                            }
-                            isComplete = true;
-                        }
-                        else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
-                            success = doExternalAuthentication(doc);
-                            isComplete = true;
-                        }
-                        else {
-                            // The selected SASL mechanism requires the server to send a challenge
-                            // to the client
-                            if (getSupportedMechanisms().contains(mechanism)) {
-                                try {
-                                    Map<String, String> props = new TreeMap<String, String>();
-                                    props.put(Sasl.QOP, "auth");
-                                    if (mechanism.equals("GSSAPI")) {
-                                        props.put(Sasl.SERVER_AUTH, "TRUE");
-                                    }
-                                    SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
-                                            session.getServerName(), props,
-                                            new XMPPCallbackHandler());
-                                    // evaluateResponse doesn't like null parameter
-                                    byte[] token = new byte[0];
-                                    if (doc.isTextOnly()) {
-                                        // If auth request includes a value then validate it
-                                        token = StringUtils.decodeBase64(doc.getTextTrim());
-                                        if (token == null) {
-                                            token = new byte[0];
-                                        }
-                                    }
-                                    byte[] challenge = ss.evaluateResponse(token);
-                                    // Send the challenge
-                                    sendChallenge(challenge);
-
-                                    session.setSessionData("SaslServer", ss);
-                                }
-                                catch (SaslException e) {
-                                    isComplete = true;
-                                    Log.warn("SaslException", e);
-                                    authenticationFailed();
+                            SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
+                                    session.getServerName(), props,
+                                    new XMPPCallbackHandler());
+                            // evaluateResponse doesn't like null parameter
+                            byte[] token = new byte[0];
+                            if (doc.isTextOnly()) {
+                                // If auth request includes a value then validate it
+                                token = StringUtils.decodeBase64(doc.getTextTrim());
+                                if (token == null) {
+                                    token = new byte[0];
                                 }
                             }
-                            else {
-                                // TODO Send auth failed before closing connection
-                                Log.warn("Client wants to do a MECH we don't support: '" +
-                                        mechanism + "'");
-                                isComplete = true;
-                                success = false;
-                            }
+                            byte[] challenge = ss.evaluateResponse(token);
+                            // Send the challenge
+                            sendChallenge(session, challenge);
+
+                            session.setSessionData("SaslServer", ss);
+                            status = Status.needResponse;
                         }
-                        break;
-                    case RESPONSE:
+                        catch (SaslException e) {
+                            Log.warn("SaslException", e);
+                            authenticationFailed(session);
+                            status = Status.failed;
+                        }
+                    }
+                    else {
+                        Log.warn("Client wants to do a MECH we don't support: '" +
+                                mechanism + "'");
+                        authenticationFailed(session);
+                        status = Status.failed;
+                    }
+                    break;
+                case RESPONSE:
+                    // Store the requested SASL mechanism by the client
+                    mechanism = (String) session.getSessionData("SaslMechanism");
+                    if (mechanism.equalsIgnoreCase("PLAIN") &&
+                            getSupportedMechanisms().contains("PLAIN")) {
+                        status = doPlainAuthentication(session, doc);
+                    }
+                    else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
+                        status = doExternalAuthentication(session, doc);
+                    }
+                    else if (getSupportedMechanisms().contains(mechanism)) {
                         SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
                             try {
                                 if (ssComplete) {
-                                    authenticationSuccessful(ss.getAuthorizationID(), null);
-                                    success = true;
-                                    isComplete = true;
+                                    authenticationSuccessful(session, ss.getAuthorizationID(),
+                                            null);
+                                    status = Status.authenticated;
                                 }
                                 else {
                                     byte[] data = StringUtils.decodeBase64(response);
@@ -238,148 +244,145 @@ public class SASLAuthentication {
                                     }
                                     byte[] challenge = ss.evaluateResponse(data);
                                     if (ss.isComplete()) {
-                                        authenticationSuccessful(ss.getAuthorizationID(),
+                                        authenticationSuccessful(session, ss.getAuthorizationID(),
                                                 challenge);
-                                        success = true;
-                                        isComplete = true;
+                                        status = Status.authenticated;
                                     }
                                     else {
                                         // Send the challenge
-                                        sendChallenge(challenge);
+                                        sendChallenge(session, challenge);
+                                        status = Status.needResponse;
                                     }
                                 }
                             }
                             catch (SaslException e) {
-                                isComplete = true;
                                 Log.warn("SaslException", e);
-                                authenticationFailed();
+                                authenticationFailed(session);
+                                status = Status.failed;
                             }
                         }
                         else {
-                            isComplete = true;
                             Log.fatal("SaslServer is null, should be valid object instead.");
-                            authenticationFailed();
+                            authenticationFailed(session);
+                            status = Status.failed;
                         }
-                        break;
-                    default:
-                        // Ignore
-                        break;
-                }
-                if (!isComplete) {
-                    // Get the next answer since we are not done yet
-                    doc = reader.parseDocument().getRootElement();
-                    if (doc == null) {
-                        // Nothing was read because the connection was closed or dropped
-                        isComplete = true;
                     }
-                }
-            }
-            else {
-                isComplete = true;
-                Log.debug("Unknown namespace sent in auth element: " + doc.asXML());
-                authenticationFailed();
+                    else {
+                        Log.warn(
+                                "Client responded to a MECH we don't support: '" + mechanism + "'");
+                        authenticationFailed(session);
+                        status = Status.failed;
+                    }
+                    break;
+                default:
+                    authenticationFailed(session);
+                    status = Status.failed;
+                    // Ignore
+                    break;
             }
         }
-        // Remove the SaslServer from the Session
-        session.removeSessionData("SaslServer");
-        return success;
+        else {
+            Log.debug("Unknown namespace sent in auth element: " + doc.asXML());
+            authenticationFailed(session);
+            status = Status.failed;
+        }
+        // Check if SASL authentication has finished so we can clean up temp information
+        if (status == Status.failed || status == Status.authenticated) {
+            // Remove the SaslServer from the Session
+            session.removeSessionData("SaslServer");
+            // Remove the requested SASL mechanism by the client
+            session.removeSessionData("SaslMechanism");
+        }
+        return status;
     }
 
-    private boolean doAnonymousAuthentication() {
+    private static Status doAnonymousAuthentication(Session session) {
         if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
             // Just accept the authentication :)
-            authenticationSuccessful(null, null);
-            return true;
+            authenticationSuccessful(session, null, null);
+            return Status.authenticated;
         }
         else {
             // anonymous login is disabled so close the connection
-            authenticationFailed();
-            return false;
+            authenticationFailed(session);
+            return Status.failed;
         }
     }
 
-    private boolean doPlainAuthentication(Element doc)
-            throws DocumentException, IOException, XmlPullParserException {
-        String username = "";
-        String password = "";
+    private static Status doPlainAuthentication(Session session, Element doc)
+            throws UnsupportedEncodingException {
+        String username;
+        String password;
         String response = doc.getTextTrim();
         if (response == null || response.length() == 0) {
             // No info was provided so send a challenge to get it
-            sendChallenge(new byte[0]);
-            // Get the next answer since we are not done yet
-            doc = reader.parseDocument().getRootElement();
-            if (doc != null && doc.getTextTrim().length() > 0) {
-                response = doc.getTextTrim();
-            }
+            sendChallenge(session, new byte[0]);
+            return Status.needResponse;
         }
 
-        if (response != null && response.length() > 0) {
-            // Parse data and obtain username & password
-            String data = new String(StringUtils.decodeBase64(response), CHARSET);
-            StringTokenizer tokens = new StringTokenizer(data, "\0");
-            if (tokens.countTokens() > 2) {
-                // Skip the "authorization identity"
-                tokens.nextToken();
-            }
-            username = tokens.nextToken();
-            password = tokens.nextToken();
+        // Parse data and obtain username & password
+        String data = new String(StringUtils.decodeBase64(response), CHARSET);
+        StringTokenizer tokens = new StringTokenizer(data, "\0");
+        if (tokens.countTokens() > 2) {
+            // Skip the "authorization identity"
+            tokens.nextToken();
         }
+        username = tokens.nextToken();
+        password = tokens.nextToken();
         try {
             AuthToken token = AuthFactory.authenticate(username, password);
-            authenticationSuccessful(token.getUsername(), null);
-            return true;
+            authenticationSuccessful(session, token.getUsername(), null);
+            return Status.authenticated;
         }
         catch (UnauthorizedException e) {
-            authenticationFailed();
-            return false;
+            authenticationFailed(session);
+            return Status.failed;
         }
     }
 
-    private boolean doExternalAuthentication(Element doc) throws DocumentException, IOException,
-            XmlPullParserException {
+    private static Status doExternalAuthentication(Session session, Element doc)
+            throws UnsupportedEncodingException {
         // Only accept EXTERNAL SASL for s2s. At this point the connection has already
         // been secured using TLS
         if (!(session instanceof IncomingServerSession)) {
-            return false;
+            return Status.failed;
         }
         String hostname = doc.getTextTrim();
         if (hostname == null || hostname.length() == 0) {
             // No hostname was provided so send a challenge to get it
-            sendChallenge(new byte[0]);
-            // Get the next answer since we are not done yet
-            doc = reader.parseDocument().getRootElement();
-            if (doc != null && doc.getTextTrim().length() > 0) {
-                hostname = doc.getTextTrim();
-            }
+            sendChallenge(session, new byte[0]);
+            return Status.needResponse;
         }
 
-        if (hostname != null  && hostname.length() > 0) {
-            hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
-            // Check if cerificate validation is disabled for s2s
-            if (session instanceof IncomingServerSession) {
-                // Flag that indicates if certificates of the remote server should be validated.
-                // Disabling certificate validation is not recommended for production environments.
-                boolean verify =
-                        JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
-                if (!verify) {
-                    authenticationSuccessful(hostname, null);
-                    return true;
-                }
-            }
-            // Check that hostname matches the one provided in a certificate
+        hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
+        // Check if cerificate validation is disabled for s2s
+        // Flag that indicates if certificates of the remote server should be validated.
+        // Disabling certificate validation is not recommended for production environments.
+        boolean verify =
+                JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
+        if (!verify) {
+            authenticationSuccessful(session, hostname, null);
+            return Status.authenticated;
+        }
+        // Check that hostname matches the one provided in a certificate
+        SocketConnection connection = (SocketConnection) session.getConnection();
+        try {
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
                 if (TLSStreamHandler.getPeerIdentities((X509Certificate) certificate)
                         .contains(hostname)) {
-                    authenticationSuccessful(hostname, null);
-                    return true;
+                    authenticationSuccessful(session, hostname, null);
+                    return Status.authenticated;
                 }
             }
         }
-        authenticationFailed();
-        return false;
+        catch (SSLPeerUnverifiedException e) {
+            Log.warn("Error retrieving client certificates of: " + session, e);
+        }
+        authenticationFailed(session);
+        return Status.failed;
     }
 
-    private void sendChallenge(byte[] challenge) {
+    private static void sendChallenge(Session session, byte[] challenge) {
         StringBuilder reply = new StringBuilder(250);
         if(challenge == null) {
             challenge = new byte[0];
@@ -392,10 +395,11 @@ public class SASLAuthentication {
                 "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append(challenge_b64);
         reply.append("</challenge>");
-        connection.deliverRawText(reply.toString());
+        session.getConnection().deliverRawText(reply.toString());
     }
 
-    private void authenticationSuccessful(String username, byte[] successData) {
+    private static void authenticationSuccessful(Session session, String username,
+            byte[] successData) {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {
@@ -404,7 +408,7 @@ public class SASLAuthentication {
         else {
             reply.append("/>");
         }
-        connection.deliverRawText(reply.toString());
+        session.getConnection().deliverRawText(reply.toString());
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((ClientSession) session).setAuthToken(new AuthToken(username));
@@ -419,11 +423,11 @@ public class SASLAuthentication {
         }
     }
 
-    private void authenticationFailed() {
+    private static void authenticationFailed(Session session) {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append("<not-authorized/></failure>");
-        connection.deliverRawText(reply.toString());
+        session.getConnection().deliverRawText(reply.toString());
         // Give a number of retries before closing the connection
         Integer retries = (Integer) session.getSessionData("authRetries");
         if (retries == null) {
@@ -435,7 +439,7 @@ public class SASLAuthentication {
         session.setSessionData("authRetries", retries);
         if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
             // Close the connection
-            connection.close();
+            session.getConnection().close();
         }
     }
     

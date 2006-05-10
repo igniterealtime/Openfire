@@ -412,11 +412,11 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle from the passed
      * in plugin.
      *
-     * @param key        the key to use for retrieving the string from the
-     *                   appropriate resource bundle.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
      * @param pluginName the name of the plugin to load the require resource bundle from.
      * @param arguments  a list of objects to use which are formatted, then
-     *                   inserted into the pattern at the appropriate places.
+     *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
@@ -428,7 +428,7 @@ public class LocaleUtils {
         final XMPPServer xmppServer = XMPPServer.getInstance();
         PluginManager pluginManager = xmppServer.getPluginManager();
         Plugin plugin = pluginManager.getPlugin(pluginName);
-        if(plugin == null){
+        if (plugin == null){
             throw new NullPointerException("Plugin could not be located.");
         }
 
@@ -442,12 +442,12 @@ public class LocaleUtils {
      * the passed in Locale substituting the passed in arguments. Substitution
      * is handled using the {@link MessageFormat} class.
      *
-     * @param key       the key to use for retrieving the string from the
-     *                  appropriate resource bundle.
-     * @param locale    the locale to use for retrieving the appropriate
-     *                  locale-specific string.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
+     * @param locale the locale to use for retrieving the appropriate
+     *      locale-specific string.
      * @param arguments a list of objects to use which are formatted, then
-     *                  inserted into the pattern at the appropriate places.
+     *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, Locale locale, List arguments, ResourceBundle bundle) {

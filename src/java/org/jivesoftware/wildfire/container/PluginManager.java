@@ -19,6 +19,7 @@ import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.database.DbConnectionManager;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -212,8 +213,6 @@ public class PluginManager {
                     compilationClassesDir.deleteOnExit();
                 }
 
-
-
                 if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();
                     // See if the parent is already loaded.
@@ -350,6 +349,9 @@ public class PluginManager {
                 if (dev != null) {
                     pluginDevelopment.put(plugin, dev);
                 }
+
+                // Check the plugin's database schema (if it requires one).
+                DbConnectionManager.getSchemaManager().checkPluginSchema(plugin);
 
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
@@ -526,6 +528,39 @@ public class PluginManager {
      */
     public String getVersion(Plugin plugin) {
         return getElementValue(plugin, "/plugin/version");
+    }
+
+    /**
+     * Returns the database schema key of a plugin, if it exists. The value is retrieved
+     * from the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt>
+     * will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's database schema key or <tt>null</tt> if it doesn't exist.
+     */
+    public String getDatabaseKey(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/databaseKey");
+    }
+
+    /**
+     * Returns the database schema version of a plugin, if it exists. The value is retrieved
+     * from the plugin.xml file of the plugin. If the value could not be found, <tt>-1</tt>
+     * will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's database schema version or <tt>-1</tt> if it doesn't exist.
+     */
+    public int getDatabaseVersion(Plugin plugin) {
+        String versionString = getElementValue(plugin, "/plugin/databaseVersion");
+        if (versionString != null) {
+            try {
+                return Integer.parseInt(versionString.trim());
+            }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe);
+            }
+        }
+        return -1;
     }
 
     /**

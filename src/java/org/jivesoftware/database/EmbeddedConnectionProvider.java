@@ -14,10 +14,8 @@ package org.jivesoftware.database;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -80,7 +78,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                         minConnections, maxConnections, connectionTimeout, false);
                 // Create initial tables if they don't already exist.
                 if (initData) {
-                    initializeDatabase();
+                    // TODO
+//                    initializeDatabase();
                 }
             }
             catch (IOException ioe) {
@@ -130,6 +129,9 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         destroy();
     }
 
+    // TODO
+
+    /*
     private void initializeDatabase() {
         BufferedReader in = null;
         Connection con = null;
@@ -172,5 +174,5 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-    }
+    }       */
 }

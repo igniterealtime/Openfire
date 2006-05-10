@@ -53,7 +53,8 @@ public class PluginClassLoader {
      * after adding the directory to make the change take effect.
      *
      * @param directory the directory.
-     * @param developmentMode true if the plugin is running in development mode. This resolves classloader conflicts between the deployed plugin
+     * @param developmentMode true if the plugin is running in development mode. This
+     *      resolves classloader conflicts between the deployed plugin
      * and development classes.
      */
     public void addDirectory(File directory, boolean developmentMode) {
@@ -62,6 +63,12 @@ public class PluginClassLoader {
             File classesDir = new File(directory, "classes");
             if (classesDir.exists()) {
                 list.add(classesDir.toURL());
+            }
+
+            // Add i18n directory to classpath.
+            File databaseDir = new File(directory, "database");
+            if(databaseDir.exists()){
+                list.add(databaseDir.toURL());
             }
 
             // Add i18n directory to classpath.
@@ -173,9 +180,10 @@ public class PluginClassLoader {
 
     /**
      * Returns the URLClassloader used.
+     *
      * @return the URLClassLoader used.
      */
-    public ClassLoader getClassLoader(){
+    public ClassLoader getClassLoader() {
         return classLoader;
     }
 }

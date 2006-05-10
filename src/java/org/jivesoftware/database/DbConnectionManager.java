@@ -9,12 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 
 import java.io.*;
@@ -32,17 +30,6 @@ import java.sql.*;
  * @see ConnectionProvider
  */
 public class DbConnectionManager {
-
-    private static final String CHECK_VERSION_OLD =
-            "SELECT minorVersion FROM jiveVersion";
-    private static final String CHECK_VERSION =
-            "SELECT version FROM jiveVersion WHERE name=?";
-
-    /**
-     * Database schema version.
-     */
-    private static final int DATABASE_VERSION = 9;
-
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -66,6 +53,8 @@ public class DbConnectionManager {
     private static boolean batchUpdatesSupported;
 
     private static DatabaseType databaseType = DatabaseType.unknown;
+
+    private static SchemaManager schemaManager = new SchemaManager();
 
     /**
      * Returns a database connection from the currently active connection
@@ -372,7 +361,7 @@ public class DbConnectionManager {
      * supports the feature, the cursor will be moved directly. Otherwise, we scroll
      * through results one by one manually by calling <tt>rs.next()</tt>.
      *
-     * @param rs        the ResultSet object to scroll.
+     * @param rs the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
      * @throws SQLException if an error occurs.
      */
@@ -438,13 +427,7 @@ public class DbConnectionManager {
                 setMetaData(con);
 
                 // Check to see if the database schema needs to be upgraded.
-                try {
-                    upgradeDatabase(con);
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"), e);
-                    System.out.println(LocaleUtils.getLocalizedString("upgrade.database.failure"));
-                }
+                schemaManager.checkWildfireSchema(con);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -587,7 +570,7 @@ public class DbConnectionManager {
      * The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param rs        the ResultSet to set the fetch size for.
+     * @param rs the ResultSet to set the fetch size for.
      * @param fetchSize the fetchSize.
      */
     public static void setFetchSize(ResultSet rs, int fetchSize) {
@@ -604,6 +587,16 @@ public class DbConnectionManager {
                 fetchSizeSupported = false;
             }
         }
+    }
+
+    /**
+     * Returns a SchemaManager instance, which can be used to manage the database
+     * schema information for Wildfire and plugins.
+     *
+     * @return a SchemaManager instance.
+     */
+    public static SchemaManager getSchemaManager() {
+        return schemaManager;
     }
 
     /**
@@ -782,144 +775,6 @@ public class DbConnectionManager {
         interbase,
 
         unknown
-    }
-
-    /**
-     * Checks to see if the database needs to be upgraded. This method should be
-     * called once every time the application starts up.
-     *
-     * @throws SQLException if an error occured.
-     */
-    private static boolean upgradeDatabase(Connection con) throws Exception {
-        int version = 0;
-        PreparedStatement pstmt = null;
-        try {
-            pstmt = con.prepareStatement(CHECK_VERSION);
-            pstmt.setString(1, "wildfire");
-            ResultSet rs = pstmt.executeQuery();
-            rs.next();
-            version = rs.getInt(1);
-            rs.close();
-        }
-        catch (SQLException sqle) {
-            // Releases of Wildfire before 2.6.0 stored a major and minor version
-            // number so the normal check for version can fail. Check for the
-            // version using the old format in that case.
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                pstmt = con.prepareStatement(CHECK_VERSION_OLD);
-                ResultSet rs = pstmt.executeQuery();
-                rs.next();
-                version = rs.getInt(1);
-                rs.close();
-            }
-            catch (SQLException sqle2) {
-                // Must be database version 0.
-            }
-        }
-        finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-        }
-        if (version == DATABASE_VERSION) {
-            return false;
-        }
-        // The database is an old version that needs to be upgraded.
-        Log.info(LocaleUtils.getLocalizedString("upgrade.database.old_schema"));
-        System.out.println(LocaleUtils.getLocalizedString("upgrade.database.old_schema"));
-        if (databaseType == DatabaseType.unknown) {
-            Log.info(LocaleUtils.getLocalizedString("upgrade.database.unknown_db"));
-            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.unknown_db"));
-            return false;
-        }
-        else if (databaseType == DatabaseType.interbase) {
-            Log.info(LocaleUtils.getLocalizedString("upgrade.database.interbase_db"));
-            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.interbase_db"));
-            return false;
-        }
-
-        // Run all upgrade scripts until we're up to the latest schema.
-        for (int i = version+1; i <= DATABASE_VERSION; i++) {
-            BufferedReader in = null;
-            Statement stmt;
-            try {
-                // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
-                String resourceName = "/database/upgrade/" + i + "/wildfire_" +
-                        databaseType + ".sql";
-                InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
-                if (resource == null) {
-                    // If the resource is null, the specific upgrade number is not available.
-                    continue;
-                }
-                in = new BufferedReader(new InputStreamReader(resource));
-                boolean done = false;
-                while (!done) {
-                    StringBuilder command = new StringBuilder();
-                    while (true) {
-                        String line = in.readLine();
-                        if (line == null) {
-                            done = true;
-                            break;
-                        }
-                        // Ignore comments and blank lines.
-                        if (isSQLCommandPart(line)) {
-                            command.append(line);
-                        }
-                        if (line.endsWith(";")) {
-                            break;
-                        }
-                    }
-                    // Send command to database.
-                    if (!done && command != null) {
-                        stmt = con.createStatement();
-                        stmt.execute(command.toString());
-                        stmt.close();
-                    }
-                }
-            }
-            finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    }
-                    catch (Exception e) {
-                        // Ignore.
-                    }
-                }
-            }
-        }
-        Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
-        System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
-        return true;
-    }
-
-    /**
-     * Returns true if a line from a SQL schema is a valid command part.
-     *
-     * @param line the line of the schema.
-     * @return true if a valid command part.
-     */
-    public static boolean isSQLCommandPart(String line) {
-        line = line.trim();
-        if (line.equals("")) {
-            return false;
-        }
-        // Check to see if the line is a comment. Valid comment types:
-        //   "//" is HSQLDB
-        //   "--" is DB2 and Postgres
-        //   "#" is MySQL
-        //   "REM" is Oracle
-        //   "/*" is SQLServer
-        return !(line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
-                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"));
     }
 
     private DbConnectionManager() {

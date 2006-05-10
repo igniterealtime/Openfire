@@ -105,10 +105,10 @@ file might look like the following:
     <li>databaseVersion -- the database schema version (if a database schema is defined). New plugins
             with a database schema should start at version 0. If future versions of the plugin
             require updates to the schema, those updates can be defined by creating sub-directories
-            in the <tt>database</tt> directory for each version number. For example, the directories
-            <tt>database/1</tt> and <tt>database/2</tt> would contain scripts such as "foo_mysql.sql"
-            and "foo_oracle.sql" that contain the relevant database changes for each version. Each
-            script should update version information in the jiveVersion table, e.g.:<br><br>
+            in the <tt>database/upgrade</tt> directory for each version number. For example, the directories
+            <tt>database/upgrade/1</tt> and <tt>database/upgrade/2</tt> would contain scripts such as
+            "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database changes for each
+            version. Each script should update version information in the jiveVersion table, e.g.:<br><br>
 
             <tt>UPDATE jiveVersion set version=1 where name='foo';</tt><br><br>
 

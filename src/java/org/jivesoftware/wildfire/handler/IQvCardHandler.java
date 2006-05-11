@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.PacketException;
@@ -24,6 +25,8 @@ import org.jivesoftware.wildfire.vcard.VCardManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+
+import java.util.Iterator;
 
 /**
  * Implements the TYPE_IQ vcard-temp protocol. Clients
@@ -103,6 +106,22 @@ public class IQvCardHandler extends IQHandler {
                     VCardManager vManager = VCardManager.getInstance();
                     Element userVCard = vManager.getVCard(recipient.getNode());
                     if (userVCard != null) {
+                        // Check if the requester wants to ignore some vCard's fields
+                        Element filter = packet.getChildElement()
+                                .element(QName.get("filter", "vcard-temp-filter"));
+                        if (filter != null) {
+                            // Create a copy so we don't modify the original vCard
+                            userVCard = userVCard.createCopy();
+                            // Ignore fields requested by the user
+                            for (Iterator toFilter = filter.elementIterator(); toFilter.hasNext();)
+                            {
+                                Element field = (Element) toFilter.next();
+                                Element fieldToRemove = userVCard.element(field.getName());
+                                if (fieldToRemove != null) {
+                                    fieldToRemove.detach();
+                                }
+                            }
+                        }
                         result.setChildElement(userVCard);
                     }
                 }

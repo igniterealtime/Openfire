@@ -38,8 +38,14 @@ public class TLSStreamWriter {
 
 	public TLSStreamWriter(TLSWrapper tlsWrapper, Socket socket) throws IOException {
 		wrapper = tlsWrapper;
-		wbc = Channels.newChannel(socket.getOutputStream());
-		outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
+        // DANIELE: Add code to use directly the socket channel
+        if (socket.getChannel() != null) {
+            wbc = socket.getChannel();
+        }
+        else {
+            wbc = Channels.newChannel(socket.getOutputStream());
+        }
+        outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
 	}
 
 	private void doWrite(ByteBuffer buff) throws IOException {

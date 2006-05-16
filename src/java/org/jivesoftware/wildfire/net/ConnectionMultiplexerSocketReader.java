@@ -69,8 +69,8 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
     private MultiplexerPacketHandler packetHandler;
 
     public ConnectionMultiplexerSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection) {
-        super(router, serverName, socket, connection);
+            SocketConnection connection, boolean useBlockingMode) {
+        super(router, serverName, socket, connection, useBlockingMode);
         // Create a pool of threads that will process received packets. If more threads are
         // required then the command will be executed on the SocketReader process
         int coreThreads = JiveGlobals.getIntProperty("xmpp.multiplex.processing.core.threads", 10);
@@ -203,6 +203,10 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
                 originatingSession.incrementClientPacketCount();
             }
         }
+    }
+
+    String getName() {
+        return "ConnectionMultiplexer SR - " + hashCode();
     }
 
     boolean validateHost() {

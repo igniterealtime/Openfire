@@ -256,42 +256,28 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return ports.iterator();
     }
 
-    public void addSocket(Socket sock, boolean isSecure, ServerPort serverPort)  {
-        try {
-            // the order of these calls is critical (stupid huh?)
-            SocketReader reader;
-            String threadName;
-            if (serverPort.isClientPort()) {
-                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-                reader = new ClientSocketReader(router, serverName, sock, conn);
-                threadName = "Client SR - " + reader.hashCode();
-            }
-            else if (serverPort.isComponentPort()) {
-                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-                reader = new ComponentSocketReader(router, serverName, sock, conn);
-                threadName = "Component SR - " + reader.hashCode();
-            }
-            else if (serverPort.isServerPort()) {
-                SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-                reader = new ServerSocketReader(router, serverName, sock, conn);
-                threadName = "Server SR - " + reader.hashCode();
-            }
-            else {
-                // Use the appropriate packeet deliverer for connection managers. The packet
-                // deliverer will be configured with the domain of the connection manager once
-                // the connection manager has finished the handshake.
-                SocketConnection conn =
-                        new SocketConnection(new MultiplexerPacketDeliverer(), sock, isSecure);
-                reader = new ConnectionMultiplexerSocketReader(router, serverName, sock, conn);
-                threadName = "ConnectionMultiplexer SR - " + reader.hashCode();
-            }
-            Thread thread = new Thread(reader, threadName);
-            thread.setDaemon(true);
-            thread.setPriority(Thread.NORM_PRIORITY);
-            thread.start();
+    public SocketReader createSocketReader(Socket sock, boolean isSecure, ServerPort serverPort,
+            boolean useBlockingMode) throws IOException {
+        if (serverPort.isClientPort()) {
+            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
+            return new ClientSocketReader(router, serverName, sock, conn, useBlockingMode);
         }
-        catch (IOException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        else if (serverPort.isComponentPort()) {
+            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
+            return new ComponentSocketReader(router, serverName, sock, conn, useBlockingMode);
+        }
+        else if (serverPort.isServerPort()) {
+            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
+            return new ServerSocketReader(router, serverName, sock, conn, useBlockingMode);
+        }
+        else {
+            // Use the appropriate packeet deliverer for connection managers. The packet
+            // deliverer will be configured with the domain of the connection manager once
+            // the connection manager has finished the handshake.
+            SocketConnection conn =
+                    new SocketConnection(new MultiplexerPacketDeliverer(), sock, isSecure);
+            return new ConnectionMultiplexerSocketReader(router, serverName, sock, conn,
+                    useBlockingMode);
         }
     }
 

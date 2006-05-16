@@ -177,8 +177,15 @@ public class TLSStreamHandler {
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);
 
-        rbc = Channels.newChannel(socket.getInputStream());
-        wbc = Channels.newChannel(socket.getOutputStream());
+        // DANIELE: Add code to use directly the socket-channel.
+        if (socket.getChannel() != null) {
+            rbc = socket.getChannel();
+            wbc = socket.getChannel();
+        }
+        else {
+            rbc = Channels.newChannel(socket.getInputStream());
+            wbc = Channels.newChannel(socket.getOutputStream());
+        }
         initialHSStatus = HandshakeStatus.NEED_UNWRAP;
         initialHSComplete = false;
 

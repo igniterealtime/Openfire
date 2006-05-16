@@ -11,9 +11,11 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.wildfire.net.SocketReader;
+
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Iterator;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Coordinates connections (accept, read, termination) on the server.
@@ -31,15 +33,17 @@ public interface ConnectionManager {
     public Iterator<ServerPort> getPorts();
 
     /**
-     * Adds a socket to be managed by the connection manager.
+     * Creates a new socket reader for the new accepted socket to be managed
+     * by the connection manager.
      *
-     * @param socket the socket to add to this manager for management.
+     * @param socket the new accepted socket by this manager.
      * @param isSecure true if the connection is secure.
      * @param serverPort holds information about the port on which the server is listening for
      *        connections.
+     * @param useBlockingMode true means that the server will use a thread per connection.
      */
-    public void addSocket(Socket socket, boolean isSecure, ServerPort serverPort)
-            throws XmlPullParserException;
+    public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
+            boolean useBlockingMode) throws IOException;
 
     /**
      * Sets if the port listener for unsecured clients will be available or not. When disabled

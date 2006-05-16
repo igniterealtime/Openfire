@@ -33,8 +33,8 @@ import java.net.Socket;
 public class ComponentSocketReader extends SocketReader {
 
     public ComponentSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection) {
-        super(router, serverName, socket, connection);
+            SocketConnection connection, boolean useBlockingMode) {
+        super(router, serverName, socket, connection, useBlockingMode);
     }
 
     /**
@@ -120,6 +120,10 @@ public class ComponentSocketReader extends SocketReader {
 
     String getNamespace() {
         return "jabber:component:accept";
+    }
+
+    String getName() {
+        return "Component SR - " + hashCode();
     }
 
     boolean validateHost() {

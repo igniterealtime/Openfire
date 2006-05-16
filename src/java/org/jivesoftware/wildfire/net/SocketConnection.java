@@ -30,6 +30,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.channels.Channels;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -122,7 +123,13 @@ public class SocketConnection implements Connection {
 
         this.secure = isSecure;
         this.socket = socket;
-        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
+        // DANIELE: Modify socket to use channel
+        if (socket.getChannel() != null) {
+            writer = Channels.newWriter(socket.getChannel(), CHARSET);
+        }
+        else {
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
+        }
         this.backupDeliverer = backupDeliverer;
         xmlSerializer = new XMLSocketWriter(writer, this);
 

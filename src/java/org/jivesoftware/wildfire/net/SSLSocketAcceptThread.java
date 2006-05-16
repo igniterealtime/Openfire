@@ -26,7 +26,9 @@ import java.net.UnknownHostException;
 
 /**
  * Implements a network front end with a dedicated thread reading
- * each incoming socket.
+ * each incoming socket. The old SSL method always uses a blocking model.
+ *
+ * @author Gaston Dombiak
  */
 public class SSLSocketAcceptThread extends Thread {
 
@@ -139,7 +141,12 @@ public class SSLSocketAcceptThread extends Thread {
             try {
                 Socket sock = serverSocket.accept();
                 Log.debug("SSL Connect " + sock.toString());
-                connManager.addSocket(sock, true, serverPort);
+                SocketReader reader = connManager.createSocketReader(sock, true, serverPort, true);
+                // Create a new reading thread for each new connected client
+                Thread thread = new Thread(reader, reader.getName());
+                thread.setDaemon(true);
+                thread.setPriority(Thread.NORM_PRIORITY);
+                thread.start();
             }
             catch (SSLException se) {
                 long exceptionTime = System.currentTimeMillis();

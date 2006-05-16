@@ -12,10 +12,10 @@
 package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
@@ -40,8 +40,8 @@ import java.net.Socket;
 public class ClientSocketReader extends SocketReader {
 
     public ClientSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection) {
-        super(router, serverName, socket, connection);
+            SocketConnection connection, boolean useBlockingMode) {
+        super(router, serverName, socket, connection, useBlockingMode);
     }
 
     protected void processIQ(IQ packet) throws UnauthorizedException {
@@ -85,6 +85,10 @@ public class ClientSocketReader extends SocketReader {
 
     String getNamespace() {
         return "jabber:client";
+    }
+
+    String getName() {
+        return "Client SR - " + hashCode();
     }
 
     boolean validateHost() {

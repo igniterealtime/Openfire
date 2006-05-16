@@ -9,18 +9,14 @@
 
 package org.dom4j.io;
 
-import java.io.*;
-import java.net.URL;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentFactory;
-import org.dom4j.Element;
-import org.dom4j.ElementHandler;
-import org.dom4j.QName;
+import org.dom4j.*;
+import org.jivesoftware.wildfire.net.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import org.jivesoftware.wildfire.net.MXParser;
+
+import java.io.*;
+import java.net.URL;
 
 /**
  * <p><code>XMPPPacketReader</code> is a Reader of DOM4J documents that
@@ -275,6 +271,23 @@ public class XMPPPacketReader {
         }
         catch (XmlPullParserException e) {}
         return lastActive > lastHeartbeat ? lastActive : lastHeartbeat;
+    }
+
+    /*
+     * DANIELE: Add parse document by string
+     */
+    public Document parseDocument(String xml) throws DocumentException {
+        /*
+        // Long way with reuse of DocumentFactory.
+        DocumentFactory df = getDocumentFactory();
+        SAXReader reader = new SAXReader( df );
+        Document document = reader.read( new StringReader( xml );*/
+
+        // Simple way
+        // TODO Optimize. Do not create a sax reader for each parsing
+        Document document = DocumentHelper.parseText(xml);
+
+        return document;
     }
 
     // Implementation methods

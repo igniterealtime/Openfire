@@ -47,8 +47,14 @@ public class TLSStreamReader {
 
     public TLSStreamReader(TLSWrapper tlsWrapper, Socket socket) throws IOException {
 		wrapper = tlsWrapper;
-		rbc = Channels.newChannel(socket.getInputStream());
-		inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
+        // DANIELE: Add code to use directly the socket channel
+        if (socket.getChannel() != null) {
+            rbc = socket.getChannel();
+        }
+        else {
+            rbc = Channels.newChannel(socket.getInputStream());
+        }
+        inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
 		inAppBB = ByteBuffer.allocate(wrapper.getAppBuffSize());
 	}
 

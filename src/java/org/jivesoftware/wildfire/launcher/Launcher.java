@@ -21,9 +21,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
-
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.URL;
 
@@ -99,7 +101,7 @@ public class Launcher {
 
         frame.setTitle(appName);
 
-        ImageIcon splash = null;
+        ImageIcon splash;
         JPanel mainPanel = new JPanel();
         JLabel splashLabel = null;
 

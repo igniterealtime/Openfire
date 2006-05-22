@@ -86,7 +86,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     public MulticastRouter() {
         super("Multicast Packet Router");
 
-        String cacheName = "Multicast service";
+        String cacheName = "Multicast Service";
         CacheManager.initializeCache(cacheName, "multicast", 128 * 1024, JiveConstants.DAY);
         cache = CacheManager.getCache(cacheName);
     }

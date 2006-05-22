@@ -86,7 +86,7 @@ public class OutgoingServerSocketReader {
         Thread thread = new Thread("Outgoing Server Reader") {
             public void run() {
                 while (open) {
-                    Element doc = null;
+                    Element doc;
                     try {
                         doc = reader.parseDocument().getRootElement();
 

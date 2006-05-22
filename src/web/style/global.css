@@ -1,5 +1,5 @@
 BODY, DIV, P, TD, TH {
-    font-family : arial, helvetica, sans-serif;
+    font-family : georgia, "times new roman", times, serif;
     font-size : 100%;
     font-size : 10pt;
 }
@@ -41,11 +41,19 @@ FIELDSET LEGEND {
 
 #jive-header {
     width : 100%;
-    height : 62px;
+    height : 61px;
     border : 0px;
     background-image : url("../images/header-background.gif");
     background-repeat : repeat-x;
     background-color : #369;
+    border-bottom : 1px #369 solid;
+}
+#jive-secondary {
+    border-top : 1px #ccc solid;
+    background-color : #eee;
+    border-bottom : 1px #bbb solid;
+    padding : 6px;
+    padding-left : 12px;
 }
 #jive-header .info {
     font-size : 8pt;
@@ -53,7 +61,6 @@ FIELDSET LEGEND {
     padding-right : 2em;
     text-align : right;
 }
-
 #jive-content {
     padding : 1em;
 }
@@ -68,14 +75,16 @@ FIELDSET LEGEND {
     margin : 0px;
 }
 #jive-header #jive-tabs LI {
-    font-family : verdana;
+    font-family : verdana, georgia, "times new roman", times, serif;
     font-size : 8pt;
     font-weight : bold;
+    text-transform : uppercase;
 }
 #jive-header #jive-tabs LI A {
     color : #CEE1FA;
     text-decoration : none;
     padding : 3px 5px 3px 5px;
+
 }
 #jive-header #jive-tabs LI A:hover {
     color : #fff;
@@ -124,9 +133,8 @@ FIELDSET LEGEND {
     white-space : nowrap;
 }
 #jive-header #jive-logout A {
-    color : #CEE1FA;
+    color : #cee1fa;
     font-size : 8pt;
-    font-family : verdana;
     font-weight : bold;
     text-decoration : none;
 }
@@ -169,6 +177,10 @@ FIELDSET LEGEND {
 /*  Sidebar                                      */
 /* --------------------------------------------- */
 
+#jive-main #jive-sidebar-box {
+    /*background-color : #eef;*/
+    /*border-right : 2px #ccf solid;*/
+}
 #jive-main #jive-sidebar {
     padding : 0px 5px 5px 5px;
 }
@@ -186,7 +198,7 @@ FIELDSET LEGEND {
 #jive-main #jive-sidebar a {
 	/*/*/display: block;
 	padding: 2px 2px 2px 10px;
-	border: 1px solid #fff;
+	border: 1px #fff solid;
 	width: 140px;
 	-moz-border-radius : 3px;
 	background-color: #fff; /* */
@@ -275,14 +287,19 @@ PRE, TT {
     width : 30%;
 }
 .jive-table TH, .jive-table TD {
-    padding : 4px;
+    padding : 6px;
+}
+.jive-table TH TH, .jive-table TD TD {
+    padding : 0px;
+}
+.jive-table TD.icon {
+    padding : 0 5px 0 3px;
 }
 .jive-table TH {
     background-color : #eee;
-    border-bottom : 1px #bbb solid;
-    border-right : 1px #bbb solid;
+    border-bottom : 2px #ccc solid;
     text-align : left;
-    font-family : verdana;
+    font-family : verdana, arial, helvetica, sans-serif;
     font-size : 8pt;
     font-weight : bold;
 }
@@ -298,7 +315,7 @@ PRE, TT {
     border-bottom : 1px #ccc solid;
 }
 .jive-table TD {
-    font-family : arial, helvetica, sans-serif;
+    font-family : georgia, "times new roman", times, serif;
     font-size : 10pt;
 }
 .jive-table .jive-odd TD {
@@ -311,7 +328,6 @@ PRE, TT {
     background-color : #ddd;
     font-family : verdana;
     font-size : 8pt;
-    border-right : 1px #bbb solid;
 }
 .jive-table TD TD {
     border-width : 0px;
@@ -324,7 +340,7 @@ PRE, TT {
 .jive-description, .jive-description A, .jive-table .jive-date, .jive-description INPUT,
 .jive-description SELECT
 {
-    font-family : verdana,arial,helvetica,sans-serif;
+    font-family : georgia, "times new roman", times, serif;
     font-size : 8pt;
 }
 

@@ -278,4 +278,14 @@
         </sidebar>
     </tab>
 
+    <tab id="tab-plugins" name="Plugins" url="xxx.jsp" description="${tab.tab-plugins.descr}">
+
+        <sidebar id="sidebar-plugins-test" name="Just A Test">
+            <item id="plugins-test-item" name="Test Entry"
+                    url="xxx.jsp"
+                    description="${plugins.test-item.descr}" />
+        </sidebar>
+
+    </tab>
+
 </adminconsole>

@@ -52,6 +52,22 @@
     }
     //-->
     </script>
+    <script type="text/javascript" src="<%= path %>/js/behaviour.js"></script>
+    <script type="text/javascript">
+    // Add a nice little rollover effect to any row in a jive-table object. This will help
+    // visually link left and right columns.
+    var myrules = {
+        '.jive-table TBODY TR' : function(el) {
+            el.onmouseover = function() {
+                this.style.backgroundColor = '#efefef';
+            }
+            el.onmouseout = function() {
+                this.style.backgroundColor = '#ffffff';
+            }
+        }
+    };
+    Behaviour.register(myrules);
+    </script>
     <decorator:head />
 </head>
 
@@ -62,7 +78,7 @@
 <tbody>
     <tr>
         <td>
-            <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="login.title" />">
+            <img id="jive-logo-image" src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="login.title" />">
         </td>
         <td align="right">
             <table cellpadding="0" cellspacing="0" border="0">
@@ -107,12 +123,20 @@
 </tbody>
 </table>
 </div>
+<%--
+<div id="jive-secondary">
+    <ul>
+        <li><a href="">Server Manager</a></li>
+        <li><a href="">Server Settings</a></li>
+    </ul>
+</div>
+--%>
 
 <div id="jive-main">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tbody>
     <tr valign="top">
-        <td width="1%">
+        <td width="1%" id="jive-sidebar-box">
             <div id="jive-sidebar">
 
                 <admin:sidebar css="" currentcss="currentlink" headercss="category">

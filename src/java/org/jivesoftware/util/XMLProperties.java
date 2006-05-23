@@ -233,7 +233,7 @@ public class XMLProperties {
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
         ArrayList<String> props = new ArrayList<String>();
         while (iter.hasNext()) {
-            props.add(((Element)iter.next()).getName());
+            props.add(((Element)iter.next()).getText());
         }
         return props.iterator();
     }

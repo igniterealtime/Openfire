@@ -229,7 +229,7 @@ public class XMLProperties {
                 return Collections.EMPTY_LIST.iterator();
             }
         }
-        // We found matching property, return names of children.
+        // We found matching property, return values of the children.
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
         ArrayList<String> props = new ArrayList<String>();
         while (iter.hasNext()) {

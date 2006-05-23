@@ -11,9 +11,6 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import org.dom4j.Element;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.muc.ConflictException;
@@ -25,6 +22,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
@@ -108,8 +109,8 @@ public class IQAdminHandler {
     private void handleItemsElement(MUCRole senderRole, List itemsList, IQ reply)
             throws ForbiddenException, ConflictException, NotAllowedException {
         Element item;
-        String affiliation = null;
-        String roleAttribute = null;
+        String affiliation;
+        String roleAttribute;
         boolean hasJID = ((Element)itemsList.get(0)).attributeValue("jid") != null;
         boolean hasNick = ((Element)itemsList.get(0)).attributeValue("nick") != null;
         // Check if the client is requesting or changing the list of moderators/members/etc.
@@ -194,9 +195,9 @@ public class IQAdminHandler {
         }
         else {
             // The client is modifying the list of moderators/members/participants/outcasts
-            JID jid = null;
+            JID jid;
             String nick;
-            String target = null;
+            String target;
             boolean hasAffiliation = ((Element) itemsList.get(0)).attributeValue("affiliation") !=
                     null;
 

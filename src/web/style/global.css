@@ -286,7 +286,7 @@ PRE, TT {
 .jive-table .c1, fieldset .c1 {
     width : 30%;
 }
-.jive-table TH, .jive-table TD {
+.jive-table TH, .jive-table TD, .jive-option-table TH, .jive-option-table TD {
     padding : 6px;
 }
 .jive-table TH TH, .jive-table TD TD {
@@ -332,7 +332,7 @@ PRE, TT {
 .jive-table TD TD {
     border-width : 0px;
 }
-.jive-table INPUT, .jive-table SELECT {
+.jive-table INPUT, .jive-table SELECT, .jive-option-table INPUT, .jive-option-table SELECT {
     font-family : verdana;
     font-size : 8pt;
 }
@@ -344,11 +344,14 @@ PRE, TT {
     font-size : 8pt;
 }
 
-.jive-label {
-    background-color : #eee;
+.jive-label, .jive-option-table LABEL {
+    font-weight : bold;
     padding-right : 10px;
-    width : 1%;
     white-space : nowrap;
+}
+.jive-label {
+    padding-right : 20px;
+    vertical-align : top;
 }
 
 .jive-buttons .jive-icon {

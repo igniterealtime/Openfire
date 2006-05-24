@@ -189,7 +189,7 @@ then proxy a real connection to the HTTP server on port 9090.
   ....
   ProxyVia On
   RewriteEngine On
-  RewriteConf %{REQUEST_URI} ^/plugins/presence/status
+  RewriteCond %{REQUEST_URI} ^/plugins/presence/status
   RewriteRule ^/(.*) http://example.com:9090/$1 [P]
 &lt;/virtualhost&gt;
 </pre></td></tr></table>

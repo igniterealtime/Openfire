@@ -97,7 +97,7 @@ public class ConnectionMultiplexerSession extends Session {
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
         sb.append("xmlns=\"jabber:connectionmanager\" from=\"");
         sb.append(domain);
-        sb.append("\">");
+        sb.append("\" version=\"1.0\">");
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
@@ -177,7 +177,7 @@ public class ConnectionMultiplexerSession extends Session {
             sb.append(domain);
             sb.append("\" id=\"");
             sb.append(session.getStreamID().toString());
-            sb.append("\">");
+            sb.append("\" version=\"1.0\" >");
             writer.write(sb.toString());
             writer.flush();
 

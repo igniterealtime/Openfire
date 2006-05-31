@@ -26,9 +26,9 @@ import java.sql.SQLException;
  * that you can connect to with JDBC. It can be used along with the
  * {@link HybridAuthProvider hybrid} auth provider, so that you can also have
  * XMPP-only users that won't pollute your external data.<p>
- * <p/>
+ *
  * To enable this provider, set the following in the XML configuration file:
- * <p/>
+ *
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
@@ -36,27 +36,33 @@ import java.sql.SQLException;
  *     &lt;/auth&gt;
  * &lt;/provider&gt;
  * </pre>
- * <p/>
+ *
  * You'll also need to set your JDBC driver, connection string, and SQL statements:
- * <p/>
+ *
  * <pre>
  * &lt;jdbcAuthProvider&gt;
  *      &lt;jdbcDriver&gt;
  *          &lt;className&gt;com.mysql.jdbc.Driver&lt;/className&gt;
  *      &lt;/jdbcDrivec&gt;
  *      &lt;jdbcConnString&gt;jdbc:mysql:://localhost/dbname?user=username&amp;amp;password=secret&lt;/jdbcConnString&gt;
- *      &lt;authorizeSQL&gt;SELECT username FROM user_account WHERE username=? AND password=?&lt;/authorizeSQL&gt;
  *      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;passwordSQL&gt;
- * &lt;/jdbcAuthProvider&gt;
- * </pre>
+ *      &lt;passwordType&gt;plain&lt;passwordType&gt;
+ * &lt;/jdbcAuthProvider&gt;</pre>
+ *
+ * The passwordType setting tells Wildfire how the password is stored. Setting the value
+ * is optional (when not set, it defaults to "plain"). The valid values are:<ul>
+ *      <li>{@link PasswordType#plain plain}
+ *      <li>{@link PasswordType#md5 md5}
+ *      <li>{@link PasswordType#sha1 sha1}
+ *  </ul>
  *
  * @author David Snopek
  */
 public class JDBCAuthProvider implements AuthProvider {
 
-    private String jdbcConnString;
-    private String authSQL;
-    private String passSQL;
+    private String jdbcConnectionString;
+    private String passwordSQL;
+    private PasswordType passwordType = PasswordType.plain;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -72,10 +78,16 @@ public class JDBCAuthProvider implements AuthProvider {
             return;
         }
 
-        // Grab connection string and SQL statements
-        jdbcConnString = JiveGlobals.getXMLProperty("jdbcAuthProvider.jdbcConnString");
-        authSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.authorizeSQL");
-        passSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
+        // Grab connection string and SQL config.
+        jdbcConnectionString = JiveGlobals.getXMLProperty("jdbcAuthProvider.jdbcConnString");
+        passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
+        passwordType = PasswordType.plain;
+        try {
+            PasswordType.valueOf(JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordType", "plain"));
+        }
+        catch (IllegalArgumentException iae) {
+            Log.error(iae);
+        }
     }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
@@ -83,42 +95,17 @@ public class JDBCAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(authSQL);
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            ResultSet rs = pstmt.executeQuery();
-            // If the query has no results, the username and password
-            // did not match a user record. Therefore, throw an exception.
-            if (!rs.next()) {
-                throw new UnauthorizedException();
-            }
-            rs.close();
+        String userPassword = getPassword(username);
+        // If the user's password doesn't match the password passed in, authentication
+        // should fail.
+        if (passwordType == PasswordType.md5) {
+            password = StringUtils.hash(password, "MD5");
         }
-        catch (SQLException e) {
-            Log.error("Exception in JDBCAuthProvider", e);
+        else if (passwordType == PasswordType.sha1) {
+            password = StringUtils.hash(password, "SHA-1");
+        }
+        if (!password.equals(userPassword)) {
             throw new UnauthorizedException();
-        }
-        finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
         }
 
         // Got this far, so the user must be authorized.
@@ -126,16 +113,64 @@ public class JDBCAuthProvider implements AuthProvider {
     }
 
     public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException {
+            throws UnauthorizedException
+    {
+        if (passwordType != PasswordType.plain) {
+            throw new UnsupportedOperationException("Digest authentication not supported for "
+                    + "password type " + passwordType);
+        }
         if (username == null || token == null || digest == null) {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        Connection conn = null;
+        String password = getPassword(username);
+        String anticipatedDigest = AuthFactory.createDigest(token, password);
+        if (!digest.equalsIgnoreCase(anticipatedDigest)) {
+            throw new UnauthorizedException();
+        }
+
+        // Got this far, so the user must be authorized.
+        createUser(username);
+    }
+
+    public boolean isPlainSupported() {
+        // If the auth SQL is defined, plain text authentication is supported.
+        return (passwordSQL != null);
+    }
+
+    public boolean isDigestSupported() {
+        // The auth SQL must be defined and the password type is supported.
+        return (passwordSQL != null && passwordType == PasswordType.plain);
+    }
+
+    /**
+     * Indicates how the password is stored.
+     */
+    public enum PasswordType {
+
+        /**
+         * The password is stored as plain text.
+         */
+        plain,
+
+        /**
+         * The password is stored as a hex-encoded MD5 hash.
+         */
+        md5,
+
+        /**
+         * The password is stored as a hex-encoded SHA-1 hash.
+         */
+        sha1
+    }
+
+    private String getPassword(String username) throws UnauthorizedException {
+        String password = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(passSQL);
+            con = DriverManager.getConnection(jdbcConnectionString);
+            pstmt = con.prepareStatement(passwordSQL);
             pstmt.setString(1, username);
 
             ResultSet rs = pstmt.executeQuery();
@@ -145,11 +180,7 @@ public class JDBCAuthProvider implements AuthProvider {
             if (!rs.next()) {
                 throw new UnauthorizedException();
             }
-            String pass = rs.getString(1);
-            String anticipatedDigest = AuthFactory.createDigest(token, pass);
-            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-                throw new UnauthorizedException();
-            }
+            password = rs.getString(1);
             rs.close();
         }
         catch (SQLException e) {
@@ -166,25 +197,15 @@ public class JDBCAuthProvider implements AuthProvider {
                 Log.error(e);
             }
             try {
-                if (conn != null) {
-                    conn.close();
+                if (con != null) {
+                    con.close();
                 }
             }
             catch (Exception e) {
                 Log.error(e);
             }
         }
-
-        // Got this far, so the user must be authorized.
-        createUser(username);
-    }
-
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    public boolean isDigestSupported() {
-        return true;
+        return password;
     }
 
     private static void createUser(String username) {

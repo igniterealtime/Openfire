@@ -464,3 +464,42 @@ A.cal:Hover {
     width : 90%;
     margin-left : 15px;
 }
+
+
+.success {
+    color : #060;
+    font-weight : bold;
+    background-color : #dfd;
+    padding : 3px;
+    border : 1px #6f6 dotted;
+    margin-top : 10px;
+    padding-left : 28px;
+    background-image : url(../images/success-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+}
+.error {
+    color : #900;
+    font-weight : bold;
+    background-color : #fdd;
+    padding : 3px;
+    border : 1px #f66 dotted;
+    margin-top : 10px;
+    padding-left : 28px;
+    background-image : url(../images/error-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+}
+
+.warning {
+    color : #900;
+    font-weight : bold;
+    background-color : #FFF9B7;
+    padding : 3px;
+    border : 1px #f66 dotted;
+    margin-top : 10px;
+    padding-left : 28px;
+    background-image : url(../images/warning-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+}

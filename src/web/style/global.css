@@ -1,5 +1,5 @@
 BODY, DIV, P, TD, TH {
-    font-family : georgia, "times new roman", times, serif;
+    font-family : arial, helvetica, sans-serif;
     font-size : 100%;
     font-size : 10pt;
 }
@@ -75,7 +75,7 @@ FIELDSET LEGEND {
     margin : 0px;
 }
 #jive-header #jive-tabs LI {
-    font-family : verdana, georgia, "times new roman", times, serif;
+    font-family : verdana, arial, helvetica, sans-serif;
     font-size : 8pt;
     font-weight : bold;
     text-transform : uppercase;
@@ -315,7 +315,7 @@ PRE, TT {
     border-bottom : 1px #ccc solid;
 }
 .jive-table TD {
-    font-family : georgia, "times new roman", times, serif;
+    font-family : arial, helvetica, sans-serif;
     font-size : 10pt;
 }
 .jive-table .jive-odd TD {
@@ -340,7 +340,7 @@ PRE, TT {
 .jive-description, .jive-description A, .jive-table .jive-date, .jive-description INPUT,
 .jive-description SELECT
 {
-    font-family : georgia, "times new roman", times, serif;
+    font-family : arial, helvetica, sans-serif;
     font-size : 8pt;
 }
 

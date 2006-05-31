@@ -43,11 +43,6 @@
                     url="logviewer.jsp"
                     description="${sidebar.server-logs.descr}" />
 
-            <!-- Plugins -->
-			<item id="plugin-settings" name="${sidebar.plugin-settings}"
-                    url="plugin-admin.jsp"
-                    description="${sidebar.plugin-settings.descr}" />
-
             <!-- Email -->
 			<item id="system-email" name="${sidebar.server-email}"
                     url="system-email.jsp"
@@ -275,6 +270,19 @@
                 url="muc-room-create.jsp"
                 description="${sidebar.muc-room-create.descr}" />
 
+        </sidebar>
+    </tab>
+
+    <!-- Plugins -->
+    <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}">
+
+        <!-- Group Chat Settings -->
+        <sidebar id="sidebar-plugin-adamin" name="${sidebar.sidebar-plugin-admin}">
+
+            <!-- Plugins -->
+			<item id="plugin-settings" name="${sidebar.plugin-settings}"
+                    url="plugin-admin.jsp"
+                    description="${sidebar.plugin-settings.descr}" />
         </sidebar>
     </tab>
 

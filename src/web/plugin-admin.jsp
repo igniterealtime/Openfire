@@ -220,7 +220,7 @@
             }
 %>
 
-	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
+	    <tr>
 	        <td width="1%">
                 <% if (icon.exists()) { %>
                 <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">

@@ -4,7 +4,7 @@
 -- Note: This schema has only been tested on PostgreSQL 7.3.2.
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   password              VARCHAR(32),
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
@@ -17,7 +17,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate);
 
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
@@ -25,7 +25,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   jid                   VARCHAR(1024)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -67,7 +67,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   value                 TEXT            NOT NULL,
   CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
 );
@@ -131,7 +131,7 @@ CREATE TABLE jiveRemoteServerConf (
 );
 
 CREATE TABLE jivePrivacyList (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   isDefault             INTEGER         NOT NULL,
   list                  TEXT            NOT NULL,

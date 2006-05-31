@@ -2,7 +2,7 @@
 /* $Date: 2005-07-19 20:18:17 -0700 (Tue, 19 Jul 2005) $   */
 
 CREATE TABLE jiveUser (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   password              NVARCHAR(32)    NULL,
   encryptedPassword     NVARCHAR(255)   NULL,
   name                  NVARCHAR(100)   NULL,
@@ -15,7 +15,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate ASC);
 
 
 CREATE TABLE jiveUserProp (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
   propValue             TEXT            NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
@@ -23,7 +23,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
   namespace             NVARCHAR(200)   NOT NULL,
   value                 TEXT            NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   jid                   TEXT            NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -65,7 +65,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 
 CREATE TABLE jiveVCard (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   value                 TEXT            NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
 );
@@ -129,7 +129,7 @@ CREATE TABLE jiveRemoteServerConf (
 );
 
 CREATE TABLE jivePrivacyList (
-  username              NVARCHAR(32)    NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
   isDefault             INT             NOT NULL,
   list                  TEXT            NOT NULL,

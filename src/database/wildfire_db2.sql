@@ -2,7 +2,7 @@
 --   $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   password              VARCHAR(32),
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
@@ -15,7 +15,7 @@ CREATE INDEX jiveUsr_cDate_idx ON jiveUser (creationDate ASC);
 
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
   CONSTRAINT jiveUsrProp_pk PRIMARY KEY (username, name)
@@ -23,7 +23,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 VARCHAR(2000)   NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   jid                   VARCHAR(2000)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -64,7 +64,7 @@ CREATE INDEX jiveRoGrps_rid_idx ON jiveRosterGroups (rosterID ASC);
 
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   value                 VARCHAR(2000)   NOT NULL,
   CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
 );
@@ -92,7 +92,7 @@ CREATE TABLE jiveGroupUser (
   CONSTRAINT jiveGrpUser PRIMARY KEY (groupName, username, administrator)
 );
 
- 
+
 CREATE TABLE jiveID (
   idType                INTEGER         NOT NULL,
   id                    INTEGER         NOT NULL,
@@ -113,12 +113,14 @@ CREATE TABLE jiveVersion (
   CONSTRAINT jiveVersion_pk PRIMARY KEY (name)
 );
 
+
 CREATE TABLE jiveExtComponentConf (
   subdomain             VARCHAR(255)    NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
   CONSTRAINT jiveExtCmpConf_pk PRIMARY KEY (subdomain)
 );
+
 
 CREATE TABLE jiveRemoteServerConf (
   domain                VARCHAR(255)    NOT NULL,
@@ -127,14 +129,16 @@ CREATE TABLE jiveRemoteServerConf (
   CONSTRAINT jiveRmSrvConf_pk PRIMARY KEY (domain)
 );
 
+
 CREATE TABLE jivePrivacyList (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   isDefault             INTEGER         NOT NULL,
   list                  VARCHAR(2000)   NOT NULL,
   CONSTRAINT jivePrivacyList_pk PRIMARY KEY (username, name)
 );
 CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
+
 
 -- MUC tables
 
@@ -163,8 +167,8 @@ CREATE TABLE mucRoom (
   canRegister         INTEGER       NOT NULL,
   CONSTRAINT mucRoom_pk PRIMARY KEY (name)
 );
-
 CREATE INDEX mucRm_roomid_idx ON mucRoom (roomID);
+
 
 CREATE TABLE mucRoomProp (
   roomID                INTEGER         NOT NULL,
@@ -173,12 +177,14 @@ CREATE TABLE mucRoomProp (
   CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
+
 CREATE TABLE mucAffiliation (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,
   affiliation         INTEGER       NOT NULL,
   CONSTRAINT mucAffiliation_pk PRIMARY KEY (roomID, jid)
 );
+
 
 CREATE TABLE mucMember (
   roomID              INTEGER       NOT NULL,
@@ -191,6 +197,7 @@ CREATE TABLE mucMember (
   faqentry            VARCHAR(100),
   CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
 );
+
 
 CREATE TABLE mucConversationLog (
   roomID              INTEGER       NOT NULL,
@@ -238,6 +245,7 @@ CREATE TABLE pubsubNode (
   CONSTRAINT pubsubNode_pk PRIMARY KEY (serviceID, nodeID)
 );
 
+
 CREATE TABLE pubsubNodeJIDs (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
@@ -246,12 +254,14 @@ CREATE TABLE pubsubNodeJIDs (
   CONSTRAINT pubsubJID_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
+
 CREATE TABLE pubsubNodeGroups (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)  NOT NULL
 );
 CREATE INDEX pubsubNodeGroups_idx ON pubsubNodeGroups (serviceID, nodeID);
+
 
 CREATE TABLE pubsubAffiliation (
   serviceID           VARCHAR(100)  NOT NULL,
@@ -260,6 +270,7 @@ CREATE TABLE pubsubAffiliation (
   affiliation         VARCHAR(10)   NOT NULL,
   CONSTRAINT pubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
+
 
 CREATE TABLE pubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
@@ -270,6 +281,7 @@ CREATE TABLE pubsubItem (
   payload             VARCHAR(4000) NULL,
   CONSTRAINT pubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
+
 
 CREATE TABLE pubsubSubscription (
   serviceID           VARCHAR(100)  NOT NULL,
@@ -289,6 +301,7 @@ CREATE TABLE pubsubSubscription (
   keyword             VARCHAR(200)  NULL,
   CONSTRAINT pubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id)
 );
+
 
 CREATE TABLE pubsubDefaultConf (
   serviceID           VARCHAR(100)  NOT NULL,

@@ -2,7 +2,7 @@
 # $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   password              VARCHAR(32),
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
@@ -14,14 +14,14 @@ CREATE TABLE jiveUser (
 );
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (username, name)
 );
 
 CREATE TABLE jiveGroup (
-  groupName              VARCHAR(50)     NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
   PRIMARY KEY (groupName)
 );
@@ -41,7 +41,7 @@ CREATE TABLE jiveGroupUser (
 );
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE jivePrivate (
 );
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   jid                   TEXT            NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE jiveRosterGroups (
 );
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   value                 TEXT            NOT NULL,
   PRIMARY KEY (username)
 );
@@ -117,7 +117,7 @@ CREATE TABLE jiveRemoteServerConf (
 );
 
 CREATE TABLE jivePrivacyList (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   isDefault             TINYINT         NOT NULL,
   list                  TEXT            NOT NULL,

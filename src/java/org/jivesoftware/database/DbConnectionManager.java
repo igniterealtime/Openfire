@@ -115,6 +115,24 @@ public class DbConnectionManager {
     }
 
     /**
+     * Closes a PreparedStatement and Connection. However, it first rolls back the transaction or
+     * commits it depending on the value of <code>abortTransaction</code>.
+     */
+    public static void closeTransactionConnection(PreparedStatement pstmt, Connection con,
+            boolean abortTransaction)
+    {
+        try {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        closeTransactionConnection(con, abortTransaction);
+    }
+
+    /**
      * Closes a Connection. However, it first rolls back the transaction or
      * commits it depending on the value of <code>abortTransaction</code>.
      */
@@ -156,7 +174,8 @@ public class DbConnectionManager {
         }
     }
 
-    /** Closes a result set. This method should be called within the finally section of
+    /**
+     * Closes a result set. This method should be called within the finally section of
      * your database logic, as in the following example:
      *
      * <pre>

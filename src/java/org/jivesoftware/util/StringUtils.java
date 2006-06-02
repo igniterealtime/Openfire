@@ -892,4 +892,36 @@ public class StringUtils {
     public static String dateToMillis(Date date) {
         return zeroPadString(Long.toString(date.getTime()), 15);
     }
+
+    /**
+     * Returns a collection of Strings as a comma-delimitted list of strings.
+     *
+     * @return a String representing the Collection.
+     */
+    public static String collectionToString(Collection<String> list) {
+        StringBuilder buf = new StringBuilder();
+        String delim = "";
+        for (String element : list) {
+            buf.append(delim);
+            buf.append(element);
+            delim = ",";
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Returns a comma-delimitted list of Strings as a Collection.
+     *
+     * @return a Collection representing the String.
+     */
+    public static Collection<String> stringToCollection(String string) {
+        Collection<String> collection = new ArrayList<String>();
+        if (string != null) {
+            StringTokenizer tokens = new StringTokenizer(string, ",");
+            while (tokens.hasMoreTokens()) {
+                collection.add((String)tokens.nextToken());
+            }
+        }
+        return collection;
+    }
 }

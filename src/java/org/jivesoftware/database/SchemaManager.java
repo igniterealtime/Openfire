@@ -10,17 +10,17 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.XMPPServer;
 
-import java.sql.*;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
+import java.sql.*;
 import java.util.Arrays;
 
 /**
@@ -156,6 +156,7 @@ public class SchemaManager {
             }
             catch (SQLException sqle2) {
                 // The database schema must not be installed.
+                Log.warn("Error verifying server version", sqle2);
             }
         }
         finally {

@@ -919,7 +919,7 @@ public class StringUtils {
         if (string != null) {
             StringTokenizer tokens = new StringTokenizer(string, ",");
             while (tokens.hasMoreTokens()) {
-                collection.add((String)tokens.nextToken());
+                collection.add(tokens.nextToken().trim());
             }
         }
         return collection;

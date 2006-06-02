@@ -898,10 +898,13 @@ public class StringUtils {
      *
      * @return a String representing the Collection.
      */
-    public static String collectionToString(Collection<String> list) {
+    public static String collectionToString(Collection<String> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return "";
+        }
         StringBuilder buf = new StringBuilder();
         String delim = "";
-        for (String element : list) {
+        for (String element : collection) {
             buf.append(delim);
             buf.append(element);
             delim = ",";
@@ -915,12 +918,13 @@ public class StringUtils {
      * @return a Collection representing the String.
      */
     public static Collection<String> stringToCollection(String string) {
+        if (string == null || string.trim().length() == 0) {
+            return Collections.emptyList();
+        }
         Collection<String> collection = new ArrayList<String>();
-        if (string != null) {
-            StringTokenizer tokens = new StringTokenizer(string, ",");
-            while (tokens.hasMoreTokens()) {
-                collection.add(tokens.nextToken().trim());
-            }
+        StringTokenizer tokens = new StringTokenizer(string, ",");
+        while (tokens.hasMoreTokens()) {
+            collection.add(tokens.nextToken().trim());
         }
         return collection;
     }

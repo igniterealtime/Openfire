@@ -271,11 +271,12 @@ public class PluginManager {
                 if (webRoot != null || classesDir != null) {
                     dev = new PluginDevEnvironment();
 
-                    System.out.println(pluginName + " is running in development mode.");
+                    System.out.println("Plugin " + pluginName + " is running in development mode.");
+                    Log.info("Plugin " + pluginName + " is running in development mode.");
                     if (webRoot != null) {
                         File webRootDir = new File(webRoot);
                         if (!webRootDir.exists()) {
-                            // ok, let's try it relative from this plugin dir?
+                            // Ok, let's try it relative from this plugin dir?
                             webRootDir = new File(pluginDir, webRoot);
                         }
 

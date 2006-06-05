@@ -16,13 +16,6 @@ package org.jivesoftware.wildfire.stats;
 public interface Statistic {
 
     /**
-     * The key uniquiely identifies a statistic in the system.
-     *
-     * @return Returns the key uniquiely identifies a statistic in the system.
-     */
-    public String getKey();
-
-    /**
      * Returns the name of a stat.
      *
      * @return Returns the name of a stat.
@@ -61,11 +54,11 @@ public interface Statistic {
          * Specifies a rate over time.
          * For example, the averave of kb/s in file transfers.
          */
-        RATE,
+        rate,
         /**
          * Specifies a count at a specific time period. An example would be the
          * number of users in MultiUserChat at this second.
          */
-        COUNT
+        count
     }
 }

@@ -10,8 +10,7 @@
  */
 package org.jivesoftware.wildfire.stats;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,6 +25,10 @@ public class StatisticsManager {
 
     private final Map<String, Statistic> statistics = new ConcurrentHashMap<String, Statistic>();
 
+    private final Map<String, List<String>> multiStatGroups = new ConcurrentHashMap<String, List<String>>();
+
+    private final Map<String, String> keyToGroupMap = new ConcurrentHashMap<String, String>();
+
     private StatisticsManager() {}
 
     /**
@@ -33,8 +36,8 @@ public class StatisticsManager {
      *
      * @param definition The statistic to be tracked.
      */
-    public void addStatistic(Statistic definition) {
-        statistics.put(definition.getKey(), definition);
+    public void addStatistic(String statKey, Statistic definition) {
+        statistics.put(statKey, definition);
     }
 
     /**
@@ -47,12 +50,31 @@ public class StatisticsManager {
         return statistics.get(statKey);
     }
 
+    public void addMultiStatistic(String statKey, String groupName, Statistic statistic) {
+        addStatistic(statKey, statistic);
+        List<String> group = multiStatGroups.get(groupName);
+        if(group == null) {
+            group = new ArrayList<String>();
+            multiStatGroups.put(groupName, group);
+        }
+        group.add(statKey);
+        keyToGroupMap.put(statKey, groupName);
+    }
+
+    public List<String> getStatGroup(String statGroup) {
+        return multiStatGroups.get(statGroup);
+    }
+
+    public String getMultistatGroup(String statKey) {
+        return keyToGroupMap.get(statKey);
+    }
+
     /**
      * Returns all statistics that the StatManager is tracking.
      * @return Returns all statistics that the StatManager is tracking.
      */
-    public Collection<Statistic> getAllStatistics() {
-        return statistics.values();
+    public Set<Map.Entry<String, Statistic>> getAllStatistics() {
+        return statistics.entrySet();
     }
 
     /**

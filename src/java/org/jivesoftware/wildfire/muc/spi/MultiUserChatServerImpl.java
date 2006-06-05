@@ -72,6 +72,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private static final String usersStatKey = "muc_users";
     private static final String incomingStatKey = "muc_incoming";
     private static final String outgoingStatKey = "muc_outgoing";
+    private static final String trafficStatGroup = "muc_traffic";
 
 
     /**
@@ -1128,16 +1129,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private void addTotalRoomStats() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
-            public String getKey() {
-                return roomsStatKey;
-            }
-
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
             }
 
             public Type getStatType() {
-                return Type.COUNT;
+                return Type.count;
             }
 
             public String getDescription() {
@@ -1152,22 +1149,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return getNumberChatRooms();
             }
         };
-        StatisticsManager.getInstance().addStatistic(statistic);
+        StatisticsManager.getInstance().addStatistic(roomsStatKey, statistic);
     }
 
     private void addTotalOccupantsStats() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
-            public String getKey() {
-                return occupantsStatKey;
-            }
-
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
             }
 
             public Type getStatType() {
-                return Type.COUNT;
+                return Type.count;
             }
 
             public String getDescription() {
@@ -1182,22 +1175,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return getNumberRoomOccupants();
             }
         };
-        StatisticsManager.getInstance().addStatistic(statistic);
+        StatisticsManager.getInstance().addStatistic(occupantsStatKey, statistic);
     }
 
     private void addTotalConnectedUsers() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
-            public String getKey() {
-                return usersStatKey;
-            }
-
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.name");
             }
 
             public Type getStatType() {
-                return Type.COUNT;
+                return Type.count;
             }
 
             public String getDescription() {
@@ -1212,22 +1201,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return getNumberConnectedUsers();
             }
         };
-        StatisticsManager.getInstance().addStatistic(statistic);
+        StatisticsManager.getInstance().addStatistic(usersStatKey, statistic);
     }
 
     private void addNumberIncomingMessages() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
-            public String getKey() {
-                return incomingStatKey;
-            }
-
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.name");
             }
 
             public Type getStatType() {
-                return Type.RATE;
+                return Type.rate;
             }
 
             public String getDescription() {
@@ -1242,22 +1227,18 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return inMessages.getAndSet(0);
             }
         };
-        StatisticsManager.getInstance().addStatistic(statistic);
+        StatisticsManager.getInstance().addMultiStatistic(incomingStatKey, trafficStatGroup, statistic);
     }
 
     private void addNumberOutgoingMessages() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
-            public String getKey() {
-                return outgoingStatKey;
-            }
-
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.name");
             }
 
             public Type getStatType() {
-                return Type.RATE;
+                return Type.rate;
             }
 
             public String getDescription() {
@@ -1272,6 +1253,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 return outMessages.getAndSet(0);
             }
         };
-        StatisticsManager.getInstance().addStatistic(statistic);
+        StatisticsManager.getInstance().addMultiStatistic(outgoingStatKey, trafficStatGroup, statistic);
     }
 }

@@ -166,7 +166,7 @@ class PrivacyItem implements Serializable, Comparable {
             }
         }
         else if (type == Type.group) {
-            Collection<String> contactGroups = null;
+            Collection<String> contactGroups;
             try {
                 // Get the groups where the contact belongs
                 RosterItem item = roster.getRosterItem(jid);
@@ -241,6 +241,6 @@ class PrivacyItem implements Serializable, Comparable {
          * JID being analyzed should belong to a contact present in the owner's roster with
          * the specified subscription status.
          */
-        subscription;
+        subscription
     }
 }

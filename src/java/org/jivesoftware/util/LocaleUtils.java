@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocaleUtils {
 
     private static final Map<Locale, String[][]> timeZoneLists =
-        new ConcurrentHashMap<Locale, String[][]>();
+            new ConcurrentHashMap<Locale, String[][]>();
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
@@ -72,8 +72,8 @@ public class LocaleUtils {
                 }
             }
             locale = new Locale(language,
-                ((country != null) ? country : ""),
-                ((variant != null) ? variant : ""));
+                    ((country != null) ? country : ""),
+                    ((variant != null) ? variant : ""));
         }
         return locale;
     }
@@ -81,80 +81,80 @@ public class LocaleUtils {
     // The list of supported timezone ids. The list tries to include all of the relevant
     // time zones for the world without any extraneous zones.
     private static String[] timeZoneIds = new String[]{"GMT",
-        "Pacific/Apia",
-        "HST",
-        "AST",
-        "America/Los_Angeles",
-        "America/Phoenix",
-        "America/Mazatlan",
-        "America/Denver",
-        "America/Belize",
-        "America/Chicago",
-        "America/Mexico_City",
-        "America/Regina",
-        "America/Bogota",
-        "America/New_York",
-        "America/Indianapolis",
-        "America/Halifax",
-        "America/Caracas",
-        "America/Santiago",
-        "America/St_Johns",
-        "America/Sao_Paulo",
-        "America/Buenos_Aires",
-        "America/Godthab",
-        "Atlantic/South_Georgia",
-        "Atlantic/Azores",
-        "Atlantic/Cape_Verde",
-        "Africa/Casablanca",
-        "Europe/Dublin",
-        "Europe/Berlin",
-        "Europe/Belgrade",
-        "Europe/Paris",
-        "Europe/Warsaw",
-        "ECT",
-        "Europe/Athens",
-        "Europe/Bucharest",
-        "Africa/Cairo",
-        "Africa/Harare",
-        "Europe/Helsinki",
-        "Asia/Jerusalem",
-        "Asia/Baghdad",
-        "Asia/Kuwait",
-        "Europe/Moscow",
-        "Africa/Nairobi",
-        "Asia/Tehran",
-        "Asia/Muscat",
-        "Asia/Baku",
-        "Asia/Kabul",
-        "Asia/Yekaterinburg",
-        "Asia/Karachi",
-        "Asia/Calcutta",
-        "Asia/Katmandu",
-        "Asia/Almaty",
-        "Asia/Dhaka",
-        "Asia/Colombo",
-        "Asia/Rangoon",
-        "Asia/Bangkok",
-        "Asia/Krasnoyarsk",
-        "Asia/Hong_Kong",
-        "Asia/Irkutsk",
-        "Asia/Kuala_Lumpur",
-        "Australia/Perth",
-        "Asia/Taipei",
-        "Asia/Tokyo",
-        "Asia/Seoul",
-        "Asia/Yakutsk",
-        "Australia/Adelaide",
-        "Australia/Darwin",
-        "Australia/Brisbane",
-        "Australia/Sydney",
-        "Pacific/Guam",
-        "Australia/Hobart",
-        "Asia/Vladivostok",
-        "Pacific/Noumea",
-        "Pacific/Auckland",
-        "Pacific/Fiji",
-        "Pacific/Tongatapu"
+            "Pacific/Apia",
+            "HST",
+            "AST",
+            "America/Los_Angeles",
+            "America/Phoenix",
+            "America/Mazatlan",
+            "America/Denver",
+            "America/Belize",
+            "America/Chicago",
+            "America/Mexico_City",
+            "America/Regina",
+            "America/Bogota",
+            "America/New_York",
+            "America/Indianapolis",
+            "America/Halifax",
+            "America/Caracas",
+            "America/Santiago",
+            "America/St_Johns",
+            "America/Sao_Paulo",
+            "America/Buenos_Aires",
+            "America/Godthab",
+            "Atlantic/South_Georgia",
+            "Atlantic/Azores",
+            "Atlantic/Cape_Verde",
+            "Africa/Casablanca",
+            "Europe/Dublin",
+            "Europe/Berlin",
+            "Europe/Belgrade",
+            "Europe/Paris",
+            "Europe/Warsaw",
+            "ECT",
+            "Europe/Athens",
+            "Europe/Bucharest",
+            "Africa/Cairo",
+            "Africa/Harare",
+            "Europe/Helsinki",
+            "Asia/Jerusalem",
+            "Asia/Baghdad",
+            "Asia/Kuwait",
+            "Europe/Moscow",
+            "Africa/Nairobi",
+            "Asia/Tehran",
+            "Asia/Muscat",
+            "Asia/Baku",
+            "Asia/Kabul",
+            "Asia/Yekaterinburg",
+            "Asia/Karachi",
+            "Asia/Calcutta",
+            "Asia/Katmandu",
+            "Asia/Almaty",
+            "Asia/Dhaka",
+            "Asia/Colombo",
+            "Asia/Rangoon",
+            "Asia/Bangkok",
+            "Asia/Krasnoyarsk",
+            "Asia/Hong_Kong",
+            "Asia/Irkutsk",
+            "Asia/Kuala_Lumpur",
+            "Australia/Perth",
+            "Asia/Taipei",
+            "Asia/Tokyo",
+            "Asia/Seoul",
+            "Asia/Yakutsk",
+            "Australia/Adelaide",
+            "Australia/Darwin",
+            "Australia/Brisbane",
+            "Australia/Sydney",
+            "Pacific/Guam",
+            "Australia/Hobart",
+            "Asia/Vladivostok",
+            "Pacific/Noumea",
+            "Pacific/Auckland",
+            "Pacific/Fiji",
+            "Pacific/Tongatapu"
     };
 
     // A mapping from the supported timezone ids to friendly english names.
@@ -322,8 +322,8 @@ public class LocaleUtils {
         }
         else {
             buf.append(
-                zone.getDisplayName(true, TimeZone.LONG, locale).replace('_', ' ').replace('/',
-                    ' '));
+                    zone.getDisplayName(true, TimeZone.LONG, locale).replace('_', ' ').replace('/',
+                            ' '));
         }
 
         return buf.toString();
@@ -412,11 +412,11 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle from the passed
      * in plugin.
      *
-     * @param key the key to use for retrieving the string from the
-     *      appropriate resource bundle.
+     * @param key        the key to use for retrieving the string from the
+     *                   appropriate resource bundle.
      * @param pluginName the name of the plugin to load the require resource bundle from.
      * @param arguments  a list of objects to use which are formatted, then
-     *      inserted into the pattern at the appropriate places.
+     *                   inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
@@ -428,7 +428,7 @@ public class LocaleUtils {
         final XMPPServer xmppServer = XMPPServer.getInstance();
         PluginManager pluginManager = xmppServer.getPluginManager();
         Plugin plugin = pluginManager.getPlugin(pluginName);
-        if (plugin == null){
+        if (plugin == null) {
             throw new NullPointerException("Plugin could not be located.");
         }
 
@@ -438,16 +438,40 @@ public class LocaleUtils {
     }
 
     /**
+     * Retrieve the <code>ResourceBundle</code> that is used with this plugin.
+     *
+     * @param pluginName the name of the plugin.
+     * @return the ResourceBundle used with this plugin.
+     * @throws Exception thrown if an exception occurs.
+     */
+    public static ResourceBundle getPluginResourceBundle(String pluginName) throws Exception {
+        final Locale locale = JiveGlobals.getLocale();
+
+        String i18nFile = pluginName + "_i18n";
+
+        // Retrieve classloader from pluginName.
+        final XMPPServer xmppServer = XMPPServer.getInstance();
+        PluginManager pluginManager = xmppServer.getPluginManager();
+        Plugin plugin = pluginManager.getPlugin(pluginName);
+        if (plugin == null) {
+            throw new NullPointerException("Plugin could not be located.");
+        }
+
+        ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin).getClassLoader();
+        return ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
+    }
+
+    /**
      * Returns an internationalized string loaded from a resource bundle using
      * the passed in Locale substituting the passed in arguments. Substitution
      * is handled using the {@link MessageFormat} class.
      *
-     * @param key the key to use for retrieving the string from the
-     *      appropriate resource bundle.
-     * @param locale the locale to use for retrieving the appropriate
-     *      locale-specific string.
+     * @param key       the key to use for retrieving the string from the
+     *                  appropriate resource bundle.
+     * @param locale    the locale to use for retrieving the appropriate
+     *                  locale-specific string.
      * @param arguments a list of objects to use which are formatted, then
-     *      inserted into the pattern at the appropriate places.
+     *                  inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, Locale locale, List arguments, ResourceBundle bundle) {
@@ -514,14 +538,14 @@ public class LocaleUtils {
                 }
                 catch (IllegalArgumentException e) {
                     Log.error("Unable to format resource string for key: "
-                        + key + ", argument type not supported");
+                            + key + ", argument type not supported");
                     value = "";
                 }
             }
         }
         catch (java.util.MissingResourceException mre) {
             Log.warn("Missing resource for key: " + key
-                + " in locale " + locale.toString());
+                    + " in locale " + locale.toString());
             value = "";
         }
 

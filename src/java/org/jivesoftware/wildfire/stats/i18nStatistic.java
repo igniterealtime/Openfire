@@ -3,8 +3,10 @@
  * $Revision  $
  * $Date  $
  *
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * Copyright (C) 1999-2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
 package org.jivesoftware.wildfire.stats;
 

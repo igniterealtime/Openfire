@@ -1870,12 +1870,13 @@ public abstract class Node {
         IQ reply = IQ.createResultIQ(iqRequest);
         Element childElement = iqRequest.getChildElement().createCopy();
         reply.setChildElement(childElement);
+        Element affiliations = childElement.element("affiliations");
 
         for (NodeAffiliate affiliate : affiliates) {
             if (affiliate.getAffiliation() == NodeAffiliate.Affiliation.none) {
                 continue;
             }
-            Element entity = childElement.addElement("affiliation");
+            Element entity = affiliations.addElement("affiliation");
             entity.addAttribute("jid", affiliate.getJID().toString());
             entity.addAttribute("affiliation", affiliate.getAffiliation().name());
         }
@@ -1893,13 +1894,14 @@ public abstract class Node {
         IQ reply = IQ.createResultIQ(iqRequest);
         Element childElement = iqRequest.getChildElement().createCopy();
         reply.setChildElement(childElement);
+        Element subscriptions = childElement.element("subscriptions");
 
         for (NodeAffiliate affiliate : affiliates) {
             for (NodeSubscription subscription : affiliate.getSubscriptions()) {
                 if (subscription.isAuthorizationPending()) {
                     continue;
                 }
-                Element entity = childElement.addElement("subscription");
+                Element entity = subscriptions.addElement("subscription");
                 entity.addAttribute("jid", subscription.getJID().toString());
                 //entity.addAttribute("affiliation", affiliate.getAffiliation().name());
                 entity.addAttribute("subscription", subscription.getState().name());

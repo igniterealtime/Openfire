@@ -152,6 +152,10 @@ public class PluginServlet extends HttpServlet {
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Register the servlet for the URL.
                 Class servletClass = classMap.get(name);
+                if(servletClass == null) {
+                    Log.error("Unable to load servlet, " + name + ", servlet-class not found.");
+                    continue;
+                }
                 Object instance = servletClass.newInstance();
                 if (instance instanceof GenericServlet) {
                     // Initialize the servlet then add it to the map..

@@ -34,6 +34,9 @@
     request.setAttribute("pageID", decoratedPage.getProperty("meta.pageID"));
     request.setAttribute("subPageID", decoratedPage.getProperty("meta.subPageID"));
     request.setAttribute("extraParams", decoratedPage.getProperty("meta.extraParams"));
+
+    // Message HTML can be passed in:
+    String message = decoratedPage.getProperty("page.message");
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -157,11 +160,17 @@
         </td>
         <td width="99%" id="jive-content">
 
-        <div id="jive-title">
-            <decorator:title default="&nbsp;"/>
-        </div>
+            <%  if (message != null) { %>
 
-        <decorator:body/>
+                <%= message %>
+
+            <%  } %>
+
+            <div id="jive-title">
+                <decorator:title default="&nbsp;"/>
+            </div>
+
+            <decorator:body/>
 
         </td>
     </tr>

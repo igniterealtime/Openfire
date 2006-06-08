@@ -13,12 +13,14 @@ package org.jivesoftware.wildfire.filetransfer;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
 
+import java.io.Serializable;
+
 /**
  * Contains all of the meta information associated with a file transfer.
  *
  * @author Alexander Wenckus
  */
-public class FileTransfer implements Cacheable {
+public class FileTransfer implements Cacheable, Serializable {
     private String sessionID;
 
     private String initiator;

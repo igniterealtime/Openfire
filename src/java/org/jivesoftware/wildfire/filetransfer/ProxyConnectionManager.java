@@ -13,6 +13,9 @@ package org.jivesoftware.wildfire.filetransfer;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer;
+import org.jivesoftware.wildfire.stats.Statistic;
+import org.jivesoftware.wildfire.stats.StatisticsManager;
+import org.jivesoftware.wildfire.stats.i18nStatistic;
 import org.xmpp.packet.JID;
 
 import java.io.*;
@@ -33,6 +36,8 @@ import java.util.concurrent.Future;
  */
 public class ProxyConnectionManager {
 
+    private static final String proxyTransferRate = "proxyTransferRate";
+
     private Map<String, ProxyTransfer> connectionMap;
 
     private final Object connectionLock = new Object();
@@ -41,23 +46,26 @@ public class ProxyConnectionManager {
 
     private Future<?> socketProcess;
 
+    private ServerSocket serverSocket;
+
     private int proxyPort;
 
     private FileTransferManager transferManager;
 
     private String className;
 
-    static long amountTransfered = 0;
+    private ProxyTracker proxyTracker;
 
+    @SuppressWarnings({"unchecked"})
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
-        CacheManager.initializeCache(cacheName, "fileproxytransfer", -1, 1000 * 60 * 10);
-        connectionMap = CacheManager.getCache(cacheName);
+        connectionMap = CacheManager.initializeCache(cacheName, "fileproxytransfer", -1, 1000 * 60 * 10);
 
         className = JiveGlobals.getProperty("provider.transfer.proxy",
                 "org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer");
 
         transferManager = manager;
+        this.proxyTracker = new ProxyTracker();
     }
 
     /*
@@ -65,19 +73,13 @@ public class ProxyConnectionManager {
     * This is the main loop of the manager which will run until the process is canceled.
     */
     synchronized void processConnections(final int port) {
-        if (socketProcess != null) {
-            if (port != proxyPort) {
-                socketProcess.cancel(true);
-                socketProcess = null;
-            }
-            else {
-                return;
-            }
+        if (port == proxyPort) {
+            return;
         }
+        reset(port);
 
         socketProcess = executor.submit(new Runnable() {
             public void run() {
-                ServerSocket serverSocket;
                 try {
                     serverSocket = new ServerSocket(port);
                 }
@@ -115,6 +117,7 @@ public class ProxyConnectionManager {
             }
         });
         proxyPort = port;
+        StatisticsManager.getInstance().addStatistic(proxyTransferRate, proxyTracker);
     }
 
     public int getProxyPort() {
@@ -197,9 +200,9 @@ public class ProxyConnectionManager {
         return provider;
     }
 
+    @SuppressWarnings({"ResultOfMethodCallIgnored"})
     private static String processIncomingSocks5Message(InputStream in)
-            throws IOException
-    {
+            throws IOException {
         // read the version and command
         byte[] cmd = new byte[5];
         int read = in.read(cmd, 0, 5);
@@ -215,8 +218,8 @@ public class ProxyConnectionManager {
         }
         String digest = new String(addr);
 
-        read = in.read();
-        read = in.read();
+        in.read();
+        in.read();
 
         return digest;
     }
@@ -241,6 +244,7 @@ public class ProxyConnectionManager {
     synchronized void shutdown() {
         disable();
         executor.shutdown();
+        StatisticsManager.getInstance().removeStatistic(proxyTransferRate);
     }
 
     /**
@@ -296,8 +300,7 @@ public class ProxyConnectionManager {
      * @return SHA-1 hash of the three parameters
      */
     public static String createDigest(final String sessionID, final JID initiator,
-                               final JID target)
-    {
+                                      final JID target) {
         return StringUtils.hash(sessionID + initiator.getNode()
                 + "@" + initiator.getDomain() + "/"
                 + initiator.getResource()
@@ -307,13 +310,40 @@ public class ProxyConnectionManager {
     }
 
     public boolean isRunning() {
-        return socketProcess != null;
+        return socketProcess != null && !socketProcess.isDone();
     }
 
     public void disable() {
+        reset(-1);
+    }
+
+    private void reset(int port) {
         if (socketProcess != null) {
-            socketProcess.cancel(true);
-            socketProcess = null;
+            if (port != proxyPort) {
+                socketProcess.cancel(true);
+                socketProcess = null;
+            }
+            else {
+                return;
+            }
+        }
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            }
+            catch (IOException e) {
+                Log.warn("Error closing proxy listening socket", e);
+            }
+        }
+    }
+
+    private static class ProxyTracker extends i18nStatistic {
+        public ProxyTracker() {
+            super("filetransferproxy.transfered", Statistic.Type.rate);
+        }
+
+        public double sample() {
+            return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000);
         }
     }
 }

@@ -10,8 +10,8 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Cache;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.Element;
 
@@ -29,16 +29,17 @@ public abstract class AbstractFileTransferManager implements FileTransferManager
     private final Map<String, FileTransfer> fileTransferMap;
 
     /**
-     * True if a proxy transfer is required to have a matching file transfer.
-     */
-    private boolean isMatchProxyTransfer;
-
-    /**
      * Default constructor creates the cache.
      */
     public AbstractFileTransferManager() {
-        fileTransferMap = CacheManager.initializeCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
-        isMatchProxyTransfer = JiveGlobals.getBooleanProperty("xmpp.proxy.transfer.required", true);
+        fileTransferMap = createCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
+    }
+
+    private Cache<String, FileTransfer> createCache(String name, String propertiesName, int size, long expirationTime) {
+        size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
+        expirationTime = (long) JiveGlobals.getIntProperty(
+                "cache." + propertiesName + ".expirationTime", (int) expirationTime);
+        return new Cache<String, FileTransfer>(name, size, expirationTime);
     }
 
     /**
@@ -47,7 +48,7 @@ public abstract class AbstractFileTransferManager implements FileTransferManager
      * @return Returns true if the proxy transfer should be matched to an existing file transfer in the system.
      */
     public boolean isMatchProxyTransfer() {
-        return isMatchProxyTransfer;
+        return JiveGlobals.getBooleanProperty("xmpp.proxy.transfer.required", true);
     }
 
     public void cacheFileTransfer(String key, FileTransfer transfer) {

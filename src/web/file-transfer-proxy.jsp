@@ -8,10 +8,10 @@
   - a copy of which is included in this distribution.
 --%>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.wildfire.filetransfer.FileTransferProxy" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -20,8 +20,10 @@
 <% webManager.init(request, response, session, application, out); %>
 
 <%
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     FileTransferProxy transferProxy = XMPPServer.getInstance().getFileTransferProxy();
+
+    boolean isFileTransferEnabled = transferProxy.isFileTransferEnabled();
 
     boolean isUpdated = request.getParameter("update") != null;
     boolean isProxyEnabled = ParamUtils.getBooleanParameter(request, "proxyEnabled");
@@ -38,12 +40,12 @@
             if (isProxyEnabled) {
                 transferProxy.setProxyPort(port);
             }
-            transferProxy.setEnabled(isProxyEnabled);
+            transferProxy.enableFileTransferProxy(isProxyEnabled);
         }
     }
 
     if (errors.isEmpty()) {
-        isProxyEnabled = transferProxy.isEnabled();
+        isProxyEnabled = transferProxy.isProxyEnabled();
         port = transferProxy.getProxyPort();
     }
     else {
@@ -60,17 +62,18 @@
 <p>
     <fmt:message key="filetransferproxy.settings.info"/>
 </p>
-<%  if (!errors.isEmpty()) { %>
+<%  if (!isFileTransferEnabled || !errors.isEmpty()) { %>
 
 <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr>
-                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
+                <td class="jive-icon"><img alt="error" src="images/error-16x16.gif" width="16" height="16"
                                            border="0"/></td>
                 <td class="jive-icon-label">
-
-                    <% if (errors.get("port") != null) { %>
+                    <% if(!isFileTransferEnabled) { %>
+                    <fmt:message key="filetransfer.error.disabled"/>
+                    <% } else if (errors.get("port") != null) { %>
                     <fmt:message key="filetransferproxy.settings.valid.port"/>
                     <% }  %>
                 </td>
@@ -85,7 +88,7 @@ else if (isUpdated) { %>
 <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16"
+            <tr><td class="jive-icon"><img alt="Success" src="images/success-16x16.gif" width="16" height="16"
                                            border="0"></td>
                 <td class="jive-icon-label">
                     <fmt:message key="filetransferproxy.settings.confirm.updated"/>
@@ -110,20 +113,20 @@ else { %>
                     <tr valign="middle">
                         <td width="1%" nowrap>
                             <input type="radio" name="proxyEnabled" value="true" id="rb02"
-                            <%= (isProxyEnabled ? "checked" : "") %>>
+                            <%= (isProxyEnabled ? "checked" : "") %> <%=!isFileTransferEnabled ? "disabled" : ""%>>
                         </td>
                         <td width="99%">
                             <label for="rb02">
                                 <b><fmt:message key="filetransferproxy.settings.label_enable"/></b>
                                 - <fmt:message key="filetransferproxy.settings.label_enable_info"/>
                             </label>  <input type="text" size="5" maxlength="10" name="port"
-                                             value="<%= port %>">
+                                             value="<%= port %>" <%=!isFileTransferEnabled ? "disabled" : ""%>>
                         </td>
                     </tr>
                     <tr valign="middle">
                         <td width="1%" nowrap>
                             <input type="radio" name="proxyEnabled" value="false" id="rb01"
-                            <%= (!isProxyEnabled ? "checked" : "") %>>
+                            <%= (!isProxyEnabled ? "checked" : "") %> <%=!isFileTransferEnabled ? "disabled" : ""%>>
                         </td>
                         <td width="99%">
                             <label for="rb01">
@@ -139,7 +142,8 @@ else { %>
     </fieldset>
     <br>
 
-    <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+    <input type="submit" name="update" value="<fmt:message key="global.save_settings" />"
+    <%=!isFileTransferEnabled ? "disabled" : ""%>>
 
 </form>
 </body>

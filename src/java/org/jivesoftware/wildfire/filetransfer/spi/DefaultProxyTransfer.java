@@ -12,20 +12,19 @@ package org.jivesoftware.wildfire.filetransfer.spi;
 
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.wildfire.filetransfer.ProxyTransfer;
+import org.jivesoftware.wildfire.filetransfer.ProxyOutputStream;
 
 import java.net.Socket;
 import java.util.concurrent.Future;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.DataOutputStream;
 
 /**
  * Tracks the different connections related to a file transfer. There are two connections, the
  * initiator and the target and when both connections are completed the transfer can begin.
  */
 public class DefaultProxyTransfer implements ProxyTransfer {
-    private static long amountTransfered;
 
     private String initiator;
 
@@ -158,14 +157,4 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         return size;
     }
 
-    static class ProxyOutputStream extends DataOutputStream {
-        public ProxyOutputStream(OutputStream out) {
-            super(out);
-        }
-
-        public synchronized void write(byte b[], int off, int len) throws IOException {
-            super.write(b, off, len);
-            amountTransfered += len;
-        }
-    }
 }

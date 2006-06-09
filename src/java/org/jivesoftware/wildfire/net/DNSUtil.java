@@ -35,7 +35,7 @@ public class DNSUtil {
      * Internal DNS that allows to specify target IP addresses and ports to use for domains.
      * The internal DNS will be checked up before performing an actual DNS SRV lookup.
      */
-    private static Map<String, HostAddress> internalDNS;
+    private static Map<String, HostAddress> dnsOverride;
 
     static {
         try {
@@ -43,9 +43,9 @@ public class DNSUtil {
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             context = new InitialDirContext(env);
 
-            String property = JiveGlobals.getProperty("dnsutil.internalDNS");
+            String property = JiveGlobals.getProperty("dnsutil.dnsOverride");
             if (property != null) {
-                internalDNS = decode(property);
+                dnsOverride = decode(property);
             }
         }
         catch (Exception e) {
@@ -72,8 +72,8 @@ public class DNSUtil {
      */
     public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
-        if (internalDNS != null) {
-            HostAddress hostAddress = internalDNS.get(domain);
+        if (dnsOverride != null) {
+            HostAddress hostAddress = dnsOverride.get(domain);
             if (hostAddress != null) {
                 return hostAddress;
             }
@@ -118,8 +118,8 @@ public class DNSUtil {
      * @return the internal DNS that allows to specify target IP addresses and ports
      *         to use for domains.
      */
-    public static Map<String, HostAddress> getInternalDNS() {
-        return internalDNS;
+    public static Map<String, HostAddress> getDnsOverride() {
+        return dnsOverride;
     }
 
     /**
@@ -127,12 +127,12 @@ public class DNSUtil {
      * to use for domains. The internal DNS will be checked up before performing an
      * actual DNS SRV lookup.
      *
-     * @param internalDNS the internal DNS that allows to specify target IP addresses and ports
+     * @param dnsOverride the internal DNS that allows to specify target IP addresses and ports
      *        to use for domains.
      */
-    public static void setInternalDNS(Map<String, HostAddress> internalDNS) {
-        DNSUtil.internalDNS = internalDNS;
-        JiveGlobals.setProperty("dnsutil.internalDNS", encode(internalDNS));
+    public static void setDnsOverride(Map<String, HostAddress> dnsOverride) {
+        DNSUtil.dnsOverride = dnsOverride;
+        JiveGlobals.setProperty("dnsutil.dnsOverride", encode(dnsOverride));
     }
 
     private static String encode(Map<String, HostAddress> internalDNS) {

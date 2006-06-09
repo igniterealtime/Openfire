@@ -11,12 +11,16 @@
 
 package org.jivesoftware.wildfire.net;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.naming.directory.Attributes;
-import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Utilty class to perform DNS lookups for XMPP services.
@@ -27,11 +31,22 @@ public class DNSUtil {
 
     private static DirContext context;
 
+    /**
+     * Internal DNS that allows to specify target IP addresses and ports to use for domains.
+     * The internal DNS will be checked up before performing an actual DNS SRV lookup.
+     */
+    private static Map<String, HostAddress> internalDNS;
+
     static {
         try {
             Hashtable<String,String> env = new Hashtable<String,String>();
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             context = new InitialDirContext(env);
+
+            String property = JiveGlobals.getProperty("dnsutil.internalDNS");
+            if (property != null) {
+                internalDNS = decode(property);
+            }
         }
         catch (Exception e) {
             Log.error(e);
@@ -56,6 +71,13 @@ public class DNSUtil {
      *      server can be reached at for the specified domain.
      */
     public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
+        // Check if there is an entry in the internal DNS for the specified domain
+        if (internalDNS != null) {
+            HostAddress hostAddress = internalDNS.get(domain);
+            if (hostAddress != null) {
+                return hostAddress;
+            }
+        }
         if (context == null) {
             return new HostAddress(domain, defaultPort);
         }
@@ -77,13 +99,66 @@ public class DNSUtil {
                 port = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]);
                 host = srvRecordEntries[srvRecordEntries.length-1];
             }
-            catch (Exception e2) { }
+            catch (Exception e2) {
+                // Do nothing
+            }
         }
         // Host entries in DNS should end with a ".".
         if (host.endsWith(".")) {
             host = host.substring(0, host.length()-1);
         }
         return new HostAddress(host, port);
+    }
+
+    /**
+     * Returns the internal DNS that allows to specify target IP addresses and ports
+     * to use for domains. The internal DNS will be checked up before performing an
+     * actual DNS SRV lookup.
+     *
+     * @return the internal DNS that allows to specify target IP addresses and ports
+     *         to use for domains.
+     */
+    public static Map<String, HostAddress> getInternalDNS() {
+        return internalDNS;
+    }
+
+    /**
+     * Sets the internal DNS that allows to specify target IP addresses and ports
+     * to use for domains. The internal DNS will be checked up before performing an
+     * actual DNS SRV lookup.
+     *
+     * @param internalDNS the internal DNS that allows to specify target IP addresses and ports
+     *        to use for domains.
+     */
+    public static void setInternalDNS(Map<String, HostAddress> internalDNS) {
+        DNSUtil.internalDNS = internalDNS;
+        JiveGlobals.setProperty("dnsutil.internalDNS", encode(internalDNS));
+    }
+
+    private static String encode(Map<String, HostAddress> internalDNS) {
+        if (internalDNS == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(100);
+        for (String key : internalDNS.keySet()) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(key).append(",");
+            sb.append(internalDNS.get(key).getHost()).append(",");
+            sb.append(internalDNS.get(key).getPort());
+        }
+        return sb.toString();
+    }
+
+    private static Map<String, HostAddress> decode(String encodedValue) {
+        Map<String, HostAddress> answer = new HashMap<String, HostAddress>();
+        StringTokenizer st = new StringTokenizer(encodedValue, ",");
+        while (st.hasMoreElements()) {
+            String key = st.nextToken();
+            answer.put(key, new HostAddress(st.nextToken(), Integer.parseInt(st.nextToken())));
+        }
+        return answer;
     }
 
     /**

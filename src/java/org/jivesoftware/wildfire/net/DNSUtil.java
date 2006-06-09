@@ -144,16 +144,16 @@ public class DNSUtil {
             if (sb.length() > 0) {
                 sb.append(",");
             }
-            sb.append(key).append(",");
-            sb.append(internalDNS.get(key).getHost()).append(",");
-            sb.append(internalDNS.get(key).getPort());
+            sb.append("{").append(key).append(",");
+            sb.append(internalDNS.get(key).getHost()).append(":");
+            sb.append(internalDNS.get(key).getPort()).append("}");
         }
         return sb.toString();
     }
 
     private static Map<String, HostAddress> decode(String encodedValue) {
         Map<String, HostAddress> answer = new HashMap<String, HostAddress>();
-        StringTokenizer st = new StringTokenizer(encodedValue, ",");
+        StringTokenizer st = new StringTokenizer(encodedValue, "{},:");
         while (st.hasMoreElements()) {
             String key = st.nextToken();
             answer.put(key, new HostAddress(st.nextToken(), Integer.parseInt(st.nextToken())));

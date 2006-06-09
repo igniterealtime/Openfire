@@ -93,8 +93,13 @@ public class ProxyConnectionManager {
                         socket = serverSocket.accept();
                     }
                     catch (IOException e) {
-                        Log.error("Error accepting procy connection", e);
-                        continue;
+                        if(!serverSocket.isClosed()) {
+                            Log.error("Error accepting proxy connection", e);
+                            continue;
+                        }
+                        else {
+                            break;
+                        }
                     }
                     executor.submit(new Runnable() {
                         public void run() {

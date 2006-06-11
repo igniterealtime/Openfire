@@ -13,21 +13,24 @@ package org.jivesoftware.wildfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.event.UserEventAdapter;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.user.User;
 
-import java.util.StringTokenizer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Manages VCard information for users.
  *
  * @author Matt Tucker
  */
-public class VCardManager extends BasicModule {
+public class VCardManager extends BasicModule implements ServerFeaturesProvider {
 
     private VCardProvider provider;
     private static VCardManager instance;
@@ -208,6 +211,12 @@ public class VCardManager extends BasicModule {
     public void stop() {
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(eventHandler);
+    }
+
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
+        features.add("vcard-temp");
+        return features.iterator();
     }
 
     private class EventHandler extends UserEventAdapter {

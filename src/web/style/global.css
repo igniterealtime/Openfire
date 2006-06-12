@@ -76,9 +76,8 @@ FIELDSET LEGEND {
 }
 #jive-header #jive-tabs LI {
     font-family : verdana, arial, helvetica, sans-serif;
-    font-size : 8pt;
+    font-size : 9pt;
     font-weight : bold;
-    text-transform : uppercase;
 }
 #jive-header #jive-tabs LI A {
     color : #CEE1FA;

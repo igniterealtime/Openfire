@@ -59,6 +59,7 @@
     <script type="text/javascript">
     // Add a nice little rollover effect to any row in a jive-table object. This will help
     // visually link left and right columns.
+    /*
     var myrules = {
         '.jive-table TBODY TR' : function(el) {
             el.onmouseover = function() {
@@ -70,6 +71,7 @@
         }
     };
     Behaviour.register(myrules);
+    */
     </script>
     <decorator:head />
 </head>

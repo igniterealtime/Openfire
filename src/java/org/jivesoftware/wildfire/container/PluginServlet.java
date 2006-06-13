@@ -47,8 +47,10 @@ import javax.servlet.http.HttpServletResponse;
  * added to the normal Wildfire admin console web app directory.<p>
  * <p/>
  * The servlet listens for requests in the form <tt>/plugins/[pluginName]/[JSP File]</tt>
- * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for image requests in the
- * the form <tt>/plugins/[pluginName]/images/*.png|gif</tt> (e.g.
+ * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for non JSP requests in the
+ * form like <tt>/plugins/[pluginName]/images/*.png|gif</tt>,
+ * <tt>/plugins/[pluginName]/scripts/*.js|css</tt> or
+ * <tt>/plugins/[pluginName]/styles/*.css</tt> (e.g.
  * <tt>/plugins/foo/images/example.gif</tt>).<p>
  * <p/>
  * JSP files must be compiled and available via the plugin's class loader. The mapping
@@ -327,9 +329,17 @@ public class PluginServlet extends HttpServlet {
             else if (pathInfo.endsWith(".swf")) {
                 contentType = "application/x-shockwave-flash";
             }
-            response.setHeader("Content-disposition", "filename=\"" + file + "\";");
+            else if (pathInfo.endsWith(".css")) {
+                contentType = "text/css";
+            }
+            else if (pathInfo.endsWith(".js")) {
+                contentType = "text/javascript";
+            }
+
+            // setting the content-disposition header breaks IE when downloading CSS
+            // response.setHeader("Content-disposition", "filename=\"" + file + "\";");
             response.setContentType(contentType);
-            // Write out the image to the user.
+            // Write out the resource to the user.
             InputStream in = null;
             ServletOutputStream out = null;
             try {

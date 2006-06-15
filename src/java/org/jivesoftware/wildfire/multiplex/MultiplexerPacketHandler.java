@@ -49,6 +49,12 @@ public class MultiplexerPacketHandler {
         multiplexerManager = ConnectionMultiplexerManager.getInstance();
     }
 
+    /**
+     * Process IQ packet sent by a connection manager indicating that a new session has
+     * been created, should be closed or that a packet was failed to be delivered.
+     *
+     * @param packet the IQ packet.
+     */
     public void handle(Packet packet) {
         if (packet instanceof IQ) {
             IQ iq = (IQ) packet;
@@ -85,52 +91,6 @@ public class MultiplexerPacketHandler {
                             // Connection Manager wants to close a Client Session
                             multiplexerManager
                                     .closeClientSession(connectionManagerDomain, streamID);
-                            sendResultPacket(iq);
-                        }
-                        else if (child.element("send") != null) {
-                            // Connection Manager wrapped a packet from a Client Session.
-                            List wrappedElements = child.element("send").elements();
-                            if (wrappedElements.size() != 1) {
-                                // Wrapper element is wrapping 0 or many items
-                                Element extraError = DocumentHelper.createElement(QName.get(
-                                        "invalid-payload",
-                                        "http://jabber.org/protocol/connectionmanager#errors"));
-                                sendErrorPacket(iq, PacketError.Condition.bad_request, extraError);
-                            }
-                            else {
-                                Element wrappedElement = (Element) wrappedElements.get(0);
-                                String tag = wrappedElement.getName();
-                                try {
-                                    if ("auth".equals(tag) || "response".equals(tag)) {
-                                        SASLAuthentication.handle(session, wrappedElement);
-                                    }
-                                    else if ("iq".equals(tag)) {
-                                        processIQ(session, getIQ(wrappedElement));
-                                    }
-                                    else if ("message".equals(tag)) {
-                                        processMessage(session, new Message(wrappedElement));
-                                    }
-                                    else if ("presence".equals(tag)) {
-                                        processPresence(session, new Presence(wrappedElement));
-                                    }
-                                    else {
-                                        Element extraError = DocumentHelper.createElement(QName.get(
-                                                "unknown-stanza",
-                                                "http://jabber.org/protocol/connectionmanager#errors"));
-                                        sendErrorPacket(iq, PacketError.Condition.bad_request,
-                                                extraError);
-                                        return;
-                                    }
-                                }
-                                catch (UnsupportedEncodingException e) {
-                                    Log.error("Error processing wrapped packet: " +
-                                            wrappedElement.asXML(), e);
-                                    sendErrorPacket(iq, PacketError.Condition.internal_server_error,
-                                            null);
-                                }
-                            }
-                            // The wrapped packet does not contain information about the sender
-                            // so the streamID helps identify the Client Session
                             sendResultPacket(iq);
                         }
                         else if (child.element("failed") != null) {
@@ -179,7 +139,58 @@ public class MultiplexerPacketHandler {
         }
     }
 
+    /**
+     * Processes a route packet that is wrapping a stanza sent by a client that is connected
+     * to the connection manager.
+     *
+     * @param route the route packet.
+     */
+    public void route(Route route) {
+        String streamID = route.getStreamID();
+        if (streamID == null) {
+            // No stream ID was included so return a bad_request error
+            Element extraError = DocumentHelper.createElement(QName.get(
+                    "id-required", "http://jabber.org/protocol/connectionmanager#errors"));
+            sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
+        }
+        ClientSession session = multiplexerManager
+                .getClientSession(connectionManagerDomain, streamID);
+        if (session == null) {
+            // Specified Client Session does not exist
+            sendErrorPacket(route, PacketError.Condition.item_not_found, null);
+            return;
+        }
+        // Connection Manager wrapped a packet from a Client Session.
+        Element wrappedElement = route.getChildElement();
+        String tag = wrappedElement.getName();
+        try {
+            if ("auth".equals(tag) || "response".equals(tag)) {
+                SASLAuthentication.handle(session, wrappedElement);
+            }
+            else if ("iq".equals(tag)) {
+                processIQ(session, getIQ(wrappedElement));
+            }
+            else if ("message".equals(tag)) {
+                processMessage(session, new Message(wrappedElement));
+            }
+            else if ("presence".equals(tag)) {
+                processPresence(session, new Presence(wrappedElement));
+            }
+            else {
+                Element extraError = DocumentHelper.createElement(QName.get(
+                        "unknown-stanza",
+                        "http://jabber.org/protocol/connectionmanager#errors"));
+                sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
+            }
+        }
+        catch (UnsupportedEncodingException e) {
+            Log.error("Error processing wrapped packet: " + wrappedElement.asXML(), e);
+            sendErrorPacket(route, PacketError.Condition.internal_server_error, null);
+        }
+    }
+
     private void processIQ(ClientSession session, IQ packet) {
+        packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -212,6 +223,7 @@ public class MultiplexerPacketHandler {
     }
 
     private void processPresence(ClientSession session, Presence packet) {
+        packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -243,6 +255,7 @@ public class MultiplexerPacketHandler {
     }
 
     private void processMessage(ClientSession session, Message packet) {
+        packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
@@ -298,6 +311,26 @@ public class MultiplexerPacketHandler {
     }
 
     /**
+     * Sends an IQ error with the specified condition to the sender of the original
+     * IQ packet.
+     *
+     * @param packet     the packet to be bounced.
+     * @param extraError application specific error or null if none.
+     */
+    private void sendErrorPacket(Route packet, PacketError.Condition error, Element extraError) {
+        Route reply = new Route(packet.getStreamID());
+        reply.setID(packet.getID());
+        reply.setFrom(packet.getTo());
+        reply.setTo(packet.getFrom());
+        reply.setError(error);
+        if (extraError != null) {
+            // Add specific application error if available
+            reply.getError().getElement().add(extraError);
+        }
+        deliver(reply);
+    }
+
+    /**
      * Sends an IQ result packet confirming that the operation was successful.
      *
      * @param packet the original IQ packet.
@@ -308,7 +341,7 @@ public class MultiplexerPacketHandler {
         deliver(reply);
     }
 
-    private void deliver(IQ reply) {
+    private void deliver(Packet reply) {
         // Get any session of the connection manager to deliver the packet
         ConnectionMultiplexerSession session =
                 multiplexerManager.getMultiplexerSession(connectionManagerDomain);

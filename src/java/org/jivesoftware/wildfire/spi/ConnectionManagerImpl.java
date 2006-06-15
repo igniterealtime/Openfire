@@ -39,6 +39,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private SessionManager sessionManager;
     private PacketDeliverer deliverer;
     private PacketRouter router;
+    private RoutingTable routingTable;
     private String serverName;
     private XMPPServer server;
     private String localIPAddress = null;
@@ -74,7 +75,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start the port listener for s2s communication
         startServerListener(localIPAddress);
         // Start the port listener for Connections Multiplexers
-        startMultiplexerListener(localIPAddress);
+        startConnectionManagerListener(localIPAddress);
         // Start the port listener for external components
         startComponentListener(localIPAddress);
         // Start the port listener for clients
@@ -116,10 +117,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void startMultiplexerListener(String localIPAddress) {
+    private void startConnectionManagerListener(String localIPAddress) {
         // Start multiplexers socket unless it's been disabled.
-        if (isMultiplexerListenerEnabled()) {
-            int port = getMultiplexerListenerPort();
+        if (isConnectionManagerListenerEnabled()) {
+            int port = getConnectionManagerListenerPort();
             ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
                     false, null, ServerPort.Type.connectionManager);
             try {
@@ -141,7 +142,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void stopMultiplexerListener() {
+    private void stopConnectionManagerListener() {
         if (multiplexerSocketThread != null) {
             multiplexerSocketThread.shutdown();
             ports.remove(multiplexerSocketThread.getServerPort());
@@ -260,15 +261,18 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             boolean useBlockingMode) throws IOException {
         if (serverPort.isClientPort()) {
             SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ClientSocketReader(router, serverName, sock, conn, useBlockingMode);
+            return new ClientSocketReader(router, routingTable, serverName, sock, conn,
+                    useBlockingMode);
         }
         else if (serverPort.isComponentPort()) {
             SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ComponentSocketReader(router, serverName, sock, conn, useBlockingMode);
+            return new ComponentSocketReader(router, routingTable, serverName, sock, conn,
+                    useBlockingMode);
         }
         else if (serverPort.isServerPort()) {
             SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ServerSocketReader(router, serverName, sock, conn, useBlockingMode);
+            return new ServerSocketReader(router, routingTable, serverName, sock, conn,
+                    useBlockingMode);
         }
         else {
             // Use the appropriate packeet deliverer for connection managers. The packet
@@ -276,8 +280,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // the connection manager has finished the handshake.
             SocketConnection conn =
                     new SocketConnection(new MultiplexerPacketDeliverer(), sock, isSecure);
-            return new ConnectionMultiplexerSocketReader(router, serverName, sock, conn,
-                    useBlockingMode);
+            return new ConnectionMultiplexerSocketReader(router, routingTable, serverName, sock,
+                    conn, useBlockingMode);
         }
     }
 
@@ -285,6 +289,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         super.initialize(server);
         this.server = server;
         router = server.getPacketRouter();
+        routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
     }
@@ -373,25 +378,25 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return JiveGlobals.getBooleanProperty("xmpp.server.socket.active", true);
     }
 
-    public void enableMultiplexerListener(boolean enabled) {
-        if (enabled == isMultiplexerListenerEnabled()) {
+    public void enableConnectionManagerListener(boolean enabled) {
+        if (enabled == isConnectionManagerListenerEnabled()) {
             // Ignore new setting
             return;
         }
         if (enabled) {
             JiveGlobals.setProperty("xmpp.multiplex.socket.active", "true");
             // Start the port listener for s2s communication
-            startMultiplexerListener(localIPAddress);
+            startConnectionManagerListener(localIPAddress);
         }
         else {
             JiveGlobals.setProperty("xmpp.multiplex.socket.active", "false");
             // Stop the port listener for s2s communication
-            stopMultiplexerListener();
+            stopConnectionManagerListener();
         }
     }
 
-    public boolean isMultiplexerListenerEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.multiplex.socket.active", true);
+    public boolean isConnectionManagerListenerEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.multiplex.socket.active", false);
     }
 
     public void setClientListenerPort(int port) {
@@ -470,7 +475,21 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 SocketAcceptThread.DEFAULT_SERVER_PORT);
     }
 
-    public int getMultiplexerListenerPort() {
+    public void setConnectionManagerListenerPort(int port) {
+        if (port == getConnectionManagerListenerPort()) {
+            // Ignore new setting
+            return;
+        }
+        JiveGlobals.setProperty("xmpp.multiplex.socket.port", String.valueOf(port));
+        // Stop the port listener for connection managers
+        stopConnectionManagerListener();
+        if (isConnectionManagerListenerEnabled()) {
+            // Start the port listener for connection managers
+            startConnectionManagerListener(localIPAddress);
+        }
+    }
+
+    public int getConnectionManagerListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.socket.port",
                 SocketAcceptThread.DEFAULT_MULTIPLEX_PORT);
     }
@@ -492,7 +511,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopClientListeners();
         stopClientSSLListeners();
         stopComponentListener();
-        stopMultiplexerListener();
+        stopConnectionManagerListener();
         stopServerListener();
         SocketSendingTracker.getInstance().shutdown();
         serverName = null;

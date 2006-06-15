@@ -19,7 +19,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.component.ExternalComponentManager;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.SocketConnection;
 import org.xmlpull.v1.XmlPullParser;
@@ -75,8 +74,8 @@ public class ConnectionMultiplexerSession extends Session {
                 Connection.CompressionPolicy.disabled.toString());
         compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
 
-        // Set the default read idle timeout. If none was set then assume 30 minutes
-        idleTimeout = JiveGlobals.getIntProperty("xmpp.multiplex.idle", 30 * 60 * 1000);
+        // Set the default read idle timeout. If none was set then assume 5 minutes
+        idleTimeout = JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000);
     }
 
     public static Session createSession(String serverName, XMPPPacketReader reader,
@@ -115,7 +114,7 @@ public class ConnectionMultiplexerSession extends Session {
         // Get the requested domain
         JID address = new JID(domain);
         // Check that a secret key was configured in the server
-        String secretKey = getSecretKey();
+        String secretKey = ConnectionMultiplexerManager.getDefaultSecret();
         if (secretKey == null) {
             Log.debug("[ConMng] A shared secret for connection manager was not found.");
             // Include the internal-server-error in the response
@@ -212,11 +211,6 @@ public class ConnectionMultiplexerSession extends Session {
         }
     }
 
-    private static String getSecretKey() {
-        // TODO Use another shared secret (?)
-        return ExternalComponentManager.getDefaultSecret();
-    }
-
     public ConnectionMultiplexerSession(String serverName, Connection connection, StreamID streamID) {
         super(serverName, connection, streamID);
     }
@@ -249,7 +243,8 @@ public class ConnectionMultiplexerSession extends Session {
      */
     public boolean authenticate(String digest) {
         // Perform authentication. Wait for the handshake (with the secret key)
-        String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(), getSecretKey());
+        String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(),
+                ConnectionMultiplexerManager.getDefaultSecret());
         // Check that the provided handshake (secret key + sessionID) is correct
         if (!anticipatedDigest.equalsIgnoreCase(digest)) {
             Log.debug("[ConMng] Incorrect handshake for connection manager with domain: " +
@@ -309,9 +304,7 @@ public class ConnectionMultiplexerSession extends Session {
             comp.addElement("method").setText("zlib");
         }
         // Add info about Non-SASL authentication
-        if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
-            child.addElement("auth", "http://jabber.org/features/iq-auth");
-        }
+        child.addElement("auth", "http://jabber.org/features/iq-auth");
         // Add info about In-Band Registration
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
             child.addElement("register", "http://jabber.org/features/iq-register");

@@ -204,6 +204,22 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns all sessions originated from connection managers.
+     *
+     * @return all sessions originated from connection managers.
+     */
+    public List<ConnectionMultiplexerSession> getConnectionMultiplexerSessions() {
+        if (connnectionManagerSessions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<ConnectionMultiplexerSession> answer = new ArrayList<ConnectionMultiplexerSession>();
+        for (List<ConnectionMultiplexerSession> sessions : connnectionManagerSessions.values()) {
+            answer.addAll(sessions);
+        }
+        return answer;
+    }
+
+    /**
      * Returns a collection with all the sessions originated from the connection manager
      * whose domain matches the specified domain. If there is no connection manager with
      * the specified domain then an empty list is going to be returned.
@@ -249,6 +265,10 @@ public class SessionManager extends BasicModule {
                 if (sessions == null) {
                     sessions = new CopyOnWriteArrayList<ConnectionMultiplexerSession>();
                     connnectionManagerSessions.put(address.getDomain(), sessions);
+                    // Notify ConnectionMultiplexerManager that a new connection manager
+                    // is available
+                    ConnectionMultiplexerManager.getInstance()
+                            .multiplexerAvailable(address.getDomain());
                 }
             }
         }
@@ -1483,7 +1503,7 @@ public class SessionManager extends BasicModule {
                 connnectionManagerSessions.remove(domain);
                 // Terminate ClientSessions originated from this connection manager
                 // that are still active since the connection manager has gone down
-                ConnectionMultiplexerManager.getInstance().closeClientSessions(domain);
+                ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
             }
         }
     }
@@ -1603,7 +1623,8 @@ public class SessionManager extends BasicModule {
 
             for (Session session : sessions) {
                 try {
-                    session.getConnection().close();
+                    // Notify connected client that the server is being shut down
+                    session.getConnection().systemShutdown();
                 }
                 catch (Throwable t) {
                     // Ignore.

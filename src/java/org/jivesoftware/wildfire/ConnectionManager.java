@@ -118,6 +118,24 @@ public interface ConnectionManager {
     public boolean isServerListenerEnabled();
 
     /**
+     * Sets if the port listener for connection managers will be available or not. When disabled
+     * there won't be a port listener active. Therefore, clients will need to connect directly
+     * to the server.
+     *
+     * @param enabled true if new connection managers will be able to connect to the server.
+     */
+    public void enableConnectionManagerListener(boolean enabled);
+
+    /**
+     * Returns true if the port listener for connection managers is available. When disabled
+     * there won't be a port listener active. Therefore, clients will need to connect directly
+     * to the server.
+     *
+     * @return true if the port listener for connection managers is available.
+     */
+    public boolean isConnectionManagerListenerEnabled();
+
+    /**
      * Sets the port to use for unsecured clients. Default port: 5222.
      *
      * @param port the port to use for unsecured clients.
@@ -174,4 +192,20 @@ public interface ConnectionManager {
      * @return the port to use for remote servers.
      */
     public int getServerListenerPort();
+
+    /**
+     * Sets the port to use for connection managers. This port is used for connection managers
+     * to connect to this server. Default port: 5262.
+     *
+     * @param port the port to use for connection managers.
+     */
+    public void setConnectionManagerListenerPort(int port);
+
+    /**
+     * Returns the port to use for remote servers. This port is used for connection managers
+     * to connect to this server. Default port: 5262.
+     *
+     * @return the port to use for connection managers.
+     */
+    public int getConnectionManagerListenerPort();
 }

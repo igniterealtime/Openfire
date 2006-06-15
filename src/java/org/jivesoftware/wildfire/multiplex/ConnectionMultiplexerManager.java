@@ -11,12 +11,14 @@
 
 package org.jivesoftware.wildfire.multiplex;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.event.SessionEventListener;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -68,8 +70,54 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         return instance;
     }
 
+    /**
+     * Returns the default secret key that connection managers should present while trying to
+     * establish a new connection.
+     *
+     * @return the default secret key that connection managers should present while trying to
+     *         establish a new connection.
+     */
+    public static String getDefaultSecret() {
+        return JiveGlobals.getProperty("xmpp.multiplex.defaultSecret");
+    }
+
+    /**
+     * Sets the default secret key that connection managers should present while trying to
+     * establish a new connection.
+     *
+     * @param defaultSecret the default secret key that connection managers should present
+     *        while trying to establish a new connection.
+     */
+    public static void setDefaultSecret(String defaultSecret) {
+        JiveGlobals.setProperty("xmpp.multiplex.defaultSecret", defaultSecret);
+    }
+
     private ConnectionMultiplexerManager() {
         sessionManager = XMPPServer.getInstance().getSessionManager();
+        // Start thread that will send heartbeats to Connection Managers every 30 seconds
+        // to keep connections open.
+        Thread hearbeatThread = new Thread() {
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(30000);
+                        for (ConnectionMultiplexerSession session : sessionManager
+                                .getConnectionMultiplexerSessions()) {
+                            session.getConnection().deliverRawText(" ");
+                        }
+                    }
+                    catch (InterruptedException e) {
+                        // Do nothing
+                    }
+                    catch(Exception e) {
+                        Log.error(e);
+                    }
+                }
+            }
+        };
+        hearbeatThread.setDaemon(true);
+        hearbeatThread.setPriority(Thread.NORM_PRIORITY);
+        hearbeatThread.start();
     }
 
     /**
@@ -124,15 +172,35 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
     }
 
     /**
-     * Close client sessions that were established to the specified connection manager. This
-     * action is usually required when the connection manager was stopped or suddenly went
-     * down.
+     * A connection manager has become available. Clients can now connect to the server through
+     * the connection manager.
      *
-     * @param connectionManagerDomain the connection manager that is no longer available.
+     * @param connectionManagerName the connection manager that has become available.
      */
-    public void closeClientSessions(String connectionManagerDomain) {
+    public void multiplexerAvailable(String connectionManagerName) {
+        // Add a new entry in the list of available managers. Here is where we are going to store
+        // which clients were connected through which connection manager
+        Map<String, ClientSession> sessions = sessionsByManager.get(connectionManagerName);
+        if (sessions == null) {
+            synchronized (connectionManagerName.intern()) {
+                sessions = sessionsByManager.get(connectionManagerName);
+                if (sessions == null) {
+                    sessions = new ConcurrentHashMap<String, ClientSession>();
+                    sessionsByManager.put(connectionManagerName, sessions);
+                }
+            }
+        }
+    }
+
+    /**
+     * A connection manager has gone unavailable. Close client sessions that were established
+     * to the specified connection manager.
+     *
+     * @param connectionManagerName the connection manager that is no longer available.
+     */
+    public void multiplexerUnavailable(String connectionManagerName) {
         // Remove the connection manager and the hosted sessions
-        Map<String, ClientSession> sessions = sessionsByManager.remove(connectionManagerDomain);
+        Map<String, ClientSession> sessions = sessionsByManager.remove(connectionManagerName);
         if (sessions != null) {
             for (String streamID : sessions.keySet()) {
                 // Remove inverse track of connection manager hosting streamIDs
@@ -180,6 +248,31 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         else {
             // Pick a random session so we can distribute traffic evenly
             return sessions.get(randGen.nextInt(sessions.size()));
+        }
+    }
+
+    /**
+     * Returns the names of the connected connection managers to this server.
+     *
+     * @return the names of the connected connection managers to this server.
+     */
+    public Collection<String> getMultiplexers() {
+        return sessionsByManager.keySet();
+    }
+
+    /**
+     * Returns the number of connected clients to a specific connection manager.
+     *
+     * @param managerName the name of the connection manager.
+     * @return the number of connected clients to a specific connection manager.
+     */
+    public int getNumConnectedClients(String managerName) {
+        Map<String, ClientSession> clients = sessionsByManager.get(managerName);
+        if (clients == null) {
+            return 0;
+        }
+        else {
+            return clients.size();
         }
     }
 

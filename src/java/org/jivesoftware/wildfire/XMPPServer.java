@@ -931,6 +931,17 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>PubSubModule</code> registered with this server. The
+     * <code>PubSubModule</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>PubSubModule</code> registered with this server.
+     */
+    public PubSubModule getPubSubModule() {
+        return (PubSubModule) modules.get(PubSubModule.class);
+    }
+
+    /**
      * Returns a list with all the modules registered with the server that inherit from IQHandler.
      *
      * @return a list with all the modules registered with the server that inherit from IQHandler.

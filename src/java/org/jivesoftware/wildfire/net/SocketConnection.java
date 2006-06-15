@@ -450,6 +450,12 @@ public class SocketConnection implements Connection {
         }
     }
 
+    public void systemShutdown() {
+        deliverRawText("<stream:error><system-shutdown " +
+                "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
+        close();
+    }
+
     void writeStarted() {
         writeStarted = System.currentTimeMillis();
     }

@@ -60,6 +60,13 @@ public interface Connection {
     public void close();
 
     /**
+     * Notification message indicating that the server is being shutdown. Implementors
+     * should send a stream error whose condition is system-shutdown before closing
+     * the connection.
+     */
+    public void systemShutdown();
+
+    /**
      * Returns true if the connection/session is closed.
      *
      * @return true if the connection is closed.

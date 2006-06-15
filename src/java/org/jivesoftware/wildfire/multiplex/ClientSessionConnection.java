@@ -12,7 +12,6 @@
 package org.jivesoftware.wildfire.multiplex;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.net.VirtualConnection;
 import org.xmpp.packet.IQ;
@@ -58,24 +57,13 @@ public class ClientSessionConnection extends VirtualConnection {
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName);
         if (multiplexerSession != null) {
-            // If TO is null then wrap packet so that the connection manager can
-            // figure out the target session
-            if (packet.getTo() == null) {
-                IQ wrapper = new IQ(IQ.Type.set);
-                wrapper.setFrom(serverName);
-                wrapper.setTo(connectionManagerName);
-                Element child = wrapper.setChildElement("session",
-                        "http://jabber.org/protocol/connectionmanager");
-                child.addAttribute("id", session.getStreamID().getID());
-                Element send = child.addElement("send");
-                send.add(packet.getElement().createCopy());
-                // Deliver wrapper
-                multiplexerSession.deliver(wrapper);
-            }
-            else {
-                // Deliver original packet
-                multiplexerSession.deliver(packet);
-            }
+            // Wrap packet so that the connection manager can figure out the target session
+            Route wrapper = new Route(session.getStreamID().getID());
+            wrapper.setFrom(serverName);
+            wrapper.setTo(connectionManagerName);
+            wrapper.setChildElement(packet.getElement().createCopy());
+            // Deliver wrapper
+            multiplexerSession.deliver(wrapper);
             session.incrementServerPacketCount();
         }
     }
@@ -97,13 +85,11 @@ public class ClientSessionConnection extends VirtualConnection {
         if (multiplexerSession != null) {
             // Wrap packet so that the connection manager can figure out the target session
             StringBuilder sb = new StringBuilder(200 + text.length());
-            sb.append("<iq type=\"set\" from=\"").append(serverName);
+            sb.append("<route from=\"").append(serverName);
             sb.append("\" to=\"").append(connectionManagerName);
-            sb.append("\" id=\"").append(StringUtils.randomString(10));
-            sb.append("\"><session xmlns=\"http://jabber.org/protocol/connectionmanager\" id=\"");
-            sb.append(session.getStreamID().getID()).append("\"><send>");
+            sb.append("\" streamid=\"").append(session.getStreamID().getID()).append("\">");
             sb.append(text);
-            sb.append("</send></session></iq>");
+            sb.append("</route>");
             // Deliver the wrapped stanza
             multiplexerSession.getConnection().deliverRawText(sb.toString());
         }
@@ -120,6 +106,12 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    public void systemShutdown() {
+        // Do nothing since a system-shutdown error will be sent to the Connection Manager
+        // that in turn will send a system-shutdown to connected clients. This is an
+        // optimization to reduce number of packets being sent from the server.
+    }
+
     /**
      * If the Connection Manager or the Client requested to close the connection then just do
      * nothing. But if the server originated the request to close the connection then we need
@@ -134,16 +126,20 @@ public class ClientSessionConnection extends VirtualConnection {
             // Do nothing since it has already been removed and closed
         }
         else {
-            // Server requested to close the client session so let the connection manager
-            // know that he has to finish the client session
-            IQ closeRequest = new IQ(IQ.Type.set);
-            closeRequest.setFrom(serverName);
-            closeRequest.setTo(connectionManagerName);
-            Element child = closeRequest.setChildElement("session",
-                    "http://jabber.org/protocol/connectionmanager");
-            child.addAttribute("id", streamID);
-            child.addElement("close");
-            deliver(closeRequest);
+            ConnectionMultiplexerSession multiplexerSession =
+                    multiplexerManager.getMultiplexerSession(connectionManagerName);
+            if (multiplexerSession != null) {
+                // Server requested to close the client session so let the connection manager
+                // know that he has to finish the client session
+                IQ closeRequest = new IQ(IQ.Type.set);
+                closeRequest.setFrom(serverName);
+                closeRequest.setTo(connectionManagerName);
+                Element child = closeRequest.setChildElement("session",
+                        "http://jabber.org/protocol/connectionmanager");
+                child.addAttribute("id", streamID);
+                child.addElement("close");
+                multiplexerSession.deliver(closeRequest);
+            }
         }
     }
 }

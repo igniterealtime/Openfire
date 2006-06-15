@@ -46,18 +46,33 @@ public abstract class SocketReader implements Runnable {
      */
     private static XmlPullParserFactory factory = null;
 
+    /**
+     * Session associated with the socket reader.
+     */
     protected Session session;
+    /**
+     * Reference to the physical connection.
+     */
     protected SocketConnection connection;
+    /**
+     * Server name for which we are attending clients.
+     */
     protected String serverName;
 
     /**
      * Router used to route incoming packets to the correct channels.
      */
     private PacketRouter router;
+    /**
+     * Routing table used for checking whether a domain is known or not.
+     */
+    private RoutingTable routingTable;
+    /**
+     * Specifies whether the socket is using blocking or non-blocking connections.
+     */
     private SocketReadingMode readingMode;
     XMPPPacketReader reader = null;
     protected boolean open;
-    private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     static {
         try {
@@ -72,15 +87,17 @@ public abstract class SocketReader implements Runnable {
      * Creates a dedicated reader for a socket.
      *
      * @param router the router for sending packets that were read.
+     * @param routingTable the table that keeps routes to registered services.
      * @param serverName the name of the server this socket is working for.
      * @param socket the socket to read from.
      * @param connection the connection being read.
      * @param useBlockingMode true means that the server will use a thread per connection.
      */
-    public SocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection, boolean useBlockingMode) {
+    public SocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
+            Socket socket, SocketConnection connection, boolean useBlockingMode) {
         this.serverName = serverName;
         this.router = router;
+        this.routingTable = routingTable;
         this.connection = connection;
 
         connection.setSocketReader(this);

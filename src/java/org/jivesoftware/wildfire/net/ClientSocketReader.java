@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
@@ -39,9 +40,9 @@ import java.net.Socket;
  */
 public class ClientSocketReader extends SocketReader {
 
-    public ClientSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection, boolean useBlockingMode) {
-        super(router, serverName, socket, connection, useBlockingMode);
+    public ClientSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
+            Socket socket, SocketConnection connection, boolean useBlockingMode) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode);
     }
 
     protected void processIQ(IQ packet) throws UnauthorizedException {

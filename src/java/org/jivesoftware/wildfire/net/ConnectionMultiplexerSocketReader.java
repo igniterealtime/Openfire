@@ -13,13 +13,19 @@ package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutingTable;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerSession;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketHandler;
+import org.jivesoftware.wildfire.multiplex.Route;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -62,15 +68,15 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
      * Pool of threads that are available for processing the requests.
      */
     private ThreadPoolExecutor threadPool;
-    private SessionManager sessionManager;
     /**
      * Handler of IQ packets sent from the Connection Manager to the server.
      */
     private MultiplexerPacketHandler packetHandler;
 
-    public ConnectionMultiplexerSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection, boolean useBlockingMode) {
-        super(router, serverName, socket, connection, useBlockingMode);
+    public ConnectionMultiplexerSocketReader(PacketRouter router, RoutingTable routingTable,
+            String serverName, Socket socket, SocketConnection connection,
+            boolean useBlockingMode) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode);
         // Create a pool of threads that will process received packets. If more threads are
         // required then the command will be executed on the SocketReader process
         int coreThreads = JiveGlobals.getIntProperty("xmpp.multiplex.processing.core.threads", 10);
@@ -80,7 +86,6 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
                 new ThreadPoolExecutor(coreThreads, maxThreads, 60, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<Runnable>(queueSize),
                         new ThreadPoolExecutor.CallerRunsPolicy());
-        sessionManager = XMPPServer.getInstance().getSessionManager();
     }
 
     boolean createSession(String namespace)
@@ -100,8 +105,7 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
 
     protected void processIQ(final IQ packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
-            // Session is not authenticated and IQ packet is not being sent to the
-            // connection manager
+            // Session is not authenticated so return error
             IQ reply = new IQ();
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setID(packet.getID());
@@ -114,95 +118,69 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
         // Process the packet in another thread
         threadPool.execute(new Runnable() {
             public void run() {
-                try {
-                    JID from = packet.getFrom();
-                    if (from != null && from.equals(session.getAddress())) {
-                        // IQ packets sent from the connection manager itself have a special
-                        // processing logic. No route is created to the Connection Managers
-                        // so we need to catch IQ packets here and process them
-                        packetHandler.handle(packet);
-                    }
-                    else {
-                        // Increment packet counter of the client session
-                        incrementClientPacketCount(from);
-                    }
-                    // Process and route the packet
-                    ConnectionMultiplexerSocketReader.super.processIQ(packet);
-                }
-                catch (UnauthorizedException e) {
-                    Log.error("Error processing packet", e);
-                }
+                packetHandler.handle(packet);
+            }
+        });
+    }
+
+    /**
+     * Process stanza sent by a client that is connected to a connection manager. The
+     * original stanza is wrapped in the route element. Only a single stanza must be
+     * wrapped in the route element.
+     *
+     * @param packet the route element.
+     */
+    private void processRoute(final Route packet) throws UnauthorizedException {
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            // Session is not authenticated so return error
+            Route reply = new Route(packet.getStreamID());
+            reply.setID(packet.getID());
+            reply.setTo(packet.getFrom());
+            reply.setFrom(packet.getTo());
+            reply.setError(PacketError.Condition.not_authorized);
+            session.process(reply);
+            return;
+        }
+        // Process the packet in another thread
+        threadPool.execute(new Runnable() {
+            public void run() {
+                packetHandler.route(packet);
             }
         });
     }
 
     protected void processMessage(final Message packet) throws UnauthorizedException {
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
-            Message reply = new Message();
-            reply.setID(packet.getID());
-            reply.setTo(packet.getFrom());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_authorized);
-            session.process(reply);
-            return;
-        }
-        // Process the packet in another thread
-        threadPool.execute(new Runnable() {
-            public void run() {
-                try {
-                    // Increment packet counter of the client session
-                    incrementClientPacketCount(packet.getFrom());
-                    // Process and route the packet
-                    ConnectionMultiplexerSocketReader.super.processMessage(packet);
-                }
-                catch (UnauthorizedException e) {
-                    Log.error("Error processing packet", e);
-                }
-            }
-        });
+        throw new UnauthorizedException("Message packets are not supported. Original packets " +
+                "should be wrapped by IQ packets.");
     }
 
     protected void processPresence(final Presence packet) throws UnauthorizedException {
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
-            Presence reply = new Presence();
-            reply.setID(packet.getID());
-            reply.setTo(packet.getFrom());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_authorized);
-            session.process(reply);
-            return;
-        }
-        // Process the packet in another thread
-        threadPool.execute(new Runnable() {
-            public void run() {
-                try {
-                    // Increment packet counter of the client session
-                    incrementClientPacketCount(packet.getFrom());
-                    // Process and route the packet
-                    ConnectionMultiplexerSocketReader.super.processPresence(packet);
-                }
-                catch (UnauthorizedException e) {
-                    Log.error("Error processing packet", e);
-                }
-            }
-        });
+        throw new UnauthorizedException("Message packets are not supported. Original packets " +
+                "should be wrapped by IQ packets.");
     }
 
     boolean processUnknowPacket(Element doc) {
-        if ("handshake".equals(doc.getName())) {
+        String tag = doc.getName();
+        if ("route".equals(tag)) {
+            // Process stanza wrapped by the route packet
+            try {
+                processRoute(new Route(doc));
+                return true;
+            }
+            catch (UnauthorizedException e) {
+                // Should never happen
+            }
+        }
+        else if ("handshake".equals(tag)) {
             open = ((ConnectionMultiplexerSession)session).authenticate(doc.getStringValue());
             return true;
         }
-        return false;
-    }
-
-    private void incrementClientPacketCount(JID from) {
-        if (from != null) {
-            ClientSession originatingSession = sessionManager.getSession(from);
-            if (originatingSession != null) {
-                originatingSession.incrementClientPacketCount();
-            }
+        else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
+            session.getConnection().close();
+            open = false;
+            return true;
         }
+        return false;
     }
 
     String getName() {

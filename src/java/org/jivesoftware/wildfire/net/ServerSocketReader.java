@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.server.IncomingServerSession;
@@ -49,9 +50,9 @@ public class ServerSocketReader extends SocketReader {
      */
     private ThreadPoolExecutor threadPool;
 
-    public ServerSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection, boolean useBlockingMode) {
-        super(router, serverName, socket, connection, useBlockingMode);
+    public ServerSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
+            Socket socket, SocketConnection connection, boolean useBlockingMode) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode);
         // Create a pool of threads that will process received packets. If more threads are
         // required then the command will be executed on the SocketReader process
         int coreThreads = JiveGlobals.getIntProperty("xmpp.server.processing.core.threads", 2);

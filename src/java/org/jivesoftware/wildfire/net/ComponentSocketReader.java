@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.net;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.component.ComponentSession;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
@@ -32,9 +33,9 @@ import java.net.Socket;
  */
 public class ComponentSocketReader extends SocketReader {
 
-    public ComponentSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection, boolean useBlockingMode) {
-        super(router, serverName, socket, connection, useBlockingMode);
+    public ComponentSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
+            Socket socket, SocketConnection connection, boolean useBlockingMode) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode);
     }
 
     /**

@@ -133,8 +133,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void sendPacket(Component component, Packet packet) {
-        PacketRouter router;
-        router = XMPPServer.getInstance().getPacketRouter();
+        PacketRouter router = XMPPServer.getInstance().getPacketRouter();
         if (router != null) {
             router.route(packet);
         }

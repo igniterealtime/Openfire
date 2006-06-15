@@ -16,27 +16,13 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.database.DbConnectionManager;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -117,6 +103,48 @@ public class PluginManager {
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
+    }
+
+    /**
+     * Installs or updates an existing plugin.
+     *
+     * @param in the input stream that contains the new plugin definition.
+     * @param pluginFilename the filename of the plugin to create or update.
+     * @return true if the plugin was successfully installed or updated.
+     */
+    public boolean installPlugin(InputStream in, String pluginFilename) {
+        try {
+            byte[] b = new byte[1024];
+            int len;
+            // Absolute path to the plugin file
+            String absolutePath = pluginDirectory + File.separator + pluginFilename;
+            // Save input stream contents to a temp file
+            OutputStream out = new FileOutputStream(absolutePath + ".part");
+            while ((len = in.read(b)) != -1) {
+                     //write byte to file
+                     out.write(b, 0, len);
+            }
+            out.close();
+            // Delete old .jar (if it exists)
+            new File(absolutePath).delete();
+            // Rename temp file to .jar
+            new File(absolutePath + ".part").renameTo(new File(absolutePath));
+        }
+        catch (IOException e) {
+            Log.error("Error installing new version of plugin: " + pluginFilename, e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the specified filename, that belongs to a plugin, exists.
+     *
+     * @param pluginFilename the filename of the plugin to create or update.
+     * @return true if the specified filename, that belongs to a plugin, exists.
+     */
+    public boolean isPluginDownloaded(String pluginFilename) {
+        return new File(pluginDirectory + File.separator + pluginFilename).exists();
     }
 
     /**

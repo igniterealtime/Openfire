@@ -8,10 +8,14 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.text.*,
-                 org.jivesoftware.admin.AdminConsole"
+<%@ page import="org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.util.JiveConstants,
+                 org.jivesoftware.util.JiveGlobals"
 %>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.update.Update"%>
+<%@ page import="org.jivesoftware.wildfire.update.UpdateManager"%>
+<%@ page import="java.text.DecimalFormat"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -55,6 +59,36 @@
     </head>
     <body>
 
+<%
+    UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
+    Update serverUpdate = updateManager.getServerUpdate();
+    if (serverUpdate != null) { %>
+    <div class="jive-info">
+    <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FF9999">
+    <tbody>
+        <tr>
+            <td width="10" class="jive-icon"><img src="images/warning-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon-label">
+            <fmt:message key="index.update.alert" />
+            </td>
+        </tr>
+        <td valign="top" align="left" colspan="2">
+        <span><fmt:message key="index.update.info">
+                <fmt:param value="<%= serverUpdate.getLatestVersion()%>" />
+                <fmt:param value="<%= "<a href='"+serverUpdate.getURL()+"'>" %>" />
+                <fmt:param value="<%= "</a>" %>" />
+                <fmt:param value="<%= "<a href='"+serverUpdate.getChangelog()+"'>" %>" />
+                <fmt:param value="<%= "</a>" %>" />
+            </fmt:message></span>
+        </td>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%
+    }
+%>
 <p>
 <fmt:message key="index.title.info" />
 </p>

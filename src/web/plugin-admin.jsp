@@ -5,13 +5,22 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.io.*,
-				 org.jivesoftware.wildfire.container.PluginManager,
-				 org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.container.Plugin,
-                 java.util.*,
-                 java.net.URLEncoder"
+<%@ page import="org.jivesoftware.util.ParamUtils,
+				 org.jivesoftware.wildfire.XMPPServer,
+				 org.jivesoftware.wildfire.container.Plugin,
+                 org.jivesoftware.wildfire.container.PluginManager,
+                 org.jivesoftware.wildfire.update.Update,
+                 org.jivesoftware.wildfire.update.UpdateManager"
 %>
+<%@ page import="java.io.BufferedReader"%>
+<%@ page import="java.io.File"%>
+<%@ page import="java.io.FileReader"%>
+<%@ page import="java.io.IOException"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.util.ArrayList"%>
+<%@ page import="java.util.Collections"%>
+<%@ page import="java.util.Comparator"%>
+<%@ page import="java.util.List"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -24,10 +33,14 @@
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
     boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
+    boolean downloadRequested = request.getParameter("download") != null;
+    String url = request.getParameter("url");
 
-	final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
+    final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
     List<Plugin> plugins = new ArrayList<Plugin>(pluginManager.getPlugins());
+
+    UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
 
     if (plugins != null) {
         Collections.sort(plugins, new Comparator<Plugin>() {
@@ -37,6 +50,11 @@
         });
     }
     
+    if (downloadRequested) {
+        // Download and install new version of plugin
+        updateManager.downloadPlugin(url);
+    }
+
     if (deletePlugin != null) {
         File pluginDir = pluginManager.getPluginDirectory(pluginManager.getPlugin(deletePlugin));
 		File pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".jar");
@@ -218,10 +236,12 @@
             if (!icon.exists()) {
                 icon = new File(pluginDir, "logo_small.gif");
             }
+            // Check if there is an update for this plugin
+            Update update = updateManager.getPluginUpdate(pluginName, pluginVersion);
 %>
 
-	    <tr>
-	        <td width="1%">
+        <tr>
+            <td width="1%">
                 <% if (icon.exists()) { %>
                 <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
                 <% } else { %>
@@ -236,31 +256,54 @@
                     boolean changelogExists = new File(pluginDir, "changelog.html").exists();
                 %>
                 </td>
-            <td nowrap>
-                <% if (readmeExists) { %>
+            <td nowrap valign="top">
+                <p><% if (readmeExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
                 <% } else { %> &nbsp; <% } %>
                 <% if (changelogExists) { %>
                 <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-                <% } else { %> &nbsp; <% } %>
+                <% } else { %> &nbsp; <% } %></p>
+                <% if (update != null) { %>
+                <p>
+                    <%
+                        String updateURL = update.getURL();
+                        if (updateURL.endsWith(".jar") || updateURL.endsWith(".zip") || updateURL.endsWith(".war")) {
+                            // Change it so that the server downloads and installs the new version of the plugin
+                            updateURL = "plugin-admin.jsp?download=true&url="+ updateURL;
+                        }
+                    %>
+                    <a href="<%= updateURL %>"
+                    ><img src="images/doc-down-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.admin.download" />"></a>
+                    <% if (update.getChangelog() != null) { %>
+                    <a href="<%= update.getChangelog()%>"
+                    ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                    <% } else { %> &nbsp; <% } %>
+                </p>
+                <% } %>
             </td>
 	        <td width="60%">
-	            <%= pluginDescription != null ? pluginDescription : "" %>  &nbsp;
+	            <p><%= pluginDescription != null ? pluginDescription : "" %></p>
+                <% if (update != null) { %>
+                <p><fmt:message key="plugin.admin.update-desc" /></p>
+                <% } %>
+            </td>
+	        <td width="5%" align="center" valign="top">
+                <p><%= pluginVersion != null ? pluginVersion : "" %></p>
+                <% if (update != null) { %>
+	             <p><%= update.getLatestVersion() %></p>
+                <% } %>
 	        </td>
-	        <td width="5%" align="center">
-	             <%= pluginVersion != null ? pluginVersion : "" %>  &nbsp;
-	        </td>
-	        <td width="15%" nowrap>
+	        <td width="15%" nowrap valign="top">
 	             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
 	        </td>
-	        <td width="1%" align="center">
+	        <td width="1%" align="center" valign="top">
 	            <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
 	             title="<fmt:message key="plugin.admin.click_reload" />"
 	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
 	        </td>
-	        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+	        <td width="1%" align="center" valign="top" style="border-right:1px #ccc solid;">
 	            <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
 	             title="<fmt:message key="global.click_delete" />"
 	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>

@@ -62,6 +62,16 @@
                     url="external-components-settings.jsp"
                     description="${sidebar.external-components-settings.descr}" />
 
+            <!-- External components -->
+            <item id="connection-managers-settings" name="${sidebar.connection-managers-settings}"
+                    url="connection-managers-settings.jsp"
+                    description="${sidebar.connection-managers-settings.descr}" />
+
+            <!-- Manage updates -->
+            <item id="manage-updates" name="${sidebar.manage-updates}"
+                    url="manage-updates.jsp"
+                    description="${sidebar.manage-updates.descr}" />
+
             <!-- Registration &amp; Login -->
             <item id="server-reg-and-login" name="${sidebar.server-reg-and-login}"
                     url="reg-settings.jsp"
@@ -283,6 +293,11 @@
 			<item id="plugin-settings" name="${sidebar.plugin-settings}"
                     url="plugin-admin.jsp"
                     description="${sidebar.plugin-settings.descr}" />
+
+            <!-- Available Plugins -->
+			<item id="available-plugins" name="${sidebar.available-plugins}"
+                    url="available-plugins.jsp"
+                    description="${sidebar.available-plugins.descr}" />
         </sidebar>
     </tab>
 

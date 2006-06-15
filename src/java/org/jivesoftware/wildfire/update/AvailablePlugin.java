@@ -1,9 +1,18 @@
+/**
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.update;
 
 /**
- * Information about an available plugin (i.e. not installed). The information was obtained
- * from jivesoftware.org after executing
- * {@link org.jivesoftware.wildfire.update.UpdateManager#getAvailablePlugins()}.
+ * Plugin available at jivesoftware.org. The plugin may or may not be locally installed.
  *
  * @author Gaston Dombiak
  */

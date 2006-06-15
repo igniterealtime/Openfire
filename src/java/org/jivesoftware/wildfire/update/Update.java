@@ -1,3 +1,14 @@
+/**
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.update;
 
 /**
@@ -75,16 +86,6 @@ public class Update {
      */
     public String getURL() {
         return url;
-    }
-
-    /**
-     * Returns true if this update means that the server needs to be updated. When false
-     * then it means that a plugin needs to be updated.
-     *
-     * @return true if this update means that the server needs to be updated.
-     */
-    public boolean isServer() {
-        return "Wildfire".equals(componentName);
     }
 
     /**

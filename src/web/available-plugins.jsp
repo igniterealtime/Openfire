@@ -8,8 +8,10 @@
 <%@ page import="org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.wildfire.update.AvailablePlugin,
                  org.jivesoftware.wildfire.update.UpdateManager,
-                 java.util.List"
+                 java.util.Collections"
 %>
+<%@ page import="java.util.Comparator"%>
+<%@ page import="java.util.List"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -21,7 +23,14 @@
     String url = request.getParameter("url");
 
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
-    List<AvailablePlugin> plugins = updateManager.getAvailablePlugins();
+    List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();
+
+    // Sort plugins alphabetically
+    Collections.sort(plugins, new Comparator() {
+        public int compare(Object o1, Object o2) {
+            return ((AvailablePlugin) o1).getName().compareTo(((AvailablePlugin) o2).getName());
+        }
+    });
 
 
     if (downloadRequested) {

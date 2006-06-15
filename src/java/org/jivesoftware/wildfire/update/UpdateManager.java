@@ -1,3 +1,14 @@
+/**
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.update;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -18,7 +29,6 @@ import org.jivesoftware.wildfire.MessageRouter;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -45,9 +55,19 @@ public class UpdateManager extends BasicModule {
     private static String updateServiceURL = "http://www.jivesoftware.org/wildfire/versions.jsp";
 
     /**
-     * List of components that need to be updated.
+     * Information about the available server update.
      */
-    private Collection<Update> toUpdate = new ArrayList<Update>();
+    private Update serverUpdate;
+
+    /**
+     * List of plugins that need to be updated.
+     */
+    private Collection<Update> pluginUpdates = new ArrayList<Update>();
+
+    /**
+     * List of plugins available at jivesoftware.org.
+     */
+    private Map<String, AvailablePlugin> availablePlugins = new HashMap<String, AvailablePlugin>();
 
     /**
      * Thread that performs the periodic checks for updates.
@@ -82,20 +102,20 @@ public class UpdateManager extends BasicModule {
                 try {
                     // Sleep for 15 seconds before starting to work
                     Thread.sleep(15000);
-                    // Load last saved response (if any)
-                    Element xmlResponse = loadResponse();
-                    if (xmlResponse != null) {
-                        // Parse response and recreate Update objects
-                        parseResponse(xmlResponse);
-                        // Check if components were manually updated
-                        checkForManualUpdates();
-                    }
+                    // Load last saved information (if any)
+                    loadSavedInfo();
                     while (isServiceEnabled()) {
                         waitForNextChecking();
                         // Check if the service is still enabled
                         if (isServiceEnabled()) {
                             try {
-                                checkForUpdates(true);
+                                // Check for server updates
+                                checkForServerUpdate(true);
+                                // Refresh list of available plugins and check for plugin updates
+                                checkForPluginsUpdates(true);
+                                // Keep track of the last time we checked for updates
+                                JiveGlobals.setProperty("update.lastCheck",
+                                        String.valueOf(System.currentTimeMillis()));
                             }
                             catch (Exception e) {
                                 Log.error("Error checking for updates", e);
@@ -118,7 +138,7 @@ public class UpdateManager extends BasicModule {
                     // This is the first time the server is used (since we added this feature)
                     Thread.sleep(45000);
                 }
-                else  {
+                else {
                     long elapsed = System.currentTimeMillis() - lastCheck;
                     int frequency = getCheckFrequency() * 60 * 60 * 1000;
                     if (elapsed < frequency) {
@@ -144,11 +164,9 @@ public class UpdateManager extends BasicModule {
      * @param notificationsEnabled true if admins will be notified when new updates are found.
      * @throws Exception if some error happens during the query.
      */
-    public synchronized void checkForUpdates(boolean notificationsEnabled) throws Exception {
-        // Keep track of the last time we checked for updates
-        JiveGlobals.setProperty("update.lastCheck", String.valueOf(System.currentTimeMillis()));
+    public synchronized void checkForServerUpdate(boolean notificationsEnabled) throws Exception {
         // Get the XML request to include in the HTTP request
-        String requestXML = getUpdatesRequest();
+        String requestXML = getServerUpdateRequest();
         // Send the request to the server
         HttpClient httpClient = new HttpClient();
         PostMethod postMethod = new PostMethod(updateServiceURL);
@@ -157,40 +175,105 @@ public class UpdateManager extends BasicModule {
                 new NameValuePair("query", requestXML)
         };
         postMethod.setRequestBody(data);
-        int responseCode = httpClient.executeMethod(postMethod);
-        String responseBody = postMethod.getResponseBodyAsString();
-        // Process answer from the server
-        processUpdatesResponse(responseBody, notificationsEnabled);
+        if (httpClient.executeMethod(postMethod) == 200) {
+            // Process answer from the server
+            String responseBody = postMethod.getResponseBodyAsString();
+            processServerUpdateResponse(responseBody, notificationsEnabled);
+        }
+    }
+
+    public synchronized void checkForPluginsUpdates(boolean notificationsEnabled) throws Exception {
+        // Get the XML request to include in the HTTP request
+        String requestXML = "<available/>";
+        // Send the request to the server
+        HttpClient httpClient = new HttpClient();
+        PostMethod postMethod = new PostMethod(updateServiceURL);
+        NameValuePair[] data = {
+                new NameValuePair("type", "available"),
+                new NameValuePair("query", requestXML)
+        };
+        postMethod.setRequestBody(data);
+        if (httpClient.executeMethod(postMethod) == 200) {
+            // Process answer from the server
+            String responseBody = postMethod.getResponseBodyAsString();
+            processAvailablePluginsResponse(responseBody, notificationsEnabled);
+        }
     }
 
     /**
-     * Returns the list of available (i.e. not installed) plugins as reported
-     * by jivesoftware.org.
+     * Download and install latest version of plugin.
      *
-     * @return the alphabetically sorted list of available plugins as reported
-     *         by jivesoftware.org.
+     * @param url the URL of the latest version of the plugin.
+     * @return true if the plugin was successfully downloaded and installed.
      */
-    public List<AvailablePlugin> getAvailablePlugins() {
+    public boolean downloadPlugin(String url) {
+        boolean installed = false;
+        // Download and install new version of plugin
+        HttpClient httpClient = new HttpClient();
+        GetMethod getMethod = new GetMethod(url);
+        //execute the method
         try {
-            // Get the XML request to include in the HTTP request
-            String requestXML = getAvailableRequest();
-            // Send the request to the server
-            HttpClient httpClient = new HttpClient();
-            PostMethod postMethod = new PostMethod(updateServiceURL);
-            NameValuePair[] data = {
-                    new NameValuePair("type", "available"),
-                    new NameValuePair("query", requestXML)
-            };
-            postMethod.setRequestBody(data);
-            int responseCode = httpClient.executeMethod(postMethod);
-            String responseBody = postMethod.getResponseBodyAsString();
-            // Process answer from the server
-            return processAvailableResponse(responseBody);
+            int statusCode = httpClient.executeMethod(getMethod);
+            if (statusCode == 200) {
+                //get the resonse as an InputStream
+                InputStream in = getMethod.getResponseBodyAsStream();
+                String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+                installed = XMPPServer.getInstance().getPluginManager()
+                        .installPlugin(in, pluginFilename);
+                in.close();
+                if (installed) {
+                    // Remove the plugin from the list of plugins to update
+                    for (Update update : pluginUpdates) {
+                        if (update.getURL().equals(url)) {
+                            update.setDownloaded(true);
+                        }
+                    }
+                    // Save response in a file for later retrieval
+                    saveLatestServerInfo();
+                }
+            }
         }
-        catch (Exception e) {
-            Log.error("Error while getting list of available plugins", e);
+        catch (IOException e) {
+            Log.warn("Error downloading new plugin version", e);
         }
-        return Collections.emptyList();
+        return installed;
+    }
+
+    /**
+     * Returns true if the plugin downloaded from the specified URL has been downloaded. Plugins
+     * may be downloaded but not installed. The install process may take like 30 seconds to
+     * detect new plugins to install.
+     *
+     * @param url the URL of the latest version of the plugin.
+     * @return true if the plugin downloaded from the specified URL has been downloaded.
+     */
+    public boolean isPluginDownloaded(String url) {
+        String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+        return XMPPServer.getInstance().getPluginManager().isPluginDownloaded(pluginFilename);
+    }
+
+    /**
+     * Returns the list of available plugins to install as reported by jivesoftware.org.
+     * Currently installed plugins will not be included.
+     *
+     * @return the list of available plugins to install as reported by jivesoftware.org.
+     */
+    public List<AvailablePlugin> getNotInstalledPlugins() {
+        ArrayList<AvailablePlugin> plugins =
+                new ArrayList<AvailablePlugin>(availablePlugins.values());
+        XMPPServer server = XMPPServer.getInstance();
+        // Remove installed plugins from the list of available plugins
+        for (Plugin plugin : server.getPluginManager().getPlugins()) {
+            String pluginName = server.getPluginManager().getName(plugin);
+            for (Iterator<AvailablePlugin> it=plugins.iterator(); it.hasNext();) {
+                AvailablePlugin availablePlugin = it.next();
+                if (availablePlugin.getName().equals(pluginName)) {
+                    it.remove();
+                    break;
+                }
+            }
+        }
+        return plugins;
     }
 
     /**
@@ -261,39 +344,23 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the list of components that need to be updated. The server and server plugins
-     * are considered components. The returned list belongs to the last time the check for
-     * updates process was executred.
-     *
-     * @return the list of components that need to be updated.
-     */
-    public Collection<Update> getToUpdate() {
-        return toUpdate;
-    }
-
-    /**
      * Returns the server update or <tt>null</tt> if the server is up to date.
      *
      * @return the server update or null if the server is up to date.
      */
     public Update getServerUpdate() {
-        for (Update update : toUpdate) {
-            if (update.isServer()) {
-                return update;
-            }
-        }
-        return null;
+        return serverUpdate;
     }
 
     /**
      * Returns the plugin update or <tt>null</tt> if the plugin is up to date.
      *
-     * @param pluginName the name of the plugin (as described in the meta-data).
+     * @param pluginName     the name of the plugin (as described in the meta-data).
      * @param currentVersion current version of the plugin that is installed.
      * @return the plugin update or null if the plugin is up to date.
      */
     public Update getPluginUpdate(String pluginName, String currentVersion) {
-        for (Update update : toUpdate) {
+        for (Update update : pluginUpdates) {
             // Check if this is the requested plugin
             if (update.getComponentName().equals(pluginName)) {
                 // Check if the plugin version is right
@@ -305,129 +372,55 @@ public class UpdateManager extends BasicModule {
         return null;
     }
 
-    private String getUpdatesRequest() {
+    private String getServerUpdateRequest() {
         XMPPServer server = XMPPServer.getInstance();
         Element xmlRequest = docFactory.createDocument().addElement("version");
         // Add current wildfire version
         Element wildfire = xmlRequest.addElement("wildfire");
         wildfire.addAttribute("current", server.getServerInfo().getVersion().getVersionString());
-        // Add plugins information
-        for (Plugin plugin : server.getPluginManager().getPlugins()) {
-            Element pluginElement = xmlRequest.addElement("plugin");
-            pluginElement.addAttribute("name", server.getPluginManager().getName(plugin));
-            pluginElement.addAttribute("current", server.getPluginManager().getVersion(plugin));
-        }
         return xmlRequest.asXML();
     }
 
-    private String getAvailableRequest() {
-        XMPPServer server = XMPPServer.getInstance();
-        Element xmlRequest = docFactory.createDocument().addElement("available");
-        // Add information of currently installed plugins
-        for (Plugin plugin : server.getPluginManager().getPlugins()) {
-            Element pluginElement = xmlRequest.addElement("plugin");
-            pluginElement.addAttribute("name", server.getPluginManager().getName(plugin));
-        }
-        return xmlRequest.asXML();
-    }
-
-    /**
-     * Discards updates of components that were manually updated while the server was stopped.
-     */
-    private void checkForManualUpdates() {
-        Collection<Update> toDelete = new ArrayList<Update>();
-        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        for (Update update : toUpdate) {
-            String latestVersion = update.getLatestVersion();
-            if (update.isServer()) {
-                // Check if current server version is correct
-                String serverVersion =
-                        XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
-                if (serverVersion.compareTo(latestVersion) >= 0) {
-                    toDelete.add(update);
-                }
-            }
-            else {
-                // Check if current plugin version is correct
-                String pluginName = update.getURL().substring(update.getURL().lastIndexOf("/")+1);
-                Plugin plugin = pluginManager
-                        .getPlugin(pluginName.substring(0, pluginName.length() - 4).toLowerCase());
-                if (plugin != null &&
-                        pluginManager.getVersion(plugin).compareTo(latestVersion) >= 0) {
-                    toDelete.add(update);
-                }
-            }
-        }
-        if (!toDelete.isEmpty()) {
-            // Remove old version of list of updates
-            toUpdate.removeAll(toDelete);
-            // Save response in a file for later retrieval
-            saveResponse();
-        }
-    }
-
-    private void processUpdatesResponse(String response, boolean notificationsEnabled)
+    private void processServerUpdateResponse(String response, boolean notificationsEnabled)
             throws DocumentException {
-        // Reset list of components that need to be updated
-        toUpdate = new ArrayList<Update>();
+        // Reset last known update information
+        serverUpdate = null;
         Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
         // Parse response and keep info as Update objects
-        parseResponse(xmlResponse);
-        // Save response in a file for later retrieval
-        saveResponse();
-        // Check if we need to send notifications to admins
-        if (notificationsEnabled && isNotificationEnabled() && !toUpdate.isEmpty()) {
-            Collection<JID> admins = XMPPServer.getInstance().getAdmins();
-            for (Update update : toUpdate) {
-                Message notification = new Message();
-                notification.setFrom(serverName);
-                notification.setBody(getNotificationMessage() + " " + update.getComponentName() +
-                        " " + update.getLatestVersion());
-                for (JID jid : admins) {
-                    notification.setTo(jid);
-                    router.route(notification);
-                }
-            }
-        }
-    }
-
-    /**
-     * Parses the XML response from the server and generates {@link Update} objects.
-     *
-     * @param xmlResponse the XML response answered by the server.
-     */
-    private void parseResponse(Element xmlResponse) {
         Element wildfire = xmlResponse.element("wildfire");
         if (wildfire != null) {
             // A new version of wildfire was found
             String latestVersion = wildfire.attributeValue("latest");
             String changelog = wildfire.attributeValue("changelog");
             String url = wildfire.attributeValue("url");
-            Update update = new Update("Wildfire", latestVersion, changelog, url);
-            // Add component to the list of components that need to be updated
-            toUpdate.add(update);
+            // Keep information about the available server update
+            serverUpdate = new Update("Wildfire", latestVersion, changelog, url);
         }
-        Iterator plugins = xmlResponse.elementIterator("plugin");
-        while (plugins.hasNext()) {
-            // A new version of a plugin was found
-            Element plugin = (Element) plugins.next();
-            String pluginName = plugin.attributeValue("name");
-            String latestVersion = plugin.attributeValue("latest");
-            String changelog = plugin.attributeValue("changelog");
-            String url = plugin.attributeValue("url");
-            Update update = new Update(pluginName, latestVersion, changelog, url);
-            // Add component to the list of components that need to be updated
-            toUpdate.add(update);
+        // Check if we need to send notifications to admins
+        if (notificationsEnabled && isNotificationEnabled() && serverUpdate != null) {
+            Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+            Message notification = new Message();
+            notification.setFrom(serverName);
+            notification.setBody(getNotificationMessage() + " " + serverUpdate.getComponentName() +
+                    " " + serverUpdate.getLatestVersion());
+            for (JID jid : admins) {
+                notification.setTo(jid);
+                router.route(notification);
+            }
         }
+        // Save response in a file for later retrieval
+        saveLatestServerInfo();
     }
 
-    private List<AvailablePlugin> processAvailableResponse(String response) throws DocumentException {
-        List<AvailablePlugin> answer = new ArrayList<AvailablePlugin>();
-        Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
+    private void processAvailablePluginsResponse(String response, boolean notificationsEnabled)
+            throws DocumentException {
+        // Reset last known list of available plugins
+        availablePlugins = new HashMap<String, AvailablePlugin>();
+
         // Parse response and keep info as AvailablePlugin objects
+        Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
-            // A new version of a plugin was found
             Element plugin = (Element) plugins.next();
             String pluginName = plugin.attributeValue("name");
             String latestVersion = plugin.attributeValue("latest");
@@ -441,43 +434,67 @@ public class UpdateManager extends BasicModule {
             String minServerVersion = plugin.attributeValue("minServerVersion");
             AvailablePlugin available = new AvailablePlugin(pluginName, description, latestVersion,
                     author, icon, changelog, readme, isCommercial, minServerVersion, url);
-            // Add component to the list of components that need to be updated
-            answer.add(available);
+            // Add plugin to the list of available plugins at js.org
+            availablePlugins.put(pluginName, available);
         }
-        // Sort answer alphabetically
-        Collections.sort(answer, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                return ((AvailablePlugin)o1).getName().compareTo(((AvailablePlugin)o2).getName());
+
+        // Figure out local plugins that need to be updated
+        buildPluginsUpdateList();
+
+        // Check if we need to send notifications to admins
+        if (notificationsEnabled && isNotificationEnabled() && !pluginUpdates.isEmpty()) {
+            Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+            for (Update update : pluginUpdates) {
+                Message notification = new Message();
+                notification.setFrom(serverName);
+                notification.setBody(getNotificationMessage() + " " + update.getComponentName() +
+                        " " + update.getLatestVersion());
+                for (JID jid : admins) {
+                    notification.setTo(jid);
+                    router.route(notification);
+                }
             }
-        });
-        return answer;
+        }
+
+        // Save information of available plugins
+        saveAvailablePluginsInfo();
     }
 
     /**
-     * Saves the XML response from the server to a file. The file is named conf/updates.xml.
-     * Only not installed plugins will be saved. Each time a plugin is installed the
-     * file will be saved again.
+     * Recreate the list of plugins that need to be updated based on the list of
+     * available plugins at jivesoftware.org.
      */
-    private void saveResponse() {
-        // Recreate XML response based on non-installed updates
-        Element xmlResponse = docFactory.createDocument().addElement("version");
-        for (Update update : toUpdate) {
-            if (update.isDownloaded()) {
-                continue;
+    private void buildPluginsUpdateList() {
+        // Reset list of plugins that need to be updated
+        pluginUpdates = new ArrayList<Update>();
+        XMPPServer server = XMPPServer.getInstance();
+        // Compare local plugins versions with latest ones
+        for (Plugin plugin : server.getPluginManager().getPlugins()) {
+            String pluginName = server.getPluginManager().getName(plugin);
+            AvailablePlugin latestPlugin = availablePlugins.get(pluginName);
+            String currentVersion = server.getPluginManager().getVersion(plugin);
+            if (latestPlugin != null &&
+                    latestPlugin.getLatestVersion().compareTo(currentVersion) > 0) {
+                Update update = new Update(pluginName, latestPlugin.getLatestVersion(),
+                        latestPlugin.getChangelog(), latestPlugin.getURL());
+                pluginUpdates.add(update);
             }
-            Element component;
-            if (update.isServer()) {
-                component = xmlResponse.addElement("wildfire");
-            }
-            else {
-                component = xmlResponse.addElement("plugin");
-                component.addAttribute("name", update.getComponentName());
-            }
-            component.addAttribute("latest", update.getLatestVersion());
-            component.addAttribute("changelog", update.getChangelog());
-            component.addAttribute("url", update.getURL());
         }
-        // Write data out to conf/updates.xml file.
+    }
+
+    /**
+     * Saves to conf/server-update.xml information about the latest Wildfire release that is
+     * available for download.
+     */
+    private void saveLatestServerInfo() {
+        Element xmlResponse = docFactory.createDocument().addElement("version");
+        if (serverUpdate != null) {
+            Element component = xmlResponse.addElement("wildfire");
+            component.addAttribute("latest", serverUpdate.getLatestVersion());
+            component.addAttribute("changelog", serverUpdate.getChangelog());
+            component.addAttribute("url", serverUpdate.getURL());
+        }
+        // Write data out to conf/server-update.xml file.
         Writer writer = null;
         try {
             // Create the conf folder if required
@@ -486,8 +503,8 @@ public class UpdateManager extends BasicModule {
                 file.mkdir();
             }
             file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
-                    "updates.xml");
-            // Delete the old version.xml file if it exists
+                    "server-update.xml");
+            // Delete the old server-update.xml file if it exists
             if (file.exists()) {
                 file.delete();
             }
@@ -513,22 +530,84 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the last recieved XML response from the server or <tt>null</tt> if non was
-     * ever saved before.
-     *
-     * @return the last recieved XML response from the server or null if non was found.
+     * Saves to conf/available-plugins.xml the list of plugins that are available
+     * at jivesoftware.org.
      */
-    private Element loadResponse() {
+    private void saveAvailablePluginsInfo() {
+        //  XML to store in the file
+        Element xml = docFactory.createDocument().addElement("available");
+        for (AvailablePlugin plugin : availablePlugins.values()) {
+            Element component = xml.addElement("plugin");
+            component.addAttribute("name", plugin.getName());
+            component.addAttribute("latest", plugin.getLatestVersion());
+            component.addAttribute("changelog", plugin.getChangelog());
+            component.addAttribute("url", plugin.getURL());
+            component.addAttribute("author", plugin.getAuthor());
+            component.addAttribute("description", plugin.getDescription());
+            component.addAttribute("icon", plugin.getIcon());
+            component.addAttribute("minServerVersion", plugin.getMinServerVersion());
+            component.addAttribute("readme", plugin.getReadme());
+            component.addAttribute("commercial", Boolean.toString(plugin.isCommercial()));
+        }
+        // Write data out to conf/available-plugins.xml file.
+        Writer writer = null;
+        try {
+            // Create the conf folder if required
+            File file = new File(JiveGlobals.getHomeDirectory(), "conf");
+            if (!file.exists()) {
+                file.mkdir();
+            }
+            file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
+                    "available-plugins.xml");
+            // Delete the old version.xml file if it exists
+            if (file.exists()) {
+                file.delete();
+            }
+            // Create new version.xml with returned data
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
+            xmlWriter.write(xml);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                }
+                catch (IOException e1) {
+                    Log.error(e1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads list of available plugins and latest available server version from
+     * conf/available-plugins.xml and conf/server-update.xml respectively.
+     */
+    private void loadSavedInfo() {
+        // Load server update information
+        loadLatestServerInfo();
+        // Load available plugins information
+        loadAvailablePluginsInfo();
+        // Recreate list of plugins to update
+        buildPluginsUpdateList();
+    }
+
+    private void loadLatestServerInfo() {
         Document xmlResponse;
-        File file =
-                new File(JiveGlobals.getHomeDirectory() + File.separator + "conf", "updates.xml");
+        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
+                "server-update.xml");
         if (!file.exists()) {
-            return null;
+            return;
         }
         // Check read privs.
         if (!file.canRead()) {
-            Log.warn("Cannot retrieve available updates. File must be readable: " + file.getName());
-            return null;
+            Log.warn("Cannot retrieve server updates. File must be readable: " + file.getName());
+            return;
         }
         FileReader reader = null;
         try {
@@ -537,8 +616,8 @@ public class UpdateManager extends BasicModule {
             xmlResponse = xmlReader.read(reader);
         }
         catch (Exception e) {
-            Log.error("Error reading updates.xml", e);
-            return null;
+            Log.error("Error reading server-update.xml", e);
+            return;
         }
         finally {
             if (reader != null) {
@@ -550,58 +629,71 @@ public class UpdateManager extends BasicModule {
                 }
             }
         }
-        return xmlResponse.getRootElement();
+        // Parse info and recreate update information (if still required)
+        Element wildfire = xmlResponse.getRootElement().element("wildfire");
+        if (wildfire != null) {
+            String latestVersion = wildfire.attributeValue("latest");
+            String changelog = wildfire.attributeValue("changelog");
+            String url = wildfire.attributeValue("url");
+            // Check if current server version is correct
+            String serverVersion =
+                    XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
+            if (serverVersion.compareTo(latestVersion) < 0) {
+                serverUpdate = new Update("Wildfire", latestVersion, changelog, url);
+            }
+        }
     }
 
-    /**
-     * Download and install latest version of plugin.
-     *
-     * @param url the URL of the latest version of the plugin.
-     * @return true if the plugin was successfully downloaded and installed.
-     */
-    public boolean downloadPlugin(String url) {
-        boolean installed = false;
-        // Download and install new version of plugin
-        HttpClient httpClient = new HttpClient();
-        GetMethod getMethod = new GetMethod(url);
-        //execute the method
+    private void loadAvailablePluginsInfo() {
+        Document xmlResponse;
+        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
+                "available-plugins.xml");
+        if (!file.exists()) {
+            return;
+        }
+        // Check read privs.
+        if (!file.canRead()) {
+            Log.warn("Cannot retrieve available plugins. File must be readable: " + file.getName());
+            return;
+        }
+        FileReader reader = null;
         try {
-            int statusCode = httpClient.executeMethod(getMethod);
-            if (statusCode == 200) {
-                //get the resonse as an InputStream
-                InputStream in = getMethod.getResponseBodyAsStream();
-                String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-                installed = XMPPServer.getInstance().getPluginManager()
-                        .installPlugin(in, pluginFilename);
-                in.close();
-                if (installed) {
-                    // Remove the plugin from the list of plugins to update
-                    for (Update update : toUpdate) {
-                        if (update.getURL().equals(url)) {
-                            update.setDownloaded(true);
-                        }
-                    }
-                    // Save response in a file for later retrieval
-                    saveResponse();
+            reader = new FileReader(file);
+            SAXReader xmlReader = new SAXReader();
+            xmlResponse = xmlReader.read(reader);
+        }
+        catch (Exception e) {
+            Log.error("Error reading available-plugins.xml", e);
+            return;
+        }
+        finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                }
+                catch (Exception e) {
+                    // Do nothing
                 }
             }
         }
-        catch (IOException e) {
-            Log.warn("Error downloading new plugin version", e);
+        // Parse info and recreate available plugins
+        Iterator it = xmlResponse.getRootElement().elementIterator("plugin");
+        while (it.hasNext()) {
+            Element plugin = (Element) it.next();
+            String pluginName = plugin.attributeValue("name");
+            String latestVersion = plugin.attributeValue("latest");
+            String icon = plugin.attributeValue("icon");
+            String readme = plugin.attributeValue("readme");
+            String changelog = plugin.attributeValue("changelog");
+            String url = plugin.attributeValue("url");
+            boolean isCommercial = "true".equals(plugin.attributeValue("commercial"));
+            String description = plugin.attributeValue("description");
+            String author = plugin.attributeValue("author");
+            String minServerVersion = plugin.attributeValue("minServerVersion");
+            AvailablePlugin available = new AvailablePlugin(pluginName, description, latestVersion,
+                    author, icon, changelog, readme, isCommercial, minServerVersion, url);
+            // Add plugin to the list of available plugins at js.org
+            availablePlugins.put(pluginName, available);
         }
-        return installed;
-    }
-
-    /**
-     * Returns true if the plugin downloaded from the specified URL has been downloaded. Plugins
-     * may be downloaded but not installed. The install process may take like 30 seconds to
-     * detect new plugins to install.
-     *
-     * @param url the URL of the latest version of the plugin.
-     * @return true if the plugin downloaded from the specified URL has been downloaded.
-     */
-    public boolean isPluginDownloaded(String url) {
-        String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-        return XMPPServer.getInstance().getPluginManager().isPluginDownloaded(pluginFilename);
     }
 }

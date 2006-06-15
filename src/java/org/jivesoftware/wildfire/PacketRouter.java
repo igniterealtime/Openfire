@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision: 943 $
- * $Date: 2005-02-04 01:53:20 -0300 (Fri, 04 Feb 2005) $
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,72 +11,45 @@
 
 package org.jivesoftware.wildfire;
 
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Presence;
 import org.xmpp.packet.IQ;
-import org.jivesoftware.wildfire.container.BasicModule;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
- * <p>An uber router that can handle any packet type.</p>
- * <p>The interface is provided primarily as a convenience for services
- * that must route all packet types (e.g. s2s routing, e2e encryption, etc).</p>
+ * A router that handles incoming packets. Packets will be routed to their
+ * corresponding handler. A router is much like a forwarded with some logic
+ * to figute out who is the target for each packet.
  *
- * @author Iain Shigeoka
+ * @author Gaston Dombiak
  */
-public class PacketRouter extends BasicModule {
-
-    private IQRouter iqRouter;
-    private PresenceRouter presenceRouter;
-    private MessageRouter messageRouter;
+public interface PacketRouter {
 
     /**
-     * Constructs a packet router.
-     */
-    public PacketRouter() {
-        super("XMPP Packet Router");
-    }
-
-    /**
-     * Routes the given packet based on packet recipient and sender. The
-     * router defers actual routing decisions to other classes.
-     * <h2>Warning</h2>
-     * Be careful to enforce concurrency DbC of concurrent by synchronizing
-     * any accesses to class resources.
+     * Routes the given packet based on its type.
      *
-     * @param packet The packet to route
+     * @param packet The packet to route.
      */
-    public void route(Packet packet) {
-        if (packet instanceof Message) {
-            route((Message)packet);
-        }
-        else if (packet instanceof Presence) {
-            route((Presence)packet);
-        }
-        else if (packet instanceof IQ) {
-            route((IQ)packet);
-        }
-        else {
-            throw new IllegalArgumentException();
-        }
-    }
+    void route(Packet packet);
 
-    public void route(IQ packet) {
-        iqRouter.route(packet);
-    }
+    /**
+     * Routes the given IQ packet.
+     *
+     * @param packet The packet to route.
+     */
+    void route(IQ packet);
 
-    public void route(Message packet) {
-        messageRouter.route(packet);
-    }
+    /**
+     * Routes the given Message packet.
+     *
+     * @param packet The packet to route.
+     */
+    void route(Message packet);
 
-    public void route(Presence packet) {
-        presenceRouter.route(packet);
-    }
-
-    public void initialize(XMPPServer server) {
-        super.initialize(server);
-        iqRouter = server.getIQRouter();
-        messageRouter = server.getMessageRouter();
-        presenceRouter = server.getPresenceRouter();
-    }
+    /**
+     * Routes the given Presence packet.
+     *
+     * @param packet The packet to route.
+     */
+    void route(Presence packet);
 }

@@ -38,6 +38,7 @@ import org.jivesoftware.wildfire.pubsub.PubSubModule;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
 import org.jivesoftware.wildfire.transport.TransportHandler;
+import org.jivesoftware.wildfire.update.UpdateManager;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.vcard.VCardManager;
 import org.xmpp.packet.JID;
@@ -411,7 +412,7 @@ public class XMPPServer {
         // Load core modules
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
-        loadModule(PacketRouter.class.getName());
+        loadModule(PacketRouterImpl.class.getName());
         loadModule(IQRouter.class.getName());
         loadModule(MessageRouter.class.getName());
         loadModule(PresenceRouter.class.getName());
@@ -445,6 +446,7 @@ public class XMPPServer {
         loadModule(IQPrivacyHandler.class.getName());
         loadModule(FileTransferProxy.class.getName());
         loadModule(PubSubModule.class.getName());
+        loadModule(UpdateManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
@@ -805,7 +807,7 @@ public class XMPPServer {
         }
         // Stop the Db connection manager.
         DbConnectionManager.getConnectionProvider().destroy();
-        // TODO: hack to allow safe stopping
+        // hack to allow safe stopping
         Log.info("Wildfire stopped");
     }
 
@@ -894,7 +896,7 @@ public class XMPPServer {
      * @return the <code>PacketRouter</code> registered with this server.
      */
     public PacketRouter getPacketRouter() {
-        return (PacketRouter) modules.get(PacketRouter.class);
+        return (PacketRouter) modules.get(PacketRouterImpl.class);
     }
 
     /**
@@ -1040,6 +1042,17 @@ public class XMPPServer {
      */
     public UserManager getUserManager() {
         return UserManager.getInstance();
+    }
+
+    /**
+     * Returns the <code>UpdateManager</code> registered with this server. The
+     * <code>UpdateManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>UpdateManager</code> registered with this server.
+     */
+    public UpdateManager getUpdateManager() {
+        return (UpdateManager) modules.get(UpdateManager.class);
     }
 
     /**

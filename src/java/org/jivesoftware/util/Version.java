@@ -142,6 +142,6 @@ public class Version {
      * are indicated by type safe enum constants.
      */
     public enum ReleaseStatus {
-        Release, Release_Candidate, Beta, Alpha;
+        Release, Release_Candidate, Beta, Alpha
     }
 }

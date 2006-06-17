@@ -48,6 +48,7 @@
     <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/prototype.js"></script>
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>
+    <script language="JavaScript" type="text/javascript" src="<%= path %>/js/cookies.js"></script>
     <script language="JavaScript" type="text/javascript">
     <!-- // code for window popups
     function helpwin() {
@@ -65,7 +66,7 @@
     var myrules = {
         '.jive-table TBODY TR' : function(el) {
             el.onmouseover = function() {
-                this.style.backgroundColor = '#efefef';
+                this.style.backgroundColor = '#ffffee';
             }
             el.onmouseout = function() {
                 this.style.backgroundColor = '#ffffff';

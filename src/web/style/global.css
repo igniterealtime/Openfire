@@ -9,7 +9,7 @@ BODY {
     background-color : #fff;
 }
 #jive-body {
-    background-image : url("../images/page-background.gif");
+    background-image : url("../images/page-background_new.gif");
     background-repeat : repeat-y;
 }
 P {
@@ -41,13 +41,37 @@ FIELDSET LEGEND {
 
 #jive-header {
     width : 100%;
-    height : 61px;
+    height : 90px;
     border : 0px;
-    background-image : url("../images/header-background.gif");
+    background-image : url("../images/header-background_new.gif");
     background-repeat : repeat-x;
-    background-color : #369;
-    border-bottom : 1px #369 solid;
+    background-color : #FFFFFF;
+	min-width: 720px;
 }
+#jive-logo-image {
+	display: block;
+	position: relative;
+	top: 0px;
+	left: 0px;
+	color: #FFFFFF;
+	}
+#jive-logo-image_new {
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 350px;
+	height: 50px;
+	background: url("../images/header-title_new.gif") no-repeat;
+	color: #FFFFFF;
+	overflow: hidden;
+	}
+#jive-logo-image_new strong {
+	display: block;
+	position: relative;
+	margin: 0px 0px 0px 130px;
+	padding-top: 23px;
+	}
 #jive-secondary {
     border-top : 1px #ccc solid;
     background-color : #eee;
@@ -56,43 +80,75 @@ FIELDSET LEGEND {
     padding-left : 12px;
 }
 #jive-header .info {
-    font-size : 8pt;
-    color : #fff;
-    padding-right : 2em;
-    text-align : right;
+	display: block;
+	position: absolute;
+	width: 170px;
+	right: 12px;
+	top: 10px;
+	/*float: right;*/
+    font-size: 8pt;
+    color: #FFFFFF;
+    padding: 0px 0px 0px 0px;
+    text-align: right;
 }
+#jive-header .info img {
+	margin: 0px 0px 4px 0px;
+	}
 #jive-content {
-    padding : 1em;
+	padding: 13px 20px 12px 20px;
 }
 
 /* --------------------------------------------- */
 /*  Main tabs                                    */
 /* --------------------------------------------- */
 
+#jive-header #jive-tabs {
+	display: block;
+	position: absolute;
+	top: 54px;
+	left: 60px;
+	height: 20px;
+	margin: 0px 0px 0px 0px;
+	white-space: nowrap;
+	}
+
 #jive-header #jive-tabs UL, #jive-header #jive-tabs LI {
-    display : inline;
-    padding : 3px;
-    margin : 0px;
+    display: inline;
+    padding: 0px;
+    margin: 0px;
+	white-space: nowrap;
 }
 #jive-header #jive-tabs LI {
     font-family : verdana, arial, helvetica, sans-serif;
-    font-size : 9pt;
+    font-size : 8pt;
     font-weight : bold;
 }
 #jive-header #jive-tabs LI A {
-    color : #CEE1FA;
+	display: block;
+	float: left;
+    color : #FFFFFF;
     text-decoration : none;
-    padding : 3px 5px 3px 5px;
-
+    padding : 1px 7px 1px 7px;
+	margin-top: 2px;
+	margin-right: 4px;
+	background-color: #6788A6;
 }
 #jive-header #jive-tabs LI A:hover {
     color : #fff;
     text-decoration : underline;
 }
 #jive-header #jive-tabs .currentlink A {
-    color : #fff;
-    text-decoration : underline;
+	margin-top: 0px;
+    color: #006699;
+    text-decoration: none;
+	background-color: EAF1F8;
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
+#jive-header #jive-tabs .currentlink A:hover {
+	color: #006699;
+	text-decoration: none;
+	}
 
 /* --------------------------------------------- */
 /*  Logviewer tabs                               */
@@ -129,16 +185,22 @@ FIELDSET LEGEND {
 /* --------------------------------------------- */
 
 #jive-header #jive-logout {
+	display: block;
+	position: absolute;
+	width: 175px;
+	right: 12px;
+	top: 53px;
     white-space : nowrap;
+	text-align: right;
 }
 #jive-header #jive-logout A {
-    color : #cee1fa;
+    color : #FFFFFF;
     font-size : 8pt;
     font-weight : bold;
     text-decoration : none;
 }
 #jive-header #jive-logout A:hover {
-    color : #fff;
+    color : #FFFFFF;
     text-decoration : underline;
 }
 
@@ -176,63 +238,76 @@ FIELDSET LEGEND {
 /*  Sidebar                                      */
 /* --------------------------------------------- */
 
+#jive-header #sidebar-top {
+	display: block;
+	position: absolute;
+	width: 169px;
+	height: 10px;
+	left: 0px;
+	top: 80px;
+	background: url("../images/sidebar_top.gif") no-repeat;
+	overflow: hidden;
+}
 #jive-main #jive-sidebar-box {
     /*background-color : #eef;*/
     /*border-right : 2px #ccf solid;*/
 }
 #jive-main #jive-sidebar {
-    padding : 0px 5px 5px 5px;
+	width: 169px;
+    padding: 0px 0px 5px 0px;
+	margin-top: -15px;
 }
 #jive-main #jive-sidebar ul {
-	margin: 0; /*removes indent IE and Opera*/
-	padding: 0 0 0 0; /*removes indent Mozilla and NN7*/
+	margin: 0px; /*removes indent IE and Opera*/
+	margin-left: 7px;
+	padding: 0px 0px 0px 0px; /*removes indent Mozilla and NN7*/
 	list-style-type: none; /*turns off display of bullet*/
 	font-family: verdana, Arial, Helvetica, sans-serif;
 	font-size: 8pt;
 }
 #jive-main #jive-sidebar li {
-	margin: 0 15px 2px 0px;
-	width : 140px;
+	margin: 0px 5px 1px 0px;
+	width : 151px;
 }
+
 #jive-main #jive-sidebar a {
-	/*/*/display: block;
-	padding: 2px 2px 2px 10px;
-	border: 1px #fff solid;
-	width: 140px;
-	-moz-border-radius : 3px;
-	background-color: #fff; /* */
+	display: block;
+	padding: 2px 2px 2px 8px;
+	border: 1px solid #EAF1F8;
+	width: 151px;
+	-moz-border-radius: 3px;
 }
+html>body #jive-main #jive-sidebar a {
+	width: 140px;
+	}
+
 #jive-main #jive-sidebar a:link, #jive-main #jive-sidebar a:visited {
-	color: #000;
-	/*/*/color: #000;
-	text-decoration: none; /* */
+	color: #003366;
+	text-decoration: none;
 }
 #jive-main #jive-sidebar a:hover {
-    /*
-	border: 1px solid #369;
-    background-color : #CBDDEE;
-	color: #333;
-	*/
-	border : 1px solid #963;
-	background-color : #ffc;
+	border: 1px solid #34679A;
+	background-color: #FFFFFF;
+	text-decoration: none;
 }
 #jive-main #jive-sidebar .currentlink a,
 #jive-main #jive-sidebar .currentlink a:link,
 #jive-main #jive-sidebar .currentlink a:visited,
 #jive-main #jive-sidebar .currentlink a:hover
 {
-	/*/*/border: 1px solid #369;
-	background-color: #CBDDEE;
-	color: #333; /* */
+	border: 1px solid #34679A;
+	background-color: #5C7D9D;
+	color: #FFFFFF;
+	font-weight: bold;
 }
 #jive-main #jive-sidebar .category {
-    padding-top : 1.5em;
-    padding-bottom : 0.5em;
+    padding-top : 20px;
+    padding-bottom : 3px;
     font-weight : bold;
 }
 #jive-main #jive-sidebar .subitems LI {
-    margin-left : 10px;
-    width : 130px;
+    margin-left: 10px;
+    width: 130px;
 }
 #jive-main #jive-sidebar .subitems LI A {
     margin-left : 10px;

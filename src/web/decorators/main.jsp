@@ -81,55 +81,24 @@
 <body id="jive-body">
 
 <div id="jive-header">
-<table cellpadding="0" cellspacing="0" width="100%" border="0">
-<tbody>
-    <tr>
-        <td>
-            <img id="jive-logo-image" src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="login.title" />">
-        </td>
-        <td align="right">
-            <table cellpadding="0" cellspacing="0" border="0">
-            <tr>
-                <td>
-                    <a href="#" onclick="helpwin();return false;"
-                     ><img src="<%= path %>/images/header-help.gif" width="24" height="24" border="0" alt="Click for help" hspace="10"></a>
-                    &nbsp;
-                </td>
-                <td class="info">
-                    <nobr><%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %></nobr>
-                </td>
-            </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td colspan="3">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tbody>
-                <tr>
-                    <td width="99%" nowrap>
-                        <div id="jive-tabs">
-
-                            <admin:tabs css="" currentcss="currentlink">
-                                <a href="[url]" title="[description]"
-                                 onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                                 >[name]</a>
-                            </admin:tabs>
-
-                        </div>
-                    </td>
-                    <td width="1%" id="jive-logout" nowrap>
-                        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(webManager.getUser().getUsername()) %>]</a>
-                        &nbsp;&nbsp;&nbsp;
-                    </td>
-                </tr>
-            </tbody>
-            </table>
-        </td>
-    </tr>
-</tbody>
-</table>
+	<div class="info">
+		<a href="#" onclick="helpwin();return false;"><img src="<%= path %>/images/header-help_new.gif" width="22" height="22" border="0" alt="Click for help"></a><br>
+		<%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>
+	</div>
+	<div id="jive-logo-image_new">
+		<strong>Administration Console</strong>
+	</div>
+	<div id="jive-logout" style="float: right;">
+		<a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(webManager.getUser().getUsername()) %>]</a>
+	</div>
+	<div id="jive-tabs">
+		<admin:tabs css="" currentcss="currentlink">
+		<a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
+		</admin:tabs>
+	</div>
+	<div id="sidebar-top"></div>
 </div>
+
 <%--
 <div id="jive-secondary">
     <ul>
@@ -145,7 +114,6 @@
     <tr valign="top">
         <td width="1%" id="jive-sidebar-box">
             <div id="jive-sidebar">
-
                 <admin:sidebar css="" currentcss="currentlink" headercss="category">
                     <a href="[url]" title="[description]"
                       onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
@@ -156,10 +124,8 @@
                          >[name]</a>
                      </admin:subsidebar>
                 </admin:sidebar>
-
                 <br>
                 <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
-
             </div>
         </td>
         <td width="99%" id="jive-content">

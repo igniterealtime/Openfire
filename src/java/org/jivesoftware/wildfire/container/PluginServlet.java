@@ -111,9 +111,9 @@ public class PluginServlet extends HttpServlet {
      * Registers all JSP page servlets for a plugin.
      *
      * @param manager the plugin manager.
-     * @param plugin  the plugin.
-     * @param webXML  the web.xml file containing JSP page names to servlet class file
-     *                mappings.
+     * @param plugin the plugin.
+     * @param webXML the web.xml file containing JSP page names to servlet class file
+     *      mappings.
      */
     public static void registerServlets(PluginManager manager, Plugin plugin, File webXML) {
         pluginManager = manager;

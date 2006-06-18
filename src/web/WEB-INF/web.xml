@@ -51,7 +51,7 @@
         <filter-name>AuthCheck</filter-name>
         <url-pattern>*.jsp</url-pattern>
     </filter-mapping>
-    
+
     <filter-mapping>
         <filter-name>PluginFilter</filter-name>
         <url-pattern>*.jsp</url-pattern>
@@ -69,6 +69,11 @@
 
     <filter-mapping>
         <filter-name>AuthCheck</filter-name>
+        <servlet-name>PluginServlet</servlet-name>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>PluginFilter</filter-name>
         <servlet-name>PluginServlet</servlet-name>
     </filter-mapping>
     

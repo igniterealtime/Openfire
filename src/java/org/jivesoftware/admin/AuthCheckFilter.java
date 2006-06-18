@@ -116,9 +116,8 @@ public class AuthCheckFilter implements Filter {
             Log.error(e);
         }
         try {
-            String url= loginPage + "?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
+            return loginPage + "?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
                     + (optionalParams != null ? "&"+optionalParams : "");
-            return url;
         }
         catch (Exception e) {
             Log.error(e);

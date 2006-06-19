@@ -35,6 +35,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -241,6 +242,21 @@ public class SessionManager extends BasicModule {
             return Collections.emptyList();
         }
         return new ArrayList<ConnectionMultiplexerSession>(sessions);
+    }
+
+    /**
+     * Returns the IP address of the connection manager whose domain matches the
+     * specified domain.
+     *
+     * @param domain the domain of the connection manager.
+     * @return the IP address of the connection manager.
+     */
+    public InetAddress getConnectionMultiplexerInetAddress(String domain) {
+        List<ConnectionMultiplexerSession> sessions = connnectionManagerSessions.get(domain);
+        if (sessions == null || sessions.isEmpty()) {
+            return null;
+        }
+        return sessions.get(0).getConnection().getInetAddress();
     }
 
     /**

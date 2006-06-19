@@ -14,10 +14,13 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.ConnectionManager,
+                 org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerManager"
+                 org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerManager,
+                 java.net.InetAddress"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Collection"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
 
@@ -197,25 +200,43 @@
 
 <br>
 
-<table>
+<p><b><fmt:message key="connection-manager.details.title" /></b></p>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
     <tr>
-        <td><%= serverName %></td>
-        <td>
-            <table>
-                <%
-                    ConnectionMultiplexerManager multiplexerManager = ConnectionMultiplexerManager.getInstance();
-                    for (String managerName : multiplexerManager.getMultiplexers()) {
-                %>
-                <tr>
-                    <td><%= managerName%>, <%= multiplexerManager.getNumConnectedClients(managerName)%> <fmt:message key="connection-manager.sessions" />, XXX <fmt:message key="connection-manager.packetsRate" /></td>
-                </tr>
-                <%
-                    }
-                %>
-            </table>
-        </td>
+        <th><fmt:message key="connection-manager.details.name" /></th>
+        <th><fmt:message key="connection-manager.details.address" /></th>
+        <th width="15%"><fmt:message key="connection-manager.details.sessions" /></th>
     </tr>
+</thead>
+<tbody>
+<%
+    ConnectionMultiplexerManager multiplexerManager = ConnectionMultiplexerManager.getInstance();
+    SessionManager sessionManager = SessionManager.getInstance();
+    Collection<String> connectionManagers = multiplexerManager.getMultiplexers();
+    if (connectionManagers.isEmpty()) {
+%>
+    <tr>
+        <td width="100%" colspan="3" align="center" nowrap><fmt:message key="connection-manager.details.no-managers-connected" /></td>
+    </tr>
+<%  }
+    else {
+        for (String managerName : connectionManagers) {
+            InetAddress ipAddress = sessionManager.getConnectionMultiplexerInetAddress(managerName);
+%>
+<tr>
+    <td><%= managerName%></td>
+    <td><%= ipAddress.getHostAddress() %> / <%= ipAddress.getHostName() %></td>
+    <td><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
+</tr>
+<%
+        }
+    }
+%>
+</tbody>
 </table>
+</div>
 
-    </body>
+</body>
 </html>

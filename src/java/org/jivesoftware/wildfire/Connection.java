@@ -15,7 +15,6 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * Represents a connection on the server.
@@ -46,7 +45,7 @@ public interface Connection {
      *
      * @return the InetAddress describing the underlying connection properties.
      */
-    public InetAddress getInetAddress() throws UnknownHostException;
+    public InetAddress getInetAddress();
 
     /**
      * Close this session including associated socket connection. The order of

@@ -18,7 +18,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * Represents a connection of a Client Session that was established to a Connection Manager.
@@ -95,7 +94,7 @@ public class ClientSessionConnection extends VirtualConnection {
         }
     }
 
-    public InetAddress getInetAddress() throws UnknownHostException {
+    public InetAddress getInetAddress() {
         //TODO Future version may return actual IP client address. We would need to pass this info
         // Return IP address of the connection manager that the client used to log in
         ConnectionMultiplexerSession multiplexerSession =

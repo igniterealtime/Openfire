@@ -543,37 +543,43 @@ A.cal:Hover {
 .success {
     color : #060;
     font-weight : bold;
-    background-color : #dfd;
-    padding : 3px;
-    border : 1px #6f6 dotted;
+    background-color : #cdf6cd;
+    padding : 5px;
+    border : 1px #029b00 solid;
     margin-top : 10px;
+	margin-bottom: 20px;
     padding-left : 28px;
     background-image : url(../images/success-16x16.gif);
     background-repeat : no-repeat;
     background-position : 5px 5px;
+	-moz-border-radius: 3px;
 }
 .error {
     color : #900;
     font-weight : bold;
-    background-color : #fdd;
-    padding : 3px;
-    border : 1px #f66 dotted;
+    background-color : #EDB9B1;
+    padding : 5px;
+    border: 1px solid #BB8888;
     margin-top : 10px;
+	margin-bottom: 20px;
     padding-left : 28px;
     background-image : url(../images/error-16x16.gif);
     background-repeat : no-repeat;
     background-position : 5px 5px;
+	-moz-border-radius: 3px;
 }
 
 .warning {
-    color : #900;
+    color : #915a15;
     font-weight : bold;
-    background-color : #FFF9B7;
-    padding : 3px;
-    border : 1px #f66 dotted;
+    background-color : #FFE9B2;
+    padding : 5px;
+    border: 1px solid #D9B04C;
     margin-top : 10px;
+	margin-bottom: 20px;
     padding-left : 28px;
-    background-image : url(../images/warning-16x16.gif);
+    background-image : url(../images/icon_warning-small.gif);
     background-repeat : no-repeat;
     background-position : 5px 5px;
+	-moz-border-radius: 3px;
 }

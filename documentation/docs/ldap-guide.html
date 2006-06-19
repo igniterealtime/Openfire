@@ -130,6 +130,10 @@
     <li>ldap.searchFilter -- the search filter that should be used when loading users. If this
         property is not set, the default search will be for users that have the attribute specified by
         ldap.usernameField.
+    <li>ldap.subTreeSearch -- the value "true" if the entire sub-tree under the base DN should
+        be included when executing searches (recursive search). If the value "false" is set, only
+        the first level under the base DN will be searched. The default value is "true", which is the better
+        option for the majority of directory layouts. Only set the value to "false" if necessary.</li>
 
     <br><br>
     <b>Group Settings</b><br><br>

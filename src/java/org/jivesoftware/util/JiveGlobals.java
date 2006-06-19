@@ -353,6 +353,35 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns a boolean value local property. Local properties are stored in the
+     * file defined in <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt>
+     * directory. Properties are always specified as "foo.bar.prop", which would map to
+     * the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     * If the specified property can't be found, the <tt>defaultValue</tt> will be returned.
+     * If the property is found, it will be parsed using {@link Boolean#valueOf(String)}.  
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property could not be loaded or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static boolean getXMLProperty(String name, boolean defaultValue) {
+        String value = getXMLProperty(name);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        }
+        return defaultValue;
+    }
+
+    /**
      * Sets a local property. If the property doesn't already exists, a new
      * one will be created. Local properties are stored in the file defined in
      * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.

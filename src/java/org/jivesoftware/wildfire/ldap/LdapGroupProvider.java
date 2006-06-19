@@ -353,7 +353,13 @@ public class LdapGroupProvider implements GroupProvider {
             // Search for the dn based on the groupname.
             SearchControls searchControls = new SearchControls();
             searchControls.setReturningAttributes(returningAttributes);
-            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
             answer = ctx.search("", searchFilter, searchControls);
 
             if (manager.isDebugEnabled()) {
@@ -388,9 +394,15 @@ public class LdapGroupProvider implements GroupProvider {
 
             ctx = manager.getContext();
 
-            SearchControls ctrls = new SearchControls();
-            ctrls.setReturningAttributes(new String[]{manager.getUsernameField()});
-            ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            SearchControls searchControls = new SearchControls();
+            searchControls.setReturningAttributes(new String[]{manager.getUsernameField()});
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
 
             String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
             XMPPServer server = XMPPServer.getInstance();
@@ -438,7 +450,7 @@ public class LdapGroupProvider implements GroupProvider {
                                     String combinedFilter =
                                             "(&(" + ldapcn + ")" + userSearchFilter + ")";
                                     NamingEnumeration usrAnswer =
-                                            ctx.search("", combinedFilter, ctrls);
+                                            ctx.search("", combinedFilter, searchControls);
                                     if (usrAnswer.hasMoreElements()) {
                                         username = (String) ((SearchResult) usrAnswer.next())
                                                 .getAttributes().get(

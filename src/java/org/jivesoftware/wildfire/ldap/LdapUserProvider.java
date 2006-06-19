@@ -123,11 +123,17 @@ public class LdapUserProvider implements UserProvider {
         try {
             ctx = manager.getContext();
             // Search for the dn based on the username.
-            SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, constraints);
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
             while (answer.hasMoreElements()) {
                 count++;
                 answer.nextElement();
@@ -168,11 +174,17 @@ public class LdapUserProvider implements UserProvider {
             ctx.setRequestControls(searchControl);
 
             // Search for the dn based on the username.
-            SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, constraints);
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
                 String username = (String)((SearchResult)answer.next()).getAttributes().get(
@@ -214,16 +226,22 @@ public class LdapUserProvider implements UserProvider {
             ctx.setRequestControls(searchControl);
 
             // Search for the dn based on the username.
-            SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             // Limit results to those we'll need to process unless client-side sorting
             // is turned on.
             if (!(Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting")))) {
-                constraints.setCountLimit(startIndex+numResults);
+                searchControls.setCountLimit(startIndex+numResults);
             }
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, constraints);
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
             // If client-side sorting is enabled, read in all results, sort, then get a sublist.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 while (answer.hasMoreElements()) {
@@ -334,9 +352,15 @@ public class LdapUserProvider implements UserProvider {
             ctx.setRequestControls(searchControl);
 
             // Search for the dn based on the username.
-            SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             StringBuilder filter = new StringBuilder();
             if (fields.size() > 1) {
                 filter.append("(|");
@@ -348,7 +372,7 @@ public class LdapUserProvider implements UserProvider {
             if (fields.size() > 1) {
                 filter.append(")");
             }
-            NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
+            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
                 String username = (String)((SearchResult)answer.next()).getAttributes().get(
@@ -398,9 +422,15 @@ public class LdapUserProvider implements UserProvider {
             ctx.setRequestControls(searchControl);
 
             // Search for the dn based on the username.
-            SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            constraints.setReturningAttributes(new String[] { manager.getUsernameField() });
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             StringBuilder filter = new StringBuilder();
             if (fields.size() > 1) {
                 filter.append("(|");
@@ -413,7 +443,7 @@ public class LdapUserProvider implements UserProvider {
                 filter.append(")");
             }
             // TODO: used paged results is supported by LDAP server.
-            NamingEnumeration answer = ctx.search("", filter.toString(), constraints);
+            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             for (int i=0; i < startIndex; i++) {
                 if (answer.hasMoreElements()) {
                     answer.next();

@@ -78,6 +78,7 @@ public class LdapManager {
     private boolean followReferrals = false;
     private boolean connectionPoolEnabled = true;
     private String searchFilter = null;
+    private boolean subTreeSearch;
 
     private String groupNameField = "cn";
     private String groupMemberField = "member";
@@ -144,6 +145,7 @@ public class LdapManager {
             filter.append("(").append(usernameField).append("={0})");
             this.searchFilter = filter.toString();
         }
+        this.subTreeSearch = JiveGlobals.getXMLProperty("ldap.subTreeSearch", true);
         if (JiveGlobals.getXMLProperty("ldap.groupNameField") != null) {
             this.groupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField");
         }
@@ -202,6 +204,7 @@ public class LdapManager {
             Log.debug("\t adminDN: " + adminDN);
             Log.debug("\t adminPassword: " + adminPassword);
             Log.debug("\t searchFilter: " + searchFilter);
+            Log.debug("\t subTreeSearch:" + subTreeSearch);
             Log.debug("\t ldapDebugEnabled: " + ldapDebugEnabled);
             Log.debug("\t sslEnabled: " + sslEnabled);
             Log.debug("\t initialContextFactory: " + initialContextFactory);
@@ -476,7 +479,14 @@ public class LdapManager {
             }
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            // If sub-tree searching is enabled (default is true) then search the entire tree.
+            if (subTreeSearch) {
+                constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            // Otherwise, only search a single level.
+            else {
+                constraints.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
             constraints.setReturningAttributes(new String[] { usernameField });
 
             NamingEnumeration answer = ctx.search("", searchFilter, new String[] {username},
@@ -858,6 +868,33 @@ public class LdapManager {
             this.searchFilter = searchFilter;
             JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
         }
+    }
+
+    /**
+     * Returns true if the entire tree under the base DN will be searched (recursive search)
+     * when doing LDAP queries (finding users, groups, etc). When false, only a single level
+     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * option for most LDAP setups. In only a few cases will the directory be setup in such
+     * a way that it's better to do single level searching.
+     *
+     * @return true if the entire tree under the base DN will be searched.
+     */
+    public boolean isSubTreeSearch() {
+        return subTreeSearch;
+    }
+
+    /**
+     * Sets whether the entire tree under the base DN will be searched (recursive search)
+     * when doing LDAP queries (finding users, groups, etc). When false, only a single level
+     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * option for most LDAP setups. In only a few cases will the directory be setup in such
+     * a way that it's better to do single level searching.
+     *
+     * @param subTreeSearch true if the entire tree under the base DN will be searched.
+     */
+    public void setSubTreeSearch(boolean subTreeSearch) {
+        this.subTreeSearch = subTreeSearch;
+        JiveGlobals.setXMLProperty("ldap.subTreeSearch", String.valueOf(subTreeSearch));
     }
 
     /**

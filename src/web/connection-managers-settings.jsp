@@ -135,7 +135,6 @@
 <form action="connection-managers-settings.jsp" method="post">
 
 <fieldset>
-    <legend><fmt:message key="connection-manager.settings.enabled.legend" /></legend>
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -166,9 +165,9 @@
                 &nbsp;
             </td>
             <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <table cellpadding="3" cellspacing="0" border="0">
                 <tr valign="top">
-                    <td width="1%" nowrap class="c1">
+                    <td width="1%" align="right" nowrap class="c1">
                         <fmt:message key="connection-manager.settings.port" />
                     </td>
                     <td width="99%">
@@ -177,7 +176,7 @@
                     </td>
                 </tr>
                 <tr valign="top">
-                    <td width="1%" nowrap class="c1">
+                    <td width="1%" nowrap align="right" class="c1">
                         <fmt:message key="connection-manager.settings.defaultSecret" />
                     </td>
                     <td width="99%">
@@ -200,16 +199,39 @@
 
 <br>
 
-<p><b><fmt:message key="connection-manager.details.title" /></b></p>
-<div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr>
-        <th><fmt:message key="connection-manager.details.name" /></th>
-        <th><fmt:message key="connection-manager.details.address" /></th>
-        <th width="15%"><fmt:message key="connection-manager.details.sessions" /></th>
+<style type="text/css">
+.connectionManagers {
+	margin-top: 8px;
+	border: 1px solid #DCDCDC;
+	border-bottom: none;
+	}
+.connectionManagers tr.head {
+	background-color: #F3F7FA;
+	border-bottom: 1px solid red;
+	}
+.connectionManagers tr.head td {
+	padding: 3px 6px 3px 6px;
+	border-bottom: 1px solid #DCDCDC;
+	}
+.connectionManagers tr td {
+	padding: 3px;
+	border-bottom: 1px solid #DCDCDC;
+	}
+.connectionManagers tr td img {
+	margin: 3px;
+	}
+</style>
+<b><fmt:message key="connection-manager.details.title" >
+        <fmt:param value="<%= XMPPServer.getInstance().getServerInfo().getName() %>" />
+    </fmt:message>
+</b>
+<br>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="connectionManagers">
+    <tr class="head">
+        <td><strong><fmt:message key="connection-manager.details.name" /></strong></td>
+        <td><strong><fmt:message key="connection-manager.details.address" /></strong></td>
+        <td align="center" width="15%"><strong><fmt:message key="connection-manager.details.sessions" /></strong></td>
     </tr>
-</thead>
 <tbody>
 <%
     ConnectionMultiplexerManager multiplexerManager = ConnectionMultiplexerManager.getInstance();
@@ -226,9 +248,9 @@
             InetAddress ipAddress = sessionManager.getConnectionMultiplexerInetAddress(managerName);
 %>
 <tr>
-    <td><%= managerName%></td>
+    <td><img src="images/connection-manager_16x16.gif" width="16" height="16" border="0" alt="" align="absmiddle"><%= managerName%></td>
     <td><%= ipAddress.getHostAddress() %> / <%= ipAddress.getHostName() %></td>
-    <td><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
+    <td align="center"><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
 </tr>
 <%
         }
@@ -236,7 +258,6 @@
 %>
 </tbody>
 </table>
-</div>
 
 </body>
 </html>

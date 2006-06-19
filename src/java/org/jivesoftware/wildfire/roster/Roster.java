@@ -549,8 +549,8 @@ public class Roster implements Cacheable {
                         session.process(packet);
                     }
                     catch (Exception e) {
-                        // Ignore any problems with sending - theoretically
-                        // only happens if session has been closed
+                        // Theoretically only happens if session has been closed.
+                        Log.debug(e);
                     }
                 }
             }

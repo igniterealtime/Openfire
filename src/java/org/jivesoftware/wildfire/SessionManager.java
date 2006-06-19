@@ -38,6 +38,7 @@ import org.xmpp.packet.Presence;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -56,6 +57,12 @@ public class SessionManager extends BasicModule {
     private JID serverAddress;
     private UserManager userManager;
     private int conflictLimit;
+
+    /**
+     * Counter of user sessions. A session is counted just after it was created and not
+     * after the user came available.
+     */
+    private final AtomicInteger usersSessionsCounter = new AtomicInteger(0);
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
@@ -511,6 +518,8 @@ public class SessionManager extends BasicModule {
 
         // Add to pre-authenticated sessions.
         preAuthenticatedSessions.put(session.getAddress().getResource(), session);
+        // Increment the counter of user sessions
+        usersSessionsCounter.incrementAndGet();
         return session;
     }
 
@@ -1199,12 +1208,7 @@ public class SessionManager extends BasicModule {
      * @return number of client sessions that are connected to the server.
      */
     public int getSessionCount() {
-        int sessionCount = 0;
-        for (String username : getSessionUsers()) {
-            sessionCount += getSessionCount(username);
-        }
-        sessionCount += anonymousSessions.size();
-        return sessionCount;
+        return usersSessionsCounter.get();
     }
 
     /**
@@ -1372,7 +1376,7 @@ public class SessionManager extends BasicModule {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
         preAuthenticatedSessions.remove(session.getAddress().getResource());
-        
+
         // Fire session event.
         SessionEventDispatcher.dispatchEvent(session,
                 SessionEventDispatcher.EventType.anonymous_session_created);
@@ -1420,6 +1424,8 @@ public class SessionManager extends BasicModule {
                 finally {
                     // Remove the session
                     removeSession(session);
+                    // Decrement the counter of user sessions
+                    usersSessionsCounter.decrementAndGet();
                 }
             }
             catch (Exception e) {
@@ -1713,13 +1719,13 @@ public class SessionManager extends BasicModule {
         // Set the new property value
         JiveGlobals.setProperty("xmpp.server.session.idle", Integer.toString(idleTime));
 
-		if (idleTime <= 0 && isMultipleServerConnectionsAllowed() )
-		{
-			Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
-				"maximum idle timeout for these connections, is unrecommended! Either " +
-				"set xmpp.server.session.allowmultiple to 'false' or change " +
-				"xmpp.server.session.idle to a (large) positive value.");
-		}
+        if (idleTime <= 0 && isMultipleServerConnectionsAllowed() )
+        {
+            Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
+                "maximum idle timeout for these connections, is unrecommended! Either " +
+                "set xmpp.server.session.allowmultiple to 'false' or change " +
+                "xmpp.server.session.idle to a (large) positive value.");
+        }
     }
 
     public int getServerSessionIdleTime() {

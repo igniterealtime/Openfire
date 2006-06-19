@@ -72,11 +72,12 @@ public class PrivacyListProvider {
         Map<String, Boolean> names = new HashMap<String, Boolean>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_LIST_NAMES);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 names.put(rs.getString(1), rs.getInt(2) == 1);
             }
@@ -85,10 +86,7 @@ public class PrivacyListProvider {
             Log.error("Error loading names of privacy lists for username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return names;
     }
@@ -106,6 +104,7 @@ public class PrivacyListProvider {
         PrivacyList privacyList = null;
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         SAXReader xmlReader = null;
         try {
             // Get a sax reader from the pool
@@ -114,7 +113,7 @@ public class PrivacyListProvider {
             pstmt = con.prepareStatement(LOAD_PRIVACY_LIST);
             pstmt.setString(1, username);
             pstmt.setString(2, listName);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 boolean isDefault = rs.getInt(1) == 1;
                 Element listElement =
@@ -130,10 +129,7 @@ public class PrivacyListProvider {
             if (xmlReader != null) {
                 xmlReaders.add(xmlReader);
             }
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return privacyList;
     }
@@ -149,6 +145,7 @@ public class PrivacyListProvider {
         PrivacyList privacyList = null;
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         SAXReader xmlReader = null;
         try {
             // Get a sax reader from the pool
@@ -156,7 +153,7 @@ public class PrivacyListProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_DEFAULT_PRIVACY_LIST);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String listName= rs.getString(1);
                 Element listElement =
@@ -172,10 +169,7 @@ public class PrivacyListProvider {
             if (xmlReader != null) {
                 xmlReaders.add(xmlReader);
             }
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return privacyList;
     }
@@ -203,10 +197,7 @@ public class PrivacyListProvider {
                     e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -234,10 +225,7 @@ public class PrivacyListProvider {
                     e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -261,10 +249,7 @@ public class PrivacyListProvider {
             Log.error("Error deleting privacy list: " + listName + " of username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -286,10 +271,7 @@ public class PrivacyListProvider {
             Log.error("Error deleting privacy lists of username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 }

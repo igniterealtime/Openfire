@@ -97,6 +97,7 @@ public class FileTransferProxy extends BasicModule
     private ProxyConnectionManager connectionManager;
     private FileTransferManager transferManager;
     private boolean isFileTransferEnabled;
+    private InetAddress bindInterface;
 
 
     public FileTransferProxy() {
@@ -185,13 +186,28 @@ public class FileTransferProxy extends BasicModule
         router = server.getPacketRouter();
 
         // Load the external IP and port information
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        bindInterface = null;
+        if (interfaceName != null) {
+            if (interfaceName.trim().length() > 0) {
+                try {
+                    bindInterface = InetAddress.getByName(interfaceName);
+                }
+                catch (UnknownHostException e) {
+                    Log.error("Error binding to network.interface", e);
+                }
+            }
+        }
+
         try {
             proxyIP = JiveGlobals.getProperty("xmpp.proxy.externalip",
-                    InetAddress.getLocalHost().getHostAddress());
+                    (bindInterface != null ? bindInterface.getHostAddress()
+                            : InetAddress.getLocalHost().getHostAddress()));
         }
         catch (UnknownHostException e) {
             Log.error("Couldn't discover local host", e);
         }
+
         transferManager = getFileTransferManager();
         connectionManager = new ProxyConnectionManager(transferManager);
         isFileTransferEnabled = isFileTransferEnabled();
@@ -213,7 +229,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     private void startProxy() {
-        connectionManager.processConnections(getProxyPort());
+        connectionManager.processConnections(bindInterface, getProxyPort());
         routingTable.addRoute(getAddress(), this);
         XMPPServer server = XMPPServer.getInstance();
 

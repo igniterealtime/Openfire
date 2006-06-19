@@ -21,6 +21,7 @@ import org.xmpp.packet.JID;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,10 +57,9 @@ public class ProxyConnectionManager {
 
     private ProxyTracker proxyTracker;
 
-    @SuppressWarnings({"unchecked"})
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
-        connectionMap = CacheManager.initializeCache(cacheName, "fileproxytransfer", -1, 1000 * 60 * 10);
+        connectionMap = new Cache<String, ProxyTransfer>(cacheName, -1, 1000 * 60 * 10);
 
         className = JiveGlobals.getProperty("provider.transfer.proxy",
                 "org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer");
@@ -72,16 +72,16 @@ public class ProxyConnectionManager {
     * Processes the clients connecting to the proxy matching the initiator and target together.
     * This is the main loop of the manager which will run until the process is canceled.
     */
-    synchronized void processConnections(final int port) {
+    synchronized void processConnections(final InetAddress bindInterface, final int port) {
         if (port == proxyPort) {
             return;
         }
-        reset(port);
+        reset();
 
         socketProcess = executor.submit(new Runnable() {
             public void run() {
                 try {
-                    serverSocket = new ServerSocket(port);
+                    serverSocket = new ServerSocket(port, -1, bindInterface);
                 }
                 catch (IOException e) {
                     Log.error("Error creating server socket", e);
@@ -319,18 +319,13 @@ public class ProxyConnectionManager {
     }
 
     public void disable() {
-        reset(-1);
+        reset();
     }
 
-    private void reset(int port) {
+    private void reset() {
         if (socketProcess != null) {
-            if (port != proxyPort) {
-                socketProcess.cancel(true);
-                socketProcess = null;
-            }
-            else {
-                return;
-            }
+            socketProcess.cancel(true);
+            socketProcess = null;
         }
         if (serverSocket != null) {
             try {

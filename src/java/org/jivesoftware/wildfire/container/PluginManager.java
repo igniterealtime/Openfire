@@ -79,10 +79,10 @@ public class PluginManager {
         // See if we're in development mode. If so, check for new plugins once every 5 seconds.
         // Otherwise, default to every 30 seconds.
         if (Boolean.getBoolean("developmentMode")) {
-            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(new PluginMonitor(), 1, 5, TimeUnit.SECONDS);
         }
         else {
-            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 20, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(new PluginMonitor(), 1, 20, TimeUnit.SECONDS);
         }
     }
 
@@ -766,8 +766,8 @@ public class PluginManager {
          * isn't a plugin, this method will do nothing.
          *
          * @param pluginName the name of the plugin.
-         * @param file       the JAR file
-         * @param dir        the directory to extract the plugin to.
+         * @param file the JAR file
+         * @param dir the directory to extract the plugin to.
          */
         private void unzipPlugin(String pluginName, File file, File dir) {
             try {

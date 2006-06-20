@@ -61,9 +61,9 @@
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
-    <property name="version.major" value="2"/>
-    <property name="version.minor" value="6"/>
-    <property name="version.revision" value="2"/>
+    <property name="version.major" value="3"/>
+    <property name="version.minor" value="0"/>
+    <property name="version.revision" value="0"/>
     <property name="version.extra" value=""/> <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="wildfire"/>
 

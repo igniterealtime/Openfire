@@ -69,6 +69,64 @@ Wildfire Changelog
 </div>
 
 <p>
+<b>3.0.0 Beta</b> -- June 20, 2006
+<p>
+
+<h2>New Features</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-666'>JM-666</a>] - Added support for connection managers.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-673'>JM-673</a>] - Added database support for plugins.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-677'>JM-677</a>] - Added i18n support for plugins.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-718'>JM-718</a>] - Added servlet filter framework for plugins.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-683'>JM-683</a>] - Added support for virtual connections.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-684'>JM-684</a>] - Added support for JEP-0164: vCard Filtering</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-704'>JM-704</a>] - Added support of other password types to JDBCAuthProvider.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-715'>JM-715</a>] - Added support for notifications of new server or plugins updates.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-719'>JM-719</a>] - Allowed flat searches of LDAP instead of sub-tree.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-680'>JM-680</a>] - Improved performance of server-to-server connections by using many threads to process incoming packets.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-720'>JM-720</a>] - Improved performance of SessionManager#getSessionCount().</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-687'>JM-687</a>] - Added support for non-blocking connections (status: experimental). <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-717'>JM-717</a>] - Updated the look and feel in the admin console.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-305'>JM-305</a>] - Server features list is now dynamic. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-652'>JM-652</a>] - Caching of favicons has been improved.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-675'>JM-675</a>] - File transfer service can now be enabled/disabled. <b>(2 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-676'>JM-676</a>] - MUC service can now be enabled/disabled. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-679'>JM-679</a>] - SASL success stanza now includes challenge data that needs to be processed by clients.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-678'>JM-678</a>] - SASLAuthentication was refactored to accommodate HTTP Binding and Connection Managers. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-688'>JM-688</a>] - Updated third-party libraries.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-713'>JM-713</a>] - Updated bundled MySQL driver.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-688'>JM-688</a>] - Upgraded to JDK 1.5.0_07.</li>
+</ul>
+
+<h2>Bug Fixes</h2>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-707'>JM-707</a>] - A &lt;system-shutdown/&gt; stream error condition is now sent when shutting down the server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-653'>JM-653</a>] - FileTransfer was not implementing Cacheable.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-654'>JM-654</a>] - Fixed conflict in Proxy Transfer cache name.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-655'>JM-655</a>] - File Transfer Proxy no longer returns null disco#items.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-710'>JM-710</a>] - File Transfer Proxy socket was not being cleaned up properly.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-721'>JM-721</a>] - File Transfer Proxy did not acknowledge configured interface.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-661'>JM-661</a>] - Field digest_frequency of pubsubSubscription table in MySQL was too small.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-665'>JM-665</a>] - Accessing published items of a pubsub node was expecting that requester was subscribed to the node.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-672'>JM-672</a>] - Updated the way pubsub node owners manage node affiliations and subscriptions.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-708'>JM-708</a>] - Answer format was incorrect when returning pubsub node affiliations or node subscriptions of a node owner.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-667'>JM-667</a>] - Roster items with subscription NONE and ask PENDING were being sent to clients.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-668'>JM-668</a>] - Fixed error when deleting a user with shared contacts that belong to public shared groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-669'>JM-669</a>] - Added fix for "javax.net.ssl.SSLException: Unsupported record version Unknown" error.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-681'>JM-681</a>] - No more than 5 concurrent threads were used for creating new server-to-server connections.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-670'>JM-670</a>] - Flash clients were waiting forever for a response if old SASL method failed or there was a conflict while binding a resource.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-671'>JM-671</a>] - Fixed NPE when external component did not include a TO attribute in stream header.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-674'>JM-674</a>] - Fixed NPE in IQDiscoItemsHandler when an ServerItemsProvider was disabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-698'>JM-698</a>] - Fixed bug in XMLProperties.getChildren.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-700'>JM-700</a>] - Increased the column size of "username" from 32 to 64.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-706'>JM-706</a>] - Non-SASL Authentication stream feature was not being offered when anonymous login was disabled.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-712'>JM-712</a>] - VCard manager was not returning vcard-temp as a stream feature.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-656'>JM-656</a>] - Streamlined disco registration process.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-709'>JM-709</a>] - An exception is now thrown when plugin servlet class was not found.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-663'>JM-663</a>] - UserProvider no longer depends on VCardManager.</li>
+</ul>
+
+<p>
 <b>2.6.2</b> -- April 20, 2006
 <p>
 

@@ -73,8 +73,10 @@ public class ProxyConnectionManager {
     * This is the main loop of the manager which will run until the process is canceled.
     */
     synchronized void processConnections(final InetAddress bindInterface, final int port) {
-        if (port == proxyPort) {
-            return;
+        if (socketProcess != null) {
+            if(proxyPort == port) {
+                return;
+            }
         }
         reset();
 

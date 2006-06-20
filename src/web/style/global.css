@@ -370,8 +370,8 @@ PRE, TT {
     padding : 0 5px 0 3px;
 }
 .jive-table TH {
-    background-color : #eee;
-    border-bottom : 2px #ccc solid;
+    background-color : #EAF1F8;
+    border-bottom : 1px #bbb solid;
     text-align : left;
     font-family : verdana, arial, helvetica, sans-serif;
     font-size : 8pt;
@@ -385,6 +385,7 @@ PRE, TT {
     text-decoration : none;
     color: #000;
 }
+
 .jive-table TR TD {
     border-bottom : 1px #ccc solid;
 }

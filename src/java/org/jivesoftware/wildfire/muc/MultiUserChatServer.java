@@ -291,4 +291,20 @@ public interface MultiUserChatServer extends Component {
      * @param numOccupants number of occupants that received the message.
      */
     void messageBroadcastedTo(int numOccupants);
+
+    /**
+     * Enables or disables the MUC service. When disabled the MUC service will disappear from
+     * the disco#items list. Moreover, service discovery features will be disabled. 
+     *
+     * @param enabled true if the service is enabled.
+     */
+    void enableService(boolean enabled);
+
+    /**
+     * Returns true if the MUC service is available. Use {@link #enableService(boolean)} to
+     * enable or disable the service.
+     *
+     * @return true if the MUC service is available.
+     */
+    boolean isServiceEnabled();
 }

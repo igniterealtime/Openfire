@@ -831,6 +831,31 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     }
 
+    public void enableService(boolean enabled) {
+        if (isServiceEnabled() == enabled) {
+            // Do nothing if the service status has not changed
+            return;
+        }
+        XMPPServer server = XMPPServer.getInstance();
+        if (!enabled) {
+            // Disable disco information
+            server.getIQDiscoItemsHandler().removeServerItemsProvider(this);
+            // Stop the service/module
+            stop();
+        }
+        JiveGlobals.setProperty("xmpp.muc.enabled", Boolean.toString(enabled));
+        if (enabled) {
+            // Start the service/module
+            start();
+            // Enable disco information
+            server.getIQDiscoItemsHandler().addServerItemsProvider(this);
+        }
+    }
+
+    public boolean isServiceEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.muc.enabled", true);
+    }
+
     public long getTotalChatTime() {
         return totalChatTime;
     }
@@ -886,8 +911,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public Iterator<DiscoServerItem> getItems() {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return null;
+        }
         ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-
         items.add(new DiscoServerItem() {
             public String getJID() {
                 return getServiceDomain();
@@ -1053,6 +1081,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return false;
+        }
         if (name == null && node == null) {
             // We always have info about the MUC service
             return true;
@@ -1069,6 +1101,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public Iterator<Element> getItems(String name, String node, JID senderJID) {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return null;
+        }
         List<Element> answer = new ArrayList<Element>();
         if (name == null && node == null) {
             Element item;

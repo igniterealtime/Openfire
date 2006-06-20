@@ -650,11 +650,6 @@
     <target name="release" depends="jar,javadoc" description="Creates a distribution">
         <mkdir dir="${release.dest.dir}"/>
 
-        <!-- Move non-checked-in plugins out of the way -->
-        <mkdir dir="${nonrelease.plugin.dir}"/>
-        <available file="${plugin.src.dir}/liveassistant" property="non-release-plugins" value="true"/>
-        <antcall target="mv-plugins-out" />
-
         <!-- Create a new prop for the final release dirs then create the dirs -->
 
         <!-- ie: wildfire -->
@@ -678,6 +673,8 @@
                 <include name="plugins/search.jar"/>
             </fileset>
         </copy>
+
+        <antcall target="enterprise" />
 
         <!-- Copy all prepare dirs to the binary dist -->
         <ant antfile="${basedir}/build/build.xml" target="-prepare">
@@ -778,24 +775,17 @@
         <!-- Package the release -->
         <antcall target="release-package"/>
 
-        <!-- Move non-checked-in plugins back -->
-        <antcall target="mv-plugins-back" />
-        <delete dir="${nonrelease.plugin.dir}"/>
-
     </target>
 
-    <!-- mv-plugins-out ========================================================================== -->
-    <target name="mv-plugins-out" if="non-release-plugins">
-        <move todir="${nonrelease.plugin.dir}/liveassistant">
-            <fileset dir="${plugin.src.dir}/liveassistant"/>
-        </move>
-    </target>
-
-    <!-- mv-plugins-back ========================================================================== -->
-    <target name="mv-plugins-back" if="non-release-plugins">
-        <move todir="${plugin.src.dir}/liveassistant">
-            <fileset dir="${nonrelease.plugin.dir}/liveassistant"/>
-        </move>
+    <target name="enterprise" if="do.enterprise">
+        <!-- Copy enterprise plugins. -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${target.dir}">
+                <include name="plugins/enterprise.jar"/>
+            </fileset>
+        </copy>
+        <!-- Remove GPL libs from distribution -->
+        <delete file="${release.out.dir}/lib/mysql.jar.pack"/>
     </target>
 
     <!-- quickrelease ========================================================================== -->

@@ -174,7 +174,7 @@
 
 
     BODY {
-        background-image : url(images/login_background.jpg);
+        background-image : url(images/login_background.png);
         background-repeat : repeat-x;
         background-color : #fff;
         padding : 0px;

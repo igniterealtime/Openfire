@@ -1130,7 +1130,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Register a statistic.
         Statistic statistic = new Statistic() {
             public String getName() {
-                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.name");
             }
 
             public Type getStatType() {
@@ -1138,11 +1138,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public String getDescription() {
-                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.desc");
             }
 
             public String getUnits() {
-                return LocaleUtils.getLocalizedString("muc.room.summary.total_room");
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.units");
             }
 
             public double sample() {

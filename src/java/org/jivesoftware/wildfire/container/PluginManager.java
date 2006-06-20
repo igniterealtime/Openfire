@@ -82,7 +82,7 @@ public class PluginManager {
             executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 5, TimeUnit.SECONDS);
         }
         else {
-            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 30, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(new PluginMonitor(), 0, 20, TimeUnit.SECONDS);
         }
     }
 

@@ -136,27 +136,31 @@ public class SchemaManager {
             pstmt = con.prepareStatement(CHECK_VERSION);
             pstmt.setString(1, schemaKey);
             ResultSet rs = pstmt.executeQuery();
-            rs.next();
-            currentVersion = rs.getInt(1);
+            if (rs.next()) {
+                currentVersion = rs.getInt(1);
+            }
             rs.close();
         }
         catch (SQLException sqle) {
             // Releases of Wildfire before 2.6.0 stored a major and minor version
             // number so the normal check for version can fail. Check for the
             // version using the old format in that case.
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
+            if (schemaKey.equals("wildfire")) {
+                try {
+                    if (pstmt != null) {
+                        pstmt.close();
+                    }
+                    pstmt = con.prepareStatement(CHECK_VERSION_OLD);
+                    ResultSet rs = pstmt.executeQuery();
+                    if (rs.next()) {
+                        currentVersion = rs.getInt(1);
+                    }
+                    rs.close();
                 }
-                pstmt = con.prepareStatement(CHECK_VERSION_OLD);
-                ResultSet rs = pstmt.executeQuery();
-                rs.next();
-                currentVersion = rs.getInt(1);
-                rs.close();
-            }
-            catch (SQLException sqle2) {
-                // The database schema must not be installed.
-                Log.warn("Error verifying server version", sqle2);
+                catch (SQLException sqle2) {
+                    // The database schema must not be installed.
+                    Log.warn("Error verifying server version", sqle2);
+                }
             }
         }
         finally {
@@ -175,7 +179,7 @@ public class SchemaManager {
         }
         // If the database schema isn't installed at all, we need to install it.
         else if (currentVersion == -1) {
-            Log.error(LocaleUtils.getLocalizedString("upgrade.database.missing_schema",
+            Log.info(LocaleUtils.getLocalizedString("upgrade.database.missing_schema",
                     Arrays.asList(schemaKey)));
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.missing_schema",
                     Arrays.asList(schemaKey)));

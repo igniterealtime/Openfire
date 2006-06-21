@@ -12,12 +12,13 @@
 package org.jivesoftware.wildfire.privacy;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -26,7 +27,7 @@ import java.util.Collections;
  *
  * @author Gaston Dombiak
  */
-class PrivacyItem implements Serializable, Comparable {
+class PrivacyItem implements Cacheable, Comparable {
 
     private int order;
     private boolean allow;
@@ -223,6 +224,29 @@ class PrivacyItem implements Serializable, Comparable {
             return filterIQ;
         }
         return false;
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();                      // overhead of object
+        size += CacheSizes.sizeOfInt();                         // order
+        size += CacheSizes.sizeOfBoolean();                     // allow
+        //size += CacheSizes.sizeOfString(jidValue.toString());   // type
+        if (jidValue != null ) {
+            size += CacheSizes.sizeOfString(jidValue.toString()); // jidValue
+        }
+        //size += CacheSizes.sizeOfString(name);                  // subscriptionValue
+        if (groupValue != null) {
+            size += CacheSizes.sizeOfString(groupValue);        // groupValue
+        }
+        size += CacheSizes.sizeOfBoolean();                     // filterEverything
+        size += CacheSizes.sizeOfBoolean();                     // filterIQ
+        size += CacheSizes.sizeOfBoolean();                     // filterMessage
+        size += CacheSizes.sizeOfBoolean();                     // filterPresence_in
+        size += CacheSizes.sizeOfBoolean();                     // filterPresence_out
+        return size;
     }
 
     /**

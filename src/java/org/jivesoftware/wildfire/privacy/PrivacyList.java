@@ -13,6 +13,8 @@ package org.jivesoftware.wildfire.privacy;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.roster.Roster;
@@ -20,7 +22,6 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-public class PrivacyList implements Serializable {
+public class PrivacyList implements Cacheable {
 
     private JID userJID;
     private String name;
@@ -156,6 +157,21 @@ public class PrivacyList implements Serializable {
         }
         // Sort items collections
         Collections.sort(items);
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();                      // overhead of object
+        size += CacheSizes.sizeOfString(userJID.toString());    // userJID
+        size += CacheSizes.sizeOfString(name);                  // name
+        size += CacheSizes.sizeOfBoolean();                     // isDefault
+        size += CacheSizes.sizeOfCollection(items);             // items of the list
+        if (roster != null) {
+            size += roster.getCachedSize();                     // add size of roster
+        }
+        return size;
     }
 
     public int hashCode() {

@@ -40,10 +40,11 @@ public class TLSStreamWriter {
 		wrapper = tlsWrapper;
         // DANIELE: Add code to use directly the socket channel
         if (socket.getChannel() != null) {
-            wbc = socket.getChannel();
+            wbc = ServerTrafficCounter.wrapWritableChannel(socket.getChannel());
         }
         else {
-            wbc = Channels.newChannel(socket.getOutputStream());
+            wbc = Channels.newChannel(
+                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()));
         }
         outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
 	}
@@ -63,8 +64,8 @@ public class TLSStreamWriter {
 	}
 
 	private void tlsWrite(ByteBuffer buf) throws IOException {
-		ByteBuffer tlsBuffer = null;
-		ByteBuffer tlsOutput = null;
+		ByteBuffer tlsBuffer;
+		ByteBuffer tlsOutput;
 		do {
             // TODO Consider optimizing by not creating new instances each time
             tlsBuffer = ByteBuffer.allocate(Math.min(buf.remaining(), wrapper.getAppBuffSize()));

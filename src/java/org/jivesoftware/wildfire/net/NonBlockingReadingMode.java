@@ -147,6 +147,7 @@ class NonBlockingReadingMode extends SocketReadingMode {
                 else {
                     is = socket.getInputStream();
                 }
+                is = ServerTrafficCounter.wrapInputStream(is);
 
                 ZInputStream in = new ZInputStream(is);
                 in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);

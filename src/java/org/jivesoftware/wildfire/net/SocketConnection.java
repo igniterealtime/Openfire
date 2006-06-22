@@ -125,10 +125,12 @@ public class SocketConnection implements Connection {
         this.socket = socket;
         // DANIELE: Modify socket to use channel
         if (socket.getChannel() != null) {
-            writer = Channels.newWriter(socket.getChannel(), CHARSET);
+            writer = Channels.newWriter(
+                    ServerTrafficCounter.wrapWritableChannel(socket.getChannel()), CHARSET);
         }
         else {
-            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
+            writer = new BufferedWriter(new OutputStreamWriter(
+                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()), CHARSET));
         }
         this.backupDeliverer = backupDeliverer;
         xmlSerializer = new XMLSocketWriter(writer, this);
@@ -186,7 +188,9 @@ public class SocketConnection implements Connection {
         compressed = true;
 
         if (tlsStreamHandler == null) {
-            ZOutputStream out = new ZOutputStream(socket.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
+            ZOutputStream out = new ZOutputStream(
+                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()),
+                    JZlib.Z_BEST_COMPRESSION);
             out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
             writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
             xmlSerializer = new XMLSocketWriter(writer, this);

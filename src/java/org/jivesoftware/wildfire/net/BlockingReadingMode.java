@@ -45,8 +45,8 @@ class BlockingReadingMode extends SocketReadingMode {
      */
     public void run() {
         try {
-            socketReader.reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                    CHARSET));
+            socketReader.reader.getXPPParser().setInput(new InputStreamReader(
+                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
 
             // Read in the opening tag and prepare for packet stream
             try {
@@ -188,7 +188,8 @@ class BlockingReadingMode extends SocketReadingMode {
             XmlPullParser xpp = socketReader.reader.getXPPParser();
             // Reset the parser since a new stream header has been sent from the client
             if (socketReader.connection.getTLSStreamHandler() == null) {
-                ZInputStream in = new ZInputStream(socket.getInputStream());
+                ZInputStream in = new ZInputStream(
+                        ServerTrafficCounter.wrapInputStream(socket.getInputStream()));
                 in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
                 xpp.setInput(new InputStreamReader(in, CHARSET));
             }

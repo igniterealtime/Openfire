@@ -49,10 +49,11 @@ public class TLSStreamReader {
 		wrapper = tlsWrapper;
         // DANIELE: Add code to use directly the socket channel
         if (socket.getChannel() != null) {
-            rbc = socket.getChannel();
+            rbc = ServerTrafficCounter.wrapReadableChannel(socket.getChannel());
         }
         else {
-            rbc = Channels.newChannel(socket.getInputStream());
+            rbc = Channels.newChannel(
+                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()));
         }
         inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
 		inAppBB = ByteBuffer.allocate(wrapper.getAppBuffSize());

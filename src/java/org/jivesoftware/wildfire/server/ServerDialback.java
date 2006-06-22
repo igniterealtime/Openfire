@@ -21,6 +21,7 @@ import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.net.DNSUtil;
 import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -168,8 +169,8 @@ class ServerDialback {
 
             XMPPPacketReader reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);
-            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                    CHARSET));
+            reader.getXPPParser().setInput(new InputStreamReader(
+                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
             // Get the answer from the Receiving Server
             XmlPullParser xpp = reader.getXPPParser();
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {

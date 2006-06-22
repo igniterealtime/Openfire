@@ -45,7 +45,7 @@ CREATE TABLE jivePrivate (
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
-  PRIMARY KEY (username, name, namespace)
+  PRIMARY KEY (username, name, namespace(100))
 );
 
 CREATE TABLE jiveOffline (

@@ -34,6 +34,7 @@ import org.jivesoftware.wildfire.handler.*;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.wildfire.net.MulticastDNSService;
+import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.pubsub.PubSubModule;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
@@ -374,13 +375,15 @@ public class XMPPServer {
                 // Initialize component manager (initialize before plugins get loaded)
                 InternalComponentManager.getInstance().start();
             }
+            // Initialize statistics
+            ServerTrafficCounter.initStatistics();
+
             // Load plugins (when in setup mode only the admin console will be loaded)
             File pluginDir = new File(wildfireHome, "plugins");
             pluginManager = new PluginManager(pluginDir);
             pluginManager.start();
 
             // Log that the server has been started
-
             List<String> params = new ArrayList<String>();
             params.add(version.getVersionString());
             params.add(JiveGlobals.formatDateTime(new Date()));

@@ -47,8 +47,10 @@ public class ServerTrafficCounter {
     private static final String incomingStatKey = "server_bytes_in";
     private static final String outgoingStatKey = "server_bytes_out";
 
-    static {
-        // Create and add statistics to statistic manager
+    /**
+     * Creates and adds statistics to statistic manager.
+     */
+    public static void initStatistics() {
         addReadBytesStat();
         addWrittenBytesStat();
     }

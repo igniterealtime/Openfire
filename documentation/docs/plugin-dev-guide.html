@@ -71,6 +71,7 @@ file might look like the following:
     &lt;date&gt;07/01/2006&lt;/date&gt;
     &lt;url&gt;http://www.jivesoftware.org/plugins&lt;/url&gt;
     &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
+    &lt;licenseType&gt;gpl&lt;/licenseType&gt;
 
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
     &lt;adminconsole&gt;
@@ -117,6 +118,18 @@ file might look like the following:
             When a plugin has a parent plugin, the parent plugin's class loader will be used instead
             of creating a new class loader. This lets plugins work together more closely. A
             child plugin will not function without its parent present.</li>
+    <li>licenseType -- indicates the license agreement that the plugin is governed by. Valid
+            values are:<ul>
+                <li>"commercial": the plugin is released under a commercial license agreement.</li>
+                <li>"gpl": the plugin is released under the GNU Public License (GPL).</li>
+                <li>"apache": the plugin is released under the Apache license.</li>
+                <li>"internal": the plugin is for internal use at an organization only and will
+                    not be re-distributed.</li>
+                <li>"other": the plugin is released under a license agrement that doesn't fall into
+                    one of the other categories. The license agreement should be details in the
+                    plugin's Readme.</li>
+            </ul>
+            If the license type is not set, it is assumed to be internal.</li>
 </ul></p>
 
 Several additional files can be present in the plugin to provide additional information to
@@ -282,14 +295,27 @@ The following HTML snippet demonstrates a valid page:
 </pre>
 </fieldset>
 
-<h4>Using i18n in your Admin Console Pages</h4>
+<h4>Using i18n in your Plugins</h4>
 <p>
-To use i18n in your own plugin, you must do the following:
+It's possible to translate your plugin into multiple languages (i18n). To do so, use the following
+procedure:
 <ul>
-    <li>Add i18n directory to root directory of your plugin.</li>
-    <li>Add each resource file using the %name_of_plugin%_i18n "_" language ".properties" naming convention.</li>
-    <li>To use directly within your jsp, use the LocaleUtils class, and pass in the name of the plugin.<br/><b>Example:&nbsp;</b>&lt;%= LocaleUtils.getLocalizedString("my.title", "myplugin") %&gt;
+    <li>Create a "i18n" directory in the root directory of your plugin.</li>
+    <li>Add each resource file using the %[plugin_name]%_i18n "_" language ".properties"
+        naming convention, where [plugin_name] is the name of the plugin directory. See the
+        <a href="translator-guide.html">translator guide</a> for more information about resource
+        bundles.</li>
+    <li>Convert Strings in your JSP files to refer to the internationalized keys. For example:
+
+        <pre>
+        &lt;%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %&gt;
+        &lt;%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %&gt;
+        ...
+        &lt;fmt:message key="some.key.name" /&gt;
+        </pre>
     </li>
+    You can also internationalize Strings in your Java files using the LocaleUtils class:<br>
+    <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
 </ul>
 </p>
 <h2>Using the Wildfire Build Script</h2>

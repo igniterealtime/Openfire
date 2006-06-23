@@ -43,8 +43,6 @@ public class ServerTrafficCounter {
      */
     private static final AtomicLong incomingCounter = new AtomicLong(0);
 
-    private static final int KBytes = 1024;
-
     private static final String trafficStatGroup = "server_bytes";
     private static final String incomingStatKey = "server_bytes_in";
     private static final String outgoingStatKey = "server_bytes_out";
@@ -143,7 +141,7 @@ public class ServerTrafficCounter {
             }
 
             public double sample() {
-                return outgoingCounter.getAndSet(0);
+                return outgoingCounter.getAndSet(0)/1024;
             }
         };
         StatisticsManager.getInstance()
@@ -166,7 +164,7 @@ public class ServerTrafficCounter {
         public int read() throws IOException {
             int readByte = originalStream.read();
             if (readByte > -1) {
-                incomingCounter.getAndAdd(1 / KBytes);
+                incomingCounter.incrementAndGet();
             }
             return readByte;
         }
@@ -174,7 +172,7 @@ public class ServerTrafficCounter {
         public int read(byte b[]) throws IOException {
             int bytes = originalStream.read(b);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes / KBytes);
+                incomingCounter.getAndAdd(bytes);
             }
             return bytes;
         }
@@ -182,7 +180,7 @@ public class ServerTrafficCounter {
         public int read(byte b[], int off, int len) throws IOException {
             int bytes = originalStream.read(b, off, len);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes / KBytes);
+                incomingCounter.getAndAdd(bytes);
             }
             return bytes;
         }
@@ -229,21 +227,21 @@ public class ServerTrafficCounter {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
-            outgoingCounter.getAndAdd(1 / KBytes);
+            outgoingCounter.incrementAndGet();
         }
 
         public void write(byte b[]) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
-            outgoingCounter.getAndAdd(b.length / KBytes);
+            outgoingCounter.getAndAdd(b.length);
         }
 
         public void write(byte b[], int off, int len) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b, off, len);
             // update outgoingCounter
-            outgoingCounter.getAndAdd(b.length / KBytes);
+            outgoingCounter.getAndAdd(b.length);
         }
 
         public void close() throws IOException {
@@ -268,7 +266,7 @@ public class ServerTrafficCounter {
         public int read(ByteBuffer dst) throws IOException {
             int bytes = originalChannel.read(dst);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes / KBytes);
+                incomingCounter.getAndAdd(bytes);
             }
             return bytes;
         }
@@ -302,7 +300,7 @@ public class ServerTrafficCounter {
 
         public int write(ByteBuffer src) throws IOException {
             int bytes = originalChannel.write(src);
-            outgoingCounter.getAndAdd(bytes / KBytes);
+            outgoingCounter.getAndAdd(bytes);
             return bytes;
         }
     }

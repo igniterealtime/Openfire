@@ -928,4 +928,31 @@ public class StringUtils {
         }
         return collection;
     }
+
+
+    /**
+     * Abbreviates a string to a specified length and then adds an ellipsis
+     * if the input is greater than the maxWidth. Example input:
+     *
+     *      user1@jivesoftware.com/home
+     *
+     * and a maximum length of 20 characters, the abbreviate method will return:
+     *
+     *      user1@jivesoftware.c...
+     *
+     * @param str  the String to abbreviate, can be null
+     * @param maxWidth, the maximum size of the string, minus the ellipsis
+     * @return abbreviated String, <code>null</code if input is null
+     */
+    public static String abbreviate(String str, int maxWidth) {
+        if (null == str) {
+            return null;
+        }
+
+        if (str.length() <= maxWidth) {
+            return str;
+        }
+        
+        return str.substring(0, maxWidth) + "...";
+    }
 }

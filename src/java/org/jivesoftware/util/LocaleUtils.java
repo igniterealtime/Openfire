@@ -42,7 +42,7 @@ public class LocaleUtils {
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
-    // and defaults to wildfire_i18n if nothing set.
+    // TODO and defaults to wildfire_i18n if nothing set.
     private static final String resourceBaseName = "wildfire_i18n";
 
     private LocaleUtils() {
@@ -336,7 +336,7 @@ public class LocaleUtils {
      * it can load bundles that are stored in jive.jar).
      *
      * @param baseName the name of the resource bundle to load.
-     * @param locale   the desired Locale.
+     * @param locale the desired Locale.
      * @return the specified resource bundle, if it exists.
      */
     public static ResourceBundle getResourceBundle(String baseName,
@@ -349,7 +349,7 @@ public class LocaleUtils {
      * The locale used will be the locale specified by JiveGlobals.getLocale().
      *
      * @param key the key to use for retrieving the string from the
-     *            appropriate resource bundle.
+     *      appropriate resource bundle.
      * @return the localized string.
      */
     public static String getLocalizedString(String key) {
@@ -364,10 +364,10 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle using
      * the passed in Locale.
      *
-     * @param key    the key to use for retrieving the string from the
-     *               appropriate resource bundle.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
      * @param locale the locale to use for retrieving the appropriate
-     *               locale-specific string.
+     *      locale-specific string.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, Locale locale) {
@@ -382,10 +382,10 @@ public class LocaleUtils {
      * in arguments. Substitution is handled using the
      * {@link java.text.MessageFormat} class.
      *
-     * @param key       the key to use for retrieving the string from the
-     *                  appropriate resource bundle.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
      * @param arguments a list of objects to use which are formatted, then
-     *                  inserted into the pattern at the appropriate places.
+     *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, List arguments) {
@@ -399,8 +399,8 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle from the passed
      * in plugin.
      *
-     * @param key        the key to use for retrieving the string from the
-     *                   appropriate resource bundle.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
      * @param pluginName the name of the plugin to load the require resource bundle from.
      * @return the localized string.
      */
@@ -412,11 +412,11 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle from the passed
      * in plugin.
      *
-     * @param key        the key to use for retrieving the string from the
-     *                   appropriate resource bundle.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
      * @param pluginName the name of the plugin to load the require resource bundle from.
-     * @param arguments  a list of objects to use which are formatted, then
-     *                   inserted into the pattern at the appropriate places.
+     * @param arguments a list of objects to use which are formatted, then
+     *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
@@ -466,15 +466,17 @@ public class LocaleUtils {
      * the passed in Locale substituting the passed in arguments. Substitution
      * is handled using the {@link MessageFormat} class.
      *
-     * @param key       the key to use for retrieving the string from the
-     *                  appropriate resource bundle.
-     * @param locale    the locale to use for retrieving the appropriate
-     *                  locale-specific string.
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
+     * @param locale the locale to use for retrieving the appropriate
+     *      locale-specific string.
      * @param arguments a list of objects to use which are formatted, then
-     *                  inserted into the pattern at the appropriate places.
+     *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
-    public static String getLocalizedString(String key, Locale locale, List arguments, ResourceBundle bundle) {
+    public static String getLocalizedString(String key, Locale locale, List arguments,
+            ResourceBundle bundle)
+    {
         if (key == null) {
             throw new NullPointerException("Key cannot be null");
         }
@@ -553,28 +555,46 @@ public class LocaleUtils {
     }
 
     /**
+     * Returns an internationalized String representation of the number using
+     * the default locale.
      *
+     * @param number the number to format.
+     * @return an internationalized String representation of the number.
      */
     public static String getLocalizedNumber(long number) {
         return NumberFormat.getInstance().format(number);
     }
 
     /**
+     * Returns an internationalized String representation of the number using
+     * the specified locale.
      *
+     * @param number the number to format.
+     * @param locale the locale to use for formatting.
+     * @return an internationalized String representation of the number.
      */
     public static String getLocalizedNumber(long number, Locale locale) {
         return NumberFormat.getInstance(locale).format(number);
     }
 
     /**
+     * Returns an internationalized String representation of the number using
+     * the default locale.
      *
+     * @param number the number to format.
+     * @return an internationalized String representation of the number.
      */
     public static String getLocalizedNumber(double number) {
         return NumberFormat.getInstance().format(number);
     }
 
     /**
+     * Returns an internationalized String representation of the number using
+     * the specified locale.
      *
+     * @param number the number to format.
+     * @param locale the locale to use for formatting.
+     * @return an internationalized String representation of the number.
      */
     public static String getLocalizedNumber(double number, Locale locale) {
         return NumberFormat.getInstance(locale).format(number);

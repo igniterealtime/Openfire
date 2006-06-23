@@ -115,7 +115,8 @@ public class ServerTrafficCounter {
             }
 
             public double sample() {
-                return incomingCounter.getAndSet(0);
+                // Divide result by 1024 so that we return the result in Kb.
+                return incomingCounter.getAndSet(0)/1024;
             }
         };
         StatisticsManager.getInstance()

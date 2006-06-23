@@ -84,7 +84,8 @@ public class DNSUtil {
         String host = domain;
         int port = defaultPort;
         try {
-            Attributes dnsLookup = context.getAttributes("_xmpp-server._tcp." + domain);
+            Attributes dnsLookup =
+                    context.getAttributes("_xmpp-server._tcp." + domain, new String[]{"SRV"});
             String srvRecord = (String)dnsLookup.get("SRV").get();
             String [] srvRecordEntries = srvRecord.split(" ");
             port = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]);
@@ -93,7 +94,8 @@ public class DNSUtil {
         catch (Exception e) {
             // Attempt lookup with older "jabber" name.
             try {
-                Attributes dnsLookup = context.getAttributes("_jabber._tcp." + domain);
+                Attributes dnsLookup =
+                        context.getAttributes("_jabber._tcp." + domain, new String[]{"SRV"});
                 String srvRecord = (String)dnsLookup.get("SRV").get();
                 String [] srvRecordEntries = srvRecord.split(" ");
                 port = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]);

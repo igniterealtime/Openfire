@@ -593,6 +593,31 @@ public class PluginManager {
     }
 
     /**
+     * Returns the license agreement type that the plugin is governed by. The value
+     * is retrieved from the plugin.xml file of the plugin. If the value could not be
+     * found, {@link License#other} is returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's license agreement.
+     */
+    public License getLicense(Plugin plugin) {
+        String licenseString = getElementValue(plugin, "/plugin/licenseType");
+        if (licenseString != null) {
+            try {
+                // Attempt to load the get the license type. We lower-case and
+                // trim the license type to give plugin author's a break. If the
+                // license type is not recognized, we'll log the error and default
+                // to "other".
+                return License.valueOf(licenseString.toLowerCase().trim());
+            }
+            catch (IllegalArgumentException iae) {
+                Log.error(iae);
+            }
+        }
+        return License.other;
+    }
+
+    /**
      * Returns the classloader of a plugin.
      *
      * @param plugin the plugin.
@@ -630,6 +655,39 @@ public class PluginManager {
             Log.error(e);
         }
         return null;
+    }
+
+    /**
+     * An enumberation for plugin license agreement types.
+     */
+    public enum License {
+
+        /**
+         * The plugin is distributed using a commercial license.
+         */
+        commercial,
+
+        /**
+         * The plugin is distributed using the GNU Public License (GPL).
+         */
+        gpl,
+
+        /**
+         * The plugin is distributed using the Apache license.
+         */
+        apache,
+
+        /**
+         * The plugin is for internal use at an organization only and is not re-distributed.
+         */
+        internal,
+
+        /**
+         * The plugin is distributed under another license agreement not covered by
+         * one of the other choices. The license agreement should be detailed in the
+         * plugin Readme.
+         */
+        other
     }
 
     /**

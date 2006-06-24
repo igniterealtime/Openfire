@@ -389,15 +389,25 @@ public class PluginManager {
                         pluginName = parentPluginNode.getTextTrim();
                     }
 
+                    Element appName = (Element)adminElement.selectSingleNode(
+                        "/plugin/adminconsole/global/appname");
+                    if (appName != null) {
+                        // Set the plugin name so that the proper i18n String can be loaded.
+                        appName.addAttribute("plugin", pluginName);
+                    }
                     // If global images are specified, override their URL.
                     Element imageEl = (Element)adminElement.selectSingleNode(
                         "/plugin/adminconsole/global/logo-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
+                        // Set the plugin name so that the proper i18n String can be loaded.
+                        imageEl.addAttribute("plugin", pluginName);
                     }
                     imageEl = (Element)adminElement.selectSingleNode("/plugin/adminconsole/global/login-image");
                     if (imageEl != null) {
                         imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
+                        // Set the plugin name so that the proper i18n String can be loaded.
+                        imageEl.addAttribute("plugin", pluginName);
                     }
                     // Modify all the URL's in the XML so that they are passed through
                     // the plugin servlet correctly.
@@ -406,6 +416,22 @@ public class PluginManager {
                         Attribute attr = (Attribute)url;
                         attr.setValue("plugins/" + pluginName + "/" + attr.getValue());
                     }
+                    // In order to internationalize the names and descriptions in the model,
+                    // we add a "plugin" attribute to each tab, sidebar, and item so that
+                    // the the renderer knows where to load the i18n Strings from.
+                    String[] elementNames = new String [] { "tab", "sidebar", "item" };
+                    for (int i=0; i<elementNames.length; i++) {
+                        List values = adminElement.selectNodes("//" + elementNames[i]);
+                        for (Object value : values) {
+                            Element element = (Element)value;
+                            // Make sure there's a name or description. Otherwise, no need to
+                            // override i18n settings.
+                            if (element.attribute("name") != null || element.attribute("value") != null) {
+                                element.addAttribute("plugin", pluginName);
+                            }
+                        }
+                    }
+
                     AdminConsole.addModel(pluginName, adminElement);
                 }
             }
@@ -518,11 +544,12 @@ public class PluginManager {
      */
     public String getName(Plugin plugin) {
         String name = getElementValue(plugin, "/plugin/name");
+        String pluginName = pluginDirs.get(plugin).getName();
         if (name != null) {
-            return name;
+            return AdminConsole.getAdminText(name, pluginName);
         }
         else {
-            return pluginDirs.get(plugin).getName();
+            return pluginName;
         }
     }
 
@@ -534,7 +561,8 @@ public class PluginManager {
      * @return the plugin's description.
      */
     public String getDescription(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/description");
+        String pluginName = pluginDirs.get(plugin).getName();
+        return AdminConsole.getAdminText(getElementValue(plugin, "/plugin/description"), pluginName);
     }
 
     /**
@@ -740,9 +768,9 @@ public class PluginManager {
                         System.gc();
                         int count = 0;
                         while (!deleteDir(dir) && count < 5) {
-                            Log.error("Error unloading plugin " + pluginName + ". " +
+                            Log.warn("Error unloading plugin " + pluginName + ". " +
                                 "Will attempt again momentarily.");
-                            Thread.sleep(5000);
+                            Thread.sleep(10000);
                             count++;
                         }
                         // Now unzip the plugin.

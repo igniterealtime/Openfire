@@ -397,7 +397,8 @@ public class LocaleUtils {
 
     /**
      * Returns an internationalized string loaded from a resource bundle from the passed
-     * in plugin.
+     * in plugin. If the plugin name is <tt>null</tt>, the key will be looked up using
+     * the standard resource bundle.
      *
      * @param key the key to use for retrieving the string from the
      *      appropriate resource bundle.
@@ -410,7 +411,8 @@ public class LocaleUtils {
 
     /**
      * Returns an internationalized string loaded from a resource bundle from the passed
-     * in plugin.
+     * in plugin. If the plugin name is <tt>null</tt>, the key will be looked up using
+     * the standard resource bundle.
      *
      * @param key the key to use for retrieving the string from the
      *      appropriate resource bundle.
@@ -420,8 +422,11 @@ public class LocaleUtils {
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
-        Locale locale = JiveGlobals.getLocale();
+        if (pluginName == null) {
+            return getLocalizedString(key, arguments);
+        }
 
+        Locale locale = JiveGlobals.getLocale();
         String i18nFile = pluginName + "_i18n";
 
         // Retrieve classloader from pluginName.
@@ -429,7 +434,7 @@ public class LocaleUtils {
         PluginManager pluginManager = xmppServer.getPluginManager();
         Plugin plugin = pluginManager.getPlugin(pluginName);
         if (plugin == null) {
-            throw new NullPointerException("Plugin could not be located.");
+            throw new NullPointerException("Plugin could not be located: " + pluginName);
         }
 
         ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin).getClassLoader();

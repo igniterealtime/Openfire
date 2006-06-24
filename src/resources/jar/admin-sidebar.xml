@@ -2,7 +2,7 @@
 <adminconsole>
 
     <global>
-        <appname>Wildfire</appname>
+        <appname>${title}</appname>
         <logo-image>images/header-title.gif</logo-image>
         <login-image>images/logo-wildfire.gif</login-image>
     </global>

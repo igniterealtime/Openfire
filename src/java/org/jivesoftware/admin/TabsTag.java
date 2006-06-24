@@ -12,7 +12,6 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.LocaleUtils;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -139,11 +138,14 @@ public class TabsTag extends BodyTagSupport {
                 String value = body;
                 if (value != null) {
                     // The URL for the tab should be the URL of the first item in the tab.
+                    String pluginName = tab.attributeValue("plugin");
                     value = StringUtils.replace(value, "[id]", clean(tab.attributeValue("id")));
                     value = StringUtils.replace(value, "[url]",
                             request.getContextPath() + "/" + clean(tab.attributeValue("url")));
-                    value = StringUtils.replace(value, "[name]", clean(i18n(tab.attributeValue("name"))));
-                    value = StringUtils.replace(value, "[description]", clean(i18n(tab.attributeValue("description"))));
+                    value = StringUtils.replace(value, "[name]",
+                            clean(AdminConsole.getAdminText(tab.attributeValue("name"), pluginName)));
+                    value = StringUtils.replace(value, "[description]",
+                            clean(AdminConsole.getAdminText(tab.attributeValue("description"), pluginName)));
                 }
                 String css = getCss();
                 if (tab.equals(currentTab)) {
@@ -174,16 +176,5 @@ public class TabsTag extends BodyTagSupport {
      */
     private String clean(String in) {
         return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
-    }
-
-    private String i18n(String in) {
-        if (in == null) {
-            return null;
-        }
-        // Look for the key symbol:
-        if (in.indexOf("${") == 0 && in.indexOf("}") == in.length()-1) {
-            return LocaleUtils.getLocalizedString(in.substring(2, in.length()-1));
-        }
-        return in;
     }
 }

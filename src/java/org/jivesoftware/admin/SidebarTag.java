@@ -12,7 +12,6 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.LocaleUtils;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -153,8 +152,8 @@ public class SidebarTag extends BodyTagSupport {
         String subPageID = (String)request.getAttribute("subPageID");
         String pageID = (String)request.getAttribute("pageID");
 
-        // If the pageID is null, use the subPageID to set it. If both the pageID and subPageIDs are null,
-        // return because these are key to execution of the tag.
+        // If the pageID is null, use the subPageID to set it. If both the pageID and
+        // subPageIDs are null, return because these are key to execution of the tag.
         if (subPageID != null || pageID != null) {
 
             if (pageID == null) {
@@ -190,12 +189,14 @@ public class SidebarTag extends BodyTagSupport {
                         for (Iterator iter=items.iterator(); iter.hasNext(); ) {
                             Element sidebar = (Element)iter.next();
                             String header = sidebar.attributeValue("name");
+                            String pluginName = sidebar.attributeValue("plugin");
                             // Print the header:
                             String hcss = getHeadercss();
                             if (hcss == null) {
                                 hcss = "";
                             }
-                            buf.append("<li class=\"").append(hcss).append("\">").append(clean(i18n(header))).append("</li>");
+                            buf.append("<li class=\"").append(hcss).append("\">").append(
+                                    clean(AdminConsole.getAdminText(header, pluginName))).append("</li>");
                             // Now print all items:
 
                             for (Iterator subitems=sidebar.elementIterator(); subitems.hasNext(); ) {
@@ -204,11 +205,14 @@ public class SidebarTag extends BodyTagSupport {
                                 String subitemName = item.attributeValue("name");
                                 String subitemURL = item.attributeValue("url");
                                 String subitemDescr = item.attributeValue("description");
+                                pluginName = item.attributeValue("plugin");
                                 String value = getBodyContent().getString();
                                 if (value != null) {
                                     value = StringUtils.replace(value, "[id]", clean(subitemID));
-                                    value = StringUtils.replace(value, "[name]", clean(i18n(subitemName)));
-                                    value = StringUtils.replace(value, "[description]", clean(i18n(subitemDescr)));
+                                    value = StringUtils.replace(value, "[name]",
+                                            clean(AdminConsole.getAdminText(subitemName, pluginName)));
+                                    value = StringUtils.replace(value, "[description]",
+                                            clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
                                     value = StringUtils.replace(value, "[url]",
                                             request.getContextPath() + "/" + clean(subitemURL));
                                 }
@@ -231,7 +235,9 @@ public class SidebarTag extends BodyTagSupport {
                                         buf.append("<ul class=\"subitems\">\n");
                                         // Print the header LI
                                         String subheader = subcurrent.getParent().attributeValue("name");
-                                        buf.append("<li class=\"").append(hcss).append("\">").append(clean(i18n(subheader))).append("</li>");
+                                        pluginName = subcurrent.getParent().attributeValue("plugin");
+                                        buf.append("<li class=\"").append(hcss).append("\">").append(
+                                                clean(AdminConsole.getAdminText(subheader, pluginName))).append("</li>");
                                     }
                                     String extraParams = (String)request.getAttribute("extraParams");
                                     while (siblings.hasNext()) {
@@ -240,6 +246,7 @@ public class SidebarTag extends BodyTagSupport {
                                         String sibName = sibling.attributeValue("name");
                                         String sibDescr = sibling.attributeValue("description");
                                         String sibURL = sibling.attributeValue("url");
+                                        pluginName = sibling.attributeValue("plugin");
                                         if (extraParams != null) {
                                             sibURL += ((sibURL.indexOf('?') > -1 ? "&" : "?") + extraParams);
                                         }
@@ -251,8 +258,10 @@ public class SidebarTag extends BodyTagSupport {
                                         String svalue = getSubsidebarTag().getBody();
                                         if (svalue != null) {
                                             svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
-                                            svalue = StringUtils.replace(svalue, "[name]", clean(i18n(sibName)));
-                                            svalue = StringUtils.replace(svalue, "[description]", clean(i18n(sibDescr)));
+                                            svalue = StringUtils.replace(svalue, "[name]",
+                                                    clean(AdminConsole.getAdminText(sibName, pluginName)));
+                                            svalue = StringUtils.replace(svalue, "[description]",
+                                                    clean(AdminConsole.getAdminText(sibDescr, pluginName)));
                                             svalue = StringUtils.replace(svalue, "[url]",
                                                     request.getContextPath() + "/" + clean(sibURL));
                                         }
@@ -288,16 +297,5 @@ public class SidebarTag extends BodyTagSupport {
      */
     private String clean(String in) {
         return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
-    }
-
-    private static String i18n(String in) {
-        if (in == null) {
-            return null;
-        }
-        // Look for the key symbol:
-        if (in.indexOf("${") == 0 && in.indexOf("}") == in.length()-1) {
-            return LocaleUtils.getLocalizedString(in.substring(2, in.length()-1));
-        }
-        return in;
     }
 }

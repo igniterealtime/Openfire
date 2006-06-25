@@ -184,7 +184,7 @@ public class UpdateManager extends BasicModule {
 
     public synchronized void checkForPluginsUpdates(boolean notificationsEnabled) throws Exception {
         // Get the XML request to include in the HTTP request
-        String requestXML = "<available/>";
+        String requestXML = getAvailablePluginsUpdateRequest();
         // Send the request to the server
         HttpClient httpClient = new HttpClient();
         PostMethod postMethod = new PostMethod(updateServiceURL);
@@ -381,6 +381,14 @@ public class UpdateManager extends BasicModule {
         return xmlRequest.asXML();
     }
 
+    private String getAvailablePluginsUpdateRequest() {
+        Element xmlRequest = docFactory.createDocument().addElement("available");
+        // Add locale so we can get current name and description of plugins
+        Element locale = xmlRequest.addElement("locale");
+        locale.addText(JiveGlobals.getLocale().toString());
+        return xmlRequest.asXML();
+    }
+
     private void processServerUpdateResponse(String response, boolean notificationsEnabled)
             throws DocumentException {
         // Reset last known update information
@@ -428,12 +436,13 @@ public class UpdateManager extends BasicModule {
             String readme = plugin.attributeValue("readme");
             String changelog = plugin.attributeValue("changelog");
             String url = plugin.attributeValue("url");
-            boolean isCommercial = "true".equals(plugin.attributeValue("commercial"));
+            String licenseType = plugin.attributeValue("licenseType");
             String description = plugin.attributeValue("description");
             String author = plugin.attributeValue("author");
             String minServerVersion = plugin.attributeValue("minServerVersion");
+            String fileSize = plugin.attributeValue("fileSize");
             AvailablePlugin available = new AvailablePlugin(pluginName, description, latestVersion,
-                    author, icon, changelog, readme, isCommercial, minServerVersion, url);
+                    author, icon, changelog, readme, licenseType, minServerVersion, url, fileSize);
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(pluginName, available);
         }
@@ -547,7 +556,8 @@ public class UpdateManager extends BasicModule {
             component.addAttribute("icon", plugin.getIcon());
             component.addAttribute("minServerVersion", plugin.getMinServerVersion());
             component.addAttribute("readme", plugin.getReadme());
-            component.addAttribute("commercial", Boolean.toString(plugin.isCommercial()));
+            component.addAttribute("licenseType", plugin.getLicenseType());
+            component.addAttribute("fileSize", Long.toString(plugin.getFileSize()));
         }
         // Write data out to conf/available-plugins.xml file.
         Writer writer = null;
@@ -686,12 +696,13 @@ public class UpdateManager extends BasicModule {
             String readme = plugin.attributeValue("readme");
             String changelog = plugin.attributeValue("changelog");
             String url = plugin.attributeValue("url");
-            boolean isCommercial = "true".equals(plugin.attributeValue("commercial"));
+            String licenseType = plugin.attributeValue("licenseType");
             String description = plugin.attributeValue("description");
             String author = plugin.attributeValue("author");
             String minServerVersion = plugin.attributeValue("minServerVersion");
+            String fileSize = plugin.attributeValue("fileSize");
             AvailablePlugin available = new AvailablePlugin(pluginName, description, latestVersion,
-                    author, icon, changelog, readme, isCommercial, minServerVersion, url);
+                    author, icon, changelog, readme, licenseType, minServerVersion, url, fileSize);
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(pluginName, available);
         }

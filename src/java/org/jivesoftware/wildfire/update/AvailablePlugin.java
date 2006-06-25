@@ -43,9 +43,9 @@ public class AvailablePlugin {
      */
     private String changelog;
     /**
-     * Flag that indicates whether the plugin is commercial or not.
+     * Type of license of the plugin.
      */
-    private  boolean commercial;
+    private String licenseType;
     /**
      * Description of the plugin as specified in plugin.xml.
      */
@@ -58,20 +58,25 @@ public class AvailablePlugin {
      * Minimum server version required by this plugin as specified in plugin.xml.
      */
     private String minServerVersion;
+    /**
+     * Size in bytes of the plugin jar file.
+     */
+    private String fileSize;
 
     public AvailablePlugin(String name, String description, String latestVersion, String author,
-            String icon, String changelog, String readme, boolean commercial,
-            String minServerVersion, String url) {
+            String icon, String changelog, String readme, String licenseType,
+            String minServerVersion, String url, String fileSize) {
         this.author = author;
         this.icon = icon;
         this.changelog = changelog;
         this.readme = readme;
-        this.commercial = commercial;
+        this.licenseType = licenseType;
         this.description = description;
         this.latestVersion = latestVersion;
         this.minServerVersion = minServerVersion;
         this.name = name;
         this.url = url;
+        this.fileSize = fileSize;
     }
 
     /**
@@ -143,7 +148,16 @@ public class AvailablePlugin {
      * @return true if the plugin is commercial.
      */
     public boolean isCommercial() {
-        return commercial;
+        return "commercial".equals(licenseType);
+    }
+
+    /**
+     * Returns the type of license the plugin is being released under.
+     *
+     * @return the type of license of the plugin.
+     */
+    public String getLicenseType() {
+        return licenseType;
     }
 
     /**
@@ -162,5 +176,18 @@ public class AvailablePlugin {
      */
     public String getMinServerVersion() {
         return minServerVersion;
+    }
+
+    /**
+     * Returns the size in bytes of the plugin jar file.
+     *
+     * @return the size in bytes of the plugin jar file.
+     */
+    public long getFileSize() {
+        if (fileSize == null) {
+            // Dummy value for old xml files that didn't contain this piece of information
+            return -1L;
+        }
+        return Long.parseLong(fileSize);
     }
 }

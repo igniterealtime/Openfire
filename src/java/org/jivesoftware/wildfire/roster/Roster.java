@@ -520,10 +520,11 @@ public class Roster implements Cacheable {
         }
         // Get the privacy list of this user
         PrivacyList list = null;
-        if (packet.getFrom() != null) {
+        JID from = packet.getFrom();
+        if (from != null) {
             // Try to use the active list of the session. If none was found then try to use
             // the default privacy list of the session
-            ClientSession session = sessionManager.getSession(packet.getFrom());
+            ClientSession session = sessionManager.getSession(from);
             if (session != null) {
                 list = session.getActiveList();
                 list = list == null ? session.getDefaultList() : list;
@@ -533,6 +534,7 @@ public class Roster implements Cacheable {
             // No privacy list was found (based on the session) so check if there is a default list
             list = PrivacyListManager.getInstance().getDefaultPrivacyList(username);
         }
+        // Broadcast presence to subscribed entities
         for (RosterItem item : rosterItems.values()) {
             if (item.getSubStatus() == RosterItem.SUB_BOTH
                     || item.getSubStatus() == RosterItem.SUB_FROM) {
@@ -554,6 +556,10 @@ public class Roster implements Cacheable {
                     }
                 }
             }
+        }
+        if (from != null) {
+            // Broadcast presence to other user's resources
+            sessionManager.broadcastPresenceToOtherResources(from, packet);
         }
     }
 

@@ -733,7 +733,7 @@ public class SessionManager extends BasicModule {
                 // Add route to the new session
                 routingTable.addRoute(session.getAddress(), session);
                 // Broadcast presence between the user's resources
-                broadcastPresenceToOtherResource(session);
+                broadcastPresenceOfOtherResource(session);
             }
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous (? - shouldn't happen)
@@ -742,13 +742,11 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Broadcast initial presence from the user's new available resource to any of the user's 
-     * existing available resources (if any).
+     * Sends the presences of other connected resources to the resource that just connected.
      * 
-     * @param session the session that received the new presence and therefore will not receive 
-     *        the notification.
+     * @param session the newly created session.
      */
-    private void broadcastPresenceToOtherResource(ClientSession session)
+    private void broadcastPresenceOfOtherResource(ClientSession session)
             throws UserNotFoundException {
         Presence presence;
         Collection<ClientSession> availableSession;
@@ -759,14 +757,29 @@ public class SessionManager extends BasicModule {
                 if (userSession != session) {
                     // Send the presence of an existing session to the session that has just changed
                     // the presence
-                    if (session.getPresence().isAvailable()) {
-                        presence = userSession.getPresence().createCopy();
-                        presence.setTo(session.getAddress());
-                        session.process(presence);
-                    }
-                    // Send the presence of the session whose presence has changed to this other
-                    // user's session
-                    presence = session.getPresence().createCopy();
+                    presence = userSession.getPresence().createCopy();
+                    presence.setTo(session.getAddress());
+                    session.process(presence);
+                }
+            }
+        }
+    }
+
+    /**
+     * Broadcasts presence updates from the originating user's resource to any of the user's
+     * existing available resources (if any).
+     *
+     * @param originatingResource the full JID of the session that sent the presence update.
+     */
+    public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
+        Collection<ClientSession> availableSession;
+        SessionMap sessionMap = sessions.get(originatingResource.getNode());
+        if (sessionMap != null) {
+            availableSession = new ArrayList<ClientSession>(sessionMap.getAvailableSessions());
+            for (ClientSession userSession : availableSession) {
+                if (userSession.getAddress() != originatingResource) {
+                    // Send the presence of the session whose presence has changed to
+                    // this other user's session
                     presence.setTo(userSession.getAddress());
                     userSession.process(presence);
                 }
@@ -807,8 +820,6 @@ public class SessionManager extends BasicModule {
                     // Remove the route for the session's BARE address
                     routingTable.removeRoute(new JID(session.getAddress().getNode(),
                             session.getAddress().getDomain(), ""));
-                    // Broadcast presence between the user's resources
-                    broadcastPresenceToOtherResource(session);
                 }
                 else {
                     // Update the order of the sessions based on the new presence of this session
@@ -818,8 +829,6 @@ public class SessionManager extends BasicModule {
                     routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
                             defaultSession.getAddress().getDomain(), ""),
                             defaultSession);
-                    // Broadcast presence between the user's resources
-                    broadcastPresenceToOtherResource(session);
                 }
             }
             catch (UserNotFoundException e) {

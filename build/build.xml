@@ -491,6 +491,10 @@
             toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
             overwrite="true">
         </copy>
+          <copy file="${web.dir}/WEB-INF/dwr.xml"
+            toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
+            overwrite="true">
+        </copy>
 
         <!-- Create a jar of compiled servlets -->
         <jar jarfile="${jspc.dest.dir}/${jspc.jar.name}">

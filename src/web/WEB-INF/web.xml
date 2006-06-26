@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <web-app
-    xmlns="http://java.sun.com/xml/ns/j2ee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4">
+        xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+        version="2.4">
 
     <display-name>Wildfire</display-name>
 
@@ -23,7 +23,8 @@
         <filter-class>org.jivesoftware.admin.AuthCheckFilter</filter-class>
         <init-param>
             <param-name>excludes</param-name>
-            <param-value>login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp</param-value>
+            <param-value>
+                login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp</param-value>
         </init-param>
     </filter>
 
@@ -37,11 +38,11 @@
         <filter-class>org.jivesoftware.util.SetCharacterEncodingFilter</filter-class>
     </filter>
 
-     <filter>
+    <filter>
         <filter-name>LocaleFilter</filter-name>
         <filter-class>org.jivesoftware.util.LocaleFilter</filter-class>
     </filter>
-    
+
     <filter>
         <filter-name>sitemesh</filter-name>
         <filter-class>com.opensymphony.module.sitemesh.filter.PageFilter</filter-class>
@@ -76,14 +77,14 @@
         <filter-name>PluginFilter</filter-name>
         <servlet-name>PluginServlet</servlet-name>
     </filter-mapping>
-    
+
     <filter-mapping>
         <filter-name>sitemesh</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
     <listener>
-         <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
+        <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
     </listener>
 
     <servlet>
@@ -98,6 +99,16 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>dwr-invoker</servlet-name>
+        <servlet-class>uk.ltd.getahead.dwr.DWRServlet</servlet-class>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </servlet>
+
+
     <!--@@JSPC-SERVLETS@@-->
 
     <servlet-mapping>
@@ -108,6 +119,12 @@
     <servlet-mapping>
         <servlet-name>FaviconServlet</servlet-name>
         <url-pattern>/getFavicon</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet-mapping>
+        <servlet-name>dwr-invoker</servlet-name>
+        <url-pattern>/dwr/*</url-pattern>
     </servlet-mapping>
 
     <jsp-config>

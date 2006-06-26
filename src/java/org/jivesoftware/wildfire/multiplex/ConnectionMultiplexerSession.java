@@ -285,7 +285,7 @@ public class ConnectionMultiplexerSession extends Session {
         // Add info about TLS
         if (ClientSession.getTLSPolicy() != Connection.TLSPolicy.disabled) {
             Element tls = child.addElement("starttls", "urn:ietf:params:xml:ns:xmpp-tls");
-            if (ClientSession.getTLSPolicy() != Connection.TLSPolicy.required) {
+            if (ClientSession.getTLSPolicy() == Connection.TLSPolicy.required) {
                 tls.addElement("required");
             }
 

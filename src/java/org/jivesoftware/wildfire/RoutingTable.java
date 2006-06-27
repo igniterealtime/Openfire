@@ -13,7 +13,7 @@ package org.jivesoftware.wildfire;
 
 import org.xmpp.packet.JID;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * <p>Maintains server-wide knowledge of routes to any node.</p>
@@ -102,7 +102,7 @@ public interface RoutingTable {
      * @param node The address we want a route to
      * @return An iterator over all applicable routes
      */
-    Iterator getRoutes(JID node);
+    List<ChannelHandler> getRoutes(JID node);
 
     /**
      * <p>Obtain a route to a handler at the given node falling back to a user branch if no resource leaf exists.</p>

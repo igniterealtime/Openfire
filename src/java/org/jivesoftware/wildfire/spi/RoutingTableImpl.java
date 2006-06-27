@@ -130,13 +130,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         return route;
     }
 
-    public Iterator getRoutes(JID node) {
+    public List<ChannelHandler> getRoutes(JID node) {
         // Check if the address belongs to a remote server
         if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
                 componentManager.getComponent(node) == null) {
             // Return a promise of a remote session. This object will queue packets pending
             // to be sent to remote servers
-            return Arrays.asList(OutgoingSessionPromise.getInstance()).iterator();
+            List<ChannelHandler> list = new ArrayList<ChannelHandler>();
+            list.add(OutgoingSessionPromise.getInstance());
+            return list;
         }
 
         LinkedList list = null;
@@ -172,10 +174,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             }
         }
         if (list == null) {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyList();
         }
         else {
-            return list.iterator();
+            return list;
         }
     }
 

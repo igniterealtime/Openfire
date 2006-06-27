@@ -538,15 +538,13 @@ public class Roster implements Cacheable {
         for (RosterItem item : rosterItems.values()) {
             if (item.getSubStatus() == RosterItem.SUB_BOTH
                     || item.getSubStatus() == RosterItem.SUB_FROM) {
-                JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
-                Iterator sessions = routingTable.getRoutes(searchNode);
                 packet.setTo(item.getJid());
                 if (list != null && list.shouldBlockPacket(packet)) {
                     // Outgoing presence notifications are blocked for this contact
                     continue;
                 }
-                while (sessions.hasNext()) {
-                    ChannelHandler session = (ChannelHandler)sessions.next();
+                JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
+                for (ChannelHandler session : routingTable.getRoutes(searchNode)) {
                     try {
                         session.process(packet);
                     }

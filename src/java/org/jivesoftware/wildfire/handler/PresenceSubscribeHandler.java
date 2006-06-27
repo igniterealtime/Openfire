@@ -27,6 +27,7 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -136,12 +137,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // a module, the module will be able to handle the packet. If the handler is a
                     // Session the packet will be routed to the client. If a route cannot be found
                     // then the packet will be delivered based on its recipient and sender.
-                    ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    if (handler != null) {
-                        Presence presenteToSend = presence.createCopy();
-                        // Stamp the presence with the user's bare JID as the 'from' address
-                        presenteToSend.setFrom(senderJID.toBareJID());
-                        handler.process(presenteToSend);
+                    List<ChannelHandler> handlers = routingTable.getRoutes(recipientJID);
+                    if (!handlers.isEmpty()) {
+                        for (ChannelHandler handler : handlers) {
+                            Presence presenteToSend = presence.createCopy();
+                            // Stamp the presence with the user's bare JID as the 'from' address
+                            presenteToSend.setFrom(senderJID.toBareJID());
+                            handler.process(presenteToSend);
+                        }
                     }
                     else {
                         deliverer.deliver(presence.createCopy());

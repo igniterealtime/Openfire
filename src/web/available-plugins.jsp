@@ -161,6 +161,27 @@
 
 <p>
 
+<%if(plugins.size() == 0){ %>
+<div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:600px;">
+    <fmt:message key="plugin.available.no.list" />&nbsp;<a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.list" /></a>
+</div>
+<br/>
+<div style="width:800px;">
+    <p>
+   <fmt:message key="plugin.available.no.list.description" />
+</p>
+
+<% if(!updateManager.isServiceEnabled()){ %>
+<fmt:message key="plugin.available.auto.update.currently" /> <b><fmt:message key="plugin.available.auto.update.currently.disabled" /></b>. <a href="manage-updates.jsp"><fmt:message key="plugin.available.click.here" /></a> <fmt:message key="plugin.available.change" />
+<% } %>
+</div>
+<% } else {%>
+
+
+
+
+
+
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
@@ -438,5 +459,7 @@
         <fmt:message key="plugin.available.autoupdate" /> <%= time%>. <fmt:message key="plugin.available.autoupdate.on"/><a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.manual.update" /></a>
         </p>
            <% } %>
+
+<%}%>
 </body>
 </html>

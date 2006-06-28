@@ -316,3 +316,5 @@ INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 9);
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
+
+commit;

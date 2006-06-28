@@ -11,3 +11,5 @@ ALTER TABLE jiveVCard MODIFY username VARCHAR2(64);
 ALTER TABLE jivePrivacyList MODIFY username VARCHAR2(64);
 
 UPDATE jiveVersion set version=9 where name = 'wildfire';
+
+commit;

@@ -44,3 +44,5 @@ CREATE TABLE jiveVCard (
   value                 LONG            NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
 );
+
+commit;

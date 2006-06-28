@@ -13,3 +13,5 @@ CREATE TABLE jivePrivacyList (
   CONSTRAINT jivePrivacyList_pk PRIMARY KEY (username, name)
 );
 CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
+
+commit;

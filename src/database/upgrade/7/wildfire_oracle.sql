@@ -101,3 +101,5 @@ CREATE TABLE pubsubDefaultConf (
 );
 
 UPDATE jiveVersion set version=7 where name = 'wildfire';
+
+commit;

@@ -57,3 +57,5 @@ CREATE TABLE jiveVersion (
   minorVersion  INTEGER  NOT NULL
 );
 INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 1);
+
+commit;

@@ -25,3 +25,5 @@ CREATE TABLE pubsubNodeGroups (
 CREATE INDEX pubsubNodeGroups_idx ON pubsubNodeGroups (serviceID, nodeID);
 
 UPDATE jiveVersion set version=8 where name = 'wildfire';
+
+commit;

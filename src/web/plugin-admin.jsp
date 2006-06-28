@@ -427,7 +427,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 </tr>
 
 <tbody>
-<tr><td colspan="8"><br/></td></tr>
+
 
 <%
     // If only the admin plugin is installed, show "none".

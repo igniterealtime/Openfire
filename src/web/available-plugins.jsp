@@ -22,7 +22,7 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.text.SimpleDateFormat"%>
-<%@ page import="org.jivesoftware.util.WebManager"%>
+<%@ page import="org.jivesoftware.util.WebManager"%><%@ page import="org.jivesoftware.util.LocaleUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -85,6 +85,17 @@
     padding: 5px;
 }
 
+.table-header-align-right {
+    text-align: right;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px 0px 1px 0px;
+    padding: 5px;
+}
+
 .row-header {
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
@@ -138,7 +149,11 @@
     function downloadPlugin(url, id) {
         document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
         document.getElementById(id).style.background = "#FFFFF7";
-        downloader.installPlugin(downloadComplete, url, id);
+        setTimeout("startDownload('"+url+"','"+id+"')", 5000);
+    }
+
+    function startDownload(url, id){
+         downloader.installPlugin(downloadComplete, url, id);
     }
 
     function downloadComplete(id) {
@@ -169,11 +184,11 @@
 <p>
 
 <%if(plugins.size() == 0){ %>
-<div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:600px;">
+<div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
     <fmt:message key="plugin.available.no.list" />&nbsp;<a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.list" /></a>
 </div>
 <br/>
-<div style="width:800px;">
+<div style="width:75%;">
     <p>
    <fmt:message key="plugin.available.no.list.description" />
 </p>
@@ -259,7 +274,7 @@
     <td width="15%" nowrap valign="top" class="line-bottom-border">
         <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
     </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
+    <td width="15%" nowrap valign="top" class="line-bottom-border" align="right">
         <%= fileSize %>
     </td>
     <td width="1%" align="center" valign="top" class="line-bottom-border">
@@ -279,12 +294,11 @@
         <% } %>
     </td>
 </tr>
-<tr id="<%= plugin.hashCode()%>-row" style="display:none;">
+<tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
     <td width="1%" class="line-bottom-border">
         <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
     </td>
-    <td nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
-    <td colspan="5" class="line-bottom-border">&nbsp;</td>
+    <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
     <td class="line-bottom-border" align="center">
         <img src="images/success-16x16.gif" height="16" width="16"/>
     </td>
@@ -456,17 +470,21 @@
 
 </div>
 <br/>
- <% if(updateManager.isServiceEnabled()){
+ <%
         String time = JiveGlobals.getProperty("update.lastCheck");
         Date date = new Date(Long.parseLong(time));
-        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy");
-        time = format.format(date);
+        time = JiveGlobals.formatDate(date);
     %>
        <p>
-        <fmt:message key="plugin.available.autoupdate" /> <%= time%>. <fmt:message key="plugin.available.autoupdate.on"/><a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.manual.update" /></a>
+        <fmt:message key="plugin.available.autoupdate" /> <%= time%>.
+           <% if(!updateManager.isServiceEnabled()){%>
+              <fmt:message key="plugin.available.autoupdate.on" />
+           <% } else { %>
+                <fmt:message key="plugin.available.autoupdate.off" />
+           <% } %>
+           &nbsp;<a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.manual.update" /></a>
         </p>
            <% } %>
 
-<%}%>
 </body>
 </html>

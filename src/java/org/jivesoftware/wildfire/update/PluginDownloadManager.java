@@ -7,7 +7,6 @@
  */
 package org.jivesoftware.wildfire.update;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 
 /**
@@ -33,13 +32,6 @@ public class PluginDownloadManager {
                 returnUpdate = update;
                 break;
             }
-        }
-
-        try {
-            updateManager.checkForPluginsUpdates(true);
-        }
-        catch (Exception e) {
-            Log.error(e);
         }
 
         return returnUpdate;

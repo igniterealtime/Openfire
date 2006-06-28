@@ -5,13 +5,23 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.update.AvailablePlugin,
-                 org.jivesoftware.wildfire.update.UpdateManager,
-                 java.util.Collections"
-        %>
+<%@ page errorPage="error.jsp" import="org.jivesoftware.util.ByteFormat,
+                                       org.jivesoftware.util.Version,
+                                       org.jivesoftware.wildfire.XMPPServer,
+                                       org.jivesoftware.wildfire.container.Plugin"
+    %>
+<%@ page import="org.jivesoftware.wildfire.container.PluginManager" %>
+<%@ page import="org.jivesoftware.wildfire.update.AvailablePlugin" %>
+<%@ page import="org.jivesoftware.wildfire.update.UpdateManager" %>
+<%@ page import="java.io.File" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collections" %>
 <%@ page import="java.util.Comparator" %>
-<%@ page import="java.util.List" %><%@ page import="org.jivesoftware.util.ByteFormat"%>
+<%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="java.util.Date"%>
+<%@ page import="java.text.SimpleDateFormat"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -32,6 +42,11 @@
         }
     });
 
+    String updateList = request.getParameter("autoupdate");
+    if(updateList != null){
+        updateManager.checkForPluginsUpdates(true);
+    }
+
 
     if (downloadRequested) {
         // Download and install new plugin
@@ -41,9 +56,9 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="plugin.available.title"/></title>
-        <meta name="pageID" content="available-plugins"/>
+<head>
+<title><fmt:message key="plugin.available.title"/></title>
+<meta name="pageID" content="available-plugins"/>
 
 <style type="text/css">
 .content {
@@ -219,32 +234,34 @@
 
 </style>
 
-    <script src="dwr/engine.js" type="text/javascript"></script>
+<script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/downloader.js" type="text/javascript"></script>
-    <script type="text/javascript">
-          function downloadPlugin(url, id) {
-             document.getElementById(id+"-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
-             document.getElementById(id).style.background = "#FFFFF7";
-             downloader.installPlugin(downloadComplete, url, id);
-          }
+<script type="text/javascript">
+    function downloadPlugin(url, id) {
+        document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        document.getElementById(id).style.background = "#FFFFF7";
+        downloader.installPlugin(downloadComplete, url, id);
+    }
 
-          function downloadComplete(id) {
-              document.getElementById(id).style.display = 'none';
-              document.getElementById(id + "-row").style.display = '';
-              setTimeout("fadeIt('"+id+"')", 3000);
-          }
+    function downloadComplete(id) {
+        document.getElementById(id).style.display = 'none';
+        document.getElementById(id + "-row").style.display = '';
+        setTimeout("fadeIt('" + id + "')", 3000);
+    }
 
-          function fadeIt(id){
-              Effect.Fade(id+"-row");
-          }
-    </script>
-    </head>
-    <body>
+    function fadeIt(id) {
+        Effect.Fade(id + "-row");
+    }
+</script>
+</head>
+
+<body>
 
 <p>
-<fmt:message key="plugin.available.info"/>
+    <fmt:message key="plugin.available.info"/>
 </p>
+
 <p>
 
 <div class="light-gray-border" style="padding:10px;">
@@ -266,9 +283,9 @@
     // If only the admin plugin is installed, show "none".
     if (plugins.isEmpty()) {
 %>
-    <tr>
-        <td align="center" colspan="8"><fmt:message key="plugin.available.no_plugin"/></td>
-    </tr>
+<tr>
+    <td align="center" colspan="8"><fmt:message key="plugin.available.no_plugin"/></td>
+</tr>
 <%
     }
 
@@ -284,154 +301,245 @@
             continue;
         }
 %>
-    <tr id="<%= plugin.hashCode()%>">
-        <td width="1%" class="line-bottom-border">
-            <% if (plugin.getIcon() != null) { %>
-            <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
-            <% }
-            else { %>
-            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-            <% } %>
-        </td>
-        <td width="20%" nowrap class="line-bottom-border">
-            <%= (pluginName != null ? pluginName : "") %> &nbsp;
-            </td>
-        <td nowrap valign="top" class="line-bottom-border">
-            <% if (plugin.getReadme() != null) { %>
-            <a href="<%= plugin.getReadme() %>"
-                    ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-            <% }
-            else { %> &nbsp; <% } %>
-            <% if (plugin.getChangelog() != null) { %>
-            <a href="<%= plugin.getChangelog() %>"
-                    ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-            <% }
-            else { %> &nbsp; <% } %>
-        </td>
-        <td width="60%" class="line-bottom-border">
-            <%= pluginDescription != null ? pluginDescription : "" %>
-        </td>
-        <td width="5%" align="center" valign="top" class="line-bottom-border">
-            <%= pluginVersion != null ? pluginVersion : "" %>
-        </td>
-        <td width="15%" nowrap valign="top" class="line-bottom-border">
-             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
-        </td>
-        <td width="15%" nowrap valign="top" class="line-bottom-border">
-             <%= fileSize %>
-        </td>
-        <td width="1%" align="center" valign="top" class="line-bottom-border">
-            <%
-                String updateURL = plugin.getURL();
-                if (updateManager.isPluginDownloaded(updateURL)) {
-            %>
-            &nbsp;
-            <%  }
-            else { %>
-            <%
+<tr id="<%= plugin.hashCode()%>">
+    <td width="1%" class="line-bottom-border">
+        <% if (plugin.getIcon() != null) { %>
+        <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
+        <% }
+        else { %>
+        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+        <% } %>
+    </td>
+    <td width="20%" nowrap class="line-bottom-border">
+        <%= (pluginName != null ? pluginName : "") %> &nbsp;
+    </td>
+    <td nowrap valign="top" class="line-bottom-border">
+        <% if (plugin.getReadme() != null) { %>
+        <a href="<%= plugin.getReadme() %>"
+            ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+        <% }
+        else { %> &nbsp; <% } %>
+        <% if (plugin.getChangelog() != null) { %>
+        <a href="<%= plugin.getChangelog() %>"
+            ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+        <% }
+        else { %> &nbsp; <% } %>
+    </td>
+    <td width="60%" class="line-bottom-border">
+        <%= pluginDescription != null ? pluginDescription : "" %>
+    </td>
+    <td width="5%" align="center" valign="top" class="line-bottom-border">
+        <%= pluginVersion != null ? pluginVersion : "" %>
+    </td>
+    <td width="15%" nowrap valign="top" class="line-bottom-border">
+        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
+    </td>
+    <td width="15%" nowrap valign="top" class="line-bottom-border">
+        <%= fileSize %>
+    </td>
+    <td width="1%" align="center" valign="top" class="line-bottom-border">
+        <%
+            String updateURL = plugin.getURL();
+            if (updateManager.isPluginDownloaded(updateURL)) {
+        %>
+        &nbsp;
+        <%  }
+        else { %>
+        <%
 
-            %>
-            <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.available.download" />"></a></span>
+        %>
+        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
+                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></a></span>
 
-            <% } %>
-        </td>
-    </tr>
-   <tr id="<%= plugin.hashCode()%>-row" style="display:none;">
-         <td width="1%" class="line-bottom-border">
-             <img src="<%= plugin.getIcon()%>" width="16" height="16" />
-         </td>
-         <td nowrap class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
-         <td colspan="5" class="line-bottom-border">&nbsp;</td>
-         <td class="line-bottom-border" align="center">
-             <img src="images/success-16x16.gif" height="16" width="16" />
-         </td>
-    </tr>
+        <% } %>
+    </td>
+</tr>
+<tr id="<%= plugin.hashCode()%>-row" style="display:none;">
+    <td width="1%" class="line-bottom-border">
+        <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
+    </td>
+    <td nowrap class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
+    <td colspan="5" class="line-bottom-border">&nbsp;</td>
+    <td class="line-bottom-border" align="center">
+        <img src="images/success-16x16.gif" height="16" width="16"/>
+    </td>
+</tr>
 <%
     }
 %>
-    <tr><td><br/></td></tr>
-  <tr style="background:#F7F7FF;">
-         <td class="table-header-left">&nbsp;</td>
-        <td nowrap colspan="7" class="row-header">Commercial Plugins</td>
-    </tr>
-    <%
-        for (AvailablePlugin plugin : plugins) {
-            String pluginName = plugin.getName();
-            String pluginDescription = plugin.getDescription();
-            String pluginAuthor = plugin.getAuthor();
-            String pluginVersion = plugin.getLatestVersion();
-            ByteFormat byteFormat = new ByteFormat();
-            String fileSize = byteFormat.format(plugin.getFileSize());
+<tr><td><br/></td></tr>
+<tr style="background:#F7F7FF;">
+    <td class="table-header-left">&nbsp;</td>
+    <td nowrap colspan="7" class="row-header">Commercial Plugins</td>
+</tr>
+<%
+    for (AvailablePlugin plugin : plugins) {
+        String pluginName = plugin.getName();
+        String pluginDescription = plugin.getDescription();
+        String pluginAuthor = plugin.getAuthor();
+        String pluginVersion = plugin.getLatestVersion();
+        ByteFormat byteFormat = new ByteFormat();
+        String fileSize = byteFormat.format(plugin.getFileSize());
 
-            if (plugin.isCommercial()) {
-                continue;
-            }
-    %>
-    <tr id="<%= plugin.hashCode()%>">
-        <td width="1%" class="line-bottom-border">
-            <% if (plugin.getIcon() != null) { %>
-            <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
-            <% }
-            else { %>
-            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-            <% } %>
-        </td>
-        <td width="20%" nowrap class="line-bottom-border">
-            <%= (pluginName != null ? pluginName : "") %> &nbsp;
-            </td>
-        <td nowrap valign="top" class="line-bottom-border">
-            <% if (plugin.getReadme() != null) { %>
-            <a href="<%= plugin.getReadme() %>"
-                    ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-            <% }
-            else { %> &nbsp; <% } %>
-            <% if (plugin.getChangelog() != null) { %>
-            <a href="<%= plugin.getChangelog() %>"
-                    ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-            <% }
-            else { %> &nbsp; <% } %>
-        </td>
-        <td width="60%" class="line-bottom-border">
-            <%= pluginDescription != null ? pluginDescription : "" %>
-        </td>
-        <td width="5%" align="center" valign="top" class="line-bottom-border">
-            <%= pluginVersion != null ? pluginVersion : "" %>
-        </td>
-        <td width="15%" nowrap valign="top" class="line-bottom-border">
-             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
-        </td>
-         <td width="15%" nowrap valign="top" class="line-bottom-border">
-             <%= fileSize  %>
-        </td>
-        <td width="1%" align="center" valign="top" class="line-bottom-border">
-            <%
-                String updateURL = plugin.getURL();
-                if (updateManager.isPluginDownloaded(updateURL)) {
-            %>
-            &nbsp;
-            <%  }
-            else { %>
+        if (!plugin.isCommercial()) {
+            continue;
+        }
+%>
+<tr id="<%= plugin.hashCode()%>">
+    <td width="1%" class="line-bottom-border">
+        <% if (plugin.getIcon() != null) { %>
+        <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
+        <% }
+        else { %>
+        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+        <% } %>
+    </td>
+    <td width="20%" nowrap class="line-bottom-border">
+        <%= (pluginName != null ? pluginName : "") %> &nbsp;
+    </td>
+    <td nowrap valign="top" class="line-bottom-border">
+        <% if (plugin.getReadme() != null) { %>
+        <a href="<%= plugin.getReadme() %>"
+            ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+        <% }
+        else { %> &nbsp; <% } %>
+        <% if (plugin.getChangelog() != null) { %>
+        <a href="<%= plugin.getChangelog() %>"
+            ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+        <% }
+        else { %> &nbsp; <% } %>
+    </td>
+    <td width="60%" class="line-bottom-border">
+        <%= pluginDescription != null ? pluginDescription : "" %>
+    </td>
+    <td width="5%" align="center" valign="top" class="line-bottom-border">
+        <%= pluginVersion != null ? pluginVersion : "" %>
+    </td>
+    <td width="15%" nowrap valign="top" class="line-bottom-border">
+        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
+    </td>
+    <td width="15%" nowrap valign="top" class="line-bottom-border">
+        <%= fileSize  %>
+    </td>
+    <td width="1%" align="center" valign="top" class="line-bottom-border">
+        <%
+            String updateURL = plugin.getURL();
+            if (updateManager.isPluginDownloaded(updateURL)) {
+        %>
+        &nbsp;
+        <%  }
+        else { %>
 
-            <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.available.download" />"></a></span>
-            <% } %>
-        </td>
-    </tr>
-    <tr id="<%= plugin.hashCode()%>-row" style="display:none;">
-         <td width="1%" class="line-bottom-border">
-             <img src="<%= plugin.getIcon()%>" width="16" height="16" />
-         </td>
-         <td class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
-         <td colspan="5" class="line-bottom-border">&nbsp;</td>
-         <td class="line-bottom-border">
-             <img src="images/success-16x16.gif" height="16" width="16" />
-         </td>
-    </tr>
+        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
+                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></a></span>
+        <% } %>
+    </td>
+</tr>
+<tr id="<%= plugin.hashCode()%>-row" style="display:none;">
+    <td width="1%" class="line-bottom-border">
+        <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
+    </td>
+    <td class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
+    <td colspan="5" class="line-bottom-border">&nbsp;</td>
+    <td class="line-bottom-border">
+        <img src="images/success-16x16.gif" height="16" width="16"/>
+    </td>
+</tr>
 <%
     }
 %>
+
 </tbody>
 </table>
+
 </div>
 
-    </body>
+<br/>
+
+
+<%
+    final XMPPServer server = XMPPServer.getInstance();
+    Version version = server.getServerInfo().getVersion();
+    List<Plugin> outdatedPlugins = new ArrayList<Plugin>();
+    for (Plugin plugin : server.getPluginManager().getPlugins()) {
+        String pluginVersion = server.getPluginManager().getVersion(plugin);
+        if (pluginVersion != null && pluginVersion.compareTo(version.getVersionString()) > 0) {
+            outdatedPlugins.add(plugin);
+        }
+    }
+
+    if (outdatedPlugins.size() > 0) {
+%>
+    <div class="light-gray-border" style="padding:10px;">
+    <p>The list of plugins below requires a newer version of Wildfire. <a href="http://www.jivesoftware.org/wildfire" target="_blank">Update Wildfire Now.</a></p>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+
+
+        <%
+            PluginManager pluginManager = server.getPluginManager();
+            for (Plugin plugin : outdatedPlugins) {
+                String pluginName = pluginManager.getName(plugin);
+                String pluginDescription = pluginManager.getDescription(plugin);
+                String pluginAuthor = pluginManager.getAuthor(plugin);
+                String pluginVersion = pluginManager.getVersion(plugin);
+                File pluginDir = pluginManager.getPluginDirectory(plugin);
+                File icon = new File(pluginDir, "logo_small.png");
+                boolean readmeExists = new File(pluginDir, "readme.html").exists();
+                boolean changelogExists = new File(pluginDir, "changelog.html").exists();
+                if (!icon.exists()) {
+                    icon = new File(pluginDir, "logo_small.gif");
+                }
+        %>
+        <tr>
+            <td class="line-bottom-border" width="1%">
+                <% if (icon.exists()) { %>
+                <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
+                <% }
+                else { %>
+                <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+                <% } %>
+            </td>
+            <td class="line-bottom-border" width="1%" nowrap>
+                <%= pluginName%>
+            </td>
+            <td nowrap class="line-bottom-border">
+                <p><% if (readmeExists) { %>
+                    <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
+                        ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+                    <% }
+                    else { %> &nbsp; <% } %>
+                    <% if (changelogExists) { %>
+                    <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
+                        ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                    <% }
+                    else { %> &nbsp; <% } %></p>
+            </td>
+            <td class="line-bottom-border">
+                <%= pluginDescription %>
+            </td>
+            <td class="line-bottom-border">
+                <%= pluginVersion%>
+            </td>
+            <td class="line-bottom-border">
+                <%= pluginAuthor%>
+            </td>
+        </tr>
+        <% }%>
+  </table>
+
+        <%} %>
+
+</div>
+<br/>
+ <% if(updateManager.isServiceEnabled()){
+        String time = JiveGlobals.getProperty("update.lastCheck");
+        Date date = new Date(Long.parseLong(time));
+        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy");
+        time = format.format(date);
+    %>
+       <p>
+        Available plugins list auto-updated on <%= time%>. Auto update is turned on. <a href="available-plugins.jsp?autoupdate=true">Update list manually.</a>
+        </p>
+           <% } %>
+</body>
 </html>

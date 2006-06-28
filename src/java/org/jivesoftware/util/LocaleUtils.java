@@ -20,14 +20,7 @@ import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -438,8 +431,14 @@ public class LocaleUtils {
         }
 
         ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin).getClassLoader();
-        ResourceBundle bundle = ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
-        return getLocalizedString(key, locale, arguments, bundle);
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
+            return getLocalizedString(key, locale, arguments, bundle);
+        }
+        catch (MissingResourceException mre) {
+            Log.error(mre);
+            return key;
+        }
     }
 
     /**

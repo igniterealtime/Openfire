@@ -195,6 +195,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private AtomicLong outMessages = new AtomicLong(0);
 
     /**
+     * Flag that indicates if MUC service is enabled.
+     */
+    private boolean serviceEnabled = true;
+
+    /**
      * Create a new group chat server.
      */
     public MultiUserChatServerImpl() {
@@ -212,6 +217,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void processPacket(Packet packet) {
+        if (!isServiceEnabled()) {
+            return;
+        }
         // The MUC service will receive all the packets whose domain matches the domain of the MUC
         // service. This means that, for instance, a disco request should be responded by the
         // service itself instead of relying on the server to handle the request.
@@ -705,6 +713,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void initialize(XMPPServer server) {
         super.initialize(server);
 
+        serviceEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.enabled", true);
         chatServiceName = JiveGlobals.getProperty("xmpp.muc.service");
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext("xmpp.muc.history");
@@ -844,6 +853,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             stop();
         }
         JiveGlobals.setProperty("xmpp.muc.enabled", Boolean.toString(enabled));
+        serviceEnabled = enabled;
         if (enabled) {
             // Start the service/module
             start();
@@ -853,7 +863,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public boolean isServiceEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.muc.enabled", true);
+        return serviceEnabled;
     }
 
     public long getTotalChatTime() {

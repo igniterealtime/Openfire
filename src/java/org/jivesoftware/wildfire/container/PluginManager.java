@@ -54,6 +54,7 @@ public class PluginManager {
     private Map<Plugin, List<String>> parentPluginMap;
     private Map<Plugin, String> childPluginMap;
     private Set<String> devPlugins;
+    private PluginMonitor pluginMonitor;
 
     /**
      * Constructs a new plugin manager.
@@ -69,6 +70,7 @@ public class PluginManager {
         parentPluginMap = new HashMap<Plugin, List<String>>();
         childPluginMap = new HashMap<Plugin, String>();
         devPlugins = new HashSet<String>();
+        pluginMonitor = new PluginMonitor();
     }
 
     /**
@@ -79,10 +81,10 @@ public class PluginManager {
         // See if we're in development mode. If so, check for new plugins once every 5 seconds.
         // Otherwise, default to every 30 seconds.
         if (Boolean.getBoolean("developmentMode")) {
-            executor.scheduleWithFixedDelay(new PluginMonitor(), 1, 5, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(pluginMonitor, 1, 5, TimeUnit.SECONDS);
         }
         else {
-            executor.scheduleWithFixedDelay(new PluginMonitor(), 1, 20, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(pluginMonitor, 1, 20, TimeUnit.SECONDS);
         }
     }
 
@@ -103,6 +105,7 @@ public class PluginManager {
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
+        pluginMonitor = null;
     }
 
     /**
@@ -129,6 +132,8 @@ public class PluginManager {
             new File(absolutePath).delete();
             // Rename temp file to .jar
             new File(absolutePath + ".part").renameTo(new File(absolutePath));
+            // Ask the plugin monitor to update the plugin immediately.
+            pluginMonitor.run();
         }
         catch (IOException e) {
             Log.error("Error installing new version of plugin: " + pluginFilename, e);
@@ -362,6 +367,9 @@ public class PluginManager {
                     classloaders.put(plugin, pluginLoader);
                 }
 
+                // Check the plugin's database schema (if it requires one).
+                DbConnectionManager.getSchemaManager().checkPluginSchema(plugin);
+
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
                     File.separator + "web.xml");
@@ -379,11 +387,8 @@ public class PluginManager {
                     pluginDevelopment.put(plugin, dev);
                 }
 
-                // Check the plugin's database schema (if it requires one).
-                DbConnectionManager.getSchemaManager().checkPluginSchema(plugin);
-
+                // Init the plugin.
                 plugin.initializePlugin(this, pluginDir);
-
 
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
@@ -739,8 +744,21 @@ public class PluginManager {
      */
     private class PluginMonitor implements Runnable {
 
+        /**
+         * Tracks if the monitor is currently running.
+         */
+        private boolean running = false;
+
         public void run() {
+            // If the task is already running, return.
+            synchronized (this) {
+                if (running) {
+                    return;
+                }
+                running = true;
+            }
             try {
+                running = true;
                 // Look for extra plugin directories specified as a system property.
                 String pluginDirs = System.getProperty("pluginDirs");
                 if (pluginDirs != null) {
@@ -843,7 +861,7 @@ public class PluginManager {
                     while (!deleteDir(dir) && count < 5) {
                         Log.error("Error unloading plugin " + pluginName + ". " +
                             "Will attempt again momentarily.");
-                        Thread.sleep(5000);
+                        Thread.sleep(10000);
                         count++;
                     }
                 }
@@ -858,6 +876,10 @@ public class PluginManager {
             }
             catch (Throwable e) {
                 Log.error(e);
+            }
+            // Finished running task.
+            synchronized (this) {
+                running = false;
             }
         }
 

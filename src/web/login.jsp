@@ -202,7 +202,9 @@
 
 
         <div align="center" id="jive-loginTable">
-            <table cellpadding="0" cellspacing="0" border="0">
+
+            <div style="text-align: center; width: 380px;">
+            <table cellpadding="0" cellspacing="0" border="0" align="center">
                 <tr>
                     <td align="right" class="loginFormTable">
 
@@ -242,7 +244,11 @@
                             <td>&nbsp;</td>
                         </tr>
                         </table>
-
+                            <script language="JavaScript">
+                                <!--
+                                document.loginForm.username.focus();
+                                //-->
+                            </script>
                     </td>
                 </tr>
                 <tr>
@@ -253,7 +259,7 @@
                     </td>
                 </tr>
             </table>
-
+            </div>
         </div>
 
     </div>

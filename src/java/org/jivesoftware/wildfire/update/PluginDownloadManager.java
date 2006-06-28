@@ -9,14 +9,20 @@ package org.jivesoftware.wildfire.update;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.update.Update;
-import org.jivesoftware.wildfire.update.UpdateManager;
 
 /**
+ * Service that allow for aysynchrous calling of system managers.
  *
+ * @author Derek DeMoro
  */
 public class PluginDownloadManager {
 
+    /**
+     * Starts the download process of a given plugin with it's URL.
+     *
+     * @param url the url of the plugin to download.
+     * @return the Update.
+     */
     public Update downloadPlugin(String url) {
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
         updateManager.downloadPlugin(url);
@@ -39,7 +45,13 @@ public class PluginDownloadManager {
         return returnUpdate;
     }
 
-
+    /**
+     * Installs a new plugin into Wildfire.
+     *
+     * @param url      the url of the plugin to install.
+     * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
+     * @return the hashCode.
+     */
     public int installPlugin(String url, int hashCode) {
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
 

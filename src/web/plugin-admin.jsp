@@ -157,6 +157,14 @@
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/downloader.js" type="text/javascript"></script>
+
+<script language="text/javascript">
+     DWREngine.setErrorHandler(handleError);
+
+     function handleError(error){
+     }
+</script>
+
 <style type="text/css">
 .content {
     border-color: #bbb;

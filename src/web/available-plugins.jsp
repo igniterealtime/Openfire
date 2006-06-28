@@ -150,6 +150,13 @@
     function fadeIt(id) {
         Effect.Fade(id + "-row");
     }
+
+
+     DWREngine.setErrorHandler(handleError);
+
+     function handleError(error){
+     }
+
 </script>
 </head>
 

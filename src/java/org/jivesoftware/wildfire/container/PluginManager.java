@@ -340,7 +340,7 @@ public class PluginManager {
                     }
                 }
 
-                plugin.initializePlugin(this, pluginDir);
+
                 plugins.put(pluginDir.getName(), plugin);
                 pluginDirs.put(plugin, pluginDir);
 
@@ -381,6 +381,9 @@ public class PluginManager {
 
                 // Check the plugin's database schema (if it requires one).
                 DbConnectionManager.getSchemaManager().checkPluginSchema(plugin);
+
+                plugin.initializePlugin(this, pluginDir);
+
 
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
@@ -585,6 +588,17 @@ public class PluginManager {
      */
     public String getVersion(Plugin plugin) {
         return getElementValue(plugin, "/plugin/version");
+    }
+
+     /**
+     * Returns the minimum server version this plugin can run within. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin the plugin.
+     * @return the plugin's version.
+     */
+    public String getMinServerVersion(Plugin plugin) {
+        return getElementValue(plugin, "/plugin/minServerVersion");
     }
 
     /**

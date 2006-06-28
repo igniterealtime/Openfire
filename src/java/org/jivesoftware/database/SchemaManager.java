@@ -15,6 +15,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.wildfire.container.PluginClassLoader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -102,8 +103,9 @@ public class SchemaManager {
             con = DbConnectionManager.getConnection();
             return checkSchema(con, schemaKey, schemaVersion, new ResourceLoader() {
                     public InputStream loadResource(String resourceName) {
-                            return pluginManager.getPluginClassloader(
-                                    plugin).getClassLoader().getResourceAsStream( resourceName);
+                        PluginClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
+                        ClassLoader classLoader = pluginClassLoader.getClassLoader();
+                        return classLoader.getResourceAsStream(resourceName);
                         }
                     });
         }
@@ -306,7 +308,7 @@ public class SchemaManager {
                     in.close();
                 }
                 catch (Exception e) {
-                    // Ignore.
+                    Log.error(e);
                 }
             }
         }

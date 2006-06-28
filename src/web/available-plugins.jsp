@@ -380,7 +380,7 @@
     Version version = server.getServerInfo().getVersion();
     List<Plugin> outdatedPlugins = new ArrayList<Plugin>();
     for (Plugin plugin : server.getPluginManager().getPlugins()) {
-        String pluginVersion = server.getPluginManager().getVersion(plugin);
+        String pluginVersion = server.getPluginManager().getMinServerVersion(plugin);
         if (pluginVersion != null && pluginVersion.compareTo(version.getVersionString()) > 0) {
             outdatedPlugins.add(plugin);
         }

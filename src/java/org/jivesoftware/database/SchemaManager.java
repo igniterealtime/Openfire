@@ -14,8 +14,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.container.PluginClassLoader;
+import org.jivesoftware.wildfire.container.PluginManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -234,7 +234,7 @@ public class SchemaManager {
             // Run all upgrade scripts until we're up to the latest schema.
             for (int i=currentVersion+1; i <= DATABASE_VERSION; i++) {
                 // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
-                String resourceName = "/database/upgrade/" + i + "/" + schemaKey + "_" +
+                String resourceName = "upgrade/" + i + "/" + schemaKey + "_" +
                         DbConnectionManager.getDatabaseType() + ".sql";
                 InputStream resource = resourceLoader.loadResource(resourceName);
                 if (resource == null) {
@@ -296,6 +296,11 @@ public class SchemaManager {
                 }
                 // Send command to database.
                 if (!done && !command.toString().equals("")) {
+                    // Remove last semicolon when using Oracle to prevent "invalid character error"
+                    if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType
+                            .oracle) {
+                        command.deleteCharAt(command.length() - 1);
+                    }
                     Statement stmt = con.createStatement();
                     stmt.execute(command.toString());
                     stmt.close();

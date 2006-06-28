@@ -115,15 +115,9 @@
     #jive-loginBox {
         display: block;
         position: relative;
-        width: 476px;
-        height: 200px;
-        overflow: hidden;
-        background: url('images/login_boxbg.gif') no-repeat;
+        width: 500px;
         text-align: left;
-        top: 138px;
-    }
-    #jive-loginBoxPadding {
-        padding: 15px;
+        top: 148px;
     }
     #jive-loginLogo {
         display: block;
@@ -138,11 +132,11 @@
     #jive-loginHeader {
         display: block;
         position: relative;
-        width: 215px;
+        width: 300px;
         height: 40px;
-        margin: 25px 0px 0px 0px;
-        font-size: 20px;
+        margin: 25px 0px 10px 0px;
         padding-top: 9px;
+        font-size: 20px;
         color: #255480;
         float: left;
         overflow: hidden;
@@ -151,25 +145,28 @@
         display: block;
         position: relative;
         clear: both;
+        width: auto;
         margin: 10px 0px 0px 0px;
-        padding: 0px 0px 0px 90px;
+        padding: 0px;
+
+    }
+    #jive-loginTable td.loginFormTable {
+        padding: 17px 17px 7px 18px;
+        background-color: #e1eaf1;
+        border: 1px solid #b6c5d3;
+        -moz-border-radius: 4px;
     }
     #jive-loginVersion {
-        display: block;
-        position: relative;
-        clear: both;
-        width: 440px;
-        text-align: right;
-        bottom: 0px;
-        color: #666666;
+        color: #999999;
         font-weight: normal;
         font-size: 11px;
-        margin-bottom: -5px;
-        padding-top: 20px;
+        padding-top: 8px;
     }
 
     .jive-login-label {
         font-size : 12px;
+        font-weight: bold;
+        color: #214c74;
     }
 
 
@@ -198,58 +195,67 @@
 <div align="center">
     <!-- BEGIN login box -->
     <div id="jive-loginBox">
-    <div id="jive-loginBoxPadding">
+
         <div id="jive-loginLogo"></div>
         <div id="jive-loginHeader"><fmt:message key="admin.console" /></div>
 
 
 
-        <div id="jive-loginTable">
-        <table cellpadding="2" cellspacing="0" border="0">
-            <noscript>
+        <div align="center" id="jive-loginTable">
+            <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td colspan="3">
-                        <table cellpadding="0" cellspacing="0" border="0">
+                    <td align="right" class="loginFormTable">
+
+                        <table cellpadding="2" cellspacing="0" border="0">
+                        <noscript>
+                            <tr>
+                                <td colspan="3">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                    <tr valign="top">
+                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
+                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.error" /></div></td>
+                                    </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </noscript>
+                        <%  if (errors) { %>
+                            <tr>
+                                <td colspan="3">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                    <tr valign="top">
+                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
+                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.failed" /></div></td>
+                                    </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        <%  } %>
+                        <tr>
+                            <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>"></td>
+                            <td><input type="password" name="password" size="15" maxlength="50" id="p01"></td>
+                            <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;"></td>
+                        </tr>
                         <tr valign="top">
-                            <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                            <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.error" /></div></td>
+                            <td class="jive-login-label"><label for="u01"><fmt:message key="login.username" /></label></td>
+                            <td class="jive-login-label"><label for="p01"><fmt:message key="login.password" /></label></td>
+                            <td>&nbsp;</td>
                         </tr>
                         </table>
+
                     </td>
                 </tr>
-            </noscript>
-            <%  if (errors) { %>
                 <tr>
-                    <td colspan="3">
-                        <table cellpadding="0" cellspacing="0" border="0">
-                        <tr valign="top">
-                            <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                            <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.failed" /></div></td>
-                        </tr>
-                        </table>
+                    <td align="right">
+                        <div align="right" id="jive-loginVersion">
+                        <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
+                        </div>
                     </td>
                 </tr>
-            <%  } %>
-            <tr>
-                <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>"></td>
-                <td><input type="password" name="password" size="15" maxlength="50" id="p01"></td>
-                <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;"></td>
-            </tr>
-            <tr valign="top">
-                <td class="jive-login-label"><label for="u01"><fmt:message key="login.username" /></label></td>
-                <td class="jive-login-label"><label for="p01"><fmt:message key="login.password" /></label></td>
-                <td>&nbsp;</td>
-            </tr>
-        </table>
+            </table>
+
         </div>
 
-        <br>
-
-        <div id="jive-loginVersion">
-            <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
-        </div>
-
-    </div>
     </div>
     <!-- END login box -->
 </div>

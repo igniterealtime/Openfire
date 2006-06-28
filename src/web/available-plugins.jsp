@@ -22,11 +22,14 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.text.SimpleDateFormat"%>
+<%@ page import="org.jivesoftware.util.WebManager"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<%
+    WebManager webManager = new WebManager();
+%>
 
 <%
     boolean downloadRequested = request.getParameter("download") != null;
@@ -61,36 +64,6 @@
 <meta name="pageID" content="available-plugins"/>
 
 <style type="text/css">
-.content {
-    border-color: #bbb;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-}
-
-.textfield {
-    font-size: 11px;
-    font-family: verdana;
-    padding: 3px 2px;
-    background: #efefef;
-}
-
-.text {
-    font-size: 11px;
-    font-family: verdana;
-}
-
-.small-label {
-    font-size: 11px;
-    font-weight: bold;
-    font-family: verdana;
-}
-
-.small-label-link {
-    font-size: 11px;
-    font-weight: bold;
-    font-family: verdana;
-    text-decoration: underline;
-}
 
 .light-gray-border {
     border-color: #bbb;
@@ -99,11 +72,7 @@
     padding: 5px;
 }
 
-.light-gray-border-bottom {
-    border-color: #bbb;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-}
+
 
 .table-header {
     text-align: left;
@@ -147,78 +116,6 @@
     border-color: #bbb;
     border-style: solid;
     border-width: 1px 1px 1px 0px;
-    padding: 5px;
-}
-
-.update-top {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 9pt;
-
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 0px 0px 0px;
-    padding: 5px;
-}
-
-.update-bottom {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-    padding: 5px;
-}
-
-.update-top-left {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 0px 0px 1px;
-    padding: 5px;
-}
-
-.update-bottom-left {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 0px 0px 1px 1px;
-    padding: 5px;
-}
-
-.update-bottom-right {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 0px 1px 1px 0px;
-    padding: 5px;
-}
-
-.update-right {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 1px 0px 0px;
     padding: 5px;
 }
 
@@ -269,7 +166,7 @@
 <thead>
     <tr style="background:#F7F7FF;">
         <td class="table-header-left">&nbsp;</td>
-        <td nowrap colspan="2" class="table-header">Open Source Plugins</td>
+        <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
         <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
         <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
         <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>
@@ -358,7 +255,7 @@
     <td width="1%" class="line-bottom-border">
         <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
     </td>
-    <td nowrap class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
+    <td nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
     <td colspan="5" class="line-bottom-border">&nbsp;</td>
     <td class="line-bottom-border" align="center">
         <img src="images/success-16x16.gif" height="16" width="16"/>
@@ -370,7 +267,7 @@
 <tr><td><br/></td></tr>
 <tr style="background:#F7F7FF;">
     <td class="table-header-left">&nbsp;</td>
-    <td nowrap colspan="7" class="row-header">Commercial Plugins</td>
+    <td nowrap colspan="7" class="row-header"><fmt:message key="plugin.available.commercial_plugins" /></td>
 </tr>
 <%
     for (AvailablePlugin plugin : plugins) {
@@ -439,7 +336,7 @@
     <td width="1%" class="line-bottom-border">
         <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
     </td>
-    <td class="line-bottom-border"><%= plugin.getName()%> plugin installed successfully!</td>
+    <td class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
     <td colspan="5" class="line-bottom-border">&nbsp;</td>
     <td class="line-bottom-border">
         <img src="images/success-16x16.gif" height="16" width="16"/>
@@ -471,7 +368,7 @@
     if (outdatedPlugins.size() > 0) {
 %>
     <div class="light-gray-border" style="padding:10px;">
-    <p>The list of plugins below requires a newer version of Wildfire. <a href="http://www.jivesoftware.org/wildfire" target="_blank">Update Wildfire Now.</a></p>
+    <p><fmt:message key="plugin.available.outdated" /><a href="http://www.jivesoftware.org/wildfire" target="_blank"><fmt:message key="plugin.available.outdated.update" /></a></p>
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
 
 
@@ -538,7 +435,7 @@
         time = format.format(date);
     %>
        <p>
-        Available plugins list auto-updated on <%= time%>. Auto update is turned on. <a href="available-plugins.jsp?autoupdate=true">Update list manually.</a>
+        <fmt:message key="plugin.available.autoupdate" /> <%= time%>. <fmt:message key="plugin.available.autoupdate.on"/><a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.manual.update" /></a>
         </p>
            <% } %>
 </body>

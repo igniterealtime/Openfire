@@ -348,7 +348,7 @@
         document.getElementById(update.hashCode + "-row").style.display = 'none';
         document.getElementById(update.hashCode + "-update").style.display = '';
         document.getElementById(update.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0"/>';
-        document.getElementById(update.hashCode + "-text").innerHTML = 'Update Completed';
+        document.getElementById(update.hashCode + "-text").innerHTML = '<fmt:message key="plugin.admin.update.complete" />';
     }
 </script>
 </head>
@@ -516,11 +516,15 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 <tr id="<%= update.hashCode() %>-row">
     <td class="update-bottom-left">&nbsp;</td>
     <td class="update-bottom" nowrap>
-        <span class="small-label">Version <%= update.getLatestVersion()%> Available</span>
+        <span class="small-label">
+            <fmt:message key="plugin.admin.version.available">
+                <fmt:param value="<%= update.getLatestVersion()%>" />
+            </fmt:message>
+            </span>
     </td>
     <td nowrap class="update-bottom">
         <% if (update.getChangelog() != null) { %>
-        <span class="text">(<a href="<%= update.getChangelog()%>">Change Log</a>)</span>
+        <span class="text">(<a href="<%= update.getChangelog()%>"><fmt:message key="plugin.admin.changelog" /></a>)</span>
         <% }
         else { %>
         &nbsp;
@@ -530,7 +534,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
         <table>
             <tr>
                 <td><a href="javascript:download('<%= update.getURL()%>', '<%=update.hashCode()%>')"><img src="images/icon_update-16x16.gif" width="16" height="16" border="0" alt="changelog"></a></td>
-                <td><a href="javascript:download('<%= update.getURL()%>', '<%=update.hashCode()%>')"><span class="small-label">Update</span></a></td>
+                <td><a href="javascript:download('<%= update.getURL()%>', '<%=update.hashCode()%>')"><span class="small-label"><fmt:message key="plugin.admin.update" /></span></a></td>
             </tr>
         </table>
     </td>
@@ -543,7 +547,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
             <table>
                 <tr>
                     <td id="<%= update.hashCode()%>-image"><img src="images/working-16x16.gif" border="0"/></td>
-                    <td id="<%= update.hashCode()%>-text" class="table-font">Updating</td>
+                    <td id="<%= update.hashCode()%>-text" class="table-font"><fmt:message key="plugin.admin.updating" /></td>
                 </tr>
             </table>
         </td>

@@ -190,4 +190,12 @@ public class AvailablePlugin {
         }
         return Long.parseLong(fileSize);
     }
+
+    /**
+     * Returns the hash code for this object.
+     * @return the hash code.
+     */
+    public int getHashCode(){
+        return hashCode();
+    }
 }

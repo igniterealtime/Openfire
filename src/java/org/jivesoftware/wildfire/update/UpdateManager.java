@@ -32,14 +32,27 @@ import org.jivesoftware.wildfire.container.Plugin;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
  * will check every 48 hours for updates. Use the system property <tt>update.frequency</tt>
  * to set new values.<p>
- *
+ * <p/>
  * New versions of plugins can be downloaded and installed. However, new server releases
  * should be manually installed.
  *
@@ -265,7 +278,7 @@ public class UpdateManager extends BasicModule {
         // Remove installed plugins from the list of available plugins
         for (Plugin plugin : server.getPluginManager().getPlugins()) {
             String pluginName = server.getPluginManager().getName(plugin);
-            for (Iterator<AvailablePlugin> it=plugins.iterator(); it.hasNext();) {
+            for (Iterator<AvailablePlugin> it = plugins.iterator(); it.hasNext();) {
                 AvailablePlugin availablePlugin = it.next();
                 if (availablePlugin.getName().equals(pluginName)) {
                     it.remove();
@@ -429,7 +442,7 @@ public class UpdateManager extends BasicModule {
         Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
-            Element plugin = (Element) plugins.next();
+            Element plugin = (Element)plugins.next();
             String pluginName = plugin.attributeValue("name");
             String latestVersion = plugin.attributeValue("latest");
             String icon = plugin.attributeValue("icon");
@@ -689,7 +702,7 @@ public class UpdateManager extends BasicModule {
         // Parse info and recreate available plugins
         Iterator it = xmlResponse.getRootElement().elementIterator("plugin");
         while (it.hasNext()) {
-            Element plugin = (Element) it.next();
+            Element plugin = (Element)it.next();
             String pluginName = plugin.attributeValue("name");
             String latestVersion = plugin.attributeValue("latest");
             String icon = plugin.attributeValue("icon");
@@ -706,5 +719,14 @@ public class UpdateManager extends BasicModule {
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(pluginName, available);
         }
+    }
+
+    /**
+     * Returns a previously fetched list of updates.
+     *
+     * @return a previously fetched list of updates.
+     */
+    public Collection<Update> getPluginUpdates() {
+        return pluginUpdates;
     }
 }

@@ -109,4 +109,12 @@ public class Update {
     public void setDownloaded(boolean downloaded) {
         this.downloaded = downloaded;
     }
+
+    /**
+     * Returns the hashCode for this update object.
+     * @return hashCode
+     */
+    public int getHashCode(){
+        return hashCode();
+    }
 }

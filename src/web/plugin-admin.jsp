@@ -6,30 +6,32 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-				 org.jivesoftware.wildfire.XMPPServer,
-				 org.jivesoftware.wildfire.container.Plugin,
+                 org.jivesoftware.util.WebManager,
+                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.container.Plugin,
                  org.jivesoftware.wildfire.container.PluginManager,
-                 org.jivesoftware.wildfire.update.Update,
-                 org.jivesoftware.wildfire.update.UpdateManager"
-%>
-<%@ page import="java.io.BufferedReader"%>
-<%@ page import="java.io.File"%>
-<%@ page import="java.io.FileReader"%>
-<%@ page import="java.io.IOException"%>
-<%@ page import="java.net.URLEncoder"%>
-<%@ page import="java.util.ArrayList"%>
-<%@ page import="java.util.Collections"%>
-<%@ page import="java.util.Comparator"%>
-<%@ page import="java.util.List"%>
+                 org.jivesoftware.wildfire.update.Update"
+        %>
+<%@ page import="org.jivesoftware.wildfire.update.UpdateManager" %>
+<%@ page import="java.io.BufferedReader" %>
+<%@ page import="java.io.File" %>
+<%@ page import="java.io.FileReader" %>
+<%@ page import="java.io.IOException" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.Comparator" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-
 <%
-	String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
-	String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
+    WebManager webManager = new WebManager();
+%>
+<%
+    String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
+    String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
     boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
@@ -49,7 +51,7 @@
             }
         });
     }
-    
+
     if (downloadRequested) {
         // Download and install new version of plugin
         updateManager.downloadPlugin(url);
@@ -57,7 +59,7 @@
 
     if (deletePlugin != null) {
         File pluginDir = pluginManager.getPluginDirectory(pluginManager.getPlugin(deletePlugin));
-		File pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".jar");
+        File pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".jar");
         // Also try the .war extension.
         if (!pluginJar.exists()) {
             pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".war");
@@ -66,158 +68,366 @@
         pluginManager.unloadPlugin(pluginDir.getName());
         response.sendRedirect("plugin-admin.jsp?deletesuccess=true");
         return;
-	}
-	
-	if (reloadPlugin != null) {
-		for (Plugin plugin : plugins) {
+    }
+
+    if (reloadPlugin != null) {
+        for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
-			if (reloadPlugin.equals(pluginDir.getName())) {
-				pluginManager.unloadPlugin(reloadPlugin);
-				response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
+            if (reloadPlugin.equals(pluginDir.getName())) {
+                pluginManager.unloadPlugin(reloadPlugin);
+                response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
                 return;
-			}
-		}		
-	}
+            }
+        }
+    }
 %>
 
 <% if (showReadme) {
-       String pluginName = ParamUtils.getParameter(request, "plugin");
-       Plugin plugin = pluginManager.getPlugin(pluginName);
-       if (plugin != null) {
-           File readme = new File(pluginManager.getPluginDirectory(plugin), "readme.html");
-           if (readme.exists()) {
-               BufferedReader in = null;
-               try {
-                   in = new BufferedReader(new FileReader(readme));
-                   String line;
-                   while ((line = in.readLine()) != null) {
+    String pluginName = ParamUtils.getParameter(request, "plugin");
+    Plugin plugin = pluginManager.getPlugin(pluginName);
+    if (plugin != null) {
+        File readme = new File(pluginManager.getPluginDirectory(plugin), "readme.html");
+        if (readme.exists()) {
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new FileReader(readme));
+                String line;
+                while ((line = in.readLine()) != null) {
 %>
-                        <%= line %>
+<%= line %>
 <%
-                   }
-               }
-               catch (IOException ioe) {
-                   ioe.printStackTrace();
-               }
-               finally {
-                   if (in != null) {
-                       try { in.close(); } catch (Exception e) { }
-                   }
-               }
-           }
-       }
-       return;
-   }
+                    }
+                }
+                catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+                finally {
+                    if (in != null) {
+                        try {
+                            in.close();
+                        }
+                        catch (Exception e) {
+                        }
+                    }
+                }
+            }
+        }
+        return;
+    }
 %>
 <% if (showChangelog) {
-       String pluginName = ParamUtils.getParameter(request, "plugin");
-       Plugin plugin = pluginManager.getPlugin(pluginName);
-       if (plugin != null) {
-           File changelog = new File(pluginManager.getPluginDirectory(plugin), "changelog.html");
-           if (changelog.exists()) {
-               BufferedReader in = null;
-               try {
-                   in = new BufferedReader(new FileReader(changelog));
-                   String line;
-                   while ((line = in.readLine()) != null) {
+    String pluginName = ParamUtils.getParameter(request, "plugin");
+    Plugin plugin = pluginManager.getPlugin(pluginName);
+    if (plugin != null) {
+        File changelog = new File(pluginManager.getPluginDirectory(plugin), "changelog.html");
+        if (changelog.exists()) {
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new FileReader(changelog));
+                String line;
+                while ((line = in.readLine()) != null) {
 %>
-                        <%= line %>
+<%= line %>
 <%
-                   }
-               }
-               catch (IOException ioe) {
+                    }
+                }
+                catch (IOException ioe) {
 
-               }
-               finally {
-                   if (in != null) {
-                       try { in.close(); } catch (Exception e) { }
-                   }
-               }
-           }
-       }
-       return;
+                }
+                finally {
+                    if (in != null) {
+                        try {
+                            in.close();
+                        }
+                        catch (Exception e) {
+                        }
+                    }
+                }
+            }
+        }
+        return;
     }
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="plugin.admin.title"/></title>
-        <meta name="pageID" content="plugin-settings"/>
-        <meta name="helpPage" content="manage_system_plugins.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="plugin.admin.title"/></title>
+<meta name="pageID" content="plugin-settings"/>
+<meta name="helpPage" content="manage_system_plugins.html"/>
+<script src="dwr/engine.js" type="text/javascript"></script>
+<script src="dwr/util.js" type="text/javascript"></script>
+<script src="dwr/interface/downloader.js" type="text/javascript"></script>
+<style type="text/css">
+.content {
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+}
+
+.textfield {
+    font-size: 11px;
+    font-family: verdana;
+    padding: 3px 2px;
+    background: #efefef;
+}
+
+.text {
+    font-size: 11px;
+    font-family: verdana;
+}
+
+.small-label {
+    font-size: 11px;
+    font-weight: bold;
+    font-family: verdana;
+}
+
+.small-label-link {
+    font-size: 11px;
+    font-weight: bold;
+    font-family: verdana;
+    text-decoration: underline;
+}
+
+.light-gray-border {
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px 1px 1px 1px;
+    padding: 5px;
+}
+
+.light-gray-border-bottom {
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+}
+
+.table-header {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px 0px 1px 0px;
+    padding: 5px;
+}
+
+.table-header-left {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px 0px 1px 1px;
+    padding: 5px;
+
+}
+
+.table-header-right {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px 1px 1px 0px;
+    padding: 5px;
+}
+
+.table-font {
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+}
+
+.update-top {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 9pt;
+
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 1px 0px 0px 0px;
+    padding: 5px;
+}
+
+.update {
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 0px 1px 1px 1px;
+    padding: 5px;
+}
+
+.update-bottom {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    padding: 5px;
+}
+
+.update-top-left {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 1px 0px 0px 1px;
+    padding: 5px;
+}
+
+.update-bottom-left {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 0px 0px 1px 1px;
+    padding: 5px;
+}
+
+.update-bottom-right {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 0px 1px 1px 0px;
+    padding: 5px;
+}
+
+.update-right {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 1px 1px 0px 0px;
+    padding: 5px;
+}
+
+.line-bottom-border {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 9pt;
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    padding: 5px;
+}
+
+
+</style>
+
+
+<script type="text/javascript">
+    function download(url, hashCode) {
+        document.getElementById(hashCode + "-row").style.display = 'none';
+        document.getElementById(hashCode + "-update").style.display = '';
+        downloader.downloadPlugin(downloadComplete, url);
+    }
+
+    function downloadComplete(update) {
+        document.getElementById(update.hashCode + "-row").style.display = 'none';
+        document.getElementById(update.hashCode + "-update").style.display = '';
+        document.getElementById(update.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0"/>';
+        document.getElementById(update.hashCode + "-text").innerHTML = 'Update Completed';
+    }
+</script>
+</head>
+
+<body>
 
 <% if ("true".equals(request.getParameter("deletesuccess"))) { %>
 
-    <div class="jive-success">
+<div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_success" /></td>
-        </tr>
-    </tbody>
+        <tbody>
+            <tr>
+                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_success"/></td>
+            </tr>
+        </tbody>
     </table>
-    </div>
-    <br>
+</div>
+<br>
 
-<% } else if ("false".equals(request.getParameter("deletesuccess"))) { %>
+<% }
+else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
-    <div class="jive-error">
+<div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" />></td>
-        	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_failure" /></td>
-        </tr>
-    </tbody>
+        <tbody>
+            <tr>
+                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/>></td>
+                <td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_failure"/></td>
+            </tr>
+        </tbody>
     </table>
-    </div>
-    <br>
+</div>
+<br>
 
 <% } %>
 
 <% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
 
-    <div class="jive-success">
+<div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success" /></td></tr>
-    </tbody>
+        <tbody>
+            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success"/></td></tr>
+        </tbody>
     </table>
-    </div>
-    <br>
+</div>
+<br>
 
 <% } %>
 
 <p>
-<fmt:message key="plugin.admin.info" />
+    <fmt:message key="plugin.admin.info"/>
 </p>
+
 <p>
 
-<div class="jive-table">
+<div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr>
-        <th>&nbsp;</th>
-        <th nowrap colspan="2"><fmt:message key="plugin.admin.name" /></th>
-        <th nowrap><fmt:message key="plugin.admin.description" /></th>
-        <th nowrap><fmt:message key="plugin.admin.version" /></th>
-        <th nowrap><fmt:message key="plugin.admin.author" /></th>
-        <th nowrap><fmt:message key="plugin.admin.restart" /></th>
-        <th nowrap><fmt:message key="global.delete" /></th>
-    </tr>
-</thead>
+<tr>
+
+    <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.version"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.author"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.restart"/></td>
+    <td nowrap class="table-header-right"><fmt:message key="global.delete"/></td>
+</tr>
+
 <tbody>
+<tr><td colspan="8"><br/></td></tr>
 
 <%
-	// If only the admin plugin is installed, show "none".
+    // If only the admin plugin is installed, show "none".
     if (plugins.size() == 1) {
 %>
-    <tr>
-        <td align="center" colspan="8"><fmt:message key="plugin.admin.no_plugin" /></td>
-    </tr>
+<tr>
+    <td align="center" colspan="8"><fmt:message key="plugin.admin.no_plugin"/></td>
+</tr>
 <%
     }
 
@@ -240,76 +450,111 @@
             Update update = updateManager.getPluginUpdate(pluginName, pluginVersion);
 %>
 
-        <tr>
-            <td width="1%">
-                <% if (icon.exists()) { %>
-                <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
-                <% } else { %>
-	            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-                <% } %>
-	        </td>
-	        <td width="20%" nowrap>
-	            <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
-                <%
+<tr valign="top">
+    <td width="1%" class="<%= update != null ? "update-top-left" : "line-bottom-border"%>">
+        <% if (icon.exists()) { %>
+        <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
+        <% }
+        else { %>
+        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+        <% } %>
+    </td>
+    <td width="20%" nowrap valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <%= (pluginName != null ? pluginName : dirName) %> &nbsp;
+        <%
 
-                    boolean readmeExists = new File(pluginDir, "readme.html").exists();
-                    boolean changelogExists = new File(pluginDir, "changelog.html").exists();
-                %>
-                </td>
-            <td nowrap valign="top">
-                <p><% if (readmeExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
-                ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-                <% } else { %> &nbsp; <% } %>
-                <% if (changelogExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
-                ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-                <% } else { %> &nbsp; <% } %></p>
-                <% if (update != null) { %>
-                <p>
-                    <%
-                        String updateURL = update.getURL();
-                        if (updateURL.endsWith(".jar") || updateURL.endsWith(".zip") || updateURL.endsWith(".war")) {
-                            // Change it so that the server downloads and installs the new version of the plugin
-                            updateURL = "plugin-admin.jsp?download=true&url="+ updateURL;
-                        }
-                    %>
-                    <a href="<%= updateURL %>"
-                    ><img src="images/doc-down-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.admin.download" />"></a>
-                    <% if (update.getChangelog() != null) { %>
-                    <a href="<%= update.getChangelog()%>"
+            boolean readmeExists = new File(pluginDir, "readme.html").exists();
+            boolean changelogExists = new File(pluginDir, "changelog.html").exists();
+        %>
+
+
+    </td>
+    <td nowrap valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <p><% if (readmeExists) { %>
+            <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
+                    ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+            <% }
+            else { %> &nbsp; <% } %>
+            <% if (changelogExists) { %>
+            <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
                     ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-                    <% } else { %> &nbsp; <% } %>
-                </p>
-                <% } %>
-            </td>
-	        <td width="60%">
-	            <p><%= pluginDescription != null ? pluginDescription : "" %></p>
-                <% if (update != null) { %>
-                <p><fmt:message key="plugin.admin.update-desc" /></p>
-                <% } %>
-            </td>
-	        <td width="5%" align="center" valign="top">
-                <p><%= pluginVersion != null ? pluginVersion : "" %></p>
-                <% if (update != null) { %>
-	             <p><%= update.getLatestVersion() %></p>
-                <% } %>
-	        </td>
-	        <td width="15%" nowrap valign="top">
-	             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
-	        </td>
-	        <td width="1%" align="center" valign="top">
-	            <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
-	             title="<fmt:message key="plugin.admin.click_reload" />"
-	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
-	        </td>
-	        <td width="1%" align="center" valign="top" style="border-right:1px #ccc solid;">
-	            <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
-	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>
-	        </td>
-	    </tr>
-<%		    
+            <% }
+            else { %> &nbsp; <% } %></p>
+    </td>
+    <td width="60%" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <%= pluginDescription != null ? pluginDescription : "" %>
+    </td>
+    <td width="5%" align="center" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <p><%= pluginVersion != null ? pluginVersion : "" %></p>
+
+    </td>
+    <td width="15%" nowrap valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
+    </td>
+    <td width="1%" align="center" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
+           title="<fmt:message key="plugin.admin.click_reload" />"
+                ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
+    </td>
+    <td width="1%" align="center" valign="top" class="<%= update != null ? "update-right" : "line-bottom-border"%>">
+        <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
+           title="<fmt:message key="global.click_delete" />"
+                ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>
+    </td>
+</tr>
+
+<% if (update != null) { %>
+
+<!-- Has Updates, show show -->
+<%
+    String updateURL = update.getURL();
+    if (updateURL.endsWith(".jar") || updateURL.endsWith(".zip") || updateURL.endsWith(".war")) {
+        // Change it so that the server downloads and installs the new version of the plugin
+        updateURL = "plugin-admin.jsp?download=true&url=" + updateURL;
+    }
+%>
+<tr id="<%= update.hashCode() %>-row">
+    <td class="update-bottom-left">&nbsp;</td>
+    <td class="update-bottom" nowrap>
+        <span class="small-label">Version <%= update.getLatestVersion()%> Available</span>
+    </td>
+    <td nowrap class="update-bottom">
+        <% if (update.getChangelog() != null) { %>
+        <span class="text">(<a href="<%= update.getChangelog()%>">Change Log</a>)</span>
+        <% }
+        else { %>
+        &nbsp;
+        <% } %>
+    </td>
+    <td class="update-bottom">
+        <table>
+            <tr>
+                <td><a href="javascript:download('<%= update.getURL()%>', '<%=update.hashCode()%>')"><img src="images/icon_update-16x16.gif" width="16" height="16" border="0" alt="changelog"></a></td>
+                <td><a href="javascript:download('<%= update.getURL()%>', '<%=update.hashCode()%>')"><span class="small-label">Update</span></a></td>
+            </tr>
+        </table>
+    </td>
+    <td class="update-bottom" colspan="3">&nbsp;</td>
+    <td class="update-bottom-right" colspan="3">&nbsp;</td>
+</tr>
+
+    <tr id="<%= update.hashCode()%>-update" style="display:none;">
+        <td colspan="8" align="center" class="update">
+            <table>
+                <tr>
+                    <td id="<%= update.hashCode()%>-image"><img src="images/working-16x16.gif" border="0"/></td>
+                    <td id="<%= update.hashCode()%>-text" class="table-font">Updating</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+
+<% } %>
+<tr><td></td></tr>
+
+<!-- End of update section -->
+<%
         }
     }
 %>
@@ -317,5 +562,5 @@
 </table>
 </div>
 
-    </body>
+</body>
 </html>

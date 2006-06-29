@@ -10,7 +10,9 @@
 
 package org.jivesoftware.wildfire.net;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.AuthFactory;
+import org.jivesoftware.wildfire.sasl.AuthorizationManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import javax.security.auth.callback.*;
@@ -20,8 +22,7 @@ import java.io.IOException;
 
 /**
  * Callback handler that may be used when doing SASL authentication. A CallbackHandler
- * may be required depending on the SASL mechanism being used. Currently DIGEST-MD5 and
- * CRAM-MD5 are the only mechanisms that will require a callback handler.<p>
+ * may be required depending on the SASL mechanism being used.<p>
  *
  * Mechanisms that use a digest don't include a password so the server needs to use the
  * stored password of the user to compare it (somehow) with the specified digest. This
@@ -39,7 +40,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
     public void handle(final Callback[] callbacks)
             throws IOException, UnsupportedCallbackException {
 
-        String realm = null;
+        String realm;
         String name = null;
 
         for (int i = 0; i < callbacks.length; i++) {
@@ -74,13 +75,18 @@ public class XMPPCallbackHandler implements CallbackHandler {
             }
             else if (callbacks[i] instanceof AuthorizeCallback) {
                 AuthorizeCallback authCallback = ((AuthorizeCallback) callbacks[i]);
-                String authenId = authCallback.getAuthenticationID();
-                String authorId = authCallback.getAuthorizationID();
-                if (authenId.equals(authorId)) {
+                String authenId =
+                        authCallback.getAuthenticationID(); // Principal that authenticated
+                String authorId =
+                        authCallback.getAuthorizationID();  // Username requested (not full JID)
+                if (AuthorizationManager.authorize(authorId, authenId)) {
                     authCallback.setAuthorized(true);
                     authCallback.setAuthorizedID(authorId);
+                    Log.debug(authenId + " authorized to " + authorId);
                 }
-                //Log.info("AuthorizeCallback: authorId: " + authorId);
+                else {
+                    Log.debug(authenId + " not authorized to " + authorId);
+                }
             }
             else {
                 throw new UnsupportedCallbackException(callbacks[i], "Unrecognized Callback");

@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.container;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.XMPPServer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -168,7 +169,7 @@ public class PluginClassLoader {
      * @return the best parent classloader to use.
      */
     private ClassLoader findParentClassLoader() {
-        ClassLoader parent = Thread.currentThread().getContextClassLoader();
+        ClassLoader parent = XMPPServer.class.getClassLoader();
         if (parent == null) {
             parent = this.getClass().getClassLoader();
         }

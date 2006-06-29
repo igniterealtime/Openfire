@@ -2,77 +2,171 @@
 
 <html>
 <head>
-	<title>Wildfire Changelog</title>
-    <style type="text/css">
-        BODY {
-            font-size : 100%;
-        }
-        BODY, TD, TH {
-            font-family : tahoma, verdana, arial, helvetica, sans-serif;
-            font-size : 0.8em;
-        }
-				H2 {
-					 font-size : 10pt;
-					 font-weight : bold;
-					 padding-left : 1em;
-				}
-        A:hover {
-            text-decoration : none;
-        }
-        .pageheader {
-            font-family : arial, helvetica, sans-serif;
-            font-size : 14pt;
-            font-weight: bold;
-        }
-        .header {
-            font-family : tahoma, arial, helvetica, sans-serif;
-            font-size : 1.4em;
-            font-weight: bold;
-            border-bottom : 1px #ccc solid;
-            padding-bottom : 2px;
-        }
-        .subheader {
-            font-weight: bold;
-            color: #600;
-        }
-        TT {
-            font-family : courier new;
-            font-weight : bold;
-            color : #060;
-        }
-        PRE {
-            font-family : courier new;
-            font-size : 100%;
-        }
-        .footer {
-            font-size : 8pt;
-            color : #666;
-            text-align : center;
-						margin-top : 2em;
-						padding-top : 0.5em;
-						border-top : 1px #CCC solid;
-        }
-        .important {
-            color : #c00;
-            font-weight : bold;
-        }
-        .issueid {
-            color : #999;
-            font-size : 11px;
-        }
-    </style>
+<title>Wildfire Changelog</title>
+<style type="text/css">
+/* global font and body settings */
+body {
+	font-size : 100%;
+	background-color : #d3d6d9;
+	padding: 0px;
+	color: #33333;
+	margin: 0px 0px 30px 0px;
+}
+body, td, th {
+	font-family : arial, helvetica, sans-serif;
+	font-size : 10pt;
+}
+pre, tt, code {
+	font-family : courier new, monospaced;
+	font-size : 9pt;
+}
+#pageContainer {
+	display: block;
+	position: relative;
+	clear: all;
+	background-color: #fff;
+	border: 1px solid #999;
+	padding: 40px;
+	margin: 30px;
+	-moz-border-radius: 6px;
+}
+#pageHeader {
+	display: block;
+	position: relative;
+	height: 80px;
+	background-color: #e7eaee;
+	border: 1px solid #cccccc;
+	border-bottom: none;
+	-moz-border-radius: 5px 5px 0px 0px;
+	margin: 10px 0px 0px 0px;
+}
+#pageBody {
+	margin: 0px 18px 0px 20px;
+}
+
+
+
+/* anchors */
+a:link {
+	color: #11568c;
+}
+a:visited {
+	color: #571c8d;
+}
+a:hover {
+	color: #7a1d42;
+	text-decoration : underline;
+}
+a:active {
+	color: #7a1d42;
+}
+
+
+
+/* page header elements (logo and navigation) */
+.navigation {
+	display: block;
+	position: relative;
+	height: 20px;
+	background-color: #335588;
+	border: 1px solid #cccccc;
+	border-top: none;
+	color: #ffffff;
+	font-size: 11px;
+	line-height: 18px;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 25px 0px;
+	overflow: hidden;
+}
+.navigation a {
+	margin: 0px 20px 0px 20px;
+}
+.navigation a:link { color: #ffffff; }
+.navigation a:visited { color: #ffffff; }
+.navigation a:hover { color: #ffffff; }
+.navigation a:active { color: #ffffff; }
+
+
+
+/* headings */
+h1 {
+	display: block;
+	position: relative;
+	font-size : 1.7em;
+	font-weight : bold;
+	color: #670e15;
+	padding: 0px;
+	margin: 30px 0px 0px 20px;
+}
+h2 {
+	font-size : 1.3em;
+	font-weight : bold;
+	margin: 40px 0px 6px 0px;
+	padding: 0px;
+	color: #335588;
+}
+h3 {
+	font-size : 1.0em;
+	font-weight : bold;
+	margin: 25px 0px 3px 0px;
+	padding: 0px;
+	color: #334466;
+}
+
+
+
+/* general elements */
+p {
+	margin: 0px 0px 15px 0px;
+}
+
+ul {
+	margin: 5px 0px 15px 35px;
+}
+li {
+	padding-bottom : 4px;
+}
+tt {
+	font-family : courier new;
+	font-weight : bold;
+	color : #060;
+}
+hr {
+	display: block;
+	height: 1px;
+	background-color: #999999;
+	border: none;
+	margin: 40px 0px 20px 0px;
+}
+	
+.footer {
+	font-size : 8pt;
+	color : #666;
+	text-align : center;
+	margin-top : 2em;
+	padding-top : 0.5em;
+	border-top : 1px #CCC solid;
+}
+</style>
 </head>
 <body>
 
-<div class="header">
-Wildfire Changelog
-</div>
+<div id="pageContainer">
+ 
+	<div id="pageHeader">
+		<h1>Wildfire Changelog</h1>
+	</div>
+	<div class="navigation">
+	<a href="README.html">Readme</a>|<a href="changelog.html"><strong>Changelog</strong></a>|<a href="LICENSE.html">License</a>
+	</div>
+	
+	<div id="pageBody">
 
-<p>
-<b>3.0.0 Beta</b> -- June 20, 2006
-<p>
 
-<h2>Wildfire New Features</h2>
+
+<h2>3.0.0 Beta -- <span style="font-weight: normal;">June 20, 2006</span></h2>
+
+<h3>Wildfire New Features</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-666'>JM-666</a>] - Added support for connection managers.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-673'>JM-673</a>] - Added database support for plugins.</li>
@@ -98,7 +192,7 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-688'>JM-688</a>] - Upgraded to JDK 1.5.0_07.</li>
 </ul>
 
-<h2>Wildfire Bug Fixes</h2>
+<h3>Wildfire Bug Fixes</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-707'>JM-707</a>] - A &lt;system-shutdown/&gt; stream error condition is now sent when shutting down the server.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-653'>JM-653</a>] - FileTransfer was not implementing Cacheable.</li>
@@ -126,21 +220,21 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-663'>JM-663</a>] - UserProvider no longer depends on VCardManager.</li>
 </ul>
 
-<h2>Wildfire Enterprise</h2>
+<h3>Wildfire Enterprise</h3>
 <ul>
     Initial release.
 </ul>
 
-<h2>Wildfire Connection Manager Module</h2>
+<h3>Wildfire Connection Manager Module</h3>
 <ul>
     Initial release.
 </ul>
 
-<p>
-<b>2.6.2</b> -- April 20, 2006
-<p>
 
-<h2>Bug Fixes</h2>
+
+<h2>2.6.2 -- April 20, 2006</h2>
+
+<h3>Bug Fixes</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-648'>JM-648</a>] - Server-to-server thread pool was getting exhausted when remote servers were unresponsive.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-650'>JM-650</a>] - Fixed concurrency problem that was closing active connections by mistake.</li>
@@ -157,11 +251,11 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-649'>JM-649</a>] - Increased proxy file transfer buffer size.</li>
 </ul>
 
-<p>
-<b>2.6.1</b> -- April 11, 2006
-<p>
 
-<h2>New Features</h2>
+
+<h2>2.6.1 -- April 11, 2006</h2>
+
+<h3>New Features</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-222'>JM-222</a>] - Entire user base is no longer loaded when using public shared groups. <b>(1 vote)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-634'>JM-634</a>] - Shared contacts whose subscription type is FROM are no longer kept in memory.</li>
@@ -169,18 +263,18 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-637'>JM-637</a>] - Added support for basic commands defined in JEP-133: Service Administration.</li>
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Bug Fixes</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-636'>JM-636</a>] - After initial install new user accounts were corrupted until restart.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-630'>JM-630</a>] - Fixed upgrade scripts of PostreSQL, SQLServer and Sybase.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-631'>JM-631</a>] - New user passwords were not being saved to the database.</li>
 </ul>
 
-<p>
-<b>2.6.0</b> -- April 6, 2006
-<p>
 
-<h2>New Features</h2>
+
+<h2>2.6.0 -- April 6, 2006</h2>
+
+<h3>New Features</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-291'>JM-291</a>] - Encrypted passwords are now stored in the db. <b>(21 votes)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-613'>JM-613</a>] - Added support for JEP-0060: Publish-Subscribe. <b>(1 vote)</b></li>
@@ -200,10 +294,9 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-620'>JM-620</a>] - Added development mode for web.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-623'>JM-623</a>] - Exposed port in connection object.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-614'>JM-614</a>] - Updated third-party libraries.</li>
-
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Bug Fixes</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-615'>JM-615</a>] - Fixed deadlock when loading users and rosters.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-621'>JM-621</a>] - Fixed deadlock in RoutingTable.</li>
@@ -222,8 +315,13 @@ Wildfire Changelog
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-628'>JM-628</a>] - Pretty printing of wildfire.xml file was not always working.</li>
 </ul>
 
-<div class="footer">
-Copyright &copy; Jive Software, 2006
+
+	<div class="footer">
+	Copyright &copy; Jive Software, 2006
+	</div>
+
+
+	</div>
 </div>
 
 </body>

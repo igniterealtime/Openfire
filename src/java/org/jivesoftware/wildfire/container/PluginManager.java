@@ -796,14 +796,18 @@ public class PluginManager {
                     // needs to be unloaded and then reloaded.
                     else if (jarFile.lastModified() > dir.lastModified()) {
                         unloadPlugin(pluginName);
+                        // Give the plugin 2 seconds to unload.
+                        Thread.sleep(2000);
                         // Ask the system to clean up references.
                         System.gc();
                         int count = 0;
                         while (!deleteDir(dir) && count < 5) {
                             Log.warn("Error unloading plugin " + pluginName + ". " +
                                 "Will attempt again momentarily.");
-                            Thread.sleep(10000);
+                            Thread.sleep(8000);
                             count++;
+                            // Ask the system to clean up references.
+                            System.gc();
                         }
                         // Now unzip the plugin.
                         unzipPlugin(pluginName, jarFile, dir);

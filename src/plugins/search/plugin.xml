@@ -19,7 +19,7 @@
         </tab>
 		<tab id="tab-users">
 			<sidebar id="sidebar-users">
-				<item id="advance-user-search" name="Advance User Search"
+				<item id="advance-user-search" name="Advanced User Search"
 					url="advance-user-search.jsp"
 					description="Advanced user search" />
 			</sidebar>

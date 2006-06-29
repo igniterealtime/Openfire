@@ -56,7 +56,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/../whack/source/java" />
+          <root url="file://J:/whack/source/java" />
           <root url="jar://$MODULE_DIR$/build/lib/merge/whack.jar!/" />
         </SOURCES>
       </library>

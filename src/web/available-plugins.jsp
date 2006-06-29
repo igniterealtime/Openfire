@@ -146,20 +146,38 @@
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/downloader.js" type="text/javascript"></script>
 <script type="text/javascript">
+
+    var downloading;
     function downloadPlugin(url, id) {
+        downloading = true;
         document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
         document.getElementById(id).style.background = "#FFFFF7";
-        setTimeout("startDownload('"+url+"','"+id+"')", 5000);
+        setTimeout("startDownload('" + url + "','" + id + "')", 5000);
     }
 
-    function startDownload(url, id){
-         downloader.installPlugin(downloadComplete, url, id);
+    function startDownload(url, id) {
+        downloader.installPlugin(downloadComplete, url, id);
     }
 
-    function downloadComplete(id) {
-        document.getElementById(id).style.display = 'none';
-        document.getElementById(id + "-row").style.display = '';
-        setTimeout("fadeIt('" + id + "')", 3000);
+    function downloadComplete(status) {
+        downloading = false;
+        if (!status.successfull) {
+            document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/add-16x16.gif" border="0"/>';
+            document.getElementById(status.hashCode).style.background = "#FFFFFF";
+            document.getElementById("errorMessage").style.display = '';
+            document.getElementById(status.hashCode).style.display = '';
+            document.getElementById(status.hashCode + "-row").style.display = 'none';
+            setTimeout("closeErrorMessage()", 5000);
+        }
+        else {
+            document.getElementById(status.hashCode).style.display = 'none';
+            document.getElementById(status.hashCode + "-row").style.display = '';
+            setTimeout("fadeIt('" + status.hashCode + "')", 3000);
+        }
+    }
+
+    function closeErrorMessage(){
+        Effect.Fade("errorMessage");
     }
 
     function fadeIt(id) {
@@ -167,10 +185,26 @@
     }
 
 
-     DWREngine.setErrorHandler(handleError);
+    DWREngine.setErrorHandler(handleError);
 
-     function handleError(error){
-     }
+    function handleError(error) {
+    }
+
+    // Handle leaving of page validation.
+    window.onbeforeunload = function (evt) {
+        if (!downloading) {
+            return;
+        }
+        var message = '<fmt:message key="plugin.available.cancel.redirect" />';
+        if (typeof evt == 'undefined') {
+            evt = window.event;
+        }
+        if (evt) {
+            evt.returnValue = message;
+        }
+        return message;
+    }
+
 
 </script>
 </head>
@@ -200,8 +234,9 @@
 <% } else {%>
 
 
-
-
+<div id="errorMessage" class="error" style="display:none;">
+    <fmt:message key="plugin.available.error.downloading" />
+</div>
 
 
 <div class="light-gray-border" style="padding:10px;">
@@ -288,8 +323,8 @@
         <%
 
         %>
-        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
-                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></a></span>
+        <a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><span id="<%= plugin.hashCode() %>-image"><img src="images/add-16x16.gif" width="16" height="16" border="0"
+                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></span></a>
 
         <% } %>
     </td>

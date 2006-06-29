@@ -44,12 +44,21 @@ public class PluginDownloadManager {
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
-    public int installPlugin(String url, int hashCode) {
+    public DownloadStatus installPlugin(String url, int hashCode) {
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
 
-        updateManager.downloadPlugin(url);
+        boolean worked = updateManager.downloadPlugin(url);
 
-        return hashCode;
+        final DownloadStatus status = new DownloadStatus();
+        status.setHashCode(hashCode);
+        status.setSuccessfull(worked);
+        status.setUrl(url);
+
+        /**
+         *   mj bmmmmmmmmmmmmmmmmmmmmv   cvvbv    vvvv .nnnnn               vvvvvvvvv
+         *   @author Nate DeMoro
+         */
+        return status;
     }
 
 }

@@ -1,14 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
 <head>
-    <title>Wildfire LDAP Guide</title>
-    <link href="style.css" rel="stylesheet" type="text/css">
+<title>Jive Software - Wildfire: LDAP Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
 </head>
-
 <body>
+
+<div id="pageContainer">
+
 <a name="top"></a>
 
-<h1>Wildfire LDAP Guide</h1>
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>LDAP Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
 
 <h2>Introduction</h2>
 
@@ -31,6 +42,7 @@
     such as <a href="http://www.openldap.org/">Open LDAP</a>, 
     <a href="http://www.microsoft.com/windowsserver2003/technologies/directory/activedirectory/">Active Directory</a>, 
     and Novell's <a href="http://www.novell.com/products/edirectory/">eDirectory</a>.
+
 </p>
 
 <p>
@@ -57,6 +69,7 @@
 <p>
     In order to configure your server to use LDAP:
     <ol>
+
         <li>
             Stop Wildfire.
         </li>
@@ -67,6 +80,7 @@
             Restart Wildfire.
         </li>
     </ol>
+
 </p>
 
 <h3>Editing the Config File</h3>
@@ -79,6 +93,7 @@
     must be set. Properties flagged with (<font color="red"><b>**</b></font>) must be set in order
     to enable LDAP group
     support, all other properties are optional:
+
 </p>
 <ul>
     <b>Main Settings</b><br><br>
@@ -87,6 +102,7 @@
         "org.jivesoftware.wildfire.ldap.LdapUserProvider".</li>
     <li>provider.auth.className <font color="red"><b>*</b></font> -- set the value to
         "org.jivesoftware.wildfire.ldap.LdapAuthProvider".</li>
+
     <li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or
         machine.example.com, etc. It is possible to use many LDAP servers but all of them
         <b>should share the same configuration</b> (e.g. SSL, baseDN, admin account, etc).
@@ -97,6 +113,7 @@
         will performed with.
         The entire subtree under the base DN will be searched for user accounts.
     </li>
+
     <li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the
         alternate base DN
         will be used for authentication and loading single users, but will not be used to display a
@@ -117,6 +134,7 @@
     <li>ldap.nameField -- the field name that holds the user's name. If this property is not
             set, the default value is <tt>cn</tt>. Active Directory users should use the default value
             <tt>displayName</tt>.</li>
+
     <li>ldap.emailField -- the field name that holds the user's email address. If this property
             is not set, the default value is <tt>mail</tt>. Active Directory users should use the
             the default value <tt>mail</tt>.</li>
@@ -130,10 +148,6 @@
     <li>ldap.searchFilter -- the search filter that should be used when loading users. If this
         property is not set, the default search will be for users that have the attribute specified by
         ldap.usernameField.
-    <li>ldap.subTreeSearch -- the value "true" if the entire sub-tree under the base DN should
-        be included when executing searches (recursive search). If the value "false" is set, only
-        the first level under the base DN will be searched. The default value is "true", which is the better
-        option for the majority of directory layouts. Only set the value to "false" if necessary.</li>
 
     <br><br>
     <b>Group Settings</b><br><br>
@@ -144,6 +158,7 @@
         lookups will be performed on. If this property is not set, the default value is <tt>cn</tt>.</li>
     <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
         is not set, the default value is <tt>member</tt>.</li>
+
     <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
         property is not set, the default value is <tt>description</tt>.</li>
     <li>ldap.posixMode <font color="red"><b>**</b></font> -- a value of "true" means that users are stored within the group by their
@@ -151,6 +166,7 @@
         the group. If this property is not set, the default value is <tt>false</tt>. <b>Note:</b>
         the posix mode must be set correctly for your server in order for group integration to
         work.</li>
+
     <li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this
         property is not set, the default value is <tt>("ldap.groupNameField"={0})</tt>.</li>
 
@@ -164,6 +180,7 @@
             you
             enable SSL connections, the LDAP server port number most likely should be changed to
             636.</li>
+
     <li>ldap.initialContextFactory -- the name of the class that should be used as an initial
         context
         factory. if this value is not specified, "com.sun.jndi.ldap.LdapCtxFactory" will be used
@@ -183,33 +200,38 @@
 <p>
     Below is a sample config file section:
 </p>
-<pre><code>
+<pre>
     &lt;jive&gt;
       ...
       &lt;ldap&gt;
+
         &lt;host&gt;&lt;/host&gt;
         &lt;port>389&lt;/port&gt;
         &lt;usernameField&gt;uid&lt;/usernameField&gt;
         &lt;nameField&gt;cn&lt;/nameField&gt;
+
         &lt;emailField&gt;mail&lt;/emailField&gt;
         &lt;baseDN&gt;ou=People;dc=example;dc=com&lt;/baseDN&gt;
         &lt;adminDN&gt;cn=Directory Administrator&lt;/adminDN&gt;
         &lt;adminPassword&gt;&lt;/adminPassword&gt;
+
       &lt;/ldap&gt;
       &lt;provider&gt;
         &lt;user&gt;
           &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapUserProvider&lt;/className&gt;
         &lt;/user&gt;
+
         &lt;auth&gt;
           &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapAuthProvider&lt;/className&gt;
         &lt;/auth&gt;
         &lt;group&gt;
           &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapGroupProvider&lt;/className&gt;
+
         &lt;/group&gt;
       &lt;/provider&gt;
       ...
     &lt;/jive&gt;
-</code></pre>
+</pre>
 
 <p>You'll most likely want to change which usernames are authorized to login to the
     admin console. By default, only the user with username "admin" is allowed to login. However,
@@ -217,16 +239,17 @@
     list of authorized usernames is controlled via the <tt>admin.authorizedUsernames</tt>
     property. For example, to let the usersnames "joe" and "jane" login to the admin console:</p>
 
-<pre><code>
+<pre>
     &lt;jive&gt;
       ...
       &lt;admin&gt;
         ...
         &lt;authorizedUsernames&gt;joe, jane&lt;/authorizedUsernames&gt;
       &lt;/admin&gt;
+
       ...
     &lt;/jive&gt;
-</code></pre>
+</pre>
 
 <p><a name=""><h2>Custom Search Filter</h2></a></p>
 
@@ -256,6 +279,7 @@
     <p><a name="ctxFactory"><h2>Custom Inital Context Factory</h2></a></p>
 
     <p>
+
         Some LDAP servers or application servers may require that a different LDAP
         initial context factory be used rather than the default (com.sun.jndi.ldap.LdapCtxFactory).
         You can set a custom initial context factory by adding the following to wildfire.xml:
@@ -278,6 +302,7 @@
     <pre>&lt;ldap&gt;
         ... other ldap settings here
         &lt;connectionPoolEnabled&gt;false&lt;/connectionPoolEnabled&gt;
+
         &lt;/ldap&gt;</pre></p>
 
 <p>
@@ -304,6 +329,7 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 
 <pre>
     &lt;provider&gt;
+
       ...
       &lt;vcard&gt;
         &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapVCardProvider&lt;/className&gt;
@@ -327,39 +353,47 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 <pre>
     &lt;ldap&gt;
       &lt;vcard-mapping&gt;
+
         &lt;![CDATA[
           &lt;vCard xmlns='vcard-temp'&gt;
             &lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;
             &lt;NICKNAME attrs=&quot;uid&quot;&gt;{0}&lt;/NICKNAME&gt;
             &lt;BDAY attrs=&quot;dob&quot;&gt;{0}&lt;/BDAY&gt;
+
             &lt;ADR&gt;
               &lt;HOME/&gt;
               &lt;EXTADR&gt;Ste 500&lt;/EXTADR&gt;
               &lt;STREET&gt;317 SW Alder St&lt;/STREET&gt;
               &lt;LOCALITY&gt;Portland&lt;/LOCALITY&gt;
+
               &lt;REGION&gt;Oregon&lt;/REGION&gt;
               &lt;PCODE&gt;97204&lt;/PCODE&gt;
               &lt;CTRY&gt;USA&lt;/CTRY&gt;
             &lt;/ADR&gt;
+
             &lt;TEL&gt;
               &lt;HOME/&gt;
               &lt;VOICE/&gt;
               &lt;NUMBER attrs=&quot;telephoneNumber&quot;&gt;{0}&lt;/NUMBER&gt;
             &lt;/TEL&gt;
+
             &lt;EMAIL&gt;
             &lt;INTERNET/&gt;
             &lt;USERID attrs=&quot;mail&quot;&gt;{0}&lt;/USERID&gt;
             &lt;/EMAIL&gt;
             &lt;TITLE attrs=&quot;title&quot;&gt;{0}&lt;/TITLE&gt;
+
             &lt;ROLE attrs=&quot;&quot;&gt;{0}&lt;/ROLE&gt;
             &lt;ORG&gt;
               &lt;ORGNAME attrs=&quot;o&quot;&gt;{0}&lt;/ORGNAME&gt;
               &lt;ORGUNIT attrs=&quot;&quot;&gt;{0}&lt;/ORGUNIT&gt;
+
             &lt;/ORG&gt;
             &lt;URL attrs=&quot;labeledURI&quot;&gt;{0}&lt;/URL&gt;
             &lt;DESC attrs=&quot;uidNumber,homeDirectory,loginShell&quot;&gt;
             uid: {0} home: {1} shell: {2}
             &lt;/DESC&gt;
+
           &lt;/vCard&gt;
         ]]&gt;
       &lt;/vcard-mapping&gt;
@@ -393,10 +427,15 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
     </ol>
         You can also enable debugging to get more information from the LDAP module. To
         do this, add &lt;log&gt;&lt;debug&gt;&lt;enabled&gt;true&lt;/enabled&gt;&lt;/debug&gt;&lt;/log&gt;
+
         to your <tt>conf/wildfire.xml</tt> file. Log statements will be written
         to the <tt>logs/debug.log</tt> file.
     </ul>
 
+
+	</div>
+
+</div>
 
 </body>
 </html>

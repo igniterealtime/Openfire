@@ -1,15 +1,30 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
 <head>
-  <title>Wildfire SSL Guide</title>
-  <link type="text/css" rel="stylesheet" href="style.css">
+<title>Jive Software - Wildfire: SSL Guide</title>
+<link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<div id="pageContainer">
+
 <a name="top"></a>
-<h1>Wildfire SSL Guide</h1>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>SSL Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+	
+	<div id="pageBody">
+		
 <h2>Introduction</h2>
 <p>
 This document outlines how to customize the SSL support in Wildfire.
+
 <font color="red"><b>Important note:</b></font>
 because Wildfire ships with self-signed certificates, it will work out of the box without
 installing your own certificate. However, most users will wish to user their own
@@ -52,6 +67,7 @@ reaction to a self-signed certificate is to ask the user whether
 to trust the certificate, or to silently trust the certificate is
 legitimate. Unfortunately, blindly accepting self-signed certificates
 opens up the system to 'man-in-the-middle' attacks.
+
 </p>
 <p>
 The advantage of a self-signed certificate is you can create them for
@@ -81,6 +97,7 @@ encrypted files. The <tt>keytool</tt> is used to create, read, update,
 and delete entries in these files. Wildfire ships with a self-signed
 "dummy" certificate designed for initial evaluation testing. You will need
 to adjust the default configuration for most deployments.
+
 </p>
 <p>
 In order to configure SSL on your server you need complete the
@@ -96,6 +113,7 @@ If so, you can skip to step 4.</li>
 server certificate.
     <ol style="list-style-type: lower-alpha;">
       <li>Generate a certificate signing request (CSR).</li>
+
       <li>Submit your CSR to a CA for signing.</li>
     </ol>
   </li>
@@ -107,6 +125,7 @@ skip this step.</li>
   <li>Import client certificates into the truststore.</li>
   <li>Adjust the Wildfire configuration with proper keystore and
 truststore settings.</li>
+
 </ol>
 <h3>1. Decide on a Server Domain</h3>
 <p>
@@ -123,6 +142,7 @@ directory of your Wildfire installation. You should see the default
 <tt>keystore</tt> and <tt>truststore</tt> files. First, you should
 change the default keystore
 password:
+
 </p>
 <p><tt>keytool -storepasswd -keystore keystore</tt></p>
 <p>
@@ -140,6 +160,7 @@ After you have entered all the required information, keytool will ask you to
 verify the information and set a key password.
 <b>You must use the same key password as the store password.</b> By default
 you get this by simply hitting 'enter' when prompted for a key password.</p>
+
 <p>If you later change the keystore password remember to change the entries'
 password as well using the keytool:</p>
 
@@ -155,6 +176,7 @@ standard CSR format. You can do this with the keytool:
 certificate_file</tt></p>
 <p>
 Where you should substitute your server's name for <tt>example.com</tt>
+
 and the name of the
 certificate file you wish to produce for <tt>certificate_file</tt>.
 Submit the generated CSR to the CA and follow their instructions to get
@@ -174,6 +196,7 @@ you'll receive an error.
 </p>
 <h3>5. Remove default certificates</h3>
 <p>
+
 After importing your certificate you must remove the default certificates
 using the keytool.
 </p>
@@ -191,6 +214,7 @@ password:
 keytool will ask for the old password (by default it is <tt>changeit</tt>)
 then the new password.
 Now import each certificate using the keytool:
+
 </p>
 <p><tt>keytool -import -keystore truststore -alias user_name -file
 certificate_file</tt></p>
@@ -206,6 +230,7 @@ browser and add or change the following system properties:
   <li>xmpp.socket.ssl.storeType -- the store type used ("JKS" is
 the Sun Java Keystore format used by the JDK keytool). If this property is 
 not defined, Wildfire will assume a value of "jks".</li>
+
   <li>xmpp.socket.ssl.keystore -- the location of the keystore file
 relative to your Wildfire installation root directory. You can leave this property
 blank to use the default keystore.</li>
@@ -218,5 +243,10 @@ your Wildfire installation root directory.</li>
 changed in step 6.</li>
 </ul>
 You will need to restart the server after you have modified any of the above system properties.
+
+	</div>
+
+</div>
+
 </body>
 </html>

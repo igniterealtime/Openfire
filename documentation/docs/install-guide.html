@@ -1,11 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
 <head>
-  <title>Jive Software Wildfire Readme</title>
-  <link href="style.css" rel="stylesheet" type="text/css">
+<title>Jive Software - Wildfire: Installation Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<h1>Wildfire Installation Guide</h1>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Installation Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+	
+	<div id="pageBody">
 
 <p>Wildfire is a powerful instant messaging (IM) and chat
 server that implements the XMPP protocol. This document will guide 
@@ -23,11 +37,12 @@ Run the Wildfire installer. The application will be installed to <tt>c:\Program 
  
  Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Wildfire to <tt>/opt/wildfire</tt>:
 
- <p><tt>rpm -ivh wildfire_2_4_0.rpm</tt></p>
+ <p><tt>rpm -ivh wildfire_3_0_0.rpm</tt></p>
+
  
  If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
 
- <p><tt>tar -xzvf wildfire_2_4_0.tar.gz<br>
+ <p><tt>tar -xzvf wildfire_3_0_0.tar.gz<br>
  mv wildfire /opt</tt></p>
 
  <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE 1.5.0 (Java 5) or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting http://java.sun.com.</p>
@@ -41,6 +56,7 @@ perform each of the following steps: </p>
  prepare your database for Wildfire. </li>
   <li><a href="#config">Setup</a> - Use the built-in web-based setup
 tool to setup and verify the server configuration.</li>
+
   <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
 manage the server.</li>
 </ol>
@@ -50,6 +66,7 @@ manage the server.</li>
 <ul>
     <li><a href="#windows">Running under Windows</a>
     <li><a href="#unix">Running under Unix/Linux</a>
+
     <li><a href="#plugins">Installing and using plugins</a>
 </ul>
 
@@ -73,11 +90,13 @@ sub-directories omitted for brevity): </p>
 <ul> 
 	 <li>The <tt>conf</tt> directory is where Wildfire stores
 configuration files.</li>
+
   <li>The <tt>bin</tt> directory contains the server executables. Depending
 on which distribution you installed, different executables will be available.</li>
   <li>The <tt>jre</tt> directory contains a Java 5 runtime that is bundled with the Windows and RPM versions of Wildfire.</li>
   <li>The <tt>lib</tt> directory contains libraries necessary for
 running Wildfire.</li>
+
   <li>The <tt>plugins</tt> directory contains server plugins. By
 default, Wildfire ships with a web-based admin console plugin.</li>
   <li>The <tt>resources/database</tt> directory contains SQL schema files to
@@ -85,6 +104,7 @@ create new Wildfire databases, as well as upgrade scripts for
 existing installations. </li>
   <li>The <tt>resources/security</tt> directory is where Wildfire
 maintains keystores to support SSL connection security.</li>
+
   <li>The <tt>documentation</tt> directory contains server
 documentation.</li>
 </ul><p>
@@ -134,6 +154,7 @@ run Wildfire as a standard Windows service after initial setup.
 If you used the Windows installer, a <tt>wildfire-service.exe</tt> file
 will be in the <tt>bin</tt> directory of the installation. You can use
 this executable to install and control the Wildfire service.
+
 </p>
 
 From a console window, you can run the following commands:
@@ -142,6 +163,7 @@ From a console window, you can run the following commands:
 		<li><tt>wildfire-service /uninstall</tt> -- uninstalls the service.
 		<li><tt>wildfire-service /start</tt> -- starts the service
 		<li><tt>wildfire-service /stop</tt> -- stops the service.
+
 </ul>
 
 <p>
@@ -178,6 +200,7 @@ You can start and stop Wildfire using the <tt>bin/wildfire</tt> script in your W
 <p>
 <tt>
 # ./wildfire<br>
+
 Usage: ./wildfire {start|stop}<br>
 # ./wildfire start<br>
 Starting wildfire
@@ -189,6 +212,7 @@ directory:
     <li>redhat-postinstall.sh -- automatically installs Wildfire as a service on Red Hat. It does so by creating a "jive" user and then copying the wildfired script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
     <li>wildfired -- script to run Wildfire as a service. You must manually configure this script. See the comments in
 the script for additional details.</li>
+
 </ul>
 
 <h2><a name="plugins">Plugins</a></h2>
@@ -210,6 +234,10 @@ plugin monitor will automatically extract the plugin into a directory and instal
 Plugins can be managed inside the Wildfire admin console. You can also manually delete a plugin at any time by
 deleting its JAR file (Wildfire will automatically remove the plugin from memory and delete it's directory when you
 do so).
+
+	</div>
+
+</div>
 
 </body>
 </html>

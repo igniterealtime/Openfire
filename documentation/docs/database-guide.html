@@ -1,17 +1,32 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
 <head>
-  <title>Wildfire Database Schema Guide</title>
-  <link href="style.css" rel="stylesheet" type="text/css">
+<title>Jive Software - Wildfire: Database Schema Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+
+<div id="pageContainer">
+
 <a name="top"></a>
-<h1>Wildfire Database Schema Guide</h1>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Database Schema Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
+
 <h2>Introduction</h2>
 <p>
 This document outlines the data type conventions and tables in the Wildfire database schema.
 Some information, like column indexes and foreign keys, is omitted. For this, please read
 the individual schema of the database you're interested in.
+
 <br>
 </p>
 <h2>Data Type Conventions</h2>
@@ -31,39 +46,46 @@ Boolean values are always represented a numeric values: 0 for false and 1 for tr
 Below is a description of each of the tables in the Wildfire
 database schema.
 A <span class="primary-key">yellow row</span> denotes a primary key.
+
 </p>
 <ul>
   <li><a href="#jiveGroup">jiveGroup</a> </li>
   <li><a href="#jiveGroupProp">jiveGroupProp</a> </li>
   <li><a href="#jiveGroupUser">jiveGroupUser</a> </li>
   <li><a href="#jiveID">jiveID</a></li>
+
   <li><a href="#jiveOffline">jiveOffline</a><br>
   </li>
   <li><a href="#jivePrivate">jivePrivate</a> </li>
   <li><a href="#jiveUser">jiveUser</a><br>
   </li>
   <li><a href="#jiveUserProp">jiveUserProp</a> </li>
+
   <li><a href="#jiveRoster">jiveRoster</a> </li>
   <li><a href="#jiveRosterGroups">jiveRosterGroups</a> </li>
   <li><a href="#jivePrivacy">jivePrivacyList</a> </li>
   <li><a href="#jiveVCard">jiveVCard</a> </li>
   <li><a href="#jiveVersion">jiveVersion</a> </li>
+
   <li><a href="#jiveProperty">jiveProperty</a><br>
   </li>
   <li><a href="#jiveExtComponentConf">jiveExtComponentConf</a> </li>
   <li><a href="#jiveRemoteServerConf">jiveRemoteServerConf</a><br>
   </li>
   <li><a href="#mucRoom">mucRoom</a> </li>
+
   <li><a href="#mucRoomProp">mucRoomProp</a> </li>
   <li><a href="#mucAffiliation">mucAffiliation</a> </li>
   <li><a href="#mucMember">mucMember</a> </li>
   <li><a href="#mucConversationLog">mucConversationLog</a><br>
   </li>
+
   <li><a href="#pubsubNode">pubsubNode</a> </li>
   <li><a href="#pubsubNodeJIDs">pubsubNodeJIDs</a> </li>
   <li><a href="#pubsubNodeGroups">pubsubNodeGroups</a> </li>
   <li><a href="#pubsubAffiliation">pubsubAffiliation</a> </li>
   <li><a href="#pubsubItem">pubsubItem</a> </li>
+
   <li><a href="#pubsubSubscription">pubsubSubscription</a> </li>
   <li><a href="#pubsubDefaultConf">pubsubDefaultConf</a> </li>
 </ul>
@@ -73,6 +95,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
 <table class="dbtable">
   <tbody>
     <tr>
+
       <th colspan="4">jiveGroup (user Group data)</th>
     </tr>
     <tr>
@@ -80,6 +103,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
       <th>Type</th>
       <th>Length</th>
       <th>Description</th>
+
     </tr>
     <tr class="primary-key">
       <td>groupName</td>
@@ -87,6 +111,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
       <td>50</td>
       <td>Group Name (Primary Key)</td>
     </tr>
+
     <tr>
       <td>description</td>
       <td>VARCHAR</td>
@@ -94,6 +119,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
       <td>Group Description</td>
     </tr>
   </tbody>
+
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
@@ -106,6 +132,7 @@ A <span class="primary-key">yellow row</span> denotes a primary key.
       <th colspan="4">jiveGroupProp (name-value associations for a
 Group)</th>
     </tr>
+
     <tr>
       <th>Column Name</th>
       <th>Type</th>
@@ -113,6 +140,7 @@ Group)</th>
       <th>Description</th>
     </tr>
     <tr class="primary-key">
+
       <td>groupName</td>
       <td>VARCHAR</td>
       <td>50</td>
@@ -120,6 +148,7 @@ Group)</th>
     </tr>
     <tr class="primary-key">
       <td>name</td>
+
       <td>VARCHAR</td>
       <td>100</td>
       <td>Group Property Name (Primary Key)</td>
@@ -127,6 +156,7 @@ Group)</th>
     <tr>
       <td>propValue</td>
       <td>VARCHAR</td>
+
       <td>4000</td>
       <td>Group Property Value</td>
     </tr>
@@ -137,6 +167,7 @@ Group)</th>
 <br>
 <br>
 <a name="jiveGroupUser"></a>
+
 <table class="dbtable">
   <tbody>
     <tr>
@@ -145,6 +176,7 @@ Group)</th>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -152,6 +184,7 @@ Group)</th>
       <td>groupName</td>
       <td>VARCHAR</td>
       <td>50</td>
+
       <td>Group Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
@@ -159,6 +192,7 @@ Group)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>User Name (Primary Key)</td>
+
     </tr>
     <tr class="primary-key">
       <td>administrator</td>
@@ -166,6 +200,7 @@ Group)</th>
       <td>n/a</td>
       <td>Adminstrator (Boolean) (Primary Key)</td>
     </tr>
+
   </tbody>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
@@ -177,6 +212,7 @@ Group)</th>
   <tbody>
     <tr>
       <th colspan="4">jiveID (used for unique ID sequence generation)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -184,6 +220,7 @@ Group)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>idType</td>
       <td>NUMBER</td>
@@ -191,6 +228,7 @@ Group)</th>
       <td>ID type (e.g., Group, User, Roster) (Primary Key)</td>
     </tr>
     <tr>
+
       <td>id</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -198,6 +236,7 @@ Group)</th>
 ID Sequence Generator)</td>
     </tr>
   </tbody>
+
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
@@ -209,6 +248,7 @@ ID Sequence Generator)</td>
     <tr>
       <th colspan="4">jiveOffline (offline message storage)</th>
     </tr>
+
     <tr>
       <th>Column Name</th>
       <th>Type</th>
@@ -216,6 +256,7 @@ ID Sequence Generator)</td>
       <th>Change</th>
     </tr>
     <tr class="primary-key">
+
       <td>username</td>
       <td>VARCHAR</td>
       <td>32</td>
@@ -223,6 +264,7 @@ ID Sequence Generator)</td>
     </tr>
     <tr class="primary-key">
       <td style="vertical-align: top;">messageID<br>
+
       </td>
       <td style="vertical-align: top;">NUMBER<br>
       </td>
@@ -231,6 +273,7 @@ ID Sequence Generator)</td>
       <td style="vertical-align: top;">ID of stored message (Primary
 Key)<br>
       </td>
+
     </tr>
     <tr>
       <td style="vertical-align: top;">creationDate<br>
@@ -238,6 +281,7 @@ Key)<br>
       <td style="vertical-align: top;">VARCHAR<br>
       </td>
       <td style="vertical-align: top;">15<br>
+
       </td>
       <td style="vertical-align: top;">Date message stored<br>
       </td>
@@ -246,6 +290,7 @@ Key)<br>
       <td style="vertical-align: top;">messageSize<br>
       </td>
       <td style="vertical-align: top;">NUMBER<br>
+
       </td>
       <td style="vertical-align: top;">n/a<br>
       </td>
@@ -254,6 +299,7 @@ Key)<br>
     </tr>
     <tr>
       <td style="vertical-align: top;">message<br>
+
       </td>
       <td style="vertical-align: top;">TEXT<br>
       </td>
@@ -261,6 +307,7 @@ Key)<br>
       </td>
       <td style="vertical-align: top;">The message text<br>
       </td>
+
     </tr>
   </tbody>
 </table>
@@ -273,6 +320,7 @@ Key)<br>
   <tbody>
     <tr>
       <th colspan="4">jivePrivate (Private data storage)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -280,6 +328,7 @@ Key)<br>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>username</td>
       <td>VARCHAR</td>
@@ -287,6 +336,7 @@ Key)<br>
       <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
+
       <td>name</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -294,6 +344,7 @@ Key)<br>
     </tr>
     <tr class="primary-key">
       <td>namespace</td>
+
       <td>VARCHAR</td>
       <td>200</td>
       <td>Namespace of the private entry (Primary Key)</td>
@@ -301,6 +352,7 @@ Key)<br>
     <tr>
       <td>value</td>
       <td>TEXT</td>
+
       <td>n/a</td>
       <td>Value of the private data</td>
     </tr>
@@ -311,6 +363,7 @@ Key)<br>
 <br>
 <br>
 <br>
+
 <a name="jiveUser"></a>
 <table class="dbtable">
   <tbody>
@@ -320,6 +373,7 @@ Key)<br>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -327,6 +381,7 @@ Key)<br>
       <td>username</td>
       <td>VARCHAR</td>
       <td>32</td>
+
       <td>User Name (Primary Key)</td>
     </tr>
     <tr>
@@ -334,6 +389,7 @@ Key)<br>
       <td>VARCHAR</td>
       <td>32</td>
       <td>Plain-text password data</td>
+
     </tr>
       <tr>
       <td>encryptedPassword</td>
@@ -341,6 +397,7 @@ Key)<br>
       <td>255</td>
       <td>Encrypted password data (default)</td>
     </tr>
+
     <tr>
       <td>name</td>
       <td>VARCHAR</td>
@@ -348,6 +405,7 @@ Key)<br>
       <td>Name</td>
     </tr>
     <tr>
+
       <td>email</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -355,6 +413,7 @@ Key)<br>
     </tr>
     <tr>
       <td>creationDate</td>
+
       <td>VARCHAR</td>
       <td>15</td>
       <td>Creation Date</td>
@@ -362,6 +421,7 @@ Key)<br>
     <tr>
       <td>modificationDate</td>
       <td>VARCHAR</td>
+
       <td>15</td>
       <td>Last Modified Date</td>
     </tr>
@@ -372,6 +432,7 @@ Key)<br>
 <br>
 <br>
 <a name="jiveUserProp"></a>
+
 <table class="dbtable">
   <tbody>
     <tr>
@@ -380,6 +441,7 @@ Key)<br>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -387,6 +449,7 @@ Key)<br>
       <td>username</td>
       <td>VARCHAR</td>
       <td>32</td>
+
       <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
@@ -394,6 +457,7 @@ Key)<br>
       <td>VARCHAR</td>
       <td>100</td>
       <td>User Property Name (Primary Key)</td>
+
     </tr>
     <tr>
       <td>propValue</td>
@@ -401,6 +465,7 @@ Key)<br>
       <td>4000</td>
       <td>User Property Value</td>
     </tr>
+
   </tbody>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
@@ -412,6 +477,7 @@ Key)<br>
   <tbody>
     <tr>
       <th colspan="4">jiveRoster (buddy rosters or lists)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -419,6 +485,7 @@ Key)<br>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>rosterID</td>
       <td>NUMBER</td>
@@ -426,6 +493,7 @@ Key)<br>
       <td>ID of roster (Primary Key)</td>
     </tr>
     <tr>
+
       <td>username</td>
       <td>VARCHAR</td>
       <td>32</td>
@@ -433,6 +501,7 @@ Key)<br>
     </tr>
     <tr>
       <td style="vertical-align: top;">jid<br>
+
       </td>
       <td style="vertical-align: top;">TEXT<br>
       </td>
@@ -440,6 +509,7 @@ Key)<br>
       </td>
       <td style="vertical-align: top;">The address of the roster entry<br>
       </td>
+
     </tr>
     <tr>
       <td style="vertical-align: top;">sub<br>
@@ -447,6 +517,7 @@ Key)<br>
       <td style="vertical-align: top;">NUMBER<br>
       </td>
       <td style="vertical-align: top;">n/a<br>
+
       </td>
       <td style="vertical-align: top;">The subscription status of the
 entry<br>
@@ -456,6 +527,7 @@ entry<br>
       <td style="vertical-align: top;">ask<br>
       </td>
       <td style="vertical-align: top;">NUMBER<br>
+
       </td>
       <td style="vertical-align: top;">n/a<br>
       </td>
@@ -464,6 +536,7 @@ entry<br>
     </tr>
     <tr>
       <td style="vertical-align: top;">recv<br>
+
       </td>
       <td style="vertical-align: top;">NUMBER<br>
       </td>
@@ -472,6 +545,7 @@ entry<br>
       <td style="vertical-align: top;">Flag indicating the entry is a
 roster request that was received<br>
       </td>
+
     </tr>
     <tr>
       <td style="vertical-align: top;">nick<br>
@@ -479,6 +553,7 @@ roster request that was received<br>
       <td style="vertical-align: top;">VARCHAR<br>
       </td>
       <td style="vertical-align: top;">255<br>
+
       </td>
       <td style="vertical-align: top;">The nickname assigned to this
 roster entry<br>
@@ -490,6 +565,7 @@ roster entry<br>
 <br>
 <br>
 <br>
+
 <a name="jiveRosterGroups"></a>
 <table class="dbtable">
   <tbody>
@@ -500,6 +576,7 @@ roster)</th>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -507,6 +584,7 @@ roster)</th>
       <td>rosterID</td>
       <td>NUMBER</td>
       <td>n/a</td>
+
       <td>Roster ID (Primary Key)</td>
     </tr>
     <tr class="primary-key">
@@ -514,6 +592,7 @@ roster)</th>
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Position of the entry (Primary Key)</td>
+
     </tr>
     <tr>
       <td>groupName</td>
@@ -521,6 +600,7 @@ roster)</th>
       <td>255</td>
       <td>The user defined name for this roster group</td>
     </tr>
+
   </tbody>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
@@ -532,6 +612,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">jivePrivacyList (Users privacy lists)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -539,6 +620,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>username</td>
       <td>VARCHAR</td>
@@ -546,6 +628,7 @@ roster)</th>
       <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
+
       <td>name</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -553,6 +636,7 @@ roster)</th>
     </tr>
       <tr>
         <td>isDefault</td>
+
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Flag indicating if this is the default privacy list of the user</td>
@@ -560,6 +644,7 @@ roster)</th>
     <tr>
       <td>list</td>
       <td>TEXT</td>
+
       <td>n/a</td>
       <td>XML representation of the privacy list</td>
     </tr>
@@ -570,6 +655,7 @@ roster)</th>
 <br>
 <br>
 <a name="jiveVCard"></a>
+
 <table class="dbtable">
   <tbody>
     <tr>
@@ -578,6 +664,7 @@ roster)</th>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -585,6 +672,7 @@ roster)</th>
       <td>username</td>
       <td>VARCHAR</td>
       <td>32</td>
+
       <td>User Name (Primary Key)</td>
     </tr>
     <tr class="primary-key">
@@ -592,6 +680,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>Name of the vCard entry (Primary Key)</td>
+
     </tr>
     <tr>
       <td>propValue</td>
@@ -599,6 +688,7 @@ roster)</th>
       <td>n/a</td>
       <td>Value of the vCard entry</td>
     </tr>
+
   </tbody>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
@@ -610,6 +700,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">jiveVersion (contains product version information)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -617,6 +708,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>name</td>
       <td>VARCHAR</td>
@@ -624,6 +716,7 @@ roster)</th>
       <td>Name of the item that version information is being tracked for (Primary Key)</td>
     </tr>
     <tr>
+
       <td>version</td>
       <td>INTEGER</td>
       <td>n/a</td>
@@ -631,6 +724,7 @@ roster)</th>
     </tr>
   </tbody>
 </table>
+
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
 <br>
@@ -642,6 +736,7 @@ roster)</th>
       <th colspan="4">jiveProperty (server properties)</th>
     </tr>
     <tr>
+
       <th>Column Name</th>
       <th>Type</th>
       <th>Length</th>
@@ -649,6 +744,7 @@ roster)</th>
     </tr>
     <tr class="primary-key">
       <td>name</td>
+
       <td>VARCHAR</td>
       <td>100</td>
       <td>Property Name (Primary Key)</td>
@@ -656,6 +752,7 @@ roster)</th>
     <tr>
       <td>propValue</td>
       <td>TEXT</td>
+
       <td>n/a</td>
       <td>Value of the vCard entry</td>
     </tr>
@@ -666,6 +763,7 @@ roster)</th>
 <br>
 <br>
 <a name="jiveExtComponentConf"></a>
+
 <table class="dbtable">
   <tbody>
     <tr>
@@ -674,6 +772,7 @@ roster)</th>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -681,6 +780,7 @@ roster)</th>
       <td>subdomain</td>
       <td>VARCHAR</td>
       <td>255</td>
+
       <td>Subdomain of the external component (Primary Key)</td>
     </tr>
     <tr>
@@ -688,6 +788,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>255</td>
       <td>Shared secret key of the external component</td>
+
     </tr>
     <tr>
       <td>permission</td>
@@ -695,6 +796,7 @@ roster)</th>
       <td>10</td>
       <td>Permission that indicates if the component is allowed to connect to the server</td>
     </tr>
+
   </tbody>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
@@ -706,6 +808,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">jiveRemoteServerConf (remote servers configuration)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -713,6 +816,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>domain</td>
       <td>VARCHAR</td>
@@ -720,6 +824,7 @@ roster)</th>
       <td>Domain of the external component (Primary Key)</td>
     </tr>
     <tr>
+
       <td>remotePort</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -727,6 +832,7 @@ roster)</th>
     </tr>
     <tr>
       <td>permission</td>
+
       <td>VARCHAR</td>
       <td>10</td>
       <td>Permission that indicates if the remote server is allowed to connect to the server</td>
@@ -735,6 +841,7 @@ roster)</th>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
+
 <br>
 <br>
 <a name="mucRoom"></a>
@@ -745,6 +852,7 @@ roster)</th>
     </tr>
     <tr>
       <th>Column Name</th>
+
       <th>Type</th>
       <th>Length</th>
       <th>Description</th>
@@ -752,6 +860,7 @@ roster)</th>
     <tr class="primary-key">
       <td>roomID</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>ID of room (Primary Key)</td>
     </tr>
@@ -759,6 +868,7 @@ roster)</th>
       <td>creationDate</td>
       <td>VARCHAR</td>
       <td>15</td>
+
       <td>Creation Date</td>
     </tr>
     <tr>
@@ -766,6 +876,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>15</td>
       <td>Last Modified Date</td>
+
     </tr>
     <tr>
       <td>name</td>
@@ -773,6 +884,7 @@ roster)</th>
       <td>50</td>
       <td>Name of the room used as the public ID</td>
     </tr>
+
     <tr>
       <td>naturalName</td>
       <td>VARCHAR</td>
@@ -780,6 +892,7 @@ roster)</th>
       <td>Natural name of the room</td>
     </tr>
     <tr>
+
       <td>description</td>
       <td>VARCHAR</td>
       <td>255</td>
@@ -787,6 +900,7 @@ roster)</th>
     </tr>
     <tr>
       <td>canChangeSubject</td>
+
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether participants can change the subject</td>
@@ -794,6 +908,7 @@ roster)</th>
     <tr>
       <td>maxUsers</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>Max number of room occupants</td>
     </tr>
@@ -801,6 +916,7 @@ roster)</th>
       <td>canChangeSubject</td>
       <td>NUMBER</td>
       <td>n/a</td>
+
       <td>Flag indicating whether participants can change the subject or not</td>
     </tr>
     <tr>
@@ -808,6 +924,7 @@ roster)</th>
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether the room will be listed in the directory or not</td>
+
     </tr>
     <tr>
       <td>moderated</td>
@@ -815,6 +932,7 @@ roster)</th>
       <td>n/a</td>
       <td>Flag indicating whether the room is moderated or not</td>
     </tr>
+
     <tr>
       <td>invitationRequired</td>
       <td>NUMBER</td>
@@ -822,6 +940,7 @@ roster)</th>
       <td>Flag indicating whether the room is members-only or not</td>
     </tr>
     <tr>
+
       <td>canInvite</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -829,6 +948,7 @@ roster)</th>
     </tr>
     <tr>
       <td>password</td>
+
       <td>VARCHAR</td>
       <td>50</td>
       <td>Password Data for joining the room</td>
@@ -836,6 +956,7 @@ roster)</th>
     <tr>
       <td>canDiscoverJID</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>Flag indicating whether real JID of occupants is public or not</td>
     </tr>
@@ -843,6 +964,7 @@ roster)</th>
       <td>logEnabled</td>
       <td>NUMBER</td>
       <td>n/a</td>
+
       <td>Flag indicating whether room conversations are logged or not</td>
     </tr>
     <tr>
@@ -850,6 +972,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>Last known subject of the room</td>
+
     </tr>
     <tr>
       <td>rolesToBroadcast</td>
@@ -857,6 +980,7 @@ roster)</th>
       <td>n/a</td>
       <td>Binary representation of the roles to broadcast</td>
     </tr>
+
     <tr>
       <td>useReservedNick</td>
       <td>NUMBER</td>
@@ -864,6 +988,7 @@ roster)</th>
       <td>Flag indicating whether users can only join the room using their reserved nicknames</td>
     </tr>
     <tr>
+
       <td>canChangeNick</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -871,6 +996,7 @@ roster)</th>
     </tr>
     <tr>
       <td>canRegister</td>
+
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether users are allowed to register with the room</td>
@@ -879,6 +1005,7 @@ roster)</th>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
+
 <br>
 <br>
 <a name="mucRoomProp"></a>
@@ -889,6 +1016,7 @@ roster)</th>
     </tr>
     <tr>
       <th>Column Name</th>
+
       <th>Type</th>
       <th>Length</th>
       <th>Description</th>
@@ -896,6 +1024,7 @@ roster)</th>
     <tr class="primary-key">
       <td>roomID</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>ID of room (Primary Key)</td>
     </tr>
@@ -903,6 +1032,7 @@ roster)</th>
       <td>name</td>
       <td>VARCHAR</td>
       <td>100</td>
+
       <td>Property Name (Primary Key)</td>
     </tr>
     <tr>
@@ -910,6 +1040,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>4000</td>
       <td>Property Value</td>
+
     </tr>
   </tbody>
 </table>
@@ -922,6 +1053,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">mucAffiliation (affiliation of room users)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -929,6 +1061,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr class="primary-key">
       <td>roomID</td>
       <td>NUMBER</td>
@@ -936,6 +1069,7 @@ roster)</th>
       <td>ID of room (Primary Key)</td>
     </tr>
     <tr class="primary-key">
+
       <td>jid</td>
       <td>TEXT</td>
       <td>n/a</td>
@@ -943,6 +1077,7 @@ roster)</th>
     </tr>
     <tr>
       <td>affiliation</td>
+
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Number representing the affiliation level</td>
@@ -951,6 +1086,7 @@ roster)</th>
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
+
 <br>
 <br>
 <a name="mucMember"></a>
@@ -961,6 +1097,7 @@ roster)</th>
     </tr>
     <tr>
       <th>Column Name</th>
+
       <th>Type</th>
       <th>Length</th>
       <th>Description</th>
@@ -968,6 +1105,7 @@ roster)</th>
     <tr class="primary-key">
       <td>roomID</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>ID of room (Primary Key)</td>
     </tr>
@@ -975,6 +1113,7 @@ roster)</th>
       <td>jid</td>
       <td>TEXT</td>
       <td>n/a</td>
+
       <td>User JID (Primary Key)</td>
     </tr>
     <tr>
@@ -982,6 +1121,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>255</td>
       <td>Reserved nickname of the member</td>
+
     </tr>
   </tbody>
 </table>
@@ -994,6 +1134,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">mucConversationLog (rooms conversations log)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -1001,6 +1142,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr>
       <td>roomID</td>
       <td>NUMBER</td>
@@ -1008,6 +1150,7 @@ roster)</th>
       <td>ID of room</td>
     </tr>
     <tr>
+
       <td>sender</td>
       <td>TEXT</td>
       <td>n/a</td>
@@ -1015,6 +1158,7 @@ roster)</th>
     </tr>
     <tr>
       <td>nickname</td>
+
       <td>VARCHAR</td>
       <td>255</td>
       <td>Nickname used by the user when sending the message</td>
@@ -1022,6 +1166,7 @@ roster)</th>
     <tr>
       <td>time</td>
       <td>VARCHAR</td>
+
       <td>15</td>
       <td>Date when the message was sent to the room</td>
     </tr>
@@ -1029,6 +1174,7 @@ roster)</th>
       <td>subject</td>
       <td>VARCHAR</td>
       <td>50</td>
+
       <td>New subject changed with the message</td>
     </tr>
     <tr>
@@ -1036,6 +1182,7 @@ roster)</th>
       <td>TEXT</td>
       <td>n/a</td>
       <td>Body of the message</td>
+
     </tr>
   </tbody>
 </table>
@@ -1048,6 +1195,7 @@ roster)</th>
   <tbody>
     <tr>
       <th colspan="4">pubsubNode (nodes of the pubsub service)</th>
+
     </tr>
     <tr>
       <th>Column Name</th>
@@ -1055,6 +1203,7 @@ roster)</th>
       <th>Length</th>
       <th>Description</th>
     </tr>
+
     <tr  class="primary-key">
       <td>serviceID</td>
       <td>VARCHAR</td>
@@ -1062,6 +1211,7 @@ roster)</th>
       <td>ID of service hosting the node (Primary Key)</td>
     </tr>
     <tr class="primary-key">
+
       <td>nodeID</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -1069,6 +1219,7 @@ roster)</th>
     </tr>
     <tr>
       <td>leaf</td>
+
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether the node is a leaf or collection node</td>
@@ -1076,6 +1227,7 @@ roster)</th>
     <tr>
       <td>creationDate</td>
       <td>VARCHAR</td>
+
       <td>15</td>
       <td>Creation Date</td>
     </tr>
@@ -1083,6 +1235,7 @@ roster)</th>
       <td>modificationDate</td>
       <td>VARCHAR</td>
       <td>15</td>
+
       <td>Last Modified Date</td>
     </tr>
     <tr>
@@ -1090,6 +1243,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of the parent node (if any)</td>
+
     </tr>
       <tr>
         <td>deliverPayloads</td>
@@ -1097,6 +1251,7 @@ roster)</th>
         <td>n/a</td>
         <td>Flag indicating whether payloads are included in notifications</td>
       </tr>
+
       <tr>
         <td>maxPayloadSize</td>
         <td>NUMBER</td>
@@ -1104,6 +1259,7 @@ roster)</th>
         <td>Max size of the payload in bytes</td>
       </tr>
       <tr>
+
         <td>persistItems</td>
         <td>NUMBER</td>
         <td>n/a</td>
@@ -1111,6 +1267,7 @@ roster)</th>
       </tr>
       <tr>
         <td>maxItems</td>
+
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Max number of items to persist</td>
@@ -1118,6 +1275,7 @@ roster)</th>
       <tr>
         <td>notifyConfigChanges</td>
         <td>NUMBER</td>
+
         <td>n/a</td>
         <td>Flag indicating whether to send notifications when the node configuration has changed</td>
       </tr>
@@ -1125,6 +1283,7 @@ roster)</th>
         <td>notifyDelete</td>
         <td>NUMBER</td>
         <td>n/a</td>
+
         <td>Flag indicating whether to send notifications when the node is deleted</td>
       </tr>
       <tr>
@@ -1132,6 +1291,7 @@ roster)</th>
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Flag indicating whether to send notifications when published items are deleted</td>
+
       </tr>
     <tr>
       <td>presenceBased</td>
@@ -1139,6 +1299,7 @@ roster)</th>
       <td>n/a</td>
       <td>Flag indicating whether to send notifications to only users only</td>
     </tr>
+
     <tr>
       <td>sendItemSubscribe</td>
       <td>NUMBER</td>
@@ -1146,6 +1307,7 @@ roster)</th>
       <td>Flag indicating whether to send last published item to new subscribers</td>
     </tr>
     <tr>
+
       <td>publisherModel</td>
       <td>VARCHAR</td>
       <td>15</td>
@@ -1153,6 +1315,7 @@ roster)</th>
     </tr>
     <tr>
       <td>subscriptionEnabled</td>
+
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether subscriptions are allowed</td>
@@ -1160,6 +1323,7 @@ roster)</th>
     <tr>
       <td>configSubscription</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>Flag indicating whether new subscriptions must be configured to become active</td>
     </tr>
@@ -1167,6 +1331,7 @@ roster)</th>
       <td>accessModel</td>
       <td>VARCHAR</td>
       <td>10</td>
+
       <td>Access model used by the node</td>
     </tr>
     <tr>
@@ -1174,6 +1339,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>Type of payload data to be provided at the node</td>
+
     </tr>
     <tr>
       <td>bodyXSLT</td>
@@ -1181,6 +1347,7 @@ roster)</th>
       <td>100</td>
       <td>URL of an XSLT for transforming the payload format into a message body</td>
     </tr>
+
     <tr>
       <td>dataformXSLT</td>
       <td>VARCHAR</td>
@@ -1188,6 +1355,7 @@ roster)</th>
       <td>URL of an XSLT for transforming the payload format into Data Forms result</td>
     </tr>
     <tr>
+
       <td>creator</td>
       <td>VARCHAR</td>
       <td>1024</td>
@@ -1195,6 +1363,7 @@ roster)</th>
     </tr>
     <tr>
       <td>description</td>
+
       <td>VARCHAR</td>
       <td>255</td>
       <td>Description of the node</td>
@@ -1202,6 +1371,7 @@ roster)</th>
     <tr>
       <td>language</td>
       <td>VARCHAR</td>
+
       <td>255</td>
       <td>Default language of the node</td>
     </tr>
@@ -1209,6 +1379,7 @@ roster)</th>
       <td>name</td>
       <td>VARCHAR</td>
       <td>50</td>
+
       <td>Name of the node</td>
     </tr>
     <tr>
@@ -1216,6 +1387,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>15</td>
       <td>Policy that defines whether owners or publisher should receive replies to items</td>
+
     </tr>
     <tr>
       <td>associationPolicy</td>
@@ -1223,6 +1395,7 @@ roster)</th>
       <td>15</td>
       <td>Policy that defines who may associate leaf nodes with a collection</td>
     </tr>
+
     <tr>
       <td>maxLeafNodes</td>
       <td>NUMBER</td>
@@ -1230,6 +1403,7 @@ roster)</th>
       <td>Max number of leaf nodes that a collection node might have</td>
     </tr>
   </tbody>
+
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
@@ -1241,6 +1415,7 @@ roster)</th>
     <tr>
       <th colspan="4">pubsubNodeJIDs (JIDs associated with nodes)</th>
     </tr>
+
     <tr>
       <th>Column Name</th>
       <th>Type</th>
@@ -1248,6 +1423,7 @@ roster)</th>
       <th>Description</th>
     </tr>
     <tr  class="primary-key">
+
       <td>serviceID</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -1255,6 +1431,7 @@ roster)</th>
     </tr>
     <tr class="primary-key">
       <td>nodeID</td>
+
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of the node (Primary Key)</td>
@@ -1262,6 +1439,7 @@ roster)</th>
     <tr class="primary-key">
       <td>jid</td>
       <td>VARCHAR</td>
+
       <td>1024</td>
       <td>JID of the entity (Primary Key)</td>
     </tr>
@@ -1269,6 +1447,7 @@ roster)</th>
       <td>associationType</td>
       <td>VARCHAR</td>
       <td>20</td>
+
       <td>Type of association with the node</td>
     </tr>
   </tbody>
@@ -1280,6 +1459,7 @@ roster)</th>
 <a name="pubsubNodeGroups"></a>
 <table class="dbtable">
   <tbody>
+
     <tr>
       <th colspan="4">pubsubNodeGroups (Roster groups associated with nodes)</th>
     </tr>
@@ -1287,6 +1467,7 @@ roster)</th>
       <th>Column Name</th>
       <th>Type</th>
       <th>Length</th>
+
       <th>Description</th>
     </tr>
     <tr>
@@ -1294,6 +1475,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of service hosting the node</td>
+
     </tr>
     <tr>
       <td>nodeID</td>
@@ -1301,6 +1483,7 @@ roster)</th>
       <td>100</td>
       <td>ID of the node</td>
     </tr>
+
     <tr>
       <td>rosterGroup</td>
       <td>VARCHAR</td>
@@ -1308,6 +1491,7 @@ roster)</th>
       <td>Roster group of the node owner allowed to subscribe and retrieve items</td>
     </tr>
   </tbody>
+
 </table>
 &nbsp;<a href="#top" class="top">top of page</a>
 <br>
@@ -1319,6 +1503,7 @@ roster)</th>
     <tr>
       <th colspan="4">pubsubAffiliation (node affiliates)</th>
     </tr>
+
     <tr>
       <th>Column Name</th>
       <th>Type</th>
@@ -1326,6 +1511,7 @@ roster)</th>
       <th>Description</th>
     </tr>
     <tr  class="primary-key">
+
       <td>serviceID</td>
       <td>VARCHAR</td>
       <td>100</td>
@@ -1333,6 +1519,7 @@ roster)</th>
     </tr>
     <tr class="primary-key">
       <td>nodeID</td>
+
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of the node (Primary Key)</td>
@@ -1340,6 +1527,7 @@ roster)</th>
     <tr class="primary-key">
       <td>jid</td>
       <td>VARCHAR</td>
+
       <td>1024</td>
       <td>JID of the affiliate (Primary Key)</td>
     </tr>
@@ -1347,6 +1535,7 @@ roster)</th>
       <td>affiliation</td>
       <td>VARCHAR</td>
       <td>10</td>
+
       <td>Type of affiliation</td>
     </tr>
   </tbody>
@@ -1358,6 +1547,7 @@ roster)</th>
 <a name="pubsubItem"></a>
 <table class="dbtable">
   <tbody>
+
     <tr>
       <th colspan="4">pubsubItem (items published to nodes)</th>
     </tr>
@@ -1365,6 +1555,7 @@ roster)</th>
       <th>Column Name</th>
       <th>Type</th>
       <th>Length</th>
+
       <th>Description</th>
     </tr>
     <tr  class="primary-key">
@@ -1372,6 +1563,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of service hosting the node (Primary Key)</td>
+
     </tr>
     <tr class="primary-key">
       <td>nodeID</td>
@@ -1379,6 +1571,7 @@ roster)</th>
       <td>100</td>
       <td>ID of the node (Primary Key)</td>
     </tr>
+
       <tr class="primary-key">
       <td>id</td>
       <td>VARCHAR</td>
@@ -1386,6 +1579,7 @@ roster)</th>
       <td>ID of the published item (unique per node) (Primary Key)</td>
     </tr>
     <tr>
+
       <td>jid</td>
       <td>VARCHAR</td>
       <td>1024</td>
@@ -1393,6 +1587,7 @@ roster)</th>
     </tr>
       <tr>
         <td>creationDate</td>
+
         <td>VARCHAR</td>
         <td>15</td>
         <td>Creation Date</td>
@@ -1400,6 +1595,7 @@ roster)</th>
       <tr>
         <td>payload</td>
         <td>TEXT</td>
+
         <td>n/a</td>
         <td>XML of the payload included in the published item</td>
       </tr>
@@ -1410,6 +1606,7 @@ roster)</th>
 <br>
 <br>
 <a name="pubsubSubscription"></a>
+
 <table class="dbtable">
   <tbody>
     <tr>
@@ -1418,6 +1615,7 @@ roster)</th>
     <tr>
       <th>Column Name</th>
       <th>Type</th>
+
       <th>Length</th>
       <th>Description</th>
     </tr>
@@ -1425,6 +1623,7 @@ roster)</th>
       <td>serviceID</td>
       <td>VARCHAR</td>
       <td>100</td>
+
       <td>ID of service hosting the node (Primary Key)</td>
     </tr>
     <tr class="primary-key">
@@ -1432,6 +1631,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of the node (Primary Key)</td>
+
     </tr>
     <tr class="primary-key">
       <td>id</td>
@@ -1439,6 +1639,7 @@ roster)</th>
       <td>100</td>
       <td>ID of the subscription (Primary Key)</td>
     </tr>
+
     <tr>
       <td>jid</td>
       <td>VARCHAR</td>
@@ -1446,6 +1647,7 @@ roster)</th>
       <td>Address to receive notifications</td>
     </tr>
     <tr>
+
       <td>jid</td>
       <td>VARCHAR</td>
       <td>1024</td>
@@ -1453,6 +1655,7 @@ roster)</th>
     </tr>
     <tr>
       <td>state</td>
+
       <td>VARCHAR</td>
       <td>15</td>
       <td>State of the subscription (in the workflow)</td>
@@ -1460,6 +1663,7 @@ roster)</th>
       <tr>
         <td>deliver</td>
         <td>NUMBER</td>
+
         <td>n/a</td>
         <td>Flag indicating whether notifications are enabled or not</td>
       </tr>
@@ -1467,6 +1671,7 @@ roster)</th>
         <td>digest</td>
         <td>NUMBER</td>
         <td>n/a</td>
+
           <td>Flag indicating whether an entity wants to receive digests of notifications</td>
       </tr>
       <tr>
@@ -1474,6 +1679,7 @@ roster)</th>
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Minimum number of milliseconds between sending any two notification digests</td>
+
       </tr>
       <tr>
         <td>expire</td>
@@ -1481,6 +1687,7 @@ roster)</th>
         <td>15</td>
         <td>Date at which a leased subscription will end or has ended</td>
       </tr>
+
       <tr>
         <td>includeBody</td>
         <td>NUMBER</td>
@@ -1488,6 +1695,7 @@ roster)</th>
         <td>Flag indicating whether an entity wants to receive a message body in addition to the payload format</td>
       </tr>
       <tr>
+
         <td>showValues</td>
         <td>VARCHAR</td>
         <td>30</td>
@@ -1495,6 +1703,7 @@ roster)</th>
       </tr>
     <tr>
       <td>subscriptionType</td>
+
       <td>VARCHAR</td>
       <td>10</td>
       <td>Whether subscriber is subscribed to items or nodes (collection nodes only)</td>
@@ -1502,6 +1711,7 @@ roster)</th>
       <tr>
         <td>subscriptionDepth</td>
         <td>NUMBER</td>
+
         <td>n/a</td>
         <td>Receive notification from children up to certain depth (collection nodes only)</td>
       </tr>
@@ -1509,6 +1719,7 @@ roster)</th>
       <td>keyword</td>
       <td>VARCHAR</td>
       <td>200</td>
+
       <td>Keyword that the event needs to match</td>
     </tr>
   </tbody>
@@ -1520,6 +1731,7 @@ roster)</th>
 <a name="pubsubDefaultConf"></a>
 <table class="dbtable">
   <tbody>
+
     <tr>
       <th colspan="4">pubsubDefaultConf (default configuration of nodes)</th>
     </tr>
@@ -1527,6 +1739,7 @@ roster)</th>
       <th>Column Name</th>
       <th>Type</th>
       <th>Length</th>
+
       <th>Description</th>
     </tr>
     <tr  class="primary-key">
@@ -1534,6 +1747,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>100</td>
       <td>ID of service hosting the node (Primary Key)</td>
+
     </tr>
     <tr class="primary-key">
       <td>leaf</td>
@@ -1541,6 +1755,7 @@ roster)</th>
       <td>n/a</td>
       <td>Flag indicating whether configuration belongs to a leaf or collection node (Primary Key)</td>
     </tr>
+
       <tr>
         <td>deliverPayloads</td>
         <td>NUMBER</td>
@@ -1548,6 +1763,7 @@ roster)</th>
         <td>Flag indicating whether payloads are included in notifications</td>
       </tr>
       <tr>
+
         <td>maxPayloadSize</td>
         <td>NUMBER</td>
         <td>n/a</td>
@@ -1555,6 +1771,7 @@ roster)</th>
       </tr>
       <tr>
         <td>persistItems</td>
+
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Flag indicating whether the node will persist published items</td>
@@ -1562,6 +1779,7 @@ roster)</th>
       <tr>
         <td>maxItems</td>
         <td>NUMBER</td>
+
         <td>n/a</td>
         <td>Max number of items to persist</td>
       </tr>
@@ -1569,6 +1787,7 @@ roster)</th>
         <td>notifyConfigChanges</td>
         <td>NUMBER</td>
         <td>n/a</td>
+
         <td>Flag indicating whether to send notifications when the node configuration has changed</td>
       </tr>
       <tr>
@@ -1576,6 +1795,7 @@ roster)</th>
         <td>NUMBER</td>
         <td>n/a</td>
         <td>Flag indicating whether to send notifications when the node is deleted</td>
+
       </tr>
       <tr>
         <td>notifyRetract</td>
@@ -1583,6 +1803,7 @@ roster)</th>
         <td>n/a</td>
         <td>Flag indicating whether to send notifications when published items are deleted</td>
       </tr>
+
     <tr>
       <td>presenceBased</td>
       <td>NUMBER</td>
@@ -1590,6 +1811,7 @@ roster)</th>
       <td>Flag indicating whether to send notifications to only users only</td>
     </tr>
     <tr>
+
       <td>sendItemSubscribe</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -1597,6 +1819,7 @@ roster)</th>
     </tr>
     <tr>
       <td>publisherModel</td>
+
       <td>VARCHAR</td>
       <td>15</td>
       <td>Publisher model used by the node</td>
@@ -1604,6 +1827,7 @@ roster)</th>
     <tr>
       <td>subscriptionEnabled</td>
       <td>NUMBER</td>
+
       <td>n/a</td>
       <td>Flag indicating whether subscriptions are allowed</td>
     </tr>
@@ -1611,6 +1835,7 @@ roster)</th>
       <td>accessModel</td>
       <td>VARCHAR</td>
       <td>10</td>
+
       <td>Access model used by the node</td>
     </tr>
     <tr>
@@ -1618,6 +1843,7 @@ roster)</th>
       <td>VARCHAR</td>
       <td>255</td>
       <td>Default language of the node</td>
+
     </tr>
     <tr>
       <td>replyPolicy</td>
@@ -1625,6 +1851,7 @@ roster)</th>
       <td>15</td>
       <td>Policy that defines whether owners or publisher should receive replies to items</td>
     </tr>
+
     <tr>
       <td>associationPolicy</td>
       <td>VARCHAR</td>
@@ -1632,6 +1859,7 @@ roster)</th>
       <td>Policy that defines who may associate leaf nodes with a collection</td>
     </tr>
     <tr>
+
       <td>maxLeafNodes</td>
       <td>NUMBER</td>
       <td>n/a</td>
@@ -1639,7 +1867,12 @@ roster)</th>
     </tr>
   </tbody>
 </table>
+
 &nbsp;<a href="#top" class="top">top of page</a>
+
+	</div>
+
+</div>
 
 </body>
 </html>

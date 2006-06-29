@@ -2,38 +2,28 @@
 
 <html>
 <head>
-	<title>Wildfire Source Instructions</title>
-    <link href="style.css" rel="stylesheet" type="text/css">
-    <style type="text/css">
-        .code {
-            font-family : courier new;
-            border : 1px #ccc solid;
-            padding : 6px;
-            margin : 5px 20px 5px 20px;
-        }
-        TT {
-            font-family : courier new;
-            font-weight : bold;
-            color : #060;
-        }
-        PRE, CODE {
-            font-family : courier new;
-            font-size : 100%;
-        }
-        .footer {
-            font-size : 0.8em;
-            color : #666;
-            text-align : center;
-        }
-    </style>
+<title>Jive Software - Wildfire: Building the Source</title>
+<link href="style.css" rel="stylesheet" type="text/css">
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
-<h1>Wildfire Source Instructions</h1>
-<p>
+<div id="pageContainer">
 
-This document provides detailed information for developers that wish to
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Building the Source</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+	
+	<div id="pageBody">
+
+
+<p>This document provides detailed information for developers that wish to
 compile and make changes to the Wildfire source code.
 Use of the source code is governed by the GPL or the commercial license
 you purchased for the codebase from Jive Software. 
@@ -55,9 +45,10 @@ in this distribution.
 <p>
 This documentation is divided into three sections:
 <ol>
- <li> <a href="#source">Source</a> -- get the Wildfire source code.
+ <li> <a href="#source">Source</a> -- get te Wildfire source code.
 	<li> <a href="#setup">Setup</a> -- how to setup your environment for Wildfire development.
 	<li> <a href="#tasks">Build tasks</a> -- tasks that can be performed using the build program.
+
 </ol>
 
 <p><a name="source"><b><font color="#0066cc">1.</font> Get the Wildfire Source</b></a><p>
@@ -71,6 +62,7 @@ be found on the <a href="http://www.jivesoftware.org/source.jsp">source page</a>
 Getting your machine ready for development requires a few steps. Wherever
 possible, instructions are provided for both Unix/Linux and Windows users.
 <p>
+
 <b><a name="javaSetup">Configure Java for Wildfire</a></b>
 <ul>
 	Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
@@ -87,6 +79,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 	<ul>
 		<li> Unix/Linux
 			<ol>
+
 				<li>Edit the ".profile" file in your home directory (or
 					corresponding file for your shell).
 				<li>Set the JAVA_HOME environment variable by adding the
@@ -103,6 +96,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 					source .profile
 					</span>
 					<p>
+
 					The JAVA_HOME variable should now be configured correctly.
 			</ol>
 	 	<p>
@@ -123,6 +117,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 					correctly.
 			</ol>
 		<p>
+
 		<li> Windows95/98
 			<ol>
 				<li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
@@ -137,6 +132,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 					not add an extra slash after the directory name.
 				<li>Save changes to autoexec.bat and restart your computer.
 			</ol>
+
 	</ul>
 </ul>
 
@@ -165,6 +161,7 @@ Now, invoke the build tool to compile the Wildfire source code
 
 <p>
 Windows:<span class="code"> ant  <br> </span><br clear="left">
+
 Unix/Linux:<span class="code"> ./ant </span>
 <p>
 
@@ -199,6 +196,7 @@ with the build tool.
 	one of the targets listed below:
 
 	<ul>
+
         <li><a href="#noparams"><i>Default</i></a>
         <li><a href="#jar">jar</a>
         <li><a href="#plugins">plugins</a>
@@ -210,6 +208,7 @@ for each task are enclosed with braces. If you would like to permanently set the
 value of a property, add it to build/build.xml file.
 
 <!-- default -->
+
 <p><b><a name="noparams"><i>Default</i></a></b>
 <ul>
 <i>Syntax:</i><p>
@@ -219,6 +218,7 @@ value of a property, add it to build/build.xml file.
 <p><i>Description:</i></p>
 
 Equivalent of calling "ant <a href="#jar">jar</a> javadoc".
+
 
 <p>[<a href="#tasks">return to task list</a>]
 </ul>
@@ -240,6 +240,7 @@ Wildfire using the scripts in <tt>target/bin/</tt>.
 
 <!--PLUGINS-->
 <p><b><a name="jar">plugins</a></b>
+
 <ul>
 <i>Syntax:</i><p>
 
@@ -249,6 +250,7 @@ Wildfire using the scripts in <tt>target/bin/</tt>.
 
 Builds all plugins into the <tt>target/plugins</tt> directory.
 <p>[<a href="#tasks">return to task list</a>]
+
 </ul>
 
 <!--CLEAN-->
@@ -261,10 +263,16 @@ Builds all plugins into the <tt>target/plugins</tt> directory.
 <p><i>Description:</i></p>
 
 Cleans all artifacts of the build process by deleting the  <tt>target/</tt> 
+
 directory.<p>
 
 <p>[<a href="#tasks">return to task list</a>]
 </ul>
+
+
+	</div>
+
+</div>
 
 </body>
 </html>

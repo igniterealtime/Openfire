@@ -131,6 +131,12 @@ CREATE TABLE jivePrivacyList (
 );
 CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
 
+CREATE TABLE jiveSASLAuthorized (
+  username            VARCHAR(64)   NOT NULL,
+  principal           VARCHAR(4000) NOT NULL,
+  CONSTRAINT jiveSASLAuthoirzed_pk PRIMARY KEY (username, principal)
+);
+
 -- MUC Tables
 
 CREATE TABLE mucRoom(
@@ -311,7 +317,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 9);
+INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 10);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

@@ -47,7 +47,7 @@ public class SchemaManager {
     /**
      * Current Wildfire database schema version.
      */
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10;
 
     /**
      * Creates a new Schema manager.

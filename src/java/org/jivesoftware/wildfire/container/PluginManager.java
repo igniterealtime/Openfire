@@ -19,6 +19,7 @@ import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.XMPPServer;
 
 import java.io.*;
@@ -368,7 +369,11 @@ public class PluginManager {
                 }
 
                 // Check the plugin's database schema (if it requires one).
-                DbConnectionManager.getSchemaManager().checkPluginSchema(plugin);
+                if (!DbConnectionManager.getSchemaManager().checkPluginSchema(plugin)) {
+                    // The schema was not there and auto-upgrade failed.
+                    Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"));
+                    System.out.println(LocaleUtils.getLocalizedString("upgrade.database.failure"));
+                }
 
                 // Load any JSP's defined by the plugin.
                 File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +

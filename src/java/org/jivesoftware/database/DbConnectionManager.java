@@ -664,7 +664,7 @@ public class DbConnectionManager {
         }
         // Postgres properties
         else if (dbName.indexOf("postgres") != -1) {
-            databaseType = DatabaseType.postgres;
+            databaseType = DatabaseType.postgresql;
             // Postgres blows, so disable scrolling result sets.
             scrollResultsSupported = false;
             fetchSizeSupported = false;
@@ -781,7 +781,7 @@ public class DbConnectionManager {
 
         oracle,
 
-        postgres,
+        postgresql,
 
         mysql,
 

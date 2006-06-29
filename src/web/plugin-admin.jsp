@@ -434,7 +434,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
     if (plugins.size() == 1) {
 %>
 <tr>
-    <td align="center" colspan="8"><fmt:message key="plugin.admin.no_plugin"/></td>
+    <td align="center" colspan="8" style="padding:5px;"><fmt:message key="plugin.admin.no_plugin"/></td>
 </tr>
 <%
     }

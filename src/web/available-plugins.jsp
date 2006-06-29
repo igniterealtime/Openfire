@@ -151,7 +151,7 @@
     function downloadPlugin(url, id) {
         downloading = true;
         document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
-        document.getElementById(id).style.background = "#FFFFF7";
+        document.getElementById(id).style.background = "##915a15";
         setTimeout("startDownload('" + url + "','" + id + "')", 5000);
     }
 
@@ -409,13 +409,12 @@
         <% } %>
     </td>
 </tr>
-<tr id="<%= plugin.hashCode()%>-row" style="display:none;">
-    <td width="1%" class="line-bottom-border">
+<tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
+     <td width="1%" class="line-bottom-border">
         <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
     </td>
-    <td class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
-    <td colspan="5" class="line-bottom-border">&nbsp;</td>
-    <td class="line-bottom-border">
+    <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
+    <td class="line-bottom-border" align="center">
         <img src="images/success-16x16.gif" height="16" width="16"/>
     </td>
 </tr>
@@ -516,7 +515,7 @@
            <% if(time != null) { %>
         <fmt:message key="plugin.available.autoupdate" /> <%= time%>.
            <% } %>
-           <% if(!updateManager.isServiceEnabled()){%>
+           <% if(updateManager.isServiceEnabled()){%>
               <fmt:message key="plugin.available.autoupdate.on" />
            <% } else { %>
                 <fmt:message key="plugin.available.autoupdate.off" />

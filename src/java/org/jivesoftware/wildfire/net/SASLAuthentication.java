@@ -448,11 +448,12 @@ public class SASLAuthentication {
     }
 
     /**
-     * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server.
+     * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server. The
+     * new mechanism will be offered to clients and connection managers as stream features.
      *
      * @param mechanism the new SASL mechanism.
      */
-    public void addSupportedMechanism(String mechanism) {
+    public static void addSupportedMechanism(String mechanism) {
         mechanisms.add(mechanism);
     }
 
@@ -461,7 +462,7 @@ public class SASLAuthentication {
      *
      * @param mechanism the SASL mechanism to remove.
      */
-    public void removeSupportedMechanism(String mechanism) {
+    public static void removeSupportedMechanism(String mechanism) {
         mechanisms.remove(mechanism);
     }
 

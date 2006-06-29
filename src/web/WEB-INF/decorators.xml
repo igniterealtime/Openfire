@@ -11,5 +11,6 @@
         <pattern>/setup/setup-completed.jsp*</pattern>
         <pattern>/login.jsp*</pattern>
         <pattern>/plugin-icon.jsp*</pattern>
+        <pattern>/js/jscalendar/i18n.jsp*</pattern>
     </excludes>
 </decorators>

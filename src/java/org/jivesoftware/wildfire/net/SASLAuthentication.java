@@ -57,7 +57,11 @@ public class SASLAuthentication {
 
     private static Map<String, ElementType> typeMap = new TreeMap<String, ElementType>();
 
-    private static Collection<String> mechanisms = null;
+    private static Set<String> mechanisms = null;
+
+    static {
+        initMechanisms();
+    }
 
     public enum ElementType {
 
@@ -128,7 +132,7 @@ public class SASLAuthentication {
                 }
                 else if (mech.equals("ANONYMOUS")) {
                     // Check anonymous is supported
-                    if (!XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                    if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
                         continue;
                     }
                 }
@@ -297,7 +301,7 @@ public class SASLAuthentication {
     }
 
     private static Status doAnonymousAuthentication(Session session) {
-        if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+        if (XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
             // Just accept the authentication :)
             authenticationSuccessful(session, null, null);
             return Status.authenticated;
@@ -442,45 +446,74 @@ public class SASLAuthentication {
             session.getConnection().close();
         }
     }
-    
-    public static Collection<String> getSupportedMechanisms() {
-        if (mechanisms == null) {
-            mechanisms = new ArrayList<String>();
-            String available = JiveGlobals.getXMLProperty("sasl.mechs");
-            if (available == null) {
-                mechanisms.add("ANONYMOUS");
-                mechanisms.add("PLAIN");
-                mechanisms.add("DIGEST-MD5");
-                mechanisms.add("CRAM-MD5");
-                return mechanisms;
-            }
+
+    /**
+     * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server.
+     *
+     * @param mechanism the new SASL mechanism.
+     */
+    public void addSupportedMechanism(String mechanism) {
+        mechanisms.add(mechanism);
+    }
+
+    /**
+     * Removes a SASL mechanism from the list of supported SASL mechanisms by the server.
+     *
+     * @param mechanism the SASL mechanism to remove.
+     */
+    public void removeSupportedMechanism(String mechanism) {
+        mechanisms.remove(mechanism);
+    }
+
+    /**
+     * Returns the list of supported SASL mechanisms by the server. Note that Java may have
+     * support for more mechanisms but some of them may not be returned since a special setup
+     * is required that might be missing. Use {@link #addSupportedMechanism(String)} to add
+     * new SASL mechanisms.
+     *
+     * @return the list of supported SASL mechanisms by the server.
+     */
+    public static Set<String> getSupportedMechanisms() {
+        return mechanisms;
+    }
+
+    private static void initMechanisms() {
+        mechanisms = new HashSet<String>();
+        String available = JiveGlobals.getXMLProperty("sasl.mechs");
+        if (available == null) {
+            mechanisms.add("ANONYMOUS");
+            mechanisms.add("PLAIN");
+            mechanisms.add("DIGEST-MD5");
+            mechanisms.add("CRAM-MD5");
+        } else {
             StringTokenizer st = new StringTokenizer(available, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String mech = st.nextToken().toUpperCase();
                 // Check that the mech is a supported mechansim. Maybe we shouldnt check this and allow any?
-                if(mech.equals("ANONYMOUS") ||
-                  mech.equals("PLAIN") ||
-                  mech.equals("DIGEST-MD5") ||
-                  mech.equals("CRAM-MD5") ||
-                  mech.equals("GSSAPI") ) { 
-                    Log.debug("SASLAuthentication: Added "+mech+" to mech list");
+                if (mech.equals("ANONYMOUS") ||
+                        mech.equals("PLAIN") ||
+                        mech.equals("DIGEST-MD5") ||
+                        mech.equals("CRAM-MD5") ||
+                        mech.equals("GSSAPI")) {
+                    Log.debug("SASLAuthentication: Added " + mech + " to mech list");
                     mechanisms.add(mech);
                 }
             }
-            
-            if(getSupportedMechanisms().contains("GSSAPI")) {
-                if(JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
-                    System.setProperty("java.security.krb5.debug", JiveGlobals.getXMLProperty("sasl.gssapi.debug","false"));
-                    System.setProperty("java.security.auth.login.config",JiveGlobals.getXMLProperty("sasl.gssapi.config"));
-                    System.setProperty("javax.security.auth.useSubjectCredsOnly",JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly","false"));
+
+            if (getSupportedMechanisms().contains("GSSAPI")) {
+                if (JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
+                    System.setProperty("java.security.krb5.debug",
+                            JiveGlobals.getXMLProperty("sasl.gssapi.debug", "false"));
+                    System.setProperty("java.security.auth.login.config",
+                            JiveGlobals.getXMLProperty("sasl.gssapi.config"));
+                    System.setProperty("javax.security.auth.useSubjectCredsOnly",
+                            JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
                 } else {
                     //Not configured, remove the option.
                     Log.debug("SASLAuthentication: Removed GSSAPI from mech list");
                     mechanisms.remove("GSSAPI");
                 }
             }
-            
         }
-        return mechanisms;
     }
 }

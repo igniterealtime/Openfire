@@ -108,6 +108,11 @@
         </init-param>
     </servlet>
 
+    <servlet>
+        <servlet-name>PluginIconServlet</servlet-name>
+        <servlet-class>org.jivesoftware.wildfire.container.PluginIconServlet</servlet-class>
+    </servlet>
+
 
     <!--@@JSPC-SERVLETS@@-->
 
@@ -119,6 +124,11 @@
     <servlet-mapping>
         <servlet-name>FaviconServlet</servlet-name>
         <url-pattern>/getFavicon</url-pattern>
+    </servlet-mapping>
+
+     <servlet-mapping>
+        <servlet-name>PluginIconServlet</servlet-name>
+        <url-pattern>/geticon</url-pattern>
     </servlet-mapping>
 
 

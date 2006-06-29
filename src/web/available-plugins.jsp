@@ -466,7 +466,7 @@
         <tr>
             <td class="line-bottom-border" width="1%">
                 <% if (icon.exists()) { %>
-                <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
+                <img src="/geticon?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
                 <% }
                 else { %>
                 <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">

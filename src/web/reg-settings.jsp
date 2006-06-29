@@ -8,13 +8,16 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.handler.IQRegisterHandler,
-                 org.jivesoftware.wildfire.handler.IQAuthHandler,
-                 java.util.*,
+<%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.ClientSession,
-                 org.jivesoftware.util.*"
+                 org.jivesoftware.wildfire.handler.IQAuthHandler,
+                 org.jivesoftware.wildfire.handler.IQRegisterHandler,
+                 java.util.HashMap"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Iterator"%>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -62,7 +65,7 @@
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = authHandler.isAllowAnonymous();
+    anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
     Iterator<String> iter = ClientSession.getAllowedIPs().keySet().iterator();

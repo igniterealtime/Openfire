@@ -269,7 +269,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         return response;
     }
 
-    public boolean isAllowAnonymous() {
+    public boolean isAnonymousAllowed() {
         return anonymousAllowed;
     }
 

@@ -25,7 +25,7 @@ public interface IQAuthInfo {
      *
      * @return true if anonymous logins are allowed
      */
-    public boolean isAllowAnonymous();
+    public boolean isAnonymousAllowed();
 
     /**
      * Changes the server's support for anonymous authentication.

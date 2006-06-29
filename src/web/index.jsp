@@ -63,13 +63,12 @@
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     Update serverUpdate = updateManager.getServerUpdate();
     if (serverUpdate != null) { %>
-    <div class="jive-info">
-    <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FF9999">
+    <div class="warning">
+    <table cellpadding="0" cellspacing="0" border="0" >
     <tbody>
         <tr>
-            <td width="10" class="jive-icon"><img src="images/warning-16x16.gif" width="16" height="16" border="0"/></td>
             <td class="jive-icon-label">
-            <fmt:message key="index.update.alert" />
+            <b><fmt:message key="index.update.alert" /></b><br/><br/>
             </td>
         </tr>
         <td valign="top" align="left" colspan="2">

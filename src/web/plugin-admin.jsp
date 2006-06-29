@@ -365,30 +365,16 @@
 
 <% if ("true".equals(request.getParameter("deletesuccess"))) { %>
 
-<div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-                <td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_success"/></td>
-            </tr>
-        </tbody>
-    </table>
+<div class="success">
+   <fmt:message key="plugin.admin.deleted_success"/>
 </div>
 <br>
 
 <% }
 else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
-<div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/>></td>
-                <td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_failure"/></td>
-            </tr>
-        </tbody>
-    </table>
+<div class="error">
+    <fmt:message key="plugin.admin.deleted_failure"/>
 </div>
 <br>
 
@@ -396,13 +382,8 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
 <% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
 
-<div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-                <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success"/></td></tr>
-        </tbody>
-    </table>
+<div class="success">
+   <fmt:message key="plugin.admin.reload_success"/></td>
 </div>
 <br>
 
@@ -416,7 +397,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr>
+ <tr style="background:#F7F7FF;">
 
     <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>

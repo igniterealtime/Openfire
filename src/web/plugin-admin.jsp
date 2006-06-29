@@ -383,7 +383,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 <% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
 
 <div class="success">
-   <fmt:message key="plugin.admin.reload_success"/></td>
+   <fmt:message key="plugin.admin.reload_success"/>
 </div>
 <br>
 

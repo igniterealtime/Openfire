@@ -787,7 +787,7 @@
             <fileset dir="${target.dir}">
                 <include name="plugins/enterprise.jar"/>
                 <include name="plugins/fastpath.jar"/>
-                <include name="plugins/webchat.jar"/>
+                <include name="plugins/webchat.war"/>
             </fileset>
         </copy>
         <!-- Remove GPL libs from distribution -->

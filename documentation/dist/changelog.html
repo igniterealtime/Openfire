@@ -164,11 +164,12 @@ hr {
 
 
 
-<h2>3.0.0 Beta -- <span style="font-weight: normal;">June 20, 2006</span></h2>
+<h2>3.0.0 -- <span style="font-weight: normal;">June 29, 2006</span></h2>
 
 <h3>Wildfire New Features</h3>
 <ul>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-666'>JM-666</a>] - Added support for connection managers.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-281'>JM-281</a>] - Added support for Kerberos/NTLM (status: experimental). <b>(56 votes)</b></li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-673'>JM-673</a>] - Added database support for plugins.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-677'>JM-677</a>] - Added i18n support for plugins.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-718'>JM-718</a>] - Added servlet filter framework for plugins.</li>
@@ -176,6 +177,7 @@ hr {
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-684'>JM-684</a>] - Added support for JEP-0164: vCard Filtering</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-704'>JM-704</a>] - Added support of other password types to JDBCAuthProvider.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-715'>JM-715</a>] - Added support for notifications of new server or plugins updates.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-740'>JM-740</a>] - Added support for adding/removing SASL mechanisms at runtime.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-719'>JM-719</a>] - Allowed flat searches of LDAP instead of sub-tree.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-680'>JM-680</a>] - Improved performance of server-to-server connections by using many threads to process incoming packets.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-720'>JM-720</a>] - Improved performance of SessionManager#getSessionCount().</li>
@@ -194,6 +196,9 @@ hr {
 
 <h3>Wildfire Bug Fixes</h3>
 <ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-702'>JM-702</a>] - Presence updates were not being broadcasted to other connected resources. <b>(4 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-735'>JM-735</a>] - Presence packets sent to bare JIDs were not being sent to all connected resources.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-731'>JM-731</a>] - DNS lookups was failing with some DNS servers.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-707'>JM-707</a>] - A &lt;system-shutdown/&gt; stream error condition is now sent when shutting down the server.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-653'>JM-653</a>] - FileTransfer was not implementing Cacheable.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-654'>JM-654</a>] - Fixed conflict in Proxy Transfer cache name.</li>
@@ -207,14 +212,20 @@ hr {
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-667'>JM-667</a>] - Roster items with subscription NONE and ask PENDING were being sent to clients.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-668'>JM-668</a>] - Fixed error when deleting a user with shared contacts that belong to public shared groups.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-669'>JM-669</a>] - Added fix for "javax.net.ssl.SSLException: Unsupported record version Unknown" error.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-729'>JM-729</a>] - Server was not processing IQ errors triggered by IQ requests made by the server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-732'>JM-732</a>] - mucConversationLog was storing room's JID instead of the sender's JID.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-681'>JM-681</a>] - No more than 5 concurrent threads were used for creating new server-to-server connections.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-670'>JM-670</a>] - Flash clients were waiting forever for a response if old SASL method failed or there was a conflict while binding a resource.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-671'>JM-671</a>] - Fixed NPE when external component did not include a TO attribute in stream header.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-674'>JM-674</a>] - Fixed NPE in IQDiscoItemsHandler when an ServerItemsProvider was disabled.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-698'>JM-698</a>] - Fixed bug in XMLProperties.getChildren.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-728'>JM-728</a>] - Fixed PK length error when upgrading jivePrivate in MySQL using URF-8.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-736'>JM-736</a>] - Added commit statement to Oracle db scripts.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-737'>JM-737</a>] - Fixed invalid character error when upgrading Oracle database.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-700'>JM-700</a>] - Increased the column size of "username" from 32 to 64.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-706'>JM-706</a>] - Non-SASL Authentication stream feature was not being offered when anonymous login was disabled.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-712'>JM-712</a>] - VCard manager was not returning vcard-temp as a stream feature.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-726'>JM-726</a>] - Privacy list now implements Cacheable interface.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-656'>JM-656</a>] - Streamlined disco registration process.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-709'>JM-709</a>] - An exception is now thrown when plugin servlet class was not found.</li>
 <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-663'>JM-663</a>] - UserProvider no longer depends on VCardManager.</li>

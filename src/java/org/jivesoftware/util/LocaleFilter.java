@@ -11,17 +11,10 @@
 
 package org.jivesoftware.util;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.jstl.core.Config;
 import javax.servlet.jsp.jstl.fmt.LocalizationContext;
-
 import java.io.IOException;
 import java.util.ResourceBundle;
 
@@ -56,7 +49,7 @@ public class LocaleFilter implements Filter {
                 String[] parts = pathInfo.split("/");
                 String pluginName = parts[1];
                 ResourceBundle bundle = LocaleUtils.getPluginResourceBundle(pluginName);
-                LocalizationContext ctx = new LocalizationContext(bundle);
+                LocalizationContext ctx = new LocalizationContext(bundle, JiveGlobals.getLocale());
                 Config.set(request, Config.FMT_LOCALIZATION_CONTEXT, ctx);
             }
             catch (Exception e) {

@@ -826,8 +826,9 @@ public class PluginManager {
                         else if (file2.getName().equals("admin")) {
                             return 1;
                         }
-                        else
+                        else {
                             return file1.compareTo(file2);
+                        }
                     }
                 });
 
@@ -933,7 +934,24 @@ public class PluginManager {
          */
         public boolean deleteDir(File dir) {
             if (dir.isDirectory()) {
-                String[] children = dir.list();
+                String[] childDirs = dir.list();
+                // Always try to delete JAR files first since that's what will
+                // be under contention. We do this by always sorting the lib directory
+                // first.
+                List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
+                Collections.sort(children, new Comparator<String>() {
+                    public int compare(String o1, String o2) {
+                        if (o1.equals("lib")) {
+                            return -1;
+                        }
+                        if (o2.equals("lib")) {
+                            return 1;
+                        }
+                        else {
+                            return o1.compareTo(o2);
+                        }
+                    }
+                });
                 for (String file : children) {
                     boolean success = deleteDir(new File(dir, file));
                     if (!success) {

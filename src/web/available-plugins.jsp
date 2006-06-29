@@ -151,7 +151,7 @@
     function downloadPlugin(url, id) {
         downloading = true;
         document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
-        document.getElementById(id).style.background = "#915a15";
+        document.getElementById(id).style.background = "#FFFFCC";
         setTimeout("startDownload('" + url + "','" + id + "')", 5000);
     }
 

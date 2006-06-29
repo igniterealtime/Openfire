@@ -137,13 +137,13 @@ CREATE TABLE jivePrivacyList (
   list                  VARCHAR(2000)   NOT NULL,
   CONSTRAINT jivePrivacyList_pk PRIMARY KEY (username, name)
 );
-CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
+CREATE INDEX jList_default_idx ON jivePrivacyList (username, isDefault);
 
 
 CREATE TABLE jiveSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,
-  principal           VARCHAR(4000) NOT NULL,
-  CONSTRAINT jiveSASLAuthorized_pk PRIMARY KEY (username, principal)
+  principal           VARCHAR(190)  NOT NULL,
+  CONSTRAINT jSASLAuthrizd_pk PRIMARY KEY (username, principal)
 );
 
 -- MUC tables
@@ -224,11 +224,11 @@ CREATE TABLE pubsubNode (
   leaf                INTEGER       NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   modificationDate    CHAR(15)      NOT NULL,
-  parent              VARCHAR(100)  NULL,
+  parent              VARCHAR(100),
   deliverPayloads     INTEGER       NOT NULL,
-  maxPayloadSize      INTEGER       NULL,
-  persistItems        INTEGER       NULL,
-  maxItems            INTEGER       NULL,
+  maxPayloadSize      INTEGER,
+  persistItems        INTEGER,
+  maxItems            INTEGER,
   notifyConfigChanges INTEGER       NOT NULL,
   notifyDelete        INTEGER       NOT NULL,
   notifyRetract       INTEGER       NOT NULL,
@@ -238,25 +238,25 @@ CREATE TABLE pubsubNode (
   subscriptionEnabled INTEGER       NOT NULL,
   configSubscription  INTEGER       NOT NULL,
   accessModel         VARCHAR(10)   NOT NULL,
-  payloadType         VARCHAR(100)  NULL,
-  bodyXSLT            VARCHAR(100)  NULL,
-  dataformXSLT        VARCHAR(100)  NULL,
+  payloadType         VARCHAR(100),
+  bodyXSLT            VARCHAR(100),
+  dataformXSLT        VARCHAR(100),
   creator             VARCHAR(1024) NOT NULL,
-  description         VARCHAR(255)  NULL,
-  language            VARCHAR(255)  NULL,
-  name                VARCHAR(50)   NULL,
-  replyPolicy         VARCHAR(15)   NULL,
-  associationPolicy   VARCHAR(15)   NULL,
-  maxLeafNodes        INTEGER       NULL,
+  description         VARCHAR(255),
+  language            VARCHAR(255),
+  name                VARCHAR(50),
+  replyPolicy         VARCHAR(15),
+  associationPolicy   VARCHAR(15),
+  maxLeafNodes        INTEGER,
   CONSTRAINT pubsubNode_pk PRIMARY KEY (serviceID, nodeID)
 );
 
 
 CREATE TABLE pubsubNodeJIDs (
-  serviceID           VARCHAR(100)  NOT NULL,
-  nodeID              VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
-  associationType     VARCHAR(20)   NOT NULL,
+  serviceID           VARCHAR(80)  NOT NULL,
+  nodeID              VARCHAR(80)  NOT NULL,
+  jid                 VARCHAR(90)  NOT NULL,
+  associationType     VARCHAR(20)  NOT NULL,
   CONSTRAINT pubsubJID_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
@@ -266,14 +266,14 @@ CREATE TABLE pubsubNodeGroups (
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)  NOT NULL
 );
-CREATE INDEX pubsubNodeGroups_idx ON pubsubNodeGroups (serviceID, nodeID);
+CREATE INDEX pubsubNGrps_idx ON pubsubNodeGroups (serviceID, nodeID);
 
 
 CREATE TABLE pubsubAffiliation (
-  serviceID           VARCHAR(100)  NOT NULL,
-  nodeID              VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(1024) NOT NULL,
-  affiliation         VARCHAR(10)   NOT NULL,
+  serviceID           VARCHAR(80)  NOT NULL,
+  nodeID              VARCHAR(80)  NOT NULL,
+  jid                 VARCHAR(90)  NOT NULL,
+  affiliation         VARCHAR(10)  NOT NULL,
   CONSTRAINT pubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
@@ -281,30 +281,30 @@ CREATE TABLE pubsubAffiliation (
 CREATE TABLE pubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
-  id                  VARCHAR(100)  NOT NULL,
+  id                  VARCHAR(20)   NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
-  payload             VARCHAR(4000) NULL,
+  payload             CLOB,
   CONSTRAINT pubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
 
 CREATE TABLE pubsubSubscription (
-  serviceID           VARCHAR(100)  NOT NULL,
-  nodeID              VARCHAR(100)  NOT NULL,
-  id                  VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(80)   NOT NULL,
+  nodeID              VARCHAR(80)   NOT NULL,
+  id                  VARCHAR(90)   NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   owner               VARCHAR(1024) NOT NULL,
   state               VARCHAR(15)   NOT NULL,
   deliver             INTEGER       NOT NULL,
   digest              INTEGER       NOT NULL,
   digest_frequency    INTEGER       NOT NULL,
-  expire              CHAR(15)      NULL,
+  expire              CHAR(15),
   includeBody         INTEGER       NOT NULL,
   showValues          VARCHAR(30)   NOT NULL,
   subscriptionType    VARCHAR(10)   NOT NULL,
   subscriptionDepth   INTEGER       NOT NULL,
-  keyword             VARCHAR(200)  NULL,
+  keyword             VARCHAR(200),
   CONSTRAINT pubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
@@ -324,8 +324,8 @@ CREATE TABLE pubsubDefaultConf (
   publisherModel      VARCHAR(15)   NOT NULL,
   subscriptionEnabled INTEGER       NOT NULL,
   accessModel         VARCHAR(10)   NOT NULL,
-  language            VARCHAR(255)  NULL,
-  replyPolicy         VARCHAR(15)   NULL,
+  language            VARCHAR(255),
+  replyPolicy         VARCHAR(15),
   associationPolicy   VARCHAR(15)   NOT NULL,
   maxLeafNodes        INTEGER       NOT NULL,
   CONSTRAINT pubsubDefConf_pk PRIMARY KEY (serviceID, leaf)

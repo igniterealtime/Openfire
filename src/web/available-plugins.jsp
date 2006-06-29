@@ -507,11 +507,15 @@
 <br/>
  <%
         String time = JiveGlobals.getProperty("update.lastCheck");
+        if(time != null){
         Date date = new Date(Long.parseLong(time));
         time = JiveGlobals.formatDate(date);
+        }
     %>
        <p>
+           <% if(time != null) { %>
         <fmt:message key="plugin.available.autoupdate" /> <%= time%>.
+           <% } %>
            <% if(!updateManager.isServiceEnabled()){%>
               <fmt:message key="plugin.available.autoupdate.on" />
            <% } else { %>

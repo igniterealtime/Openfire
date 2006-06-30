@@ -205,6 +205,20 @@
         return message;
     }
 
+    function updatePluginsList(){
+        document.getElementById("reloaderID").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        downloader.updatePluginsList(pluginsListUpdated);
+    }
+
+    function updatePluginsListNow(){
+        document.getElementById("reloader2").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        downloader.updatePluginsList(pluginsListUpdated);
+    }
+
+    function pluginsListUpdated(){
+        window.location.href = "available-plugins.jsp";
+    }
+
 
 </script>
 </head>
@@ -219,7 +233,7 @@
 
 <%if(plugins.size() == 0){ %>
 <div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
-    <fmt:message key="plugin.available.no.list" />&nbsp;<a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.list" /></a>
+    <fmt:message key="plugin.available.no.list" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
 </div>
 <br/>
 <div style="width:75%;">
@@ -520,7 +534,7 @@
            <% } else { %>
                 <fmt:message key="plugin.available.autoupdate.off" />
            <% } %>
-           &nbsp;<a href="available-plugins.jsp?autoupdate=true"><fmt:message key="plugin.available.manual.update" /></a>
+           &nbsp;<span id="reloader2"><a href="javascript:updatePluginsListNow()"><fmt:message key="plugin.available.manual.update" /></a></span>
         </p>
            <% } %>
 

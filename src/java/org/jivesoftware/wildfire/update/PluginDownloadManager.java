@@ -7,6 +7,7 @@
  */
 package org.jivesoftware.wildfire.update;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 
 /**
@@ -59,6 +60,19 @@ public class PluginDownloadManager {
          *   @author Nate DeMoro
          */
         return status;
+    }
+
+    public boolean updatePluginsList() {
+        UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
+        try {
+            updateManager.checkForPluginsUpdates(true);
+            return true;
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+
+        return false;
     }
 
 }

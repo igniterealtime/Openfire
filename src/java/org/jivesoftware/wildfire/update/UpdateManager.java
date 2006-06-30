@@ -100,6 +100,9 @@ public class UpdateManager extends BasicModule {
 
     public void start() throws IllegalStateException {
         super.start();
+        // Load last saved information (if any)
+        loadSavedInfo();
+        
         if (isServiceEnabled()) {
             startService();
         }
@@ -115,8 +118,6 @@ public class UpdateManager extends BasicModule {
                 try {
                     // Sleep for 15 seconds before starting to work
                     Thread.sleep(15000);
-                    // Load last saved information (if any)
-                    loadSavedInfo();
                     while (isServiceEnabled()) {
                         waitForNextChecking();
                         // Check if the service is still enabled

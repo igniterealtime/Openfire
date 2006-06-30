@@ -102,29 +102,22 @@ public class UpdateManager extends BasicModule {
                     Thread.sleep(15000);
                     // Load last saved information (if any)
                     loadSavedInfo();
-                    while (true) {
-                        // Check if the service is enabled
+                    while (isServiceEnabled()) {
+                        waitForNextChecking();
+                        // Check if the service is still enabled
                         if (isServiceEnabled()) {
-                            waitForNextChecking();
-                            // Check if the service is still enabled
-                            if (isServiceEnabled()) {
-                                try {
-                                    // Check for server updates
-                                    checkForServerUpdate(true);
-                                    // Refresh list of available plugins and check for plugin updates
-                                    checkForPluginsUpdates(true);
-                                    // Keep track of the last time we checked for updates
-                                    JiveGlobals.setProperty("update.lastCheck",
-                                            String.valueOf(System.currentTimeMillis()));
-                                }
-                                catch (Exception e) {
-                                    Log.error("Error checking for updates", e);
-                                }
+                            try {
+                                // Check for server updates
+                                checkForServerUpdate(true);
+                                // Refresh list of available plugins and check for plugin updates
+                                checkForPluginsUpdates(true);
+                                // Keep track of the last time we checked for updates
+                                JiveGlobals.setProperty("update.lastCheck",
+                                        String.valueOf(System.currentTimeMillis()));
                             }
-                        }
-                        else {
-                            // Service is not enabled so sleep for 5 minutes
-                             Thread.sleep(300000);
+                            catch (Exception e) {
+                                Log.error("Error checking for updates", e);
+                            }
                         }
                     }
                 }
@@ -306,6 +299,9 @@ public class UpdateManager extends BasicModule {
      */
     public void setServiceEnabled(boolean enabled) {
         JiveGlobals.setProperty("update.service-enabled", enabled ? "true" : "false");
+        if (enabled && thread == null) {
+            startService();
+        }
     }
 
     /**

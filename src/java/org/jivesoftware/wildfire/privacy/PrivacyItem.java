@@ -124,7 +124,7 @@ class PrivacyItem implements Cacheable, Comparable {
      * @return true if the packet to analyze matches the condition defined by this rule.
      */
     boolean matchesCondition(Packet packet, Roster roster, JID userJID) {
-        return matchesPacketSenderCondition(packet, roster) &&
+        return matchesPacketSenderCondition(packet, roster, userJID) &&
                 matchesPacketTypeCondition(packet, userJID);
     }
 
@@ -132,19 +132,24 @@ class PrivacyItem implements Cacheable, Comparable {
         return allow;
     }
 
-    private boolean matchesPacketSenderCondition(Packet packet, Roster roster) {
+    private boolean matchesPacketSenderCondition(Packet packet, Roster roster, JID userJID) {
         if (type == null) {
             // This is the "fall-through" case
             return true;
         }
         boolean isPresence = packet.getClass().equals(Presence.class);
+        boolean incoming = true;
+        if (packet.getFrom() != null) {
+            incoming = !userJID.toBareJID().equals(packet.getFrom().toBareJID());
+        }
         boolean matches = false;
-        if (isPresence && (filterEverything || filterPresence_out)) {
+        if (isPresence && !incoming && (filterEverything || filterPresence_out)) {
             // If this is an outgoing presence and we are filtering by outgoing presence
             // notification then use the receipient of the packet in the analysis
             matches = verifyJID(packet.getTo(), roster);
         }
-        if (!matches && (filterEverything || filterPresence_in || filterIQ || filterMessage)) {
+        if (!matches && incoming &&
+                (filterEverything || filterPresence_in || filterIQ || filterMessage)) {
             matches = verifyJID(packet.getFrom(), roster);
         }
         return matches;

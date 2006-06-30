@@ -32,21 +32,8 @@ import org.jivesoftware.wildfire.container.Plugin;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
@@ -100,12 +87,7 @@ public class UpdateManager extends BasicModule {
 
     public void start() throws IllegalStateException {
         super.start();
-        // Load last saved information (if any)
-        loadSavedInfo();
-        
-        if (isServiceEnabled()) {
-            startService();
-        }
+        startService();
     }
 
     /**
@@ -118,22 +100,31 @@ public class UpdateManager extends BasicModule {
                 try {
                     // Sleep for 15 seconds before starting to work
                     Thread.sleep(15000);
-                    while (isServiceEnabled()) {
-                        waitForNextChecking();
-                        // Check if the service is still enabled
+                    // Load last saved information (if any)
+                    loadSavedInfo();
+                    while (true) {
+                        // Check if the service is enabled
                         if (isServiceEnabled()) {
-                            try {
-                                // Check for server updates
-                                checkForServerUpdate(true);
-                                // Refresh list of available plugins and check for plugin updates
-                                checkForPluginsUpdates(true);
-                                // Keep track of the last time we checked for updates
-                                JiveGlobals.setProperty("update.lastCheck",
-                                        String.valueOf(System.currentTimeMillis()));
+                            waitForNextChecking();
+                            // Check if the service is still enabled
+                            if (isServiceEnabled()) {
+                                try {
+                                    // Check for server updates
+                                    checkForServerUpdate(true);
+                                    // Refresh list of available plugins and check for plugin updates
+                                    checkForPluginsUpdates(true);
+                                    // Keep track of the last time we checked for updates
+                                    JiveGlobals.setProperty("update.lastCheck",
+                                            String.valueOf(System.currentTimeMillis()));
+                                }
+                                catch (Exception e) {
+                                    Log.error("Error checking for updates", e);
+                                }
                             }
-                            catch (Exception e) {
-                                Log.error("Error checking for updates", e);
-                            }
+                        }
+                        else {
+                            // Service is not enabled so sleep for 5 minutes
+                             Thread.sleep(300000);
                         }
                     }
                 }
@@ -151,8 +142,7 @@ public class UpdateManager extends BasicModule {
                 if (lastCheck == 0) {
                     // This is the first time the server is used (since we added this feature)
                     Thread.sleep(45000);
-                }
-                else {
+                } else {
                     long elapsed = System.currentTimeMillis() - lastCheck;
                     int frequency = getCheckFrequency() * 60 * 60 * 1000;
                     if (elapsed < frequency) {
@@ -316,9 +306,6 @@ public class UpdateManager extends BasicModule {
      */
     public void setServiceEnabled(boolean enabled) {
         JiveGlobals.setProperty("update.service-enabled", enabled ? "true" : "false");
-        if (enabled && thread == null) {
-            startService();
-        }
     }
 
     /**
@@ -443,7 +430,7 @@ public class UpdateManager extends BasicModule {
         Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
-            Element plugin = (Element)plugins.next();
+            Element plugin = (Element) plugins.next();
             String pluginName = plugin.attributeValue("name");
             String latestVersion = plugin.attributeValue("latest");
             String icon = plugin.attributeValue("icon");
@@ -703,7 +690,7 @@ public class UpdateManager extends BasicModule {
         // Parse info and recreate available plugins
         Iterator it = xmlResponse.getRootElement().elementIterator("plugin");
         while (it.hasNext()) {
-            Element plugin = (Element)it.next();
+            Element plugin = (Element) it.next();
             String pluginName = plugin.attributeValue("name");
             String latestVersion = plugin.attributeValue("latest");
             String icon = plugin.attributeValue("icon");

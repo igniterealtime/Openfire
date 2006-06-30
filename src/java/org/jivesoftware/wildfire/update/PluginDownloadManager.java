@@ -7,6 +7,7 @@
  */
 package org.jivesoftware.wildfire.update;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 
@@ -65,7 +66,15 @@ public class PluginDownloadManager {
     public boolean updatePluginsList() {
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
         try {
+            // Todo: Unify update checking into one xml file. Have the update check set the last check property.
+            updateManager.checkForServerUpdate(true);
             updateManager.checkForPluginsUpdates(true);
+
+            // Keep track of the last time we checked for updates
+            JiveGlobals.setProperty("update.lastCheck",
+                    String.valueOf(System.currentTimeMillis()));
+
+
             return true;
         }
         catch (Exception e) {

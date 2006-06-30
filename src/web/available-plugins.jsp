@@ -45,12 +45,6 @@
         }
     });
 
-    String updateList = request.getParameter("autoupdate");
-    if(updateList != null){
-        updateManager.checkForPluginsUpdates(true);
-    }
-
-
     if (downloadRequested) {
         // Download and install new plugin
         updateManager.downloadPlugin(url);

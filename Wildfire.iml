@@ -147,7 +147,9 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/" />
         </CLASSES>
-        <JAVADOC />
+        <JAVADOC>
+          <root url="http://www.dom4j.org/apidocs/" />
+        </JAVADOC>
         <SOURCES />
       </library>
     </orderEntry>

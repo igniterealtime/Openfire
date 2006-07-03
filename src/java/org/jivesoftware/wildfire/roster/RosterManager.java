@@ -750,23 +750,23 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         Collection<JID> users = new HashSet<JID>(group.getMembers());
         users.addAll(group.getAdmins());
         
-        // Check if anyone can see this shared group
-        if ("everybody".equals(showInRoster)) {
-            // If the user of the roster belongs to the public group then we should return all users
-            // in the system since they all need to be in the roster with subscription "from"
-            if (group.isUser(roster.getUsername())) {
+        // If the user of the roster belongs to the shared group then we should return
+        // users that need to be in the roster with subscription "from"
+        if (group.isUser(roster.getUsername())) {
+            // Check if anyone can see this shared group
+            if ("everybody".equals(showInRoster)) {
                 // Add all users in the system
                 for (String username : UserManager.getInstance().getUsernames()) {
                     users.add(server.createJID(username, null));
                 }
             }
-        }
-        else {
-            // Add the users that may see the group
-            Collection<Group> groupList = parseGroups(groupNames);
-            for (Group groupInList : groupList) {
-                users.addAll(groupInList.getMembers());
-                users.addAll(groupInList.getAdmins());
+            else {
+                // Add the users that may see the group
+                Collection<Group> groupList = parseGroups(groupNames);
+                for (Group groupInList : groupList) {
+                    users.addAll(groupInList.getMembers());
+                    users.addAll(groupInList.getAdmins());
+                }
             }
         }
         return users;

@@ -93,9 +93,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
                 }
             }
         }
-        if (roster == null) {
-            throw new UserNotFoundException(username);
-        }
         return roster;
     }
 
@@ -271,7 +268,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
-            //Collection<Group> visibleGroups = getVisibleGroups(group);
             for (JID user : users) {
                 groupUserAdded(group, user);
             }
@@ -295,7 +291,6 @@ public class RosterManager extends BasicModule implements GroupEventListener {
 
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
-            //Collection<Group> visibleGroups = getVisibleGroups(group);
             for (JID user : users) {
                 groupUserAdded(group, user);
             }
@@ -401,8 +396,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(group.getMembers());
-                users.addAll(group.getAdmins());
+                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                users.addAll(visibleGroup.getAdmins());
                 groupUserAdded(visibleGroup, users, addedUser);
             }
         }
@@ -424,8 +419,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(group.getMembers());
-                users.addAll(group.getAdmins());
+                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                users.addAll(visibleGroup.getAdmins());
                 groupUserDeleted(visibleGroup, users, deletedUser);
             }
         }
@@ -443,8 +438,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(group.getMembers());
-                users.addAll(group.getAdmins());
+                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                users.addAll(visibleGroup.getAdmins());
                 groupUserAdded(visibleGroup, users, addedUser);
             }
         }
@@ -463,8 +458,8 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(group.getMembers());
-                users.addAll(group.getAdmins());
+                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                users.addAll(visibleGroup.getAdmins());
                 groupUserDeleted(visibleGroup, users, deletedUser);
             }
         }

@@ -233,7 +233,13 @@ public class ClientSession extends Session {
         connection.setXMPPVersion(majorVersion, minorVersion);
 
         // Indicate the TLS policy to use for this connection
-        connection.setTlsPolicy(tlsPolicy);
+        if (!connection.isSecure()) {
+            // Set default TLS policy
+            connection.setTlsPolicy(tlsPolicy);
+        } else {
+            // Set default TLS policy
+            connection.setTlsPolicy(Connection.TLSPolicy.disabled);
+        }
 
         // Indicate the compression policy to use for this connection
         connection.setCompressionPolicy(compressionPolicy);
@@ -286,9 +292,9 @@ public class ClientSession extends Session {
 
         sb = new StringBuilder(490);
         sb.append("<stream:features>");
-        if (tlsPolicy != Connection.TLSPolicy.disabled) {
+        if (connection.getTlsPolicy() != Connection.TLSPolicy.disabled) {
             sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-            if (tlsPolicy == Connection.TLSPolicy.required) {
+            if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                 sb.append("<required/>");
             }
             sb.append("</starttls>");

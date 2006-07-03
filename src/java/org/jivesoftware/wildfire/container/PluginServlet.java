@@ -201,7 +201,9 @@ public class PluginServlet extends HttpServlet {
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
                 GenericServlet servlet = servlets.get(pluginName + url);
-                servlet.destroy();
+                if (servlet != null) {
+                    servlet.destroy();
+                }
                 servlets.remove(pluginName + url);
                 servlet = null;
             }

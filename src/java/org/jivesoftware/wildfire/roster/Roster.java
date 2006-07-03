@@ -47,9 +47,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Roster implements Cacheable {
 
     /**
-     * <p>Roster item cache - table: key jabberid string; value roster item.</p>
+     * Roster item cache - table: key jabberid string; value roster item.
      */
     protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<String, RosterItem>();
+    /**
+     * Contacts with subscription FROM that only exist due to shared groups
+     * key: jabberid string; value: replciated key value.
+     */
+    protected ConcurrentHashMap<String, String> implicitFrom = new ConcurrentHashMap<String, String>();
 
     private RosterItemProvider rosterItemProvider;
     private String username;
@@ -146,6 +151,10 @@ public class Roster implements Cacheable {
                     item.setNickname(UserNameManager.getUserName(jid));
                     rosterItems.put(item.getJid().toBareJID(), item);
                 }
+                else {
+                    // Cache information about shared contacts with subscription status FROM
+                    implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
+                }
             }
             catch (UserNotFoundException e) {
                 Log.error("Groups (" + sharedUsers.get(jid) + ") include non-existent username (" +
@@ -211,33 +220,9 @@ public class Roster implements Cacheable {
      *         user and the susbcription only exists due to some shared groups or otherwise null.
      */
     private RosterItem getImplicitRosterItem(JID user) {
-        // Get the groups of this user
-        Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
-        Collection<Group> sharedGroups = new ArrayList<Group>(userGroups.size());
-        // Check if there is a public shared group. That means that anyone can see this user.
-        for (Group group : userGroups) {
-            if (rosterManager.isPulicSharedGroup(group)) {
-                // Only local users may see public shared groups
-                if (server.isLocal(user)) {
-                    return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
-                            RosterItem.RECV_NONE, "", null);
-                }
-            }
-            else if (rosterManager.isSharedGroup(group)) {
-                // This is a shared group that can be seen only by group members or
-                // (maybe) by other groups
-                sharedGroups.add(group);
-            }
-        }
-        if (!sharedGroups.isEmpty()) {
-            // Check if any group of the contact may see a shared group of this user
-            Collection<Group> contactGroups = GroupManager.getInstance().getGroups(user);
-            for (Group sharedGroup : sharedGroups) {
-                if (rosterManager.isSharedGroupVisible(sharedGroup, contactGroups)) {
-                    return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
-                            RosterItem.RECV_NONE, "", null);
-                }
-            }
+        if (implicitFrom.containsKey(user.toBareJID())) {
+            return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
+                    RosterItem.RECV_NONE, "", null);
         }
         return null;
     }
@@ -555,6 +540,23 @@ public class Roster implements Cacheable {
                 }
             }
         }
+        // Broadcast presence to shared contacts whose subscription status is FROM
+        for (String contact : implicitFrom.keySet()) {
+            packet.setTo(contact);
+            if (list != null && list.shouldBlockPacket(packet)) {
+                // Outgoing presence notifications are blocked for this contact
+                continue;
+            }
+            for (ChannelHandler session : routingTable.getRoutes(new JID(contact))) {
+                try {
+                    session.process(packet);
+                }
+                catch (Exception e) {
+                    // Theoretically only happens if session has been closed.
+                    Log.debug(e);
+                }
+            }
+        }
         if (from != null) {
             // Broadcast presence to other user's resources
             sessionManager.broadcastPresenceToOtherResources(from, packet);
@@ -749,8 +751,12 @@ public class Roster implements Cacheable {
         if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
             // Remove from memory and do nothing else
             rosterItems.remove(item.getJid().toBareJID());
+            // Cache information about shared contacts with subscription status FROM
+            implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
         }
         else {
+            // Remove from list of shared contacts with status FROM (if any)
+            implicitFrom.remove(item.getJid().toBareJID());
             // Brodcast to all the user resources of the updated roster item
             broadcast(item, true);
             // Probe the presence of the new group user
@@ -854,8 +860,12 @@ public class Roster implements Cacheable {
         if (item.isOnlyShared() && item.getSubStatus() == RosterItem.SUB_FROM) {
             // Remove from memory and do nothing else
             rosterItems.remove(item.getJid().toBareJID());
+            // Cache information about shared contacts with subscription status FROM
+            implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
         }
         else {
+            // Remove from list of shared contacts with status FROM (if any)
+            implicitFrom.remove(item.getJid().toBareJID());
             // Brodcast to all the user resources of the updated roster item
             broadcast(item, true);
             // Probe the presence of the new group user

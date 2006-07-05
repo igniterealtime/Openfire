@@ -156,6 +156,9 @@ class PrivacyItem implements Cacheable, Comparable {
     }
 
     private boolean verifyJID(JID jid, Roster roster) {
+        if (jid == null) {
+            return false;
+        }
         if (type == Type.jid) {
             if (jidValue.getResource() != null) {
                 // Rule is filtering by exact resource match

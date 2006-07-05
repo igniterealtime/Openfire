@@ -161,6 +161,9 @@ public class JDBCAuthProvider implements AuthProvider {
     public String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException
     {
+        if (!supportsPasswordRetrieval()) {
+            throw new UnsupportedOperationException();
+        }
         String password = null;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -190,11 +193,13 @@ public class JDBCAuthProvider implements AuthProvider {
     }
 
     public void setPassword(String username, String password)
-            throws UserNotFoundException, UnsupportedOperationException {
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
     }
 
     public boolean supportsPasswordRetrieval() {
-        return false;
+        return (passwordSQL != null && passwordType == PasswordType.plain);
     }
 
     /**

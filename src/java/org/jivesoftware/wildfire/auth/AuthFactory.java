@@ -14,7 +14,6 @@ package org.jivesoftware.wildfire.auth;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserManager;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +39,8 @@ public class AuthFactory {
 
     private static AuthProvider authProvider = null;
     private static MessageDigest digest;
+    private static final Object DIGEST_LOCK = new Object();
+    private static Blowfish cipher = null;
 
     static {
         // Load an auth provider.
@@ -60,6 +61,18 @@ public class AuthFactory {
         catch (NoSuchAlgorithmException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+    }
+
+    /**
+     * Returns the currently-installed AuthProvider. <b>Warning:</b> in virtually all
+     * cases the auth provider should not be used directly. Instead, the appropriate
+     * methods in AuthFactory should be called. Direct access to the auth provider is
+     * only provided for special-case logic.
+     *
+     * @return the current UserProvider.
+     */
+    public static AuthProvider getAuthProvider() {
+        return authProvider;
     }
 
     /**
@@ -95,7 +108,7 @@ public class AuthFactory {
      */
     public static String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException {
-        return UserManager.getUserProvider().getPassword(username);
+        return authProvider.getPassword(username);
     }
 
     /**
@@ -144,9 +157,80 @@ public class AuthFactory {
      * @return the digested result as a hex string.
      */
     public static String createDigest(String token, String password) {
-        synchronized (digest) {
+        synchronized (DIGEST_LOCK) {
             digest.update(token.getBytes());
             return StringUtils.encodeHex(digest.digest(password.getBytes()));
         }
+    }
+
+    /**
+     * Returns an encrypted version of the plain-text password. Encryption is performed
+     * using the Blowfish algorithm. The encryption key is stored as the Jive property
+     * "passwordKey". If the key is not present, it will be automatically generated.
+     *
+     * @param password the plain-text password.
+     * @return the encrypted password.
+     * @throws UnsupportedOperationException if encryption/decryption is not possible;
+     *      for example, during setup mode.
+     */
+    public static String encryptPassword(String password) {
+        Blowfish cipher = getCipher();
+        if (cipher == null) {
+            throw new UnsupportedOperationException();
+        }
+        return cipher.encryptString(password);
+    }
+
+    /**
+     * Returns a decrypted version of the encrypted password. Encryption is performed
+     * using the Blowfish algorithm. The encryption key is stored as the Jive property
+     * "passwordKey". If the key is not present, it will be automatically generated.
+     *
+     * @param encryptedPassword the encrypted password.
+     * @return the encrypted password.
+     * @throws UnsupportedOperationException if encryption/decryption is not possible;
+     *      for example, during setup mode.
+     */
+    public static String decryptPassword(String encryptedPassword) {
+        Blowfish cipher = getCipher();
+        if (cipher == null) {
+            throw new UnsupportedOperationException();
+        }
+        return cipher.decryptString(encryptedPassword);
+    }
+
+    /**
+     * Returns a Blowfish cipher that can be used for encrypting and decrypting passwords.
+     * The encryption key is stored as the Jive property "passwordKey". If it's not present,
+     * it will be automatically generated.
+     *
+     * @return the Blowfish cipher, or <tt>null</tt> if Wildfire is not able to create a Cipher;
+     *      for example, during setup mode.
+     */
+    private static synchronized Blowfish getCipher() {
+        if (cipher != null) {
+            return cipher;
+        }
+        // Get the password key, stored as a database property. Obviously,
+        // protecting your database is critical for making the
+        // encryption fully secure.
+        String keyString;
+        try {
+            keyString = JiveGlobals.getProperty("passwordKey");
+            if (keyString == null) {
+                keyString = StringUtils.randomString(15);
+                JiveGlobals.setProperty("passwordKey", keyString);
+                // Check to make sure that setting the property worked. It won't work,
+                // for example, when in setup mode.
+                if (!keyString.equals(JiveGlobals.getProperty("passwordKey"))) {
+                    return null;
+                }
+            }
+            cipher = new Blowfish(keyString);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        return cipher;
     }
 }

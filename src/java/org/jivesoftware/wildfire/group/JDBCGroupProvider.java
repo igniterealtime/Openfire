@@ -41,11 +41,12 @@ import java.util.*;
  * Then you need to set your driver, connection string and SQL statements:
  *
  * <pre>
+ * &lt;jdbcProvider&gt;
+ *     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+ *     &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
+ * &lt;/jdbcProvider&gt;
+ *
  * &lt;jdbcGroupProvider&gt;
- *      &lt;jdbcDriver&gt;
- *          &lt;className&gt;com.mysql.jdbc.Driver&lt;/className&gt;
- *      &lt;/jdbcDrivec&gt;
- *      &lt;jdbcConnString&gt;jdbc:mysql:://localhost/dbname?user=username&amp;amp;password=secret&lt;/jdbcConnString&gt;
  *      &lt;groupCountSQL&gt;SELECT count(*) FROM myGroups&lt;/groupCountSQL&gt;
  *      &lt;allGroupsSQL&gt;SELECT groupName FROM myGroups&lt;/allGroupsSQL&gt;
  *      &lt;userGroupsSQL&gt;SELECT groupName FORM myGroupUsers WHERE
@@ -61,10 +62,9 @@ import java.util.*;
  *
  * @author David Snopek
  */
-
 public class JDBCGroupProvider implements GroupProvider {
 
-    private String jdbcConnString;
+    private String connectionString;
 
     private String groupCountSQL;
     private String descriptionSQL;
@@ -77,8 +77,8 @@ public class JDBCGroupProvider implements GroupProvider {
      * Constructor of the JDBCGroupProvider class.
      */
     public JDBCGroupProvider() {
-        // Load the JDBC driver
-        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcGroupProvider.jdbcDriver.className");
+        // Load the JDBC driver and connection string.
+        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
         try {
             Class.forName(jdbcDriver).newInstance();
         }
@@ -86,9 +86,9 @@ public class JDBCGroupProvider implements GroupProvider {
             Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
             return;
         }
+        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
 
-        // grab our conn string and SQL statements
-        jdbcConnString = JiveGlobals.getXMLProperty("jdbcGroupProvider.jdbcConnString");
+        // Load SQL statements
         groupCountSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.groupCountSQL");
         allGroupsSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.allGroupsSQL");
         userGroupsSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.userGroupsSQL");
@@ -120,13 +120,14 @@ public class JDBCGroupProvider implements GroupProvider {
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
 
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(descriptionSQL);
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(descriptionSQL);
             pstmt.setString(1, name);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new GroupNotFoundException("Group with name "
                         + name + " not found.");
@@ -137,22 +138,7 @@ public class JDBCGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
@@ -161,22 +147,24 @@ public class JDBCGroupProvider implements GroupProvider {
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
         List<JID> members = new ArrayList<JID>();
-        Connection conn = null;
+
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
+            con = DriverManager.getConnection(connectionString);
             if (adminsOnly) {
                 if (loadAdminsSQL == null) {
                     return members;
                 }
-                pstmt = conn.prepareStatement(loadAdminsSQL);
+                pstmt = con.prepareStatement(loadAdminsSQL);
             }
             else {
-                pstmt = conn.prepareStatement(loadMembersSQL);
+                pstmt = con.prepareStatement(loadMembersSQL);
             }
 
             pstmt.setString(1, groupName);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String user = rs.getString(1);
                 if (user != null) {
@@ -184,28 +172,12 @@ public class JDBCGroupProvider implements GroupProvider {
                     members.add(userJID);
                 }
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return members;
     }
@@ -235,74 +207,44 @@ public class JDBCGroupProvider implements GroupProvider {
 
     public int getGroupCount() {
         int count = 0;
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(groupCountSQL);
-            ResultSet rs = pstmt.executeQuery();
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(groupCountSQL);
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return count;
     }
 
     public Collection<Group> getGroups() {
         List<String> groupNames = new ArrayList<String>();
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(allGroupsSQL);
-            ResultSet rs = pstmt.executeQuery();
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(allGroupsSQL);
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         List<Group> groups = new ArrayList<Group>(groupNames.size());
         for (String groupName : groupNames) {
@@ -331,40 +273,25 @@ public class JDBCGroupProvider implements GroupProvider {
 
     public Collection<Group> getGroups(int start, int num) {
         List<String> groupNames = new ArrayList<String>();
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = DbConnectionManager.createScrollablePreparedStatement(conn, allGroupsSQL);
-            ResultSet rs = pstmt.executeQuery();
+            con = DriverManager.getConnection(connectionString);
+            pstmt = DbConnectionManager.createScrollablePreparedStatement(con, allGroupsSQL);
+            rs = pstmt.executeQuery();
             DbConnectionManager.scrollResultSet(rs, start);
             int count = 0;
             while (rs.next() && count < num) {
                 groupNames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         List<Group> groups = new ArrayList<Group>(groupNames.size());
         for (String groupName : groupNames) {
@@ -380,38 +307,23 @@ public class JDBCGroupProvider implements GroupProvider {
 
     public Collection<Group> getGroups(JID user) {
         List<String> groupNames = new ArrayList<String>();
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DriverManager.getConnection(jdbcConnString);
-            pstmt = conn.prepareStatement(userGroupsSQL);
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(userGroupsSQL);
             pstmt.setString(1, user.toString());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         List<Group> groups = new ArrayList<Group>(groupNames.size());
         for (String groupName : groupNames) {
@@ -434,7 +346,8 @@ public class JDBCGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException when called.
      */
     public void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException {
+            throws UnsupportedOperationException
+    {
         throw new UnsupportedOperationException();
     }
 

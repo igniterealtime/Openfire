@@ -38,12 +38,4 @@ public class POP3UserProvider extends DefaultUserProvider {
     public void setEmail(String username, String email) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
-
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return false;
-    }
 }

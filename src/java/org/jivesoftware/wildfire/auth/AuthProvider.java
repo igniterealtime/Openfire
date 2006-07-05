@@ -11,6 +11,8 @@
 
 package org.jivesoftware.wildfire.auth;
 
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+
 /**
  * Provider interface for authentication. Users that wish to integrate with
  * their own authentication system must implement this class and then register
@@ -77,4 +79,40 @@ public interface AuthProvider {
      */
     void authenticate(String username, String token, String digest)
             throws UnauthorizedException;
+
+    /**
+     * Returns the user's password. This method should throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @return the user's password.
+     * @throws UserNotFoundException if the given user could not be loaded.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException;
+
+    /**
+     * Sets the users's password. This method should throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @param password the new plaintext password for the user.
+     * @throws UserNotFoundException if the given user could not be loaded.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public void setPassword(String username, String password)
+            throws UserNotFoundException, UnsupportedOperationException;
+
+    /**
+     * Returns true if this UserProvider is able to retrieve user passwords from
+     * the backend user store. If this operation is not supported then {@link #getPassword(String)}
+     * will throw an {@link UnsupportedOperationException} if invoked.
+     *
+     * @return true if this UserProvider is able to retrieve user passwords from the
+     *         backend user store.
+     */
+    public boolean supportsPasswordRetrieval();
 }

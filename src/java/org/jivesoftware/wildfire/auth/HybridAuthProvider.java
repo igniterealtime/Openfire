@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.auth;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -232,4 +233,19 @@ public class HybridAuthProvider implements AuthProvider {
         throw new UnauthorizedException("Digest authentication not supported.");
     }
 
+    public String getPassword(String username)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPassword(String username, String password)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 }

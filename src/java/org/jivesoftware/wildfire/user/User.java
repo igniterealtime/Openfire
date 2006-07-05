@@ -16,6 +16,7 @@ import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.jivesoftware.wildfire.roster.Roster;
 
@@ -136,13 +137,16 @@ public class User implements Cacheable {
         }
 
         try {
-            UserManager.getUserProvider().setPassword(username, password);
+            AuthFactory.getAuthProvider().setPassword(username, password);
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
+        }
+        catch (UnsupportedOperationException uoe) {
+            Log.error(uoe);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -164,7 +168,7 @@ public class User implements Cacheable {
             this.name = name;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,String> params = new HashMap<String,String>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -189,7 +193,7 @@ public class User implements Cacheable {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map params = new HashMap();
+            Map<String,String> params = new HashMap<String,String>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -215,7 +219,7 @@ public class User implements Cacheable {
             this.creationDate = creationDate;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "creationDateModified");
             params.put("originalValue", originalCreationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -241,7 +245,7 @@ public class User implements Cacheable {
             this.modificationDate = modificationDate;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalModificationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -325,12 +329,12 @@ public class User implements Cacheable {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
-            Map eventParams = new HashMap();
+            Map<String,Object> eventParams = new HashMap<String,Object>();
             Object answer;
             String keyString = (String) key;
             synchronized (keyString.intern()) {
-                if (properties.containsKey(key)) {
-                    String originalValue = properties.get(key);
+                if (properties.containsKey(keyString)) {
+                    String originalValue = properties.get(keyString);
                     answer = properties.put(keyString, (String)value);
                     updateProperty(keyString, (String)value);
                     // Configure event.
@@ -389,7 +393,7 @@ public class User implements Cacheable {
                     deleteProperty(key);
                     iter.remove();
                     // Fire event.
-                    Map params = new HashMap();
+                    Map<String,Object> params = new HashMap<String,Object>();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", key);
                     UserEventDispatcher.dispatchEvent(User.this,

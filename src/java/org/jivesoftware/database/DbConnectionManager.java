@@ -208,7 +208,7 @@ public class DbConnectionManager {
     }
 
     /**
-     * Closes a prepared statement. This method should be called within the finally section of
+     * Closes a statement. This method should be called within the finally section of
      * your database logic, as in the following example:
      *
      * <pre>
@@ -226,12 +226,12 @@ public class DbConnectionManager {
      *      }
      * } </pre>
      *
-     * @param pstmt the prepared statement.
+     * @param stmt the statement.
      */
-    public static void closePreparedStatement(PreparedStatement pstmt) {
+    public static void closeStatement(Statement stmt) {
         try {
-            if (pstmt != null) {
-                pstmt.close();
+            if (stmt != null) {
+                stmt.close();
             }
         }
         catch (Exception e) {
@@ -240,7 +240,7 @@ public class DbConnectionManager {
     }
 
     /**
-     * Closes a result set, prepared statement and database connection (returning the connection to
+     * Closes a result set, statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of
      * your database logic, as in the following example:
      *
@@ -261,17 +261,17 @@ public class DbConnectionManager {
      *     ConnectionManager.closeConnection(rs, pstmt, con);
      * }</pre>
      *
-     * @param pstmt the prepared statement.
+     * @param stmt the statement.
      * @param con the connection.
      */
-    public static void closeConnection(ResultSet rs, PreparedStatement pstmt, Connection con) {
+    public static void closeConnection(ResultSet rs, Statement stmt, Connection con) {
         closeResultSet(rs);
-        closePreparedStatement(pstmt);
+        closeStatement(stmt);
         closeConnection(con);
     }
 
     /**
-     * Closes a prepared statement and database connection (returning the connection to
+     * Closes a statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of
      * your database logic, as in the following example:
      * <p/>
@@ -290,13 +290,13 @@ public class DbConnectionManager {
      *     DbConnectionManager.closeConnection(pstmt, con);
      * }</pre>
      *
-     * @param pstmt the prepated statement.
-     * @param con   the connection.
+     * @param stmt the statement.
+     * @param con the connection.
      */
-    public static void closeConnection(PreparedStatement pstmt, Connection con) {
+    public static void closeConnection(Statement stmt, Connection con) {
         try {
-            if (pstmt != null) {
-                pstmt.close();
+            if (stmt != null) {
+                stmt.close();
             }
         }
         catch (Exception e) {
@@ -536,9 +536,9 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * setting large text values.
      *
-     * @param pstmt          the PreparedStatement to set the text field in.
+     * @param pstmt the PreparedStatement to set the text field in.
      * @param parameterIndex the index corresponding to the text field.
-     * @param value          the String to set.
+     * @param value the String to set.
      */
     public static void setLargeTextField(PreparedStatement pstmt, int parameterIndex,
                                          String value) throws SQLException {

@@ -12,7 +12,11 @@
 package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.DefaultUserProvider;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
+
+import java.sql.*;
 
 /**
  * Default AuthProvider implementation. It authenticates against the <tt>jiveUser</tt>
@@ -25,18 +29,16 @@ import org.jivesoftware.wildfire.user.DefaultUserProvider;
  */
 public class DefaultAuthProvider implements AuthProvider {
 
-    private DefaultUserProvider userProvider;
+    private static final String LOAD_PASSWORD =
+            "SELECT password,encryptedPassword FROM jiveUser WHERE username=?";
+    private static final String UPDATE_PASSWORD =
+            "UPDATE jiveUser SET password=?, encryptedPassword=? WHERE username=?";
 
     /**
      * Constructs a new DefaultAuthProvider.
      */
     public DefaultAuthProvider() {
-        // Create a new default user provider since we need it to get the
-        // user's password. We always create our own user provider because
-        // we don't know what user provider is configured for the system and
-        // the contract of this class is to authenticate against the jiveUser
-        // database table.
-        userProvider = new DefaultUserProvider();
+
     }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
@@ -45,7 +47,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         username = username.trim().toLowerCase();
         try {
-            if (!password.equals(userProvider.getPassword(username))) {
+            if (!password.equals(getPassword(username))) {
                 throw new UnauthorizedException();
             }
         }
@@ -61,7 +63,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         username = username.trim().toLowerCase();
         try {
-            String password = userProvider.getPassword(username);
+            String password = getPassword(username);
             String anticipatedDigest = AuthFactory.createDigest(token, password);
             if (!digest.equalsIgnoreCase(anticipatedDigest)) {
                 throw new UnauthorizedException();
@@ -78,6 +80,95 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     public boolean isDigestSupported() {
+        return true;
+    }
+
+    public String getPassword(String username) throws UserNotFoundException {
+        if (!supportsPasswordRetrieval()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PASSWORD);
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new UserNotFoundException(username);
+            }
+            String plainText = rs.getString(1);
+            String encrypted = rs.getString(2);
+            if (encrypted != null) {
+                try {
+                    return AuthFactory.decryptPassword(encrypted);
+                }
+                catch (UnsupportedOperationException uoe) {
+                    // Ignore and return plain password instead.
+                }
+            }
+            return plainText;
+        }
+        catch (SQLException sqle) {
+            throw new UserNotFoundException(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        // Determine if the password should be stored as plain text or encrypted.
+        boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
+        String encryptedPassword = null;
+        if (!usePlainPassword) {
+            try {
+                encryptedPassword = AuthFactory.encryptPassword(password);
+                // Set password to null so that it's inserted that way.
+                password = null;
+            }
+            catch (UnsupportedOperationException uoe) {
+                // Encryption may fail. In that case, ignore the error and
+                // the plain password will be stored.
+            }
+        }
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_PASSWORD);
+            if (password == null) {
+                pstmt.setNull(1, Types.VARCHAR);
+            }
+            else {
+                pstmt.setString(1, password);
+            }
+            if (encryptedPassword == null) {
+                pstmt.setNull(2, Types.VARCHAR);
+            }
+            else {
+                pstmt.setString(2, encryptedPassword);
+            }
+            pstmt.setString(3, username);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            throw new UserNotFoundException(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    public boolean supportsPasswordRetrieval() {
         return true;
     }
 }

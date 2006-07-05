@@ -22,7 +22,6 @@ import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.JID;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -126,7 +125,7 @@ public class SASLAuthentication {
                 if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
                     // Check if the user provider in use supports passwords retrieval. Accessing
                     // to the users passwords will be required by the CallbackHandler
-                    if (!UserManager.getUserProvider().supportsPasswordRetrieval()) {
+                    if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
                         continue;
                     }
                 }

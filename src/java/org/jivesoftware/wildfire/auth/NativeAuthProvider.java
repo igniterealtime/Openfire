@@ -164,4 +164,18 @@ public class NativeAuthProvider implements AuthProvider {
     public boolean isDigestSupported() {
         return false;
     }
+
+    public String getPassword(String username)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();    
+    }
+
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 }

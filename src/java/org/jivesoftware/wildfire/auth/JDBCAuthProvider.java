@@ -14,6 +14,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.user.*;
+import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.DriverManager;
 import java.sql.Connection;
@@ -40,11 +41,12 @@ import java.sql.SQLException;
  * You'll also need to set your JDBC driver, connection string, and SQL statements:
  *
  * <pre>
+ * &lt;jdbcProvider&gt;
+ *     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+ *     &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
+ * &lt;/jdbcProvider&gt;
+ *
  * &lt;jdbcAuthProvider&gt;
- *      &lt;jdbcDriver&gt;
- *          &lt;className&gt;com.mysql.jdbc.Driver&lt;/className&gt;
- *      &lt;/jdbcDrivec&gt;
- *      &lt;jdbcConnString&gt;jdbc:mysql:://localhost/dbname?user=username&amp;amp;password=secret&lt;/jdbcConnString&gt;
  *      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;passwordSQL&gt;
  *      &lt;passwordType&gt;plain&lt;passwordType&gt;
  * &lt;/jdbcAuthProvider&gt;</pre>
@@ -60,7 +62,8 @@ import java.sql.SQLException;
  */
 public class JDBCAuthProvider implements AuthProvider {
 
-    private String jdbcConnectionString;
+    private String connectionString;
+
     private String passwordSQL;
     private PasswordType passwordType = PasswordType.plain;
 
@@ -68,8 +71,8 @@ public class JDBCAuthProvider implements AuthProvider {
      * Constructs a new JDBC authentication provider.
      */
     public JDBCAuthProvider() {
-        // Load the JDBC driver
-        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcAuthProvider.jdbcDriver.className");
+        // Load the JDBC driver and connection string.
+        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.jdbcDriver.className");
         try {
             Class.forName(jdbcDriver).newInstance();
         }
@@ -77,9 +80,9 @@ public class JDBCAuthProvider implements AuthProvider {
             Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
             return;
         }
+        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.jdbcConnString");
 
-        // Grab connection string and SQL config.
-        jdbcConnectionString = JiveGlobals.getXMLProperty("jdbcAuthProvider.jdbcConnString");
+        // Load SQL statements.
         passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
         passwordType = PasswordType.plain;
         try {
@@ -95,7 +98,13 @@ public class JDBCAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        String userPassword = getPassword(username);
+        String userPassword;
+        try {
+            userPassword = getPassword(username);
+        }
+        catch (UserNotFoundException unfe) {
+            throw new UnauthorizedException();
+        }
         // If the user's password doesn't match the password passed in, authentication
         // should fail.
         if (passwordType == PasswordType.md5) {
@@ -123,7 +132,13 @@ public class JDBCAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
-        String password = getPassword(username);
+        String password;
+        try {
+            password = getPassword(username);
+        }
+        catch (UserNotFoundException unfe) {
+            throw new UnauthorizedException();
+        }
         String anticipatedDigest = AuthFactory.createDigest(token, password);
         if (!digest.equalsIgnoreCase(anticipatedDigest)) {
             throw new UnauthorizedException();
@@ -141,6 +156,45 @@ public class JDBCAuthProvider implements AuthProvider {
     public boolean isDigestSupported() {
         // The auth SQL must be defined and the password type is supported.
         return (passwordSQL != null && passwordType == PasswordType.plain);
+    }
+
+    public String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException
+    {
+        String password = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(passwordSQL);
+            pstmt.setString(1, username);
+
+            rs = pstmt.executeQuery();
+
+            // If the query had no results, the username and password
+            // did not match a user record. Therefore, throw an exception.
+            if (!rs.next()) {
+                throw new UserNotFoundException();
+            }
+            password = rs.getString(1);
+        }
+        catch (SQLException e) {
+            Log.error("Exception in JDBCAuthProvider", e);
+            throw new UserNotFoundException();
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return password;
+    }
+
+    public void setPassword(String username, String password)
+            throws UserNotFoundException, UnsupportedOperationException {
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
     }
 
     /**
@@ -164,50 +218,11 @@ public class JDBCAuthProvider implements AuthProvider {
         sha1
     }
 
-    private String getPassword(String username) throws UnauthorizedException {
-        String password = null;
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DriverManager.getConnection(jdbcConnectionString);
-            pstmt = con.prepareStatement(passwordSQL);
-            pstmt.setString(1, username);
-
-            ResultSet rs = pstmt.executeQuery();
-
-            // If the query had no results, the username and password
-            // did not match a user record. Therefore, throw an exception.
-            if (!rs.next()) {
-                throw new UnauthorizedException();
-            }
-            password = rs.getString(1);
-            rs.close();
-        }
-        catch (SQLException e) {
-            Log.error("Exception in JDBCAuthProvider", e);
-            throw new UnauthorizedException();
-        }
-        finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-        }
-        return password;
-    }
-
+    /**
+     * Checks to see if the user exists; if not, a new user is created.
+     *
+     * @param username the username.
+     */
     private static void createUser(String username) {
         // See if the user exists in the database. If not, automatically create them.
         UserManager userManager = UserManager.getInstance();

@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.auth.AuthFactory;
 
 import java.sql.*;
 import java.util.*;
@@ -54,39 +55,6 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE jiveUser SET creationDate=? WHERE username=?";
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE jiveUser SET modificationDate=? WHERE username=?";
-    private static final String LOAD_PASSWORD =
-            "SELECT password,encryptedPassword FROM jiveUser WHERE username=?";
-    private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser SET password=?, encryptedPassword=? WHERE username=?";
-
-    private static Blowfish cipher = null;
-
-    private static synchronized Blowfish getCipher() {
-        if (cipher != null) {
-            return cipher;
-        }
-        // Get the password key, stored as a database property. Obviously,
-        // protecting your database is critical for making the
-        // encryption fully secure.
-        String keyString;
-        try {
-            keyString = JiveGlobals.getProperty("passwordKey");
-            if (keyString == null) {
-                keyString = StringUtils.randomString(15);
-                JiveGlobals.setProperty("passwordKey", keyString);
-                // Check to make sure that setting the property worked. It won't work,
-                // for example, when in setup mode.
-                if (!keyString.equals(JiveGlobals.getProperty("passwordKey"))) {
-                    return null;
-                }
-            }
-            cipher = new Blowfish(keyString);
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        return cipher;
-    }
 
     public User loadUser(String username) throws UserNotFoundException {
         Connection con = null;
@@ -137,11 +105,14 @@ public class DefaultUserProvider implements UserProvider {
             boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
             String encryptedPassword = null;
             if (!usePlainPassword) {
-                Blowfish cipher = getCipher();
-                if (cipher != null) {
-                    encryptedPassword = cipher.encryptString(password);
+                try {
+                    encryptedPassword = AuthFactory.encryptPassword(password);
                     // Set password to null so that it's inserted that way.
                     password = null;
+                }
+                catch (UnsupportedOperationException uoe) {
+                    // Encrypting the password may have failed if in setup mode. Therefore,
+                    // use the plain password.
                 }
             }
 
@@ -411,91 +382,6 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
-    public String getPassword(String username) throws UserNotFoundException {
-        if (!supportsPasswordRetrieval()) {
-            // Reject the operation since the provider is read-only
-            throw new UnsupportedOperationException();
-        }
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PASSWORD);
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                throw new UserNotFoundException(username);
-            }
-            String plainText = rs.getString(1);
-            String encrypted = rs.getString(2);
-            if (encrypted != null) {
-                Blowfish cipher = getCipher();
-                if (cipher != null) {
-                    return cipher.decryptString(encrypted);
-                }
-            }
-            return plainText;
-        }
-        catch (SQLException sqle) {
-            throw new UserNotFoundException(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
-    }
-
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        if (isReadOnly()) {
-            // Reject the operation since the provider is read-only
-            throw new UnsupportedOperationException();
-        }
-
-        // Determine if the password should be stored as plain text or encrypted.
-        boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
-        String encryptedPassword = null;
-        if (!usePlainPassword) {
-            Blowfish cipher = getCipher();
-            if (cipher != null) {
-                encryptedPassword = cipher.encryptString(password);
-                // Set password to null so that it's inserted that way.
-                password = null;
-            }
-        }
-
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PASSWORD);
-            if (password == null) {
-                pstmt.setNull(1, Types.VARCHAR);
-            }
-            else {
-                pstmt.setString(1, password);
-            }
-            if (encryptedPassword == null) {
-                pstmt.setNull(2, Types.VARCHAR);
-            }
-            else {
-                pstmt.setString(2, encryptedPassword);
-            }
-            pstmt.setString(3, username);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException sqle) {
-            throw new UserNotFoundException(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
-    }
-
     public Set<String> getSearchFields() throws UnsupportedOperationException {
         return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
     }
@@ -636,9 +522,5 @@ public class DefaultUserProvider implements UserProvider {
 
     public boolean isReadOnly() {
         return false;
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return true;
     }
 }

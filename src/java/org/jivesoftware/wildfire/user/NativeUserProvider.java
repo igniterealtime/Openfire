@@ -24,11 +24,5 @@ package org.jivesoftware.wildfire.user;
  */
 public class NativeUserProvider extends DefaultUserProvider {
 
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return false;
-    }
+    
 }

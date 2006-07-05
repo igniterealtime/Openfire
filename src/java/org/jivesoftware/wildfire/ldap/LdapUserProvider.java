@@ -297,16 +297,6 @@ public class LdapUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
-    public String getPassword(String username) throws UserNotFoundException,
-            UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        throw new UnsupportedOperationException();
-    }
-
     public void setName(String username, String name) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
@@ -490,9 +480,5 @@ public class LdapUserProvider implements UserProvider {
 
     public boolean isReadOnly() {
         return true;
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return false;
     }
 }

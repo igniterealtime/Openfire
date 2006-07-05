@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.ldap;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.AuthProvider;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -105,7 +106,17 @@ public class LdapAuthProvider implements AuthProvider {
         throw new UnsupportedOperationException("Digest authentication not currently supported.");
     }
 
-    public void updatePassword(String username, String password) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Cannot update password in LDAP");
+    public String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
     }
 }

@@ -47,10 +47,10 @@ import java.util.Date;
  * &lt;/jdbcProvider&gt;
  *
  * &lt;jdbcUserProvider&gt;
- *      &lt;loadUser&gt;SELECT name,email FROM myUser WHERE user = ?&lt;/loadUser&gt;
- *      &lt;userCount&gt;SELECT COUNT(*) FROM myUser&lt;/usercount&gt;
- *      &lt;allUsers&gt;SELECT user FROM myUser&lt;/allUsers&gt;
- *      &lt;search&gt;SELECT user FROM myUser WHERE&lt;/search&gt;
+ *      &lt;loadUserSQL&gt;SELECT name,email FROM myUser WHERE user = ?&lt;/loadUserSQL&gt;
+ *      &lt;userCountSQL&gt;SELECT COUNT(*) FROM myUser&lt;/userCountSQL&gt;
+ *      &lt;allUsersSQL&gt;SELECT user FROM myUser&lt;/allUsersSQL&gt;
+ *      &lt;searchSQL&gt;SELECT user FROM myUser WHERE&lt;/searchSQL&gt;
  *      &lt;usernameField&gt;myUsernameField&lt;/usernameField&gt;
  *      &lt;nameField&gt;myNameField&lt;/nameField&gt;
  *      &lt;emailField&gt;mymailField&lt;/emailField&gt;
@@ -87,10 +87,10 @@ public class JDBCUserProvider implements UserProvider {
 		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.jdbcConnString");
 
         // Load database statements for user data.
-        loadUserSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.loadUser");
-		userCountSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.userCount");
-		allUsersSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.allUsers");
-		searchSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.search");
+        loadUserSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.loadUserSQL");
+		userCountSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.userCountSQL");
+		allUsersSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.allUsersSQL");
+		searchSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.searchSQL");
 		usernameField = JiveGlobals.getXMLProperty("jdbcUserProvider.usernameField");
 		nameField = JiveGlobals.getXMLProperty("jdbcUserProvider.nameField");
 		emailField = JiveGlobals.getXMLProperty("jdbcUserProvider.emailField");

@@ -1203,8 +1203,6 @@
 				<exclude name="**/redhat-postinstall.sh"/>
 			</fileset>
 		</copy>
-		<mkdir dir="${mac.pkg.dir}/Install_resources"/>
-		<copy file="${basedir}/build/osx/postinstall" todir="${mac.pkg.dir}/Install_resources"/>
 		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
 		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
 		<mkdir dir="${mac.dmg.dir}"/>
@@ -1215,6 +1213,9 @@
 			<fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
 				<include name="wildfire.sh"/>
 				<include name="extra/launchd-wrapper.sh"/>
+			</fileset>
+			<fileset dir="${basedir}/build/osx/resources">
+				<include name="postinstall"/>
 			</fileset>
 		</chmod>
 	</target>

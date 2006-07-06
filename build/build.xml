@@ -1180,8 +1180,68 @@
         <delete includeemptydirs="true">
             <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*" />
         </delete>
-        <!--<delete dir="${plugin.dest.dir}"/>-->
+        <!--<delete dir="${plugin.dest.dir}"/> -->
         <delete dir="${plugin.dev.dest.dir}"/>
     </target>
+
+	<property name="mac.pkg.dir" value="${basedir}/macpkg" />
+	<property name="mac.dmg.dir" value="${basedir}/Wildfire" />
+	<property name="mac.dmg.file" value="${basedir}/wildfire.dmg" />
+	
+	<target name="mac.delete">
+		<delete dir="${mac.pkg.dir}" />
+		<delete dir="${mac.dmg.dir}" />
+		<delete file="${mac.dmg.file}" />
+	</target>
+	
+	<target name="mac.prepare" depends="mac.delete,jar">
+		<mkdir dir="${mac.pkg.dir}/usr/local/wildfire"/>
+		<copy todir="${mac.pkg.dir}/usr/local/wildfire">
+			<fileset dir="${target.dir}">
+				<exclude name="**/wildfired"/>
+				<exclude name="**/embedded-db*"/>
+				<exclude name="**/redhat-postinstall.sh"/>
+			</fileset>
+		</copy>
+		<mkdir dir="${mac.pkg.dir}/Install_resources"/>
+		<copy file="${basedir}/build/osx/postinstall" todir="${mac.pkg.dir}/Install_resources"/>
+		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+		<copy file="${basedir}/build/osx/com.jivesoftware.wildfire" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+		<mkdir dir="${mac.dmg.dir}"/>
+		<exec executable="chown">
+			<arg line="-R daemon:daemon ${mac.pkg.dir}/usr/local/wildfire"/>
+		</exec>
+		<exec executable="chown">
+			<arg line="-R root:wheel ${mac.pkg.dir}/System"/>
+		</exec>
+	</target>
+	
+	<!-- create a mac os x installer -->
+	<target name="mac.pkg" depends="mac.prepare">
+		<exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
+			<arg value="-build"/> 
+			<arg value="-proj" />
+			<arg value="${basedir}/build/osx/wildfire.pmproj"/>
+			<arg value="-p"/>
+			<arg value="${mac.dmg.dir}/wildfire.pkg"/>
+			<arg value="-v"/>
+			<arg value="-ds"/>
+		</exec>
+	</target>
+	
+	<target name="mac.dmg" depends="mac.pkg">
+		<exec executable="hdiutil" failonerror="true">
+            <arg value="create"/>
+            <arg value="-srcfolder"/>
+            <arg value="${mac.dmg.dir}"/>
+            <arg value="-fs"/>
+            <arg value="HFS+"/>
+            <arg value="${basedir}/tmp.dmg"/>
+        </exec>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="convert ${basedir}/tmp.dmg -format UDZO -o ${mac.dmg.file}"/>
+        </exec>
+        <delete file="${basedir}/tmp.dmg"/>    
+	</target>
 
 </project>

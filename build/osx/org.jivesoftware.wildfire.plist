@@ -12,12 +12,12 @@
 			<string>/Library/Java/Home</string>
 		</dict>
 		<key>Label</key>
-		<string>com.jivesoftware.wildfire</string>
+		<string>org.jivesoftware.wildfire</string>
 		<key>OnDemand</key>
 		<false/>
 		<key>ProgramArguments</key>
 		<array>
-			<string>/bin/sh /usr/local/wildfire/bin/extra/launchd-wrapper.sh</string>
+			<string>/usr/local/wildfire/bin/extra/launchd-wrapper.sh</string>
 		</array>
 		<key>RunAtLoad</key>
 		<true/>

@@ -1206,14 +1206,17 @@
 		<mkdir dir="${mac.pkg.dir}/Install_resources"/>
 		<copy file="${basedir}/build/osx/postinstall" todir="${mac.pkg.dir}/Install_resources"/>
 		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
-		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
 		<mkdir dir="${mac.dmg.dir}"/>
 		<exec executable="chown">
-			<arg line="-R daemon:daemon ${mac.pkg.dir}/usr/local/wildfire"/>
+			<arg line="-R root:wheel ${mac.pkg.dir}"/>
 		</exec>
-		<exec executable="chown">
-			<arg line="-R root:wheel ${mac.pkg.dir}/System"/>
-		</exec>
+		<chmod perm="ug+x">
+			<fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
+				<include name="wildfire.sh"/>
+				<include name="extra/launchd-wrapper.sh"/>
+			</fileset>
+		</chmod>
 	</target>
 	
 	<!-- create a mac os x installer -->

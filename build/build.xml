@@ -1206,7 +1206,7 @@
 		<mkdir dir="${mac.pkg.dir}/Install_resources"/>
 		<copy file="${basedir}/build/osx/postinstall" todir="${mac.pkg.dir}/Install_resources"/>
 		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
-		<copy file="${basedir}/build/osx/com.jivesoftware.wildfire" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
 		<mkdir dir="${mac.dmg.dir}"/>
 		<exec executable="chown">
 			<arg line="-R daemon:daemon ${mac.pkg.dir}/usr/local/wildfire"/>

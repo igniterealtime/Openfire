@@ -27,7 +27,5 @@
 		<string>/usr/local/wildfire/logs/launchd.stderr</string>
 		<key>StandardOutPath</key>
 		<string>/usr/local/wildfire/logs/launchd.stout</string>
-		<key>Username</key>
-		<string>daemon</string>
 	</dict>
 </plist>

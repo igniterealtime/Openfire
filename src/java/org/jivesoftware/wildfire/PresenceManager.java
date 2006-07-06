@@ -11,11 +11,11 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.util.Collection;
 
@@ -66,7 +66,9 @@ public interface PresenceManager {
     public Collection<Presence> getPresences(String username);
 
     /**
-     * Probes the presence of the given XMPPAddress and attempts to send it to the given user.
+     * Probes the presence of the given XMPPAddress and attempts to send it to the given user. If
+     * the user probing the presence is using his bare JID then the probee's presence will be
+     * sent to all connected resources of the prober. 
      *
      * @param prober The user requesting the probe
      * @param probee The XMPPAddress whos presence we would like sent have have probed
@@ -98,7 +100,8 @@ public interface PresenceManager {
      * Sends unavailable presence from all of the user's available resources to the remote user.
      * When a remote user unsubscribes from the presence of a local user then the server should
      * send to the remote user unavailable presence from all of the local user's available
-     * resources.
+     * resources. Moreover, if the recipient user is a local user then the unavailable presence
+     * will be sent to all user resources.
      *
      * @param recipientJID JID of the remote user that will receive the unavailable presences.
      * @param userJID JID of the local user.

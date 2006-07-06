@@ -226,6 +226,16 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void probePresence(JID prober, JID probee) {
         try {
             if (server.isLocal(probee)) {
+                // Local probers should receive presences of probee in all connected resources
+                Collection<JID> proberFullJIDs = new ArrayList<JID>();
+                if (prober.getResource() == null && server.isLocal(prober)) {
+                    for (ClientSession session : sessionManager.getSessions(prober.getNode())) {
+                        proberFullJIDs.add(session.getAddress());
+                    }
+                }
+                else {
+                    proberFullJIDs.add(prober);
+                }
                 // If the probee is a local user then don't send a probe to the contact's server.
                 // But instead just send the contact's presence to the prober
                 Collection<ClientSession> sessions = sessionManager.getSessions(probee.getNode());
@@ -242,14 +252,17 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                             // Create the presence from the parsed element
                             Presence presencePacket = new Presence(element.getRootElement());
                             presencePacket.setFrom(probee.toBareJID());
-                            presencePacket.setTo(prober);
                             // Check if default privacy list of the probee blocks the
                             // outgoing presence
                             PrivacyList list = PrivacyListManager.getInstance()
                                     .getDefaultPrivacyList(probee.getNode());
-                            if (list == null || !list.shouldBlockPacket(presencePacket)) {
-                                // Send the presence to the prober
-                                deliverer.deliver(presencePacket);
+                            // Send presence to all prober's resources
+                            for (JID receipient : proberFullJIDs) {
+                                presencePacket.setTo(receipient);
+                                if (list == null || !list.shouldBlockPacket(presencePacket)) {
+                                    // Send the presence to the prober
+                                    deliverer.deliver(presencePacket);
+                                }
                             }
                         }
                         catch (Exception e) {
@@ -264,21 +277,24 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         // Create presence to send from probee to prober
                         Presence presencePacket = session.getPresence().createCopy();
                         presencePacket.setFrom(session.getAddress());
-                        presencePacket.setTo(prober);
                         // Check if a privacy list of the probee blocks the outgoing presence
                         PrivacyList list = session.getActiveList();
                         list = list == null ? session.getDefaultList() : list;
-                        if (list != null) {
-                            if (list.shouldBlockPacket(presencePacket)) {
-                                // Default list blocked outgoing presence so skip this session
-                                continue;
+                        // Send presence to all prober's resources
+                        for (JID receipient : proberFullJIDs) {
+                            presencePacket.setTo(receipient);
+                            if (list != null) {
+                                if (list.shouldBlockPacket(presencePacket)) {
+                                    // Default list blocked outgoing presence so skip this session
+                                    continue;
+                                }
                             }
-                        }
-                        try {
-                            deliverer.deliver(presencePacket);
-                        }
-                        catch (Exception e) {
-                            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                            try {
+                                deliverer.deliver(presencePacket);
+                            }
+                            catch (Exception e) {
+                                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                            }
                         }
                     }
                 }
@@ -331,12 +347,25 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 Presence presencePacket = new Presence();
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
-                presencePacket.setTo(recipientJID);
-                try {
-                    deliverer.deliver(presencePacket);
+                // Ensure that unavailable presence is sent to all receipient's resources
+                Collection<JID> recipientFullJIDs = new ArrayList<JID>();
+                if (server.isLocal(recipientJID)) {
+                    for (ClientSession targetSession : sessionManager
+                            .getSessions(recipientJID.getNode())) {
+                        recipientFullJIDs.add(targetSession.getAddress());
+                    }
                 }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                else {
+                    recipientFullJIDs.add(recipientJID);
+                }
+                for (JID jid : recipientFullJIDs) {
+                    presencePacket.setTo(jid);
+                    try {
+                        deliverer.deliver(presencePacket);
+                    }
+                    catch (Exception e) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    }
                 }
             }
         }

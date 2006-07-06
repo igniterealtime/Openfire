@@ -180,7 +180,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.not_acceptable);
         }
-
+        username = username.toLowerCase();
         // If a session already exists with the requested JID, then check to see
         // if we should kick it off or refuse the new connection
         if (sessionManager.isActiveRoute(username, resource)) {

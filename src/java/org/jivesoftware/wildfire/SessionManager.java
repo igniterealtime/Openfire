@@ -932,7 +932,6 @@ public class SessionManager extends BasicModule {
         }
         else {
             // Check if there is a session for a registered user
-            username = username.toLowerCase();
             Session session = null;
             SessionMap sessionMap = sessions.get(username);
             if (sessionMap != null) {

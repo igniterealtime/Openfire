@@ -91,7 +91,7 @@ public class IQBindHandler extends IQHandler {
                 session.setAnonymousAuth();
             }
             else {
-                String username = authToken.getUsername();
+                String username = authToken.getUsername().toLowerCase();
                 // If a session already exists with the requested JID, then check to see
                 // if we should kick it off or refuse the new connection
                 if (sessionManager.isActiveRoute(username, resource)) {

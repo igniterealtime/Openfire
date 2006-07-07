@@ -1196,6 +1196,7 @@
 	</target>
 	
 	<target name="mac.prepare" depends="mac.delete,jar">
+		<unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/" />
 		<copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg" />
 		<mkdir dir="${mac.dmg.dir}" />
 		<exec executable="hdiutil" failonerror="true">

@@ -1187,6 +1187,7 @@
 	<property name="mac.pkg.dir" value="${basedir}/macpkg" />
 	<property name="mac.dmg.dir" value="${basedir}/Wildfire" />
 	<property name="mac.dmg.file" value="${basedir}/wildfire.dmg" />
+	<property name="mac.dmg.template" value="${basedir}/build/osx/template.dmg" />
 	
 	<target name="mac.delete">
 		<delete dir="${mac.pkg.dir}" />
@@ -1195,7 +1196,11 @@
 	</target>
 	
 	<target name="mac.prepare" depends="mac.delete,jar">
-		<mkdir dir="${mac.pkg.dir}/usr/local/wildfire"/>
+		<copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg" />
+		<mkdir dir="${mac.dmg.dir}" />
+		<exec executable="hdiutil" failonerror="true">
+			<arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'" />
+		</exec>
 		<copy todir="${mac.pkg.dir}/usr/local/wildfire">
 			<fileset dir="${target.dir}">
 				<exclude name="**/wildfired"/>
@@ -1204,7 +1209,8 @@
 			</fileset>
 		</copy>
 		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
-		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist" todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist" 
+			todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
 		<mkdir dir="${mac.dmg.dir}"/>
 		<exec executable="chown">
 			<arg line="-R root:wheel ${mac.pkg.dir}"/>
@@ -1227,7 +1233,7 @@
 			<arg value="-proj" />
 			<arg value="${basedir}/build/osx/wildfire.pmproj"/>
 			<arg value="-p"/>
-			<arg value="${mac.dmg.dir}/wildfire.pkg"/>
+			<arg value="${mac.dmg.dir}/Wildfire.pkg"/>
 			<arg value="-v"/>
 			<arg value="-ds"/>
 		</exec>
@@ -1235,13 +1241,8 @@
 	
 	<target name="mac.dmg" depends="mac.pkg">
 		<exec executable="hdiutil" failonerror="true">
-            <arg value="create"/>
-            <arg value="-srcfolder"/>
-            <arg value="${mac.dmg.dir}"/>
-            <arg value="-fs"/>
-            <arg value="HFS+"/>
-            <arg value="${basedir}/tmp.dmg"/>
-        </exec>
+			<arg line="detach ${mac.dmg.dir} -quiet -force" />
+		</exec>
         <exec executable="hdiutil" failonerror="true">
             <arg line="convert ${basedir}/tmp.dmg -format UDZO -o ${mac.dmg.file}"/>
         </exec>

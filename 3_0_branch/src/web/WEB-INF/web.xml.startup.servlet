@@ -1,0 +1,5 @@
+<servlet>
+    <servlet-name>XMPPBootServlet</servlet-name>
+    <servlet-class>org.jivesoftware.messenger.XMPPBootServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+</servlet>

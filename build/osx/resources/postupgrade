@@ -8,6 +8,5 @@ if [ -f /tmp/security ]; then
 	mv /tmp/security /usr/local/wildfire/resources/
 fi
 
-/bin/launchctl stop org.jivesoftware.wildfire stop
-/bin/launchctl load /System/Library/LaunchDaemons
-/bin/launchctl start org.jivesoftware.wildfire start
+/bin/launchctl load /System/Library/LaunchDaemons/org.jivesoftware.wildfire.plist
+/bin/launchctl start org.jivesoftware.wildfire

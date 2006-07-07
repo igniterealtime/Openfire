@@ -1221,9 +1221,7 @@
 				<include name="wildfire.sh"/>
 				<include name="extra/launchd-wrapper.sh"/>
 			</fileset>
-			<fileset dir="${basedir}/build/osx/resources">
-				<include name="postinstall"/>
-			</fileset>
+			<fileset dir="${basedir}/build/osx/resources"/>
 		</chmod>
 	</target>
 	

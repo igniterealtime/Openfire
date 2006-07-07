@@ -11,6 +11,7 @@
 
 package org.jivesoftware.wildfire.update;
 
+import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -166,6 +167,12 @@ public class UpdateManager extends BasicModule {
         String requestXML = getServerUpdateRequest();
         // Send the request to the server
         HttpClient httpClient = new HttpClient();
+        // Check if a proxy should be used
+        if (isUsingProxy()) {
+            HostConfiguration hc = new HostConfiguration();
+            hc.setProxy(getProxyHost(), getProxyPort());
+            httpClient.setHostConfiguration(hc);
+        }
         PostMethod postMethod = new PostMethod(updateServiceURL);
         NameValuePair[] data = {
                 new NameValuePair("type", "update"),
@@ -184,6 +191,12 @@ public class UpdateManager extends BasicModule {
         String requestXML = getAvailablePluginsUpdateRequest();
         // Send the request to the server
         HttpClient httpClient = new HttpClient();
+        // Check if a proxy should be used
+        if (isUsingProxy()) {
+            HostConfiguration hc = new HostConfiguration();
+            hc.setProxy(getProxyHost(), getProxyPort());
+            httpClient.setHostConfiguration(hc);
+        }
         PostMethod postMethod = new PostMethod(updateServiceURL);
         NameValuePair[] data = {
                 new NameValuePair("type", "available"),
@@ -338,6 +351,65 @@ public class UpdateManager extends BasicModule {
      */
     public void setCheckFrequency(int checkFrequency) {
         JiveGlobals.setProperty("update.frequency", Integer.toString(checkFrequency));
+    }
+
+    /**
+     * Returns true if a proxy is being used to connect to jivesoftware.org or false if
+     * a direct connection should be attempted.
+     *
+     * @return true if a proxy is being used to connect to jivesoftware.org.
+     */
+    public boolean isUsingProxy() {
+        return getProxyHost() != null;
+    }
+
+    /**
+     * Returns the host of the proxy to use to connect to jivesoftware.org or <tt>null</tt>
+     * if no proxy is used.
+     *
+     * @return the host of the proxy or null if no proxy is used.
+     */
+    public String getProxyHost() {
+        return JiveGlobals.getProperty("update.proxy.host");
+    }
+
+    /**
+     * Sets the host of the proxy to use to connect to jivesoftware.org or <tt>null</tt>
+     * if no proxy is used.
+     *
+     * @param host the host of the proxy or null if no proxy is used.
+     */
+    public void setProxyHost(String host) {
+        if (host == null) {
+            // Remove the property
+            JiveGlobals.deleteProperty("update.proxy.host");
+        }
+        else {
+            // Create or update the property
+            JiveGlobals.setProperty("update.proxy.host", host);
+        }
+    }
+
+    /**
+     * Returns the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * proxy is being used.
+     *
+     * @return the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     *         proxy is being used.
+     */
+    public int getProxyPort() {
+        return JiveGlobals.getIntProperty("update.proxy.port", -1);
+    }
+
+    /**
+     * Sets the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * proxy is being used.
+     *
+     * @param port the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     *        proxy is being used.
+     */
+    public void setProxyPort(int port) {
+        JiveGlobals.setProperty("update.proxy.port", Integer.toString(port));
     }
 
     /**

@@ -162,7 +162,7 @@ public class SchemaManager {
                 }
                 catch (SQLException sqle2) {
                     // The database schema must not be installed.
-                    Log.warn("Error verifying server version", sqle2);
+                    Log.debug("Error verifying server version", sqle2);
                 }
             }
         }

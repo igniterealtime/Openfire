@@ -12,12 +12,13 @@
 package org.jivesoftware.wildfire.privacy;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -26,7 +27,7 @@ import java.util.Collections;
  *
  * @author Gaston Dombiak
  */
-class PrivacyItem implements Serializable, Comparable {
+class PrivacyItem implements Cacheable, Comparable {
 
     private int order;
     private boolean allow;
@@ -123,7 +124,7 @@ class PrivacyItem implements Serializable, Comparable {
      * @return true if the packet to analyze matches the condition defined by this rule.
      */
     boolean matchesCondition(Packet packet, Roster roster, JID userJID) {
-        return matchesPacketSenderCondition(packet, roster) &&
+        return matchesPacketSenderCondition(packet, roster, userJID) &&
                 matchesPacketTypeCondition(packet, userJID);
     }
 
@@ -131,25 +132,33 @@ class PrivacyItem implements Serializable, Comparable {
         return allow;
     }
 
-    private boolean matchesPacketSenderCondition(Packet packet, Roster roster) {
+    private boolean matchesPacketSenderCondition(Packet packet, Roster roster, JID userJID) {
         if (type == null) {
             // This is the "fall-through" case
             return true;
         }
         boolean isPresence = packet.getClass().equals(Presence.class);
+        boolean incoming = true;
+        if (packet.getFrom() != null) {
+            incoming = !userJID.toBareJID().equals(packet.getFrom().toBareJID());
+        }
         boolean matches = false;
-        if (isPresence && (filterEverything || filterPresence_out)) {
+        if (isPresence && !incoming && (filterEverything || filterPresence_out)) {
             // If this is an outgoing presence and we are filtering by outgoing presence
             // notification then use the receipient of the packet in the analysis
             matches = verifyJID(packet.getTo(), roster);
         }
-        if (!matches && (filterEverything || filterPresence_in || filterIQ || filterMessage)) {
+        if (!matches && incoming &&
+                (filterEverything || filterPresence_in || filterIQ || filterMessage)) {
             matches = verifyJID(packet.getFrom(), roster);
         }
         return matches;
     }
 
     private boolean verifyJID(JID jid, Roster roster) {
+        if (jid == null) {
+            return false;
+        }
         if (type == Type.jid) {
             if (jidValue.getResource() != null) {
                 // Rule is filtering by exact resource match
@@ -166,7 +175,7 @@ class PrivacyItem implements Serializable, Comparable {
             }
         }
         else if (type == Type.group) {
-            Collection<String> contactGroups = null;
+            Collection<String> contactGroups;
             try {
                 // Get the groups where the contact belongs
                 RosterItem item = roster.getRosterItem(jid);
@@ -225,6 +234,29 @@ class PrivacyItem implements Serializable, Comparable {
         return false;
     }
 
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();                      // overhead of object
+        size += CacheSizes.sizeOfInt();                         // order
+        size += CacheSizes.sizeOfBoolean();                     // allow
+        //size += CacheSizes.sizeOfString(jidValue.toString());   // type
+        if (jidValue != null ) {
+            size += CacheSizes.sizeOfString(jidValue.toString()); // jidValue
+        }
+        //size += CacheSizes.sizeOfString(name);                  // subscriptionValue
+        if (groupValue != null) {
+            size += CacheSizes.sizeOfString(groupValue);        // groupValue
+        }
+        size += CacheSizes.sizeOfBoolean();                     // filterEverything
+        size += CacheSizes.sizeOfBoolean();                     // filterIQ
+        size += CacheSizes.sizeOfBoolean();                     // filterMessage
+        size += CacheSizes.sizeOfBoolean();                     // filterPresence_in
+        size += CacheSizes.sizeOfBoolean();                     // filterPresence_out
+        return size;
+    }
+
     /**
      * Type defines if the rule is based on JIDs, roster groups or presence subscription types.
      */
@@ -241,6 +273,6 @@ class PrivacyItem implements Serializable, Comparable {
          * JID being analyzed should belong to a contact present in the owner's roster with
          * the specified subscription status.
          */
-        subscription;
+        subscription
     }
 }

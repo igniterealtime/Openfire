@@ -472,8 +472,9 @@ public class LdapGroupProvider implements GroupProvider {
                         // it passes the filter.
                         try {
                             JID userJID;
+                            int position = username.indexOf("@" + serverName);
                             // Create JID of local user if JID does not match a component's JID
-                            if (!username.contains(serverName)) {
+                            if (position == -1) {
                                 // In order to lookup a username from the manager, the username
                                 // must be a properly escaped JID node.
                                 String escapedUsername = JID.escapeNode(username);
@@ -487,8 +488,9 @@ public class LdapGroupProvider implements GroupProvider {
                             }
                             else {
                                 // This is a JID of a component or node of a server's component
-                                String escapedUsername = JID.escapeNode(username);
-                                userJID = new JID(escapedUsername);
+                                String node = username.substring(0, position);
+                                String escapedUsername = JID.escapeNode(node);
+                                userJID = new JID(escapedUsername + "@" + serverName);
                             }
                             members.add(userJID);
                         }

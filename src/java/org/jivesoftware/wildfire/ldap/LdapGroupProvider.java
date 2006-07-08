@@ -487,7 +487,8 @@ public class LdapGroupProvider implements GroupProvider {
                             }
                             else {
                                 // This is a JID of a component or node of a server's component
-                                userJID = new JID(username);
+                                String escapedUsername = JID.escapeNode(username);
+                                userJID = new JID(escapedUsername);
                             }
                             members.add(userJID);
                         }

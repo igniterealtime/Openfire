@@ -13,7 +13,7 @@
 
 	<div id="pageHeader">
 		<div id="logo"></div>
-		<h1>Plugin Developer Guide</h1>
+		<h1>Wildfire Plugin Developer Guide</h1>
 	</div>
 	<div class="navigation">
 		<a href="index.html">&laquo; Back to documentation index</a>
@@ -47,6 +47,8 @@ plugin directory are as follows:
  |- icon_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
  |- icon_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
  |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
+ |- database/       &lt;- Optional database schema files that your plugin needs
+ |- i18n/           &lt;- Optional i18n files to allow for internationalization of plugins.
  |- lib/            &lt;- Libraries (JAR files) your plugin needs
  |- web             &lt;- Resources for Admin Console integration, if any
      |- WEB-INF/
@@ -80,9 +82,10 @@ file might look like the following:
     &lt;author&gt;Jive Software&lt;/author&gt;
 
     &lt;version&gt;1.0&lt;/version&gt;
-    &lt;date&gt;07/15/2005&lt;/date&gt;
-    &lt;url&gt;http://www.jivesoftware.org/pluginX&lt;/url&gt;
-    &lt;minServerVersion&gt;2.2.0&lt;/minServerVersion&gt;
+    &lt;date&gt;07/01/2006&lt;/date&gt;
+    &lt;url&gt;http://www.jivesoftware.org/plugins&lt;/url&gt;
+    &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
+    &lt;licenseType&gt;gpl&lt;/licenseType&gt;
 
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
     &lt;adminconsole&gt;
@@ -100,16 +103,48 @@ file might look like the following:
     <li>author -- the author of the plugin.</li>
     <li>version -- the version of the plugin.</li>
     <li>date -- the date the plugin was released. The date must be in the form MM/dd/yyyy, such
-          as 07/15/2005.</li>
+          as 07/01/2006.</li>
 
     <li>url -- a URL where additional information about the plugin is available.</li>
     <li>minServerVersion -- the minimum version of Wildfire required
           to run the plugin (supported by Wildfire 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
+    <li>databaseKey -- if the plugin requires it's own database tables, the databaseKey element should
+            be set with a schema key name (often the same name as the plugin). Database
+            schema files for each supported database should then be placed in the <tt>database</tt>
+            directory of the plugin. For example, given the key "foo", schema files would be called
+            "foo_mysql.sql", "foo_oracle.sql", etc. The scripts should make an entry into the
+            jiveVersion table using the key so that schema version information can be tracked, e.g.:<br><br>
+
+            <tt>INSERT INTO jiveVersion (name, version) VALUES ('foo', 0);</tt><br><br>
+    </li>
+    <li>databaseVersion -- the database schema version (if a database schema is defined). New plugins
+            with a database schema should start at version 0. If future versions of the plugin
+            require updates to the schema, those updates can be defined by creating sub-directories
+            in the <tt>database/upgrade</tt> directory for each version number. For example, the directories
+            <tt>database/upgrade/1</tt> and <tt>database/upgrade/2</tt> would contain scripts such as
+            "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database changes for each
+            version. Each script should update version information in the jiveVersion table, e.g.:<br><br>
+
+            <tt>UPDATE jiveVersion set version=1 where name='foo';</tt><br><br>
+
+    </li>
     <li>parentPlugin -- the name of the parent plugin (given as "foo" for the "foo.jar" plugin).
             When a plugin has a parent plugin, the parent plugin's class loader will be used instead
             of creating a new class loader. This lets plugins work together more closely. A
             child plugin will not function without its parent present.</li>
+    <li>licenseType -- indicates the license agreement that the plugin is governed by. Valid
+            values are:<ul>
+                <li>"commercial": the plugin is released under a commercial license agreement.</li>
+                <li>"gpl": the plugin is released under the GNU Public License (GPL).</li>
+                <li>"apache": the plugin is released under the Apache license.</li>
+                <li>"internal": the plugin is for internal use at an organization only and will
+                    not be re-distributed.</li>
+                <li>"other": the plugin is released under a license agrement that doesn't fall into
+                    one of the other categories. The license agreement should be details in the
+                    plugin's Readme.</li>
+            </ul>
+            If the license type is not set, it is assumed to be other.</li>
 </ul></p>
 
 Several additional files can be present in the plugin to provide additional information to
@@ -287,6 +322,29 @@ The following HTML snippet demonstrates a valid page:
 
 </fieldset>
 
+<h4>Using i18n in your Plugins</h4>
+<p>
+It's possible to translate your plugin into multiple languages (i18n). To do so, use the following
+procedure:
+<ul>
+    <li>Create a "i18n" directory in the root directory of your plugin.</li>
+    <li>Add each resource file using the %[plugin_name]%_i18n "_" language ".properties"
+        naming convention, where [plugin_name] is the name of the plugin directory. See the
+        <a href="translator-guide.html">translator guide</a> for more information about resource
+        bundles.</li>
+    <li>Convert Strings in your JSP files to refer to the internationalized keys. For example:
+
+        <pre>
+        &lt;%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %&gt;
+        &lt;%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %&gt;
+        ...
+        &lt;fmt:message key="some.key.name" /&gt;
+        </pre>
+    </li>
+    You can also internationalize Strings in your Java files using the LocaleUtils class:<br>
+    <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
+</ul>
+</p>
 <h2>Using the Wildfire Build Script</h2>
 
 <p>
@@ -382,8 +440,9 @@ so it also deletes the directory.</p>
 
 <b>What license agreement are plugins subject to?</b>
 <p>Because Wildfire is released under the Open Source GPL license, any plugins developed
-must also be released under the GPL or a compatible Open Source license. It is a
-violation of the license agreement to create plugins that are not Open Source. Please visit 
+must also be released under the GPL or a compatible Open Source license if you distribute
+the plugins outside your organization. It is a violation of the license agreement to create
+plugins for distribution that are not Open Source. Please visit
 <a href="http://www.jivesoftware.com/products/wildfire/">Jive Software</a> if you need different
 licensing terms for Wildfire, including the right to create commercial plugins.</p>
 

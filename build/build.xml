@@ -62,9 +62,9 @@
     <!-- ======================================================================================= -->
 
     <property name="version.major" value="3"/>
-    <property name="version.minor" value="0"/>
+    <property name="version.minor" value="1"/>
     <property name="version.revision" value="0"/>
-    <property name="version.extra" value=""/> <!-- For 'beta' or 'alpha' -->
+    <property name="version.extra" value="alpha"/> <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="wildfire"/>
 
     <property file="${basedir}/build/build.properties"/>
@@ -1184,7 +1184,8 @@
         <delete dir="${plugin.dev.dest.dir}"/>
     </target>
 
-	<property name="mac.pkg.dir" value="${basedir}/macpkg" />
+    <!-- Mac installer ========================================================================= -->
+    <property name="mac.pkg.dir" value="${basedir}/macpkg" />
 	<property name="mac.dmg.dir" value="${basedir}/Wildfire" />
 	<property name="mac.dmg.file" value="${basedir}/wildfire.dmg" />
 	<property name="mac.dmg.template" value="${basedir}/build/osx/template.dmg" />
@@ -1225,7 +1226,7 @@
 		</chmod>
 	</target>
 	
-	<!-- create a mac os x installer -->
+	<!-- Create a Mac OS X installer -->
 	<target name="mac.pkg" depends="mac.prepare">
 		<exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
 			<arg value="-build"/> 
@@ -1238,7 +1239,7 @@
 		</exec>
 	</target>
 	
-	<target name="mac.dmg" depends="mac.pkg">
+	<target name="installer-mac" depends="mac.pkg" description="Creates a Mac OS X package">
 		<exec executable="hdiutil" failonerror="true">
 			<arg line="detach ${mac.dmg.dir} -quiet -force" />
 		</exec>
@@ -1247,5 +1248,33 @@
         </exec>
         <delete file="${basedir}/tmp.dmg"/>    
 	</target>
+
+    <!-- Debian package ========================================================================= -->
+    <property name="debian.dir" value="${basedir}/build/debian" />
+    <property name="debian.release.dir" value="${target.dir}/debian" />
+    <property name="debian.release.install_path" value="${debian.release.dir}/${dist.prefix}/usr/bin" />
+    <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
+
+    <target name="installer-debian" depends="init" description="Creates a Debian package">
+        <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
+        <copy todir="${debian.release.install_path}/${dist.prefix}">
+            <fileset dir="${release.dest.dir}/${dist.prefix}">
+                <exclude name="**/wildfire.bat"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${debian.release.dir}/DEBIAN">
+            <fileset dir="${debian.dir}" includes="**/*" />
+            <filterset>
+                <filter token="builddate" value="${builddate}"/>
+                <filter token="version" value="${debian.version}"/>
+            </filterset>
+        </copy>
+        <exec executable="dpkg" failonerror="true">
+            <arg line="-b ${debian.dir}/${dist.prefix} ${dist.prefix}_${debian.version}-i386.deb"/>
+        </exec>
+        <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}" />
+        <!-- <delete dir="debian.release.dir"/> -->
+    </target>
 
 </project>

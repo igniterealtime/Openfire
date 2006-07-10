@@ -30,6 +30,8 @@ import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.disco.ServerItemsProvider;
 import org.jivesoftware.wildfire.filetransfer.FileTransferProxy;
+import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
+import org.jivesoftware.wildfire.filetransfer.spi.DefaultFileTransferManager;
 import org.jivesoftware.wildfire.handler.*;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
@@ -447,6 +449,7 @@ public class XMPPServer {
         loadModule(IQSharedGroupHandler.class.getName());
         loadModule(AdHocCommandHandler.class.getName());
         loadModule(IQPrivacyHandler.class.getName());
+        loadModule(DefaultFileTransferManager.class.getName());
         loadModule(FileTransferProxy.class.getName());
         loadModule(PubSubModule.class.getName());
         loadModule(UpdateManager.class.getName());
@@ -1176,5 +1179,16 @@ public class XMPPServer {
      */
     public FileTransferProxy getFileTransferProxy() {
         return (FileTransferProxy) modules.get(FileTransferProxy.class);
+    }
+
+    /**
+     * Returns the <code>FileTransferManager</code> registered with this server. The
+     * <code>FileTransferManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>FileTransferProxy</code> registered with this server.
+     */
+    public FileTransferManager getFileTransferManager() {
+        return (FileTransferManager) modules.get(DefaultFileTransferManager.class);
     }
 }

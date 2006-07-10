@@ -18,10 +18,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.filetransfer.spi.DefaultFileTransferManager;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.disco.*;
@@ -46,13 +42,6 @@ public class FileTransferProxy extends BasicModule
         implements ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider,
         RoutableChannelHandler {
     /**
-     * The JiveProperty relating to whether or not file transfer is currently enabled. If file transfer is disabled
-     * all known file transfer related packets are blocked, it also goes with out saying that the file transfer proxy
-     * is then disabled.
-     */
-    public static final String JIVEPROPERTY_FILE_TRANSFER_ENABLED = "xmpp.filetransfer.enabled";
-
-    /**
      * The JiveProperty relating to whether or not the file treansfer proxy is enabled.
      */
     public static final String JIVEPROPERTY_PROXY_ENABLED = "xmpp.proxy.enabled";
@@ -69,24 +58,9 @@ public class FileTransferProxy extends BasicModule
     public static final boolean DEFAULT_IS_PROXY_ENABLED = true;
 
     /**
-     * Whether or not the file transfer is enabled.
-     */
-    public static final boolean DEFAULT_IS_FILE_TRANSFER_ENABLED = true;
-
-    /**
      * The default port of the file transfer proxy
      */
     public static final int DEFAULT_PORT = 7777;
-
-    private static final String NAMESPACE_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
-
-    /**
-     * Stream Initiation, SI, namespace
-     */
-    private static final String NAMESPACE_SI = "http://jabber.org/protocol/si";
-
-    private static final List<String> FILETRANSFER_NAMESPACES
-            = Arrays.asList(NAMESPACE_BYTESTREAMS, NAMESPACE_SI);
 
     private String proxyServiceName;
 
@@ -96,15 +70,15 @@ public class FileTransferProxy extends BasicModule
     private String proxyIP;
     private ProxyConnectionManager connectionManager;
     private FileTransferManager transferManager;
-    private boolean isFileTransferEnabled;
+
     private InetAddress bindInterface;
 
 
     public FileTransferProxy() {
         super("SOCKS5 file transfer proxy");
 
-        info = new IQHandlerInfo("query", NAMESPACE_BYTESTREAMS);
-        InterceptorManager.getInstance().addInterceptor(new FileTransferInterceptor());
+        info = new IQHandlerInfo("query", FileTransferManager.NAMESPACE_BYTESTREAMS);
+
         PropertyEventDispatcher.addListener(new FileTransferPropertyListener());
     }
 
@@ -141,10 +115,11 @@ public class FileTransferProxy extends BasicModule
                 // Do nothing. This error should never happen
             }
         }
-        else if (NAMESPACE_BYTESTREAMS.equals(namespace)) {
+        else if (FileTransferManager.NAMESPACE_BYTESTREAMS.equals(namespace)) {
             if (packet.getType() == IQ.Type.get) {
                 IQ reply = IQ.createResultIQ(packet);
-                Element newChild = reply.setChildElement("query", NAMESPACE_BYTESTREAMS);
+                Element newChild = reply.setChildElement("query",
+                        FileTransferManager.NAMESPACE_BYTESTREAMS);
                 Element response = newChild.addElement("streamhost");
                 response.addAttribute("jid", getServiceDomain());
                 response.addAttribute("host", proxyIP);
@@ -208,13 +183,12 @@ public class FileTransferProxy extends BasicModule
             Log.error("Couldn't discover local host", e);
         }
 
-        transferManager = getFileTransferManager();
+        transferManager = getFileTransferManager(server);
         connectionManager = new ProxyConnectionManager(transferManager);
-        isFileTransferEnabled = isFileTransferEnabled();
     }
 
-    private FileTransferManager getFileTransferManager() {
-        return new DefaultFileTransferManager();
+    private FileTransferManager getFileTransferManager(XMPPServer server) {
+        return server.getFileTransferManager();
     }
 
     public void start() {
@@ -251,12 +225,9 @@ public class FileTransferProxy extends BasicModule
         connectionManager.shutdown();
     }
 
-    public void enableFileTransfer(boolean isEnabled) {
-        JiveGlobals.setProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED, Boolean.toString(isEnabled));
-    }
-
     public void enableFileTransferProxy(boolean isEnabled) {
-        JiveGlobals.setProperty(FileTransferProxy.JIVEPROPERTY_PROXY_ENABLED, Boolean.toString(isEnabled));
+        JiveGlobals.setProperty(FileTransferProxy.JIVEPROPERTY_PROXY_ENABLED,
+                Boolean.toString(isEnabled));
     }
 
     private void setEnabled(boolean isEnabled) {
@@ -266,15 +237,6 @@ public class FileTransferProxy extends BasicModule
         else {
             stop();
         }
-    }
-
-    private void setEnabledFileTransfer(boolean isEnabled) {
-        isFileTransferEnabled = isEnabled;
-        setEnabled(isEnabled && JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED));
-    }
-
-    public boolean isFileTransferEnabled() {
-        return JiveGlobals.getBooleanProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED, DEFAULT_IS_FILE_TRANSFER_ENABLED);
     }
 
     /**
@@ -288,8 +250,8 @@ public class FileTransferProxy extends BasicModule
     }
 
     private boolean isEnabled() {
-        return isFileTransferEnabled() && (connectionManager.isRunning() ||
-                JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED));
+        return transferManager.isFileTransferEnabled() &&
+                JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED);
     }
 
     /**
@@ -373,8 +335,8 @@ public class FileTransferProxy extends BasicModule
     }
 
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        return Arrays.asList(NAMESPACE_BYTESTREAMS, "http://jabber.org/protocol/disco#info")
-                .iterator();
+        return Arrays.asList(FileTransferManager.NAMESPACE_BYTESTREAMS,
+                "http://jabber.org/protocol/disco#info").iterator();
     }
 
     public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
@@ -405,61 +367,33 @@ public class FileTransferProxy extends BasicModule
         }
     }
 
-    /**
-     * Interceptor to grab and validate file transfer meta information.
-     */
-    private class FileTransferInterceptor implements PacketInterceptor {
-        public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
-                throws PacketRejectedException {
-            // We only want packets recieved by the server
-            if (!processed && incoming && packet instanceof IQ) {
-                IQ iq = (IQ) packet;
-                Element childElement = iq.getChildElement();
-                if(childElement == null) {
-                    return;
-                }
-
-                String namespace = childElement.getNamespaceURI();
-                if(!isFileTransferEnabled && FILETRANSFER_NAMESPACES.contains(namespace)) {
-                    throw new PacketRejectedException("File Transfer Disabled");
-                }
-
-                if (NAMESPACE_SI.equals(namespace)) {
-                    // If this is a set, check the feature offer
-                    if (iq.getType().equals(IQ.Type.set)) {
-                        JID from = iq.getFrom();
-                        JID to = iq.getTo();
-                        String packetID = iq.getID();
-                        if (!transferManager.acceptIncomingFileTransferRequest(packetID, from, to, childElement)) {
-                            throw new PacketRejectedException();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private class FileTransferPropertyListener implements PropertyEventListener {
         public void propertySet(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 Object value = params.get("value");
-                boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString()) : DEFAULT_IS_PROXY_ENABLED);
-                setEnabled(isEnabled && isFileTransferEnabled());
+                boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString()) :
+                        DEFAULT_IS_PROXY_ENABLED);
+                setEnabled(isEnabled && transferManager.isFileTransferEnabled());
             }
-            else if(JIVEPROPERTY_FILE_TRANSFER_ENABLED.equalsIgnoreCase(property)) {
+            else if(FileTransferManager.JIVEPROPERTY_FILE_TRANSFER_ENABLED
+                    .equalsIgnoreCase(property))
+            {
                 Object value = params.get("value");
                 boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString())
-                        : DEFAULT_IS_FILE_TRANSFER_ENABLED);
-                setEnabledFileTransfer(isEnabled);
+                        : FileTransferManager.DEFAULT_IS_FILE_TRANSFER_ENABLED);
+                setEnabled(isEnabled && JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED,
+                        DEFAULT_IS_PROXY_ENABLED));
             }
         }
 
         public void propertyDeleted(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
-                setEnabled(DEFAULT_IS_PROXY_ENABLED && isFileTransferEnabled());
+                setEnabled(DEFAULT_IS_PROXY_ENABLED && transferManager.isFileTransferEnabled());
             }
-            else if(JIVEPROPERTY_FILE_TRANSFER_ENABLED.equalsIgnoreCase(property)){
-                setEnabledFileTransfer(DEFAULT_IS_FILE_TRANSFER_ENABLED);
+            else if(FileTransferManager.JIVEPROPERTY_FILE_TRANSFER_ENABLED.
+                    equalsIgnoreCase(property)){setEnabled(FileTransferManager.
+                    DEFAULT_IS_FILE_TRANSFER_ENABLED && JiveGlobals.
+                    getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED));
             }
         }
 

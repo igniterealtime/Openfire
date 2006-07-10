@@ -17,9 +17,9 @@ import org.jivesoftware.wildfire.filetransfer.FileTransfer;
 import org.jivesoftware.wildfire.filetransfer.ProxyConnectionManager;
 
 /**
- *  The default implementation of the file transfer manager. The only acceptance criteria for a proxy
+ * The default implementation of the file transfer manager. The only acceptance criteria for a proxy
  * transfer is employed in the <i>ProxyConnectionManager</i>, it checks that the file transfers stored
- * hre
+ * here.
  */
 public class DefaultFileTransferManager extends AbstractFileTransferManager {
     public boolean acceptIncomingFileTransferRequest(String packetID, JID from, JID to, Element siElement) {

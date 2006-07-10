@@ -12,6 +12,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.filetransfer.FileTransferManager"%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -22,8 +23,9 @@
 <%
     Map<String, String> errors = new HashMap<String, String>();
     FileTransferProxy transferProxy = XMPPServer.getInstance().getFileTransferProxy();
+    FileTransferManager manager = XMPPServer.getInstance().getFileTransferManager();
 
-    boolean isFileTransferEnabled = transferProxy.isFileTransferEnabled();
+    boolean isFileTransferEnabled = manager.isFileTransferEnabled();
 
     boolean isUpdated = request.getParameter("update") != null;
     boolean isProxyEnabled = ParamUtils.getBooleanParameter(request, "proxyEnabled");

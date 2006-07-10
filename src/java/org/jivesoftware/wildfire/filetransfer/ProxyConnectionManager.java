@@ -55,8 +55,6 @@ public class ProxyConnectionManager {
 
     private String className;
 
-    private ProxyTracker proxyTracker;
-
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
         connectionMap = new Cache<String, ProxyTransfer>(cacheName, -1, 1000 * 60 * 10);
@@ -65,7 +63,7 @@ public class ProxyConnectionManager {
                 "org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer");
 
         transferManager = manager;
-        this.proxyTracker = new ProxyTracker();
+        StatisticsManager.getInstance().addStatistic(proxyTransferRate, new ProxyTracker());
     }
 
     /*
@@ -79,7 +77,6 @@ public class ProxyConnectionManager {
             }
         }
         reset();
-
         socketProcess = executor.submit(new Runnable() {
             public void run() {
                 try {
@@ -124,7 +121,6 @@ public class ProxyConnectionManager {
             }
         });
         proxyPort = port;
-        StatisticsManager.getInstance().addStatistic(proxyTransferRate, proxyTracker);
     }
 
     public int getProxyPort() {

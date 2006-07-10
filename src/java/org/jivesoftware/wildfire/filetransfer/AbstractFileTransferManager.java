@@ -13,17 +13,32 @@ package org.jivesoftware.wildfire.filetransfer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.Session;
 import org.dom4j.Element;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 import java.util.Map;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * Provides several utility methods for file transfer manager implementaions to utilize.
  *
  * @author Alexander Wenckus
  */
-public abstract class AbstractFileTransferManager implements FileTransferManager {
+public abstract class AbstractFileTransferManager
+        extends BasicModule implements FileTransferManager
+{
+
+    private static final List<String> FILETRANSFER_NAMESPACES
+            = Arrays.asList(NAMESPACE_BYTESTREAMS, NAMESPACE_SI);
+
     private static final String CACHE_NAME = "File Transfer Cache";
 
     private final Map<String, FileTransfer> fileTransferMap;
@@ -32,10 +47,14 @@ public abstract class AbstractFileTransferManager implements FileTransferManager
      * Default constructor creates the cache.
      */
     public AbstractFileTransferManager() {
+        super("File Transfer Manager");
         fileTransferMap = createCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
+        InterceptorManager.getInstance().addInterceptor(new FileTransferInterceptor());
     }
 
-    private Cache<String, FileTransfer> createCache(String name, String propertiesName, int size, long expirationTime) {
+    private Cache<String, FileTransfer> createCache(String name, String propertiesName, int size,
+                                                    long expirationTime)
+    {
         size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
         expirationTime = (long) JiveGlobals.getIntProperty(
                 "cache." + propertiesName + ".expirationTime", (int) expirationTime);
@@ -43,23 +62,25 @@ public abstract class AbstractFileTransferManager implements FileTransferManager
     }
 
     /**
-     * Returns true if the proxy transfer should be matched to an existing file transfer in the system.
+     * Returns true if the proxy transfer should be matched to an existing file transfer
+     * in the system.
      *
-     * @return Returns true if the proxy transfer should be matched to an existing file transfer in the system.
+     * @return Returns true if the proxy transfer should be matched to an existing file
+     * transfer in the system.
      */
     public boolean isMatchProxyTransfer() {
         return JiveGlobals.getBooleanProperty("xmpp.proxy.transfer.required", true);
     }
 
-    public void cacheFileTransfer(String key, FileTransfer transfer) {
+    protected void cacheFileTransfer(String key, FileTransfer transfer) {
         fileTransferMap.put(key, transfer);
     }
 
-    public FileTransfer retrieveFileTransfer(String key) {
+    protected FileTransfer retrieveFileTransfer(String key) {
         return fileTransferMap.get(key);
     }
 
-    public static Element getChildElement(Element element, String namespace) {
+    protected static Element getChildElement(Element element, String namespace) {
         List elements = element.elements();
         if (elements.isEmpty()) {
             return null;
@@ -88,5 +109,50 @@ public abstract class AbstractFileTransferManager implements FileTransferManager
 
         transfer.setProgress(proxyTransfer);
         cacheFileTransfer(transferDigest, transfer);
+    }
+
+    public void enableFileTransfer(boolean isEnabled) {
+        JiveGlobals.setProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED, Boolean.toString(isEnabled));
+    }
+
+    public boolean isFileTransferEnabled() {
+        return JiveGlobals.getBooleanProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED,
+                DEFAULT_IS_FILE_TRANSFER_ENABLED);
+    }
+
+    /**
+     * Interceptor to grab and validate file transfer meta information.
+     */
+    private class FileTransferInterceptor implements PacketInterceptor {
+        public void interceptPacket(Packet packet, Session session, boolean incoming,
+                                    boolean processed)
+                throws PacketRejectedException
+        {
+            // We only want packets recieved by the server
+            if (!processed && incoming && packet instanceof IQ) {
+                IQ iq = (IQ) packet;
+                Element childElement = iq.getChildElement();
+                if(childElement == null) {
+                    return;
+                }
+
+                String namespace = childElement.getNamespaceURI();
+                if(!isFileTransferEnabled() && FILETRANSFER_NAMESPACES.contains(namespace)) {
+                    throw new PacketRejectedException("File Transfer Disabled");
+                }
+
+                if (NAMESPACE_SI.equals(namespace)) {
+                    // If this is a set, check the feature offer
+                    if (iq.getType().equals(IQ.Type.set)) {
+                        JID from = iq.getFrom();
+                        JID to = iq.getTo();
+                        String packetID = iq.getID();
+                        if (!acceptIncomingFileTransferRequest(packetID, from, to, childElement)) {
+                            throw new PacketRejectedException();
+                        }
+                    }
+                }
+            }
+        }
     }
 }

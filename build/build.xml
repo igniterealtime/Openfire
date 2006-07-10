@@ -1257,9 +1257,10 @@
 
     <target name="installer-debian" depends="release" description="Creates a Debian package">
         <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
+        <mkdir dir="${debian.release.dir}/etc/${dist.prefix}"/>
         <copy todir="${debian.release.install_path}/${dist.prefix}">
             <fileset dir="${release.dest.dir}/${dist.prefix}">
-                <exclude name="**/wildfire.bat"/>
+                <exclude name="**/*.bat"/>
             </fileset>
         </copy>
 
@@ -1270,6 +1271,15 @@
                 <filter token="version" value="${debian.version}"/>
             </filterset>
         </copy>
+        <!-- Move the conf directory to /etc/wildfire and then make a sym link  -->
+        <copy todir="${debian.release.dir}/etc/${dist.prefix}">
+            <fileset dir="${debian.release.install_path}/${dist.prefix}/conf"/>
+        </copy>
+        <delete dir="${debian.release.install_path}/${dist.prefix}/conf"/>
+        <exec executable="ln" failonerror="true">
+            <arg line="-s  /etc/${dist.prefix} ${debian.release.install_path}/${dist.prefix}/conf"/>
+        </exec>
+        <!-- Create the package -->
         <exec executable="dpkg" failonerror="true">
             <arg line="-b ${debian.release.dir} ${dist.prefix}_${debian.version}-i386.deb"/>
         </exec>

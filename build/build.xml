@@ -1252,7 +1252,7 @@
     <!-- Debian package ========================================================================= -->
     <property name="debian.dir" value="${basedir}/build/debian" />
     <property name="debian.release.dir" value="${target.dir}/debian" />
-    <property name="debian.release.install_path" value="${debian.release.dir}/${dist.prefix}/usr/bin" />
+    <property name="debian.release.install_path" value="${debian.release.dir}/usr/bin" />
     <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
 
     <target name="installer-debian" depends="release" description="Creates a Debian package">

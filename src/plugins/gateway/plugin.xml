@@ -6,10 +6,22 @@
     
     <!-- Plugin meta-data -->
     <name>IM Gateway</name>
-    <description>Provides gateway connectivity to the public AIM and ICQ networks</description>
-    <author></author>
-    <version>.1</version>
+    <description>Provides gateway connectivity to the other public instant messaging networks</description>
+    <author>Daniel Henninger</author>
+    <version>0.0.1</version>
     <date>07/02/2006</date>
     <minServerVersion>3.0.0</minServerVersion>
+    <databaseKey>gateway</databaseKey>
+    <databaseVersion>0</databaseVersion>
+    <licenseType>gpl</licenseType>
     
+    <!-- Admin console meta-data -->
+    <adminconsole>              
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="gateway-service" name="IM Gateway" url="gateway-service.jsp"
+                     description="Click to manage the service that provides access to other IM networks" />
+            </sidebar>
+        </tab>
+    </adminconsole>
 </plugin>

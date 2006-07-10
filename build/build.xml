@@ -1274,7 +1274,7 @@
             <arg line="-b ${debian.release.dir} ${dist.prefix}_${debian.version}-i386.deb"/>
         </exec>
         <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}" />
-        <!-- <delete dir="debian.release.dir"/> -->
+        <delete dir="debian.release.dir"/>
     </target>
 
 </project>

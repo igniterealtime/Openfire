@@ -300,7 +300,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 }
             }
             else {
-                Component component = getPresenceComponent(probee);
+                Component component = getComponent(probee);
                 if (component != null) {
                     // If the probee belongs to a component then ask the component to process the
                     // probe presence
@@ -385,7 +385,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         rosterManager = server.getRosterManager();
     }
 
-    public Component getPresenceComponent(JID probee) {
+    private Component getComponent(JID probee) {
         // Check for registered components
         Component component = componentManager.getComponent(probee);
         if (component != null) {

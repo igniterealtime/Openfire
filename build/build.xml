@@ -1255,7 +1255,7 @@
     <property name="debian.release.install_path" value="${debian.release.dir}/${dist.prefix}/usr/bin" />
     <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
 
-    <target name="installer-debian" depends="init" description="Creates a Debian package">
+    <target name="installer-debian" depends="release" description="Creates a Debian package">
         <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
         <copy todir="${debian.release.install_path}/${dist.prefix}">
             <fileset dir="${release.dest.dir}/${dist.prefix}">
@@ -1274,7 +1274,7 @@
             <arg line="-b ${debian.release.dir} ${dist.prefix}_${debian.version}-i386.deb"/>
         </exec>
         <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}" />
-        <delete dir="debian.release.dir"/>
+        <delete dir="${debian.release.dir}"/>
     </target>
 
 </project>

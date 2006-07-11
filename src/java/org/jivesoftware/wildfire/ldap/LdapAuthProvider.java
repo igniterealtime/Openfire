@@ -16,6 +16,8 @@ import org.jivesoftware.wildfire.auth.AuthProvider;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 
+import javax.naming.CommunicationException;
+
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
  * Only plaintext authentication is currently supported.<p>
@@ -73,7 +75,7 @@ public class LdapAuthProvider implements AuthProvider {
             }
         }
 
-        String userDN = null;
+        String userDN;
         try {
             // The username by itself won't help us much with LDAP since we
             // need a fully qualified dn. We could make the assumption that
@@ -91,6 +93,12 @@ public class LdapAuthProvider implements AuthProvider {
             if (!manager.checkAuthentication(userDN, password)) {
                 throw new UnauthorizedException("Username and password don't match");
             }
+        }
+        catch (CommunicationException e) {
+            // Log error here since it will be wrapped with an UnauthorizedException that
+            // is never logged
+            Log.error("Error connecting to LDAP server", e);
+            throw new UnauthorizedException(e);
         }
         catch (Exception e) {
             throw new UnauthorizedException(e);

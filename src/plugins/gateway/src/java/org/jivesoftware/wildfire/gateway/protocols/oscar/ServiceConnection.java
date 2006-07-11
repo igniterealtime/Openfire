@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ServiceConnection extends BasicFlapConnection {
+
     protected int serviceFamily;
 
     public ServiceConnection(OSCARGatewaySession mainSession, ByteBlock cookie, int serviceFamily) {
@@ -98,13 +99,12 @@ public class ServiceConnection extends BasicFlapConnection {
                 for (int i = 0; i < infos.length; i++) {
                     if (infos[i].getType() == InterestInfo.TYPE_CHILD) {
                         int parentCode = infos[i].getParentId();
-                        Integer parent = new Integer(parentCode);
 
-                        List interests = (List) children.get(parent);
+                        List interests = (List) children.get(parentCode);
 
                         if (interests == null) {
                             interests = new LinkedList();
-                            children.put(parent, interests);
+                            children.put(parentCode, interests);
                         }
 
                         interests.add(infos[i]);

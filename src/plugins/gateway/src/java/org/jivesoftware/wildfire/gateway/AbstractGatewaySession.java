@@ -1,5 +1,14 @@
-package org.jivesoftware.wildfire.gateway;
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
 
+package org.jivesoftware.wildfire.gateway;
 
 /**
  * AbstractGatewaySession provides an abstract implementation of 
@@ -8,7 +17,6 @@ package org.jivesoftware.wildfire.gateway;
  * management. 
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public abstract class AbstractGatewaySession implements GatewaySession, Endpoint {
 

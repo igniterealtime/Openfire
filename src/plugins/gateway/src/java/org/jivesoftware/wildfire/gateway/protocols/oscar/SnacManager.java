@@ -12,8 +12,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.util.Log;
-
 import net.kano.joscar.snac.SnacRequest;
 
 import java.util.ArrayList;
@@ -42,13 +40,12 @@ public class SnacManager {
 
         for (int i = 0; i < families.length; i++) {
             int familyCode = families[i];
-            Integer family = new Integer(familyCode);
 
-            List handlers = (List) conns.get(family);
+            List handlers = (List) conns.get(familyCode);
 
             if (handlers == null) {
                 handlers = new LinkedList();
-                conns.put(family, handlers);
+                conns.put(familyCode, handlers);
             }
 
             if (!handlers.contains(conn)) handlers.add(conn);
@@ -89,11 +86,11 @@ public class SnacManager {
     }
 
     public BasicFlapConnection getConn(int familyCode) {
-        Integer family = new Integer(familyCode);
+        List handlers = (List) conns.get(familyCode);
 
-        List handlers = (List) conns.get(family);
-
-        if (handlers == null || handlers.size() == 0) return null;
+        if (handlers == null || handlers.size() == 0) {
+            return null;
+        }
 
         return (BasicFlapConnection) handlers.get(0);
     }
@@ -108,7 +105,9 @@ public class SnacManager {
     }
 
     public void addListener(PendingSnacListener l) {
-        if (!listeners.contains(l)) listeners.add(l);
+        if (!listeners.contains(l)) {
+            listeners.add(l);
+        }
     }
 
     public void removeListener(PendingSnacListener l) {

@@ -1,6 +1,13 @@
 /**
- * 
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.gateway.roster;
 
 import java.text.MessageFormat;
@@ -9,20 +16,14 @@ import java.util.ResourceBundle;
 
 /**
  * @author Noah Campbell
- * @version 1.0
  */
 public class UnknownForeignContactException extends Exception {
 
-    
     /** The args. */
     private final Object[] args;
     
-    /** The serialVersionUID. */
-    private static final long serialVersionUID = 1L;
-
     /**
-     * Construct a new <code>UnknownForeignContactException</code>.
-     *
+     * Constructs a new <code>UnknownForeignContactException</code>.
      */
     public UnknownForeignContactException() {
         super();
@@ -61,19 +62,4 @@ public class UnknownForeignContactException extends Exception {
         super(cause);
         args = new Object[0];
     }
-
-    /**
-     * @see java.lang.Throwable#getLocalizedMessage()
-     */
-    @Override
-    public String getLocalizedMessage() {
-        return MessageFormat.format(resource.getString(this.getMessage()), args);
-    }
-    
-    
-    /** The resource. */
-    private static ResourceBundle resource = PropertyResourceBundle.getBundle("exceptions");
-    
-    
-
 }

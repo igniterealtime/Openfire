@@ -1,6 +1,13 @@
 /**
- * 
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.gateway.util;
 
 import java.util.logging.Level;
@@ -9,7 +16,6 @@ import java.util.logging.Level;
  * Custom log levels.
  * 
  * @author Noah Campbell
- * @version 1.0
  * @see java.util.logging.Level
  */
 public class GatewayLevel extends Level {
@@ -30,6 +36,5 @@ public class GatewayLevel extends Level {
 
     /** The serialVersionUID. */
     private static final long serialVersionUID = 1L;
-
 
 }

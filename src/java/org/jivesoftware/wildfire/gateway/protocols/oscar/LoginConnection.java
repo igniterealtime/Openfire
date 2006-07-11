@@ -15,13 +15,11 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 import org.jivesoftware.util.Log;
 
 import net.kano.joscar.*;
-import net.kano.joscar.tlv.*;
 import net.kano.joscar.flap.*;
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.net.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.auth.*;
-import net.kano.joscar.snaccmd.chat.*;
 
 import java.net.InetAddress;
 

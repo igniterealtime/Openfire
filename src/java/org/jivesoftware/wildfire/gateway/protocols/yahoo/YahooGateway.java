@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.util.logging.Logger;
@@ -29,7 +39,7 @@ public class YahooGateway extends BaseGateway  {
 	}
 
 	/**
-	 * @see org.jivesoftware.wildfire.gateway.BaseGateway#setName()
+	 * @see org.jivesoftware.wildfire.gateway.BaseGateway#setName(String)
 	 */
 	@Override
     public void setName(String newname) {

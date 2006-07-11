@@ -1,6 +1,13 @@
 /**
- * 
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.gateway.util;
 
 import java.util.concurrent.ThreadFactory;
@@ -9,7 +16,6 @@ import java.util.concurrent.ThreadFactory;
  * Generates threads that are of low priority and daemon.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public class BackgroundThreadFactory implements ThreadFactory {
 

@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import java.util.logging.Logger;
 import org.jivesoftware.util.Log;
 
 import org.jivesoftware.wildfire.gateway.BaseGateway;
@@ -23,7 +22,6 @@ import org.xmpp.packet.Packet;
 
 /**
  * @author Daniel Henninger
- * @version 1.0
  */
 public class OSCARGateway extends BaseGateway {
     /* Gateway Name String */

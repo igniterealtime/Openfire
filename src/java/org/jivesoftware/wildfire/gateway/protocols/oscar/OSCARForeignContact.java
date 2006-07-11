@@ -21,7 +21,6 @@ import net.kano.joscar.ssiitem.*;
 
 /**
  * @author Daniel Henninger
- * @version 1.0
  */
 public class OSCARForeignContact extends AbstractForeignContact {
 

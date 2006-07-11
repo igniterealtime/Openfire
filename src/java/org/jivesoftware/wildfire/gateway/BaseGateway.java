@@ -1,28 +1,22 @@
 package org.jivesoftware.wildfire.gateway;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.collections.BidiMap;
-import org.apache.commons.collections.bidimap.DualHashBidiMap;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.gateway.roster.AbstractForeignContact;
 import org.jivesoftware.wildfire.gateway.roster.ForeignContact;
 import org.jivesoftware.wildfire.gateway.roster.NormalizedJID;
 import org.jivesoftware.wildfire.gateway.roster.PersistenceManager;
 import org.jivesoftware.wildfire.gateway.roster.Roster;
 import org.jivesoftware.wildfire.gateway.roster.Status;
 import org.jivesoftware.wildfire.gateway.util.BackgroundThreadFactory;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -35,7 +29,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.PacketError.Condition;
-import org.xmpp.packet.Presence.Show;
 
 /**
  * Handle a good share of the tasks for a gateway.  Dealing with lookups for ids,
@@ -52,7 +45,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     public abstract String getName();
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.Gateway#setName()
+     * @see org.jivesoftware.wildfire.gateway.Gateway#setName(String)
      */
     public abstract void setName(String newname);
     
@@ -113,7 +106,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     /**
      * Handle Foreign Contacts and JID Mapping
      */
-    private final BidiMap foreignContacts = new DualHashBidiMap();
+    private final Map<JID, String> foreignContacts = new HashMap<JID, String>();
     
     /**
      * helper method for getting the ns from a packet.
@@ -463,13 +456,12 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @see org.xmpp.packet.Message
      */
     private void processPacket(Message message) throws Exception {
-
         logger.finer(message.toString());
         
     	GatewaySession session = PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(message.getFrom());
     	session.getLegacyEndpoint().sendPacket(message);
-    	return;
     }
+
     /**
      * Proces a presense packet.
      * 
@@ -492,9 +484,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             if(!Presence.Type.unavailable.equals(presence.getType())) {
                 logger.log(Level.INFO, "basegateway.unauthorizedrequest", new Object[] { presence.getType(), from.toString() });
                 Presence result = new Presence();
-                result = new Presence();
                 result.setError(Condition.not_authorized);
-                result.setStatus(bundle.getString("basegateway.registerfirst"));
+                result.setStatus(LocaleUtils.getLocalizedString("basegateway.registerfirst", "gateway"));
                 p.add(result);
             }
     		return p;
@@ -508,7 +499,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             logger.log(Level.WARNING, "basegateway.unabletolocatesession" , from);
             return p;
         }
-    	if(Presence.Type.subscribe.equals(presence.getType())) {
+
+        if(Presence.Type.subscribe.equals(presence.getType())) {
             if(presence.getTo().equals(this.jid)) {
                 sessionInfo.getSubscriptionInfo().serverRegistered = true;
             } else {
@@ -522,14 +514,16 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             reply.setFrom(presence.getTo());
             p.add(reply);
             
-    	} else if (Presence.Type.subscribed.equals(presence.getType())) {
+    	}
+        else if (Presence.Type.subscribed.equals(presence.getType())) {
             if(presence.getTo().equals(this.jid)) { // subscribed to server
                 sessionInfo.getSubscriptionInfo().clientRegistered = true;    
             } else { // subscribe to legacy user
                 logger.log(Level.FINE,"basegateway.subscribed");
             }
     		
-    	} else if (Presence.Type.unavailable.equals(presence.getType())){
+    	}
+        else if (Presence.Type.unavailable.equals(presence.getType())){
             /**
              * If an unavailable presence stanza is received then logout the 
              * current user and send back and unavailable stanza.
@@ -542,17 +536,15 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             reply.setTo(presence.getFrom());
             reply.setFrom(presence.getTo());
             p.add(reply);
-            
-            
-    	} else if (presence.getTo().getNode() == null) { // this is a request to the gateway only.
+    	}
+        else if (presence.getTo().getNode() == null) { // this is a request to the gateway only.
             Presence result = new Presence();
             result.setTo(presence.getFrom());
             result.setFrom(this.jid);
             p.add(result);
             logger.log(Level.FINE, "basegateway.gatewaypresence");
-        } else {
-            
-            
+        }
+        else {
             GatewaySession session = rosterManager.getRegistrar().getGatewaySession(presence.getFrom());
             
             try {
@@ -563,27 +555,20 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 p2.setTo(presence.getFrom());
                 if(status.isOnline()) {
                     p2.setStatus(status.getValue());
-                } else {
+                }
+                else {
                     p2.setType(Presence.Type.unavailable);
                 }
                 p.add(p2);
-            } catch (Exception e) {
-                
+            }
+            catch (Exception e) {
                 logger.log(Level.WARNING, "basegateway.statusexception",
                         new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()});
             }
     	}
     	return p;
     }
-    
-    
-    /** The resource bundle for this gateway. */
-    ResourceBundle bundle = PropertyResourceBundle.getBundle("gateway_i18n");
 
-    
-    /** The jabberEndpointValve. */
-    private EndpointValve jabberEndpointValve;
-    
     /**
      * Return the JID of this component.
      * 
@@ -605,7 +590,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      */
     public void initialize(JID jid, ComponentManager componentManager) throws ComponentException {
     	this.jid = jid;
-        this.jabberEndpointValve = new EndpointValve(false);
+        EndpointValve jabberEndpointValve = new EndpointValve(false);
         this.jabberEndpoint = new JabberEndpoint(componentManager, this, jabberEndpointValve);
     }
     
@@ -617,8 +602,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return jid The JID associated with this contact.
      */
     public JID whois(String foreignContact) {
-    	JID jid = new JID(foreignContact + "@" + this.getName() + "." + this.getDomain());
-    	foreignContacts.put(foreignContact, jid);
+    	JID jid = new JID(foreignContact, this.getName() + "." + this.getDomain(), null);
+    	foreignContacts.put(jid, foreignContact);
     	return jid;
     }
     
@@ -629,7 +614,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return contact A String for the foreign contact or null if non is regestered.
      */
     public String whois(JID jid) {
-    	return (String)foreignContacts.get(jid);
+    	return foreignContacts.get(jid);
     }
 
     /**
@@ -643,6 +628,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * Shutdown this component
      */
     public void shutdown() {
+        threadPool.shutdown();
     }
 
     /** 

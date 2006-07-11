@@ -1,39 +1,23 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import java.io.IOException;
-import java.net.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.HashSet;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.AbstractGatewaySession;
 import org.jivesoftware.wildfire.gateway.Endpoint;
-import org.jivesoftware.wildfire.gateway.EndpointValve;
 import org.jivesoftware.wildfire.gateway.Gateway;
-import org.jivesoftware.wildfire.gateway.JabberEndpoint;
 import org.jivesoftware.wildfire.gateway.SubscriptionInfo;
-import org.jivesoftware.wildfire.gateway.roster.AbstractForeignContact;
 import org.jivesoftware.wildfire.gateway.roster.ForeignContact;
-import org.jivesoftware.wildfire.gateway.roster.NormalizedJID;
-import org.jivesoftware.wildfire.gateway.roster.PersistenceManager;
 import org.jivesoftware.wildfire.gateway.roster.UnknownForeignContactException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
 
-import net.kano.joscar.flap.*;
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.snac.*;
-import net.kano.joscar.snaccmd.*;
-import net.kano.joscar.snaccmd.auth.*;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
 import net.kano.joscar.snaccmd.ssi.*;
@@ -44,7 +28,6 @@ import net.kano.joscar.ByteBlock;
  * Manages the session to the underlying legacy system.
  * 
  * @author Daniel Henninger
- * @version 1.0
  */
 public class OSCARGatewaySession extends AbstractGatewaySession implements Endpoint {
 
@@ -147,7 +130,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     public String getStatus(JID to) {
         Log.debug("getStatus called");
         for (ForeignContact c : contacts) {
-            if (c.getName() == to.getNode()) {
+            if (c.getName().equals(to.getNode())) {
                 return c.getStatus().getValue();
             }
         }
@@ -159,7 +142,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
         Integer newBuddyId = highestBuddyId + 1;
         Integer groupId = -1;
         for (GroupItem g : groups) {
-            if (g.getGroupName() == "Transport Buddies") {
+            if ("Transport Buddies".equals(g.getGroupName())) {
                 groupId = g.getId();
             }
         }
@@ -177,7 +160,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     public void removeContact(JID jid) throws Exception {
         Log.debug("removeContact called");
         for (ForeignContact c : contacts) {
-            if (c.getName() == jid.getNode()) {
+            if (c.getName().equals(jid.getNode())) {
                 OSCARForeignContact oc = (OSCARForeignContact)c;
                 request(new DeleteItemsCmd(new SsiItem[] { oc.getSSIItem() }));
                 contacts.remove(contacts.indexOf(c));
@@ -196,7 +179,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     public ForeignContact getContact(JID to) throws UnknownForeignContactException {
         Log.debug("getContact called");
         for (ForeignContact c : contacts) {
-            if (c.getName() == to.getNode()) {
+            if (c.getName().equals(to.getNode())) {
                 return c;
             }
         }

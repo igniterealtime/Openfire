@@ -1,19 +1,21 @@
 /**
- * 
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.gateway.roster;
 
 import java.io.Serializable;
 
 /**
- * @author Noah Campbell
- * @version 1.0
- */
-/**
  * Status object.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public final class Status implements Serializable {
 	

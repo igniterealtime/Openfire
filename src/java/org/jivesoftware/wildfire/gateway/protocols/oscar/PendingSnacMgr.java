@@ -12,8 +12,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.util.Log;
-
 import net.kano.joscar.snac.SnacRequest;
 
 import java.util.ArrayList;
@@ -22,34 +20,32 @@ import java.util.List;
 import java.util.Map;
 
 public class PendingSnacMgr {
-    protected Map snacs = new HashMap();
+
+    protected Map<Integer,List<SnacRequest>> snacs = new HashMap<Integer,List<SnacRequest>>();
 
     public boolean isPending(int familyCode) {
-        Integer family = new Integer(familyCode);
-
-        return snacs.containsKey(family);
+        return snacs.containsKey(familyCode);
     }
 
     public void add(SnacRequest request) {
-        Integer family = new Integer(request.getCommand().getFamily());
+        Integer family = request.getCommand().getFamily();
 
-        List pending = (List) snacs.get(family);
+        List<SnacRequest> pending = snacs.get(family);
 
         pending.add(request);
     }
 
     public SnacRequest[] getPending(int familyCode) {
-        Integer family = new Integer(familyCode);
-
-        List pending = (List) snacs.get(family);
-
-        return (SnacRequest[]) pending.toArray(new SnacRequest[0]);
+        List<SnacRequest> pending = snacs.get(familyCode);
+        return pending.toArray(new SnacRequest[0]);
     }
 
     public void setPending(int familyCode, boolean pending) {
-        Integer family = new Integer(familyCode);
-
-        if (pending) snacs.put(family, new ArrayList());
-        else snacs.remove(family);
+        if (pending) {
+            snacs.put(familyCode, new ArrayList<SnacRequest>());
+        }
+        else {
+            snacs.remove(familyCode);
+        }
     }
 }

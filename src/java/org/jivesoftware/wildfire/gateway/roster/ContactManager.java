@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.roster;
 
 import java.io.Serializable;
@@ -13,11 +23,8 @@ import org.xmpp.packet.JID;
  * Manage contacts for a paticular JID.
  * 
  * @author Noah Campbell
- *
  */
 public class ContactManager implements Serializable {
-	
-    
     
     /**
      * Construct a new <code>ContactManager</code>

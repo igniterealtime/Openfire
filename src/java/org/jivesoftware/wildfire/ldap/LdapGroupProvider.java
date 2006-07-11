@@ -270,7 +270,7 @@ public class LdapGroupProvider implements GroupProvider {
                 if (JiveGlobals.getXMLProperty("ldap.wrapUserDN", true)) {
                     // Check if we need to wrap values between "
                     // eg. cn=John\, Doe,ou=People --> cn="John\, Doe",ou=People
-                    Matcher matcher = userDNPattern.matcher(username);
+                    Matcher matcher = userDNPattern.matcher(userDN);
                     while (matcher.find()) {
                         userDN = matcher.replaceFirst(
                                 matcher.group(1) + "\"" + matcher.group(2) + "\"");

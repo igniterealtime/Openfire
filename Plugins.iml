@@ -69,7 +69,16 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/oscar.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/ymsg_network.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

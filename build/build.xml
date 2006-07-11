@@ -1260,7 +1260,6 @@
 
     <target name="installer-debian" depends="release" description="Creates a Debian package">
         <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
-        <mkdir dir="${debian.release.dir}/etc/${dist.prefix}"/>
         <copy todir="${debian.release.install_path}/${dist.prefix}">
             <fileset dir="${release.dest.dir}/${dist.prefix}">
                 <exclude name="**/*.bat"/>
@@ -1275,6 +1274,7 @@
             </filterset>
         </copy>
         <!-- Move the conf directory to /etc/wildfire and then make a sym link  -->
+        <mkdir dir="${debian.release.dir}/etc/${dist.prefix}"/>
         <copy todir="${debian.release.dir}/etc/${dist.prefix}">
             <fileset dir="${debian.release.install_path}/${dist.prefix}/conf"/>
         </copy>
@@ -1283,6 +1283,7 @@
             <arg line="-s  /etc/${dist.prefix} ${debian.release.install_path}/${dist.prefix}/conf"/>
         </exec>
         <!-- Move the logs directory to /var/log/wildfire and then make a sym link -->
+        <mkdir dir="${debian.release.dir}/var/log/${dist.prefix}"/>
         <copy todir="${debian.release.dir}/var/log/${dist.prefix}">
             <fileset dir="${debian.release.install_path}/${dist.prefix}/logs"/>
         </copy>

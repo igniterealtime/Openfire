@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.ldap;
 
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.group.Group;
@@ -43,6 +44,7 @@ public class LdapGroupProvider implements GroupProvider {
     private int groupCount;
     private long expiresStamp;
     private String[] standardAttributes;
+    private Pattern userDNPattern;
 
     /**
      * Constructor of the LdapGroupProvider class. Gets an LdapManager instance from the LdapManager class.
@@ -56,6 +58,8 @@ public class LdapGroupProvider implements GroupProvider {
         standardAttributes[0] = manager.getGroupNameField();
         standardAttributes[1] = manager.getGroupDescriptionField();
         standardAttributes[2] = manager.getGroupMemberField();
+        // Set the pattern to use to figure out if we need to wrap userDNs between "
+        userDNPattern = Pattern.compile("(=)([\\w ]*[\\\\].[\\w ]*)");
     }
 
     /**
@@ -262,7 +266,18 @@ public class LdapGroupProvider implements GroupProvider {
             }
             username = JID.unescapeNode(user.getNode());
             try {
-                username = manager.findUserDN(username) + "," + manager.getBaseDN();
+                String userDN = manager.findUserDN(username);
+                if (JiveGlobals.getXMLProperty("ldap.wrapUserDN", true)) {
+                    // Check if we need to wrap values between "
+                    // eg. cn=John\, Doe,ou=People --> cn="John\, Doe",ou=People
+                    Matcher matcher = userDNPattern.matcher(username);
+                    while (matcher.find()) {
+                        userDN = matcher.replaceFirst(
+                                matcher.group(1) + "\"" + matcher.group(2) + "\"");
+                        matcher.reset(userDN);
+                    }
+                }
+                username = userDN + "," + manager.getBaseDN();
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);

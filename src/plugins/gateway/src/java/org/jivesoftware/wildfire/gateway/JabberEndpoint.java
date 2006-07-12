@@ -34,20 +34,20 @@ public class JabberEndpoint implements Endpoint {
      * @see ComponentManager
      */
     private final ComponentManager componentManager;
+
     /**
      * The component
      *
      * @see Component
      */
     private final Component component;
-    
-    
+
     /** 
      * The value. 
      * @see EndpointValve 
      */
     private final EndpointValve valve;
-    
+
     /**
      * Construct a new <code>JabberEndpoint</code>.
      * @param componentManager The componentManager.
@@ -56,7 +56,7 @@ public class JabberEndpoint implements Endpoint {
     public JabberEndpoint(ComponentManager componentManager, Component component) {
         this(componentManager, component, new EndpointValve());
     }
-    
+
     /**
      * Construct a new <code>JabberEndpoint</code>.
      * @param componentManager 
@@ -68,19 +68,6 @@ public class JabberEndpoint implements Endpoint {
         this.component = component;
         this.valve= valve;
     }
-//    
-//    
-//    /**
-//     * @param jid
-//     * @param string
-//     * @throws Exception
-//     */
-//    public void sendMessage(JID jid, String string) throws Exception {
-//        Message message = new Message();
-//        message.setBody(string);
-//        message.setTo(jid);
-//        this.componentManager.sendPacket(this.component, message);
-//    }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.Endpoint#sendPacket(Packet)
@@ -103,10 +90,9 @@ public class JabberEndpoint implements Endpoint {
     /** The backlog queue. */
     private final ConcurrentLinkedQueue<Packet> queue = new ConcurrentLinkedQueue<Packet>();
 
-    
     /** The logger. */
     final static private Logger logger = Logger.getLogger("JabberEndpoint", "gateway_i18n");
-    
+
     /**
      * @see org.jivesoftware.wildfire.gateway.Endpoint#getValve()
      */

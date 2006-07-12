@@ -89,7 +89,7 @@ public class YahooForeignContact extends AbstractForeignContact {
         }
         else if (StatusConstants.STATUS_INVISIBLE == id) {
             status.updateValue(resource.getString("STATUS_INVISIBLE"));
-        
+        }
         else if (StatusConstants.STATUS_BAD == id) {
             status.updateValue(resource.getString("STATUS_BAD")); // Bad login?
         }

@@ -4,66 +4,169 @@
 <head>
 <title>User Import/Export Plugin Readme</title>
 <style type="text/css">
-   BODY {
-      font-size : 100%;
-   }
-  
-   BODY, TD, TH {
-      font-family : tahoma, verdana, arial, helvetica, sans-serif;
-      font-size : 0.8em;
-   }
-  
-   H2 {
-      font-size : 11pt;
-      font-weight : bold;
-   }
-  
-   A:hover {
-      text-decoration : none;
-   }
-  
-   H1 {
-      font-family : tahoma, arial, helvetica, sans-serif;
-      font-size : 1.4em;
-      font-weight: bold;
-      border-bottom : 1px #ccc solid;
-      padding-bottom : 2px;
-   }
+   /* global font and body settings */
+body {
+	font-size : 100%;
+	background-color : #d3d6d9;
+	padding: 0px;
+	margin: 0px 0px 30px 0px;
+}
+body, td, th {
+	font-family : arial, helvetica, sans-serif;
+	font-size : 10pt;
+}
+pre, tt, code {
+	font-family : courier new, monospaced;
+	font-size : 9pt;
+}
+#pageContainer {
+	display: block;
+	position: relative;
+	clear: both;
+	background-color: #fff;
+	border: 1px solid #999;
+	padding: 40px;
+	margin: 30px;
+	-moz-border-radius: 6px;
+}
+#pageHeader {
+	display: block;
+	position: relative;
+	height: 80px;
+	background-color: #e7eaee;
+	border: 1px solid #cccccc;
+	border-bottom: none;
+	-moz-border-radius: 5px 5px 0px 0px;
+	margin: 10px 0px 0px 0px;
+}
+#pageBody {
+	margin: 0px 18px 0px 20px;
+}
 
-   TT {
-      font-family : courier new;
-      font-weight : bold;
-      color : #060;
-   }
-  
-   PRE {
-      font-family : courier new;
-      font-size : 100%;
-   }
-  
-   #datatable TH {
-      color : #fff;
-      background-color : #2A448C;
-      text-align : left;
-   }
-  
-   #datatable TD {
-      background-color : #FAF6EF;
-   }
-  
-   #datatable .name {
-      background-color : #DCE2F5;
-      text-align : center;
-   }
-   
-   #xmltable TD {
-      background-color : #C3FDB8;
-   }
+/* anchors */
+a:link {
+	color: #11568c;
+}
+a:visited {
+	color: #571c8d;
+}
+a:hover {
+	color: #7a1d42;
+	text-decoration : underline;
+}
+a:active {
+	color: #7a1d42;
+}
+
+/* page header elements (logo and navigation) */
+.navigation {
+	display: block;
+	position: relative;
+	height: 20px;
+	background-color: #335588;
+	border: 1px solid #cccccc;
+	border-top: none;
+	color: #ffffff;
+	font-size: 11px;
+	line-height: 18px;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 25px 0px;
+	overflow: hidden;
+}
+.navigation a {
+	margin: 0px 20px 0px 20px;
+}
+.navigation a:link { color: #ffffff; }
+.navigation a:visited { color: #ffffff; }
+.navigation a:hover { color: #ffffff; }
+.navigation a:active { color: #ffffff; }
+
+/* headings */
+h1 {
+	display: block;
+	position: relative;
+	font-size : 1.7em;
+	font-weight : bold;
+	color: #670e15;
+	padding: 0px;
+	margin: 30px 0px 0px 20px;
+}
+h2 {
+	font-size : 1.3em;
+	font-weight : bold;
+	margin: 40px 0px 6px 0px;
+	padding: 0px;
+	color: #335588;
+}
+h3 {
+	font-size : 1.0em;
+	font-weight : bold;
+	margin: 25px 0px 3px 0px;
+	padding: 0px;
+	color: #334466;
+}
+
+/* general elements */
+p {
+	margin: 0px 0px 15px 0px;
+}
+
+ul {
+	margin: 5px 0px 15px 35px;
+}
+li {
+	padding-bottom : 4px;
+}
+tt {
+	font-family : courier new;
+	font-weight : bold;
+	color : #060;
+}
+hr {
+	display: block;
+	height: 1px;
+	background-color: #999999;
+	border: none;
+	margin: 40px 0px 20px 0px;
+}
+
+.footer {
+	font-size : 8pt;
+	color : #666;
+	text-align : center;
+	margin-top : 2em;
+	padding-top : 0.5em;
+	border-top : 1px #CCC solid;
+}
+
+#datatable TH {
+  color : #fff;
+  background-color : #2A448C;
+  text-align : left;
+}
+
+#datatable TD {
+  background-color : #FAF6EF;
+}
+
+#datatable .name {
+  background-color : #DCE2F5;
+  text-align : center;
+}
+
+#xmltable TD {
+  background-color : #EFEFEF;
+}
 </style>
 </head>
 <body>
 
-<h1>User Import/Export Plugin Readme</h1>
+<div id="pageContainer">
+
+	<div id="pageHeader">
+		<h1>User Import/Export Plugin Readme</h1>
+	</div>
+<div id="pageBody">
 
 <h2>Overview</h2>
 <p>The user import/export plugin provides a way to import and export Wildfire user data via
@@ -302,5 +405,9 @@ Below is a list of the different status types and what their associated numbers 
    </tbody>
 </table>
 </div>
+
+	</div>
+</div>
+
 </body>
 </html>

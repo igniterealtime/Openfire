@@ -27,30 +27,30 @@ import org.xmpp.packet.JID;
  * @version 1.0
  */
 public abstract class AbstractForeignContact implements Serializable, ForeignContact {
-	/**
-	 * The serialVersionUID
-	 */
-	private static final long serialVersionUID = 1L;
-	
-	/**
-	 * The id for this contact.  This maps directly to the legacy userid.
-	 */
-	public final String id;
+    /**
+     * The serialVersionUID
+     */
+    private static final long serialVersionUID = 1L;
+    
+    /**
+     * The id for this contact.  This maps directly to the legacy userid.
+     */
+    public final String id;
 
     /**
-	 * The status of this contact.
-	 *
-	 * @see Status
-	 */
-	public final Status status;
-	
-	/**
-	 * The jid associated with this foreign contact.
-	 *
-	 * @see JID
-	 */
-	private transient JID jid;
-	
+     * The status of this contact.
+     *
+     * @see Status
+     */
+    public final Status status;
+    
+    /**
+     * The jid associated with this foreign contact.
+     *
+     * @see JID
+     */
+    private transient JID jid;
+    
     /**
      * The gatewayDomain.
      */
@@ -67,14 +67,14 @@ public abstract class AbstractForeignContact implements Serializable, ForeignCon
      * @see java.util.Set
      */
     private transient Set<GatewaySession> associatedSessions = new HashSet<GatewaySession>();
-	
-	/**
-	 * The format for a JID
-	 *
-	 * @see java.text.MessageFormat
-	 */
-	private static final MessageFormat mf = new MessageFormat("{0}@{1}.{2}");
-	
+    
+    /**
+     * The format for a JID
+     *
+     * @see java.text.MessageFormat
+     */
+    private static final MessageFormat mf = new MessageFormat("{0}@{1}.{2}");
+    
     /**
      * Create a ForeignContact relating to the gateway it originated from.
      * 
@@ -82,24 +82,24 @@ public abstract class AbstractForeignContact implements Serializable, ForeignCon
      * @param status the current status of the contact.
      * @param gateway the gateway the foreign contact is associated with.
      */
-	public AbstractForeignContact(String id, Status status, Gateway gateway) {
-		this.id = id;
-		this.status = status;
-		this.gatewayDomain = gateway.getDomain();
+    public AbstractForeignContact(String id, Status status, Gateway gateway) {
+        this.id = id;
+        this.status = status;
+        this.gatewayDomain = gateway.getDomain();
         this.gatewayName = gateway.getName();
-	}
+    }
 
-	/**
+    /**
      * @see org.jivesoftware.wildfire.gateway.roster.ForeignContact#getJid()
      */
-	public JID getJid() {
-		if(jid == null) {
-			jid = new JID(mf.format(new Object[]{id, gatewayName, gatewayDomain}));
-		}
-		return jid;
-	}
+    public JID getJid() {
+        if(jid == null) {
+            jid = new JID(mf.format(new Object[]{id, gatewayName, gatewayDomain}));
+        }
+        return jid;
+    }
     
-	/**
+    /**
      * @param in
      * @throws IOException
      * @throws ClassNotFoundException

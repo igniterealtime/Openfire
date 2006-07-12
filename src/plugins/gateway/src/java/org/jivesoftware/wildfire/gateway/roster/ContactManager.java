@@ -31,11 +31,11 @@ public class ContactManager implements Serializable {
      */
     ContactManager() { }
     
-	/**
-	 * The serialVersionUID
-	 */
-	private static final long serialVersionUID = 1L;
-	
+    /**
+     * The serialVersionUID
+     */
+    private static final long serialVersionUID = 1L;
+    
     /**
      * The fcs
      *
@@ -43,27 +43,27 @@ public class ContactManager implements Serializable {
      */
     private final Set<AbstractForeignContact> fcs = new HashSet<AbstractForeignContact>();
     
-	/**
-	 * Maintain a mapping of JIDs to their contact list.
-	 */
-	private final Map<NormalizedJID, Roster> contactLists = 
-		new HashMap<NormalizedJID, Roster>();
-	
-	/**
-	 * Return a roster for a JID.
+    /**
+     * Maintain a mapping of JIDs to their contact list.
+     */
+    private final Map<NormalizedJID, Roster> contactLists = 
+        new HashMap<NormalizedJID, Roster>();
+    
+    /**
+     * Return a roster for a JID.
      * 
-	 * @param name The <code>JID</code> to lookup.
-	 * @return roster The roster for the <code>JID</code>.
-	 */
-	public synchronized Roster getRoster(JID name) {
-		Roster r = contactLists.get(NormalizedJID.wrap(name));
-		if(r == null) {
-			r = new Roster();
-			contactLists.put(NormalizedJID.wrap(name), r);
-		}
-		
-		return r;
-	}
+     * @param name The <code>JID</code> to lookup.
+     * @return roster The roster for the <code>JID</code>.
+     */
+    public synchronized Roster getRoster(JID name) {
+        Roster r = contactLists.get(NormalizedJID.wrap(name));
+        if(r == null) {
+            r = new Roster();
+            contactLists.put(NormalizedJID.wrap(name), r);
+        }
+        
+        return r;
+    }
     
     /**
      * @return foreignContacts A {@code java.util.Set} of {@code ForeignContact}s.
@@ -73,12 +73,12 @@ public class ContactManager implements Serializable {
     }
 
 
-	/**
+    /**
      * Remove the <code>JID</code> from the contact list.
      * 
-	 * @param jid
-	 */
-	void remove(NormalizedJID jid) {
-		contactLists.remove(jid);	
-	}
+     * @param jid
+     */
+    void remove(NormalizedJID jid) {
+        contactLists.remove(jid);    
+    }
 }

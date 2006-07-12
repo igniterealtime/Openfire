@@ -115,13 +115,13 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return namespace The namespaceUri.
      */
     private String getNS(IQ packet) {
-    	Element childElement = (packet).getChildElement();
+        Element childElement = (packet).getChildElement();
         String namespace = null;
         if (childElement != null) {
             namespace = childElement.getNamespaceURI();
         }
-    	
-    	return namespace;
+        
+        return namespace;
     }
     
     /**
@@ -133,22 +133,22 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @see org.xmpp.packet.IQ
      */
     private List<Packet> processPacket(IQ iq) {
-    	String namespace = getNS(iq);
-    	List<Packet> response = new ArrayList<Packet>();
-    	if("http://jabber.org/protocol/disco#info".equals(namespace)) {
-    		response.add(handleServiceDiscovery(iq));
-    	} else if("jabber:iq:agents".equals(namespace)) {
-    		response.add(handleLegacyServiceDiscovery(iq));
-    	} else if("http://jabber.org/protocol/disco#items".equals(namespace)) {
-    		response.add(handleDiscoveryItems(iq));
-    	} else if("jabber:iq:register".equals(namespace)) {
-    		response.addAll(handleRegisterInBand(iq));
-    	} else if("jabber:iq:version".equals(namespace)) {
-    		response.add(handleVersion(iq));
-    	} else if("jabber:iq:browse".equals(namespace)) {
-    		response.add(handleBrowse(iq));
-    	}
-    	return response;
+        String namespace = getNS(iq);
+        List<Packet> response = new ArrayList<Packet>();
+        if("http://jabber.org/protocol/disco#info".equals(namespace)) {
+            response.add(handleServiceDiscovery(iq));
+        } else if("jabber:iq:agents".equals(namespace)) {
+            response.add(handleLegacyServiceDiscovery(iq));
+        } else if("http://jabber.org/protocol/disco#items".equals(namespace)) {
+            response.add(handleDiscoveryItems(iq));
+        } else if("jabber:iq:register".equals(namespace)) {
+            response.addAll(handleRegisterInBand(iq));
+        } else if("jabber:iq:version".equals(namespace)) {
+            response.add(handleVersion(iq));
+        } else if("jabber:iq:browse".equals(namespace)) {
+            response.add(handleBrowse(iq));
+        }
+        return response;
     }
     
     /**
@@ -158,23 +158,23 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return iq The response IQ packet.
      */
     private IQ handleBrowse(IQ iq) {
-    	IQ reply = IQ.createResultIQ(iq);
-    	Element responseElement = DocumentHelper.createElement(QName.get(
+        IQ reply = IQ.createResultIQ(iq);
+        Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "jabber:iq:browse"));
-    	
+        
         try {
         
-    	for(ForeignContact fc : PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(iq.getFrom()).getContacts()) {
-    		Element item = DocumentHelper.createElement("item");
-    		item.addAttribute("category", "user");
-    		item.addAttribute("jid", fc + "@" + this.getName() + "." + this.getDomain());
-    		item.addAttribute("type", "client");
-    		responseElement.add(item);
-    		
-    	}
+        for(ForeignContact fc : PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(iq.getFrom()).getContacts()) {
+            Element item = DocumentHelper.createElement("item");
+            item.addAttribute("category", "user");
+            item.addAttribute("jid", fc + "@" + this.getName() + "." + this.getDomain());
+            item.addAttribute("type", "client");
+            responseElement.add(item);
+            
+        }
         
-    	reply.setChildElement(responseElement);
-    	
+        reply.setChildElement(responseElement);
+        
         } catch (Exception e) {
             logger.log(Level.WARNING, "basegateway.notfound", iq.getFrom().toBareJID());
         }
@@ -189,14 +189,14 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return iq The response to the client.
      */
     private IQ handleVersion(IQ iq) {
-    	IQ reply = IQ.createResultIQ(iq);
-    	Element responseElement = DocumentHelper.createElement(QName.get(
+        IQ reply = IQ.createResultIQ(iq);
+        Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "jabber:iq:version"));
-    	responseElement.addElement("name").addText(this.getName());
-    	responseElement.addElement("version").addText(this.getVersion());
-    	responseElement.addElement("os").addText(System.getProperty("os.name"));
-    	reply.setChildElement(responseElement);
-    	return reply;
+        responseElement.addElement("name").addText(this.getName());
+        responseElement.addElement("version").addText(this.getVersion());
+        responseElement.addElement("os").addText(System.getProperty("os.name"));
+        reply.setChildElement(responseElement);
+        return reply;
     }
     
     /**
@@ -208,13 +208,13 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * make up the response.
      */
     private Collection<Packet> handleRegisterInBand(final IQ iq) {
-    	Element remove = iq.getChildElement().element("remove");
-    	Collection<Packet> response = new ArrayList<Packet>();
-    	if(remove != null) {
-    		response.addAll(unregister(iq));
-    	} else {
-    		response.addAll(register(iq));
-    	}
+        Element remove = iq.getChildElement().element("remove");
+        Collection<Packet> response = new ArrayList<Packet>();
+        if(remove != null) {
+            response.addAll(unregister(iq));
+        } else {
+            response.addAll(register(iq));
+        }
         
         return response;
     }
@@ -226,7 +226,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return response The packets that make up the response.
      */
     private Collection<Packet> unregister(IQ iq) {
-    	IQ reply = IQ.createResultIQ(iq);
+        IQ reply = IQ.createResultIQ(iq);
         PersistenceManager.Factory.get(this).remove(iq.getFrom());
         
         Collection<Packet> results = new ArrayList<Packet>();
@@ -252,7 +252,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         
         logger.log(Level.INFO, "basegateway.unregister", iq.getFrom());
         
-    	return results;
+        return results;
     }
     
     /**
@@ -261,14 +261,14 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @param iq The client's IQ packet.
      * @return response A <code>Collection</code> of <code>Packet</code>s that make up the response.
      */
-    private Collection<Packet> register(IQ iq) {	
-    	
+    private Collection<Packet> register(IQ iq) {    
+        
         Collection<Packet> response = new ArrayList<Packet>();
-    	
+        
         IQ reply = IQ.createResultIQ(iq);
         Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "jabber:iq:register"));
-    	if(iq.getType().equals(IQ.Type.set)) {
+        if(iq.getType().equals(IQ.Type.set)) {
             
             String username = null;
             String password = null;
@@ -319,9 +319,9 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             
                 logger.log(Level.INFO, "basegateway.register", username.trim());
                 SubscriptionInfo info = new SubscriptionInfo(username.trim(), password);
-        		PersistenceManager.Factory.get(this).getRegistrar().add(iq.getFrom(), info);
-        		reply.setChildElement(responseElement);
-        		response.add( reply );
+                PersistenceManager.Factory.get(this).getRegistrar().add(iq.getFrom(), info);
+                reply.setChildElement(responseElement);
+                response.add( reply );
             
                 Presence subscribe = new Presence(Presence.Type.subscribe);
                 subscribe.setTo(iq.getFrom());
@@ -329,7 +329,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 response.add(subscribe);
             }
             
-    	} else if(iq.getType().equals(IQ.Type.get)) { 
+        } else if(iq.getType().equals(IQ.Type.get)) { 
             
             DataForm form = new DataForm(DataForm.Type.form);
             
@@ -338,7 +338,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             usernameField.setLabel("Username");
             usernameField.setVariable("username");
             usernameField.setType(FormField.Type.text_single);
-    		FormField passwordField = form.addField();
+            FormField passwordField = form.addField();
             passwordField.setLabel("Password");
             passwordField.setVariable("password");
             passwordField.setType(FormField.Type.text_private);
@@ -356,8 +356,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             responseElement.add(form.getElement());
             
             reply.setChildElement(responseElement);
-    		response.add( reply );
-    	}
+            response.add( reply );
+        }
         
         return response;
     }
@@ -369,8 +369,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return response The IQ packet response.
      */
     private IQ handleDiscoveryItems(IQ iq) {
-    	IQ reply = IQ.createResultIQ(iq);
-    	Element responseElement = DocumentHelper.createElement(QName.get(
+        IQ reply = IQ.createResultIQ(iq);
+        Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "http://jabber.org/protocol/disco#info"));
     
         Roster roster = this.rosterManager.getContactManager().getRoster(iq.getFrom());
@@ -392,8 +392,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return response
      */
     private IQ handleLegacyServiceDiscovery(IQ iq) {
-    	return IQ.createResultIQ(iq);
-    	// TODO: Implement Legacy Service Discovery.
+        return IQ.createResultIQ(iq);
+        // TODO: Implement Legacy Service Discovery.
     }
     /**
      * Handle service discovery.
@@ -402,18 +402,18 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return respones The IQ response.
      */
     private IQ handleServiceDiscovery(IQ iq) {
-    	IQ reply = IQ.createResultIQ(iq);
-    	
+        IQ reply = IQ.createResultIQ(iq);
+        
         Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "http://jabber.org/protocol/disco#info"));
         responseElement.addElement("identity").addAttribute("category", "gateway")
                                               .addAttribute("type", this.getType())
                                               .addAttribute("name", this.getDescription());
         responseElement.addElement("feature").addAttribute("var", "jabber:iq:time");
-    	responseElement.addElement("feature").addAttribute("var", "jabber:iq:version");
-    	responseElement.addElement("feature").addAttribute("var", "jabber:iq:register");
+        responseElement.addElement("feature").addAttribute("var", "jabber:iq:version");
+        responseElement.addElement("feature").addAttribute("var", "jabber:iq:register");
         reply.setChildElement(responseElement);
-    	return reply;
+        return reply;
     }
     
     /**
@@ -422,31 +422,31 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @param packet The packet to process.
      */
     public void processPacket(Packet packet) {
-    	try {
-    		List<Packet> response  = new ArrayList<Packet>();
-    		if(packet instanceof IQ) {
-    			response.addAll( processPacket((IQ)packet) );
-    		} else if (packet instanceof Presence) {
-    			response.addAll( processPacket((Presence)packet) );
-    		} else if (packet instanceof Message) {
-    			processPacket((Message)packet);
-    		} else {
-    			System.out.println("UNHANDLED: " + packet.toString());
-    		}
-    		
-    		// process
-    		if(response.size() > 0) {
-    			for(Packet p : response) {
-    				componentManager.sendPacket(this, p);
-    			}
-    		} else {
-    			//System.out.println("Request[" + packet.toString() + "] with no response");
-    		}
+        try {
+            List<Packet> response  = new ArrayList<Packet>();
+            if(packet instanceof IQ) {
+                response.addAll( processPacket((IQ)packet) );
+            } else if (packet instanceof Presence) {
+                response.addAll( processPacket((Presence)packet) );
+            } else if (packet instanceof Message) {
+                processPacket((Message)packet);
+            } else {
+                System.out.println("UNHANDLED: " + packet.toString());
+            }
+            
+            // process
+            if(response.size() > 0) {
+                for(Packet p : response) {
+                    componentManager.sendPacket(this, p);
+                }
+            } else {
+                //System.out.println("Request[" + packet.toString() + "] with no response");
+            }
     
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    		throw new RuntimeException(e);
-    	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
     /**
      * Process a message from the client.
@@ -458,8 +458,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     private void processPacket(Message message) throws Exception {
         logger.finer(message.toString());
         
-    	GatewaySession session = PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(message.getFrom());
-    	session.getLegacyEndpoint().sendPacket(message);
+        GatewaySession session = PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(message.getFrom());
+        session.getLegacyEndpoint().sendPacket(message);
     }
 
     /**
@@ -470,15 +470,15 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @throws Exception 
      */
     private List<Presence> processPacket(Presence presence) throws Exception {
-    	List<Presence> p = new ArrayList<Presence>();
-    	JID from = presence.getFrom();
-    	        
+        List<Presence> p = new ArrayList<Presence>();
+        JID from = presence.getFrom();
+                
         logger.finest(presence.toString());
-    	
+        
         /*
          * Unknown entity is trying to access the gateway.
          */
-    	if(!rosterManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
+        if(!rosterManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
             logger.log(Level.INFO, "basegateway.unabletofind", from);
             // silently ignore a delete request
             if(!Presence.Type.unavailable.equals(presence.getType())) {
@@ -488,13 +488,13 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 result.setStatus(LocaleUtils.getLocalizedString("basegateway.registerfirst", "gateway"));
                 p.add(result);
             }
-    		return p;
-    	}
+            return p;
+        }
         
         /*
          * Get the underlying session for this JID and handle accordingly. 
          */
-    	GatewaySession sessionInfo = rosterManager.getRegistrar().getGatewaySession(from);
+        GatewaySession sessionInfo = rosterManager.getRegistrar().getGatewaySession(from);
         if(sessionInfo == null) {
             logger.log(Level.WARNING, "basegateway.unabletolocatesession" , from);
             return p;
@@ -514,29 +514,29 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             reply.setFrom(presence.getTo());
             p.add(reply);
             
-    	}
+        }
         else if (Presence.Type.subscribed.equals(presence.getType())) {
             if(presence.getTo().equals(this.jid)) { // subscribed to server
                 sessionInfo.getSubscriptionInfo().clientRegistered = true;    
             } else { // subscribe to legacy user
                 logger.log(Level.FINE,"basegateway.subscribed");
             }
-    		
-    	}
+            
+        }
         else if (Presence.Type.unavailable.equals(presence.getType())){
             /**
              * If an unavailable presence stanza is received then logout the 
              * current user and send back and unavailable stanza.
              */
-    		if(sessionInfo.isConnected()) {
-    			sessionInfo.logout();
-    		}
+            if(sessionInfo.isConnected()) {
+                sessionInfo.logout();
+            }
            
             Presence reply = new Presence(Presence.Type.unavailable);
             reply.setTo(presence.getFrom());
             reply.setFrom(presence.getTo());
             p.add(reply);
-    	}
+        }
         else if (presence.getTo().getNode() == null) { // this is a request to the gateway only.
             Presence result = new Presence();
             result.setTo(presence.getFrom());
@@ -565,8 +565,8 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 logger.log(Level.WARNING, "basegateway.statusexception",
                         new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()});
             }
-    	}
-    	return p;
+        }
+        return p;
     }
 
     /**
@@ -589,7 +589,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @see org.xmpp.component.Component#initialize(JID, ComponentManager)
      */
     public void initialize(JID jid, ComponentManager componentManager) throws ComponentException {
-    	this.jid = jid;
+        this.jid = jid;
         EndpointValve jabberEndpointValve = new EndpointValve(false);
         this.jabberEndpoint = new JabberEndpoint(componentManager, this, jabberEndpointValve);
     }
@@ -602,9 +602,9 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return jid The JID associated with this contact.
      */
     public JID whois(String foreignContact) {
-    	JID jid = new JID(foreignContact, this.getName() + "." + this.getDomain(), null);
-    	foreignContacts.put(jid, foreignContact);
-    	return jid;
+        JID jid = new JID(foreignContact, this.getName() + "." + this.getDomain(), null);
+        foreignContacts.put(jid, foreignContact);
+        return jid;
     }
     
     /**
@@ -614,7 +614,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @return contact A String for the foreign contact or null if non is regestered.
      */
     public String whois(JID jid) {
-    	return foreignContacts.get(jid);
+        return foreignContacts.get(jid);
     }
 
     /**

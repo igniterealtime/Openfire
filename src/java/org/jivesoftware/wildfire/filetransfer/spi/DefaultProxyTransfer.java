@@ -14,7 +14,6 @@ import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.wildfire.filetransfer.ProxyTransfer;
 import org.jivesoftware.wildfire.filetransfer.ProxyOutputStream;
 
-import java.net.Socket;
 import java.util.concurrent.Future;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,9 +27,9 @@ public class DefaultProxyTransfer implements ProxyTransfer {
 
     private String initiator;
 
-    private Socket initiatorSocket;
+    private InputStream inputStream;
 
-    private Socket targetSocket;
+    private OutputStream outputStream;
 
     private String target;
 
@@ -51,29 +50,24 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         return initiator;
     }
 
-    /**
-     * Sets the fully qualified JID of the initiator of the file transfer.
-     *
-     * @param initiator The fully qualified JID of the initiator of the file transfer.
-     */
     public void setInitiator(String initiator) {
         this.initiator = initiator;
     }
 
-    public Socket getInitiatorSocket() {
-        return initiatorSocket;
+    public InputStream getInputStream() {
+        return inputStream;
     }
 
-    public void setInitiatorSocket(Socket initiatorSocket) {
-        this.initiatorSocket = initiatorSocket;
+    public void setInputStream(InputStream initiatorInputStream) {
+        this.inputStream = initiatorInputStream;
     }
 
-    public Socket getTargetSocket() {
-        return targetSocket;
+    public OutputStream getOutputStream() {
+        return outputStream;
     }
 
-    public void setTargetSocket(Socket targetSocket) {
-        this.targetSocket = targetSocket;
+    public void setOutputStream(OutputStream outputStream) {
+        this.outputStream = outputStream;
     }
 
     public String getTarget() {
@@ -102,7 +96,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
 
 
     public boolean isActivatable() {
-        return ((initiatorSocket != null) && (targetSocket != null));
+        return ((inputStream != null) && (outputStream != null));
     }
 
     public synchronized void setTransferFuture(Future<?> future) {
@@ -120,8 +114,8 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         if(!isActivatable()) {
             throw new IOException("Transfer missing party");
         }
-        InputStream in = getInitiatorSocket().getInputStream();
-        OutputStream out = new ProxyOutputStream(getTargetSocket().getOutputStream());
+        InputStream in = getInputStream();
+        OutputStream out = new ProxyOutputStream(getOutputStream());
 
         final byte[] b = new byte[BUFFER_SIZE];
         int count = 0;
@@ -137,8 +131,8 @@ public class DefaultProxyTransfer implements ProxyTransfer {
             count = in.read(b);
         } while (count >= 0);
 
-        getInitiatorSocket().close();
-        getTargetSocket().close();
+        getInputStream().close();
+        getOutputStream().close();
     }
 
     public int getCachedSize() {

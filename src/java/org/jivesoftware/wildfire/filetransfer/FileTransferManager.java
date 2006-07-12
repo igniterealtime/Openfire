@@ -28,22 +28,22 @@ public interface FileTransferManager extends Module {
      * transfer is disabled all known file transfer related packets are blocked, it also goes
      * with out saying that the file transfer proxy is then disabled.
      */
-    public static final String JIVEPROPERTY_FILE_TRANSFER_ENABLED = "xmpp.filetransfer.enabled";
+    static final String JIVEPROPERTY_FILE_TRANSFER_ENABLED = "xmpp.filetransfer.enabled";
 
     /**
      * Whether or not the file transfer is enabled by default.
      */
-    public static final boolean DEFAULT_IS_FILE_TRANSFER_ENABLED = true;
+    static final boolean DEFAULT_IS_FILE_TRANSFER_ENABLED = true;
 
     /**
      * Stream Initiation, SI, namespace
      */
-    public static final String NAMESPACE_SI = "http://jabber.org/protocol/si";
+    static final String NAMESPACE_SI = "http://jabber.org/protocol/si";
 
     /**
      * Bytestreams namespace
      */
-    public static final String NAMESPACE_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
+    static final String NAMESPACE_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
 
     /**
      * Checks an incoming file transfer request to see if it should be accepted or rejected.
@@ -66,7 +66,7 @@ public interface FileTransferManager extends Module {
      * @throws UnauthorizedException when in the current server configuration this transfer
      * should not be permitted.
      */
-    public void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
+    void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException;
 
     /**
@@ -75,12 +75,18 @@ public interface FileTransferManager extends Module {
      *
      * @param isEnabled true if file transfer should be enabled and false if it should not be.
      */
-    public void enableFileTransfer(boolean isEnabled);
+    void enableFileTransfer(boolean isEnabled);
 
     /**
      * Returns whether or not file transfer is currently enabled in the server.
      *
      * @return true if file transfer is enabled and false if it is not
      */
-    public boolean isFileTransferEnabled();
+    boolean isFileTransferEnabled();
+
+    void addFileTransferInterceptor(FileTransferInterceptor interceptor);
+
+    void removeFileTransferInterceptor(FileTransferInterceptor interceptor);
+
+    void fireFileTransferIntercept(String transferDigest) throws FileTransferRejectedException;
 }

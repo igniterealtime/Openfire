@@ -72,7 +72,7 @@ public class ProxyConnectionManager {
     */
     synchronized void processConnections(final InetAddress bindInterface, final int port) {
         if (socketProcess != null) {
-            if(proxyPort == port) {
+            if (proxyPort == port) {
                 return;
             }
         }
@@ -92,7 +92,7 @@ public class ProxyConnectionManager {
                         socket = serverSocket.accept();
                     }
                     catch (IOException e) {
-                        if(!serverSocket.isClosed()) {
+                        if (!serverSocket.isClosed()) {
                             Log.error("Error accepting proxy connection", e);
                             continue;
                         }
@@ -174,7 +174,7 @@ public class ProxyConnectionManager {
                     connectionMap.put(responseDigest, transfer);
                 }
                 else {
-                    transfer.setInitiatorSocket(connection);
+                    transfer.setInputStream(connection.getInputStream());
                 }
             }
             cmd = createOutgoingSocks5Message(0, responseDigest);
@@ -187,7 +187,8 @@ public class ProxyConnectionManager {
         }
     }
 
-    private ProxyTransfer createProxyTransfer(String transferDigest, Socket initiatorSocket) {
+    private ProxyTransfer createProxyTransfer(String transferDigest, Socket targetSocket)
+            throws IOException {
         ProxyTransfer provider;
         try {
             Class c = ClassUtils.forName(className);
@@ -199,7 +200,7 @@ public class ProxyConnectionManager {
         }
 
         provider.setTransferDigest(transferDigest);
-        provider.setTargetSocket(initiatorSocket);
+        provider.setOutputStream(targetSocket.getOutputStream());
         return provider;
     }
 
@@ -281,6 +282,13 @@ public class ProxyConnectionManager {
         transfer.setTransferFuture(executor.submit(new Runnable() {
             public void run() {
                 try {
+                    transferManager.fireFileTransferIntercept(digest);
+                }
+                catch (FileTransferRejectedException e) {
+                    notifyFailure(transfer, e);
+                    return;
+                }
+                try {
                     transfer.doTransfer();
                 }
                 catch (IOException e) {
@@ -291,6 +299,10 @@ public class ProxyConnectionManager {
                 }
             }
         }));
+    }
+
+    private void notifyFailure(ProxyTransfer transfer, FileTransferRejectedException e) {
+
     }
 
     /**

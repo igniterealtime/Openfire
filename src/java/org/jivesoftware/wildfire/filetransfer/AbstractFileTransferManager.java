@@ -49,7 +49,7 @@ public abstract class AbstractFileTransferManager
     public AbstractFileTransferManager() {
         super("File Transfer Manager");
         fileTransferMap = createCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
-        InterceptorManager.getInstance().addInterceptor(new FileTransferInterceptor());
+        InterceptorManager.getInstance().addInterceptor(new MetaFileTransferInterceptor());
     }
 
     private Cache<String, FileTransfer> createCache(String name, String propertiesName, int size,
@@ -120,10 +120,21 @@ public abstract class AbstractFileTransferManager
                 DEFAULT_IS_FILE_TRANSFER_ENABLED);
     }
 
+    public void addFileTransferInterceptor(FileTransferInterceptor interceptor) {
+    }
+
+    public void removeFileTransferInterceptor(FileTransferInterceptor interceptor) {
+    }
+
+    public void fireFileTransferIntercept(String transferDigest)
+            throws FileTransferRejectedException
+    {
+    }
+
     /**
      * Interceptor to grab and validate file transfer meta information.
      */
-    private class FileTransferInterceptor implements PacketInterceptor {
+    private class MetaFileTransferInterceptor implements PacketInterceptor {
         public void interceptPacket(Packet packet, Session session, boolean incoming,
                                     boolean processed)
                 throws PacketRejectedException

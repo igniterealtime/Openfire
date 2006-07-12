@@ -1,4 +1,4 @@
-Name                 |  Version
+Name                   |  Version
 ---------------------------------------------
 ant.jar                | Jetty 5.1.10
 ant-contrib.jar        | 1.0b1

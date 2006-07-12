@@ -30,34 +30,34 @@ public abstract class AbstractGatewaySession implements GatewaySession, Endpoint
         this.gateway = gateway;
         this.subscription = info;
     }
-    
+
     /**
      * The gateway.
      */
     protected transient Gateway gateway;
-    
+
     /**
      * Has the client registered with the gateway?
      */
     public boolean clientRegistered;
-    
+
     /**
      * Has the server attempted to register with the client?
      */
     public boolean serverRegistered;
-    
+
     /**
      * The subscriptionInfo.
      * @see org.jivesoftware.wildfire.gateway.SubscriptionInfo
      */
     private final SubscriptionInfo subscription;
-    
+
     /**
      * The jabber endpoint.
      * @see org.jivesoftware.wildfire.gateway.Endpoint
      */
     private Endpoint jabberEndpoint;
-    
+
     /**
      * Set the Jabber <code>Endpoint</code>.
      * 
@@ -66,17 +66,17 @@ public abstract class AbstractGatewaySession implements GatewaySession, Endpoint
     public void setJabberEndpoint(Endpoint jabberEndpoint) {
         this.jabberEndpoint = jabberEndpoint;
     }
-    
+
     /**
-     * Return the jabber <code>Endpoint</code>.
+     * Return the Jabber <code>Endpoint</code>.
      * 
-     * @return endpoint The jabber endpoint.
+     * @return endpoint The Jabber endpoint.
      * @see org.jivesoftware.wildfire.gateway.Endpoint
      */
     public Endpoint getJabberEndpoint() {
         return jabberEndpoint;
     }
-    
+
     /**
      * Return the legacy <code>Endpoint</code>.
      * 
@@ -86,7 +86,7 @@ public abstract class AbstractGatewaySession implements GatewaySession, Endpoint
     public Endpoint getLegacyEndpoint() {
         return this;
     }    
-    
+
     /**
      * Return the <code>SubscriptionInfo</code>
      * 
@@ -97,7 +97,7 @@ public abstract class AbstractGatewaySession implements GatewaySession, Endpoint
     public SubscriptionInfo getSubscriptionInfo() {
         return this.subscription;
     }
-    
+
     /**
      * Return the gateway associated with this session.
      * 
@@ -114,4 +114,5 @@ public abstract class AbstractGatewaySession implements GatewaySession, Endpoint
     public EndpointValve getValve() {
        return this.jabberEndpoint.getValve();
     }
+
 }

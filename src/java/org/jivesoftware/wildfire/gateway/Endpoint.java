@@ -21,7 +21,7 @@ import org.xmpp.packet.Packet;
  * @version 1.0
  */
 public interface Endpoint {
-    
+
     /**
      * Send a packet to the underlying messaging services
      * 
@@ -29,8 +29,7 @@ public interface Endpoint {
      * @throws ComponentException
      */
     public void sendPacket(Packet packet) throws ComponentException;
-    
-    
+
     /**
      * Return the <code>EndpointValve</code>.  This provides the ability of the
      * caller to open or close the valve to control the follow of packets to the
@@ -39,4 +38,5 @@ public interface Endpoint {
      * @return valve The <code>EndpointValve</code> associated with this <code>Endpoint</code>
      */
     public EndpointValve getValve();
+
 }

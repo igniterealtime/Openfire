@@ -26,45 +26,45 @@ import org.xmpp.packet.Packet;
  */
 public class YahooGateway extends BaseGateway  {
 
-	
-	/** The YAHOO. */
-	private static String YAHOO = "yahoo";
     
-	/**
-	 * @see org.jivesoftware.wildfire.gateway.BaseGateway#getName()
-	 */
-	@Override
+    /** The YAHOO. */
+    private static String YAHOO = "yahoo";
+    
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseGateway#getName()
+     */
+    @Override
     public String getName() {
-		return YAHOO;
-	}
-
-	/**
-	 * @see org.jivesoftware.wildfire.gateway.BaseGateway#setName(String)
-	 */
-	@Override
-    public void setName(String newname) {
-        YAHOO = newname;
-	}
-
-	/**
-	 * @see org.jivesoftware.wildfire.gateway.BaseGateway#getDescription()
-	 */
-	@Override
-    public String getDescription() {
-		return "Yahoo! Gateway (ymsg9)";
-	}
-	
-	
-	/** The logger. @see java.util.logging.Logger */
-	static public final Logger logger = Logger.getLogger("YahooGateway");
+        return YAHOO;
+    }
 
     /**
-	 * @see org.jivesoftware.wildfire.gateway.Endpoint#sendPacket(Packet)
-	 */
-	@SuppressWarnings("unused")
+     * @see org.jivesoftware.wildfire.gateway.BaseGateway#setName(String)
+     */
+    @Override
+    public void setName(String newname) {
+        YAHOO = newname;
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseGateway#getDescription()
+     */
+    @Override
+    public String getDescription() {
+        return "Yahoo! Gateway (ymsg9)";
+    }
+    
+    
+    /** The logger. @see java.util.logging.Logger */
+    static public final Logger logger = Logger.getLogger("YahooGateway");
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.Endpoint#sendPacket(Packet)
+     */
+    @SuppressWarnings("unused")
     public void sendPacket(@SuppressWarnings("unused") Packet packet) throws ComponentException {
-		// do nothing.
-	}
+        // do nothing.
+    }
  
     /**
      * @param jid

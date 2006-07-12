@@ -57,11 +57,11 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
     
     /** The logger. */
     private static Logger logger = Logger.getLogger("YahooGatewaySession", "gateway_i18n");
-	
+    
     /**
      * Yahoo Session
      */
-	public final Session session; 
+    public final Session session; 
     
     /**
      * The JID associated with this session.
@@ -84,30 +84,30 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
         session.addSessionListener(new YahooSessionListener(this));
     }
 
-	
-	/** The attemptingLogin. */
-	private boolean attemptingLogin = false;
-	
-	/** The loginFailed. */
-	private boolean loginFailed = false;
-	
-	/** The loginFailedCount. */
-	private int loginFailedCount = 0;
-	
+    
+    /** The attemptingLogin. */
+    private boolean attemptingLogin = false;
+    
+    /** The loginFailed. */
+    private boolean loginFailed = false;
+    
+    /** The loginFailedCount. */
+    private int loginFailedCount = 0;
+    
 
-	
-	/**
-	 * Manage presense information.
-	 */
-//	public void updatePresence() {
+    
+    /**
+     * Manage presense information.
+     */
+//    public void updatePresence() {
 //        if(isConnected()) {
 //
-//			for(YahooGroup group : session.getGroups()) {
-//				Vector members = group.getMembers();
-//				for(Object member : members) {
-//					YahooUser user = (YahooUser)member;
+//            for(YahooGroup group : session.getGroups()) {
+//                Vector members = group.getMembers();
+//                for(Object member : members) {
+//                    YahooUser user = (YahooUser)member;
 //                    logger.info("Adding foreign contact: " + user.getId());
-//					String foreignId = user.getId();
+//                    String foreignId = user.getId();
 //                    NormalizedJID whois = NormalizedJID.wrap(gateway.whois(foreignId));
 //                    AbstractForeignContact fc = PersistenceManager.Factory.get(gateway)
 //                        .getContactManager().getRoster(this.jid)
@@ -121,90 +121,90 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
 //                        logger.warning("Invalid Yahoo user");
 //                        continue;
 //                    }
-//					if(fc.status.getValue() != null && !fc.status.getValue().equalsIgnoreCase(user.getCustomStatusMessage())) {
-//						logger.log(Level.FINE, "yahoogatewaysession.status", new Object[] {fc.status});
+//                    if(fc.status.getValue() != null && !fc.status.getValue().equalsIgnoreCase(user.getCustomStatusMessage())) {
+//                        logger.log(Level.FINE, "yahoogatewaysession.status", new Object[] {fc.status});
 //                        try {
-//							Presence p = new Presence();
-//							if(!fc.status.isSubscribed()) {
-//								p.setType(Presence.Type.subscribe);
-//								fc.status.setSubscribed(true);
-//							}
-//							p.setFrom(user.getId() +  "@" + gateway.getName() + "." + gateway.getDomain());
-//							p.setTo(this.jid);
-//							gateway.sendPacket(p);
-//							
-//						} catch (Exception e) {
-//							e.printStackTrace();
-//						}		
-//					}
+//                            Presence p = new Presence();
+//                            if(!fc.status.isSubscribed()) {
+//                                p.setType(Presence.Type.subscribe);
+//                                fc.status.setSubscribed(true);
+//                            }
+//                            p.setFrom(user.getId() +  "@" + gateway.getName() + "." + gateway.getDomain());
+//                            p.setTo(this.jid);
+//                            gateway.sendPacket(p);
+//                            
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                        }        
+//                    }
 //                    
-//				}
-//			}
-//		}
-//	} 
+//                }
+//            }
+//        }
+//    } 
 
     /**
      * Login to the Yahoo! Messenger serverice
      * @throws Exception 
      */
-	public synchronized void login() throws Exception {
-		if(!isConnected() && !loginFailed && !attemptingLogin) {
-			attemptingLogin = true;
-			new Thread() {
-				@Override
+    public synchronized void login() throws Exception {
+        if(!isConnected() && !loginFailed && !attemptingLogin) {
+            attemptingLogin = true;
+            new Thread() {
+                @Override
                 public void run() {
-					try {
-						session.login(getSubscriptionInfo().username, 
+                    try {
+                        session.login(getSubscriptionInfo().username, 
                                 new String(getSubscriptionInfo().password));
                         /**
                          * Password is stored in the JVM as a string in JVM
                          * util termination.
                          */
-						logger.log(Level.INFO, "yahoogatewaysession.login", new Object[]{jid, getSubscriptionInfo().username});
-						getJabberEndpoint().getValve().open(); // allow any buffered messages to pass through
+                        logger.log(Level.INFO, "yahoogatewaysession.login", new Object[]{jid, getSubscriptionInfo().username});
+                        getJabberEndpoint().getValve().open(); // allow any buffered messages to pass through
 //                        updatePresence();
-					} catch (LoginRefusedException lre) {
-						session.reset();
-						if( loginFailedCount++ > 3) { 
-							loginFailed = true;
-						}
-						logger.warning("Login failed for " + getSubscriptionInfo().username);
-						
-						
-					} catch (IOException ioe) {
-						ioe.printStackTrace();
-					}
-					attemptingLogin = false;
+                    } catch (LoginRefusedException lre) {
+                        session.reset();
+                        if( loginFailedCount++ > 3) { 
+                            loginFailed = true;
+                        }
+                        logger.warning("Login failed for " + getSubscriptionInfo().username);
+                        
+                        
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                    attemptingLogin = false;
                     
-				}
-			}.run(); // intentionally not forked.
-		} else {
-		    logger.warning(this.jid + " is already logged in");
+                }
+            }.run(); // intentionally not forked.
+        } else {
+            logger.warning(this.jid + " is already logged in");
         }
-	}
-	
+    }
+    
     /**
      * Is the connection connected?
      * @return connected is the session connected?
      */
-	public boolean isConnected() {
-		return session.getSessionStatus() == Session.MESSAGING;
-	}
-	
+    public boolean isConnected() {
+        return session.getSessionStatus() == Session.MESSAGING;
+    }
+    
     /**
      * Logout from Yahoo!
      * @throws Exception 
      */
-	public synchronized void logout() throws Exception {
+    public synchronized void logout() throws Exception {
         logger.info("[" + this.jid + "]" + getSubscriptionInfo().username + " logged out.");
         session.logout();
-		session.reset();
-	}
-	
-	/**
+        session.reset();
+    }
+    
+    /**
      * @see java.lang.Object#toString() 
-	 */
-	@Override
+     */
+    @Override
     public String toString() { return "[" + this.getSubscriptionInfo().username + " CR:" + clientRegistered + " SR:" + serverRegistered + "]"; }
 
     /**
@@ -212,23 +212,23 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      * @return ID the jid for this session.
      * @see org.xmpp.packet.JID
      */
-	public String getId() {
-		return this.jid.toBareJID();
-	}
+    public String getId() {
+        return this.jid.toBareJID();
+    }
 
     /**
      * Returns all the contacts associated with this Session.
      * @return contacts A list of <code>String</code>s.
      */
-	@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     public List<ForeignContact> getContacts() {
-		Map users = session.getUsers();
+        Map users = session.getUsers();
         ArrayList<ForeignContact> contacts = new ArrayList<ForeignContact>(users.size());
         for(YahooUser user : (Collection<YahooUser>)session.getUsers().values()) {
             contacts.add(new YahooForeignContact(user, this.gateway));
         }
-		return contacts;
-	}
+        return contacts;
+    }
 
     /**
      * Return the <code>JID</code> for this session.

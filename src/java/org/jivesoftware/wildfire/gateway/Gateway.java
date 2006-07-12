@@ -25,40 +25,40 @@ public interface Gateway extends Endpoint {
      * Node naming coventions
      * @return Name The gateway name (JID Node)
      */
-	public String getName();
+    public String getName();
 
     /**
      * Sets the name, or node, of the gateway.  This should comply with JID
      * Node naming coventions
      */
-	public void setName(String newname);
+    public void setName(String newname);
 
     /**
      * A textual description of the gateway
      * @return description
      */
-	public String getDescription();
+    public String getDescription();
 
     /**
      * The domain name
      * @return domain
      */
-	public String getDomain();
-	
+    public String getDomain();
+    
     /**
      * Lookup a contact name for the JID
      * @param jid The jabber id
      * @return contact The legacy name
      */
-	public String whois(JID jid);
-	
+    public String whois(JID jid);
+    
     /**
      * Lookup a JID for a legacy contact name
      * @param contact The name of legacy contact
      * @return JID
      */
-	public JID whois(String contact);
-	
+    public JID whois(String contact);
+    
     /**
      * The JID of the gateway
      * @return JID

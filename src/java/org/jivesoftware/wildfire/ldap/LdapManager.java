@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Centralized administration of LDAP connections. The getInstance() method
@@ -79,12 +81,15 @@ public class LdapManager {
     private boolean connectionPoolEnabled = true;
     private String searchFilter = null;
     private boolean subTreeSearch;
+    private boolean encloseUserDN;
 
     private String groupNameField = "cn";
     private String groupMemberField = "member";
     private String groupDescriptionField = "description";
     private boolean posixMode = false;
     private String groupSearchFilter = null;
+
+    private Pattern userDNPattern;
 
     private static LdapManager instance = new LdapManager();
 
@@ -176,6 +181,9 @@ public class LdapManager {
                 "ldap.sslEnabled"));
         this.followReferrals = Boolean.valueOf(JiveGlobals.getXMLProperty(
                 "ldap.autoFollowReferrals"));
+        encloseUserDN = JiveGlobals.getXMLProperty("ldap.encloseUserDN", true);
+        // Set the pattern to use to wrap userDNs values "
+        userDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
         this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -522,11 +530,17 @@ public class LdapManager {
             if (userDN.startsWith("ldap://")) {
                 userDN = userDN.replace("," + baseDN, "");
                 userDN = userDN.substring(userDN.lastIndexOf("/") + 1);
-                return userDN;
             }
-            else {
-                return userDN;
+            if (encloseUserDN) {
+                // Enclose userDN values between "
+                // eg. cn=John\, Doe,ou=People --> cn="John\, Doe",ou="People"
+                Matcher matcher = userDNPattern.matcher(userDN);
+                userDN = matcher.replaceAll("$1\"$2\",");
+                if (userDN.endsWith(",")) {
+                    userDN = userDN.substring(0, userDN.length() - 1);
+                }
             }
+            return userDN;
         }
         catch (Exception e) {
             if (debug) {

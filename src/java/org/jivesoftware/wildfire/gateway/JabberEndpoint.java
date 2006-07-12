@@ -24,7 +24,6 @@ import org.xmpp.packet.Packet;
  * XMPP server.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public class JabberEndpoint implements Endpoint {
 
@@ -73,20 +72,21 @@ public class JabberEndpoint implements Endpoint {
      * @see org.jivesoftware.wildfire.gateway.Endpoint#sendPacket(Packet)
      */
     public void sendPacket(Packet packet) throws ComponentException {
-        if(valve.isOpen()) {
+        if (valve.isOpen()) {
             /**
              * Push all pending packets to the XMPP Server.
              */
-            while(!queue.isEmpty()) {
+            while (!queue.isEmpty()) {
                 this.componentManager.sendPacket(this.component, queue.poll());
             }
             this.componentManager.sendPacket(this.component, packet);
-        } else {
+        }
+        else {
             queue.add(packet);
             logger.log(Level.FINE, "jabberendpoint.sendpacketenqueue", packet.getFrom());
         }
     }
-    
+
     /** The backlog queue. */
     private final ConcurrentLinkedQueue<Packet> queue = new ConcurrentLinkedQueue<Packet>();
 

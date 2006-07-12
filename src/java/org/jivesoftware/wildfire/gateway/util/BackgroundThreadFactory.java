@@ -19,10 +19,9 @@ import java.util.concurrent.ThreadFactory;
  */
 public class BackgroundThreadFactory implements ThreadFactory {
 
-    
     /** The background thread group. */
     private static ThreadGroup group = new ThreadGroup("background");
-    
+
     /**
      * @see java.util.concurrent.ThreadFactory#newThread(java.lang.Runnable)
      */
@@ -32,6 +31,5 @@ public class BackgroundThreadFactory implements ThreadFactory {
         thread.setPriority(Thread.MIN_PRIORITY);
         return thread;
     }
-
 
 }

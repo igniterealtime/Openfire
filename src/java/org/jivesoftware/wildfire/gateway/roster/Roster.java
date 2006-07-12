@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,19 +22,13 @@ import org.jivesoftware.wildfire.gateway.Gateway;
  * to a particular <code>JID</code>
  * 
  * @author Noah Campbell
- * @version 1.0
  * 
  * @see AbstractForeignContact
  * @see org.xmpp.packet.JID
  * @deprecated
  */
-public class Roster implements Serializable {
-    
-    /**
-     * The serialVersionUID.
-     */
-    private static final long serialVersionUID = 1L;
-    
+public class Roster {
+
     /**
      * The foreignContacts.
      *
@@ -54,7 +47,6 @@ public class Roster implements Serializable {
      * @return ForeignContact
      */
     public ForeignContact getForeignContact(String foreignId, Gateway gateway) {
-        
         AbstractForeignContact fc = this.foreignContacts.get(foreignId);
         if(fc == null)  {
 //            fc = new ForeignContact(foreignId, new Status(), gateway);
@@ -69,5 +61,5 @@ public class Roster implements Serializable {
     public Collection<AbstractForeignContact> getAll() {
         return Collections.unmodifiableCollection(this.foreignContacts.values());
     }
-    
+
 }

@@ -29,20 +29,12 @@ import ymsg.network.event.SessionNotifyEvent;
  * for the ymsg9 library.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public class NoopSessionListener implements SessionListener {
 
-    
     /** The logger. @see java.util.logging.Logger */
     private static final Logger logger = Logger.getLogger("NoopSessionListener");
-    
-    /**
-     * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
-     */
-    /**
-     * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
-     */
+
     /**
      * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
      */
@@ -55,7 +47,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void connectionClosed(SessionEvent arg0) {
         logger.info(arg0.toString());
-        
     }
 
     /**
@@ -63,7 +54,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void listReceived(SessionEvent arg0) {
         logger.info(arg0.toString());
-        
     }
 
     /**
@@ -71,7 +61,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void messageReceived(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -79,7 +68,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void buzzReceived(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -87,7 +75,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void offlineMessageReceived(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -95,7 +82,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void errorPacketReceived(SessionErrorEvent arg0) {
         logger.severe(arg0.toString());
-        
     }
 
     /**
@@ -111,7 +97,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void newMailReceived(SessionNewMailEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -119,7 +104,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void notifyReceived(SessionNotifyEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -127,7 +111,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void contactRequestReceived(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -135,7 +118,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void contactRejectionReceived(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -143,7 +125,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void conferenceInviteReceived(SessionConferenceEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -151,7 +132,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void conferenceInviteDeclinedReceived(SessionConferenceEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -159,18 +139,13 @@ public class NoopSessionListener implements SessionListener {
      */
     public void conferenceLogonReceived(SessionConferenceEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
      * @see ymsg.network.event.SessionListener#conferenceLogoffReceived(ymsg.network.event.SessionConferenceEvent)
      */
-    /**
-     * @see ymsg.network.event.SessionListener#conferenceLogoffReceived(ymsg.network.event.SessionConferenceEvent)
-     */
     public void conferenceLogoffReceived(SessionConferenceEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -178,7 +153,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void conferenceMessageReceived(SessionConferenceEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -186,7 +160,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void friendsUpdateReceived(SessionFriendEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -194,7 +167,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void friendAddedReceived(SessionFriendEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -202,7 +174,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void friendRemovedReceived(SessionFriendEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -210,7 +181,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void chatLogonReceived(SessionChatEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -218,7 +188,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void chatLogoffReceived(SessionChatEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -226,7 +195,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void chatMessageReceived(SessionChatEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -234,7 +202,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void chatUserUpdateReceived(SessionChatEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
 
     /**
@@ -242,6 +209,6 @@ public class NoopSessionListener implements SessionListener {
      */
     public void chatConnectionClosed(SessionEvent arg0) {
         logger.finest(arg0.toString());
-        
     }
+
 }

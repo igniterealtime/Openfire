@@ -15,7 +15,6 @@ import org.xmpp.packet.JID;
 
 /**
  * @author Noah Campbell
- * @version 1.0
  */
 public interface ForeignContact {
 
@@ -46,16 +45,14 @@ public interface ForeignContact {
      * @return connected 
      */
     public boolean isConnected();
-    
-    
+
     /**
      * Return the translated status for the contact.
      * 
      * @return Status
      */
     public Status getStatus();
-    
-    
+
     /**
      * Return the name of the contact.
      * 

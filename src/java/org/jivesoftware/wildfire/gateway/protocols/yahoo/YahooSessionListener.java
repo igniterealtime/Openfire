@@ -27,7 +27,6 @@ import ymsg.network.event.SessionNewMailEvent;
  * api.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public class YahooSessionListener extends NoopSessionListener {
 
@@ -35,10 +34,10 @@ public class YahooSessionListener extends NoopSessionListener {
      * Gateway session associated with this listener.
      */
     private YahooGatewaySession gatewaySession;
-    
+
     /** The logger. */
     private static final Logger logger = Logger.getLogger("YahooSessionListener");
-    
+
     /**
      * Creates a YahooSessionListener that will translate events from the Yahoo!
      * connection into XMPP formated packets.
@@ -61,7 +60,8 @@ public class YahooSessionListener extends NoopSessionListener {
             message.setBody("New Mail Received (" + snme.getMailCount() + ")");
             message.setType(Message.Type.headline);
             gatewaySession.getJabberEndpoint().sendPacket(message);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.severe("Unable to send message: " + e.getLocalizedMessage());
         }    
     }
@@ -81,7 +81,8 @@ public class YahooSessionListener extends NoopSessionListener {
             message.setFrom(this.gatewaySession.getGateway().whois(sessionEvent.getFrom()));
             gatewaySession.getJabberEndpoint().sendPacket(message);
             logger.fine(message.getElement().asXML());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.severe("unable to send message: "+ e.getLocalizedMessage());
         }
     }
@@ -93,12 +94,12 @@ public class YahooSessionListener extends NoopSessionListener {
     public void friendsUpdateReceived(SessionFriendEvent event) {
         try {
             updateStatus(event);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.log(Level.SEVERE, "yahoosessionlistener.friendupdateerror", e.getLocalizedMessage());
         }
     }
 
-    
     /**
      * Update a friends status.
      * 
@@ -125,7 +126,8 @@ public class YahooSessionListener extends NoopSessionListener {
             message.setBody(sessionEvent.getMessage());
             message.setFrom(this.gatewaySession.getGateway().whois(sessionEvent.getFrom()));
             gatewaySession.getJabberEndpoint().sendPacket(message);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.severe("unable to send message: "+ e.getLocalizedMessage());
         }
     }
@@ -155,7 +157,5 @@ public class YahooSessionListener extends NoopSessionListener {
         // TODO Auto-generated method stub
         super.friendRemovedReceived(arg0);
     }
-    
-    
 
 }

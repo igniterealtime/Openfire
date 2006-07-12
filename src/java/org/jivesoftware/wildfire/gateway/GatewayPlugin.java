@@ -27,6 +27,7 @@ import java.util.Hashtable;
  * @author Daniel Henninger
  */
 public class GatewayPlugin implements Plugin {
+
     /**
      *  Represents all configured gateway handlers.
      */
@@ -102,4 +103,5 @@ public class GatewayPlugin implements Plugin {
             gwInstance.stopInstance();
         }
     }
+
 }

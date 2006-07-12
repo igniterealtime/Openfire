@@ -21,7 +21,7 @@ public class UnknownForeignContactException extends Exception {
 
     /** The args. */
     private final Object[] args;
-    
+
     /**
      * Constructs a new <code>UnknownForeignContactException</code>.
      */
@@ -62,4 +62,5 @@ public class UnknownForeignContactException extends Exception {
         super(cause);
         args = new Object[0];
     }
+
 }

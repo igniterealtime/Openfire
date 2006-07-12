@@ -18,7 +18,6 @@ import org.xmpp.packet.Packet;
  * underlying implementation, providing translation if necessary.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public interface Endpoint {
 

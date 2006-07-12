@@ -1,0 +1,2 @@
+joscar.jar               0.9.3 (patched)
+ymsg_network.jar         0.61

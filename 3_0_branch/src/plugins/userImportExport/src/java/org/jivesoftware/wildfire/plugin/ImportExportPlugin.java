@@ -9,6 +9,7 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.RosterItem;
@@ -43,6 +44,7 @@ import java.util.StringTokenizer;
  * @author Ryan Graham
  */
 public class ImportExportPlugin implements Plugin {
+
     private UserManager userManager;
     private UserProvider provider;
     
@@ -122,7 +124,7 @@ public class ImportExportPlugin implements Plugin {
             userElement.addElement("Username").addText(userName);
 			
             try {
-                userElement.addElement("Password").addText(provider.getPassword(user.getUsername()));
+                userElement.addElement("Password").addText(AuthFactory.getPassword(user.getUsername()));
             }
             catch (UserNotFoundException e) {
                 //this should never happen

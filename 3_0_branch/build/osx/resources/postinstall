@@ -1,4 +1,0 @@
-#!/bin/sh
-
-/bin/launchctl load /Library/LaunchDaemons
-/bin/launchctl start org.jivesoftware.wildfire

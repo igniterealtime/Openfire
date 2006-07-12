@@ -1,5 +1,0 @@
-#!/bin/sh
-
-launchctl stop org.jivesoftware.wildfire stop
-launchctl load /System/Library/LaunchDaemons
-launchctl start org.jivesoftware.wildfire start

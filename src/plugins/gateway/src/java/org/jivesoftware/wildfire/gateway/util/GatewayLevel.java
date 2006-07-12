@@ -20,10 +20,9 @@ import java.util.logging.Level;
  */
 public class GatewayLevel extends Level {
 
-    
     /** SECURITY log level. */
     public static final Level SECURITY = new GatewayLevel("SECURITY", 501);
-    
+
     /**
      * Construct a new <code>GatewayLevel</code>.
      *
@@ -33,8 +32,5 @@ public class GatewayLevel extends Level {
     protected GatewayLevel(String name, int value) {
         super(name, value, "gateway_i18n");
     }
-
-    /** The serialVersionUID. */
-    private static final long serialVersionUID = 1L;
 
 }

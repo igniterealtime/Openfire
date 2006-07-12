@@ -10,8 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway;
 
-import java.io.Serializable;
-
 import org.xmpp.packet.JID;
 
 /**
@@ -22,8 +20,8 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public class SubscriptionInfo implements Serializable {
-    
+public class SubscriptionInfo {
+
     /**
      * Construct a new <code>SubscriptionInfo</code>
      * @param username The username
@@ -33,27 +31,27 @@ public class SubscriptionInfo implements Serializable {
         this.username = username;
         this.password = password;
     }
-    
+
     /**
      * Has the session been registered on the client?     
      */
     public boolean clientRegistered;
-    
+
     /**
      * Has the server registered with the client?
      */ 
     public boolean serverRegistered;
-    
+
     /**
      * The username.
      */
     public String username;
-    
+
     /**
      * The password.
      */
     public String password;
-    
+
     /**
      * The jid.
      *

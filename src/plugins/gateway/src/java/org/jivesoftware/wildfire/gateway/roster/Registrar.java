@@ -12,7 +12,6 @@ package org.jivesoftware.wildfire.gateway.roster;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,23 +28,16 @@ import org.xmpp.packet.JID;
  * legacy system and the XMPP Server.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
-public class Registrar implements Serializable {
-    /**
-     * The serialVersionUID.
-     *
-     * @see Registrar
-     */
-    private static final long serialVersionUID = 1L;
-        
+public class Registrar {
+
     /**
      * Construct a new <code>Registrar</code>.
      */
     Registrar() {
         createSessionCache();
     }
-    
+
     /**
      * Initializes a new session cache
      */
@@ -57,13 +49,14 @@ public class Registrar implements Serializable {
      * GatewaySessions are maintained in the registration
      */
     private final Map<NormalizedJID, SubscriptionInfo> registrar = new HashMap<NormalizedJID, SubscriptionInfo>();
+
     /**
      * The <code>GatewaySessions</code> mapped by <code>JID</code>
      *
      * @see java.util.Map
      */
     private transient Map<JID, GatewaySession> sessions;
-    
+
     /**
      * Determine if the JID is registered (based on the bare JID)
      * @param id
@@ -72,7 +65,7 @@ public class Registrar implements Serializable {
     public boolean isRegistered(NormalizedJID id) {
         return registrar.containsKey(id);
     }
-    
+
     /**
      * Add a JID to the registrar.
      * @param id
@@ -82,7 +75,7 @@ public class Registrar implements Serializable {
         registrar.put(NormalizedJID.wrap(id), info);
         //timer.scheduleAtFixedRate(info, 10, 10, TimeUnit.SECONDS);
     }
-    
+
     /**
      * Get the Session for a JID.
      * 
@@ -92,10 +85,10 @@ public class Registrar implements Serializable {
      */
     public GatewaySession getGatewaySession(JID jid) throws Exception {
         SubscriptionInfo info = registrar.get(NormalizedJID.wrap(jid));
-        if(info == null) {
+        if (info == null) {
             throw new IllegalStateException("Please register before attempting to get a session");
         }
-        if(!sessions.containsKey(jid)) {
+        if (!sessions.containsKey(jid)) {
             info.jid = jid;
             
             GatewaySession session = this.gateway.getSessionFactory().newInstance(info);
@@ -119,14 +112,14 @@ public class Registrar implements Serializable {
     void setGateway(Gateway gateway) {
         this.gateway = gateway;
     }
-    
+
     /**
      * The gateway.
      *
      * @see Gateway
      */
     private transient Gateway gateway;
-    
+
     /**
      * The logger.
      *
@@ -142,15 +135,16 @@ public class Registrar implements Serializable {
         NormalizedJID wrapped = NormalizedJID.wrap(jid);
         registrar.remove(wrapped);
         GatewaySession session = sessions.get(jid);
-        if(session.isConnected()) {
+        if (session.isConnected()) {
             try {
                 session.logout();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                // silently ignore
             }
         }
     }
-        
+
     /**
      * @param ois
      * @throws IOException
@@ -160,4 +154,5 @@ public class Registrar implements Serializable {
         ois.defaultReadObject();
         this.createSessionCache();
     }
+
 }

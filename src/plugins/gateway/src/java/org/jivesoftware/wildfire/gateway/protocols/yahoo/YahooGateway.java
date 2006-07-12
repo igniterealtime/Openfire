@@ -22,14 +22,12 @@ import org.xmpp.packet.Packet;
 
 /**
  * @author Noah Campbell
- * @version 1.0
  */
-public class YahooGateway extends BaseGateway  {
+public class YahooGateway extends BaseGateway {
 
-    
     /** The YAHOO. */
     private static String YAHOO = "yahoo";
-    
+
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseGateway#getName()
      */
@@ -53,8 +51,7 @@ public class YahooGateway extends BaseGateway  {
     public String getDescription() {
         return "Yahoo! Gateway (ymsg9)";
     }
-    
-    
+
     /** The logger. @see java.util.logging.Logger */
     static public final Logger logger = Logger.getLogger("YahooGateway");
 
@@ -101,4 +98,5 @@ public class YahooGateway extends BaseGateway  {
     protected GatewaySession getSessionInstance(SubscriptionInfo info) {
         return new YahooGatewaySession(info, this);
     }
+
 }

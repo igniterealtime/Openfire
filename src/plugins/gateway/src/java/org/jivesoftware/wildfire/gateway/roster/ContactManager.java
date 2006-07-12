@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,31 +23,26 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public class ContactManager implements Serializable {
-    
+public class ContactManager {
+
     /**
      * Construct a new <code>ContactManager</code>
      */
     ContactManager() { }
-    
-    /**
-     * The serialVersionUID
-     */
-    private static final long serialVersionUID = 1L;
-    
+
     /**
      * The fcs
      *
      * @see java.util.Set
      */
     private final Set<AbstractForeignContact> fcs = new HashSet<AbstractForeignContact>();
-    
+
     /**
      * Maintain a mapping of JIDs to their contact list.
      */
     private final Map<NormalizedJID, Roster> contactLists = 
         new HashMap<NormalizedJID, Roster>();
-    
+
     /**
      * Return a roster for a JID.
      * 
@@ -57,21 +51,20 @@ public class ContactManager implements Serializable {
      */
     public synchronized Roster getRoster(JID name) {
         Roster r = contactLists.get(NormalizedJID.wrap(name));
-        if(r == null) {
+        if (r == null) {
             r = new Roster();
             contactLists.put(NormalizedJID.wrap(name), r);
         }
-        
+
         return r;
     }
-    
+
     /**
      * @return foreignContacts A {@code java.util.Set} of {@code ForeignContact}s.
      */
     public Set<AbstractForeignContact> getAllForeignContacts() {
         return this.fcs;
     }
-
 
     /**
      * Remove the <code>JID</code> from the contact list.
@@ -81,4 +74,5 @@ public class ContactManager implements Serializable {
     void remove(NormalizedJID jid) {
         contactLists.remove(jid);    
     }
+
 }

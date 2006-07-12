@@ -15,7 +15,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -46,22 +45,22 @@ import org.xmpp.packet.JID;
  * @author Noah Campbell
  *
  */
-public class PersistenceManager implements Serializable {
-        
+public class PersistenceManager {
+
     /**
      * The contactManager.
      *
      * @see ContactManager
      */
     private ContactManager contactManager = null;
-    
+
     /**
      * The registrar.
      *
      * @see Registrar
      */
     private Registrar registrar = null;
-    
+
     /**
      * The gateway.
      *
@@ -69,13 +68,14 @@ public class PersistenceManager implements Serializable {
      */
     @SuppressWarnings("unused")
     private Gateway gateway;
-    
+
     /**
      * Factory for accessing the various RosterManagers.
      * 
      * @author Noah Campbell
      */
     public final static class Factory {
+
         /**
          * The <code>PersistanceManager</code> associated with a particular 
          * <code>Gateway</code>
@@ -84,7 +84,7 @@ public class PersistenceManager implements Serializable {
          */
         private final static Map<Gateway, PersistenceManager> instances = 
             new HashMap<Gateway, PersistenceManager>();
-        
+
         /**
          * Given a <code>Gateway</code> return a <code>PersistenceManager</code>
          * @param gateway
@@ -99,12 +99,12 @@ public class PersistenceManager implements Serializable {
             }
             return rm;
         }
+
     }
-    
-    
+
     /** The db file. */
     private final File db;
-    
+
     /**
      * Construct a new <code>PersistanceManager</code>.
      * 
@@ -117,8 +117,7 @@ public class PersistenceManager implements Serializable {
         timer.scheduleAtFixedRate(archiver, 5, 5, TimeUnit.SECONDS);
         
     }
-    
-    
+
     /**
      * Unregister a JID.
      * @param jid
@@ -129,17 +128,17 @@ public class PersistenceManager implements Serializable {
             NormalizedJID njid = NormalizedJID.wrap(jid);
             contactManager.remove(njid);
             registrar.remove(jid);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.severe("Unable to remove " + bareJID + ": " + e.getLocalizedMessage());
         }
     }
- 
+
     /**
      * Load the roster manager (we simply read a binary file from the file system).
      * @param gateway 
      */
     private void load(Gateway gateway) {
-        
         ContactManager contactManager = null;
         Registrar registrar = null;
         try {
@@ -149,7 +148,7 @@ public class PersistenceManager implements Serializable {
              */
             byte[] rawKey = Preferences.systemNodeForPackage(this.getClass()).getByteArray(".key", null);
             
-            if(rawKey == null) {
+            if (rawKey == null) {
                 logger.log(GatewayLevel.SECURITY, "persistencemanager.nokey");
                 return;
             }
@@ -164,38 +163,34 @@ public class PersistenceManager implements Serializable {
             contactManager = (ContactManager)is.readObject() ;
             registrar = (Registrar) is.readObject() ;
             is.close();
-        } catch (Exception e) {
-            if(db.exists()) {
+        }
+        catch (Exception e) {
+            if (db.exists()) {
                 db.delete();
             }
             logger.log(Level.WARNING, "persistencemanager.loadrosterfailed",e);
-        } finally {
-            
+        }
+        finally {
             this.contactManager = (contactManager != null) ? contactManager : new ContactManager();
             this.registrar = (registrar != null) ? registrar : new Registrar();
             this.registrar.setGateway(gateway); // re-vitialize the registrar.
         }
     }
-    
+
     /**
      * A timer for executing tasks related to PersistanceManager.
      *
      * @see java.util.concurrent.ScheduledExecutorService
      */
     private final ScheduledExecutorService timer = Executors.newScheduledThreadPool(1, new BackgroundThreadFactory());
-    /**
-     * The serialVersionUID.
-     *
-     * @see PersistenceManager
-     */
-    private static final long serialVersionUID = 1L;
+
     /**
      * The logger.
      *
      * @see PersistenceManager
      */
     private static final Logger logger = Logger.getLogger("PersistenceManager", "gateway_i18n");
-    
+
     /**
      * Responsible for flushing the in-memory database.
      */
@@ -203,32 +198,31 @@ public class PersistenceManager implements Serializable {
         public void run() {
             try {
                 store();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 logger.log(Level.WARNING, "persistencemanager.unabletoflush", e);
                 e.printStackTrace();
             }
         }
     };
-    
+
     /**
      * Write the contact manager and registrar to the file system.
      * 
      * @throws Exception
      */
     public synchronized void store() throws Exception {
-        
         Preferences prefs = Preferences.systemNodeForPackage(this.getClass());
-        
+
         byte[] rawKey = prefs.getByteArray(".key", null);
-        if(rawKey == null) {
+        if (rawKey == null) {
             logger.log(GatewayLevel.SECURITY, "persistencemanager.gennewkey");
             KeyGenerator kg = KeyGenerator.getInstance("AES");
             SecretKey key = kg.generateKey();
             rawKey = key.getEncoded();
             prefs.putByteArray(".key", rawKey);
-            
         }
-       
+
         SecretKeySpec key = new SecretKeySpec(rawKey, "AES");
         Cipher c = Cipher.getInstance("AES");
         c.init(Cipher.ENCRYPT_MODE, key);
@@ -238,9 +232,7 @@ public class PersistenceManager implements Serializable {
         oos.writeObject(registrar);
         oos.flush();
         oos.close();
-       
     }
-
 
     /**
      * @return Returns the contactManager.
@@ -249,14 +241,12 @@ public class PersistenceManager implements Serializable {
         return contactManager;
     }
 
-
     /**
      * @return Returns the registrar.
      */
     public Registrar getRegistrar() {
         return registrar;
     }
-
 
     /**
      * @see java.lang.Object#finalize()
@@ -267,4 +257,5 @@ public class PersistenceManager implements Serializable {
         this.timer.shutdownNow();
         logger.log(Level.FINER, "persistencemanager.registrarFinalize");
     }
+
 }

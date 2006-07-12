@@ -57,4 +57,5 @@ public enum GatewayType {
      * A gateway to a service not covered by the other options..
      */
     other
+
 }

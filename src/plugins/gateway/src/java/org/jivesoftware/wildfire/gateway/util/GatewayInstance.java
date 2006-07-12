@@ -24,6 +24,7 @@ import org.jivesoftware.util.PropertyEventDispatcher;
  * @author Daniel Henninger
  */
 public class GatewayInstance {
+
     private ComponentManager componentManager;
     private String serviceName = null;
     private String nameOfClass = null;
@@ -31,6 +32,13 @@ public class GatewayInstance {
     private Boolean enabled = false;
     private Boolean running = false;
 
+    /**
+     *  Creates a new gateway instance.
+     *
+     *  @param subdomain Part of gateway domain prepended to server domain.
+     *  @param classname Full name/path of class associated with instance.
+     *  @param componentManager Component manager managing this instance.
+     */
     public GatewayInstance(String subdomain, String classname, ComponentManager componentManager) {
         this.serviceName = subdomain;
         this.nameOfClass = classname;
@@ -38,18 +46,36 @@ public class GatewayInstance {
         enabled = JiveGlobals.getBooleanProperty("plugin.gateway."+serviceName+"Enabled", false);
     }
 
+    /**
+     *  Retrieves the name of the service (aka, subdomain)
+     *
+     *  @return name of the service
+     */
     public String getName() {
         return serviceName;
     }
 
+    /**
+     *  Returns whether this gateway instance is enabled.
+     *
+     *  @return true or false if instance is enabled
+     */
     public Boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     *  Returns whether this gateway instance is currently running.
+     *
+     *  @return true or false if instance is currently running
+     */
     public Boolean isRunning() {
         return running;
     }
 
+    /**
+     *  Enables the gateway instance and starts it if it's not already running.
+     */
     public void enable() {
         enabled = true;
         JiveGlobals.setProperty("plugin.gateway."+serviceName+"Enabled", "true");
@@ -58,6 +84,9 @@ public class GatewayInstance {
         }
     }
 
+    /**
+     *  Disables the gateway instance and stops it if it's running.
+     */
     public void disable() {
         enabled = false;
         JiveGlobals.setProperty("plugin.gateway."+serviceName+"Enabled", "false");
@@ -66,6 +95,9 @@ public class GatewayInstance {
         }
     }
 
+    /**
+     *  Starts the gateway instance if it's enabled and not already running.
+     */
     public void startInstance() {
         if (!enabled || running) {
             return;
@@ -101,6 +133,9 @@ public class GatewayInstance {
         }
     }
 
+    /**
+     *  Stops the gateway instance if it's running.
+     */
     public void stopInstance() {
         if (!running) {
             return;
@@ -117,4 +152,5 @@ public class GatewayInstance {
         gateway = null;
         running = false;
     }
+
 }

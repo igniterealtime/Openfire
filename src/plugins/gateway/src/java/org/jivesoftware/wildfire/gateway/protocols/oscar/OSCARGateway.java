@@ -24,6 +24,7 @@ import org.xmpp.packet.Packet;
  * @author Daniel Henninger
  */
 public class OSCARGateway extends BaseGateway {
+
     /* Gateway Name String */
     private static String NameString = "oscar";
 
@@ -69,4 +70,5 @@ public class OSCARGateway extends BaseGateway {
         Log.debug("Getting session instance");       
         return new OSCARGatewaySession(info, this);
     }
+
 }

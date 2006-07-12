@@ -47,29 +47,24 @@ import ymsg.network.YahooUser;
  * Manages the session to the underlying legacy system.
  * 
  * @author Noah Campbell
- * @version 1.0
  */
 public class YahooGatewaySession extends AbstractGatewaySession implements Endpoint {
 
-    
-    /** The serialVersionUID. */
-    private static final long serialVersionUID = 1L;
-    
     /** The logger. */
     private static Logger logger = Logger.getLogger("YahooGatewaySession", "gateway_i18n");
-    
+
     /**
      * Yahoo Session
      */
     public final Session session; 
-    
+
     /**
      * The JID associated with this session.
      * 
      * @see org.xmpp.packet.JID
      */
     private final JID jid;  // JID associated with this session
-    
+
     /**
      * Initialize a new session object for Yahoo!
      * 
@@ -79,23 +74,20 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
     public YahooGatewaySession(SubscriptionInfo info, Gateway gateway) {
         super(info, gateway);
         this.jid = info.jid;
-        
+
         session = new Session();
         session.addSessionListener(new YahooSessionListener(this));
     }
 
-    
     /** The attemptingLogin. */
     private boolean attemptingLogin = false;
-    
+
     /** The loginFailed. */
     private boolean loginFailed = false;
-    
+
     /** The loginFailedCount. */
     private int loginFailedCount = 0;
-    
 
-    
     /**
      * Manage presense information.
      */
@@ -148,7 +140,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      * @throws Exception 
      */
     public synchronized void login() throws Exception {
-        if(!isConnected() && !loginFailed && !attemptingLogin) {
+        if (!isConnected() && !loginFailed && !attemptingLogin) {
             attemptingLogin = true;
             new Thread() {
                 @Override
@@ -163,26 +155,26 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
                         logger.log(Level.INFO, "yahoogatewaysession.login", new Object[]{jid, getSubscriptionInfo().username});
                         getJabberEndpoint().getValve().open(); // allow any buffered messages to pass through
 //                        updatePresence();
-                    } catch (LoginRefusedException lre) {
+                    }
+                    catch (LoginRefusedException lre) {
                         session.reset();
-                        if( loginFailedCount++ > 3) { 
+                        if (loginFailedCount++ > 3) { 
                             loginFailed = true;
                         }
                         logger.warning("Login failed for " + getSubscriptionInfo().username);
-                        
-                        
-                    } catch (IOException ioe) {
+                    }
+                    catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
                     attemptingLogin = false;
-                    
                 }
             }.run(); // intentionally not forked.
-        } else {
+        }
+        else {
             logger.warning(this.jid + " is already logged in");
         }
     }
-    
+
     /**
      * Is the connection connected?
      * @return connected is the session connected?
@@ -190,7 +182,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
     public boolean isConnected() {
         return session.getSessionStatus() == Session.MESSAGING;
     }
-    
+
     /**
      * Logout from Yahoo!
      * @throws Exception 
@@ -200,12 +192,14 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
         session.logout();
         session.reset();
     }
-    
+
     /**
      * @see java.lang.Object#toString() 
      */
     @Override
-    public String toString() { return "[" + this.getSubscriptionInfo().username + " CR:" + clientRegistered + " SR:" + serverRegistered + "]"; }
+    public String toString() {
+        return "[" + this.getSubscriptionInfo().username + " CR:" + clientRegistered + " SR:" + serverRegistered + "]";
+    }
 
     /**
      * Return the id of this session as a <code>String</code>.
@@ -224,7 +218,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
     public List<ForeignContact> getContacts() {
         Map users = session.getUsers();
         ArrayList<ForeignContact> contacts = new ArrayList<ForeignContact>(users.size());
-        for(YahooUser user : (Collection<YahooUser>)session.getUsers().values()) {
+        for (YahooUser user : (Collection<YahooUser>)session.getUsers().values()) {
             contacts.add(new YahooForeignContact(user, this.gateway));
         }
         return contacts;
@@ -255,12 +249,12 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      * @return String status of JID
      */
     public String getStatus(JID to) {
-        
         Map table = this.session.getUsers();
-        if(isConnected() && table != null && to.getNode() != null && table.containsKey(to.getNode())) {
+        if (isConnected() && table != null && to.getNode() != null && table.containsKey(to.getNode())) {
             YahooUser user = this.session.getUser(to.getNode());
             return user.getCustomStatusMessage();
-        } else {
+        }
+        else {
             return null;
         }
     }
@@ -294,11 +288,12 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      */
     public void sendPacket(Packet packet) {
         logger.log(Level.FINE, packet.toString());
-        if(packet instanceof Message) {
+        if (packet instanceof Message) {
             Message m = (Message)packet;
             try {
                 session.sendMessage(packet.getTo().getNode(), m.getBody());
-            } catch (IOException ioe) {
+            }
+            catch (IOException ioe) {
                 logger.warning(ioe.getLocalizedMessage());
             }
         }
@@ -309,9 +304,10 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      */
     public ForeignContact getContact(JID to) throws UnknownForeignContactException {
         String node = to.getNode();
-        if(node == null || node.length() == 0) throw new UnknownForeignContactException("invalidnode", node.toString());
+        if (node == null || node.length() == 0) throw new UnknownForeignContactException("invalidnode", node.toString());
         YahooUser user = session.getUser(node);
-        if(user == null) throw new UnknownForeignContactException("invaliduser");
+        if (user == null) throw new UnknownForeignContactException("invaliduser");
         return new YahooForeignContact(session.getUser(to.getNode()), this.gateway);
     }
+
 }

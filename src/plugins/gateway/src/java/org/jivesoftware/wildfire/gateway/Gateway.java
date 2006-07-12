@@ -16,7 +16,6 @@ import org.xmpp.packet.JID;
  * A gateway to an external or legacy messaging system.
  * 
  * @author ncampbell
- * @version 1.0
  */
 public interface Gateway extends Endpoint {
 
@@ -44,30 +43,31 @@ public interface Gateway extends Endpoint {
      * @return domain
      */
     public String getDomain();
-    
+
     /**
      * Lookup a contact name for the JID
      * @param jid The jabber id
      * @return contact The legacy name
      */
     public String whois(JID jid);
-    
+
     /**
      * Lookup a JID for a legacy contact name
      * @param contact The name of legacy contact
      * @return JID
      */
     public JID whois(String contact);
-    
+
     /**
      * The JID of the gateway
      * @return JID
      */
     public JID getJID();
-    
+
     /**
      * Return the session gateway for this gateway
      * @return SessionFactory
      */
     public SessionFactory getSessionFactory();
+
 }

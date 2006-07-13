@@ -19,10 +19,7 @@ import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
 
 import java.util.Date;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 /**
  * Contains information about the registration a user has made with an external gateway.
@@ -43,6 +40,10 @@ public class Registration {
     private static final String LOAD_REGISTRATION =
             "SELECT jid, gatewayType, username, password, registrationDate, lastLogin " +
             "FROM gatewayRegistration WHERE registrationID=?";
+    private static final String SET_LAST_LOGIN =
+            "UPDATE gatewayRegistration SET lastLogin=? WHERE registrationID=?";
+    private static final String SET_PASSWORD =
+            "UPDATE gatewayRegistration SET password=? WHERE registrationID=?";
 
     private long registrationID;
     private JID jid;
@@ -133,7 +134,28 @@ public class Registration {
      */
     public void setPassword(String password) {
         this.password = password;
-        // todo: save to db
+        // The password is stored in encrypted form for improved security.
+        String encryptedPassword = AuthFactory.encryptPassword(password);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SET_PASSWORD);
+            if (password != null) {
+                pstmt.setString(1, encryptedPassword);
+            }
+            else {
+                pstmt.setNull(1, Types.VARCHAR);
+            }
+            pstmt.setLong(2, registrationID);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
     }
 
     /**
@@ -162,7 +184,21 @@ public class Registration {
      */
     public void setLastLogin(Date lastLogin) {
         this.lastLogin = lastLogin;
-        // todo: save to db
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SET_LAST_LOGIN);
+            pstmt.setNull(1, Types.VARCHAR);
+            pstmt.setLong(2, registrationID);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
     }
 
     public String toString() {
@@ -184,7 +220,14 @@ public class Registration {
             pstmt.setString(2, jid.toString());
             pstmt.setString(3, gatewayType.name());
             pstmt.setString(4, username);
-            pstmt.setString(5, password);
+            if (password != null) {
+                // The password is stored in encrypted form for improved security.
+                String encryptedPassword = AuthFactory.encryptPassword(password);
+                pstmt.setString(5, encryptedPassword);
+            }
+            else {
+                pstmt.setNull(5, Types.VARCHAR);
+            }
             pstmt.setLong(6, registrationDate.getTime());
             pstmt.executeUpdate();
         }
@@ -212,7 +255,8 @@ public class Registration {
             this.jid = new JID(rs.getString(1));
             this.gatewayType = GatewayType.valueOf(rs.getString(2));
             this.username = rs.getString(3);
-            this.password = rs.getString(4);
+            // The password is stored in encrypted form, so decrypt it.
+            this.password = AuthFactory.decryptPassword(rs.getString(4));
             this.registrationDate = new Date(rs.getLong(5));
             long loginDate = rs.getLong(6);
             if (rs.wasNull()) {

@@ -349,7 +349,9 @@ public class RosterItem implements Cacheable {
                         try {
                             it.remove();
                         }
-                        catch (IllegalStateException e) {}
+                        catch (IllegalStateException e) {
+                            // Do nothing
+                        }
                     }
                 }
                 catch (GroupNotFoundException e) {
@@ -362,7 +364,9 @@ public class RosterItem implements Cacheable {
                             try {
                                 it.remove();
                             }
-                            catch (IllegalStateException ise) {}
+                            catch (IllegalStateException ise) {
+                                // Do nothing
+                            }
                         }
                     }
                 }
@@ -383,6 +387,7 @@ public class RosterItem implements Cacheable {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
             }
             catch (GroupNotFoundException e) {
+                // Do nothing
             }
         }
         return groups;
@@ -402,9 +407,18 @@ public class RosterItem implements Cacheable {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
             }
             catch (GroupNotFoundException e) {
+                // Do nothing
             }
         }
         return groups;
+    }
+
+    Set<String> getInvisibleSharedGroupsNames() {
+        return invisibleSharedGroups;
+    }
+
+    void setInvisibleSharedGroupsNames(Set<String> groupsNames) {
+        invisibleSharedGroups = groupsNames;
     }
 
     /**

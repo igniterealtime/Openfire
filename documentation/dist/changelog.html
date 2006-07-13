@@ -163,6 +163,48 @@ hr {
 
 
 
+<h2>3.0.1 -- <span style="font-weight: normal;">July 13, 2006</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-752'>JM-752</a>] - A proxy server can now be used to download updates. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-754'>JM-754</a>] - Added JDBC user provider and documentation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-759'>JM-759</a>] - Added support for vCards events. Thanks to Remko Tronçon.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-762'>JM-762</a>] - Performance optimized by reducing privacy list SQL calls when no privacy lists used.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-744'>JM-744</a>] - Presence updates were not being sent to shared contacts whose subscriptions is FROM.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-745'>JM-745</a>] - Users of the same group (not shared) that can see a shared group were receiving presences of each other.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-750'>JM-750</a>] - Presence subscription was incorrect when adding group member to non-shared group that could see shared group.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-758'>JM-758</a>] - Available presence was not being sent to all connected resources after subscription was approved.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-775'>JM-775</a>] - Member of public group was not able to add to his roster contact that did not belong to public group.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-776'>JM-776</a>] - Members of public shared groups were not getting their rosters updated when a new user was created in the system.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-777'>JM-777</a>] - Presence was not working when creating new shared groups and at the same time defining list of members.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-695'>JM-695</a>] - Fixed presence problem when using shared group loaded from LDAP. <b>(5 votes)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-772'>JM-772</a>] - An error is now logged when Wildfire cannot connect to the LDAP server.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-741'>JM-741</a>] - Fixed javascript error while updating plugin. <b>(1 vote)</b></li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-742'>JM-742</a>] - Fixed NPE in privacy lists when presence packet has no TO address.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-748'>JM-748</a>] - Fixed NPE when trying to unload a bad plugin in plugin-admin page.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-749'>JM-749</a>] - TLS feature was being offered to clients using old SSL method.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-760'>JM-760</a>] - Fixed login problem when using uppercase letters in username and there is a resource conflict.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-763'>JM-763</a>] - Removed warning from logs on installation.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-768'>JM-768</a>] - A semicolon was missing in mysql and sqlserver upgrade scripts #9.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-778'>JM-778</a>] - Fixed error when trying to unregister an account from a client.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-751'>JM-751</a>] - Moved getPassword/setPassword methods from UserProvider to AuthProvider.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/ENT-19'>ENT-19</a>] - Message archiving was failing on Postgres.</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
 <h2>3.0.0 -- <span style="font-weight: normal;">June 29, 2006</span></h2>
 
 <h3>Wildfire New Features</h3>

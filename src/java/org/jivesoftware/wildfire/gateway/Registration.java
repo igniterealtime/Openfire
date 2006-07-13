@@ -13,8 +13,16 @@ package org.jivesoftware.wildfire.gateway;
 import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.database.SequenceManager;
 
 import java.util.Date;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 /**
  * Contains information about the registration a user has made with an external gateway.
@@ -26,8 +34,17 @@ import java.util.Date;
  *
  * @author Matt Tucker
  */
+@JiveID(125)
 public class Registration {
 
+    private static final String INSERT_REGISTRATION =
+            "INSERT INTO entConversation(registrationID, jid, gatewayType, " +
+            "username, password, registrationDate) VALUES (?,?,?,?,?,?)";
+    private static final String LOAD_REGISTRATION =
+            "SELECT jid, gatewayType, username, password, registrationDate, lastLogin " +
+            "FROM gatewayRegistration WHERE registrationID=?";
+
+    private long registrationID;
     private JID jid;
     private GatewayType gatewayType;
     private String username;
@@ -47,32 +64,31 @@ public class Registration {
         if (jid == null || gatewayType == null || username == null) {
             throw new NullPointerException("Arguments cannot be null.");
         }
-        this.jid = jid;
+        // Ensure that we store the bare JID.
+        this.jid = new JID(jid.toBareJID());
         this.gatewayType = gatewayType;
         this.username = username;
         this.password = password;
         this.registrationDate = new Date();
-        // todo: insert into db
+        try {
+            insertIntoDb();
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
     }
 
     /**
      * Loads an existing registration.
      *
-     * @param jid the JID of the user making the registration.
-     * @param gatewayType the type of the gateway.
-     * @param username the username on the gateway.
+     * @param registrationID the ID of the registration.
      * @throws NotFoundException if the registration could not be loaded.
      */
-    public Registration(JID jid, GatewayType gatewayType, String username)
+    public Registration(long registrationID)
             throws NotFoundException
     {
-        if (jid == null || gatewayType == null || username == null) {
-            throw new NullPointerException("Arguments cannot be null.");
-        }
-        this.jid = jid;
-        this.gatewayType = gatewayType;
-        this.username = username;
-        // todo: load from db
+        this.registrationID = registrationID;
+        loadFromDb();
     }
 
     /**
@@ -153,4 +169,64 @@ public class Registration {
         return jid + ", " + gatewayType + ", " + username;
     }
 
+    /**
+     * Inserts a new registration into the database.
+     */
+    private void insertIntoDb() throws SQLException {
+        this.registrationID = SequenceManager.nextID(this);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            pstmt = con.prepareStatement(INSERT_REGISTRATION);
+            pstmt.setLong(1, registrationID);
+            pstmt.setString(2, jid.toString());
+            pstmt.setString(3, gatewayType.name());
+            pstmt.setString(4, username);
+            pstmt.setString(5, password);
+            pstmt.setLong(6, registrationDate.getTime());
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            abortTransaction = true;
+            throw sqle;
+        }
+        finally {
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+        }
+    }
+
+    private void loadFromDb() throws NotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_REGISTRATION);
+            pstmt.setLong(1, registrationID);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new NotFoundException("Registration not found: " + registrationID);
+            }
+            this.jid = new JID(rs.getString(1));
+            this.gatewayType = GatewayType.valueOf(rs.getString(2));
+            this.username = rs.getString(3);
+            this.password = rs.getString(4);
+            this.registrationDate = new Date(rs.getLong(5));
+            long loginDate = rs.getLong(6);
+            if (rs.wasNull()) {
+                this.lastLogin = null;
+            }
+            else {
+                this.lastLogin = new Date(loginDate);
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
 }

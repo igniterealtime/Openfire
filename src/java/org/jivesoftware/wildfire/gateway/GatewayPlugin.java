@@ -22,7 +22,8 @@ import java.io.File;
 import java.util.Hashtable;
 
 /**
- * IM Gateway plugin.
+ * IM Gateway plugin, which provides connectivity to IM networks that don't support
+ * the XMPP protocol. 
  *
  * @author Daniel Henninger
  */
@@ -47,15 +48,18 @@ public class GatewayPlugin implements Plugin {
         componentManager = ComponentManagerFactory.getComponentManager();
 
         /* Set up AIM gateway. */
-        gateways.put("aim", new GatewayInstance("aim", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        gateways.put("aim", new GatewayInstance("aim",
+                "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("aim");
 
         /* Set up ICQ gateway. */
-        gateways.put("icq", new GatewayInstance("icq", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        gateways.put("icq", new GatewayInstance("icq",
+                "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("icq");
 
         /* Set up Yahoo gateway. */
-        gateways.put("yahoo", new GatewayInstance("yahoo", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
+        gateways.put("yahoo", new GatewayInstance("yahoo",
+                "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
         maybeStartService("yahoo");
     }
 

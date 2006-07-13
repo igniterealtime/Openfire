@@ -13,7 +13,10 @@ package org.jivesoftware.wildfire.gateway;
 import org.xmpp.packet.JID;
 
 /**
- * A gateway to an external or legacy messaging system.
+ * A gateway to an external or legacy messaging system. Users of the XMPP server register
+ * with the gateway by providing their login credentials with the external system. The
+ * gateway then logs into the external system on the user's behalf and translates IM
+ * data between the user's XMPP account and the external system. 
  * 
  * @author ncampbell
  */

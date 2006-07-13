@@ -8,7 +8,6 @@
     <content url="file://$MODULE_DIR$/src/plugins">
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/broadcast/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/contentFilter/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/gateway/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/presence/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/registration/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/search/src/java" isTestSource="false" />
@@ -61,15 +60,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/commons-fileupload-1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/oscar.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

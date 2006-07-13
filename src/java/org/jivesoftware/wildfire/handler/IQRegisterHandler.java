@@ -170,7 +170,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         currentRegistration.addElement("registered");
                         currentRegistration.element("username").setText(user.getUsername());
                         currentRegistration.element("password").setText("");
-                        currentRegistration.element("email").setText(user.getEmail());
+                        currentRegistration.element("email")
+                                .setText(user.getEmail() == null ? "" : user.getEmail());
                         currentRegistration.element("name").setText(user.getName());
 
                         Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
@@ -185,7 +186,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 field.addElement("value").addText(user.getName());
                             }
                             else if ("email".equals(field.attributeValue("var"))) {
-                                field.addElement("value").addText(user.getEmail());
+                                field.addElement("value")
+                                        .addText(user.getEmail() == null ? "" : user.getEmail());
                             }
                         }
                         reply.setChildElement(currentRegistration);

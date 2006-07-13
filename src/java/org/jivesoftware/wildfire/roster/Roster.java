@@ -52,9 +52,9 @@ public class Roster implements Cacheable {
     protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<String, RosterItem>();
     /**
      * Contacts with subscription FROM that only exist due to shared groups
-     * key: jabberid string; value: replciated key value.
+     * key: jabberid string; value: groups why the implicit roster item exists (aka invisibleSharedGroups).
      */
-    protected ConcurrentHashMap<String, String> implicitFrom = new ConcurrentHashMap<String, String>();
+    protected ConcurrentHashMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<String, Set<String>>();
 
     private RosterItemProvider rosterItemProvider;
     private String username;
@@ -153,7 +153,8 @@ public class Roster implements Cacheable {
                 }
                 else {
                     // Cache information about shared contacts with subscription status FROM
-                    implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
+                    implicitFrom
+                            .put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
                 }
             }
             catch (UserNotFoundException e) {
@@ -220,9 +221,12 @@ public class Roster implements Cacheable {
      *         user and the susbcription only exists due to some shared groups or otherwise null.
      */
     private RosterItem getImplicitRosterItem(JID user) {
-        if (implicitFrom.containsKey(user.toBareJID())) {
-            return new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
+        Set<String> invisibleSharedGroups = implicitFrom.get(user.toBareJID());
+        if (invisibleSharedGroups != null) {
+            RosterItem rosterItem = new RosterItem(user, RosterItem.SUB_FROM, RosterItem.ASK_NONE,
                     RosterItem.RECV_NONE, "", null);
+            rosterItem.setInvisibleSharedGroupsNames(invisibleSharedGroups);
+            return rosterItem;
         }
         return null;
     }
@@ -325,6 +329,11 @@ public class Roster implements Cacheable {
      * @throws UserNotFoundException If the roster item for the given user doesn't already exist
      */
     public void updateRosterItem(RosterItem item) throws UserNotFoundException {
+        // Check if we need to convert an implicit roster item into an explicit one
+        if (implicitFrom.remove(item.getJid().toBareJID()) != null) {
+            // Ensure that the item is an explicit roster item
+            rosterItems.put(item.getJid().toBareJID(), item);
+        }
         if (rosterItems.putIfAbsent(item.getJid().toBareJID(), item) == null) {
             rosterItems.remove(item.getJid().toBareJID());
             if (item.getSubStatus() != RosterItem.SUB_NONE) {
@@ -381,7 +390,7 @@ public class Roster implements Cacheable {
     public RosterItem deleteRosterItem(JID user, boolean doChecking) throws SharedGroupException {
         // Answer an error if user (i.e. contact) to delete belongs to a shared group
         RosterItem itemToRemove = rosterItems.get(user.toBareJID());
-        if (doChecking && itemToRemove != null && itemToRemove.isShared()) {
+        if (doChecking && itemToRemove != null && !itemToRemove.getSharedGroups().isEmpty()) {
             throw new SharedGroupException("Cannot remove contact that belongs to a shared group");
         }
 
@@ -425,6 +434,20 @@ public class Roster implements Cacheable {
             }
 
             return item;
+        }
+        else {
+            // Verify if the item being removed is an implicit roster item
+            // that only exists due to some shared group
+            if (implicitFrom.remove(user.toBareJID()) != null) {
+                // If the contact being removed is not a local user then ACK unsubscription
+                if (!server.isLocal(user)) {
+                    Presence presence = new Presence();
+                    presence.setFrom(server.createJID(username, null));
+                    presence.setTo(user);
+                    presence.setType(Presence.Type.unsubscribed);
+                    server.getPacketRouter().route(presence);
+                }
+            }
         }
 
         return null;
@@ -752,11 +775,13 @@ public class Roster implements Cacheable {
             // Remove from memory and do nothing else
             rosterItems.remove(item.getJid().toBareJID());
             // Cache information about shared contacts with subscription status FROM
-            implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
+            implicitFrom.put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
         }
         else {
             // Remove from list of shared contacts with status FROM (if any)
             implicitFrom.remove(item.getJid().toBareJID());
+            // Ensure that the item is an explicit roster item
+            rosterItems.put(item.getJid().toBareJID(), item);
             // Brodcast to all the user resources of the updated roster item
             broadcast(item, true);
             // Probe the presence of the new group user
@@ -861,11 +886,13 @@ public class Roster implements Cacheable {
             // Remove from memory and do nothing else
             rosterItems.remove(item.getJid().toBareJID());
             // Cache information about shared contacts with subscription status FROM
-            implicitFrom.put(item.getJid().toBareJID(), item.getJid().toBareJID());
+            implicitFrom.put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
         }
         else {
             // Remove from list of shared contacts with status FROM (if any)
             implicitFrom.remove(item.getJid().toBareJID());
+            // Ensure that the item is an explicit roster item
+            rosterItems.put(item.getJid().toBareJID(), item);
             // Brodcast to all the user resources of the updated roster item
             broadcast(item, true);
             // Probe the presence of the new group user
@@ -893,7 +920,8 @@ public class Roster implements Cacheable {
             int groupSize = item.getSharedGroups().size() + item.getInvisibleSharedGroups().size();
             if (item.isOnlyShared() && groupSize == 1) {
                 // Do nothing if the existing shared group is not the sharedGroup to remove
-                if (!item.getSharedGroups().contains(sharedGroup)) {
+                if (!item.getSharedGroups().contains(sharedGroup) &&
+                        !item.getInvisibleSharedGroups().contains(sharedGroup)) {
                     return;
                 }
                 // Delete the roster item from the roster since it exists only because of this

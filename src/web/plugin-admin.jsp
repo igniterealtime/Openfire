@@ -158,7 +158,7 @@
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/downloader.js" type="text/javascript"></script>
 
-<script language="text/javascript">
+<script type="text/javascript" >
      DWREngine.setErrorHandler(handleError);
 
      function handleError(error){

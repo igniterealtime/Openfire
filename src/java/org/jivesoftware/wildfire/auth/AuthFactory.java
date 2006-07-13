@@ -174,6 +174,9 @@ public class AuthFactory {
      *      for example, during setup mode.
      */
     public static String encryptPassword(String password) {
+        if (password == null) {
+            return null;
+        }
         Blowfish cipher = getCipher();
         if (cipher == null) {
             throw new UnsupportedOperationException();
@@ -192,6 +195,9 @@ public class AuthFactory {
      *      for example, during setup mode.
      */
     public static String decryptPassword(String encryptedPassword) {
+        if (encryptedPassword == null) {
+            return null;
+        }
         Blowfish cipher = getCipher();
         if (cipher == null) {
             throw new UnsupportedOperationException();

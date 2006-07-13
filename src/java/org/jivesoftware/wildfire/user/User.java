@@ -179,8 +179,13 @@ public class User implements Cacheable {
         }
     }
 
+    /**
+     * Returns the email address of the user or <tt>null</tt> if none is defined.
+     *
+     * @return the email address of the user or nullif none is defined.
+     */
     public String getEmail() {
-        return email == null ? "" : email;
+        return email;
     }
 
     public void setEmail(String email) {

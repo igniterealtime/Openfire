@@ -180,7 +180,7 @@ public class User implements Cacheable {
     }
 
     public String getEmail() {
-        return email;
+        return email == null ? "" : email;
     }
 
     public void setEmail(String email) {

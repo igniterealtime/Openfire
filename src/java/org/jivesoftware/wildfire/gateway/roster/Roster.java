@@ -10,6 +10,7 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +28,9 @@ import org.jivesoftware.wildfire.gateway.Gateway;
  * @see org.xmpp.packet.JID
  * @deprecated
  */
-public class Roster {
+public class Roster implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The foreignContacts.

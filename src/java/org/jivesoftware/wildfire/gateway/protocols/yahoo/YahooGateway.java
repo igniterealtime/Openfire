@@ -10,8 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
-import java.util.logging.Logger;
-
 import org.jivesoftware.wildfire.gateway.BaseGateway;
 import org.jivesoftware.wildfire.gateway.GatewaySession;
 import org.jivesoftware.wildfire.gateway.SubscriptionInfo;
@@ -51,9 +49,6 @@ public class YahooGateway extends BaseGateway {
     public String getDescription() {
         return "Yahoo! Gateway (ymsg9)";
     }
-
-    /** The logger. @see java.util.logging.Logger */
-    static public final Logger logger = Logger.getLogger("YahooGateway");
 
     /**
      * @see org.jivesoftware.wildfire.gateway.Endpoint#sendPacket(Packet)

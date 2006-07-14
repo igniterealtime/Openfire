@@ -10,16 +10,17 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.jivesoftware.wildfire.gateway.Gateway;
 import org.jivesoftware.wildfire.gateway.GatewaySession;
 import org.jivesoftware.wildfire.gateway.SubscriptionInfo;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 /**
@@ -29,7 +30,9 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public class Registrar {
+public class Registrar implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new <code>Registrar</code>.
@@ -93,7 +96,7 @@ public class Registrar {
             
             GatewaySession session = this.gateway.getSessionFactory().newInstance(info);
             session.login();
-            logger.info("Creating session for: " + jid);
+            Log.info("Creating session for: " + jid);
             sessions.put(jid, session);
         }
         return sessions.get(jid);
@@ -119,13 +122,6 @@ public class Registrar {
      * @see Gateway
      */
     private transient Gateway gateway;
-
-    /**
-     * The logger.
-     *
-     * @see Registrar
-     */
-    private static final Logger logger = Logger.getLogger("Registrar");
 
     /**
      * Removes the NormalizedJID from the registrar.

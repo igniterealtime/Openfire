@@ -12,13 +12,12 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.jivesoftware.wildfire.gateway.AbstractGatewaySession;
 import org.jivesoftware.wildfire.gateway.Endpoint;
@@ -31,6 +30,8 @@ import org.jivesoftware.wildfire.gateway.roster.ForeignContact;
 import org.jivesoftware.wildfire.gateway.roster.NormalizedJID;
 import org.jivesoftware.wildfire.gateway.roster.PersistenceManager;
 import org.jivesoftware.wildfire.gateway.roster.UnknownForeignContactException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -49,9 +50,6 @@ import ymsg.network.YahooUser;
  * @author Noah Campbell
  */
 public class YahooGatewaySession extends AbstractGatewaySession implements Endpoint {
-
-    /** The logger. */
-    private static Logger logger = Logger.getLogger("YahooGatewaySession", "gateway_i18n");
 
     /**
      * Yahoo Session
@@ -98,7 +96,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
 //                Vector members = group.getMembers();
 //                for(Object member : members) {
 //                    YahooUser user = (YahooUser)member;
-//                    logger.info("Adding foreign contact: " + user.getId());
+//                    Log.info("Adding foreign contact: " + user.getId());
 //                    String foreignId = user.getId();
 //                    NormalizedJID whois = NormalizedJID.wrap(gateway.whois(foreignId));
 //                    AbstractForeignContact fc = PersistenceManager.Factory.get(gateway)
@@ -106,15 +104,15 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
 //                        .getForeignContact(foreignId, gateway);
 //                    
 //                    if(fc == null || fc.status == null) {
-//                        logger.warning("Unable to find Foreign Contact for: " + whois);
+//                        Log.warn("Unable to find Foreign Contact for: " + whois);
 //                        continue;
 //                    }
 //                    if(user == null) {
-//                        logger.warning("Invalid Yahoo user");
+//                        Log.warn("Invalid Yahoo user");
 //                        continue;
 //                    }
 //                    if(fc.status.getValue() != null && !fc.status.getValue().equalsIgnoreCase(user.getCustomStatusMessage())) {
-//                        logger.log(Level.FINE, "yahoogatewaysession.status", new Object[] {fc.status});
+//                        Log.debug(LocaleUtils.getLocalizedString("yahoogatewaysession.status", "gateway", Arrays.asList(new Object[] {fc.status})));
 //                        try {
 //                            Presence p = new Presence();
 //                            if(!fc.status.isSubscribed()) {
@@ -152,7 +150,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
                          * Password is stored in the JVM as a string in JVM
                          * util termination.
                          */
-                        logger.log(Level.INFO, "yahoogatewaysession.login", new Object[]{jid, getSubscriptionInfo().username});
+                        Log.info(LocaleUtils.getLocalizedString("yahoogatewaysession.login", "gateway", Arrays.asList(new Object[]{jid, getSubscriptionInfo().username})));
                         getJabberEndpoint().getValve().open(); // allow any buffered messages to pass through
 //                        updatePresence();
                     }
@@ -161,7 +159,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
                         if (loginFailedCount++ > 3) { 
                             loginFailed = true;
                         }
-                        logger.warning("Login failed for " + getSubscriptionInfo().username);
+                        Log.warn("Login failed for " + getSubscriptionInfo().username);
                     }
                     catch (IOException ioe) {
                         ioe.printStackTrace();
@@ -171,7 +169,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
             }.run(); // intentionally not forked.
         }
         else {
-            logger.warning(this.jid + " is already logged in");
+            Log.warn(this.jid + " is already logged in");
         }
     }
 
@@ -188,7 +186,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      * @throws Exception 
      */
     public synchronized void logout() throws Exception {
-        logger.info("[" + this.jid + "]" + getSubscriptionInfo().username + " logged out.");
+        Log.info("[" + this.jid + "]" + getSubscriptionInfo().username + " logged out.");
         session.logout();
         session.reset();
     }
@@ -287,14 +285,14 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
      * @param packet incoming packet from XMPP Server (typically from client)
      */
     public void sendPacket(Packet packet) {
-        logger.log(Level.FINE, packet.toString());
+        Log.debug(packet.toString());
         if (packet instanceof Message) {
             Message m = (Message)packet;
             try {
                 session.sendMessage(packet.getTo().getNode(), m.getBody());
             }
             catch (IOException ioe) {
-                logger.warning(ioe.getLocalizedMessage());
+                Log.warn(ioe.getLocalizedMessage());
             }
         }
     }

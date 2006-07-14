@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -26,6 +24,7 @@ import org.jivesoftware.wildfire.gateway.roster.PersistenceManager;
 import org.jivesoftware.wildfire.gateway.roster.Roster;
 import org.jivesoftware.wildfire.gateway.roster.Status;
 import org.jivesoftware.wildfire.gateway.util.BackgroundThreadFactory;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
@@ -68,7 +67,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      */
     public final String getDomain() {
         String domainName = this.componentManager.getServerName();
-        logger.log(Level.FINE, "basegateway.domainname", domainName);
+        Log.debug(LocaleUtils.getLocalizedString("basegateway.domainname", "gateway", Arrays.asList(domainName)));
         return domainName;
     }
 
@@ -83,9 +82,6 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     public String getType() {
         return "gateway";
     }
-
-    /** The logger. @see java.util.logging.Logger */
-    private static final Logger logger = Logger.getLogger("BaseGateway","gateway_i18n");
 
     /**
      * Jabber endpoint.
@@ -186,7 +182,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             reply.setChildElement(responseElement);
         }
         catch (Exception e) {
-            logger.log(Level.WARNING, "basegateway.notfound", iq.getFrom().toBareJID());
+            Log.warn(LocaleUtils.getLocalizedString("basegateway.notfound", "gateway", Arrays.asList(iq.getFrom().toBareJID())));
         }
         return reply;
     }
@@ -260,7 +256,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         results.add(unsubscribed);
         results.add(unavailable);
 
-        logger.log(Level.INFO, "basegateway.unregister", iq.getFrom());
+        Log.info(LocaleUtils.getLocalizedString("basegateway.unregister", "gateway", Arrays.asList(iq.getFrom())));
 
         return results;
     }
@@ -302,7 +298,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             }
             catch (Exception e) {
                 // unable to use dataform
-                logger.log(Level.FINER, "basegateway.dataformnotused", e);
+                Log.debug(LocaleUtils.getLocalizedString("basegateway.dataformnotused", "gateway"), e);
             }
 
             if (username == null || password == null) {
@@ -326,7 +322,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                     response.add(result);
             }
             else {
-                logger.log(Level.INFO, "basegateway.register", username.trim());
+                Log.info(LocaleUtils.getLocalizedString("basegateway.register", "gateway", Arrays.asList(username.trim())));
                 SubscriptionInfo info = new SubscriptionInfo(username.trim(), password);
                 PersistenceManager.Factory.get(this).getRegistrar().add(iq.getFrom(), info);
                 reply.setChildElement(responseElement);
@@ -390,7 +386,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             responseElement.add(item);
         }
         reply.setChildElement(responseElement);
-        System.out.println(reply);
+        Log.debug(reply.toString());
         return reply;
     }
 
@@ -448,7 +444,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 processPacket((Message)packet);
             }
             else {
-                System.out.println("UNHANDLED: " + packet.toString());
+                Log.debug("UNHANDLED: " + packet.toString());
             }
 
             // process
@@ -458,7 +454,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 }
             }
             else {
-                //System.out.println("Request[" + packet.toString() + "] with no response");
+                //Log.debug("Request[" + packet.toString() + "] with no response");
             }
 
         }
@@ -476,7 +472,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * @see org.xmpp.packet.Message
      */
     private void processPacket(Message message) throws Exception {
-        logger.finer(message.toString());
+        Log.debug(message.toString());
 
         GatewaySession session = PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(message.getFrom());
         session.getLegacyEndpoint().sendPacket(message);
@@ -493,16 +489,16 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         List<Presence> p = new ArrayList<Presence>();
         JID from = presence.getFrom();
 
-        logger.finest(presence.toString());
+        Log.debug(presence.toString());
 
         /*
          * Unknown entity is trying to access the gateway.
          */
         if (!rosterManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
-            logger.log(Level.INFO, "basegateway.unabletofind", from);
+            Log.info(LocaleUtils.getLocalizedString("basegateway.unabletofind", "gateway", Arrays.asList(from)));
             // silently ignore a delete request
             if (!Presence.Type.unavailable.equals(presence.getType())) {
-                logger.log(Level.INFO, "basegateway.unauthorizedrequest", new Object[] { presence.getType(), from.toString() });
+                Log.info(LocaleUtils.getLocalizedString("basegateway.unauthorizedrequest", "gateway", Arrays.asList(new Object[] { presence.getType(), from.toString() })));
                 Presence result = new Presence();
                 result.setError(Condition.not_authorized);
                 result.setStatus(LocaleUtils.getLocalizedString("basegateway.registerfirst", "gateway"));
@@ -516,7 +512,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
          */
         GatewaySession sessionInfo = rosterManager.getRegistrar().getGatewaySession(from);
         if (sessionInfo == null) {
-            logger.log(Level.WARNING, "basegateway.unabletolocatesession" , from);
+            Log.warn(LocaleUtils.getLocalizedString("basegateway.unabletolocatesession" , "gateway", Arrays.asList(from)));
             return p;
         }
 
@@ -541,7 +537,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 sessionInfo.getSubscriptionInfo().clientRegistered = true;    
             }
             else { // subscribe to legacy user
-                logger.log(Level.FINE,"basegateway.subscribed");
+                Log.debug(LocaleUtils.getLocalizedString("basegateway.subscribed", "gateway"));
             }
         }
         else if (Presence.Type.unavailable.equals(presence.getType())){
@@ -563,7 +559,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
             result.setTo(presence.getFrom());
             result.setFrom(this.jid);
             p.add(result);
-            logger.log(Level.FINE, "basegateway.gatewaypresence");
+            Log.debug(LocaleUtils.getLocalizedString("basegateway.gatewaypresence", "gateway"));
         }
         else {
             GatewaySession session = rosterManager.getRegistrar().getGatewaySession(presence.getFrom());
@@ -583,8 +579,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
                 p.add(p2);
             }
             catch (Exception e) {
-                logger.log(Level.WARNING, "basegateway.statusexception",
-                        new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()});
+                Log.warn(LocaleUtils.getLocalizedString("basegateway.statusexception", "gateway", Arrays.asList(new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()})));
             }
         }
         return p;
@@ -657,7 +652,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * subscribed the contact to the JID.
      */
     public void run() {
-        logger.log(Level.FINEST, "basegateway.maintenancestart");
+        Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestart", "gateway"));
 
         for (SubscriptionInfo si : rosterManager.getRegistrar().getAllGatewaySessions()) {
             if (!si.clientRegistered) {
@@ -682,7 +677,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
 //                try {
 //                    componentManager.sendPacket(this, p);
 //                } catch (Exception e) {
-//                    logger.log(Level.WARNING, "basegateway.unabletosendpresence", e);
+//                    Log.warn(LocaleUtils.getLocalizedString("basegateway.unabletosendpresence", "gateway"), e);
 //                }
 //            }
         }
@@ -695,11 +690,11 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
 //            try {
 //                componentManager.sendPacket(this, p);
 //            } catch (Exception e) {
-//                logger.log(Level.WARNING, "basegateway.unabletosendpresence", e);
+//                Log.warn(LocaleUtils.getLocalizedString("basegateway.unabletosendpresence", "gateway"), e);
 //            }  
 //        }
 
-        logger.log(Level.FINEST, "basegateway.maintenancestop");
+        Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestop", "gateway"));
     }
 
     /**

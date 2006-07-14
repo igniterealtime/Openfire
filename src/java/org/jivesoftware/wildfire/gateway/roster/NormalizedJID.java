@@ -10,6 +10,8 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +23,9 @@ import org.xmpp.packet.JID;
  * @author Noah Campbell
  *
  */
-public final class NormalizedJID {
+public final class NormalizedJID implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The JID.

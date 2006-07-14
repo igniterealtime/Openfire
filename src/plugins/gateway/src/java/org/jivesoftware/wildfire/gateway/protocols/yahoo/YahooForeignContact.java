@@ -12,8 +12,9 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 
 import org.jivesoftware.wildfire.gateway.Gateway;
 import org.jivesoftware.wildfire.gateway.roster.AbstractForeignContact;
@@ -109,16 +110,12 @@ public class YahooForeignContact extends AbstractForeignContact {
             status.updateValue(resource.getString("STATUS_TYPING"));
         }
         else {
-            logger.log(Level.WARNING, "yahooforeigncontact.unabletolocatestatus");
+            Log.warn(LocaleUtils.getLocalizedString("yahooforeigncontact.unabletolocatestatus", "gateway"));
             status.updateValue("????");
         }
 
         return status;
     }
-
-    /** The logger. */
-    final static private Logger logger = Logger.getLogger("yahooforeigncontact",
-            "gateway_i18n");
 
     /** The resource. */
     private static ResourceBundle resource = PropertyResourceBundle.getBundle("yahoostatus");

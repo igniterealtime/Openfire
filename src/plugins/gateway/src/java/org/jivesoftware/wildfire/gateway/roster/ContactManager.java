@@ -10,6 +10,8 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +25,9 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public class ContactManager {
+public class ContactManager implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new <code>ContactManager</code>

@@ -10,6 +10,7 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,8 +21,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.crypto.Cipher;
@@ -33,7 +32,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.jivesoftware.wildfire.gateway.Gateway;
 import org.jivesoftware.wildfire.gateway.util.BackgroundThreadFactory;
-import org.jivesoftware.wildfire.gateway.util.GatewayLevel;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
 
 /**
@@ -45,7 +45,9 @@ import org.xmpp.packet.JID;
  * @author Noah Campbell
  *
  */
-public class PersistenceManager {
+public class PersistenceManager implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The contactManager.
@@ -130,7 +132,7 @@ public class PersistenceManager {
             registrar.remove(jid);
         }
         catch (Exception e) {
-            logger.severe("Unable to remove " + bareJID + ": " + e.getLocalizedMessage());
+            Log.error("Unable to remove " + bareJID + ": " + e.getLocalizedMessage());
         }
     }
 
@@ -149,7 +151,7 @@ public class PersistenceManager {
             byte[] rawKey = Preferences.systemNodeForPackage(this.getClass()).getByteArray(".key", null);
             
             if (rawKey == null) {
-                logger.log(GatewayLevel.SECURITY, "persistencemanager.nokey");
+                Log.error(LocaleUtils.getLocalizedString("persistencemanager.nokey", "gateway"));
                 return;
             }
             
@@ -168,7 +170,7 @@ public class PersistenceManager {
             if (db.exists()) {
                 db.delete();
             }
-            logger.log(Level.WARNING, "persistencemanager.loadrosterfailed",e);
+            Log.warn(LocaleUtils.getLocalizedString("persistencemanager.loadrosterfailed", "gateway"), e);
         }
         finally {
             this.contactManager = (contactManager != null) ? contactManager : new ContactManager();
@@ -185,13 +187,6 @@ public class PersistenceManager {
     private final ScheduledExecutorService timer = Executors.newScheduledThreadPool(1, new BackgroundThreadFactory());
 
     /**
-     * The logger.
-     *
-     * @see PersistenceManager
-     */
-    private static final Logger logger = Logger.getLogger("PersistenceManager", "gateway_i18n");
-
-    /**
      * Responsible for flushing the in-memory database.
      */
     private final Runnable archiver = new Runnable() {
@@ -200,7 +195,7 @@ public class PersistenceManager {
                 store();
             }
             catch (Exception e) {
-                logger.log(Level.WARNING, "persistencemanager.unabletoflush", e);
+                Log.warn(LocaleUtils.getLocalizedString("persistencemanager.unabletoflush", "gateway"), e);
                 e.printStackTrace();
             }
         }
@@ -216,7 +211,7 @@ public class PersistenceManager {
 
         byte[] rawKey = prefs.getByteArray(".key", null);
         if (rawKey == null) {
-            logger.log(GatewayLevel.SECURITY, "persistencemanager.gennewkey");
+            Log.error(LocaleUtils.getLocalizedString("persistencemanager.gennewkey", "gateway"));
             KeyGenerator kg = KeyGenerator.getInstance("AES");
             SecretKey key = kg.generateKey();
             rawKey = key.getEncoded();
@@ -255,7 +250,7 @@ public class PersistenceManager {
     protected void finalize() throws Throwable {
         super.finalize();
         this.timer.shutdownNow();
-        logger.log(Level.FINER, "persistencemanager.registrarFinalize");
+        Log.debug(LocaleUtils.getLocalizedString("persistencemanager.registrarFinalize", "gateway"));
     }
 
 }

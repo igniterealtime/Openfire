@@ -10,12 +10,16 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
+
 /**
  * Status object.
  * 
  * @author Noah Campbell
  */
 public final class Status {
+
+    private static final long serialVersionUID = 1L;
     
     /** The subscribed. */
     private boolean subscribed = false;

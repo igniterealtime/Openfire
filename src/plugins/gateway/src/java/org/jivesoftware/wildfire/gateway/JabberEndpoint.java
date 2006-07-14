@@ -11,13 +11,16 @@
 package org.jivesoftware.wildfire.gateway;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.Packet;
+
+import java.util.Arrays;
 
 /**
  * The <code>JabberEndpoint</code> implements the <code>Endpoint</code> for an
@@ -83,15 +86,12 @@ public class JabberEndpoint implements Endpoint {
         }
         else {
             queue.add(packet);
-            logger.log(Level.FINE, "jabberendpoint.sendpacketenqueue", packet.getFrom());
+            Log.debug(LocaleUtils.getLocalizedString("jabberendpoint.sendpacketenqueue", "gateway", Arrays.asList(packet.getFrom())));
         }
     }
 
     /** The backlog queue. */
     private final ConcurrentLinkedQueue<Packet> queue = new ConcurrentLinkedQueue<Packet>();
-
-    /** The logger. */
-    final static private Logger logger = Logger.getLogger("JabberEndpoint", "gateway_i18n");
 
     /**
      * @see org.jivesoftware.wildfire.gateway.Endpoint#getValve()

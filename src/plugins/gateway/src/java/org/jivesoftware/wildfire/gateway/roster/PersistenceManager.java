@@ -117,7 +117,6 @@ public class PersistenceManager implements Serializable {
         db = new File("/tmp/." + this.gateway.getName().toLowerCase() + ".dat");
         load(gateway);
         timer.scheduleAtFixedRate(archiver, 5, 5, TimeUnit.SECONDS);
-        
     }
 
     /**

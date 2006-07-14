@@ -10,6 +10,7 @@
 
 package org.jivesoftware.wildfire.gateway.roster;
 
+import java.io.Serializable;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashSet;
@@ -24,7 +25,9 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public abstract class AbstractForeignContact implements ForeignContact {
+public abstract class AbstractForeignContact implements ForeignContact, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The id for this contact.  This maps directly to the legacy userid.

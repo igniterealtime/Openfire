@@ -10,6 +10,8 @@
 
 package org.jivesoftware.wildfire.gateway;
 
+import java.io.Serializable;
+
 import org.xmpp.packet.JID;
 
 /**
@@ -20,7 +22,9 @@ import org.xmpp.packet.JID;
  * 
  * @author Noah Campbell
  */
-public class SubscriptionInfo {
+public class SubscriptionInfo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new <code>SubscriptionInfo</code>

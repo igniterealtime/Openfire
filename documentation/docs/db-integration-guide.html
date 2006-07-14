@@ -72,7 +72,10 @@
         <a href="database.html">database guide</a> for common driver names for major databases.
     </li>
     <li>jdbcProvider.connectionString -- the full connection string for the database. Please
-        consult your database driver documentation for syntax.</li>
+        consult your database driver documentation for syntax. <b>Warning:</b> it's common
+        for connection string to contain "&" characters. That character has special meaning
+        in XML, so you should escape it using "&amp;amp;".
+    </li>
 </ul>
 
 <p>
@@ -83,7 +86,7 @@
   ...
   &lt;jdbcProvider&gt;
     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
-      &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
+      &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;amp;password=secret&lt;/connectionString&gt;
     &lt;/jdbcProvider&gt;
   ...
 &lt;/jive&gt;

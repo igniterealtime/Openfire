@@ -652,7 +652,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
      * subscribed the contact to the JID.
      */
     public void run() {
-        Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestart", "gateway"));
+        //Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestart", "gateway"));
 
         for (SubscriptionInfo si : rosterManager.getRegistrar().getAllGatewaySessions()) {
             if (!si.clientRegistered) {
@@ -694,7 +694,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
 //            }  
 //        }
 
-        Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestop", "gateway"));
+        //Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestop", "gateway"));
     }
 
     /**

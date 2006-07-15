@@ -304,6 +304,7 @@ public class YahooGatewaySession extends AbstractGatewaySession implements Endpo
         String node = to.getNode();
         if (node == null || node.length() == 0) throw new UnknownForeignContactException("invalidnode", node.toString());
         YahooUser user = session.getUser(node);
+        Log.debug("getUser on node " + node);
         if (user == null) throw new UnknownForeignContactException("invaliduser");
         return new YahooForeignContact(session.getUser(to.getNode()), this.gateway);
     }

@@ -16,6 +16,8 @@ import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.gateway.util.GatewayInstance;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.io.File;
 
@@ -29,6 +31,8 @@ import java.util.Hashtable;
  */
 public class GatewayPlugin implements Plugin {
 
+    private MutablePicoContainer picoContainer;
+
     /**
      *  Represents all configured gateway handlers.
      */
@@ -39,10 +43,15 @@ public class GatewayPlugin implements Plugin {
      */
     private ComponentManager componentManager;
 
-    /**
-     *  Configures and starts the plugin.
-     */
+    public GatewayPlugin() {
+        picoContainer = new DefaultPicoContainer();
+
+        picoContainer.registerComponentImplementation(RegistrationManager.class);
+    }
+
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        picoContainer.start();
+
         gateways = new Hashtable<String,GatewayInstance>();
 
         componentManager = ComponentManagerFactory.getComponentManager();
@@ -61,6 +70,25 @@ public class GatewayPlugin implements Plugin {
         gateways.put("yahoo", new GatewayInstance("yahoo",
                 "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
         maybeStartService("yahoo");
+    }
+
+    public void destroyPlugin() {
+        for (GatewayInstance gwInstance : gateways.values()) {
+            gwInstance.stopInstance();
+        }
+        picoContainer.stop();
+        picoContainer.dispose();
+        picoContainer = null;
+    }
+
+    /**
+     * Returns the instance of a module registered with the plugin.
+     *
+     * @param clazz the module class.
+     * @return the instance of the module.
+     */
+    public Object getModule(Class clazz) {
+        return picoContainer.getComponentInstanceOfType(clazz);
     }
 
     /**
@@ -98,14 +126,4 @@ public class GatewayPlugin implements Plugin {
         GatewayInstance gwInstance = gateways.get(serviceName);
         return gwInstance.isEnabled();
     }
-
-    /**
-     *  Shuts down the plugin.
-     */
-    public void destroyPlugin() {
-        for (GatewayInstance gwInstance : gateways.values()) {
-            gwInstance.stopInstance();
-        }
-    }
-
 }

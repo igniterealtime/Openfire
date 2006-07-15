@@ -14,6 +14,7 @@ import org.xmpp.packet.JID;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.picocontainer.Startable;
 
 import java.util.*;
 import java.sql.Connection;
@@ -27,7 +28,7 @@ import java.sql.ResultSet;
  *
  * @author Matt Tucker
  */
-public class RegistrationManager {
+public class RegistrationManager implements Startable {
 
     private static final String DELETE_REGISTRATION =
             "DELETE FROM gatewayRegistration WHERE registrationID=?";
@@ -44,6 +45,14 @@ public class RegistrationManager {
             "SELECT registrationID FROM gatewayRegistration WHERE gatewayType=?";
     private static final String USER_GATEWAY_REGISTRATIONS =
             "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND gatewayType=?";
+
+    public void start() {
+
+    }
+
+    public void stop() {
+
+    }
 
     /**
      * Creates a new registration.
@@ -89,7 +98,7 @@ public class RegistrationManager {
      * @param gatewayType the gateway type.
      * @return all registrations for the gateway type.
      */
-    Collection<Registration> getRegistrations(GatewayType gatewayType) {
+    public Collection<Registration> getRegistrations(GatewayType gatewayType) {
         List<Long> registrationIDs = new ArrayList<Long>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -123,7 +132,7 @@ public class RegistrationManager {
      * @param jid the JID of the user.
      * @return all registrations for the JID.
      */
-    Collection<Registration> getRegistrations(JID jid) {
+    public Collection<Registration> getRegistrations(JID jid) {
         List<Long> registrationIDs = new ArrayList<Long>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -163,7 +172,7 @@ public class RegistrationManager {
      * @param gatewayType the type of the gateway.
      * @return all registrations for the JID of a particular gateway type.
      */
-    Collection<Registration> getRegistrations(JID jid, GatewayType gatewayType) {
+    public Collection<Registration> getRegistrations(JID jid, GatewayType gatewayType) {
         List<Long> registrationIDs = new ArrayList<Long>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -193,7 +202,16 @@ public class RegistrationManager {
         }
     }
 
-    Registration getRegistration(JID jid, GatewayType gatewayType, String username)
+    /**
+     * Returns a registration given a JID, gateway type, and username.
+     *
+     * @param jid the JID of the user.
+     * @param gatewayType the gateway type.
+     * @param username the username on the gateway service.
+     * @return the registration.
+     * @throws NotFoundException if the registration could not be found.
+     */
+    public Registration getRegistration(JID jid, GatewayType gatewayType, String username)
             throws NotFoundException
     {
         long registrationID = -1;

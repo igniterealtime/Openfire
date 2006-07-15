@@ -1,4 +1,5 @@
 Name                   |  Version
 ---------------------------------------------
 joscar.jar             | 0.9.3 (patched)
+picocontainer          | 1.2.0
 ymsg_network.jar       | 0.61

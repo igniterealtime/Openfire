@@ -22,7 +22,8 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 /**
- * Manages registrations with gateways.
+ * Manages registration data for gateways. Individual gateways use the registration data
+ * and then create sessions used to exchange messages and presence data.
  *
  * @author Matt Tucker
  */
@@ -47,10 +48,10 @@ public class RegistrationManager {
     /**
      * Creates a new registration.
      *
-     * @param jid
-     * @param gatewayType
-     * @param username
-     * @param password
+     * @param jid the JID of the user making the registration.
+     * @param gatewayType the type of the gateway.
+     * @param username the username on the gateway service.
+     * @param password the password on the gateway service.
      * @return a new registration.
      */
     public Registration createRegistration(JID jid, GatewayType gatewayType, String username,
@@ -82,16 +83,114 @@ public class RegistrationManager {
         }
     }
 
+    /**
+     * Returns all registrations for a particular type of gateway.
+     *
+     * @param gatewayType the gateway type.
+     * @return all registrations for the gateway type.
+     */
     Collection<Registration> getRegistrations(GatewayType gatewayType) {
-        return null;
+        List<Long> registrationIDs = new ArrayList<Long>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(ALL_GATEWAY_REGISTRATIONS);
+            pstmt.setString(1, gatewayType.name());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                registrationIDs.add(rs.getLong(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        if (registrationIDs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        else {
+            return new RegistrationCollection(registrationIDs);
+        }
     }
 
+    /**
+     * Returns all registrations for a particular JID.
+     *
+     * @param jid the JID of the user.
+     * @return all registrations for the JID.
+     */
     Collection<Registration> getRegistrations(JID jid) {
-        return null;
+        List<Long> registrationIDs = new ArrayList<Long>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(ALL_USER_REGISTRATIONS);
+            // Use the bare JID of the user.
+            pstmt.setString(1, jid.toBareJID());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                registrationIDs.add(rs.getLong(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        if (registrationIDs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        else {
+            return new RegistrationCollection(registrationIDs);
+        }
     }
 
+    /**
+     * Returns all registrations that a JID has on a particular gateway type.
+     * In the typical case, a JID has a single registration with a particular gateway
+     * type. However, it's also possible to maintain multiple registrations. For example,
+     * the user "joe_smith@example.com" might have have two user accounts on the AIM
+     * gateway service: "jsmith" and "joesmith".
+     *
+     * @param jid the JID of the user.
+     * @param gatewayType the type of the gateway.
+     * @return all registrations for the JID of a particular gateway type.
+     */
     Collection<Registration> getRegistrations(JID jid, GatewayType gatewayType) {
-        return null;
+        List<Long> registrationIDs = new ArrayList<Long>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(USER_GATEWAY_REGISTRATIONS);
+            // Use the bare JID of the user.
+            pstmt.setString(1, jid.toBareJID());
+            pstmt.setString(2, gatewayType.name());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                registrationIDs.add(rs.getLong(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        if (registrationIDs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        else {
+            return new RegistrationCollection(registrationIDs);
+        }
     }
 
     Registration getRegistration(JID jid, GatewayType gatewayType, String username)

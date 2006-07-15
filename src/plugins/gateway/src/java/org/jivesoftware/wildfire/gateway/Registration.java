@@ -93,6 +93,15 @@ public class Registration {
     }
 
     /**
+     * Returns the unique ID of the registration.
+     *
+     * @return the registration ID.
+     */
+    public long getRegistrationID() {
+        return registrationID;
+    }
+
+    /**
      * Returns the JID of the user that made this registration.
      *
      * @return the JID of the user.

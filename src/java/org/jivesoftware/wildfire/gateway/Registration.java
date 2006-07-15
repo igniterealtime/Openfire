@@ -35,7 +35,7 @@ import java.sql.*;
 public class Registration {
 
     private static final String INSERT_REGISTRATION =
-            "INSERT INTO entConversation(registrationID, jid, gatewayType, " +
+            "INSERT INTO gatewayRegistration(registrationID, jid, gatewayType, " +
             "username, password, registrationDate) VALUES (?,?,?,?,?,?)";
     private static final String LOAD_REGISTRATION =
             "SELECT jid, gatewayType, username, password, registrationDate, lastLogin " +

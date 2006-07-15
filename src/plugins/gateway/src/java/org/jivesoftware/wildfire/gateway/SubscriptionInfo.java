@@ -31,9 +31,10 @@ public class SubscriptionInfo implements Serializable {
      * @param username The username
      * @param password The password
      */
-    public SubscriptionInfo(String username, String password) {
+    public SubscriptionInfo(String username, String password, JID jid) {
         this.username = username;
         this.password = password;
+        this.jid = jid;
     }
 
     /**
@@ -61,6 +62,7 @@ public class SubscriptionInfo implements Serializable {
      *
      * @see org.xmpp.packet.JID
      */
-    public transient JID jid;
+    //public transient JID jid;
+    public JID jid;
 
 }

@@ -21,9 +21,13 @@ import org.dom4j.QName;
 import org.jivesoftware.wildfire.gateway.roster.ForeignContact;
 import org.jivesoftware.wildfire.gateway.roster.NormalizedJID;
 import org.jivesoftware.wildfire.gateway.roster.PersistenceManager;
-import org.jivesoftware.wildfire.gateway.roster.Roster;
 import org.jivesoftware.wildfire.gateway.roster.Status;
 import org.jivesoftware.wildfire.gateway.util.BackgroundThreadFactory;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.component.Component;
@@ -101,7 +105,12 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     /**
      * Handles registration for this gateway.
      */
-    public final PersistenceManager rosterManager = PersistenceManager.Factory.get(this);
+    public final PersistenceManager persistenceManager = PersistenceManager.Factory.get(this);
+
+    /**
+     * Handles server side roster for this gateway.
+     */
+    public final RosterManager rosterManager = new RosterManager();
 
     /** The threadPool. @see java.util.concurrent.ScheduledExecutorService */
     protected static final ScheduledExecutorService threadPool = Executors.newSingleThreadScheduledExecutor(new BackgroundThreadFactory());
@@ -141,9 +150,6 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
             response.add(handleServiceDiscovery(iq));
         }
-        else if ("jabber:iq:agents".equals(namespace)) {
-            response.add(handleLegacyServiceDiscovery(iq));
-        }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
             response.add(handleDiscoveryItems(iq));
         }
@@ -153,38 +159,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         else if ("jabber:iq:version".equals(namespace)) {
             response.add(handleVersion(iq));
         }
-        else if ("jabber:iq:browse".equals(namespace)) {
-            response.add(handleBrowse(iq));
-        }
         return response;
-    }
-
-    /**
-     * Process a browse request.
-     * 
-     * @param iq The client IQ packet.
-     * @return iq The response IQ packet.
-     */
-    private IQ handleBrowse(IQ iq) {
-        IQ reply = IQ.createResultIQ(iq);
-        Element responseElement = DocumentHelper.createElement(QName.get(
-                "query", "jabber:iq:browse"));
-
-        try {
-            for (ForeignContact fc : PersistenceManager.Factory.get(this).getRegistrar().getGatewaySession(iq.getFrom()).getContacts()) {
-                Element item = DocumentHelper.createElement("item");
-                item.addAttribute("category", "user");
-                item.addAttribute("jid", fc + "@" + this.getName() + "." + this.getDomain());
-                item.addAttribute("type", "client");
-                responseElement.add(item);
-            }
-
-            reply.setChildElement(responseElement);
-        }
-        catch (Exception e) {
-            Log.warn(LocaleUtils.getLocalizedString("basegateway.notfound", "gateway", Arrays.asList(iq.getFrom().toBareJID())));
-        }
-        return reply;
     }
 
     /**
@@ -317,27 +292,66 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
 
             // make sure that something was collected, otherwise return an error
             if (username == null || password == null) {
-                    IQ result = IQ.createResultIQ(iq);
-                    result.setError(Condition.bad_request);
-                    response.add(result);
+                IQ result = IQ.createResultIQ(iq);
+                result.setError(Condition.bad_request);
+                response.add(result);
             }
             else {
                 Log.info(LocaleUtils.getLocalizedString("basegateway.register", "gateway", Arrays.asList(username.trim())));
-                SubscriptionInfo info = new SubscriptionInfo(username.trim(), password);
+                SubscriptionInfo info = new SubscriptionInfo(username.trim(), password, iq.getFrom());
                 PersistenceManager.Factory.get(this).getRegistrar().add(iq.getFrom(), info);
                 reply.setChildElement(responseElement);
                 response.add( reply );
 
-                Presence subscribe = new Presence(Presence.Type.subscribe);
-                subscribe.setTo(iq.getFrom());
-                subscribe.setFrom(iq.getTo());
-                response.add(subscribe);
+                //Presence subscribe = new Presence(Presence.Type.subscribe);
+                //subscribe.setTo(iq.getFrom());
+                //subscribe.setFrom(iq.getTo());
+                //response.add(subscribe);
+                try {
+                    Roster roster = rosterManager.getRoster(iq.getFrom().getNode());
+                    try {
+                        RosterItem gwitem = roster.getRosterItem(iq.getTo());
+                        if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
+                            gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                        }
+                        if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
+                            gwitem.setAskStatus(RosterItem.ASK_NONE);
+                        }
+                        roster.updateRosterItem(gwitem);
+                    }
+                    catch (UserNotFoundException e) {
+                        try {
+                            RosterItem gwitem = roster.createRosterItem(iq.getTo(), true);
+                            gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                            gwitem.setAskStatus(RosterItem.ASK_NONE);
+                            roster.updateRosterItem(gwitem);
+                        }
+                        catch (UserAlreadyExistsException ee) {
+                            Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                            IQ result = IQ.createResultIQ(iq);
+                            result.setError(Condition.bad_request);
+                            response.add(result);
+                        }
+                        catch (Exception ee) {
+                            Log.error("createRosterItem caused exception: " + ee.getMessage());
+                            IQ result = IQ.createResultIQ(iq);
+                            result.setError(Condition.bad_request);
+                            response.add(result);
+                        }
+                    }
+                }
+                catch (UserNotFoundException e) {
+                    Log.error("Someone attempted to register with the gateway who is not registered with the server: " + iq.getFrom());
+                    IQ result = IQ.createResultIQ(iq);
+                    result.setError(Condition.bad_request);
+                    response.add(result);
+                }
             }
         }
         else if (iq.getType().equals(IQ.Type.get)) { 
             DataForm form = new DataForm(DataForm.Type.form);
             // This needs to ask the specific gateway what to say.
-            form.addInstruction("Please enter your AIM Screenname and Password");
+            form.addInstruction("Please enter your legacy account username and password");
             FormField usernameField = form.addField();
             usernameField.setLabel("Username");
             usernameField.setVariable("username");
@@ -351,7 +365,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
              * Add standard elements to request.
              */
             // This needs to ask the specific gateway what to say.
-            responseElement.addElement("instruction").addText("Please enter your AIM screenname and password");
+            responseElement.addElement("instruction").addText("Please enter your legacy account username and password");
             responseElement.addElement("username");
             responseElement.addElement("password");
 
@@ -378,27 +392,16 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         Element responseElement = DocumentHelper.createElement(QName.get(
                 "query", "http://jabber.org/protocol/disco#info"));
 
-        Roster roster = this.rosterManager.getContactManager().getRoster(iq.getFrom());
-        for (ForeignContact entry : roster.getAll()) {
-            Element item = responseElement.addElement("item");
-            item.addAttribute("jid", entry.getJid().toBareJID());
-            item.addAttribute("name", entry.getName());
-            responseElement.add(item);
-        }
+        //Roster roster = this.persistenceManager.getContactManager().getRoster(iq.getFrom());
+        //for (ForeignContact entry : roster.getAll()) {
+        //    Element item = responseElement.addElement("item");
+        //    item.addAttribute("jid", entry.getJid().toBareJID());
+        //    item.addAttribute("name", entry.getName());
+        //    responseElement.add(item);
+        //}
         reply.setChildElement(responseElement);
         Log.debug(reply.toString());
         return reply;
-    }
-
-    /**
-     * TODO: handle a legacy service discovery request.
-     * 
-     * @param iq
-     * @return response
-     */
-    private IQ handleLegacyServiceDiscovery(IQ iq) {
-        return IQ.createResultIQ(iq);
-        // TODO: Implement Legacy Service Discovery.
     }
 
     /**
@@ -494,7 +497,7 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         /*
          * Unknown entity is trying to access the gateway.
          */
-        if (!rosterManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
+        if (!persistenceManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
             Log.info(LocaleUtils.getLocalizedString("basegateway.unabletofind", "gateway", Arrays.asList(from)));
             // silently ignore a delete request
             if (!Presence.Type.unavailable.equals(presence.getType())) {
@@ -510,76 +513,141 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
         /*
          * Get the underlying session for this JID and handle accordingly. 
          */
-        GatewaySession sessionInfo = rosterManager.getRegistrar().getGatewaySession(from);
+        GatewaySession sessionInfo = persistenceManager.getRegistrar().getGatewaySession(from);
         if (sessionInfo == null) {
             Log.warn(LocaleUtils.getLocalizedString("basegateway.unabletolocatesession" , "gateway", Arrays.asList(from)));
             return p;
         }
+    
+        if (presence.getTo().getNode() == null) { // this is a request to the gateway itself.
+            if (presence.getType() == null && persistenceManager.getRegistrar().isRegistered(NormalizedJID.wrap(from))) {
+                GatewaySession session = persistenceManager.getRegistrar().getGatewaySession(presence.getFrom());
 
-        if (Presence.Type.subscribe.equals(presence.getType())) {
-            if (presence.getTo().equals(this.jid)) {
-                sessionInfo.getSubscriptionInfo().serverRegistered = true;
-            }
-            else {
-                Presence subscribe = new Presence(Presence.Type.subscribe);
-                subscribe.setTo(presence.getFrom());
-                subscribe.setFrom(presence.getTo());
-                p.add(subscribe);
-            }
-            Presence reply = new Presence(Presence.Type.subscribed);
-            reply.setTo(presence.getFrom());
-            reply.setFrom(presence.getTo());
-            p.add(reply);
-            
-        }
-        else if (Presence.Type.subscribed.equals(presence.getType())) {
-            if (presence.getTo().equals(this.jid)) { // subscribed to server
-                sessionInfo.getSubscriptionInfo().clientRegistered = true;    
-            }
-            else { // subscribe to legacy user
-                Log.debug(LocaleUtils.getLocalizedString("basegateway.subscribed", "gateway"));
-            }
-        }
-        else if (Presence.Type.unavailable.equals(presence.getType())){
-            /**
-             * If an unavailable presence stanza is received then logout the 
-             * current user and send back and unavailable stanza.
-             */
-            if (sessionInfo.isConnected()) {
-                sessionInfo.logout();
-            }
+                Presence result = new Presence();
+                result.setTo(presence.getFrom());
+                result.setFrom(this.jid);
+                p.add(result);
 
-            Presence reply = new Presence(Presence.Type.unavailable);
-            reply.setTo(presence.getFrom());
-            reply.setFrom(presence.getTo());
-            p.add(reply);
-        }
-        else if (presence.getTo().getNode() == null) { // this is a request to the gateway only.
-            Presence result = new Presence();
-            result.setTo(presence.getFrom());
-            result.setFrom(this.jid);
-            p.add(result);
-            Log.debug(LocaleUtils.getLocalizedString("basegateway.gatewaypresence", "gateway"));
+                Log.debug(LocaleUtils.getLocalizedString("basegateway.gatewaypresence", "gateway"));
+            }
+            else if (Presence.Type.unavailable.equals(presence.getType())) {
+                /**
+                 * If an unavailable presence stanza is received then logout the 
+                 * current user and send back and unavailable stanza.
+                 */
+                if (sessionInfo.isConnected()) {
+                    sessionInfo.logout();
+                }
+    
+                Presence reply = new Presence(Presence.Type.unavailable);
+                reply.setTo(presence.getFrom());
+                reply.setFrom(presence.getTo());
+                p.add(reply);
+            }
         }
         else {
-            GatewaySession session = rosterManager.getRegistrar().getGatewaySession(presence.getFrom());
+            if (Presence.Type.subscribe.equals(presence.getType())) {
+                GatewaySession session = persistenceManager.getRegistrar().getGatewaySession(presence.getFrom());
+                try {
+                    session.addContact(presence.getTo());
+                }
+                catch (Exception e) {
+                    Log.error("Failed to add: " + presence.getTo());
+                }
 
-            try {
-                ForeignContact fc = session.getContact(presence.getTo());
-                Status status = fc.getStatus();
-                Presence p2 = new Presence();
-                p2.setFrom(presence.getTo());
-                p2.setTo(presence.getFrom());
-                if (status.isOnline()) {
-                    p2.setStatus(status.getValue());
+                try {
+                    Roster roster = rosterManager.getRoster(presence.getFrom().getNode());
+                    try {
+                        RosterItem gwitem = roster.getRosterItem(presence.getTo());
+                        if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
+                            gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                        }
+                        if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
+                            gwitem.setAskStatus(RosterItem.ASK_NONE);
+                        }
+                        roster.updateRosterItem(gwitem);
+                    }
+                    catch (UserNotFoundException e) {
+                        try {
+                            RosterItem gwitem = roster.createRosterItem(presence.getTo(), true);
+                            gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                            gwitem.setAskStatus(RosterItem.ASK_NONE);
+                            roster.updateRosterItem(gwitem);
+                        }
+                        catch (UserAlreadyExistsException ee) {
+                            Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                        }
+                        catch (Exception ee) {
+                            Log.error("createRosterItem caused exception: " + ee.getMessage());
+                        }
+                    }
                 }
-                else {
-                    p2.setType(Presence.Type.unavailable);
+                catch (UserNotFoundException e) {
+                    Log.error("Someone attempted to register with the gateway who is not registered with the server: " + presence.getFrom());
                 }
-                p.add(p2);
+                //Presence subscribe = new Presence(Presence.Type.subscribe);
+                //subscribe.setTo(presence.getFrom());
+                //subscribe.setFrom(presence.getTo());
+                //p.add(subscribe);
+
+                Presence reply = new Presence(Presence.Type.subscribed);
+                reply.setTo(presence.getFrom());
+                reply.setFrom(presence.getTo());
+                p.add(reply);
             }
-            catch (Exception e) {
-                Log.warn(LocaleUtils.getLocalizedString("basegateway.statusexception", "gateway", Arrays.asList(new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()})));
+            else if (Presence.Type.unsubscribe.equals(presence.getType())) {
+                GatewaySession session = persistenceManager.getRegistrar().getGatewaySession(presence.getFrom());
+                try {
+                    session.removeContact(presence.getTo());
+                }
+                catch (Exception e) {
+                    Log.error("Failed to remove: " + presence.getTo());
+                }
+
+                try {
+                    Roster roster = rosterManager.getRoster(presence.getFrom().getNode());
+                    try {
+                        roster.deleteRosterItem(presence.getTo(), false);
+                    }
+                    catch (Exception e) {
+                        Log.error("deleteRosterItem caused exception: " + e.getMessage());
+                    }
+                }
+                catch (UserNotFoundException e) {
+                    Log.error("Someone attempted to register with the gateway who is not registered with the server: " + presence.getFrom());
+                }
+                //Presence unsubscribe = new Presence(Presence.Type.subscribe);
+                //unsubscribe.setTo(presence.getFrom());
+                //unsubscribe.setFrom(presence.getTo());
+                //p.add(subscribe);
+
+                Presence reply = new Presence(Presence.Type.unsubscribed);
+                reply.setTo(presence.getFrom());
+                reply.setFrom(presence.getTo());
+                p.add(reply);
+            }
+            else if (Presence.Type.subscribed.equals(presence.getType())) {
+                Log.debug(LocaleUtils.getLocalizedString("basegateway.subscribed", "gateway"));
+            }
+            else {
+                GatewaySession session = persistenceManager.getRegistrar().getGatewaySession(presence.getFrom());
+                try {
+                    ForeignContact fc = session.getContact(presence.getTo());
+                    Status status = fc.getStatus();
+                    Presence p2 = new Presence();
+                    p2.setFrom(presence.getTo());
+                    p2.setTo(presence.getFrom());
+                    if (status.isOnline()) {
+                        p2.setStatus(status.getValue());
+                    }
+                    else {
+                        p2.setType(Presence.Type.unavailable);
+                    }
+                    p.add(p2);
+                }
+                catch (Exception e) {
+                    Log.warn(LocaleUtils.getLocalizedString("basegateway.statusexception", "gateway", Arrays.asList(new Object[]{presence.getTo(), presence.getFrom(), e.getLocalizedMessage()})));
+                }
             }
         }
         return p;
@@ -654,22 +722,69 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
     public void run() {
         //Log.debug(LocaleUtils.getLocalizedString("basegateway.maintenancestart", "gateway"));
 
-        for (SubscriptionInfo si : rosterManager.getRegistrar().getAllGatewaySessions()) {
-            if (!si.clientRegistered) {
-                Presence p = new Presence();
-                p.setType(Presence.Type.subscribe);
-                p.setTo(si.jid);
-                p.setFrom(this.jid);
-                try {
-                    componentManager.sendPacket(this, p);
+        for (SubscriptionInfo si : persistenceManager.getRegistrar().getAllGatewaySessions()) {
+            try {
+                GatewaySession session = persistenceManager.getRegistrar().getGatewaySession(si.jid);
+                if (!session.isConnected()) {
+                    continue;
                 }
-                catch (ComponentException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                for (ForeignContact fc : session.getContacts()) {
+                    try {
+                        Roster roster = rosterManager.getRoster(si.jid.getNode());
+                        try {
+                            RosterItem gwitem = roster.getRosterItem(fc.getJid());
+                            if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
+                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                            }
+                            if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
+                                gwitem.setAskStatus(RosterItem.ASK_NONE);
+                            }
+                            roster.updateRosterItem(gwitem);
+                        }
+                        catch (UserNotFoundException e) {
+                            try {
+                                RosterItem gwitem = roster.createRosterItem(fc.getJid(), true);
+                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                                gwitem.setAskStatus(RosterItem.ASK_NONE);
+                                roster.updateRosterItem(gwitem);
+                            }
+                            catch (UserAlreadyExistsException ee) {
+                                Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                            }
+                            catch (Exception ee) {
+                                Log.error("createRosterItem caused exception: " + ee.getMessage());
+                            }
+                        }
+                    }
+                    catch (UserNotFoundException e) {
+                        Log.error("Someone attempted to register with the gateway who is not registered with the server: " + si.jid);
+                    }
                 }
             }
+            catch (Exception e) {
+                // ignore
+            }
+        }
+        //for (SubscriptionInfo si : persistenceManager.getRegistrar().getAllGatewaySessions()) {
+        //    if (!si.clientRegistered) {
+        //        Presence p = new Presence();
+        //        p.setType(Presence.Type.subscribe);
+        //        p.setTo(si.jid);
+        //        p.setFrom(this.jid);
+        //        Log.debug("Run Packet: " + p.toString());
+        //        Log.debug("Run si.user: " + si.username);
+        //        Log.debug("Run si.pass: " + si.password);
+        //        try {
+        //            componentManager.sendPacket(this, p);
+        //        }
+        //        catch (ComponentException e) {
+                    // TODO Auto-generated catch block
+        //            Log.error(e.getMessage());
+        //        }
+        //    }
 
-//            for(ForeignContact fc : rosterManager.getContactManager().getRoster(si.jid).getAll()) {
+
+//            for(ForeignContact fc : persistenceManager.getContactManager().getRoster(si.jid).getAll()) {
 //                Presence p = new Presence();
 //                p.setFrom(fc.getJid());
 //                p.setTo(si.jid);
@@ -680,9 +795,9 @@ public abstract class BaseGateway implements Gateway, Component, Runnable {
 //                    Log.warn(LocaleUtils.getLocalizedString("basegateway.unabletosendpresence", "gateway"), e);
 //                }
 //            }
-        }
+        //}
         
-//        for(ForeignContact contact : rosterManager.getContactManager().getAllForeignContacts()) {
+//        for(ForeignContact contact : persistenceManager.getContactManager().getAllForeignContacts()) {
 //            if(!contact.isConnected()) 
 //                continue;
 //            Presence p = new Presence();

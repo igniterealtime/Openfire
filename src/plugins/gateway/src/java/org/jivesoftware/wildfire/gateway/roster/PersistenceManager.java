@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.Byte;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -147,20 +148,21 @@ public class PersistenceManager implements Serializable {
              * The key is stored in the registry so the key is as secure as the
              * registry is secure.
              */
-            byte[] rawKey = Preferences.systemNodeForPackage(this.getClass()).getByteArray(".key", null);
+            //byte[] rawKey = Preferences.systemNodeForPackage(this.getClass()).getByteArray(".key", null);
             
-            if (rawKey == null) {
-                Log.error(LocaleUtils.getLocalizedString("persistencemanager.nokey", "gateway"));
-                return;
-            }
+            //if (rawKey == null) {
+            //    Log.error(LocaleUtils.getLocalizedString("persistencemanager.nokey", "gateway"));
+            //    return;
+            //}
             
-            SecretKeySpec key = new SecretKeySpec(rawKey, "AES");
-            Cipher c = Cipher.getInstance("AES");
-            c.init(Cipher.DECRYPT_MODE, key);
+            //SecretKeySpec key = new SecretKeySpec(rawKey, "AES");
+            //Cipher c = Cipher.getInstance("AES");
+            //c.init(Cipher.DECRYPT_MODE, key);
             
-            CipherInputStream cis = new CipherInputStream(new FileInputStream(db), c);
+            //CipherInputStream cis = new CipherInputStream(new FileInputStream(db), c);
                         
-            ObjectInputStream is = new ObjectInputStream(cis);
+            //ObjectInputStream is = new ObjectInputStream(cis);
+            ObjectInputStream is = new ObjectInputStream(new FileInputStream(db));
             contactManager = (ContactManager)is.readObject() ;
             registrar = (Registrar) is.readObject() ;
             is.close();
@@ -206,22 +208,23 @@ public class PersistenceManager implements Serializable {
      * @throws Exception
      */
     public synchronized void store() throws Exception {
-        Preferences prefs = Preferences.systemNodeForPackage(this.getClass());
+        //Preferences prefs = Preferences.systemNodeForPackage(this.getClass());
 
-        byte[] rawKey = prefs.getByteArray(".key", null);
-        if (rawKey == null) {
-            Log.error(LocaleUtils.getLocalizedString("persistencemanager.gennewkey", "gateway"));
-            KeyGenerator kg = KeyGenerator.getInstance("AES");
-            SecretKey key = kg.generateKey();
-            rawKey = key.getEncoded();
-            prefs.putByteArray(".key", rawKey);
-        }
+        //byte[] rawKey = prefs.getByteArray(".key", null);
+        //if (rawKey == null) {
+        //    Log.error(LocaleUtils.getLocalizedString("persistencemanager.gennewkey", "gateway"));
+        //    KeyGenerator kg = KeyGenerator.getInstance("AES");
+        //    SecretKey key = kg.generateKey();
+        //    rawKey = key.getEncoded();
+        //    prefs.putByteArray(".key", rawKey);
+        //}
 
-        SecretKeySpec key = new SecretKeySpec(rawKey, "AES");
-        Cipher c = Cipher.getInstance("AES");
-        c.init(Cipher.ENCRYPT_MODE, key);
-        CipherOutputStream os = new CipherOutputStream(new FileOutputStream(db), c);
-        ObjectOutputStream oos = new ObjectOutputStream(os);
+        //SecretKeySpec key = new SecretKeySpec(rawKey, "AES");
+        //Cipher c = Cipher.getInstance("AES");
+        //c.init(Cipher.ENCRYPT_MODE, key);
+        //CipherOutputStream os = new CipherOutputStream(new FileOutputStream(db), c);
+        //ObjectOutputStream oos = new ObjectOutputStream(os);
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(db));
         oos.writeObject(contactManager);
         oos.writeObject(registrar);
         oos.flush();

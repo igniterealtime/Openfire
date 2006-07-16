@@ -12,8 +12,19 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.util.Log;
-
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
 import net.kano.joscar.flapcmd.*;
@@ -33,22 +44,9 @@ import net.kano.joscar.snaccmd.buddy.*;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
 import net.kano.joscar.snaccmd.rooms.*;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
@@ -90,17 +88,17 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         rvProcessor.addListener(rvListener);
     }
 
-    public BasicFlapConnection(OSCARGatewaySession mainSession, ByteBlock cookie) {
+    public BasicFlapConnection(OSCARSession mainSession, ByteBlock cookie) {
         super(mainSession);
         this.cookie = cookie;
     }
 
-    public BasicFlapConnection(String host, int port, OSCARGatewaySession mainSession, ByteBlock cookie) {
+    public BasicFlapConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
         super(host, port, mainSession);
         this.cookie = cookie;
     }
 
-    public BasicFlapConnection(InetAddress ip, int port, OSCARGatewaySession mainSession,
+    public BasicFlapConnection(InetAddress ip, int port, OSCARSession mainSession,
             ByteBlock cookie) {
         super(ip, port, mainSession);
         this.cookie = cookie;
@@ -140,7 +138,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
             setSnacFamilyInfos(familyInfos);
 
-            session.registerSnacFamilies(this);
+            oscarSession.registerSnacFamilies(this);
 
             request(new ClientVersionsCmd(familyInfos));
             request(new RateInfoRequest());
@@ -154,16 +152,11 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             msg = OscarTools.stripHtml(message.getMessage());
 
             Message jmessage = new Message();
-            jmessage.setTo(session.getSessionJID());
+            jmessage.setTo(oscarSession.getRegistration().getJID());
             jmessage.setBody(msg);
             jmessage.setType(Message.Type.chat);
-            jmessage.setFrom(this.session.getGateway().whois(sn));
-            try {
-                session.getJabberEndpoint().sendPacket(jmessage);
-            }
-            catch (Exception ex) {
-                Log.error("Unable to send packet.");
-            }
+            jmessage.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
+            oscarSession.getTransport().sendPacket((Packet)jmessage);
 
             //sendRequest(new SnacRequest(new SendImIcbm(sn, msg), null));
 
@@ -311,7 +304,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     }
 
     protected void dispatchRequest(SnacRequest req) {
-        session.handleRequest(req);
+        oscarSession.handleRequest(req);
     }
 
     protected SnacRequest request(SnacCommand cmd,
@@ -329,7 +322,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             // this connection supports this snac, so we'll send it here
             sendRequest(request);
         } else {
-            session.handleRequest(request);
+            oscarSession.handleRequest(request);
         }
     }
 

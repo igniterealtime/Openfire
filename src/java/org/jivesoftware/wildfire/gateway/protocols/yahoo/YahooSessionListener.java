@@ -10,151 +10,223 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
-import org.xmpp.component.ComponentException;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Presence;
-
-import java.util.Arrays;
-
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
-
+import org.xmpp.packet.Message;
 import ymsg.network.event.SessionChatEvent;
+import ymsg.network.event.SessionConferenceEvent;
+import ymsg.network.event.SessionErrorEvent;
 import ymsg.network.event.SessionEvent;
+import ymsg.network.event.SessionExceptionEvent;
+import ymsg.network.event.SessionFileTransferEvent;
 import ymsg.network.event.SessionFriendEvent;
+import ymsg.network.event.SessionListener;
 import ymsg.network.event.SessionNewMailEvent;
+import ymsg.network.event.SessionNotifyEvent;
 
 /**
- * <code>YahooSessionListener</code> is a call back mechanism for <code>ymsg9</code>
- * api.
- * 
- * @author Noah Campbell
+ * Handles incoming packets from Yahoo.
+ *
+ * This takes care of events we don't do anything with yet by logging them.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by Noah Campbell's work.
  */
-public class YahooSessionListener extends NoopSessionListener {
+public class YahooSessionListener implements SessionListener {
 
     /**
-     * Gateway session associated with this listener.
+     * Creates a Yahoo session listener affiliated with a session.
+     *
+     * @param session The YahooSession instance we are associatd with.
      */
-    private YahooGatewaySession gatewaySession;
-
-    /**
-     * Creates a YahooSessionListener that will translate events from the Yahoo!
-     * connection into XMPP formated packets.
-     * 
-     * @param gateway The yahoo gateway.
-     */
-    public YahooSessionListener(YahooGatewaySession gateway) {
-        this.gatewaySession = gateway;
+    public YahooSessionListener(YahooSession session) {
+        this.yahooSession = session;
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
+     * The transport session we are affiliated with.
      */
-    @Override
-    public void newMailReceived(SessionNewMailEvent snme) {
-        try {
-            Message message = new Message();
-            message.setTo(gatewaySession.getSessionJID());
-            message.setFrom(this.gatewaySession.getGateway().getJID());
-            message.setBody("New Mail Received (" + snme.getMailCount() + ")");
-            message.setType(Message.Type.headline);
-            gatewaySession.getJabberEndpoint().sendPacket(message);
-        }
-        catch (Exception e) {
-            Log.error("Unable to send message: " + e.getLocalizedMessage());
-        }    
+    YahooSession yahooSession;
+
+    /**
+     * @see ymsg.network.event.SessionListener#messageReceived(ymsg.network.event.SessionEvent)
+     */
+    public void messageReceived(SessionEvent event) {
+        Log.debug(event.toString());
+        Message m = new Message();
+        m.setTo(yahooSession.getRegistration().getJID());
+        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        m.setBody(event.getMessage());
+        yahooSession.getTransport().sendPacket(m);
     }
 
-    /** (non-Javadoc)
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#messageReceived(ymsg.network.event.SessionEvent)
+
+    /**
+     * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
      */
-    @Override
-    public void messageReceived(SessionEvent sessionEvent) {
-        Log.debug(sessionEvent.toString());
-        
-        try {
-            Message message = new Message();
-            message.setTo(gatewaySession.getSessionJID());
-            message.setBody(sessionEvent.getMessage());
-            message.setType(Message.Type.chat);
-            message.setFrom(this.gatewaySession.getGateway().whois(sessionEvent.getFrom()));
-            gatewaySession.getJabberEndpoint().sendPacket(message);
-            Log.debug(message.getElement().asXML());
-        }
-        catch (Exception e) {
-            Log.error("unable to send message: "+ e.getLocalizedMessage());
-        }
+    public void fileTransferReceived(SessionFileTransferEvent event) {
+        Log.info(event.toString());
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#friendsUpdateReceived(ymsg.network.event.SessionFriendEvent)
+     * @see ymsg.network.event.SessionListener#connectionClosed(ymsg.network.event.SessionEvent)
      */
-    @Override
+    public void connectionClosed(SessionEvent event) {
+        Log.info(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#listReceived(ymsg.network.event.SessionEvent)
+     */
+    public void listReceived(SessionEvent event) {
+        Log.info(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#buzzReceived(ymsg.network.event.SessionEvent)
+     */
+    public void buzzReceived(SessionEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#offlineMessageReceived(ymsg.network.event.SessionEvent)
+     */
+    public void offlineMessageReceived(SessionEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#errorPacketReceived(ymsg.network.event.SessionErrorEvent)
+     */
+    public void errorPacketReceived(SessionErrorEvent event) {
+        Log.error(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#inputExceptionThrown(ymsg.network.event.SessionExceptionEvent)
+     */
+    public void inputExceptionThrown(SessionExceptionEvent event) {
+        event.getException().printStackTrace();
+        Log.error(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
+     */
+    public void newMailReceived(SessionNewMailEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#notifyReceived(ymsg.network.event.SessionNotifyEvent)
+     */
+    public void notifyReceived(SessionNotifyEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#contactRequestReceived(ymsg.network.event.SessionEvent)
+     */
+    public void contactRequestReceived(SessionEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#contactRejectionReceived(ymsg.network.event.SessionEvent)
+     */
+    public void contactRejectionReceived(SessionEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#conferenceInviteReceived(ymsg.network.event.SessionConferenceEvent)
+     */
+    public void conferenceInviteReceived(SessionConferenceEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#conferenceInviteDeclinedReceived(ymsg.network.event.SessionConferenceEvent)
+     */
+    public void conferenceInviteDeclinedReceived(SessionConferenceEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#conferenceLogonReceived(ymsg.network.event.SessionConferenceEvent)
+     */
+    public void conferenceLogonReceived(SessionConferenceEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#conferenceLogoffReceived(ymsg.network.event.SessionConferenceEvent)
+     */
+    public void conferenceLogoffReceived(SessionConferenceEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#conferenceMessageReceived(ymsg.network.event.SessionConferenceEvent)
+     */
+    public void conferenceMessageReceived(SessionConferenceEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#friendsUpdateReceived(ymsg.network.event.SessionFriendEvent)
+     */
     public void friendsUpdateReceived(SessionFriendEvent event) {
-        try {
-            updateStatus(event);
-        }
-        catch (Exception e) {
-            Log.debug(LocaleUtils.getLocalizedString("yahoosessionlistener.friendupdateerror", "gateway", Arrays.asList(e.getLocalizedMessage())));
-        }
+        Log.debug(event.toString());
     }
 
     /**
-     * Update a friends status.
-     * 
-     * @param event
-     * @throws ComponentException
+     * @see ymsg.network.event.SessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
      */
-    private void updateStatus(SessionFriendEvent event) throws ComponentException {
-        Presence p = new Presence();
-        p.setStatus(event.getFriend().getCustomStatusMessage());
-        p.setFrom(gatewaySession.getGateway().whois(event.getFriend().getId()));
-        p.setTo(gatewaySession.getSessionJID());
-        gatewaySession.getJabberEndpoint().sendPacket(p);
+    public void friendAddedReceived(SessionFriendEvent event) {
+        Log.debug(event.toString());
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#chatMessageReceived(ymsg.network.event.SessionChatEvent)
+     * @see ymsg.network.event.SessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
      */
-    @Override
-    public void chatMessageReceived(SessionChatEvent sessionEvent) {
-        Log.debug(sessionEvent.toString());
-        try {
-            Message message = new Message();
-            message.setTo(gatewaySession.getSessionJID());
-            message.setBody(sessionEvent.getMessage());
-            message.setFrom(this.gatewaySession.getGateway().whois(sessionEvent.getFrom()));
-            gatewaySession.getJabberEndpoint().sendPacket(message);
-        }
-        catch (Exception e) {
-            Log.error("unable to send message: "+ e.getLocalizedMessage());
-        }
+    public void friendRemovedReceived(SessionFriendEvent event) {
+        Log.debug(event.toString());
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#connectionClosed(ymsg.network.event.SessionEvent)
+     * @see ymsg.network.event.SessionListener#chatLogonReceived(ymsg.network.event.SessionChatEvent)
      */
-    @Override
-    public void connectionClosed(SessionEvent arg0) {
-        gatewaySession.getJabberEndpoint().getValve().close();
+    public void chatLogonReceived(SessionChatEvent event) {
+        Log.debug(event.toString());
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
+     * @see ymsg.network.event.SessionListener#chatLogoffReceived(ymsg.network.event.SessionChatEvent)
      */
-    @Override
-    public void friendAddedReceived(SessionFriendEvent arg0) {
-        // TODO Auto-generated method stub
-        super.friendAddedReceived(arg0);
+    public void chatLogoffReceived(SessionChatEvent event) {
+        Log.debug(event.toString());
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.protocols.yahoo.NoopSessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
+     * @see ymsg.network.event.SessionListener#chatMessageReceived(ymsg.network.event.SessionChatEvent)
      */
-    @Override
-    public void friendRemovedReceived(SessionFriendEvent arg0) {
-        // TODO Auto-generated method stub
-        super.friendRemovedReceived(arg0);
+    public void chatMessageReceived(SessionChatEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#chatUserUpdateReceived(ymsg.network.event.SessionChatEvent)
+     */
+    public void chatUserUpdateReceived(SessionChatEvent event) {
+        Log.debug(event.toString());
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#chatConnectionClosed(ymsg.network.event.SessionEvent)
+     */
+    public void chatConnectionClosed(SessionEvent event) {
+        Log.debug(event.toString());
     }
 
 }

@@ -37,23 +37,23 @@ public class ServiceConnection extends BasicFlapConnection {
 
     protected int serviceFamily;
 
-    public ServiceConnection(OSCARGatewaySession mainSession, ByteBlock cookie, int serviceFamily) {
+    public ServiceConnection(OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
         super(mainSession, cookie);
         this.serviceFamily = serviceFamily;
     }
 
-    public ServiceConnection(String host, int port, OSCARGatewaySession mainSession, ByteBlock cookie, int serviceFamily) {
+    public ServiceConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
         super(host, port, mainSession, cookie);
         this.serviceFamily = serviceFamily;
     }
 
-    public ServiceConnection(InetAddress ip, int port, OSCARGatewaySession mainSession, ByteBlock cookie, int serviceFamily) {
+    public ServiceConnection(InetAddress ip, int port, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
         super(ip, port, mainSession, cookie);
         this.serviceFamily = serviceFamily;
     }
 
     protected void clientReady() {
-        session.serviceReady(this);
+        oscarSession.serviceReady(this);
         super.clientReady();
     }
 
@@ -63,11 +63,11 @@ public class ServiceConnection extends BasicFlapConnection {
                 + ": " + e.getReason());
 
         if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
-            session.serviceFailed(this);
+            oscarSession.serviceFailed(this);
         } else if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {
-            session.serviceConnected(this);
+            oscarSession.serviceConnected(this);
         } else if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED) {
-            session.serviceDied(this);
+            oscarSession.serviceDied(this);
         }
     }
 
@@ -151,7 +151,7 @@ public class ServiceConnection extends BasicFlapConnection {
             byte[] data = idc.getIconData().toByteArray();
             Image icon = Toolkit.getDefaultToolkit().createImage(data);
 
-//            session.getUserInfo(sn).setIcon(icon);
+//            oscarSession.getUserInfo(sn).setIcon(icon);
 
         }
     }

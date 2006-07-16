@@ -26,15 +26,15 @@ import java.net.InetAddress;
 public class LoginConnection extends BaseFlapConnection {
     protected boolean loggedin = false;
 
-    public LoginConnection(OSCARGatewaySession mainSession) {
+    public LoginConnection(OSCARSession mainSession) {
         super(mainSession); // Hand off to BaseFlapConnection
     }
 
-    public LoginConnection(String host, int port, OSCARGatewaySession mainSession) {
+    public LoginConnection(String host, int port, OSCARSession mainSession) {
         super(host, port, mainSession); // Hand off to BaseFlapConnection
     }
 
-    public LoginConnection(InetAddress ip, int port, OSCARGatewaySession mainSession) {
+    public LoginConnection(InetAddress ip, int port, OSCARSession mainSession) {
         super(ip, port, mainSession); // Hand off to BaseFlapConnection
     }
 
@@ -44,7 +44,7 @@ public class LoginConnection extends BaseFlapConnection {
         if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {
             Log.debug("connected, sending flap version and key request");
             getFlapProcessor().sendFlap(new LoginFlapCmd());
-            request(new KeyRequest(session.getLegacyName()));
+            request(new KeyRequest(oscarSession.getRegistration().getUsername()));
         }
         else if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
             Log.info("connection failed: " + e.getReason());
@@ -75,9 +75,7 @@ public class LoginConnection extends BaseFlapConnection {
                     "AOL Instant Messenger, version 5.2.3292/WIN32",
                     5, 1, 0, 3292, 238);
 
-            request(new AuthRequest(
-                    session.getLegacyName(), session.getLegacyPassword(),
-                    version, authkey));
+            request(new AuthRequest(oscarSession.getRegistration().getUsername(), oscarSession.getRegistration().getPassword(), version, authkey));
 
         } else if (cmd instanceof AuthResponse) {
             AuthResponse ar = (AuthResponse) cmd;
@@ -90,8 +88,7 @@ public class LoginConnection extends BaseFlapConnection {
                 }
             } else {
                 loggedin = true;
-                session.startBosConn(ar.getServer(), ar.getPort(),
-                        ar.getCookie());
+                oscarSession.startBosConn(ar.getServer(), ar.getPort(), ar.getCookie());
                 Log.info("connecting to " + ar.getServer() + ":"
                         + ar.getPort());
             }

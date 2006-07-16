@@ -47,20 +47,28 @@ public abstract class BaseTransport implements Component {
 
     /**
      * Create a new BaseTransport instance.
-     *
-     * @param jid JID associated with the transport.
-     * @param description Description of the transport (for Disco).
-     * @param type Type of the transport.
      */
-    public BaseTransport(JID jid, String description, TransportType type) {
-        this.jid = jid;
+    public BaseTransport() {
+        // We've got nothing to do here.
+    }
+
+    /**
+     * Set up the transport instance.
+     *
+     * @param type Type of the transport.
+     * @param description Description of the transport (for Disco).
+     */
+    public void setup(TransportType type, String description) {
         this.description = description;
         this.transportType = type;
     }
 
-    // TODO: Why do I need this?
-    public BaseTransport() {
-        // I don't understand why I need this.
+    /**
+     * Handles initialization of the transport.
+     */
+    public void initialize(JID jid, ComponentManager componentManager) {
+        this.jid = jid;
+        this.componentManager = componentManager;
     }
 
     /**
@@ -449,13 +457,6 @@ public abstract class BaseTransport implements Component {
      */
     public JID convertIDToJID(String username) {
         return new JID(username, this.jid.getDomain(), null);
-    }
-
-    /**
-     * Handles initialization of the transport.
-     */
-    public void initialize(JID jid, ComponentManager componentManager) {
-        this.componentManager = componentManager;
     }
 
     /**

@@ -13,9 +13,16 @@ package org.jivesoftware.wildfire.gateway;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -23,6 +30,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.packet.Presence;
 
 /**
@@ -81,6 +89,11 @@ public abstract class BaseTransport implements Component {
      * Component Manager associated with transport.
      */
     public ComponentManager componentManager = null;
+
+    /**
+     * Manager component for user rosters.
+     */
+    public final RosterManager rosterManager = new RosterManager();
 
     /**
      * Type of the transport in question.
@@ -239,13 +252,13 @@ public abstract class BaseTransport implements Component {
         }
 
         if (xmlns.equals(DISCO_INFO)) {
-            reply.add(handleDiscoInfo(packet));
+            reply.addAll(handleDiscoInfo(packet));
         }
         else if (xmlns.equals(DISCO_ITEMS)) {
-            reply.add(handleDiscoItems(packet));
+            reply.addAll(handleDiscoItems(packet));
         }
         else if (xmlns.equals(IQ_REGISTER)) {
-            reply.add(handleIQRegister(packet));
+            reply.addAll(handleIQRegister(packet));
         }
 
         return reply;
@@ -257,8 +270,23 @@ public abstract class BaseTransport implements Component {
      * @param packet An IQ packet in the disco info namespace.
      * @return An IQ packet to be returned to the user.
      */
-    private IQ handleDiscoInfo(IQ packet) {
-        IQ reply = IQ.createResultIQ(packet);
+    private List<Packet> handleDiscoInfo(IQ packet) {
+        List<Packet> reply = new ArrayList<Packet>();
+
+        if (packet.getTo().getNode() == null) {
+            // Requested info from transport itself.
+            IQ result = IQ.createResultIQ(packet);
+            Element response = DocumentHelper.createElement(QName.get("query", DISCO_INFO));
+            response.addElement("identity")
+                    .addAttribute("category", "gateway")
+                    .addAttribute("type", this.transportType.toString())
+                    .addAttribute("name", this.description);
+            response.addElement("feature")
+                    .addAttribute("var", IQ_REGISTER);
+            result.setChildElement(response);
+            reply.add(result);
+        }
+
         return reply;
     }
 
@@ -268,8 +296,10 @@ public abstract class BaseTransport implements Component {
      * @param packet An IQ packet in the disco items namespace.
      * @return An IQ packet to be returned to the user.
      */
-    private IQ handleDiscoItems(IQ packet) {
-        IQ reply = IQ.createResultIQ(packet);
+    private List<Packet> handleDiscoItems(IQ packet) {
+        List<Packet> reply = new ArrayList<Packet>();
+        IQ result = IQ.createResultIQ(packet);
+        reply.add(result);
         return reply;
     }
 
@@ -279,8 +309,135 @@ public abstract class BaseTransport implements Component {
      * @param packet An IQ packet in the iq registration namespace.
      * @return An IQ packet to be returned to the user.
      */
-    private IQ handleIQRegister(IQ packet) {
-        IQ reply = IQ.createResultIQ(packet);
+    private List<Packet> handleIQRegister(IQ packet) {
+        List<Packet> reply = new ArrayList<Packet>();
+
+        Element remove = packet.getChildElement().element("remove");
+        if (remove != null) {
+            // User wants to unregister.  =(
+            // this.convinceNotToLeave() ... kidding.
+            IQ result = IQ.createResultIQ(packet);
+
+            Collection<Registration> registrations = registrationManager.getRegistrations(packet.getFrom(), this.transportType);
+            // For now, we're going to have to just nuke all of these.  Sorry.
+            for (Registration reg : registrations) {
+                registrationManager.deleteRegistration(reg);
+            }
+
+            // Tell the end user the transport went byebye.
+            Presence unavailable = new Presence(Presence.Type.unavailable);
+            unavailable.setTo(packet.getFrom());
+            unavailable.setFrom(packet.getTo());
+            reply.add(unavailable);
+
+            // Clean up the user's contact list.
+            try {
+                Roster roster = rosterManager.getRoster(packet.getFrom().getNode());
+                for (RosterItem ri : roster.getRosterItems()) {
+                    if (ri.getJid().getDomain() == this.jid.getDomain()) {
+                        try {
+                            roster.deleteRosterItem(ri.getJid(), false);
+                        }
+                        catch (Exception e) {
+                            Log.error("Error removing roster item: " + ri.toString());
+                        }
+                    }
+                }
+            }
+            catch (UserNotFoundException e) {
+                Log.error("Error cleaning up contact list of: " + packet.getFrom());
+                result.setError(Condition.bad_request);
+            }
+
+            reply.add(result);
+        }
+        else {
+            // User wants to register with the transport.
+            String username = null;
+            String password = null;
+
+            if (packet.getType() == IQ.Type.set) {
+                Element userEl = packet.getChildElement().element("username");
+                Element passEl = packet.getChildElement().element("password");
+
+                if (userEl != null) {
+                    username = userEl.getTextTrim();
+                }
+
+                if (passEl != null) {
+                    password = passEl.getTextTrim();
+                }
+
+                if (username == null || password == null) {
+                    // Found nothing from stanza, lets yell.
+                    IQ result = IQ.createResultIQ(packet);
+                    result.setError(Condition.bad_request);
+                    reply.add(result);
+                }
+                else {
+                    Log.info("Registered " + packet.getFrom() + " as " + username);
+                    IQ result = IQ.createResultIQ(packet);
+                    Element response = DocumentHelper.createElement(QName.get("query", IQ_REGISTER));
+                    result.setChildElement(response);
+                    reply.add(result);
+
+                    registrationManager.createRegistration(packet.getFrom(), this.transportType, username, password);
+
+                    try {
+                        Roster roster = rosterManager.getRoster(packet.getFrom().getNode());
+                        try {
+                            RosterItem gwitem = roster.getRosterItem(packet.getTo());
+                            if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
+                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                            }
+                            if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
+                                gwitem.setAskStatus(RosterItem.ASK_NONE);
+                            }
+                            roster.updateRosterItem(gwitem);
+                        }
+                        catch (UserNotFoundException e) {
+                            try {
+                                RosterItem gwitem = roster.createRosterItem(packet.getTo(), true);
+                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                                gwitem.setAskStatus(RosterItem.ASK_NONE);
+                                roster.updateRosterItem(gwitem);
+                            }
+                            catch (UserAlreadyExistsException ee) {
+                                Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                                IQ eresult = IQ.createResultIQ(packet);
+                                eresult.setError(Condition.bad_request);
+                                reply.add(eresult);
+                            }
+                            catch (Exception ee) {
+                                Log.error("createRosterItem caused exception: " + ee.getMessage());
+                                IQ eresult = IQ.createResultIQ(packet);
+                                eresult.setError(Condition.bad_request);
+                                reply.add(eresult);
+                            }
+                        }
+                    }
+                    catch (UserNotFoundException e) {
+                        Log.error("Someone attempted to register with the gateway who is not registered with the server: " + packet.getFrom());
+                        IQ eresult = IQ.createResultIQ(packet);
+                        eresult.setError(Condition.bad_request);
+                        reply.add(eresult);
+                    }
+                }
+            }
+            else if (packet.getType() == IQ.Type.get) {
+                Element response = DocumentHelper.createElement(QName.get("query", IQ_REGISTER));
+                IQ result = IQ.createResultIQ(packet);
+
+                response.addElement("instruction").addText("Please enter your " + this.getName() + " username and password.");
+                response.addElement("username");
+                response.addElement("password");
+
+                result.setChildElement(response);
+
+                reply.add(result);
+            }
+        }
+
         return reply;
     }
 

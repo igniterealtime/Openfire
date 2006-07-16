@@ -56,22 +56,18 @@ public class GatewayPlugin implements Plugin {
         picoContainer.start();
 
         transports = new Hashtable<String,TransportInstance>();
-
         componentManager = ComponentManagerFactory.getComponentManager();
 
         /* Set up AIM transport. */
-        transports.put("aim", new TransportInstance("aim",
-                "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        transports.put("aim", new TransportInstance(TransportType.aim, "AIM Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("aim");
 
         /* Set up ICQ transport. */
-        transports.put("icq", new TransportInstance("icq",
-                "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        transports.put("icq", new TransportInstance(TransportType.icq, "ICQ Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("icq");
 
         /* Set up Yahoo transport. */
-        transports.put("yahoo", new TransportInstance("yahoo",
-                "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
+        transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
         maybeStartService("yahoo");
     }
 

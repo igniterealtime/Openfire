@@ -13,7 +13,7 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.gateway.util.GatewayInstance;
+import org.jivesoftware.wildfire.gateway.TransportInstance;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.picocontainer.MutablePicoContainer;
@@ -24,8 +24,11 @@ import java.io.File;
 import java.util.Hashtable;
 
 /**
- * IM Gateway plugin, which provides connectivity to IM networks that don't support
- * the XMPP protocol. 
+ * IM Gateway plugin, which provides connectivity to IM networks that
+ * don't support the XMPP protocol. 
+ *
+ * The entire plugin is referred to as the gateway, while individual
+ * IM network mappings are referred to as transports.
  *
  * @author Daniel Henninger
  */
@@ -34,9 +37,9 @@ public class GatewayPlugin implements Plugin {
     private MutablePicoContainer picoContainer;
 
     /**
-     *  Represents all configured gateway handlers.
+     *  Represents all configured transport handlers.
      */
-    private Hashtable<String,GatewayInstance> gateways; 
+    private Hashtable<String,TransportInstance> transports; 
 
     /**
      *  Represents the base component manager.
@@ -52,29 +55,29 @@ public class GatewayPlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         picoContainer.start();
 
-        gateways = new Hashtable<String,GatewayInstance>();
+        transports = new Hashtable<String,TransportInstance>();
 
         componentManager = ComponentManagerFactory.getComponentManager();
 
-        /* Set up AIM gateway. */
-        gateways.put("aim", new GatewayInstance("aim",
+        /* Set up AIM transport. */
+        transports.put("aim", new TransportInstance("aim",
                 "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("aim");
 
-        /* Set up ICQ gateway. */
-        gateways.put("icq", new GatewayInstance("icq",
+        /* Set up ICQ transport. */
+        transports.put("icq", new TransportInstance("icq",
                 "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
         maybeStartService("icq");
 
-        /* Set up Yahoo gateway. */
-        gateways.put("yahoo", new GatewayInstance("yahoo",
+        /* Set up Yahoo transport. */
+        transports.put("yahoo", new TransportInstance("yahoo",
                 "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
         maybeStartService("yahoo");
     }
 
     public void destroyPlugin() {
-        for (GatewayInstance gwInstance : gateways.values()) {
-            gwInstance.stopInstance();
+        for (TransportInstance trInstance : transports.values()) {
+            trInstance.stopInstance();
         }
         picoContainer.stop();
         picoContainer.dispose();
@@ -92,38 +95,38 @@ public class GatewayPlugin implements Plugin {
     }
 
     /**
-     *  Starts a gateway service, identified by subdomain.  The gateway
+     *  Starts a transport service, identified by subdomain.  The transport
      *  service will only start if it is enabled.
      */
     private void maybeStartService(String serviceName) {
-        GatewayInstance gwInstance = gateways.get(serviceName);
-        gwInstance.startInstance();
-        Log.debug("Starting gateway service: "+serviceName);
+        TransportInstance trInstance = transports.get(serviceName);
+        trInstance.startInstance();
+        Log.debug("Starting transport service: "+serviceName);
     }
 
     /**
-     *  Enables a gateway service, identified by subdomain.
+     *  Enables a transport service, identified by subdomain.
      */
     public void enableService(String serviceName) {
-        GatewayInstance gwInstance = gateways.get(serviceName);
-        gwInstance.enable();
-        Log.debug("Enabling gateway service: "+serviceName);
+        TransportInstance trInstance = transports.get(serviceName);
+        trInstance.enable();
+        Log.debug("Enabling transport service: "+serviceName);
     }
 
     /**
-     *  Disables a gateway service, identified by subdomain.
+     *  Disables a transport service, identified by subdomain.
      */
     public void disableService(String serviceName) {
-        GatewayInstance gwInstance = gateways.get(serviceName);
-        gwInstance.disable();
-        Log.debug("Disabling gateway service: "+serviceName);
+        TransportInstance trInstance = transports.get(serviceName);
+        trInstance.disable();
+        Log.debug("Disabling transport service: "+serviceName);
     }
 
     /**
-     *  Returns the state of a gateway service, identified by subdomain.
+     *  Returns the state of a transport service, identified by subdomain.
      */
     public Boolean serviceEnabled(String serviceName) {
-        GatewayInstance gwInstance = gateways.get(serviceName);
-        return gwInstance.isEnabled();
+        TransportInstance trInstance = transports.get(serviceName);
+        return trInstance.isEnabled();
     }
 }

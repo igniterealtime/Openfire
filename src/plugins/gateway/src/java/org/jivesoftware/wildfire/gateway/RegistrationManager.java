@@ -23,7 +23,7 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 /**
- * Manages registration data for gateways. Individual gateways use the registration data
+ * Manages registration data for transports. Individual transports use the registration data
  * and then create sessions used to exchange messages and presence data.
  *
  * @author Matt Tucker
@@ -37,14 +37,14 @@ public class RegistrationManager implements Startable {
     private static final String ALL_REGISTRATIONS =
             "SELECT registrationID FROM gatewayRegistration";
     private static final String LOAD_REGISTRATION =
-            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND gatewayType=? " +
+            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=? " +
             "AND username=?";
     private static final String ALL_USER_REGISTRATIONS =
             "SELECT registrationID FROM gatewayRegistration WHERE jid=?";
     private static final String ALL_GATEWAY_REGISTRATIONS =
-            "SELECT registrationID FROM gatewayRegistration WHERE gatewayType=?";
+            "SELECT registrationID FROM gatewayRegistration WHERE transportType=?";
     private static final String USER_GATEWAY_REGISTRATIONS =
-            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND gatewayType=?";
+            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=?";
 
     public void start() {
 
@@ -58,15 +58,15 @@ public class RegistrationManager implements Startable {
      * Creates a new registration.
      *
      * @param jid the JID of the user making the registration.
-     * @param gatewayType the type of the gateway.
-     * @param username the username on the gateway service.
-     * @param password the password on the gateway service.
+     * @param transportType the type of the transport.
+     * @param username the username on the transport service.
+     * @param password the password on the transport service.
      * @return a new registration.
      */
-    public Registration createRegistration(JID jid, GatewayType gatewayType, String username,
+    public Registration createRegistration(JID jid, TransportType transportType, String username,
             String password)
     {
-        return new Registration(jid, gatewayType, username, password);
+        return new Registration(jid, transportType, username, password);
     }
 
     /**
@@ -93,12 +93,12 @@ public class RegistrationManager implements Startable {
     }
 
     /**
-     * Returns all registrations for a particular type of gateway.
+     * Returns all registrations for a particular type of transport.
      *
-     * @param gatewayType the gateway type.
-     * @return all registrations for the gateway type.
+     * @param transportType the transport type.
+     * @return all registrations for the transport type.
      */
-    public Collection<Registration> getRegistrations(GatewayType gatewayType) {
+    public Collection<Registration> getRegistrations(TransportType transportType) {
         List<Long> registrationIDs = new ArrayList<Long>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -106,7 +106,7 @@ public class RegistrationManager implements Startable {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_GATEWAY_REGISTRATIONS);
-            pstmt.setString(1, gatewayType.name());
+            pstmt.setString(1, transportType.name());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 registrationIDs.add(rs.getLong(1));
@@ -162,17 +162,17 @@ public class RegistrationManager implements Startable {
     }
 
     /**
-     * Returns all registrations that a JID has on a particular gateway type.
-     * In the typical case, a JID has a single registration with a particular gateway
+     * Returns all registrations that a JID has on a particular transport type.
+     * In the typical case, a JID has a single registration with a particular transport
      * type. However, it's also possible to maintain multiple registrations. For example,
      * the user "joe_smith@example.com" might have have two user accounts on the AIM
-     * gateway service: "jsmith" and "joesmith".
+     * transport service: "jsmith" and "joesmith".
      *
      * @param jid the JID of the user.
-     * @param gatewayType the type of the gateway.
-     * @return all registrations for the JID of a particular gateway type.
+     * @param transportType the type of the transport.
+     * @return all registrations for the JID of a particular transport type.
      */
-    public Collection<Registration> getRegistrations(JID jid, GatewayType gatewayType) {
+    public Collection<Registration> getRegistrations(JID jid, TransportType transportType) {
         List<Long> registrationIDs = new ArrayList<Long>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -182,7 +182,7 @@ public class RegistrationManager implements Startable {
             pstmt = con.prepareStatement(USER_GATEWAY_REGISTRATIONS);
             // Use the bare JID of the user.
             pstmt.setString(1, jid.toBareJID());
-            pstmt.setString(2, gatewayType.name());
+            pstmt.setString(2, transportType.name());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 registrationIDs.add(rs.getLong(1));
@@ -203,15 +203,15 @@ public class RegistrationManager implements Startable {
     }
 
     /**
-     * Returns a registration given a JID, gateway type, and username.
+     * Returns a registration given a JID, transport type, and username.
      *
      * @param jid the JID of the user.
-     * @param gatewayType the gateway type.
-     * @param username the username on the gateway service.
+     * @param transportType the transport type.
+     * @param username the username on the transport service.
      * @return the registration.
      * @throws NotFoundException if the registration could not be found.
      */
-    public Registration getRegistration(JID jid, GatewayType gatewayType, String username)
+    public Registration getRegistration(JID jid, TransportType transportType, String username)
             throws NotFoundException
     {
         long registrationID = -1;
@@ -222,7 +222,7 @@ public class RegistrationManager implements Startable {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_REGISTRATION);
             pstmt.setString(1, jid.toBareJID());
-            pstmt.setString(2, gatewayType.name());
+            pstmt.setString(2, transportType.name());
             pstmt.setString(3, username);
             rs = pstmt.executeQuery();
             if (!rs.next()) {

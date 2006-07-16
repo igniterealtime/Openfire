@@ -11,21 +11,9 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.gateway.AbstractGatewaySession;
-import org.jivesoftware.wildfire.gateway.Endpoint;
-import org.jivesoftware.wildfire.gateway.Gateway;
-import org.jivesoftware.wildfire.gateway.SubscriptionInfo;
-import org.jivesoftware.wildfire.gateway.roster.ForeignContact;
-import org.jivesoftware.wildfire.gateway.roster.UnknownForeignContactException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.conn.*;
@@ -33,13 +21,32 @@ import net.kano.joscar.snaccmd.icbm.*;
 import net.kano.joscar.snaccmd.ssi.*;
 import net.kano.joscar.ssiitem.*;
 import net.kano.joscar.ByteBlock;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 /**
- * Manages the session to the underlying legacy system.
+ * Represents an OSCAR session.
+ *
+ * This is the interface with which the base transport functionality will
+ * communicate with OSCAR (AIM/ICQ).
  * 
  * @author Daniel Henninger
  */
-public class OSCARGatewaySession extends AbstractGatewaySession implements Endpoint {
+public class OSCARSession extends TransportSession {
+
+    /**
+     * Initialize a new session object for OSCAR
+     * 
+     * @param info The subscription information to use during login.
+     * @param gateway The gateway that created this session.
+     */
+    public OSCARSession(Registration registration, OSCARTransport transport) {
+        super(registration, transport);
+    }
 
     /**
      * OSCAR Session Pieces
@@ -47,7 +54,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     private LoginConnection loginConn = null;
     private BOSConnection bosConn = null;
     private Set services = new HashSet();
-    private Boolean connected = false;
+    private Boolean loggedIn = false;
     
     /**
      * The Screenname, Password, and JID associated with this session.
@@ -57,97 +64,38 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     private String legacypass = null;
     
     /**
-     * Misc tracking variables.
+     * SSI tracking variables.
      */
-    private ArrayList<ForeignContact> contacts = new ArrayList<ForeignContact>();
+    private ArrayList<BuddyItem> buddies = new ArrayList<BuddyItem>();
     private ArrayList<GroupItem> groups = new ArrayList<GroupItem>();
     private Integer highestBuddyId = -1;
     private Integer highestGroupId = -1;
 
-    /**
-     * Initialize a new session object for OSCAR
-     * 
-     * @param info The subscription information to use during login.
-     * @param gateway The gateway that created this session.
-     */
-    public OSCARGatewaySession(SubscriptionInfo info, Gateway gateway) {
-        super(info, gateway);
-        this.jid = info.jid;
-        this.legacyname = info.username;
-        this.legacypass = info.password;
-    }
-
-    public synchronized void login() throws Exception {
+    public void logIn() {
         Log.debug("Login called");
-        if (!isConnected()) {
+        if (!isLoggedIn()) {
             Log.debug("Connecting...");
             loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
             loginConn.connect();
 
-            getJabberEndpoint().getValve().open(); // allow any buffered messages to pass through
-            connected = true;
+            loggedIn = true;
         } else {
             Log.warn(this.jid + " is already logged in");
         }
     }
     
-    public boolean isConnected() {
-        Log.debug("isConnected called");
-        return connected;
+    public Boolean isLoggedIn() {
+        Log.debug("isLoggedIn called");
+        return loggedIn;
     }
     
-    public synchronized void logout() throws Exception {
+    public synchronized void logOut() {
         Log.debug("logout called");
-        Log.info("[" + this.jid + "]" + getSubscriptionInfo().username + " logged out.");
         bosConn.disconnect();
-        connected = false;
+        loggedIn = false;
     }
     
-    @Override
-    public String toString() { return "[" + this.getSubscriptionInfo().username + " CR:" + clientRegistered + " SR:" + serverRegistered + "]"; }
-
-    public String getId() {
-        Log.debug("getId called");
-        return this.jid.toBareJID();
-    }
-
-    public String getLegacyName() {
-        Log.debug("getLegacyName called");
-        return this.legacyname;
-    }
-
-    public String getLegacyPassword() {
-        Log.debug("getLegacyPassword called");
-        return this.legacypass;
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<ForeignContact> getContacts() {
-        Log.debug("getContacts called");
-        return contacts;
-    }
-
-    public JID getSessionJID() {
-        Log.debug("getSessionJID called");
-        return this.jid;
-    }
-
-    public JID getJID() {
-        Log.debug("getJID called");
-        return this.jid;
-    }
-
-    public String getStatus(JID to) {
-        Log.debug("getStatus called");
-        for (ForeignContact c : contacts) {
-            if (c.getName().equals(to.getNode())) {
-                return c.getStatus().getValue();
-            }
-        }
-        return null;
-    }
-
-    public void addContact(JID jid) throws Exception {
+    public void addContact(JID jid) {
         Log.debug("addContact called");
         Integer newBuddyId = highestBuddyId + 1;
         Integer groupId = -1;
@@ -167,33 +115,19 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
             new BuddyItem(jid.getNode(), newBuddyId, groupId).toSsiItem() }));
     }
 
-    public void removeContact(JID jid) throws Exception {
+    public void removeContact(JID jid) {
         Log.debug("removeContact called");
-        for (ForeignContact c : contacts) {
-            if (c.getName().equals(jid.getNode())) {
-                OSCARForeignContact oc = (OSCARForeignContact)c;
-                request(new DeleteItemsCmd(new SsiItem[] { oc.getSSIItem() }));
-                contacts.remove(contacts.indexOf(c));
+        for (BuddyItem i : buddies) {
+            if (i.getScreenname().equals(jid.getNode())) {
+                request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
+                buddies.remove(buddies.indexOf(i));
             }
         }
     }
 
-    public void sendPacket(Packet packet) {
-        Log.debug("sendPacket called:"+packet.toString());
-        if (packet instanceof Message) {
-            Message m = (Message)packet;
-            request(new SendImIcbm(packet.getTo().getNode(), m.getBody()));
-        }
-    }
-
-    public ForeignContact getContact(JID to) throws UnknownForeignContactException {
-        Log.debug("getContact called");
-        for (ForeignContact c : contacts) {
-            if (c.getName().equals(to.getNode())) {
-                return c;
-            }
-        }
-        return null;
+    public void sendMessage(JID jid, String message) {
+        Log.debug("sendPacket called:"+jid.toString()+","+message);
+        request(new SendImIcbm(jid.getNode(), message));
     }
 
     void startBosConn(String server, int port, ByteBlock cookie) {
@@ -272,7 +206,7 @@ public class OSCARGatewaySession extends AbstractGatewaySession implements Endpo
     }
 
     void gotBuddy(BuddyItem buddy) {
-        contacts.add(new OSCARForeignContact(buddy, this.gateway));
+        buddies.add(buddy);
         if (buddy.getId() > highestBuddyId) {
             highestBuddyId = buddy.getId();
         }

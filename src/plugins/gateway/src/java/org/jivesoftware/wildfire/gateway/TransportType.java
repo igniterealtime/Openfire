@@ -11,12 +11,12 @@
 package org.jivesoftware.wildfire.gateway;
 
 /**
- * An enumeration for the valid gateway types, which encompasses proprietary IM networks
+ * An enumeration for the valid transport types, which encompasses proprietary IM networks
  * as well as other IM protocols.
  *
  * @author Matt Tucker
  */
-public enum GatewayType {
+public enum TransportType {
 
     /**
      * The AOL instant messaging service.

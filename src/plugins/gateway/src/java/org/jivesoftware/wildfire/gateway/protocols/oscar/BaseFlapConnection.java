@@ -24,23 +24,23 @@ import java.net.InetAddress;
 
 public abstract class BaseFlapConnection extends ClientFlapConn {
     protected ClientSnacProcessor sp;
-    OSCARGatewaySession session;
+    OSCARSession oscarSession;
 
-    public BaseFlapConnection(OSCARGatewaySession mainSession) {
+    public BaseFlapConnection(OSCARSession mainSession) {
         initBaseFlapConnection();
-        session = mainSession;
+        oscarSession = mainSession;
     }
 
-    public BaseFlapConnection(String host, int port, OSCARGatewaySession mainSession) {
+    public BaseFlapConnection(String host, int port, OSCARSession mainSession) {
         super(host, port); // Hand off to ClientFlapConn
         initBaseFlapConnection();
-        session = mainSession;
+        oscarSession = mainSession;
     }
 
-    public BaseFlapConnection(InetAddress ip, int port, OSCARGatewaySession mainSession) {
+    public BaseFlapConnection(InetAddress ip, int port, OSCARSession mainSession) {
         super(ip, port); // Hand off to ClientFlapConn
         initBaseFlapConnection();
-        session = mainSession;
+        oscarSession = mainSession;
     }
 
     private void initBaseFlapConnection() {
@@ -90,7 +90,7 @@ public abstract class BaseFlapConnection extends ClientFlapConn {
         return sp;
     }
 
-    public OSCARGatewaySession getMainSession() { return session; }
+    public OSCARSession getMainSession() { return oscarSession; }
 
     void sendRequest(SnacRequest req) {
         if (!req.hasListeners()) req.addListener(genericReqListener);

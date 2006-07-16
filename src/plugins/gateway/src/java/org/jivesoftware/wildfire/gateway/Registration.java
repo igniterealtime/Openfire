@@ -22,11 +22,11 @@ import java.util.Date;
 import java.sql.*;
 
 /**
- * Contains information about the registration a user has made with an external gateway.
- * Each registration includes a username and password used to login to the gateway
+ * Contains information about the registration a user has made with an external transport.
+ * Each registration includes a username and password used to login to the transport
  * as well as a registration date and last login date.<p>
  *
- * The password for the gateway registration is stored in encrypted form using
+ * The password for the transport registration is stored in encrypted form using
  * the Wildfire password encryption key. See {@link AuthFactory#encryptPassword(String)}.
  *
  * @author Matt Tucker
@@ -35,10 +35,10 @@ import java.sql.*;
 public class Registration {
 
     private static final String INSERT_REGISTRATION =
-            "INSERT INTO gatewayRegistration(registrationID, jid, gatewayType, " +
+            "INSERT INTO gatewayRegistration(registrationID, jid, transportType, " +
             "username, password, registrationDate) VALUES (?,?,?,?,?,?)";
     private static final String LOAD_REGISTRATION =
-            "SELECT jid, gatewayType, username, password, registrationDate, lastLogin " +
+            "SELECT jid, transportType, username, password, registrationDate, lastLogin " +
             "FROM gatewayRegistration WHERE registrationID=?";
     private static final String SET_LAST_LOGIN =
             "UPDATE gatewayRegistration SET lastLogin=? WHERE registrationID=?";
@@ -47,7 +47,7 @@ public class Registration {
 
     private long registrationID;
     private JID jid;
-    private GatewayType gatewayType;
+    private TransportType transportType;
     private String username;
     private String password;
     private Date registrationDate;
@@ -57,17 +57,17 @@ public class Registration {
      * Creates a new registration.
      *
      * @param jid the JID of the user making the registration.
-     * @param gatewayType the type of the gateway.
-     * @param username the username on the gateway.
-     * @param password the password on the gateway.
+     * @param transportType the type of the transport.
+     * @param username the username on the transport.
+     * @param password the password on the transport.
      */
-    public Registration(JID jid, GatewayType gatewayType, String username, String password) {
-        if (jid == null || gatewayType == null || username == null) {
+    public Registration(JID jid, TransportType transportType, String username, String password) {
+        if (jid == null || transportType == null || username == null) {
             throw new NullPointerException("Arguments cannot be null.");
         }
         // Ensure that we store the bare JID.
         this.jid = new JID(jid.toBareJID());
-        this.gatewayType = gatewayType;
+        this.transportType = transportType;
         this.username = username;
         this.password = password;
         this.registrationDate = new Date();
@@ -111,16 +111,16 @@ public class Registration {
     }
 
     /**
-     * Returns the type of the gateway.
+     * Returns the type of the transport.
      *
-     * @return the gateway type.
+     * @return the transport type.
      */
-    public GatewayType getGatewayType() {
-        return gatewayType;
+    public TransportType getTransportType() {
+        return transportType;
     }
 
     /**
-     * Returns the username used for logging in to the gateway.
+     * Returns the username used for logging in to the transport.
      *
      * @return the username.
      */
@@ -129,7 +129,7 @@ public class Registration {
     }
 
     /**
-     * Returns the password used for logging in to the gateway.
+     * Returns the password used for logging in to the transport.
      *
      * @return the password.
      */
@@ -138,7 +138,7 @@ public class Registration {
     }
 
     /**
-     * Sets the password used for logging in to the gateway.
+     * Sets the password used for logging in to the transport.
      * @param password
      */
     public void setPassword(String password) {
@@ -168,7 +168,7 @@ public class Registration {
     }
 
     /**
-     * Returns the date that this gateway registration was created.
+     * Returns the date that this transport registration was created.
      *
      * @return the date the registration was created.
      */
@@ -177,7 +177,7 @@ public class Registration {
     }
 
     /**
-     * Returns the date that the user last logged in to the gateway using this
+     * Returns the date that the user last logged in to the transport using this
      * registration data, or <tt>null</tt> if the user has never logged in.
      *
      * @return the last login date.
@@ -187,7 +187,7 @@ public class Registration {
     }
 
     /**
-     * Sets the data that the user last logged into the gateway.
+     * Sets the data that the user last logged into the transport.
      *
      * @param lastLogin the last login date.
      */
@@ -211,7 +211,7 @@ public class Registration {
     }
 
     public String toString() {
-        return jid + ", " + gatewayType + ", " + username;
+        return jid + ", " + transportType + ", " + username;
     }
 
     /**
@@ -227,7 +227,7 @@ public class Registration {
             pstmt = con.prepareStatement(INSERT_REGISTRATION);
             pstmt.setLong(1, registrationID);
             pstmt.setString(2, jid.toString());
-            pstmt.setString(3, gatewayType.name());
+            pstmt.setString(3, transportType.name());
             pstmt.setString(4, username);
             if (password != null) {
                 // The password is stored in encrypted form for improved security.
@@ -262,7 +262,7 @@ public class Registration {
                 throw new NotFoundException("Registration not found: " + registrationID);
             }
             this.jid = new JID(rs.getString(1));
-            this.gatewayType = GatewayType.valueOf(rs.getString(2));
+            this.transportType = TransportType.valueOf(rs.getString(2));
             this.username = rs.getString(3);
             // The password is stored in encrypted form, so decrypt it.
             this.password = AuthFactory.decryptPassword(rs.getString(4));

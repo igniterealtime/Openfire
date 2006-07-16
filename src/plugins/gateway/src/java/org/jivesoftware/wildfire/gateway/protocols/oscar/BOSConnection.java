@@ -31,15 +31,15 @@ import java.net.InetAddress;
 public class BOSConnection extends BasicFlapConnection {
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
 
-    public BOSConnection(OSCARGatewaySession mainSession, ByteBlock cookie) {
+    public BOSConnection(OSCARSession mainSession, ByteBlock cookie) {
         super(mainSession, cookie); // HAnd off to BasicFlapConnection
     }
 
-    public BOSConnection(String host, int port, OSCARGatewaySession mainSession, ByteBlock cookie) {
+    public BOSConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
         super(host, port, mainSession, cookie); // HAnd off to BasicFlapConnection
     }
 
-    public BOSConnection(InetAddress ip, int port, OSCARGatewaySession mainSession, ByteBlock cookie) {
+    public BOSConnection(InetAddress ip, int port, OSCARSession mainSession, ByteBlock cookie) {
         super(ip, port, mainSession, cookie); // HAnd off to BasicFlapConnection
     }
 
@@ -107,7 +107,7 @@ public class BOSConnection extends BasicFlapConnection {
             Log.debug("connecting to " + sr.getRedirectHost()
                     + " for 0x" + Integer.toHexString(sr.getSnacFamily()));
 
-            session.connectToService(sr.getSnacFamily(), sr.getRedirectHost(),
+            oscarSession.connectToService(sr.getSnacFamily(), sr.getRedirectHost(),
                     sr.getCookie());
 
         } else if (cmd instanceof SsiDataCmd) {
@@ -117,10 +117,10 @@ public class BOSConnection extends BasicFlapConnection {
             for (int i = 0; i < items.length; i++) {
                 SsiItemObj obj = itemFactory.getItemObj(items[i]);
                 if (obj instanceof BuddyItem) {
-                    session.gotBuddy((BuddyItem)obj);
+                    oscarSession.gotBuddy((BuddyItem)obj);
                 }
                 else if (obj instanceof GroupItem) {
-                    session.gotGroup((GroupItem)obj);
+                    oscarSession.gotGroup((GroupItem)obj);
                 }
                 Log.debug("- " + (obj == null ? (Object) items[i]
                         : (Object) obj));

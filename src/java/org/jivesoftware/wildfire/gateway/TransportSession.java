@@ -29,7 +29,8 @@ public abstract class TransportSession {
      *
      * @param registration Registration this session is associated with.
      */
-    public TransportSession(Registration registration, BaseTransport transport) {
+    public TransportSession(Registration registration, JID jid, BaseTransport transport) {
+        this.jid = jid;
         this.registration = registration;
         this.transport = transport;
     }
@@ -45,7 +46,14 @@ public abstract class TransportSession {
     public BaseTransport transport;
 
     /**
+     * JID the session is associated with.  (includes specific resource)
+     */
+    public JID jid;
+
+    /**
      * Retrieves the registration information associated with the session.
+     *
+     * @return Registration information of the user associated with the session.
      */
     public Registration getRegistration() {
         return registration;
@@ -53,9 +61,20 @@ public abstract class TransportSession {
 
     /**
      * Retrieves the transport associated wtih the session.
+     *
+     * @return Transport associated with the session.
      */
     public BaseTransport getTransport() {
         return transport;
+    }
+
+    /**
+     * Retrieves the jid associated with the session.
+     *
+     * @return JID of the user associated with this session.
+     */
+    public JID getJID() {
+        return jid;
     }
 
     /**

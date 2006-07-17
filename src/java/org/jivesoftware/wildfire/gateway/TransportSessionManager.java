@@ -40,7 +40,7 @@ public class TransportSessionManager {
      * @return TransportSession instance requested.
      */
     public TransportSession getSession(JID jid) throws NotFoundException {
-        TransportSession session = activeSessions.get(jid.toBareJID());
+        TransportSession session = activeSessions.get(new JID(jid.toBareJID()));
         if (session == null) {
             throw new NotFoundException("Could not find session requested.");
         }

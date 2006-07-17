@@ -44,8 +44,8 @@ public class OSCARSession extends TransportSession {
      * @param info The subscription information to use during login.
      * @param gateway The gateway that created this session.
      */
-    public OSCARSession(Registration registration, OSCARTransport transport) {
-        super(registration, transport);
+    public OSCARSession(Registration registration, JID jid, OSCARTransport transport) {
+        super(registration, jid, transport);
     }
 
     /**

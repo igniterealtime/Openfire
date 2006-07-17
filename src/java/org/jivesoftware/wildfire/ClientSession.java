@@ -124,7 +124,7 @@ public class ClientSession extends Session {
 
         // Set the Compression policy stored as a system property
         policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
-                Connection.CompressionPolicy.disabled.toString());
+                Connection.CompressionPolicy.optional.toString());
         compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
 
         // Set the default read idle timeout. If none was set then assume 30 minutes

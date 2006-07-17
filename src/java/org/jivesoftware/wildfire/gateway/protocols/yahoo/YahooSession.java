@@ -15,6 +15,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
 
@@ -73,6 +74,11 @@ public class YahooSession extends TransportSession {
                         loginAttempts++;
                         yahooSession.login(registration.getUsername(), registration.getPassword());
                         loggedIn = true;
+
+                        Presence p = new Presence();
+                        p.setTo(registration.getJID());
+                        p.setFrom(getTransport().getJID());
+                        getTransport().sendPacket(p);
                     }
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
@@ -101,6 +107,10 @@ public class YahooSession extends TransportSession {
         loggedIn = false;
         loggingIn = false;
         loginAttempts = 0;
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(registration.getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
     }
 
     /**

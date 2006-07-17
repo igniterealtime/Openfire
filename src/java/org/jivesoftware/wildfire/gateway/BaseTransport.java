@@ -134,6 +134,12 @@ public abstract class BaseTransport implements Component {
             else {
                 Log.info("Received an unhandled packet: " + packet.toString());
             }
+
+            if (reply.size() > 0) {
+                for (Packet p : reply) {
+                    this.sendPacket(p);
+                }
+            }
         }
         catch (Exception e) {
             Log.error("Error occured while processing packet: " + e.toString());
@@ -150,12 +156,15 @@ public abstract class BaseTransport implements Component {
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
+        Log.debug("Got Message packet: " + packet.toString());
+
         try {
             TransportSession session = sessionManager.getSession(from);
             session.sendMessage(to, packet.getBody());
         }
         catch (NotFoundException e) {
             // TODO: Should return an error packet here
+            Log.debug("Unable to find session.");
         }
 
         return reply;
@@ -171,17 +180,20 @@ public abstract class BaseTransport implements Component {
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
+        Log.debug("Got Presence packet: " + packet.toString());
+
         if (packet.getType() == Presence.Type.error) {
             // We don't want to do anything with this.  Ignore it.
             return reply;
         }
 
         try {
-            TransportSession session = sessionManager.getSession(from);
             if (to.getNode() == null) {
+                Log.debug("Message to gateway");
                 Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
                 if (!registrations.iterator().hasNext()) {
                     // User is not registered with us.
+                    Log.debug("Unable to find registration.");
                     return reply;
                 }
                 Registration registration = registrations.iterator().next();
@@ -189,27 +201,44 @@ public abstract class BaseTransport implements Component {
                 // This packet is to the transport itself.
                 if (packet.getType() == null) {
                     // User has come online.
-                    if (session == null) {
-                        session = this.registrationLoggedIn(registration);
-                        sessionManager.storeSession(registration.getJID(), session);
+                    Log.debug("Got available.");
+                    TransportSession session = null;
+                    try {
+                        session = sessionManager.getSession(from);
+                        // TODO: This can also represent a status change.
                     }
-    
-                    // TODO: This can also represent a status change.
+                    catch (NotFoundException e) {
+                        session = this.registrationLoggedIn(registration);
+                        //sessionManager.storeSession(registration.getJID(), session);
+                        sessionManager.storeSession(from, session);
+                    }
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
                     // User has gone offline.
-                    if (session != null && session.isLoggedIn()) {
-                        this.registrationLoggedOut(session);
+                    Log.debug("Got unavailable.");
+                    TransportSession session = null;
+                    try {
+                        session = sessionManager.getSession(from);
+                        if (session.isLoggedIn()) {
+                            this.registrationLoggedOut(session);
+                        }
+
+                        //sessionManager.removeSession(registration.getJID());
+                        sessionManager.removeSession(from);
                     }
-    
-                    sessionManager.removeSession(registration.getJID());
+                    catch (NotFoundException e) {
+                        Log.debug("Ignoring unavailable presence for inactive seession.");
+                    }
                 }
                 else {
+                    Log.debug("Ignoring this packet.");
                     // Anything else we will ignore for now.
                 }
             }
             else {
+                Log.debug("Message to user at gateway");
                 // This packet is to a user at the transport.
+                TransportSession session = sessionManager.getSession(from);
                 if (session == null) {
                     // We don't have a session, so stop here.
                     // TODO: maybe return an error?
@@ -228,7 +257,7 @@ public abstract class BaseTransport implements Component {
             }
         }
         catch (NotFoundException e) {
-            // We don't care, we account for this later.
+            Log.error("Exception while processing packet: " + e.toString());
         }
 
         return reply;
@@ -242,13 +271,15 @@ public abstract class BaseTransport implements Component {
     private List<Packet> processPacket(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
 
+        Log.debug("Got IQ packet: " + packet.toString());
+
         if (packet.getType() == IQ.Type.error) {
             // Lets not start a loop.  Ignore.
             return reply;
         }
 
-        Element child = packet.getChildElement();
         String xmlns = null;
+        Element child = (packet).getChildElement();
         if (child != null) {
             xmlns = child.getNamespaceURI();
         }
@@ -256,17 +287,24 @@ public abstract class BaseTransport implements Component {
         if (xmlns == null) {
             // No namespace defined.
             // TODO: Should we return an error?
+            Log.debug("No XMLNS");
             return reply;
         }
 
         if (xmlns.equals(DISCO_INFO)) {
+            Log.debug("Matched Disco Info");
             reply.addAll(handleDiscoInfo(packet));
         }
         else if (xmlns.equals(DISCO_ITEMS)) {
+            Log.debug("Matched Disco Items");
             reply.addAll(handleDiscoItems(packet));
         }
         else if (xmlns.equals(IQ_REGISTER)) {
+            Log.debug("Matched IQ Register");
             reply.addAll(handleIQRegister(packet));
+        }
+        else {
+            Log.debug("Matched nothing");
         }
 
         return reply;
@@ -476,7 +514,14 @@ public abstract class BaseTransport implements Component {
     }
 
     /**
-     * Returns the name(jid) of the transport.
+     * Returns the jid of the transport.
+     */
+    public JID getJID() {
+        return this.jid;
+    }
+
+    /**
+     * Returns the name (type) of the transport.
      */
     public String getName() {
         return transportType.toString();

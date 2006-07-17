@@ -59,15 +59,15 @@ public class GatewayPlugin implements Plugin {
         componentManager = ComponentManagerFactory.getComponentManager();
 
         /* Set up AIM transport. */
-        transports.put("aim", new TransportInstance(TransportType.aim, "AIM Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        transports.put("aim", new TransportInstance(TransportType.aim, "AIM Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
         maybeStartService("aim");
 
         /* Set up ICQ transport. */
-        transports.put("icq", new TransportInstance(TransportType.icq, "ICQ Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARGateway", componentManager));
+        transports.put("icq", new TransportInstance(TransportType.icq, "ICQ Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
         maybeStartService("icq");
 
         /* Set up Yahoo transport. */
-        transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooGateway", componentManager));
+        transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooTransport", componentManager));
         maybeStartService("yahoo");
     }
 

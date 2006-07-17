@@ -10,6 +10,7 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -30,6 +31,7 @@ public class YahooTransport extends BaseTransport {
      * @param registration Registration information to be used to log in.
      */
     public TransportSession registrationLoggedIn(Registration registration) {
+        Log.debug("Logging in to Yahoo gateway.");
         TransportSession session = new YahooSession(registration, this);
         session.logIn();
         return session;
@@ -41,6 +43,7 @@ public class YahooTransport extends BaseTransport {
      * @param session The session to be disconnected.
      */
     public void registrationLoggedOut(TransportSession session) {
+        Log.debug("Logging out of Yahoo gateway.");
         session.logOut();
     }
 

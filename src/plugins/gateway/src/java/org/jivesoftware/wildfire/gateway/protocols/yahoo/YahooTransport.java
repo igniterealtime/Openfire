@@ -14,6 +14,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.xmpp.packet.JID;
 
 /**
  * Yahoo Transport Interface.
@@ -30,9 +31,9 @@ public class YahooTransport extends BaseTransport {
      *
      * @param registration Registration information to be used to log in.
      */
-    public TransportSession registrationLoggedIn(Registration registration) {
+    public TransportSession registrationLoggedIn(Registration registration, JID jid) {
         Log.debug("Logging in to Yahoo gateway.");
-        TransportSession session = new YahooSession(registration, this);
+        TransportSession session = new YahooSession(registration, jid, this);
         session.logIn();
         return session;
     }

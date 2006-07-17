@@ -208,7 +208,7 @@ public abstract class BaseTransport implements Component {
                         // TODO: This can also represent a status change.
                     }
                     catch (NotFoundException e) {
-                        session = this.registrationLoggedIn(registration);
+                        session = this.registrationLoggedIn(registration, from);
                         //sessionManager.storeSession(registration.getJID(), session);
                         sessionManager.storeSession(from, session);
                     }
@@ -228,6 +228,23 @@ public abstract class BaseTransport implements Component {
                     }
                     catch (NotFoundException e) {
                         Log.debug("Ignoring unavailable presence for inactive seession.");
+                    }
+                }
+                else if (packet.getType() == Presence.Type.probe) {
+                    // Client is asking for presence status.
+                    Log.debug("Got probe.");
+                    TransportSession session = null;
+                    try {
+                        session = sessionManager.getSession(from);
+                        if (session.isLoggedIn()) {
+                            Presence p = new Presence();
+                            p.setTo(from);
+                            p.setFrom(to);
+                            this.sendPacket(p);
+                        }
+                    }
+                    catch (NotFoundException e) {
+                        Log.debug("Ignoring probe presence for inactive session.");
                     }
                 }
                 else {
@@ -561,7 +578,7 @@ public abstract class BaseTransport implements Component {
      * @param registration Registration used for log in.
      * @return A session instance for the new login.
      */
-    public abstract TransportSession registrationLoggedIn(Registration registration);
+    public abstract TransportSession registrationLoggedIn(Registration registration, JID jid);
 
     /**
      * Will handle logging out of the legacy service.

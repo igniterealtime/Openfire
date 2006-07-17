@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.xmpp.packet.JID;
 
 /**
  * OSCAR Transport Interface.
@@ -29,8 +30,8 @@ public class OSCARTransport extends BaseTransport {
      *
      * @param registration Registration information to be used to log in.
      */
-    public TransportSession registrationLoggedIn(Registration registration) {
-        TransportSession session = new OSCARSession(registration, this);
+    public TransportSession registrationLoggedIn(Registration registration, JID jid) {
+        TransportSession session = new OSCARSession(registration, jid, this);
         session.logIn();
         return session;
     }

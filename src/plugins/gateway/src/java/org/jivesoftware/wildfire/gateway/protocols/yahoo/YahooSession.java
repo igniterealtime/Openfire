@@ -35,8 +35,8 @@ public class YahooSession extends TransportSession {
      *
      * @param registration Registration informationed used for logging in.
      */
-    public YahooSession(Registration registration, YahooTransport transport) {
-        super(registration, transport);
+    public YahooSession(Registration registration, JID jid, YahooTransport transport) {
+        super(registration, jid, transport);
 
         yahooSession = new Session();
         yahooSession.addSessionListener(new YahooSessionListener(this));
@@ -76,13 +76,14 @@ public class YahooSession extends TransportSession {
                         loggedIn = true;
 
                         Presence p = new Presence();
-                        p.setTo(registration.getJID());
+                        p.setTo(getJID());
                         p.setFrom(getTransport().getJID());
+                        Log.debug("Logged in, sending: " + p.toString());
                         getTransport().sendPacket(p);
                     }
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
-                        Log.warn("Yahoo login failed for " + registration.getJID());
+                        Log.warn("Yahoo login failed for " + getJID());
                     }
                     catch (IOException e) {
                         Log.error("Yahoo login caused IO exception: " + e.toString());
@@ -108,7 +109,7 @@ public class YahooSession extends TransportSession {
         loggingIn = false;
         loginAttempts = 0;
         Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(registration.getJID());
+        p.setTo(getJID());
         p.setFrom(getTransport().getJID());
         getTransport().sendPacket(p);
     }

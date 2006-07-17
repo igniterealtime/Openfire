@@ -53,7 +53,8 @@ public class YahooSessionListener implements SessionListener {
     public void messageReceived(SessionEvent event) {
         Log.debug(event.toString());
         Message m = new Message();
-        m.setTo(yahooSession.getRegistration().getJID());
+        m.setType(Message.Type.chat);
+        m.setTo(yahooSession.getJID());
         m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
         m.setBody(event.getMessage());
         yahooSession.getTransport().sendPacket(m);

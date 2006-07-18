@@ -47,10 +47,13 @@ import net.kano.joscar.snaccmd.rooms.*;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
     protected boolean sentClientReady = false;
+
+    public Map<String,FullUserInfo> buddystore = new HashMap<String,FullUserInfo>();
 
     protected int[] snacFamilies = null;
     protected SnacFamilyInfo[] snacFamilyInfos;
@@ -175,69 +178,48 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                         + " warned you up to " + wn.getNewLevel() + "%");
             }
         } else if (cmd instanceof BuddyStatusCmd) {
-            BuddyStatusCmd bsc = (BuddyStatusCmd) cmd;
-
+            BuddyStatusCmd bsc = (BuddyStatusCmd)cmd;
             FullUserInfo info = bsc.getUserInfo();
+            buddystore.put(info.getScreenname(), info);
+            Presence p = new Presence();
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(info.getScreenname()));
 
-            String sn = info.getScreenname();
+            if (info.getAwayStatus() == true) {
+                p.setShow(Presence.Show.away);
+            }
 
-            ExtraInfoBlock[] extraInfos = info.getExtraInfoBlocks();
+            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            if (extraInfo != null) {
+                for (ExtraInfoBlock i : extraInfo) {
+                    ExtraInfoData data = i.getExtraData();
 
-            if (extraInfos != null) {
-                for (int i = 0; i < extraInfos.length; i++) {
-                    ExtraInfoBlock extraInfo = extraInfos[i];
-                    ExtraInfoData data = extraInfo.getExtraData();
-
-                    if (extraInfo.getType() == ExtraInfoBlock.TYPE_AVAILMSG) {
+                    if (i.getType() == ExtraInfoBlock.TYPE_AVAILMSG) {
                         ByteBlock msgBlock = data.getData();
                         int len = BinaryTools.getUShort(msgBlock, 0);
-                        byte[] msgBytes = msgBlock.subBlock(2, len).toByteArray();
-
+                        byte[] msgBytes = msgBlock.subBlock(2, len).toByteArray(
+);
                         String msg;
                         try {
                             msg = new String(msgBytes, "UTF-8");
-                        } catch (UnsupportedEncodingException e1) {
-                            e1.printStackTrace();
-                            return;
+                        }
+                        catch (UnsupportedEncodingException e1) {
+                            continue;
                         }
                         if (msg.length() > 0) {
-                            Log.debug(info.getScreenname()
-                                    + " availability: " + msg);
+                            p.setStatus(msg);
                         }
                     }
                 }
             }
-
-            if (info.getCapabilityBlocks() != null) {
-                List known = Arrays.asList(new CapabilityBlock[] {
-                    CapabilityBlock.BLOCK_ICQCOMPATIBLE,
-                });
-
-                List caps = new ArrayList(Arrays.asList(
-                        info.getCapabilityBlocks()));
-                caps.removeAll(known);
-                if (!caps.isEmpty()) {
-                    Log.debug(sn + " has " + caps.size()
-                            + " unknown caps:");
-                    for (Iterator it = caps.iterator(); it.hasNext();) {
-                        Log.debug("- " + it.next());
-                    }
-                }
-/*
-                caps = new ArrayList(known);
-                caps.removeAll(Arrays.asList(info.getCapabilityBlocks()));
-                if (!caps.isEmpty()) {
-                    Log.debug(sn + " is missing " + caps.size()
-                            + " caps:");
-                    for (Iterator it = caps.iterator(); it.hasNext();) {
-                        Log.debug("- " + it.next());
-                    }
-                }
-*/
-            }
+            oscarSession.getTransport().sendPacket(p);
         } else if (cmd instanceof BuddyOfflineCmd) {
-            BuddyOfflineCmd boc = (BuddyOfflineCmd) cmd;
-
+            BuddyOfflineCmd boc = (BuddyOfflineCmd)cmd;
+            buddystore.remove(boc.getScreenname());
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(boc.getScreenname()));
+            oscarSession.getTransport().sendPacket(p);
         } else if (cmd instanceof RateChange) {
             RateChange rc = (RateChange) cmd;
 
@@ -323,6 +305,59 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             sendRequest(request);
         } else {
             oscarSession.handleRequest(request);
+        }
+    }
+
+    /**
+     * Retrieves and sends last known status.
+     *
+     * This retrieves the last known status of the user and sends it on
+     * to the JID associated with this session.  Meant for probe packets.
+     *
+     * @param sn Screen name to check on.
+     */
+    public void getAndSendStatus(String sn) {
+        if (buddystore.containsKey(sn)) {
+            FullUserInfo info = buddystore.get(sn);
+            buddystore.put(info.getScreenname(), info);
+            Presence p = new Presence();
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(info.getScreenname()));
+
+            if (info.getAwayStatus() == true) {
+                p.setShow(Presence.Show.away);
+            }
+
+            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            if (extraInfo != null) {
+                for (ExtraInfoBlock i : extraInfo) {
+                    ExtraInfoData data = i.getExtraData();
+
+                    if (i.getType() == ExtraInfoBlock.TYPE_AVAILMSG) {
+                        ByteBlock msgBlock = data.getData();
+                        int len = BinaryTools.getUShort(msgBlock, 0);
+                        byte[] msgBytes = msgBlock.subBlock(2, len).toByteArray(
+);
+                        String msg;
+                        try {
+                            msg = new String(msgBytes, "UTF-8");
+                        }
+                        catch (UnsupportedEncodingException e1) {
+                            continue;
+                        }
+                        if (msg.length() > 0) {
+                            p.setStatus(msg);
+                        }
+                    }
+                }
+            }
+            oscarSession.getTransport().sendPacket(p);
+        }
+        else {
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(sn));
+            oscarSession.getTransport().sendPacket(p);
         }
     }
 

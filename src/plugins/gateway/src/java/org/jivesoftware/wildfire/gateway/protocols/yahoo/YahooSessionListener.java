@@ -12,6 +12,8 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
+import ymsg.network.YahooUser;
 import ymsg.network.event.SessionChatEvent;
 import ymsg.network.event.SessionConferenceEvent;
 import ymsg.network.event.SessionErrorEvent;
@@ -22,6 +24,7 @@ import ymsg.network.event.SessionFriendEvent;
 import ymsg.network.event.SessionListener;
 import ymsg.network.event.SessionNewMailEvent;
 import ymsg.network.event.SessionNotifyEvent;
+import ymsg.network.StatusConstants;
 import ymsg.support.MessageDecoder;
 
 /**
@@ -57,7 +60,6 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#messageReceived(ymsg.network.event.SessionEvent)
      */
     public void messageReceived(SessionEvent event) {
-        Log.debug(event.toString());
         Message m = new Message();
         m.setType(Message.Type.chat);
         m.setTo(yahooSession.getJID());
@@ -66,6 +68,81 @@ public class YahooSessionListener implements SessionListener {
         yahooSession.getTransport().sendPacket(m);
     }
 
+    /**
+     * @see ymsg.network.event.SessionListener#friendsUpdateReceived(ymsg.network.event.SessionFriendEvent)
+     */
+    public void friendsUpdateReceived(SessionFriendEvent event) {
+        for (YahooUser user : event.getFriends()) {
+            Presence p = new Presence();
+            p.setTo(yahooSession.getJID());
+            p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+
+            String custommsg = user.getCustomStatusMessage();
+            if (custommsg != null) {
+                p.setStatus(custommsg);
+            }
+
+            long statusid = user.getStatus();
+            if (statusid == StatusConstants.STATUS_AVAILABLE) {
+                // We're good, leave the type as blank for available.
+            }
+            else if (statusid == StatusConstants.STATUS_BRB) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_BUSY) {
+                p.setShow(Presence.Show.dnd);
+            }
+            else if (statusid == StatusConstants.STATUS_IDLE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_OFFLINE) {
+                p.setType(Presence.Type.unavailable);
+            }
+            else if (statusid == StatusConstants.STATUS_NOTATDESK) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_ONPHONE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_ONVACATION) {
+                p.setShow(Presence.Show.xa);
+            }
+            else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
+                p.setShow(Presence.Show.xa);
+            }
+            else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
+                p.setShow(Presence.Show.away);
+            }
+            else {
+                // Not something we handle, we're going to ignore it.
+            }
+
+            yahooSession.getTransport().sendPacket(p);
+        }
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
+     */
+    public void friendAddedReceived(SessionFriendEvent event) {
+        Presence p = new Presence(Presence.Type.subscribed);
+        p.setTo(yahooSession.getJID());
+        p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        yahooSession.getTransport().sendPacket(p);
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
+     */
+    public void friendRemovedReceived(SessionFriendEvent event) {
+        Presence p = new Presence(Presence.Type.unsubscribed);
+        p.setTo(yahooSession.getJID());
+        p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        yahooSession.getTransport().sendPacket(p);
+    }
 
     /**
      * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
@@ -177,27 +254,6 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#conferenceMessageReceived(ymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceMessageReceived(SessionConferenceEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#friendsUpdateReceived(ymsg.network.event.SessionFriendEvent)
-     */
-    public void friendsUpdateReceived(SessionFriendEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
-     */
-    public void friendAddedReceived(SessionFriendEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
-     */
-    public void friendRemovedReceived(SessionFriendEvent event) {
         Log.debug(event.toString());
     }
 

@@ -130,6 +130,7 @@ public class BOSConnection extends BasicFlapConnection {
                 Log.debug("done with SSI");
                 request(new ActivateSsiCmd());
                 clientReady();
+                oscarSession.gotCompleteSSI();
             }
         }
     }

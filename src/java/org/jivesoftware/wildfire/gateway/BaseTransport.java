@@ -13,6 +13,8 @@ package org.jivesoftware.wildfire.gateway;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -189,7 +191,7 @@ public abstract class BaseTransport implements Component {
 
         try {
             if (to.getNode() == null) {
-                Log.debug("Message to gateway");
+                Log.debug("Presence to gateway");
                 Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
                 if (!registrations.iterator().hasNext()) {
                     // User is not registered with us.
@@ -253,12 +255,17 @@ public abstract class BaseTransport implements Component {
                 }
             }
             else {
-                Log.debug("Message to user at gateway");
+                Log.debug("Presence to user at gateway");
                 // This packet is to a user at the transport.
                 TransportSession session = sessionManager.getSession(from);
                 if (session == null) {
                     // We don't have a session, so stop here.
                     // TODO: maybe return an error?
+                    Log.error("No session for incoming packet: " + packet.toString());
+                }
+                else if (packet.getType() == Presence.Type.probe) {
+                    // Presence probe, lets try to tell them.
+                    session.retrieveContactStatus(packet.getTo());
                 }
                 else if (packet.getType() == Presence.Type.subscribe) {
                     // User wants to add someone to their legacy roster.
@@ -444,7 +451,21 @@ public abstract class BaseTransport implements Component {
                     result.setChildElement(response);
                     reply.add(result);
 
-                    registrationManager.createRegistration(packet.getFrom(), this.transportType, username, password);
+                    Collection<Registration> registrations = registrationManager.getRegistrations(packet.getFrom(), this.transportType);
+                    Boolean foundReg = false;
+                    for (Registration registration : registrations) {
+                        if (!registration.getUsername().equals(username)) {
+                            registrationManager.deleteRegistration(registration);
+                        }
+                        else {
+                            registration.setPassword(password);
+                            foundReg = true;
+                        }
+                    }
+
+                    if (!foundReg) {
+                        registrationManager.createRegistration(packet.getFrom(), this.transportType, username, password);
+                    }
 
                     try {
                         addOrUpdateRosterItem(packet.getFrom(), packet.getTo(), this.getDescription(), "Transports");
@@ -531,6 +552,8 @@ public abstract class BaseTransport implements Component {
     /**
      * Either updates or adds a JID to a user's roster.
      *
+     * Tries to only edit the roster if it has to.
+     *
      * @param userjid JID of user to have item added to their roster.
      * @param contactjid JID to add to roster.
      * @param nickname Nickname of item. (can be null)
@@ -542,22 +565,34 @@ public abstract class BaseTransport implements Component {
             Roster roster = rosterManager.getRoster(userjid.getNode());
             try {
                 RosterItem gwitem = roster.getRosterItem(contactjid);
+                Boolean changed = false;
                 if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                    changed = true;
                 }
                 if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
+                    changed = true;
                 }
-                gwitem.setNickname(nickname);
+                if (!gwitem.getNickname().equals(nickname)) {
+                    gwitem.setNickname(nickname);
+                    changed = true;
+                }
+                List<String> curgroups = gwitem.getGroups();
                 List<String> groups = new ArrayList<String>();
                 groups.add(group);
-                try {
-                    gwitem.setGroups(groups);
+                if (curgroups != groups) {
+                    try {
+                        gwitem.setGroups(groups);
+                        changed = true;
+                    }
+                    catch (Exception ee) {
+                        // Oooookay, ignore then.
+                    }
                 }
-                catch (Exception ee) {
-                    // Oooookay, ignore then.
+                if (changed) {
+                    roster.updateRosterItem(gwitem);
                 }
-                roster.updateRosterItem(gwitem);
             }
             catch (UserNotFoundException e) {
                 try {
@@ -652,6 +687,87 @@ public abstract class BaseTransport implements Component {
         catch (UserNotFoundException e) {
             // Pass it on through.
             throw e;
+        }
+    }
+
+    /**
+     * Sync a user's roster with their legacy contact list.
+     *
+     * Given a collection of transport buddies, syncs up the user's
+     * roster by fixing any nicknames, group assignments, adding and removing
+     * roster items, and generally trying to make the jabber roster list
+     * assigned to the transport's JID look at much like the legacy buddy
+     * list as possible.  This is a very extensive operation.  You do not
+     * want to do this very often.  Typically once right after the person
+     * has logged into the legacy service.
+     *
+     * @param userjid JID of user who's roster we are syncing with.
+     * @param legacyitems List of TransportBuddy's to be synced.
+     * @throws UserNotFoundException if userjid not found.
+     */
+    public void syncLegacyRoster(JID userjid, List<TransportBuddy> legacyitems) throws UserNotFoundException {
+        try {
+            Roster roster = rosterManager.getRoster(userjid.getNode());
+
+            // First thing first, we want to build ourselves an easy mapping.
+            Map<JID,TransportBuddy> legacymap = new HashMap<JID,TransportBuddy>();
+            for (TransportBuddy buddy : legacyitems) {
+                Log.debug("ROSTERSYNC: Mapping "+buddy.getName());
+                legacymap.put(new JID(buddy.getName(), this.jid.getDomain(), null), buddy);
+            }
+
+            // Now, lets go through the roster and see what matches up.
+            for (RosterItem ri : roster.getRosterItems()) {
+                if (!ri.getJid().getDomain().equals(this.jid.getDomain())) {
+                    // Not our contact to care about.
+                    continue;
+                }
+                if (ri.getJid().getNode() == null) {
+                    // This is a transport instance, lets leave it alone.
+                    continue;
+                }
+                JID jid = new JID(ri.getJid().toBareJID());
+                if (legacymap.containsKey(jid)) {
+                    Log.debug("ROSTERSYNC: We found, updating " + jid.toString());
+                    // Ok, matched a legacy to jabber roster item
+                    // Lets update if there are differences
+                    TransportBuddy buddy = legacymap.get(jid);
+                    try {
+                        this.addOrUpdateRosterItem(userjid, buddy.getName(), buddy.getNickname(), buddy.getGroup());
+                    }
+                    catch (UserNotFoundException e) {
+                        // TODO: Something is quite wrong if we see this.
+                        Log.error("Failed updating roster item");
+                    }
+                    legacymap.remove(jid);
+                }
+                else {
+                    Log.debug("ROSTERSYNC: We did not find, removing " + jid.toString());
+                    // This person is apparantly no longer in the legacy roster.
+                    try {
+                        this.removeFromRoster(userjid, jid);
+                    }
+                    catch (UserNotFoundException e) {
+                        // TODO: Something is quite wrong if we see this.
+                        Log.error("Failed removing roster item");
+                    }
+                }
+            }
+
+            // Ok, we should now have only new items from the legacy roster
+            for (TransportBuddy buddy : legacymap.values()) {
+                Log.debug("ROSTERSYNC: We have new, adding " + buddy.getName());
+                try {
+                    this.addOrUpdateRosterItem(userjid, buddy.getName(), buddy.getNickname(), buddy.getGroup());
+                }
+                catch (UserNotFoundException e) {
+                    // TODO: Something is quite wrong if we see this.
+                    Log.error("Failed adding new roster item");
+                }
+            }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Could not find roster for " + userjid.toString());
         }
     }
 

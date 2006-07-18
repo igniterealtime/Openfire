@@ -116,4 +116,13 @@ public abstract class TransportSession {
      */
     public abstract void sendMessage(JID jid, String message);
 
+    /**
+     * Asks the legacy service to send a presence packet for a contact.
+     *
+     * This is typically response to a probe.
+     *
+     * @param jid JID to be checked.
+    */
+    public abstract void retrieveContactStatus(JID jid);
+
 }

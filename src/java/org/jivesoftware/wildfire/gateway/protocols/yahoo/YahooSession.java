@@ -11,14 +11,21 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
+import ymsg.network.StatusConstants;
+import ymsg.network.YahooGroup;
 import ymsg.network.YahooUser;
 
 /**
@@ -129,13 +136,70 @@ public class YahooSession extends TransportSession {
      * Syncs up the yahoo roster with the jabber roster.
      */
     public void syncUsers() {
-        for(YahooUser user : (Collection<YahooUser>)yahooSession.getUsers().values()) {
-            try {
-                getTransport().addOrUpdateRosterItem(getJID(), user.getId(), user.getId(), null);
+        List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
+        for (YahooGroup group : yahooSession.getGroups()) {
+            for (Enumeration e = group.getMembers().elements(); e.hasMoreElements();) {
+                YahooUser user = (YahooUser)e.nextElement();
+                legacyusers.add(new TransportBuddy(user.getId(), user.getId(), group.getName()));
             }
-            catch (Exception e) {
-                // TODO: Failed for some reason.
+        }
+        try {
+            getTransport().syncLegacyRoster(getJID(), legacyusers);
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Unable to sync yahoo contact list for " + getJID());
+        }
+
+        // Ok, now lets check presence
+        for (YahooUser user : (Collection<YahooUser>)yahooSession.getUsers().values()) {
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().convertIDToJID(user.getId()));
+
+            String custommsg = user.getCustomStatusMessage();
+            if (custommsg != null) {
+                p.setStatus(custommsg);
             }
+
+            long statusid = user.getStatus();
+            if (statusid == StatusConstants.STATUS_AVAILABLE) {
+                // We're good, leave the type as blank for available.
+            }
+            else if (statusid == StatusConstants.STATUS_BRB) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_BUSY) {
+                p.setShow(Presence.Show.dnd);
+            }
+            else if (statusid == StatusConstants.STATUS_IDLE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_OFFLINE) {
+                p.setType(Presence.Type.unavailable);
+            }
+            else if (statusid == StatusConstants.STATUS_NOTATDESK) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_ONPHONE) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (statusid == StatusConstants.STATUS_ONVACATION) {
+                p.setShow(Presence.Show.xa);
+            }
+            else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
+                p.setShow(Presence.Show.xa);
+            }
+            else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
+                p.setShow(Presence.Show.away);
+            }
+            else {
+                // Not something we handle, we're going to ignore it.
+            }
+
+            getTransport().sendPacket(p);
         }
     }
 
@@ -183,5 +247,62 @@ public class YahooSession extends TransportSession {
             Log.error("Failed to send message to yahoo user.");
         }
     }
+
+    /**
+     * Asks for transport to send information about a contact if possible.
+     *
+     * @param jid JID of contact to be probed.
+     */
+    public void retrieveContactStatus(JID jid) {
+        YahooUser user = yahooSession.getUser(jid.getNode());
+        Presence p = new Presence();
+        p.setTo(getJID());
+        p.setFrom(getTransport().convertIDToJID(user.getId()));
+
+        String custommsg = user.getCustomStatusMessage();
+        if (custommsg != null) {
+            p.setStatus(custommsg);
+        }
+
+        long statusid = user.getStatus();
+        if (statusid == StatusConstants.STATUS_AVAILABLE) {
+            // We're good, leave the type as blank for available.
+        }
+        else if (statusid == StatusConstants.STATUS_BRB) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (statusid == StatusConstants.STATUS_BUSY) {
+            p.setShow(Presence.Show.dnd);
+        }
+        else if (statusid == StatusConstants.STATUS_IDLE) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (statusid == StatusConstants.STATUS_OFFLINE) {
+            p.setType(Presence.Type.unavailable);
+        }
+        else if (statusid == StatusConstants.STATUS_NOTATDESK) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (statusid == StatusConstants.STATUS_ONPHONE) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (statusid == StatusConstants.STATUS_ONVACATION) {
+            p.setShow(Presence.Show.xa);
+        }
+        else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
+            p.setShow(Presence.Show.xa);
+        }
+        else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
+            p.setShow(Presence.Show.away);
+        }
+        else {
+            // Not something we handle, we're going to ignore it.
+        }
+
+        getTransport().sendPacket(p);
+    }   
 
 }

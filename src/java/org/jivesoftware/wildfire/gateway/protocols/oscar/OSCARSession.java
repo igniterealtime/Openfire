@@ -12,7 +12,9 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.snac.*;
@@ -23,11 +25,13 @@ import net.kano.joscar.ssiitem.*;
 import net.kano.joscar.ByteBlock;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Represents an OSCAR session.
@@ -67,40 +71,46 @@ public class OSCARSession extends TransportSession {
     /**
      * SSI tracking variables.
      */
-    private ArrayList<BuddyItem> buddies = new ArrayList<BuddyItem>();
-    private ArrayList<GroupItem> groups = new ArrayList<GroupItem>();
+    private Map<Integer,BuddyItem> buddies = new HashMap<Integer,BuddyItem>();
+    private Map<Integer,GroupItem> groups = new HashMap<Integer,GroupItem>();
     private Integer highestBuddyId = -1;
     private Integer highestGroupId = -1;
 
     public void logIn() {
-        Log.debug("Login called");
         if (!isLoggedIn()) {
             Log.debug("Connecting...");
             loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
             loginConn.connect();
 
             loggedIn = true;
+
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            Log.debug("Logged in, sending: " + p.toString());
+            getTransport().sendPacket(p);
         } else {
             Log.warn(this.jid + " is already logged in");
         }
     }
     
     public Boolean isLoggedIn() {
-        Log.debug("isLoggedIn called");
         return loggedIn;
     }
     
     public synchronized void logOut() {
-        Log.debug("logout called");
         bosConn.disconnect();
         loggedIn = false;
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
     }
     
     public void addContact(JID jid) {
-        Log.debug("addContact called");
         Integer newBuddyId = highestBuddyId + 1;
         Integer groupId = -1;
-        for (GroupItem g : groups) {
+        for (GroupItem g : groups.values()) {
             if ("Transport Buddies".equals(g.getGroupName())) {
                 groupId = g.getId();
             }
@@ -118,10 +128,10 @@ public class OSCARSession extends TransportSession {
 
     public void removeContact(JID jid) {
         Log.debug("removeContact called");
-        for (BuddyItem i : buddies) {
+        for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equals(jid.getNode())) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
-                buddies.remove(buddies.indexOf(i));
+                buddies.remove(i.getId());
             }
         }
     }
@@ -206,27 +216,62 @@ public class OSCARSession extends TransportSession {
         snacMgr.unregister(conn);
     }
 
+    /**
+     * We've been told about a buddy that exists on the buddy list.
+     *
+     * @param buddy The buddy we've been told about.
+     */
     void gotBuddy(BuddyItem buddy) {
-        buddies.add(buddy);
-        String nickname = buddy.getAlias();
-        //String group = groups.get(buddy.getGroupId()).getGroupName();
-        try {
-            //getTransport().addOrUpdateRosterItem(getJID(), buddy.getScreenname(), nickname, group);
-            getTransport().addOrUpdateRosterItem(getJID(), buddy.getScreenname(), nickname, null);
-        }
-        catch (UserNotFoundException e) {
-            Log.error("Unable to add " + buddy.getScreenname() + " to roster.");
-        }
+        Log.debug("Found buddy item: " + buddy.toString());
+        buddies.put(buddy.getId(), buddy);
         if (buddy.getId() > highestBuddyId) {
             highestBuddyId = buddy.getId();
         }
     }
 
+    /**
+     * We've been told about a group that exists on the buddy list.
+     *
+     * @param group The group we've been told about.
+     */
     void gotGroup(GroupItem group) {
-        groups.add(group);
+        Log.debug("Found group item: " + group.toString());
+        groups.put(group.getId(), group);
         if (group.getId() > highestGroupId) {
             highestGroupId = group.getId();
         }
+    }
+
+    /**
+     * Apparantly we now have the entire list, lets sync.
+     */
+    void gotCompleteSSI() {
+        List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
+        for (BuddyItem buddy : buddies.values()) {
+            Log.debug("CompleteSSI: adding "+buddy.getScreenname());
+            String nickname = buddy.getAlias();
+            if (nickname == null) {
+                nickname = buddy.getScreenname();
+            }
+            int groupid = buddy.getGroupId();
+            String groupname = groups.get(groupid).getGroupName();
+            legacyusers.add(new TransportBuddy(buddy.getScreenname(), nickname, groupname));
+        }
+        try {
+            getTransport().syncLegacyRoster(getJID(), legacyusers);
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Unable to sync oscar contact list for " + getJID());
+        }
+    }
+
+    /**
+     * Asks for transport to send information about a contact if possible.
+     *
+     * @param jid JID of contact to be probed.
+     */
+    public void retrieveContactStatus(JID jid) {
+        bosConn.getAndSendStatus(jid.getNode());
     }
 
 }

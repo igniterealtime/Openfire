@@ -18,6 +18,8 @@ import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.filetransfer.proxy.ProxyConnectionManager;
+import org.jivesoftware.wildfire.filetransfer.proxy.ProxyTransfer;
 import org.dom4j.Element;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ;
@@ -25,19 +27,13 @@ import org.xmpp.packet.JID;
 
 import java.util.Map;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * Provides several utility methods for file transfer manager implementaions to utilize.
  *
  * @author Alexander Wenckus
  */
-public abstract class AbstractFileTransferManager
-        extends BasicModule implements FileTransferManager
-{
-
-    private static final List<String> FILETRANSFER_NAMESPACES
-            = Arrays.asList(NAMESPACE_BYTESTREAMS, NAMESPACE_SI);
+public class DefaultFileTransferManager extends BasicModule implements FileTransferManager {
 
     private static final String CACHE_NAME = "File Transfer Cache";
 
@@ -46,7 +42,7 @@ public abstract class AbstractFileTransferManager
     /**
      * Default constructor creates the cache.
      */
-    public AbstractFileTransferManager() {
+    public DefaultFileTransferManager() {
         super("File Transfer Manager");
         fileTransferMap = createCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
         InterceptorManager.getInstance().addInterceptor(new MetaFileTransferInterceptor());
@@ -96,6 +92,24 @@ public abstract class AbstractFileTransferManager
         return null;
     }
 
+    public boolean acceptIncomingFileTransferRequest(FileTransfer transfer)
+    {
+        try {
+            fireFileTransferMetaIntercept(transfer);
+        }
+        catch (FileTransferRejectedException e) {
+            return false;
+        }
+        if(transfer != null) {
+            String streamID = transfer.getSessionID();
+            JID from = new JID(transfer.getInitiator());
+            JID to = new JID(transfer.getTarget());
+            cacheFileTransfer(ProxyConnectionManager.createDigest(streamID, from, to), transfer);
+            return true;
+        }
+        return false;
+    }
+
     public void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException
     {
@@ -111,14 +125,29 @@ public abstract class AbstractFileTransferManager
         cacheFileTransfer(transferDigest, transfer);
     }
 
-    public void enableFileTransfer(boolean isEnabled) {
-        JiveGlobals.setProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED, Boolean.toString(isEnabled));
+    private FileTransfer createFileTransfer(String packetID, JID from,
+                                                     JID to, Element siElement) {
+        String streamID = siElement.attributeValue("id");
+        String mimeType = siElement.attributeValue("mime-type");
+        String profile = siElement.attributeValue("profile");
+        // Check profile, the only type we deal with currently is file transfer
+        FileTransfer transfer = null;
+        if (NAMESPACE_SI_FILETRANSFER.equals(profile)) {
+            Element fileTransferElement = getChildElement(siElement, NAMESPACE_SI_FILETRANSFER);
+            // Not valid form, reject
+            if (fileTransferElement == null) {
+                return null;
+            }
+            String fileName = fileTransferElement.attributeValue("name");
+            long size = Long.parseLong(fileTransferElement.attributeValue("size"));
+
+            transfer = new FileTransfer(from.toString(), to.toString(),
+                    streamID, fileName, size, mimeType);
+        }
+        return transfer;
     }
 
-    public boolean isFileTransferEnabled() {
-        return JiveGlobals.getBooleanProperty(JIVEPROPERTY_FILE_TRANSFER_ENABLED,
-                DEFAULT_IS_FILE_TRANSFER_ENABLED);
-    }
+
 
     public void addFileTransferInterceptor(FileTransferInterceptor interceptor) {
     }
@@ -128,6 +157,11 @@ public abstract class AbstractFileTransferManager
 
     public void fireFileTransferIntercept(String transferDigest)
             throws FileTransferRejectedException
+    {
+    }
+
+    private void fireFileTransferMetaIntercept(FileTransfer transfer) throws
+            FileTransferRejectedException
     {
     }
 
@@ -148,17 +182,17 @@ public abstract class AbstractFileTransferManager
                 }
 
                 String namespace = childElement.getNamespaceURI();
-                if(!isFileTransferEnabled() && FILETRANSFER_NAMESPACES.contains(namespace)) {
-                    throw new PacketRejectedException("File Transfer Disabled");
-                }
-
                 if (NAMESPACE_SI.equals(namespace)) {
                     // If this is a set, check the feature offer
                     if (iq.getType().equals(IQ.Type.set)) {
                         JID from = iq.getFrom();
                         JID to = iq.getTo();
                         String packetID = iq.getID();
-                        if (!acceptIncomingFileTransferRequest(packetID, from, to, childElement)) {
+
+                        FileTransfer transfer =
+                                createFileTransfer(packetID, from, to, childElement);
+
+                        if (transfer == null || !acceptIncomingFileTransferRequest(transfer)) {
                             throw new PacketRejectedException();
                         }
                     }

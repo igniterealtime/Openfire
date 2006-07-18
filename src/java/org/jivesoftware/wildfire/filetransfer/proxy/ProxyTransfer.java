@@ -7,9 +7,10 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.wildfire.filetransfer;
+package org.jivesoftware.wildfire.filetransfer.proxy;
 
 import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.wildfire.filetransfer.FileTransferProgress;
 
 import java.io.IOException;
 
@@ -19,14 +20,25 @@ import java.io.IOException;
  */
 public interface ProxyTransfer extends Cacheable, FileTransferProgress {
 
+    /**
+     * Sets the transfer digest for a file transfer. The transfer digest uniquely identifies a file
+     * transfer in the system.
+     *
+     * @param digest the digest which uniquely identifies this transfer.
+     */
     public void setTransferDigest(String digest);
 
+    /**
+     * Returns the transfer digest uniquely identifies a file transfer in the system.
+     *  
+     * @return the transfer digest uniquely identifies a file transfer in the system.
+     */
     public String getTransferDigest();
 
     /**
-     * Returns true if the Bytestream is ready to be activated and the  proxy transfer can begin.
+     * Returns true if the Bytestream is ready to be activated and the proxy transfer can begin.
      *
-     * @return Returns true if the Bytestream is ready to be activated.
+     * @return true if the Bytestream is ready to be activated.
      */
     public boolean isActivatable();
 

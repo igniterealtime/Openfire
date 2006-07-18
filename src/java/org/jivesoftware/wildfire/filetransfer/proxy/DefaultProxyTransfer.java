@@ -8,11 +8,9 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.wildfire.filetransfer.spi;
+package org.jivesoftware.wildfire.filetransfer.proxy;
 
 import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.wildfire.filetransfer.ProxyTransfer;
-import org.jivesoftware.wildfire.filetransfer.ProxyOutputStream;
 
 import java.util.concurrent.Future;
 import java.io.IOException;

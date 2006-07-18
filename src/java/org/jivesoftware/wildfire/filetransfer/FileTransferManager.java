@@ -10,10 +10,9 @@
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.xmpp.packet.JID;
-import org.dom4j.Element;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.Module;
+import org.jivesoftware.wildfire.filetransfer.proxy.ProxyTransfer;
 
 /**
  * Manages all file transfer currently happening originating from and/or ending at users of the
@@ -22,23 +21,16 @@ import org.jivesoftware.wildfire.container.Module;
  * @author Alexander Wenckus
  */
 public interface FileTransferManager extends Module {
-
     /**
-     * The JiveProperty relating to whether or not file transfer is currently enabled. If file
-     * transfer is disabled all known file transfer related packets are blocked, it also goes
-     * with out saying that the file transfer proxy is then disabled.
-     */
-    static final String JIVEPROPERTY_FILE_TRANSFER_ENABLED = "xmpp.filetransfer.enabled";
-
-    /**
-     * Whether or not the file transfer is enabled by default.
-     */
-    static final boolean DEFAULT_IS_FILE_TRANSFER_ENABLED = true;
-
-    /**
-     * Stream Initiation, SI, namespace
+     * The Stream Initiation, SI, namespace.
      */
     static final String NAMESPACE_SI = "http://jabber.org/protocol/si";
+
+    /**
+     * Namespace for the file transfer profile of Stream Initiation.
+     */
+    static final String NAMESPACE_SI_FILETRANSFER =
+            "http://jabber.org/protocol/si/profile/file-transfer";
 
     /**
      * Bytestreams namespace
@@ -49,13 +41,10 @@ public interface FileTransferManager extends Module {
      * Checks an incoming file transfer request to see if it should be accepted or rejected.
      * If it is accepted true will be returned and if it is rejected false will be returned.
      *
-     * @param packetID the packet ID of the packet being parsed.
-     * @param from the offerer The offerer of the file transfer.
-     * @param to The receiver the potential reciever of the file transfer.
-     * @param siElement the Stream Initiation element
+     * @param transfer the transfer to test for acceptance
      * @return true if it should be accepted false if it should not.
      */
-    boolean acceptIncomingFileTransferRequest(String packetID, JID from, JID to, Element siElement);
+    boolean acceptIncomingFileTransferRequest(FileTransfer transfer);
 
     /**
      * Registers that a transfer has begun through the proxy connected to the server.
@@ -68,21 +57,6 @@ public interface FileTransferManager extends Module {
      */
     void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException;
-
-    /**
-     * Enables or disable all file transfers going through the server. This includes the blocking
-     * of file transfer related packets from reaching their recipients.
-     *
-     * @param isEnabled true if file transfer should be enabled and false if it should not be.
-     */
-    void enableFileTransfer(boolean isEnabled);
-
-    /**
-     * Returns whether or not file transfer is currently enabled in the server.
-     *
-     * @return true if file transfer is enabled and false if it is not
-     */
-    boolean isFileTransferEnabled();
 
     void addFileTransferInterceptor(FileTransferInterceptor interceptor);
 

@@ -8,11 +8,12 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.wildfire.filetransfer;
+package org.jivesoftware.wildfire.filetransfer.proxy;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer;
+import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
+import org.jivesoftware.wildfire.filetransfer.FileTransferRejectedException;
 import org.jivesoftware.wildfire.stats.Statistic;
 import org.jivesoftware.wildfire.stats.StatisticsManager;
 import org.jivesoftware.wildfire.stats.i18nStatistic;
@@ -60,7 +61,7 @@ public class ProxyConnectionManager {
         connectionMap = new Cache<String, ProxyTransfer>(cacheName, -1, 1000 * 60 * 10);
 
         className = JiveGlobals.getProperty("provider.transfer.proxy",
-                "org.jivesoftware.wildfire.filetransfer.spi.DefaultProxyTransfer");
+                "org.jivesoftware.wildfire.filetransfer.proxy.DefaultProxyTransfer");
 
         transferManager = manager;
         StatisticsManager.getInstance().addStatistic(proxyTransferRate, new ProxyTracker());

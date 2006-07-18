@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.filetransfer;
+package org.jivesoftware.wildfire.filetransfer.proxy;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -18,6 +18,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.disco.*;
@@ -69,7 +70,6 @@ public class FileTransferProxy extends BasicModule
     private PacketRouter router;
     private String proxyIP;
     private ProxyConnectionManager connectionManager;
-    private FileTransferManager transferManager;
 
     private InetAddress bindInterface;
 
@@ -182,9 +182,8 @@ public class FileTransferProxy extends BasicModule
         catch (UnknownHostException e) {
             Log.error("Couldn't discover local host", e);
         }
-
-        transferManager = getFileTransferManager(server);
-        connectionManager = new ProxyConnectionManager(transferManager);
+        
+        connectionManager = new ProxyConnectionManager(getFileTransferManager(server));
     }
 
     private FileTransferManager getFileTransferManager(XMPPServer server) {
@@ -250,8 +249,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     private boolean isEnabled() {
-        return transferManager.isFileTransferEnabled() &&
-                JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED);
+        return JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED);
     }
 
     /**
@@ -373,27 +371,13 @@ public class FileTransferProxy extends BasicModule
                 Object value = params.get("value");
                 boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString()) :
                         DEFAULT_IS_PROXY_ENABLED);
-                setEnabled(isEnabled && transferManager.isFileTransferEnabled());
-            }
-            else if(FileTransferManager.JIVEPROPERTY_FILE_TRANSFER_ENABLED
-                    .equalsIgnoreCase(property))
-            {
-                Object value = params.get("value");
-                boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString())
-                        : FileTransferManager.DEFAULT_IS_FILE_TRANSFER_ENABLED);
-                setEnabled(isEnabled && JiveGlobals.getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED,
-                        DEFAULT_IS_PROXY_ENABLED));
+                setEnabled(isEnabled);
             }
         }
 
         public void propertyDeleted(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
-                setEnabled(DEFAULT_IS_PROXY_ENABLED && transferManager.isFileTransferEnabled());
-            }
-            else if(FileTransferManager.JIVEPROPERTY_FILE_TRANSFER_ENABLED.
-                    equalsIgnoreCase(property)){setEnabled(FileTransferManager.
-                    DEFAULT_IS_FILE_TRANSFER_ENABLED && JiveGlobals.
-                    getBooleanProperty(JIVEPROPERTY_PROXY_ENABLED, DEFAULT_IS_PROXY_ENABLED));
+                setEnabled(DEFAULT_IS_PROXY_ENABLED);
             }
         }
 

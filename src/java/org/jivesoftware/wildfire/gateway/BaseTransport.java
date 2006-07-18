@@ -447,37 +447,7 @@ public abstract class BaseTransport implements Component {
                     registrationManager.createRegistration(packet.getFrom(), this.transportType, username, password);
 
                     try {
-                        Roster roster = rosterManager.getRoster(packet.getFrom().getNode());
-                        try {
-                            RosterItem gwitem = roster.getRosterItem(packet.getTo());
-                            if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
-                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
-                            }
-                            if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
-                                gwitem.setAskStatus(RosterItem.ASK_NONE);
-                            }
-                            roster.updateRosterItem(gwitem);
-                        }
-                        catch (UserNotFoundException e) {
-                            try {
-                                RosterItem gwitem = roster.createRosterItem(packet.getTo(), true);
-                                gwitem.setSubStatus(RosterItem.SUB_BOTH);
-                                gwitem.setAskStatus(RosterItem.ASK_NONE);
-                                roster.updateRosterItem(gwitem);
-                            }
-                            catch (UserAlreadyExistsException ee) {
-                                Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
-                                IQ eresult = IQ.createResultIQ(packet);
-                                eresult.setError(Condition.bad_request);
-                                reply.add(eresult);
-                            }
-                            catch (Exception ee) {
-                                Log.error("createRosterItem caused exception: " + ee.getMessage());
-                                IQ eresult = IQ.createResultIQ(packet);
-                                eresult.setError(Condition.bad_request);
-                                reply.add(eresult);
-                            }
-                        }
+                        addOrUpdateRosterItem(packet.getFrom(), packet.getTo(), this.getDescription(), "Transports");
                     }
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + packet.getFrom());
@@ -556,6 +526,133 @@ public abstract class BaseTransport implements Component {
      */
     public ComponentManager getComponentManager() {
         return componentManager;
+    }
+
+    /**
+     * Either updates or adds a JID to a user's roster.
+     *
+     * @param userjid JID of user to have item added to their roster.
+     * @param contactjid JID to add to roster.
+     * @param nickname Nickname of item. (can be null)
+     * @param group Group item is to be placed in. (can be null)
+     * @throws UserNotFoundException if userjid not found.
+     */
+    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, String group) throws UserNotFoundException {
+        try {
+            Roster roster = rosterManager.getRoster(userjid.getNode());
+            try {
+                RosterItem gwitem = roster.getRosterItem(contactjid);
+                if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
+                    gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                }
+                if (gwitem.getAskStatus() != RosterItem.ASK_NONE) {
+                    gwitem.setAskStatus(RosterItem.ASK_NONE);
+                }
+                gwitem.setNickname(nickname);
+                List<String> groups = new ArrayList<String>();
+                groups.add(group);
+                try {
+                    gwitem.setGroups(groups);
+                }
+                catch (Exception ee) {
+                    // Oooookay, ignore then.
+                }
+                roster.updateRosterItem(gwitem);
+            }
+            catch (UserNotFoundException e) {
+                try {
+                    RosterItem gwitem = roster.createRosterItem(contactjid, true);
+                    gwitem.setSubStatus(RosterItem.SUB_BOTH);
+                    gwitem.setAskStatus(RosterItem.ASK_NONE);
+                    gwitem.setNickname(nickname);
+                    List<String> groups = new ArrayList<String>();
+                    groups.add(group);
+                    try {
+                        gwitem.setGroups(groups);
+                    }
+                    catch (Exception ee) {
+                        // Oooookay, ignore then.
+                    }
+                    roster.updateRosterItem(gwitem);
+                }
+                catch (UserAlreadyExistsException ee) {
+                    Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                    // TODO: Should we throw exception or something?
+                }
+                catch (Exception ee) {
+                    Log.error("createRosterItem caused exception: " + ee.getMessage());
+                    // TODO: Should we throw exception or something?
+                }
+            }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Could not find roster for " + userjid.toString());
+        }
+    }
+
+    /**
+     * Either updates or adds a contact to a user's roster.
+     *
+     * @param userjid JID of user to have item added to their roster.
+     * @param contactid String contact name, will be translated to JID.
+     * @param nickname Nickname of item. (can be null)
+     * @param group Group item is to be placed in. (can be null)
+     * @throws UserNotFoundException if userjid not found.
+     */
+    public void addOrUpdateRosterItem(JID userjid, String contactid, String nickname, String group) throws UserNotFoundException {
+        try {
+            addOrUpdateRosterItem(userjid, new JID(contactid, this.jid.toBareJID(), null), nickname, group);
+        }
+        catch (UserNotFoundException e) {
+            // Pass it on down.
+            throw e;
+        }
+    }
+
+    /**
+     * Removes a roster item from a user's roster.
+     *
+     * @param userjid JID of user whose roster we will interact with.
+     * @param contactjid JID to be removed from roster.
+     * @throws UserNotFoundException if userjid not found.
+     */
+    void removeFromRoster(JID userjid, JID contactjid) throws UserNotFoundException {
+        // Clean up the user's contact list.
+        try {
+            Roster roster = rosterManager.getRoster(userjid.getNode());
+            for (RosterItem ri : roster.getRosterItems()) {
+                if (ri.getJid() == contactjid) {
+                    try {
+                        roster.deleteRosterItem(ri.getJid(), false);
+                    }
+                    catch (Exception e) {
+                        Log.error("Error removing roster item: " + ri.toString());
+                        // TODO: Should we say something?
+                    }
+                }
+            }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Could not find roster for " + userjid.toString());
+        }
+    }
+
+    /**
+     * Removes a roster item from a user's roster based on a legacy contact.
+     *
+     * @param userjid JID of user whose roster we will interact with.
+     * @param contactid Contact to be removed, will be translated to JID.
+     * @throws UserNotFoundException if userjid not found.
+     */
+    void removeFromRoster(JID userjid, String contactid) throws UserNotFoundException {
+        // Clean up the user's contact list.
+        try {
+            removeFromRoster(userjid, new JID(contactid, this.jid.toBareJID(), null));
+        }
+        catch (UserNotFoundException e) {
+            // Pass it on through.
+            throw e;
+        }
     }
 
     /**

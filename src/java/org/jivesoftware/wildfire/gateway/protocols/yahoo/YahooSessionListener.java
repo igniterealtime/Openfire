@@ -22,6 +22,7 @@ import ymsg.network.event.SessionFriendEvent;
 import ymsg.network.event.SessionListener;
 import ymsg.network.event.SessionNewMailEvent;
 import ymsg.network.event.SessionNotifyEvent;
+import ymsg.support.MessageDecoder;
 
 /**
  * Handles incoming packets from Yahoo.
@@ -32,6 +33,11 @@ import ymsg.network.event.SessionNotifyEvent;
  * Heavily inspired by Noah Campbell's work.
  */
 public class YahooSessionListener implements SessionListener {
+
+    /**
+     * Handles converting messages between formats.
+     */
+    private MessageDecoder messageDecoder = new MessageDecoder();
 
     /**
      * Creates a Yahoo session listener affiliated with a session.
@@ -56,7 +62,7 @@ public class YahooSessionListener implements SessionListener {
         m.setType(Message.Type.chat);
         m.setTo(yahooSession.getJID());
         m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
-        m.setBody(event.getMessage());
+        m.setBody(messageDecoder.decodeToText(event.getMessage()));
         yahooSession.getTransport().sendPacket(m);
     }
 

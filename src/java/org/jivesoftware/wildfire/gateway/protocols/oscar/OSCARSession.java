@@ -24,6 +24,7 @@ import net.kano.joscar.ByteBlock;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -207,6 +208,15 @@ public class OSCARSession extends TransportSession {
 
     void gotBuddy(BuddyItem buddy) {
         buddies.add(buddy);
+        String nickname = buddy.getAlias();
+        //String group = groups.get(buddy.getGroupId()).getGroupName();
+        try {
+            //getTransport().addOrUpdateRosterItem(getJID(), buddy.getScreenname(), nickname, group);
+            getTransport().addOrUpdateRosterItem(getJID(), buddy.getScreenname(), nickname, null);
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Unable to add " + buddy.getScreenname() + " to roster.");
+        }
         if (buddy.getId() > highestBuddyId) {
             highestBuddyId = buddy.getId();
         }

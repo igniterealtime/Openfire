@@ -11,8 +11,8 @@
 package org.jivesoftware.wildfire.filetransfer;
 
 import java.util.concurrent.Future;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 /**
  * An interface to track the progress of a file transfer through the server. This interface is used
@@ -58,11 +58,11 @@ public interface FileTransferProgress {
      */
     public void setTransferFuture(Future<?> future);
 
-    public void setInputStream(InputStream initiatorInputStream);
+    public void setInputChannel(ReadableByteChannel inputChannel);
 
-    public InputStream getInputStream();
+    public ReadableByteChannel getInputChannel();
 
-    public void setOutputStream(OutputStream targetOutputStream);
+    public void setOutputChannel(WritableByteChannel outputChannel);
 
-    public OutputStream getOutputStream();
+    public WritableByteChannel getOutputChannel();
 }

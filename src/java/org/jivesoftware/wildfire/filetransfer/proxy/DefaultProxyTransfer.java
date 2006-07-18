@@ -14,8 +14,9 @@ import org.jivesoftware.util.CacheSizes;
 
 import java.util.concurrent.Future;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.ByteBuffer;
 
 /**
  * Tracks the different connections related to a file transfer. There are two connections, the
@@ -25,9 +26,9 @@ public class DefaultProxyTransfer implements ProxyTransfer {
 
     private String initiator;
 
-    private InputStream inputStream;
+    private ReadableByteChannel inputStream;
 
-    private OutputStream outputStream;
+    private WritableByteChannel outputStream;
 
     private String target;
 
@@ -52,20 +53,20 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         this.initiator = initiator;
     }
 
-    public InputStream getInputStream() {
+    public ReadableByteChannel getInputChannel() {
         return inputStream;
     }
 
-    public void setInputStream(InputStream initiatorInputStream) {
-        this.inputStream = initiatorInputStream;
+    public void setInputChannel(ReadableByteChannel inputChannel) {
+        this.inputStream = inputChannel;
     }
 
-    public OutputStream getOutputStream() {
+    public WritableByteChannel getOutputChannel() {
         return outputStream;
     }
 
-    public void setOutputStream(OutputStream outputStream) {
-        this.outputStream = outputStream;
+    public void setOutputChannel(WritableByteChannel outputChannel) {
+        this.outputStream = outputChannel;
     }
 
     public String getTarget() {
@@ -112,25 +113,27 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         if(!isActivatable()) {
             throw new IOException("Transfer missing party");
         }
-        InputStream in = getInputStream();
-        OutputStream out = new ProxyOutputStream(getOutputStream());
+        ReadableByteChannel in = getInputChannel();
+        WritableByteChannel out = new ProxyOutputChannel(getOutputChannel());
 
-        final byte[] b = new byte[BUFFER_SIZE];
+        ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
         int count = 0;
         amountWritten = 0;
 
         do {
-            // write to the output stream
-            out.write(b, 0, count);
+            // write to the output channel
+            out.write(buffer);
 
             amountWritten += count;
 
-            // read more bytes from the input stream
-            count = in.read(b);
+            // read more bytes from the input channel
+            buffer.clear();
+            count = in.read(buffer);
+            buffer.flip();
         } while (count >= 0);
 
-        getInputStream().close();
-        getOutputStream().close();
+        in.close();
+        out.close();
     }
 
     public int getCachedSize() {

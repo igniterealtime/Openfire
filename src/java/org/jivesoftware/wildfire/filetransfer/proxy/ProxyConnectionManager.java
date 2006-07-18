@@ -20,13 +20,15 @@ import org.jivesoftware.wildfire.stats.i18nStatistic;
 import org.xmpp.packet.JID;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.ByteBuffer;
 
 /**
  * Manages the connections to the proxy server. The connections go through two stages before
@@ -48,13 +50,13 @@ public class ProxyConnectionManager {
 
     private Future<?> socketProcess;
 
-    private ServerSocket serverSocket;
-
     private int proxyPort;
 
     private FileTransferManager transferManager;
 
     private String className;
+
+    private ServerSocketChannel serverChannel;
 
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
@@ -80,20 +82,23 @@ public class ProxyConnectionManager {
         reset();
         socketProcess = executor.submit(new Runnable() {
             public void run() {
+                ServerSocket serverSocket;
                 try {
-                    serverSocket = new ServerSocket(port, -1, bindInterface);
+                    serverChannel = ServerSocketChannel.open();
+                    serverSocket = serverChannel.socket();
+                    serverSocket.bind(new InetSocketAddress(bindInterface, port));
                 }
                 catch (IOException e) {
-                    Log.error("Error creating server socket", e);
+                    Log.error("Error binding server socket", e);
                     return;
                 }
                 while (serverSocket.isBound()) {
-                    final Socket socket;
+                    final SocketChannel channel;
                     try {
-                        socket = serverSocket.accept();
+                        channel = serverChannel.accept();
                     }
                     catch (IOException e) {
-                        if (!serverSocket.isClosed()) {
+                        if (serverChannel.isOpen()) {
                             Log.error("Error accepting proxy connection", e);
                             continue;
                         }
@@ -104,13 +109,13 @@ public class ProxyConnectionManager {
                     executor.submit(new Runnable() {
                         public void run() {
                             try {
-                                processConnection(socket);
+                                processConnection(channel);
                             }
                             catch (IOException ie) {
                                 Log.error("Error processing file transfer proxy connection",
                                         ie);
                                 try {
-                                    socket.close();
+                                    channel.close();
                                 }
                                 catch (IOException e) {
                                     /* Do Nothing */
@@ -128,21 +133,21 @@ public class ProxyConnectionManager {
         return proxyPort;
     }
 
-    private void processConnection(Socket connection) throws IOException {
-        OutputStream out = new DataOutputStream(connection.getOutputStream());
-        InputStream in = new DataInputStream(connection.getInputStream());
-
+    private void processConnection(SocketChannel connection) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(512);
+        connection.read(buffer);
+        buffer.flip();
         // first byte is version should be 5
-        int b = in.read();
+        int b = buffer.get();
         if (b != 5) {
             throw new IOException("Only SOCKS5 supported");
         }
 
         // second byte number of authentication methods supported
-        b = in.read();
+        b = buffer.get();
         int[] auth = new int[b];
         for (int i = 0; i < b; i++) {
-            auth[i] = in.read();
+            auth[i] = buffer.get();
         }
 
         int authMethod = -1;
@@ -163,9 +168,11 @@ public class ProxyConnectionManager {
         byte[] cmd = new byte[2];
         cmd[0] = (byte) 0x05;
         cmd[1] = (byte) 0x00;
-        out.write(cmd);
+        buffer.clear();
+        buffer.put(cmd).flip();
+        connection.write(buffer);
 
-        String responseDigest = processIncomingSocks5Message(in);
+        String responseDigest = processIncomingSocks5Message(connection, buffer);
         try {
             synchronized (connectionLock) {
                 ProxyTransfer transfer = connectionMap.get(responseDigest);
@@ -175,21 +182,26 @@ public class ProxyConnectionManager {
                     connectionMap.put(responseDigest, transfer);
                 }
                 else {
-                    transfer.setInputStream(connection.getInputStream());
+                    transfer.setInputChannel(connection);
                 }
             }
             cmd = createOutgoingSocks5Message(0, responseDigest);
-            out.write(cmd);
+            buffer.clear();
+            buffer.put(cmd).flip();
+            connection.write(buffer);
         }
         catch (UnauthorizedException eu) {
             cmd = createOutgoingSocks5Message(2, responseDigest);
-            out.write(cmd);
+            buffer.clear();
+            buffer.put(cmd).flip();
+            connection.write(buffer);
             throw new IOException("Illegal proxy transfer");
         }
     }
 
-    private ProxyTransfer createProxyTransfer(String transferDigest, Socket targetSocket)
-            throws IOException {
+    private ProxyTransfer createProxyTransfer(String transferDigest,
+                                              WritableByteChannel targetSocket)
+    {
         ProxyTransfer provider;
         try {
             Class c = ClassUtils.forName(className);
@@ -201,32 +213,26 @@ public class ProxyConnectionManager {
         }
 
         provider.setTransferDigest(transferDigest);
-        provider.setOutputStream(targetSocket.getOutputStream());
+        provider.setOutputChannel(targetSocket);
         return provider;
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored"})
-    private static String processIncomingSocks5Message(InputStream in)
+    private static String processIncomingSocks5Message(SocketChannel in, ByteBuffer buffer)
             throws IOException {
+        buffer.clear();
         // read the version and command
-        byte[] cmd = new byte[5];
-        int read = in.read(cmd, 0, 5);
-        if (read != 5) {
+        int read = in.read(buffer);
+
+        if (read < 5) {
             throw new IOException("Error reading Socks5 version and command");
         }
+        buffer.position(5);
 
         // read the digest
-        byte[] addr = new byte[cmd[4]];
-        read = in.read(addr, 0, addr.length);
-        if (read != addr.length) {
-            throw new IOException("Error reading provided address");
-        }
-        String digest = new String(addr);
+        byte[] addr = new byte[buffer.get(4)];
+        buffer.get(addr, 0, addr.length);
 
-        in.read();
-        in.read();
-
-        return digest;
+        return new String(addr);
     }
 
     private static byte[] createOutgoingSocks5Message(int cmd, String digest) {
@@ -338,9 +344,9 @@ public class ProxyConnectionManager {
             socketProcess.cancel(true);
             socketProcess = null;
         }
-        if (serverSocket != null) {
+        if (serverChannel != null) {
             try {
-                serverSocket.close();
+                serverChannel.close();
             }
             catch (IOException e) {
                 Log.warn("Error closing proxy listening socket", e);
@@ -354,7 +360,7 @@ public class ProxyConnectionManager {
         }
 
         public double sample() {
-            return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000);
+            return (ProxyOutputChannel.amountTransfered.getAndSet(0) / 1000);
         }
     }
 }

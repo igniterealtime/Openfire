@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.io.IOException;
+import java.util.Collection;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -18,6 +19,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
+import ymsg.network.YahooUser;
 
 /**
  * Represents a Yahoo session.
@@ -80,6 +82,8 @@ public class YahooSession extends TransportSession {
                         p.setFrom(getTransport().getJID());
                         Log.debug("Logged in, sending: " + p.toString());
                         getTransport().sendPacket(p);
+
+                        syncUsers();
                     }
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
@@ -119,6 +123,20 @@ public class YahooSession extends TransportSession {
      */
     public Boolean isLoggedIn() {
         return loggedIn;
+    }
+
+    /**
+     * Syncs up the yahoo roster with the jabber roster.
+     */
+    public void syncUsers() {
+        for(YahooUser user : (Collection<YahooUser>)yahooSession.getUsers().values()) {
+            try {
+                getTransport().addOrUpdateRosterItem(getJID(), user.getId(), user.getId(), null);
+            }
+            catch (Exception e) {
+                // TODO: Failed for some reason.
+            }
+        }
     }
 
     /**

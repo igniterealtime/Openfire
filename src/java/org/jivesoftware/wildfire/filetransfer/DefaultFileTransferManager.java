@@ -155,7 +155,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
     public void removeFileTransferInterceptor(FileTransferInterceptor interceptor) {
     }
 
-    public void fireFileTransferIntercept(String transferDigest)
+    public void fireFileTransferIntercept(FileTransferProgress transfer)
             throws FileTransferRejectedException
     {
     }

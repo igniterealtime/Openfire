@@ -283,7 +283,7 @@ public class ProxyConnectionManager {
         transfer.setTransferFuture(executor.submit(new Runnable() {
             public void run() {
                 try {
-                    transferManager.fireFileTransferIntercept(digest);
+                    transferManager.fireFileTransferIntercept(transfer);
                 }
                 catch (FileTransferRejectedException e) {
                     notifyFailure(transfer, e);

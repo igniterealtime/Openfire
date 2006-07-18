@@ -62,5 +62,5 @@ public interface FileTransferManager extends Module {
 
     void removeFileTransferInterceptor(FileTransferInterceptor interceptor);
 
-    void fireFileTransferIntercept(String transferDigest) throws FileTransferRejectedException;
+    void fireFileTransferIntercept(FileTransferProgress transfer) throws FileTransferRejectedException;
 }

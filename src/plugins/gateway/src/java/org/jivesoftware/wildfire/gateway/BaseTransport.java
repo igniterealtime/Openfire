@@ -28,6 +28,8 @@ import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -113,7 +115,9 @@ public abstract class BaseTransport implements Component {
 
     private final String DISCO_INFO = "http://jabber.org/protocol/disco#info";
     private final String DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
+    private final String IQ_GATEWAY = "jabber:iq:gateway";
     private final String IQ_REGISTER = "jabber:iq:register";
+    private final String IQ_VERSION = "jabber:iq:version";
 
     /**
      * Handles all incoming XMPP stanzas, passing them to individual
@@ -324,9 +328,17 @@ public abstract class BaseTransport implements Component {
             Log.debug("Matched Disco Items");
             reply.addAll(handleDiscoItems(packet));
         }
+        else if (xmlns.equals(IQ_GATEWAY)) {
+            Log.debug("Matched IQ Gateway");
+            reply.addAll(handleIQGateway(packet));
+        }
         else if (xmlns.equals(IQ_REGISTER)) {
             Log.debug("Matched IQ Register");
             reply.addAll(handleIQRegister(packet));
+        }
+        else if (xmlns.equals(IQ_VERSION)) {
+            Log.debug("Matched IQ Version");
+            reply.addAll(handleIQVersion(packet));
         }
         else {
             Log.debug("Matched nothing");
@@ -339,7 +351,7 @@ public abstract class BaseTransport implements Component {
      * Handle service discovery info request.
      *
      * @param packet An IQ packet in the disco info namespace.
-     * @return An IQ packet to be returned to the user.
+     * @return A list of IQ packets to be returned to the user.
      */
     private List<Packet> handleDiscoInfo(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -353,7 +365,11 @@ public abstract class BaseTransport implements Component {
                     .addAttribute("type", this.transportType.toString())
                     .addAttribute("name", this.description);
             response.addElement("feature")
+                    .addAttribute("var", IQ_GATEWAY);
+            response.addElement("feature")
                     .addAttribute("var", IQ_REGISTER);
+            response.addElement("feature")
+                    .addAttribute("var", IQ_VERSION);
             result.setChildElement(response);
             reply.add(result);
         }
@@ -365,7 +381,7 @@ public abstract class BaseTransport implements Component {
      * Handle service discovery items request.
      *
      * @param packet An IQ packet in the disco items namespace.
-     * @return An IQ packet to be returned to the user.
+     * @return A list of IQ packets to be returned to the user.
      */
     private List<Packet> handleDiscoItems(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -375,10 +391,52 @@ public abstract class BaseTransport implements Component {
     }
 
     /**
+     * Handle gateway translation service request.
+     *
+     * @param packet An IQ packet in the iq gateway namespace.
+     * @return A list of IQ packets to be returned to the user.
+     */
+    private List<Packet> handleIQGateway(IQ packet) {
+        List<Packet> reply = new ArrayList<Packet>();
+
+        if (packet.getType() == IQ.Type.get) {
+            IQ result = IQ.createResultIQ(packet);
+            Element query = DocumentHelper.createElement(QName.get("query", IQ_GATEWAY));
+            query.addElement("desc").addText("Please enter the person's "+this.getName()+" username.");
+            query.addElement("prompt");
+            result.setChildElement(query);
+            reply.add(result);
+        }
+        else if (packet.getType() == IQ.Type.set) {
+            IQ result = IQ.createResultIQ(packet);
+            String prompt = null;
+            Element promptEl = packet.getChildElement().element("prompt");
+            if (promptEl != null) {
+                prompt = promptEl.getTextTrim();
+            }
+            if (prompt == null) {
+                result.setError(Condition.bad_request);
+            }
+            else {
+                JID jid = this.convertIDToJID(prompt);
+                Element query = DocumentHelper.createElement(QName.get("query", IQ_GATEWAY));
+                // This is what Psi expects
+                query.addElement("prompt").addText(jid.toString());
+                // This is JEP complient
+                query.addElement("jid").addText(jid.toString());
+                result.setChildElement(query);
+            }
+            reply.add(result);
+        }
+        
+        return reply;
+    }
+
+    /**
      * Handle registration request.
      *
      * @param packet An IQ packet in the iq registration namespace.
-     * @return An IQ packet to be returned to the user.
+     * @return A list of IQ packets to be returned to the user.
      */
     private List<Packet> handleIQRegister(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -426,6 +484,23 @@ public abstract class BaseTransport implements Component {
             // User wants to register with the transport.
             String username = null;
             String password = null;
+
+            try {
+                DataForm form = new DataForm(packet.getChildElement().element("x"));
+                List<FormField> fields = form.getFields();
+                for (FormField field : fields) {
+                    String var = field.getVariable();
+                    if (var.equals("username")) {
+                        username = field.getValues().get(0);
+                    }
+                    else if (var.equals("password")) {
+                        password = field.getValues().get(0);
+                    }
+                }
+            }
+            catch (Exception e) {
+                // No with data form apparantly
+            }
 
             if (packet.getType() == IQ.Type.set) {
                 Element userEl = packet.getChildElement().element("username");
@@ -477,13 +552,33 @@ public abstract class BaseTransport implements Component {
                         eresult.setError(Condition.bad_request);
                         reply.add(eresult);
                     }
+
+                    // Lets ask them what their presence is, maybe log
+                    // them in immediately.
+                    Presence p = new Presence(Presence.Type.probe);
+                    p.setTo(packet.getFrom());
+                    p.setFrom(packet.getTo());
+                    reply.add(p);
                 }
             }
             else if (packet.getType() == IQ.Type.get) {
                 Element response = DocumentHelper.createElement(QName.get("query", IQ_REGISTER));
                 IQ result = IQ.createResultIQ(packet);
 
-                response.addElement("instruction").addText("Please enter your " + this.getName() + " username and password.");
+                DataForm form = new DataForm(DataForm.Type.form);
+                form.addInstruction("Please enter your " + this.getName() + " username and password.");
+
+                FormField usernameField = form.addField();
+                usernameField.setLabel("Username");
+                usernameField.setVariable("username");
+                usernameField.setType(FormField.Type.text_single);
+
+                FormField passwordField = form.addField();
+                passwordField.setLabel("Password");
+                passwordField.setVariable("password");
+                passwordField.setType(FormField.Type.text_private);
+
+                response.addElement("instructions").addText("Please enter your " + this.getName() + " username and password.");
                 response.addElement("username");
                 response.addElement("password");
 
@@ -497,13 +592,45 @@ public abstract class BaseTransport implements Component {
     }
 
     /**
+     * Handle version request.
+     *
+     * @param packet An IQ packet in the iq version namespace.
+     * @return A list of IQ packets to be returned to the user.
+     */
+    private List<Packet> handleIQVersion(IQ packet) {
+        List<Packet> reply = new ArrayList<Packet>();
+
+        if (packet.getType() == IQ.Type.get) {
+            IQ result = IQ.createResultIQ(packet);
+            Element query = DocumentHelper.createElement(QName.get("query", IQ_VERSION));
+            query.addElement("name").addText("Wildfire " + this.getDescription());
+            query.addElement("version").addText(this.getVersionString());
+            query.addElement("os").addText(System.getProperty("os.name"));
+            result.setChildElement(query);
+            reply.add(result);
+        }
+        
+        return reply;
+    }
+
+    /**
      * Converts a legacy username to a JID.
      *
      * @param username Username to be converted to a JID.
      * @return The legacy username as a JID.
      */
     public JID convertIDToJID(String username) {
-        return new JID(username, this.jid.getDomain(), null);
+        return new JID(username.replace('@', '%'), this.jid.getDomain(), null);
+    }
+
+    /**
+     * Converts a JID to a legacy username.
+     *
+     * @param jid JID to be converted to a legacy username.
+     * @return THe legacy username as a String.
+     */
+    public String convertJIDToID(JID jid) {
+        return jid.getNode().replace('%', '@');
     }
 
     /**
@@ -548,6 +675,13 @@ public abstract class BaseTransport implements Component {
      */
     public ComponentManager getComponentManager() {
         return componentManager;
+    }
+
+    /**
+     * Returns the version string of the gateway.
+     */
+    public String getVersionString() {
+        return "0.0.1";
     }
 
     /**

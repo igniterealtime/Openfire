@@ -57,6 +57,8 @@ public class MSNSession extends TransportSession {
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
             msnManager.setStatus(ContactStatus.ONLINE);
+            msnManager.setPrivacyMode(true);
+            msnManager.setReverseListBehaviour(true);
         }
         catch (MSNException e) {
             Log.error("MSN exception thrown while logging in: " + e.toString());
@@ -112,7 +114,7 @@ public class MSNSession extends TransportSession {
      */
     public void sendMessage(JID jid, String message) {
         try {
-            msnManager.sendMessage(jid.getNode(), message);
+            msnManager.sendMessage(getTransport().convertJIDToID(jid), message);
         }
         catch (MSNException e) {
             Log.error("MSN exception while sending message: " + e.toString());

@@ -406,7 +406,8 @@ public class SASLAuthentication {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {
-            reply.append(">").append(successData).append("</success>");
+            String successData_b64 = StringUtils.encodeBase64(successData).trim();
+            reply.append(">").append(successData_b64).append("</success>");
         }
         else {
             reply.append("/>");

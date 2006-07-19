@@ -119,7 +119,9 @@ public class PrivacyList implements Cacheable {
      * @return an Element with the privacy list XML representation.
      */
     public Element asElement() {
-        Element listElement = DocumentFactory.getInstance().createDocument().addElement("list");
+        //Element listElement = DocumentFactory.getInstance().createDocument().addElement("list");
+        Element listElement = DocumentFactory.getInstance().createDocument()
+                .addElement("list", "jabber:iq:privacy");
         listElement.addAttribute("name", getName());
         // Add the list items to the result
         for (PrivacyItem item : items) {

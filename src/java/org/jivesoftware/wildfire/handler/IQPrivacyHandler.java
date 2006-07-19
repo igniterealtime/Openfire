@@ -187,6 +187,7 @@ public class IQPrivacyHandler extends IQHandler
             }
             if (list != null) {
                 // Add the privacy list to the result
+                childElement = result.setChildElement("query", "jabber:iq:privacy");
                 childElement.add(list.asElement());
             }
             else {
@@ -360,13 +361,15 @@ public class IQPrivacyHandler extends IQHandler
         try {
             sessionManager.userBroadcast(from.getNode(), pushPacket);
         }
-        catch (UnauthorizedException e) {}
+        catch (UnauthorizedException e) {
+            // Ignore
+        }
 
         return result;
     }
 
     private IQ deleteList(IQ packet, JID from, String listName) {
-        ClientSession currentSession = null;
+        ClientSession currentSession;
         IQ result = IQ.createResultIQ(packet);
         Element childElement = packet.getChildElement().createCopy();
         result.setChildElement(childElement);

@@ -45,6 +45,7 @@ public class PresenceStatusServlet extends HttpServlet {
     private PresencePlugin plugin;
     private XMLPresenceProvider xmlProvider;
     private ImagePresenceProvider imageProvider;
+    private TextPresenceProvider textProvider;
 
     byte available[];
     byte away[];
@@ -59,6 +60,7 @@ public class PresenceStatusServlet extends HttpServlet {
                 (PresencePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("presence");
         xmlProvider = new XMLPresenceProvider();
         imageProvider = new ImagePresenceProvider(this);
+        textProvider = new TextPresenceProvider();
         available = loadResource("/images/user-green-16x16.gif");
         away = loadResource("/images/user-yellow-16x16.gif");
         chat = loadResource("/images/user-green-16x16.gif");
@@ -84,6 +86,9 @@ public class PresenceStatusServlet extends HttpServlet {
             else if ("xml".equals(type)) {
                 xmlProvider.sendInfo(request, response, presence);
             }
+            else if ("text".equals(type)) {
+                textProvider.sendInfo(request, response, presence);
+            }
             else {
                 Log.warn("The presence servlet received an invalid request of type: " + type);
                 // TODO Do something
@@ -96,6 +101,9 @@ public class PresenceStatusServlet extends HttpServlet {
             else if ("xml".equals(type)) {
                 xmlProvider.sendUserNotFound(request, response);
             }
+            else if ("text".equals(type)) {
+                textProvider.sendUserNotFound(request, response);
+            }
             else {
                 Log.warn("The presence servlet received an invalid request of type: " + type);
                 // TODO Do something
@@ -107,6 +115,9 @@ public class PresenceStatusServlet extends HttpServlet {
             }
             else if ("xml".equals(type)) {
                 xmlProvider.sendUserNotFound(request, response);
+            }
+            else if ("text".equals(type)) {
+                textProvider.sendUserNotFound(request, response);
             }
             else {
                 Log.warn("The presence servlet received an invalid request of type: " + type);

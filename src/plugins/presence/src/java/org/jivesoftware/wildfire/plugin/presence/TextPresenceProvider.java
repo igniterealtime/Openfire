@@ -2,9 +2,12 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.plugin.presence;
 
 import org.xmpp.packet.Presence;
@@ -44,7 +47,9 @@ class TextPresenceProvider extends PresenceInfoProvider {
                     presence.setStatus(status);
                 }
             }
-            catch (UserNotFoundException e) {}
+            catch (UserNotFoundException e) {
+                // Ignore.
+            }
             presence.setFrom(targetJID);
         }
         out.println(presence.getStatus());
@@ -61,11 +66,15 @@ class TextPresenceProvider extends PresenceInfoProvider {
         try {
             presence.setFrom(new JID(request.getParameter("jid")));
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            // Ignore.
+        }
         try {
             presence.setTo(new JID(request.getParameter("req_jid")));
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            // Ignore.
+        }
         out.println(presence.getStatus());
         out.flush();
     }

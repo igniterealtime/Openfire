@@ -78,7 +78,6 @@ public class OSCARSession extends TransportSession {
 
     public void logIn() {
         if (!isLoggedIn()) {
-            Log.debug("Connecting...");
             loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
             loginConn.connect();
 
@@ -87,7 +86,6 @@ public class OSCARSession extends TransportSession {
             Presence p = new Presence();
             p.setTo(getJID());
             p.setFrom(getTransport().getJID());
-            Log.debug("Logged in, sending: " + p.toString());
             getTransport().sendPacket(p);
         } else {
             Log.warn(this.jid + " is already logged in");
@@ -127,7 +125,6 @@ public class OSCARSession extends TransportSession {
     }
 
     public void removeContact(JID jid) {
-        Log.debug("removeContact called");
         for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equals(jid.getNode())) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
@@ -137,7 +134,6 @@ public class OSCARSession extends TransportSession {
     }
 
     public void sendMessage(JID jid, String message) {
-        Log.debug("sendPacket called:"+jid.toString()+","+message);
         request(new SendImIcbm(jid.getNode(), message));
     }
 
@@ -152,7 +148,7 @@ public class OSCARSession extends TransportSession {
 
     protected SnacManager snacMgr = new SnacManager(new PendingSnacListener() {
         public void dequeueSnacs(SnacRequest[] pending) {
-            Log.debug("dequeuing " + pending.length + " snacs");
+            //Log.debug("dequeuing " + pending.length + " snacs");
             for (int i = 0; i < pending.length; i++) {
                 handleRequest(pending[i]);
             }
@@ -172,8 +168,8 @@ public class OSCARSession extends TransportSession {
         } else {
             // it's time to request a service
             if (!(request.getCommand() instanceof ServiceRequest)) {
-                Log.debug("requesting " + Integer.toHexString(family)
-                        + " service.");
+                //Log.debug("requesting " + Integer.toHexString(family)
+                //        + " service.");
                 snacMgr.setPending(family, true);
                 snacMgr.addRequest(request);
                 request(new ServiceRequest(family));
@@ -222,7 +218,7 @@ public class OSCARSession extends TransportSession {
      * @param buddy The buddy we've been told about.
      */
     void gotBuddy(BuddyItem buddy) {
-        Log.debug("Found buddy item: " + buddy.toString());
+        //Log.debug("Found buddy item: " + buddy.toString());
         buddies.put(buddy.getId(), buddy);
         if (buddy.getId() > highestBuddyId) {
             highestBuddyId = buddy.getId();
@@ -235,7 +231,7 @@ public class OSCARSession extends TransportSession {
      * @param group The group we've been told about.
      */
     void gotGroup(GroupItem group) {
-        Log.debug("Found group item: " + group.toString());
+        //Log.debug("Found group item: " + group.toString());
         groups.put(group.getId(), group);
         if (group.getId() > highestGroupId) {
             highestGroupId = group.getId();
@@ -248,7 +244,7 @@ public class OSCARSession extends TransportSession {
     void gotCompleteSSI() {
         List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
         for (BuddyItem buddy : buddies.values()) {
-            Log.debug("CompleteSSI: adding "+buddy.getScreenname());
+            //Log.debug("CompleteSSI: adding "+buddy.getScreenname());
             String nickname = buddy.getAlias();
             if (nickname == null) {
                 nickname = buddy.getScreenname();

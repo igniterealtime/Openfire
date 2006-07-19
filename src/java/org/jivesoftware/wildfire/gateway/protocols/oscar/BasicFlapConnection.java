@@ -61,7 +61,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected RvProcessor rvProcessor = new RvProcessor(sp);
     protected RvProcessorListener rvListener = new RvProcessorListener() {
         public void handleNewSession(NewRvSessionEvent event) {
-            Log.debug("new RV session: " + event.getSession());
+            //Log.debug("new RV session: " + event.getSession());
 
             event.getSession().addListener(rvSessionListener);
         }
@@ -75,13 +75,13 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             SnacCommand snaccmd = event.getSnacCommand();
             if (!(snaccmd instanceof RecvRvIcbm)) return;
             RecvRvIcbm icbm = (RecvRvIcbm) snaccmd;
-            Log.debug("got rendezvous on session <" + session + ">");
-            Log.debug("- command: " + cmd);
+            //Log.debug("got rendezvous on session <" + session + ">");
+            //Log.debug("- command: " + cmd);
         }
         public void handleSnacResponse(RvSnacResponseEvent event) {
-            Log.debug("got SNAC response for <"
-                    + event.getRvSession() + ">: "
-                    + event.getSnacCommand());
+            //Log.debug("got SNAC response for <"
+            //        + event.getRvSession() + ">: "
+            //        + event.getSnacCommand());
         }
     };
 
@@ -117,18 +117,18 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         if (cmd instanceof LoginFlapCmd) {
             getFlapProcessor().sendFlap(new LoginFlapCmd(cookie));
         } else {
-            Log.debug("got FLAP command on channel 0x"
-                    + Integer.toHexString(e.getFlapPacket().getChannel())
-                    + ": " + cmd);
+            //Log.debug("got FLAP command on channel 0x"
+            //        + Integer.toHexString(e.getFlapPacket().getChannel())
+            //        + ": " + cmd);
         }
     }
 
     protected void handleSnacPacket(SnacPacketEvent e) {
         SnacPacket packet = e.getSnacPacket();
-        Log.debug("got snac packet type "
-                + Integer.toHexString(packet.getFamily()) + "/"
-                + Integer.toHexString(packet.getCommand()) + ": "
-                + e.getSnacCommand());
+        //Log.debug("got snac packet type "
+        //        + Integer.toHexString(packet.getFamily()) + "/"
+        //        + Integer.toHexString(packet.getCommand()) + ": "
+        //        + e.getSnacCommand());
 
         SnacCommand cmd = e.getSnacCommand();
         if (cmd instanceof ServerReadyCmd) {
@@ -223,17 +223,17 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         } else if (cmd instanceof RateChange) {
             RateChange rc = (RateChange) cmd;
 
-            Log.debug("rate change: current avg is "
-                    + rc.getRateInfo().getCurrentAvg());
+            //Log.debug("rate change: current avg is "
+            //        + rc.getRateInfo().getCurrentAvg());
         }
     }
 
     protected void handleSnacResponse(SnacResponseEvent e) {
         SnacPacket packet = e.getSnacPacket();
-        Log.debug("got snac response type "
-                + Integer.toHexString(packet.getFamily()) + "/"
-                + Integer.toHexString(packet.getCommand()) + ": "
-                + e.getSnacCommand());
+        //Log.debug("got snac response type "
+        //        + Integer.toHexString(packet.getFamily()) + "/"
+        //        + Integer.toHexString(packet.getCommand()) + ": "
+        //        + e.getSnacCommand());
 
         SnacCommand cmd = e.getSnacCommand();
 

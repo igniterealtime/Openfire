@@ -72,15 +72,15 @@ public class JDBCAuthProvider implements AuthProvider {
      */
     public JDBCAuthProvider() {
         // Load the JDBC driver and connection string.
-        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.jdbcDriver.className");
-        try {
-            Class.forName(jdbcDriver).newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-            return;
-        }
-        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.jdbcConnString");
+		String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
+		try {
+			Class.forName(jdbcDriver).newInstance();
+		}
+		catch (Exception e) {
+			Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+			return;
+		}
+		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
 
         // Load SQL statements.
         passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");

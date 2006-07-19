@@ -76,7 +76,7 @@ public class JDBCUserProvider implements UserProvider {
      */
     public JDBCUserProvider() {
 		// Load the JDBC driver and connection string.
-		String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.jdbcDriver.className");
+		String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
 		try {
 			Class.forName(jdbcDriver).newInstance();
 		}
@@ -84,7 +84,7 @@ public class JDBCUserProvider implements UserProvider {
 			Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
 			return;
 		}
-		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.jdbcConnString");
+		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
 
         // Load database statements for user data.
         loadUserSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.loadUserSQL");

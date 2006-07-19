@@ -69,6 +69,10 @@ public class GatewayPlugin implements Plugin {
         /* Set up Yahoo transport. */
         transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooTransport", componentManager));
         maybeStartService("yahoo");
+
+        /* Set up MSN transport. */
+        transports.put("msn", new TransportInstance(TransportType.msn, "MSN Transport", "org.jivesoftware.wildfire.gateway.protocols.msn.MSNTransport", componentManager));
+        maybeStartService("msn");
     }
 
     public void destroyPlugin() {

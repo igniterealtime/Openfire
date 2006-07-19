@@ -44,9 +44,9 @@ public class BOSConnection extends BasicFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
-        Log.debug("main connection state changed from "
-                + e.getOldState() + " to " + e.getNewState() + ": "
-                + e.getReason());
+        //Log.debug("main connection state changed from "
+        //        + e.getOldState() + " to " + e.getNewState() + ": "
+        //        + e.getReason());
     }
 
     protected void handleFlapPacket(FlapPacketEvent e) {
@@ -92,20 +92,20 @@ public class BOSConnection extends BasicFlapConnection {
 
             FullUserInfo info = yic.getUserInfo();
 
-            Log.debug("got my user info: " + info);
+            //Log.debug("got my user info: " + info);
 
         } else if (cmd instanceof UserInfoCmd) {
             UserInfoCmd uic = (UserInfoCmd) cmd;
 
             String sn = uic.getUserInfo().getScreenname();
-            Log.debug("user info for " + sn + ": "
-                    + uic.getInfoData());
+            //Log.debug("user info for " + sn + ": "
+            //        + uic.getInfoData());
 
         } else if (cmd instanceof ServiceRedirect) {
             ServiceRedirect sr = (ServiceRedirect) cmd;
 
-            Log.debug("connecting to " + sr.getRedirectHost()
-                    + " for 0x" + Integer.toHexString(sr.getSnacFamily()));
+            //Log.debug("connecting to " + sr.getRedirectHost()
+            //        + " for 0x" + Integer.toHexString(sr.getSnacFamily()));
 
             oscarSession.connectToService(sr.getSnacFamily(), sr.getRedirectHost(),
                     sr.getCookie());
@@ -122,12 +122,12 @@ public class BOSConnection extends BasicFlapConnection {
                 else if (obj instanceof GroupItem) {
                     oscarSession.gotGroup((GroupItem)obj);
                 }
-                Log.debug("- " + (obj == null ? (Object) items[i]
-                        : (Object) obj));
+                //Log.debug("- " + (obj == null ? (Object) items[i]
+                //        : (Object) obj));
             }
 
             if (sdc.getLastModDate() != 0) {
-                Log.debug("done with SSI");
+                //Log.debug("done with SSI");
                 request(new ActivateSsiCmd());
                 clientReady();
                 oscarSession.gotCompleteSSI();

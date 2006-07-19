@@ -14,6 +14,7 @@
     boolean aimEnabled = ParamUtils.getBooleanParameter(request, "aimEnabled");
     boolean icqEnabled = ParamUtils.getBooleanParameter(request, "icqEnabled");
     boolean yahooEnabled = ParamUtils.getBooleanParameter(request, "yahooEnabled");
+    boolean msnEnabled = ParamUtils.getBooleanParameter(request, "msnEnabled");
     String serverName = XMPPServer.getInstance().getServerInfo().getName();
 
     GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
@@ -39,6 +40,12 @@
         else {
             plugin.disableService("yahoo");
         }
+        if (msnEnabled) {
+            plugin.enableService("msn");
+        }
+        else {
+            plugin.disableService("msn");
+        }
         response.sendRedirect("gateway-service.jsp?success=true");
         return;
     }
@@ -46,6 +53,7 @@
     aimEnabled = plugin.serviceEnabled("aim");
     icqEnabled = plugin.serviceEnabled("icq");
     yahooEnabled = plugin.serviceEnabled("yahoo");
+    msnEnabled = plugin.serviceEnabled("msn");
 %>
 
 <html>
@@ -179,6 +187,43 @@ JID provided in each corresponding section.
             </td>
             <td width="99%">
                 <label for="rb01"><b>Disabled</b> - Yahoo gateway is not available.</label>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
+<br><br>
+
+<fieldset>
+    <legend>MSN Gateway</legend>
+    <div>
+    <p>
+    This gateway provides a mechanism for users to access the MSN network.
+    Users will be able to register with the JID specified below, specifying
+    their MSN username and password.<br />
+    <br />
+    JID: msn.<%= serverName %>
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="msnEnabled" value="true" id="rb03"
+             <%= ((msnEnabled) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb01"><b>Enabled</b> - MSN gateway is available.</label>
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="msnEnabled" value="false" id="rb04"
+             <%= ((!msnEnabled) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb01"><b>Disabled</b> - MSN gateway is not available.</label>
             </td>
         </tr>
     </tbody>

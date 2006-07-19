@@ -257,30 +257,31 @@ public abstract class BaseTransport implements Component {
             else {
                 Log.debug("Presence to user at gateway");
                 // This packet is to a user at the transport.
-                TransportSession session = sessionManager.getSession(from);
-                if (session == null) {
-                    // We don't have a session, so stop here.
-                    // TODO: maybe return an error?
-                    Log.error("No session for incoming packet: " + packet.toString());
+                try {
+                    TransportSession session = sessionManager.getSession(from);
+                
+                    if (packet.getType() == Presence.Type.probe) {
+                        // Presence probe, lets try to tell them.
+                        session.retrieveContactStatus(packet.getTo());
+                    }
+                    else if (packet.getType() == Presence.Type.subscribe) {
+                        // User wants to add someone to their legacy roster.
+                        session.addContact(packet.getTo());
+                    }
+                    else if (packet.getType() == Presence.Type.unsubscribe) {
+                        // User wants to remove someone from their legacy roster.
+                        session.removeContact(packet.getTo());
+                    }
+                    else {
+                        // Anything else we will ignore for now.
+                    }
                 }
-                else if (packet.getType() == Presence.Type.probe) {
-                    // Presence probe, lets try to tell them.
-                    session.retrieveContactStatus(packet.getTo());
-                }
-                else if (packet.getType() == Presence.Type.subscribe) {
-                    // User wants to add someone to their legacy roster.
-                    session.addContact(packet.getTo());
-                }
-                else if (packet.getType() == Presence.Type.unsubscribe) {
-                    // User wants to remove someone from their legacy roster.
-                    session.removeContact(packet.getTo());
-                }
-                else {
-                    // Anything else we will ignore for now.
+                catch (NotFoundException e) {
+                    // Well we just don't care then.
                 }
             }
         }
-        catch (NotFoundException e) {
+        catch (Exception e) {
             Log.error("Exception while processing packet: " + e.toString());
         }
 
@@ -656,7 +657,7 @@ public abstract class BaseTransport implements Component {
         try {
             Roster roster = rosterManager.getRoster(userjid.getNode());
             for (RosterItem ri : roster.getRosterItems()) {
-                if (ri.getJid() == contactjid) {
+                if (ri.getJid().toBareJID().equals(contactjid.toBareJID())) {
                     try {
                         roster.deleteRosterItem(ri.getJid(), false);
                     }

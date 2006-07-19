@@ -58,9 +58,9 @@ public class ServiceConnection extends BasicFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
-        Log.debug("0x" + Integer.toHexString(serviceFamily)
-                + " service connection state changed to " + e.getNewState()
-                + ": " + e.getReason());
+        //Log.debug("0x" + Integer.toHexString(serviceFamily)
+        //        + " service connection state changed to " + e.getNewState()
+        //        + ": " + e.getReason());
 
         if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
             oscarSession.serviceFailed(this);
@@ -115,12 +115,12 @@ public class ServiceConnection extends BasicFlapConnection {
                         Integer id = new Integer(infos[i].getParentId());
                         List interests = (List) children.get(id);
 
-                        Log.debug("- " + infos[i].getName());
+                        //Log.debug("- " + infos[i].getName());
                         if (interests != null) {
                             for (Iterator it = interests.iterator();
                                  it.hasNext();) {
                                 InterestInfo info = (InterestInfo) it.next();
-                                Log.debug("  - " + info.getName());
+                                //Log.debug("  - " + info.getName());
                             }
                         }
                     }
@@ -128,8 +128,8 @@ public class ServiceConnection extends BasicFlapConnection {
                 List toplevels = (List) children.get(new Integer(0));
                 if (toplevels != null) {
                     for (Iterator it = toplevels.iterator(); it.hasNext();) {
-                        Log.debug("  "
-                                + ((InterestInfo) it.next()).getName());
+                        //Log.debug("  "
+                        //        + ((InterestInfo) it.next()).getName());
                     }
                 }
             }
@@ -140,7 +140,7 @@ public class ServiceConnection extends BasicFlapConnection {
             DirInfo[] results = src.getResults();
 
             for (int i = 0; i < results.length; i++) {
-                Log.debug("result " + (i + 1) + ": " + results[i]);
+                //Log.debug("result " + (i + 1) + ": " + results[i]);
             }
 
         } else if (cmd instanceof IconDataCmd) {

@@ -11,6 +11,10 @@
     <orderEntry type="module" module-name="Wildfire" exported="" />
     <orderEntryProperties />
   </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ACTIVE_VCS_NAME" value="svn" />
+    <option name="USE_PROJECT_VCS" value="false" />
+  </component>
   <component name="WebModuleBuildComponent">
     <setting name="EXPLODED_URL" value="file://" />
     <setting name="EXPLODED_ENABLED" value="false" />
@@ -86,7 +90,7 @@
       <attribute name="URI" value="/WEB-INF/lib/xmltask.jar" />
       <url>jar://$MODULE_DIR$/build/lib/xmltask.jar!/</url>
     </containerElement>
-    <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/src/web/WEB-INF/web.xml" version="2.3" />
+    <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/src/web/WEB-INF/web.xml" optional="false" version="2.3" />
     <webroots>
       <root url="file://$MODULE_DIR$/src/web" relative="/" />
       <root url="file://$MODULE_DIR$/src/web/WEB-INF" relative="/WEB-INF" />
@@ -94,6 +98,11 @@
   </component>
   <component name="WeblogicWebModuleProperties">
     <option name="IS_RUN_APPC" value="false" />
+  </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="2" />
+    </Base>
   </component>
 </module>
 

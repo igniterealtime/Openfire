@@ -10,12 +10,18 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.hn.sleek.jmml.Contact;
+import org.hn.sleek.jmml.ContactList;
 import org.hn.sleek.jmml.ContactStatus;
 import org.hn.sleek.jmml.MessengerServerManager;
 import org.hn.sleek.jmml.MSNException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -52,16 +58,18 @@ public class MSNSession extends TransportSession {
     public void logIn() {
         try {
             msnManager.signIn(registration.getUsername(), registration.getPassword(), ContactStatus.ONLINE);
+
             Presence p = new Presence();
             p.setTo(getJID());
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
+
             msnManager.setStatus(ContactStatus.ONLINE);
             msnManager.setPrivacyMode(true);
             msnManager.setReverseListBehaviour(true);
         }
         catch (MSNException e) {
-            Log.error("MSN exception thrown while logging in: " + e.toString());
+            Log.error("MSN exception thrown while logging in:", e);
         }
     }
 
@@ -77,7 +85,7 @@ public class MSNSession extends TransportSession {
             getTransport().sendPacket(p);
         }
         catch (MSNException e) {
-            Log.error("MSN exception thrown while logging out: " + e.toString());
+            Log.error("MSN exception thrown while logging out:", e);
         }
     }
 
@@ -117,7 +125,7 @@ public class MSNSession extends TransportSession {
             msnManager.sendMessage(getTransport().convertJIDToID(jid), message);
         }
         catch (MSNException e) {
-            Log.error("MSN exception while sending message: " + e.toString());
+            Log.error("MSN exception while sending message:", e);
         }
     }
 
@@ -128,6 +136,13 @@ public class MSNSession extends TransportSession {
      */
     public void retrieveContactStatus(JID jid) {
         // TODO: yeah
+    }
+
+    /**
+     * Retrieves the manager for this session.
+     */
+    public MessengerServerManager getManager() {
+        return msnManager;
     }
 
 }

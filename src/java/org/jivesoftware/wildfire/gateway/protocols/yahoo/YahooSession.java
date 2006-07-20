@@ -97,7 +97,7 @@ public class YahooSession extends TransportSession {
                         Log.warn("Yahoo login failed for " + getJID());
                     }
                     catch (IOException e) {
-                        Log.error("Yahoo login caused IO exception: " + e.toString());
+                        Log.error("Yahoo login caused IO exception:", e);
                     }
                     loggingIn = false;
                 }

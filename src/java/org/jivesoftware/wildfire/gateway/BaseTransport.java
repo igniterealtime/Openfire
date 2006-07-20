@@ -20,11 +20,13 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -148,7 +150,7 @@ public abstract class BaseTransport implements Component {
             }
         }
         catch (Exception e) {
-            Log.error("Error occured while processing packet: " + e.toString());
+            Log.error("Error occured while processing packet:", e);
         }
     }
 
@@ -286,7 +288,7 @@ public abstract class BaseTransport implements Component {
             }
         }
         catch (Exception e) {
-            Log.error("Exception while processing packet: " + e.toString());
+            Log.error("Exception while processing packet: ", e);
         }
 
         return reply;
@@ -604,7 +606,7 @@ public abstract class BaseTransport implements Component {
             IQ result = IQ.createResultIQ(packet);
             Element query = DocumentHelper.createElement(QName.get("query", IQ_VERSION));
             query.addElement("name").addText("Wildfire " + this.getDescription());
-            query.addElement("version").addText(this.getVersionString());
+            query.addElement("version").addText(XMPPServer.getInstance().getServerInfo().getVersion().getVersionString() + " - " + this.getVersionString());
             query.addElement("os").addText(System.getProperty("os.name"));
             result.setChildElement(query);
             reply.add(result);
@@ -678,10 +680,19 @@ public abstract class BaseTransport implements Component {
     }
 
     /**
+     * Retains the version string for later requests.
+     */
+    private String versionString = null;
+
+    /**
      * Returns the version string of the gateway.
      */
     public String getVersionString() {
-        return "0.0.1";
+        if (versionString == null) {
+            PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+            versionString = pluginManager.getVersion(pluginManager.getPlugin("gateway"));
+        }
+        return versionString;
     }
 
     /**

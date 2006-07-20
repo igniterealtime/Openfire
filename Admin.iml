@@ -99,10 +99,5 @@
   <component name="WeblogicWebModuleProperties">
     <option name="IS_RUN_APPC" value="false" />
   </component>
-  <component name="copyright">
-    <Base>
-      <setting name="state" value="2" />
-    </Base>
-  </component>
 </module>
 

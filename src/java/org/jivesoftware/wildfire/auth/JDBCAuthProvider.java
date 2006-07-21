@@ -100,7 +100,7 @@ public class JDBCAuthProvider implements AuthProvider {
         username = username.trim().toLowerCase();
         String userPassword;
         try {
-            userPassword = getPassword(username);
+            userPassword = getPasswordValue(username);
         }
         catch (UserNotFoundException unfe) {
             throw new UnauthorizedException();
@@ -134,7 +134,7 @@ public class JDBCAuthProvider implements AuthProvider {
         username = username.trim().toLowerCase();
         String password;
         try {
-            password = getPassword(username);
+            password = getPasswordValue(username);
         }
         catch (UserNotFoundException unfe) {
             throw new UnauthorizedException();
@@ -164,6 +164,27 @@ public class JDBCAuthProvider implements AuthProvider {
         if (!supportsPasswordRetrieval()) {
             throw new UnsupportedOperationException();
         }
+        return getPasswordValue(username);
+    }
+
+    public void setPassword(String username, String password)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return (passwordSQL != null && passwordType == PasswordType.plain);
+    }
+
+    /**
+     * Returns the value of the password field. It will be in plain text or hashed
+     * format, depending on the password type.
+     *
+     * @return the password value.
+     * @throws UserNotFoundException if the given user could not be loaded.
+     */
+    private String getPasswordValue(String username) throws UserNotFoundException {
         String password = null;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -190,16 +211,6 @@ public class JDBCAuthProvider implements AuthProvider {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return password;
-    }
-
-    public void setPassword(String username, String password)
-            throws UserNotFoundException, UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return (passwordSQL != null && passwordType == PasswordType.plain);
     }
 
     /**

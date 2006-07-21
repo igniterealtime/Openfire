@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -73,8 +74,12 @@ public class YahooSession extends TransportSession {
 
     /**
      * Log in to Yahoo.
+     *
+     * @param presenceType Type of presence.
+     * @param verboseStatus Long representation of status.
      */
-    public void logIn() {
+    public void logIn(PresenceType presenceType, String verboseStatus) {
+        final PresenceType pType = presenceType;
         if (!isLoggedIn() && !loggingIn && loginAttempts <= 3) {
             loggingIn = true;
             new Thread() {
@@ -89,6 +94,8 @@ public class YahooSession extends TransportSession {
                         p.setFrom(getTransport().getJID());
                         Log.debug("Logged in, sending: " + p.toString());
                         getTransport().sendPacket(p);
+
+                        yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(pType));
 
                         syncUsers();
                     }
@@ -161,44 +168,7 @@ public class YahooSession extends TransportSession {
                 p.setStatus(custommsg);
             }
 
-            long statusid = user.getStatus();
-            if (statusid == StatusConstants.STATUS_AVAILABLE) {
-                // We're good, leave the type as blank for available.
-            }
-            else if (statusid == StatusConstants.STATUS_BRB) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_BUSY) {
-                p.setShow(Presence.Show.dnd);
-            }
-            else if (statusid == StatusConstants.STATUS_IDLE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_OFFLINE) {
-                p.setType(Presence.Type.unavailable);
-            }
-            else if (statusid == StatusConstants.STATUS_NOTATDESK) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_ONPHONE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_ONVACATION) {
-                p.setShow(Presence.Show.xa);
-            }
-            else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
-                p.setShow(Presence.Show.xa);
-            }
-            else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
-                p.setShow(Presence.Show.away);
-            }
-            else {
-                // Not something we handle, we're going to ignore it.
-            }
-
+            ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
             getTransport().sendPacket(p);
         }
     }
@@ -249,6 +219,18 @@ public class YahooSession extends TransportSession {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     */
+    public void updateStatus(PresenceType presenceType, String verboseStatus) {
+        try {
+            yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(presenceType));
+        }
+        catch (Exception e) {
+            Log.error("Unable to set Yahoo Status:", e);
+        }
+    }
+
+    /**
      * Asks for transport to send information about a contact if possible.
      *
      * @param jid JID of contact to be probed.
@@ -264,44 +246,7 @@ public class YahooSession extends TransportSession {
             p.setStatus(custommsg);
         }
 
-        long statusid = user.getStatus();
-        if (statusid == StatusConstants.STATUS_AVAILABLE) {
-            // We're good, leave the type as blank for available.
-        }
-        else if (statusid == StatusConstants.STATUS_BRB) {
-            p.setShow(Presence.Show.away);
-        }
-        else if (statusid == StatusConstants.STATUS_BUSY) {
-            p.setShow(Presence.Show.dnd);
-        }
-        else if (statusid == StatusConstants.STATUS_IDLE) {
-            p.setShow(Presence.Show.away);
-        }
-        else if (statusid == StatusConstants.STATUS_OFFLINE) {
-            p.setType(Presence.Type.unavailable);
-        }
-        else if (statusid == StatusConstants.STATUS_NOTATDESK) {
-            p.setShow(Presence.Show.away);
-        }
-        else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
-            p.setShow(Presence.Show.away);
-        }
-        else if (statusid == StatusConstants.STATUS_ONPHONE) {
-            p.setShow(Presence.Show.away);
-        }
-        else if (statusid == StatusConstants.STATUS_ONVACATION) {
-            p.setShow(Presence.Show.xa);
-        }
-        else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
-            p.setShow(Presence.Show.xa);
-        }
-        else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
-            p.setShow(Presence.Show.away);
-        }
-        else {
-            // Not something we handle, we're going to ignore it.
-        }
-
+        ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
         getTransport().sendPacket(p);
     }   
 

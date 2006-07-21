@@ -18,6 +18,7 @@ import org.hn.sleek.jmml.ContactStatus;
 import org.hn.sleek.jmml.MessengerServerManager;
 import org.hn.sleek.jmml.MSNException;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -54,22 +55,27 @@ public class MSNSession extends TransportSession {
 
     /**
      * Log in to MSN.
+     *
+     * @param presenceType Type of presence.
+     * @param verboseStatus Long representation of status.
      */
-    public void logIn() {
-        try {
-            msnManager.signIn(registration.getUsername(), registration.getPassword(), ContactStatus.ONLINE);
+    public void logIn(PresenceType presenceType, String verboseStatus) {
+        if (!this.isLoggedIn()) {
+            try {
+                msnManager.signIn(registration.getUsername(), registration.getPassword(), ((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
 
-            Presence p = new Presence();
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
+                Presence p = new Presence();
+                p.setTo(getJID());
+                p.setFrom(getTransport().getJID());
+                getTransport().sendPacket(p);
 
-            msnManager.setStatus(ContactStatus.ONLINE);
-            msnManager.setPrivacyMode(true);
-            msnManager.setReverseListBehaviour(true);
-        }
-        catch (MSNException e) {
-            Log.error("MSN exception thrown while logging in:", e);
+                msnManager.setStatus(ContactStatus.ONLINE);
+                msnManager.setPrivacyMode(true);
+                msnManager.setReverseListBehaviour(true);
+            }
+            catch (MSNException e) {
+                Log.error("MSN exception thrown while logging in:", e);
+            }
         }
     }
 
@@ -77,15 +83,17 @@ public class MSNSession extends TransportSession {
      * Log out of MSN.
      */
     public void logOut() {
-        try {
-            msnManager.signOut();
-            Presence p = new Presence(Presence.Type.unavailable);
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-        }
-        catch (MSNException e) {
-            Log.error("MSN exception thrown while logging out:", e);
+        if (this.isLoggedIn()) {
+            try {
+                msnManager.signOut();
+                Presence p = new Presence(Presence.Type.unavailable);
+                p.setTo(getJID());
+                p.setFrom(getTransport().getJID());
+                getTransport().sendPacket(p);
+            }
+            catch (MSNException e) {
+                Log.error("MSN exception thrown while logging out:", e);
+            }
         }
     }
 
@@ -136,6 +144,18 @@ public class MSNSession extends TransportSession {
      */
     public void retrieveContactStatus(JID jid) {
         // TODO: yeah
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     */
+    public void updateStatus(PresenceType presenceType, String verboseStatus) {
+        try {
+            msnManager.setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+        }
+        catch (MSNException e) {
+            Log.error("MSN exception while setting status:", e);
+        }
     }
 
     /**

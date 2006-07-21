@@ -77,7 +77,8 @@ public class LoginConnection extends BaseFlapConnection {
 
             request(new AuthRequest(oscarSession.getRegistration().getUsername(), oscarSession.getRegistration().getPassword(), version, authkey));
 
-        } else if (cmd instanceof AuthResponse) {
+        }
+        else if (cmd instanceof AuthResponse) {
             AuthResponse ar = (AuthResponse) cmd;
 
             int error = ar.getErrorCode();

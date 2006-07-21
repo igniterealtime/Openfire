@@ -213,10 +213,12 @@ public abstract class BaseTransport implements Component {
                     TransportSession session = null;
                     try {
                         session = sessionManager.getSession(from);
-                        // TODO: This can also represent a status change.
+
+                        // Well, this could represent a status change.
+                        session.updateStatus(getPresenceType(packet), packet.getStatus());
                     }
                     catch (NotFoundException e) {
-                        session = this.registrationLoggedIn(registration, from);
+                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus());
                         //sessionManager.storeSession(registration.getJID(), session);
                         sessionManager.storeSession(from, session);
                     }
@@ -636,6 +638,38 @@ public abstract class BaseTransport implements Component {
     }
 
     /**
+     * Gets an easy to use presence type from a presence packet.
+     *
+     * @param packet A presence packet from which the type will be pulled.
+     */
+    public PresenceType getPresenceType(Presence packet) {
+        Presence.Type ptype = packet.getType();
+        Presence.Show stype = packet.getShow();
+
+        if (stype == Presence.Show.chat) {
+            return PresenceType.chat;
+        }
+        else if (stype == Presence.Show.away) {
+            return PresenceType.away;
+        }
+        else if (stype == Presence.Show.xa) {
+            return PresenceType.xa;
+        }
+        else if (stype == Presence.Show.dnd) {
+            return PresenceType.dnd;
+        }
+        else if (ptype == Presence.Type.unavailable) {
+            return PresenceType.unavailable;
+        }
+        else if (packet.isAvailable()) {
+            return PresenceType.available;
+        }
+        else {
+            return PresenceType.unknown;
+        }
+    }
+
+    /**
      * Handles startup of the transport.
      */
     public void start() {
@@ -935,9 +969,12 @@ public abstract class BaseTransport implements Component {
      * Will handle logging in to the legacy service.
      *
      * @param registration Registration used for log in.
+     * @param jid JID that is logged into the transport.
+     * @param presenceType Type of presence.
+     * @param verboseStatus Longer status description.
      * @return A session instance for the new login.
      */
-    public abstract TransportSession registrationLoggedIn(Registration registration, JID jid);
+    public abstract TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus);
 
     /**
      * Will handle logging out of the legacy service.

@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.wildfire.gateway.BaseTransport;
+import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.xmpp.packet.JID;
@@ -29,10 +30,13 @@ public class OSCARTransport extends BaseTransport {
      * Handles creating an OSCAR session and triggering a login.
      *
      * @param registration Registration information to be used to log in.
+     * @param jid JID that is logged into the transport.
+     * @param presenceType Type of presence.
+     * @param verboseStatus Longer status description.
      */
-    public TransportSession registrationLoggedIn(Registration registration, JID jid) {
+    public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus) {
         TransportSession session = new OSCARSession(registration, jid, this);
-        session.logIn();
+        ((OSCARSession)session).logIn(presenceType, verboseStatus);
         return session;
     }
 
@@ -42,7 +46,7 @@ public class OSCARTransport extends BaseTransport {
      * @param session The session to be disconnected.
      */
     public void registrationLoggedOut(TransportSession session) {
-        session.logOut();
+        ((OSCARSession)session).logOut();
     }
 
 }

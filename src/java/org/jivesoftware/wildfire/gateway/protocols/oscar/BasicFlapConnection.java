@@ -146,7 +146,8 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             request(new ClientVersionsCmd(familyInfos));
             request(new RateInfoRequest());
 
-        } else if (cmd instanceof RecvImIcbm) {
+        }
+        else if (cmd instanceof RecvImIcbm) {
             RecvImIcbm icbm = (RecvImIcbm) cmd;
 
             String sn = icbm.getSenderInfo().getScreenname();
@@ -167,17 +168,20 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                     + sn + ": " + msg;
             Log.debug(str);
 
-        } else if (cmd instanceof WarningNotification) {
+        }
+        else if (cmd instanceof WarningNotification) {
             WarningNotification wn = (WarningNotification) cmd;
             MiniUserInfo warner = wn.getWarner();
             if (warner == null) {
                 Log.debug("*** You were warned anonymously to "
                         + wn.getNewLevel() + "%");
-            } else {
+            }
+            else {
                 Log.debug("*** " + warner.getScreenname()
                         + " warned you up to " + wn.getNewLevel() + "%");
             }
-        } else if (cmd instanceof BuddyStatusCmd) {
+        }
+        else if (cmd instanceof BuddyStatusCmd) {
             BuddyStatusCmd bsc = (BuddyStatusCmd)cmd;
             FullUserInfo info = bsc.getUserInfo();
             buddystore.put(info.getScreenname(), info);
@@ -213,14 +217,16 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 }
             }
             oscarSession.getTransport().sendPacket(p);
-        } else if (cmd instanceof BuddyOfflineCmd) {
+        }
+        else if (cmd instanceof BuddyOfflineCmd) {
             BuddyOfflineCmd boc = (BuddyOfflineCmd)cmd;
             buddystore.remove(boc.getScreenname());
             Presence p = new Presence(Presence.Type.unavailable);
             p.setTo(oscarSession.getJID());
             p.setFrom(oscarSession.getTransport().convertIDToJID(boc.getScreenname()));
             oscarSession.getTransport().sendPacket(p);
-        } else if (cmd instanceof RateChange) {
+        }
+        else if (cmd instanceof RateChange) {
             RateChange rc = (RateChange) cmd;
 
             //Log.debug("rate change: current avg is "

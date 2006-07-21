@@ -83,43 +83,7 @@ public class YahooSessionListener implements SessionListener {
             }
 
             long statusid = user.getStatus();
-            if (statusid == StatusConstants.STATUS_AVAILABLE) {
-                // We're good, leave the type as blank for available.
-            }
-            else if (statusid == StatusConstants.STATUS_BRB) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_BUSY) {
-                p.setShow(Presence.Show.dnd);
-            }
-            else if (statusid == StatusConstants.STATUS_IDLE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_OFFLINE) {
-                p.setType(Presence.Type.unavailable);
-            }
-            else if (statusid == StatusConstants.STATUS_NOTATDESK) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_NOTINOFFICE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_ONPHONE) {
-                p.setShow(Presence.Show.away);
-            }
-            else if (statusid == StatusConstants.STATUS_ONVACATION) {
-                p.setShow(Presence.Show.xa);
-            }
-            else if (statusid == StatusConstants.STATUS_OUTTOLUNCH) {
-                p.setShow(Presence.Show.xa);
-            }
-            else if (statusid == StatusConstants.STATUS_STEPPEDOUT) {
-                p.setShow(Presence.Show.away);
-            }
-            else {
-                // Not something we handle, we're going to ignore it.
-            }
-
+            ((YahooTransport)yahooSession.getTransport()).setUpPresencePacket(p, user.getStatus());
             yahooSession.getTransport().sendPacket(p);
         }
     }

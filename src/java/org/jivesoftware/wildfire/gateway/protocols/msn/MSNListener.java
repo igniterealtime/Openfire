@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import org.hn.sleek.jmml.Contact;
+import org.hn.sleek.jmml.ContactChangeEvent;
 import org.hn.sleek.jmml.ContactList;
+import org.hn.sleek.jmml.ContactStatus;
 import org.hn.sleek.jmml.IncomingMessageEvent;
 import org.hn.sleek.jmml.MessengerClientAdapter;
 import org.hn.sleek.jmml.MSNException;
@@ -79,6 +81,48 @@ public class MSNListener extends MessengerClientAdapter {
         }
         catch (UserNotFoundException e) {
             Log.error("Unable to find session associated with MSN session.");
+        }
+    }
+
+    /**
+     * A property of a contact has changed.
+     *
+     * This can be a myriad of things that have changed.
+     *
+     * @param event An event instance for the change.
+     */
+    public void contactPropertyChanged(ContactChangeEvent event) {
+        int propid = event.getProperty();
+        if (propid == Contact.STATUS) {
+            String newstatus = (String)event.getNewValue();
+            Presence p = new Presence();
+            p.setTo(msnSession.getJID());
+            p.setFrom(msnSession.getTransport().convertIDToJID(event.getUserName()));
+            if (newstatus.equals(ContactStatus.ONLINE)) {
+                // We're good, send as is..
+            }
+            else if (newstatus.equals(ContactStatus.AWAY)) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (newstatus.equals(ContactStatus.BE_RIGHT_BACK)) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (newstatus.equals(ContactStatus.BUSY)) {
+                p.setShow(Presence.Show.dnd);
+            }
+            else if (newstatus.equals(ContactStatus.IDLE)) {
+                p.setShow(Presence.Show.away);
+            }
+            else if (newstatus.equals(ContactStatus.OFFLINE)) {
+                p.setType(Presence.Type.unavailable);
+            }
+            else if (newstatus.equals(ContactStatus.ON_THE_PHONE)) {
+                p.setShow(Presence.Show.dnd);
+            }
+            else if (newstatus.equals(ContactStatus.OUT_TO_LUNCH)) {
+                p.setShow(Presence.Show.xa);
+            }
+            msnSession.getTransport().sendPacket(p);
         }
     }
 

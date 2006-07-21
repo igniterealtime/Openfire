@@ -69,7 +69,6 @@ public class MSNSession extends TransportSession {
                 p.setFrom(getTransport().getJID());
                 getTransport().sendPacket(p);
 
-                msnManager.setStatus(ContactStatus.ONLINE);
                 msnManager.setPrivacyMode(true);
                 msnManager.setReverseListBehaviour(true);
             }

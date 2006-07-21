@@ -66,6 +66,8 @@ public class OSCARSession extends TransportSession {
     private BOSConnection bosConn = null;
     private Set services = new HashSet();
     private Boolean loggedIn = false;
+    private PresenceType presenceType = null;
+    private String verboseStatus = null;
     
     /**
      * The Screenname, Password, and JID associated with this session.
@@ -94,7 +96,8 @@ public class OSCARSession extends TransportSession {
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
 
-            updateStatus(presenceType, verboseStatus);
+            this.presenceType = presenceType;
+            this.verboseStatus = verboseStatus;
         } else {
             Log.warn(this.jid + " is already logged in");
         }
@@ -267,6 +270,8 @@ public class OSCARSession extends TransportSession {
         catch (UserNotFoundException e) {
             Log.error("Unable to sync oscar contact list for " + getJID());
         }
+
+        updateStatus(this.presenceType, this.verboseStatus);
     }
 
     /**
@@ -290,8 +295,11 @@ public class OSCARSession extends TransportSession {
             request(new SetInfoCmd(new InfoData(awayMsg)));
         }
         else {
-            request(new SetInfoCmd(new InfoData("")));
+            request(new SetInfoCmd(new InfoData(InfoData.NOT_AWAY)));
         }
+
+        this.presenceType = presenceType;
+        this.verboseStatus = verboseStatus;
     }
 
 }

@@ -73,12 +73,24 @@ public class YahooSession extends TransportSession {
     private final Session yahooSession;
 
     /**
+     * Stored Last Presence Type
+     */
+    public PresenceType presenceType = null;
+
+    /**
+     * Stored Last Verbose Status
+     */
+    public String verboseStatus = null;
+
+    /**
      * Log in to Yahoo.
      *
      * @param presenceType Type of presence.
      * @param verboseStatus Long representation of status.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
+        this.presenceType = presenceType;
+        this.verboseStatus = verboseStatus;
         final PresenceType pType = presenceType;
         if (!isLoggedIn() && !loggingIn && loginAttempts <= 3) {
             loggingIn = true;
@@ -228,6 +240,8 @@ public class YahooSession extends TransportSession {
         catch (Exception e) {
             Log.error("Unable to set Yahoo Status:", e);
         }
+        this.presenceType = presenceType;
+        this.verboseStatus = verboseStatus;
     }
 
     /**

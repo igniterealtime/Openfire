@@ -65,7 +65,7 @@ public class JDBCAuthProvider implements AuthProvider {
     private String connectionString;
 
     private String passwordSQL;
-    private PasswordType passwordType = PasswordType.plain;
+    private PasswordType passwordType;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -86,7 +86,8 @@ public class JDBCAuthProvider implements AuthProvider {
         passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
         passwordType = PasswordType.plain;
         try {
-            PasswordType.valueOf(JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordType", "plain"));
+            passwordType = PasswordType.valueOf(
+                    JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordType", "plain"));
         }
         catch (IllegalArgumentException iae) {
             Log.error(iae);

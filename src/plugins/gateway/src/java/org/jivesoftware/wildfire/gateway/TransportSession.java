@@ -78,14 +78,12 @@ public abstract class TransportSession {
     }
 
     /**
-     * Logs in to the legacy service.
+     * Updates status on legacy service.
+     *
+     * @param presenceType Type of presence.
+     * @param verboseStatus Longer status description.
      */
-    public abstract void logIn();
-
-    /**
-     * Log out of the legacy service.
-     */
-    public abstract void logOut();
+    public abstract void updateStatus(PresenceType presenceType, String verboseStatus);
 
     /**
      * Is the legacy service account logged in?

@@ -18,12 +18,15 @@ import java.util.Map;
 import java.util.Set;
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.snac.*;
+import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
+import net.kano.joscar.snaccmd.loc.*;
 import net.kano.joscar.snaccmd.ssi.*;
 import net.kano.joscar.ssiitem.*;
 import net.kano.joscar.ByteBlock;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -38,6 +41,9 @@ import org.xmpp.packet.Presence;
  *
  * This is the interface with which the base transport functionality will
  * communicate with OSCAR (AIM/ICQ).
+ *
+ * Yeesh, this is the one I'm most familiar with and yet it's the ugliest.
+ * This needs some housecleaning.
  * 
  * @author Daniel Henninger
  */
@@ -76,7 +82,7 @@ public class OSCARSession extends TransportSession {
     private Integer highestBuddyId = -1;
     private Integer highestGroupId = -1;
 
-    public void logIn() {
+    public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!isLoggedIn()) {
             loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
             loginConn.connect();
@@ -87,6 +93,8 @@ public class OSCARSession extends TransportSession {
             p.setTo(getJID());
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
+
+            updateStatus(presenceType, verboseStatus);
         } else {
             Log.warn(this.jid + " is already logged in");
         }
@@ -268,6 +276,22 @@ public class OSCARSession extends TransportSession {
      */
     public void retrieveContactStatus(JID jid) {
         bosConn.getAndSendStatus(jid.getNode());
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     */
+    public void updateStatus(PresenceType presenceType, String verboseStatus) {
+        if (presenceType != PresenceType.available && presenceType != PresenceType.chat) {
+            String awayMsg = "Away";
+            if (verboseStatus != null) {
+                awayMsg = verboseStatus;
+            }
+            request(new SetInfoCmd(new InfoData(awayMsg)));
+        }
+        else {
+            request(new SetInfoCmd(new InfoData("")));
+        }
     }
 
 }

@@ -18,10 +18,18 @@
     <!-- Admin console meta-data -->
     <adminconsole>              
         <tab id="tab-server">
-            <sidebar id="sidebar-server-settings">
-                <item id="gateway-service" name="IM Gateway" url="gateway-service.jsp"
-                     description="Click to manage the service that provides access to other IM networks" />
+		
+            <sidebar id="gateways" name="Gateways" description="Gateway setup">
+                <item id="gateway-settings" 
+                      name="Settings"
+                      url="gateway-settings.jsp"
+                      description="Click to manage the service that provides access to other IM networks"/>
+                <item id="gateway-registrations" 
+                      name="Registrations"
+                      url="gateway-registrations.jsp"
+                      description="Click to view and manage the user registrations to other IM networks"/>
             </sidebar>
+		
         </tab>
     </adminconsole>
 </plugin>

@@ -45,7 +45,7 @@
 	border: 1px solid #f3f7fa;
 	padding: 2px 10px 2px 18px;
 	margin: 0px 5px 0px 0px;
-	background: url('/images/twisty_closed_9x9.gif') no-repeat left;
+	background: url('../images/twisty_closed_9x9.gif') no-repeat left;
 	background-position: 6px;
 	color: #34679a;
 	}
@@ -54,7 +54,7 @@
 	}
 a.jive-gatewayButtonOn {
 	border: 1px solid #dcdcdc;
-	background: #ffffff url('/images/twisty_opened_9x9.gif') no-repeat left;
+	background: #ffffff url('../images/twisty_opened_9x9.gif') no-repeat left;
 	background-position: 6px;
 	}
 /* disabled panel, when a gateway isn't selected */
@@ -63,7 +63,7 @@ a.jive-gatewayButtonOn {
 	}
 .jive-gatewayDisabled .jive-gatewayButtons a {
 	border: 1px solid #fcfcfc;
-	background: url('/images/twisty_inactive_9x9.gif') no-repeat left;
+	background: url('../images/twisty_inactive_9x9.gif') no-repeat left;
 	background-position: 6px;
 	color: #999999;
 	text-decoration: none;
@@ -147,7 +147,7 @@ a.jive-gatewayButtonOn {
 .jive-gateway-filter input.filterBtn {
 	float: right;
 	}
-/* the below is for a future feature */.
+/* the below is for a future feature */
 .jive-gateway-filter-dropdownLink {
 	display: block;
 	float: left;
@@ -264,35 +264,35 @@ a.jive-gatewayButtonOn {
 	padding: 1px 0px 2px 25px;
 	}
 .jive-gateway-AIMon {
-	background: url(/images/aim.gif) no-repeat left;
+	background: url(../images/aim.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-AIMoff {
-	background: url(/images/aim-gray.gif) no-repeat left;
+	background: url(../images/aim-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-ICQon {
-	background: url(/images/icq.gif) no-repeat left;
+	background: url(../images/icq.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-ICQoff {
-	background: url(/images/icq-gray.gif) no-repeat left;
+	background: url(../images/icq-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-MSNon {
-	background: url(/images/msn.gif) no-repeat left;
+	background: url(../images/msn.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-MSNoff {
-	background: url(/images/msn-gray.gif) no-repeat left;
+	background: url(../images/msn-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
-.jive-gateway-Yon {
-	background: url(/images/yahoo.gif) no-repeat left;
+.jive-gateway-YAHOOon {
+	background: url(../images/yahoo.gif) no-repeat left;
 	background-position: 0px 1px;
 	}
-.jive-gateway-Yoff {
-	background: url(/images/yahoo-gray.gif) no-repeat left;
+.jive-gateway-YAHOOoff {
+	background: url(../images/yahoo-gray.gif) no-repeat left;
 	background-position: 0px 1px;
 	}
 

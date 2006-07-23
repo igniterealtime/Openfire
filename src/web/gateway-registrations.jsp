@@ -1,12 +1,29 @@
 <%@ page import="java.util.*,
+                 org.xmpp.packet.Presence,
+                 org.jivesoftware.wildfire.ClientSession,
+                 org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.gateway.GatewayPlugin"
+                 org.jivesoftware.wildfire.gateway.Registration,
+                 org.jivesoftware.wildfire.gateway.RegistrationManager"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+
+<%
+    webManager.init(request, response, session, application, out);
+
+    RegistrationManager registrationManager = new RegistrationManager();
+    Collection<Registration> registrations = registrationManager.getRegistrations();
+    int regCount = registrations.size();
+
+    // Get the user manager
+    SessionManager sessionManager = webManager.getSessionManager();
+%>
 
 <html>
 <head>
@@ -75,7 +92,7 @@ below and update the view.</p>
 
 	<!-- BEGIN results -->
 	<div class="jive-registrations-results">
-		Registrations: <strong>1-15</strong> of <strong>52</strong>
+		Registrations: <strong>1-15</strong> of <strong><%= regCount %></strong>
 	</div>
 	<!-- END results -->
 
@@ -100,7 +117,7 @@ below and update the view.</p>
 		<a href="#">2</a> 
 		<a href="#">3</a> 
 		<a href="#">4</a> -
-		<a href="#"><strong>Next ></strong></a>
+		<a href="#"><strong>Next &gt;</strong></a>
 	</div>
 	<!-- END pagination -->
 
@@ -113,27 +130,27 @@ below and update the view.</p>
 		<div>
 		<strong>Filter by:</strong>
 		<label for="filterAIMcheckbox">
-			<input type="checkbox" name="filter" value="aim" checked id="filterAIMcheckbox"> 
-			<img src="/images/aim.gif" alt="" border="0"> 
+			<input type="checkbox" name="filter[]" value="aim" checked id="filterAIMcheckbox"> 
+			<img src="images/aim.gif" alt="" border="0"> 
 			<span>AIM</span>
 		</label>
 		<label for="filterICQcheckbox">
-			<input type="checkbox" name="filter" value="icq" checked id="filterICQcheckbox"> 
-			<img src="/images/icq.gif" alt="" border="0"> 
+			<input type="checkbox" name="filter[]" value="icq" checked id="filterICQcheckbox"> 
+			<img src="images/icq.gif" alt="" border="0"> 
 			<span>ICQ</span>
 		</label>
 		<label for="filterMSNcheckbox">
-			<input type="checkbox" name="filter" value="msn" checked id="filterMSNcheckbox"> 
-			<img src="/images/msn.gif" alt="" border="0"> 
+			<input type="checkbox" name="filter[]" value="msn" checked id="filterMSNcheckbox"> 
+			<img src="images/msn.gif" alt="" border="0"> 
 			<span>MSN</span>
 		</label>
 		<label for="filterYAHOOcheckbox">
-			<input type="checkbox" name="filter" value="yahoo" checked id="filterYAHOOcheckbox"> 
-			<img src="/images/yahoo.gif" alt="" border="0"> 
+			<input type="checkbox" name="filter[]" value="yahoo" checked id="filterYAHOOcheckbox"> 
+			<img src="images/yahoo.gif" alt="" border="0"> 
 			<span>Yahoo</span>
 		</label>
 		<label for="filterActiveOnly">
-			<input type="checkbox" name="filter" value="signedon" id="filterActiveOnly"> 
+			<input type="checkbox" name="filter[]" value="signedon" id="filterActiveOnly"> 
 			<span>Signed on only</span>
 		</label>	
 		<input type="submit" name="submit" value="Update" class="filterBtn"> 
@@ -158,164 +175,75 @@ below and update the view.</p>
 	</thead>
 	<tbody>
 		
-		<!-- <tr id="jiveRegistration1" class="jive-registrations-normal"> -->
-		<tr id="jiveRegistration1">
+<%
+    for (Registration registration : registrations) {
+        long id = registration.getRegistrationID();
+        ClientSession clientSession = (ClientSession)sessionManager.getSessions(registration.getJID().getNode()).toArray()[0];
+        String status = "unavailable";
+        String linestatus = "offline";
+        if (clientSession != null) {
+            Presence presence = clientSession.getPresence();
+            if (presence == null) {
+                // not logged in, leave alone
+            }
+            else if (presence.getShow() == Presence.Show.xa) {
+                status = "away";
+                linestatus = "online";
+            }
+            else if (presence.getShow() == Presence.Show.away) {
+                status = "away";
+                linestatus = "online";
+            }
+            else if (presence.getShow() == Presence.Show.chat) {
+                status = "free_chat";
+                linestatus = "online";
+            }
+            else if (presence.getShow() == Presence.Show.dnd) {
+                status = "dnd";
+                linestatus = "online";
+            }
+            else if (presence.isAvailable()) {
+                status = "available";
+                linestatus = "online";
+            }
+        }
+
+        Date lastLogin = registration.getLastLogin();
+        String lastLoginStr = ((lastLogin != null) ? lastLogin.toString() : "never");
+%>
+		<tr id="jiveRegistration<%= id %>">
 			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>anthony@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-AIMon">antmanJive</span></td>
-			<td>Jun 27, 2006</td>
-			<td align="center"><a href="#" onClick="toggleEdit(1); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
+			<img src="/images/im_<%= status %>.gif" alt="<%= linestatus %>" border="0"></td>
+			<td><%= registration.getJID() %></td>
+			<td><span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %>on"><%= registration.getUsername() %></span></td>
+			<td><%= lastLoginStr %></td>
+			<td align="center"><a href="#" onClick="toggleEdit(<%= id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
 			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
 		</tr>
-		<!-- <tr id="jiveRegistrationEdit1" class="jive-registrations-edit"> -->
-		<tr id="jiveRegistrationEdit1" style="display: none;">
+		<tr id="jiveRegistrationEdit<%= id %>" style="display: none;">
 			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>anthony@jivesoftware.com</td>
+			<img src="/images/im_<%= status %>.gif" alt="<%= status %>" border="0"></td>
+			<td><%= registration.getJID() %></td>
 			<td colspan="4">
-			<span class="jive-gateway-online jive-gateway-AIMon">
+			<span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %>on">
 				<div class="jive-registrations-editUsername">
-				<input type="text" name="aimname" size="12" maxlength="50" value="antmanJive"><br>
+				<input type="text" name="username" size="12" maxlength="50" value="<%= registration.getUsername() %>"><br>
 				<strong>username</strong>
 				</div>
 				<div class="jive-registrations-editPassword">
-				<input type="password" name="aimpwd" size="12" maxlength="50" value="*********"><br>
+				<input type="password" name="password" size="12" maxlength="50" value="*********"><br>
 				<strong>password</strong>
 				</div>
 				<div class="jive-registrations-editButtons">
-				<input type="submit" name="Submit" value="Save Changes" class="savechanges" onClick="toggleEdit(1);"> &nbsp;
-				<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleEdit(1);">
+				<input type="submit" name="Submit" value="Save Changes" class="savechanges" onClick="toggleEdit(<%= id %>);"> &nbsp;
+				<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleEdit(<%= id %>);">
 				</div>
 			</span>
 			</td>
 		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>barry@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-MSNoff">mr_barry@msn.com</span></td>
-			<td>Jub 27, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>bill@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-AIMon">lynchbill</span></td>
-			<td>Jul 15, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>dave@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-AIMon">djhersh</span></td>
-			<td>Jun 11, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>matt@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-AIMon">tuckermatt</span></td>
-			<td>Jul 15, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>matt@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-ICQoff">543124</span></td>
-			<td>Jun 22, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>matt@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-MSNoff">mtucker@hotmail.com</span></td>
-			<td>Jul 1, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>matt@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-Yon">matt_tucker@yahoo.com</span></td>
-			<td>Jul 11, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_available.gif" alt="online" border="0"></td>
-			<td>nick@jivesoftware.com</td>
-			<td><span class="jive-gateway-online jive-gateway-MSNon">nickJive@hotmail.com</span></td>
-			<td>Jul 5, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>ryan@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-AIMoff">vanman0001</span></td>
-			<td>Jul 18, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>ryan@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-ICQoff">4918312</span></td>
-			<td>Jun 22, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>ryan@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-MSNoff">ryan_vanderzanden@hotmail.com</span></td>
-			<td>Jul 7, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>ryan@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-Yoff">ryan_vanderzanden@yahoo.com</span></td>
-			<td>Jun 14, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>sam@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-AIMoff">mr_sam</span></td>
-			<td>Jul 14, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
-		<tr>
-			<td align="center">
-			<img src="/images/im_away.gif" alt="online" border="0"></td>
-			<td>sam@jivesoftware.com</td>
-			<td><span class="jive-gateway-offline jive-gateway-Yoff">samJive@yahoo.com</span></td>
-			<td>Jul 15, 2006</td>
-			<td align="center"><a href="#"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
-		</tr>
+<%
+    }
+%>
 	</tbody>
 	</table>
 	<!-- BEGIN registrations table -->
@@ -328,7 +256,7 @@ below and update the view.</p>
 		<a href="#">2</a> 
 		<a href="#">3</a> 
 		<a href="#">4</a> -
-		<a href="#"><strong>Next ></strong></a>
+		<a href="#"><strong>Next &gt;</strong></a>
 	</div>
 	<!-- END pagination -->
 

@@ -624,7 +624,7 @@ public abstract class BaseTransport implements Component {
      * @return The legacy username as a JID.
      */
     public JID convertIDToJID(String username) {
-        return new JID(username.replace('@', '%'), this.jid.getDomain(), null);
+        return new JID(username.replace('@', '%').replace(" ", ""), this.jid.getDomain(), null);
     }
 
     /**
@@ -711,6 +711,20 @@ public abstract class BaseTransport implements Component {
      */
     public ComponentManager getComponentManager() {
         return componentManager;
+    }
+
+    /**
+     * Returns the registration manager of the transport.
+     */
+    public RegistrationManager getRegistrationManager() {
+        return registrationManager;
+    }
+
+    /**
+     * Returns the session manager of the transport.
+     */
+    public TransportSessionManager getSessionManager() {
+        return sessionManager;
     }
 
     /**
@@ -816,7 +830,7 @@ public abstract class BaseTransport implements Component {
      */
     public void addOrUpdateRosterItem(JID userjid, String contactid, String nickname, String group) throws UserNotFoundException {
         try {
-            addOrUpdateRosterItem(userjid, new JID(contactid, this.jid.toBareJID(), null), nickname, group);
+            addOrUpdateRosterItem(userjid, convertIDToJID(contactid), nickname, group);
         }
         catch (UserNotFoundException e) {
             // Pass it on down.
@@ -862,7 +876,7 @@ public abstract class BaseTransport implements Component {
     void removeFromRoster(JID userjid, String contactid) throws UserNotFoundException {
         // Clean up the user's contact list.
         try {
-            removeFromRoster(userjid, new JID(contactid, this.jid.toBareJID(), null));
+            removeFromRoster(userjid, convertIDToJID(contactid));
         }
         catch (UserNotFoundException e) {
             // Pass it on through.
@@ -893,7 +907,7 @@ public abstract class BaseTransport implements Component {
             Map<JID,TransportBuddy> legacymap = new HashMap<JID,TransportBuddy>();
             for (TransportBuddy buddy : legacyitems) {
                 Log.debug("ROSTERSYNC: Mapping "+buddy.getName());
-                legacymap.put(new JID(buddy.getName(), this.jid.getDomain(), null), buddy);
+                legacymap.put(convertIDToJID(buddy.getName()), buddy);
             }
 
             // Now, lets go through the roster and see what matches up.

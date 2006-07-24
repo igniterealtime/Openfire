@@ -39,7 +39,7 @@ public class GatewayPlugin implements Plugin {
     /**
      *  Represents all configured transport handlers.
      */
-    private Hashtable<String,TransportInstance> transports; 
+    public Hashtable<String,TransportInstance> transports; 
 
     /**
      *  Represents the base component manager.
@@ -129,4 +129,13 @@ public class GatewayPlugin implements Plugin {
         TransportInstance trInstance = transports.get(serviceName);
         return trInstance.isEnabled();
     }
+
+    /**
+     *  Returns the transport instance, identified by subdomain.
+     */
+    public TransportInstance getTransportInstance(String serviceName) {
+        TransportInstance trInstance = transports.get(serviceName);
+        return trInstance;
+    }
+
 }

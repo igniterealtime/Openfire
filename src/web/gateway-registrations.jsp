@@ -4,6 +4,7 @@
                  org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.*,
+                 org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.Registration,
                  org.jivesoftware.wildfire.gateway.RegistrationManager"
     errorPage="error.jsp"
@@ -16,6 +17,8 @@
 
 <%
     webManager.init(request, response, session, application, out);
+
+    GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
 
     RegistrationManager registrationManager = new RegistrationManager();
     Collection<Registration> registrations = registrationManager.getRegistrations();
@@ -178,44 +181,58 @@ below and update the view.</p>
 <%
     for (Registration registration : registrations) {
         long id = registration.getRegistrationID();
-        ClientSession clientSession = (ClientSession)sessionManager.getSessions(registration.getJID().getNode()).toArray()[0];
         String status = "unavailable";
         String linestatus = "offline";
-        if (clientSession != null) {
-            Presence presence = clientSession.getPresence();
-            if (presence == null) {
-                // not logged in, leave alone
+    	try {
+            ClientSession clientSession = (ClientSession)sessionManager.getSessions(registration.getJID().getNode()).toArray()[0];
+            if (clientSession != null) {
+                Presence presence = clientSession.getPresence();
+                if (presence == null) {
+                    // not logged in, leave alone
+                }
+                else if (presence.getShow() == Presence.Show.xa) {
+                    status = "away";
+                    linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.away) {
+                    status = "away";
+                    linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.chat) {
+                    status = "free_chat";
+                    linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.dnd) {
+                    status = "dnd";
+                    linestatus = "online";
+                }
+                else if (presence.isAvailable()) {
+                    status = "available";
+                    linestatus = "online";
+                }
             }
-            else if (presence.getShow() == Presence.Show.xa) {
-                status = "away";
-                linestatus = "online";
-            }
-            else if (presence.getShow() == Presence.Show.away) {
-                status = "away";
-                linestatus = "online";
-            }
-            else if (presence.getShow() == Presence.Show.chat) {
-                status = "free_chat";
-                linestatus = "online";
-            }
-            else if (presence.getShow() == Presence.Show.dnd) {
-                status = "dnd";
-                linestatus = "online";
-            }
-            else if (presence.isAvailable()) {
-                status = "available";
-                linestatus = "online";
-            }
+        }
+        catch (Exception e) {
         }
 
         Date lastLogin = registration.getLastLogin();
-        String lastLoginStr = ((lastLogin != null) ? lastLogin.toString() : "never");
+        String lastLoginStr = ((lastLogin != null) ? lastLogin.toString() : "<i>never</i>");
+
+        boolean sessionActive = false;
+        try {
+            plugin.getTransportInstance(registration.getTransportType().toString()).getTransport().getSessionManager().getSession(registration.getJID());
+            sessionActive = true;
+        }
+        catch (Exception e) {
+            sessionActive = false;
+            Log.error("what the crap?", e);
+        }
 %>
 		<tr id="jiveRegistration<%= id %>">
 			<td align="center">
 			<img src="/images/im_<%= status %>.gif" alt="<%= linestatus %>" border="0"></td>
 			<td><%= registration.getJID() %></td>
-			<td><span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %>on"><%= registration.getUsername() %></span></td>
+			<td><span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %><%= ((sessionActive) ? "on" : "off") %>"><%= registration.getUsername() %></span></td>
 			<td><%= lastLoginStr %></td>
 			<td align="center"><a href="#" onClick="toggleEdit(<%= id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
 			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>

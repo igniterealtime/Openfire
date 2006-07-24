@@ -132,12 +132,12 @@ public class OSCARSession extends TransportSession {
             groupId = newGroupId;
         }
         request(new CreateItemsCmd(new SsiItem[] {
-            new BuddyItem(jid.getNode(), newBuddyId, groupId).toSsiItem() }));
+            new BuddyItem(getTransport().convertJIDToID(jid), newBuddyId, groupId).toSsiItem() }));
     }
 
     public void removeContact(JID jid) {
         for (BuddyItem i : buddies.values()) {
-            if (i.getScreenname().equals(jid.getNode())) {
+            if (i.getScreenname().equals(getTransport().convertJIDToID(jid))) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
                 buddies.remove(i.getId());
             }
@@ -145,7 +145,7 @@ public class OSCARSession extends TransportSession {
     }
 
     public void sendMessage(JID jid, String message) {
-        request(new SendImIcbm(jid.getNode(), message));
+        request(new SendImIcbm(getTransport().convertJIDToID(jid), message));
     }
 
     void startBosConn(String server, int port, ByteBlock cookie) {
@@ -280,7 +280,7 @@ public class OSCARSession extends TransportSession {
      * @param jid JID of contact to be probed.
      */
     public void retrieveContactStatus(JID jid) {
-        bosConn.getAndSendStatus(jid.getNode());
+        bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
     }
 
     /**

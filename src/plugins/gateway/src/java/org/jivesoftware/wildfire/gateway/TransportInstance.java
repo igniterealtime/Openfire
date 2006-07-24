@@ -30,7 +30,7 @@ public class TransportInstance {
     private JID jid = null;
     private String description = null;
     private String nameOfClass = null;
-    private BaseTransport transport = null;
+    public BaseTransport transport = null;
     private TransportType type = null;
     private Boolean enabled = false;
     private Boolean running = false;
@@ -154,6 +154,13 @@ public class TransportInstance {
         }
         transport = null;
         running = false;
+    }
+
+    /**
+     * Retrieves actual transport associated with this instance.
+     */
+    public BaseTransport getTransport() {
+        return transport;
     }
 
 }

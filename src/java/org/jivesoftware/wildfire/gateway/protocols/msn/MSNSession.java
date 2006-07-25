@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.hn.sleek.jmml.Contact;
 import org.hn.sleek.jmml.ContactList;
@@ -71,6 +72,8 @@ public class MSNSession extends TransportSession {
 
                 msnManager.setPrivacyMode(true);
                 msnManager.setReverseListBehaviour(true);
+
+                getRegistration().setLastLogin(new Date());
             }
             catch (MSNException e) {
                 Log.error("MSN exception thrown while logging in:", e);

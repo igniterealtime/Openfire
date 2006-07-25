@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.JID;
 
@@ -109,7 +108,7 @@ public class TransportInstance {
             return;
         }
 
-        BaseTransport transport = null;
+        transport = null;
 
         Log.debug("Loading class "+nameOfClass);
 

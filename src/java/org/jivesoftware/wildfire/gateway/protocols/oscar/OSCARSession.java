@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
@@ -253,6 +254,7 @@ public class OSCARSession extends TransportSession {
      * Apparantly we now have the entire list, lets sync.
      */
     void gotCompleteSSI() {
+        getRegistration().setLastLogin(new Date());
         List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
         for (BuddyItem buddy : buddies.values()) {
             //Log.debug("CompleteSSI: adding "+buddy.getScreenname());

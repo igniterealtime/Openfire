@@ -164,8 +164,6 @@ public abstract class BaseTransport implements Component {
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
-        Log.debug("Got Message packet: " + packet.toString());
-
         try {
             TransportSession session = sessionManager.getSession(from);
             session.sendMessage(to, packet.getBody());
@@ -188,8 +186,6 @@ public abstract class BaseTransport implements Component {
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
-        Log.debug("Got Presence packet: " + packet.toString());
-
         if (packet.getType() == Presence.Type.error) {
             // We don't want to do anything with this.  Ignore it.
             return reply;
@@ -197,7 +193,6 @@ public abstract class BaseTransport implements Component {
 
         try {
             if (to.getNode() == null) {
-                Log.debug("Presence to gateway");
                 Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
                 if (!registrations.iterator().hasNext()) {
                     // User is not registered with us.
@@ -209,7 +204,6 @@ public abstract class BaseTransport implements Component {
                 // This packet is to the transport itself.
                 if (packet.getType() == null) {
                     // User has come online.
-                    Log.debug("Got available.");
                     TransportSession session = null;
                     try {
                         session = sessionManager.getSession(from);
@@ -225,7 +219,6 @@ public abstract class BaseTransport implements Component {
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
                     // User has gone offline.
-                    Log.debug("Got unavailable.");
                     TransportSession session = null;
                     try {
                         session = sessionManager.getSession(from);
@@ -242,7 +235,6 @@ public abstract class BaseTransport implements Component {
                 }
                 else if (packet.getType() == Presence.Type.probe) {
                     // Client is asking for presence status.
-                    Log.debug("Got probe.");
                     TransportSession session = null;
                     try {
                         session = sessionManager.getSession(from);
@@ -258,12 +250,11 @@ public abstract class BaseTransport implements Component {
                     }
                 }
                 else {
-                    Log.debug("Ignoring this packet.");
+                    Log.debug("Ignoring this packet:" + packet.toString());
                     // Anything else we will ignore for now.
                 }
             }
             else {
-                Log.debug("Presence to user at gateway");
                 // This packet is to a user at the transport.
                 try {
                     TransportSession session = sessionManager.getSession(from);
@@ -304,8 +295,6 @@ public abstract class BaseTransport implements Component {
     private List<Packet> processPacket(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
 
-        Log.debug("Got IQ packet: " + packet.toString());
-
         if (packet.getType() == IQ.Type.error) {
             // Lets not start a loop.  Ignore.
             return reply;
@@ -320,32 +309,27 @@ public abstract class BaseTransport implements Component {
         if (xmlns == null) {
             // No namespace defined.
             // TODO: Should we return an error?
-            Log.debug("No XMLNS");
+            Log.debug("No XMLNS:" + packet.toString());
             return reply;
         }
 
         if (xmlns.equals(DISCO_INFO)) {
-            Log.debug("Matched Disco Info");
             reply.addAll(handleDiscoInfo(packet));
         }
         else if (xmlns.equals(DISCO_ITEMS)) {
-            Log.debug("Matched Disco Items");
             reply.addAll(handleDiscoItems(packet));
         }
         else if (xmlns.equals(IQ_GATEWAY)) {
-            Log.debug("Matched IQ Gateway");
             reply.addAll(handleIQGateway(packet));
         }
         else if (xmlns.equals(IQ_REGISTER)) {
-            Log.debug("Matched IQ Register");
             reply.addAll(handleIQRegister(packet));
         }
         else if (xmlns.equals(IQ_VERSION)) {
-            Log.debug("Matched IQ Version");
             reply.addAll(handleIQVersion(packet));
         }
         else {
-            Log.debug("Matched nothing");
+            Log.debug("Unabled iq request:" + xmlns);
         }
 
         return reply;
@@ -451,31 +435,14 @@ public abstract class BaseTransport implements Component {
             // this.convinceNotToLeave() ... kidding.
             IQ result = IQ.createResultIQ(packet);
 
-            Collection<Registration> registrations = registrationManager.getRegistrations(packet.getFrom(), this.transportType);
-            // For now, we're going to have to just nuke all of these.  Sorry.
-            for (Registration reg : registrations) {
-                registrationManager.deleteRegistration(reg);
-            }
-
             // Tell the end user the transport went byebye.
             Presence unavailable = new Presence(Presence.Type.unavailable);
             unavailable.setTo(packet.getFrom());
             unavailable.setFrom(packet.getTo());
             reply.add(unavailable);
 
-            // Clean up the user's contact list.
             try {
-                Roster roster = rosterManager.getRoster(packet.getFrom().getNode());
-                for (RosterItem ri : roster.getRosterItems()) {
-                    if (ri.getJid().getDomain() == this.jid.getDomain()) {
-                        try {
-                            roster.deleteRosterItem(ri.getJid(), false);
-                        }
-                        catch (Exception e) {
-                            Log.error("Error removing roster item: " + ri.toString());
-                        }
-                    }
-                }
+                this.deleteRegistration(packet.getFrom());
             }
             catch (UserNotFoundException e) {
                 Log.error("Error cleaning up contact list of: " + packet.getFrom());
@@ -531,24 +498,8 @@ public abstract class BaseTransport implements Component {
                     result.setChildElement(response);
                     reply.add(result);
 
-                    Collection<Registration> registrations = registrationManager.getRegistrations(packet.getFrom(), this.transportType);
-                    Boolean foundReg = false;
-                    for (Registration registration : registrations) {
-                        if (!registration.getUsername().equals(username)) {
-                            registrationManager.deleteRegistration(registration);
-                        }
-                        else {
-                            registration.setPassword(password);
-                            foundReg = true;
-                        }
-                    }
-
-                    if (!foundReg) {
-                        registrationManager.createRegistration(packet.getFrom(), this.transportType, username, password);
-                    }
-
                     try {
-                        addOrUpdateRosterItem(packet.getFrom(), packet.getTo(), this.getDescription(), "Transports");
+                        this.addNewRegistration(packet.getFrom(), username, password);
                     }
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + packet.getFrom());
@@ -906,7 +857,7 @@ public abstract class BaseTransport implements Component {
             // First thing first, we want to build ourselves an easy mapping.
             Map<JID,TransportBuddy> legacymap = new HashMap<JID,TransportBuddy>();
             for (TransportBuddy buddy : legacyitems) {
-                Log.debug("ROSTERSYNC: Mapping "+buddy.getName());
+                //Log.debug("ROSTERSYNC: Mapping "+buddy.getName());
                 legacymap.put(convertIDToJID(buddy.getName()), buddy);
             }
 
@@ -922,7 +873,7 @@ public abstract class BaseTransport implements Component {
                 }
                 JID jid = new JID(ri.getJid().toBareJID());
                 if (legacymap.containsKey(jid)) {
-                    Log.debug("ROSTERSYNC: We found, updating " + jid.toString());
+                    //Log.debug("ROSTERSYNC: We found, updating " + jid.toString());
                     // Ok, matched a legacy to jabber roster item
                     // Lets update if there are differences
                     TransportBuddy buddy = legacymap.get(jid);
@@ -936,7 +887,7 @@ public abstract class BaseTransport implements Component {
                     legacymap.remove(jid);
                 }
                 else {
-                    Log.debug("ROSTERSYNC: We did not find, removing " + jid.toString());
+                    //Log.debug("ROSTERSYNC: We did not find, removing " + jid.toString());
                     // This person is apparantly no longer in the legacy roster.
                     try {
                         this.removeFromRoster(userjid, jid);
@@ -950,7 +901,7 @@ public abstract class BaseTransport implements Component {
 
             // Ok, we should now have only new items from the legacy roster
             for (TransportBuddy buddy : legacymap.values()) {
-                Log.debug("ROSTERSYNC: We have new, adding " + buddy.getName());
+                //Log.debug("ROSTERSYNC: We have new, adding " + buddy.getName());
                 try {
                     this.addOrUpdateRosterItem(userjid, buddy.getName(), buddy.getNickname(), buddy.getGroup());
                 }
@@ -962,6 +913,71 @@ public abstract class BaseTransport implements Component {
         }
         catch (UserNotFoundException e) {
             throw new UserNotFoundException("Could not find roster for " + userjid.toString());
+        }
+    }
+
+    /**
+     * Adds a registration with this transport.
+     *
+     * @param jid JID of user to add registration to.
+     * @param username Legacy username of registration.
+     * @param password Legacy password of registration.
+     * @throws UserNotFoundException if registration or roster not found.
+     */
+    public void addNewRegistration(JID jid, String username, String password) throws UserNotFoundException {
+        Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);
+        Boolean foundReg = false;
+        for (Registration registration : registrations) {
+            if (!registration.getUsername().equals(username)) {
+                registrationManager.deleteRegistration(registration);
+            }
+            else {
+                registration.setPassword(password);
+                foundReg = true;
+            }
+        }
+
+        if (!foundReg) {
+            registrationManager.createRegistration(jid, this.transportType, username, password);
+        }
+
+        try {
+            addOrUpdateRosterItem(jid, this.getJID(), this.getDescription(), "Transports");
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("User not registered with server.");
+        }
+    }
+
+    /**
+     * Removes a registration from this transport.
+     *
+     * @param jid JID of user to add registration to.
+     * @throws UserNotFoundException if registration or roster not found.
+     */
+    public void deleteRegistration(JID jid) throws UserNotFoundException {
+        Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);
+        // For now, we're going to have to just nuke all of these.  Sorry.
+        for (Registration reg : registrations) {
+            registrationManager.deleteRegistration(reg);
+        }
+
+        // Clean up the user's contact list.
+        try {
+            Roster roster = rosterManager.getRoster(jid.getNode());
+            for (RosterItem ri : roster.getRosterItems()) {
+                if (ri.getJid().getDomain() == this.jid.getDomain()) {
+                    try {
+                        roster.deleteRosterItem(ri.getJid(), false);
+                    }
+                    catch (Exception e) {
+                        Log.error("Error removing roster item: " + ri.toString());
+                    }
+                }
+            }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Unable to find roster.");
         }
     }
 

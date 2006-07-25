@@ -3,10 +3,13 @@
                  org.jivesoftware.wildfire.ClientSession,
                  org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.user.UserNotFoundException,
                  org.jivesoftware.util.*,
                  org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.Registration,
-                 org.jivesoftware.wildfire.gateway.RegistrationManager"
+                 org.jivesoftware.wildfire.gateway.RegistrationManager,
+                 org.jivesoftware.wildfire.gateway.TransportType,
+                 org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
 
@@ -16,51 +19,270 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%
-    webManager.init(request, response, session, application, out);
-
     GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
 
+    String success = request.getParameter("success");
+    webManager.init(request, response, session, application, out);
+
     RegistrationManager registrationManager = new RegistrationManager();
+
+    String action = ParamUtils.getParameter(request, "action");
+    if (action != null) {
+        if (action.equals("delete")) {
+            long regId = ParamUtils.getLongParameter(request, "deleteid", -1);
+            try {
+                Registration reg = new Registration(regId);
+                plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
+                response.sendRedirect("gateway-registrations.jsp?success=true");
+                return;
+            }
+            catch (NotFoundException e) {
+                // Ok, nevermind.
+                Log.error("Not found while deleting id "+regId, e);
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
+            catch (UserNotFoundException e) {
+                // Ok, nevermind.
+                Log.error("Not found while deleting id "+regId, e);
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
+        }
+        else if (action.equals("edit")) {
+            long regId = ParamUtils.getLongParameter(request, "editid", -1);
+            try {
+                Registration reg = new Registration(regId);
+                reg.setUsername(ParamUtils.getParameter(request, "username"));
+                reg.setPassword(ParamUtils.getParameter(request, "password"));
+                response.sendRedirect("gateway-registrations.jsp?success=true");
+                return;
+            }
+            catch (NotFoundException e) {
+                // Ok, nevermind.
+                Log.error("Not found while editing id "+regId, e);
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
+        }
+        else if (action.equals("add")) {
+            JID jid;
+            String jidStr = ParamUtils.getParameter(request, "gatewayJID");
+            if (jidStr.contains("@")) {
+                jid = new JID(jidStr);
+            }
+            else {
+                jid = new JID(jidStr, XMPPServer.getInstance().getServerInfo().getName(), null);
+            }
+            String typeStr = ParamUtils.getParameter(request, "gatewayType");
+            String username = ParamUtils.getParameter(request, "gatewayUser");
+            String password = ParamUtils.getParameter(request, "gatewayPass");
+            try {
+                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password);
+                response.sendRedirect("gateway-registrations.jsp?success=true");
+                return;
+            }
+            catch (UserNotFoundException e) {
+                Log.error("Not found while adding account for "+jid.toString());
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
+        }
+    }
+
     Collection<Registration> registrations = registrationManager.getRegistrations();
-    int regCount = registrations.size();
 
     // Get the user manager
     SessionManager sessionManager = webManager.getSessionManager();
+
+    // Lets gather what information we are going to display
+    class regResult {
+        public JID jid = null;
+        public long id = -1;
+        public String type = null;
+        public String username = null;
+        public String status = "unavailable";
+        public String linestatus = "offline";
+        public String lastLogin = null;
+        public boolean sessionActive = false;
+    }
+    Collection<regResult> regResults = new ArrayList<regResult>();
+
+    ArrayList filteropts = new ArrayList<String>();
+    if (ParamUtils.getParameter(request, "filter[]") != null) {
+        String[] optlist = ParamUtils.getParameters(request, "filter[]");
+        for (String opt : optlist) {
+            filteropts.add(opt);
+        }
+    }
+    else if (webManager.getPageProperty("gateway-registrations", "filterSET", 0) != 0) {
+        if (webManager.getPageProperty("gateway-registrations", "filterAIM", 0) != 0) { filteropts.add("aim"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterICQ", 0) != 0) { filteropts.add("icq"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterMSN", 0) != 0) { filteropts.add("msn"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterYAHOO", 0) != 0) { filteropts.add("yahoo"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterIRC", 0) != 0) { filteropts.add("irc"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterSIGNEDON", 0) != 0) { filteropts.add("signedon"); }
+    }
+    else {
+        filteropts.add("aim");
+        filteropts.add("icq");
+        filteropts.add("msn");
+        filteropts.add("yahoo");
+        filteropts.add("irc");
+    }
+
+    webManager.setPageProperty("gateway-registrations", "filterSET", 1);
+    webManager.setPageProperty("gateway-registrations", "filterAIM", filteropts.contains("aim") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterICQ", filteropts.contains("icq") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterMSN", filteropts.contains("msn") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterYAHOO", filteropts.contains("yahoo") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterIRC", filteropts.contains("irc") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterSIGNEDON", filteropts.contains("signedon") ? 1 : 0);
+
+    int resCount = 0;
+    for (Registration registration : registrations) {
+        regResult res = new regResult();
+        res.id = registration.getRegistrationID();
+        res.jid = registration.getJID();
+        res.username = registration.getUsername();
+        res.type = registration.getTransportType().toString();
+        if (!filteropts.contains(res.type)) { continue; }
+
+    	try {
+            ClientSession clientSession = (ClientSession)sessionManager.getSessions(res.jid.getNode()).toArray()[0];
+            if (clientSession != null) {
+                Presence presence = clientSession.getPresence();
+                if (presence == null) {
+                    // not logged in, leave alone
+                }
+                else if (presence.getShow() == Presence.Show.xa) {
+                    res.status = "away";
+                    res.linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.away) {
+                    res.status = "away";
+                    res.linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.chat) {
+                    res.status = "free_chat";
+                    res.linestatus = "online";
+                }
+                else if (presence.getShow() == Presence.Show.dnd) {
+                    res.status = "dnd";
+                    res.linestatus = "online";
+                }
+                else if (presence.isAvailable()) {
+                    res.status = "available";
+                    res.linestatus = "online";
+                }
+            }
+        }
+        catch (Exception e) {
+        }
+
+        if (res.linestatus.equals("offline") && filteropts.contains("signedon")) { continue; }
+
+        Date lastLogin = registration.getLastLogin();
+        res.lastLogin = ((lastLogin != null) ? lastLogin.toString() : "<i>never</i>");
+
+        res.sessionActive = false;
+        try {
+            plugin.getTransportInstance(res.type).getTransport().getSessionManager().getSession(res.jid);
+            res.sessionActive = true;
+        }
+        catch (Exception e) {
+            res.sessionActive = false;
+        }
+        resCount++;
+        regResults.add(res);
+    }
+
+    final int DEFAULT_RANGE = 15;
+    final int[] RANGE_PRESETS = {15, 30, 50, 100};
+
+    int start = ParamUtils.getIntParameter(request,"start",0);
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("gateway-registrations", DEFAULT_RANGE));
+
+    if (request.getParameter("range") != null) {
+        webManager.setRowsPerPage("gateway-registrations", range);
+    }
+
+    // paginator vars
+    int numPages = (int)Math.ceil((double)resCount/(double)range);
+    int curPage = (start/range) + 1;
+
+    int topRange = ((start+range) < resCount) ? (start+range) : resCount;
 %>
 
 <html>
+
 <head>
 <title>Gateway Registrations</title>
-
 <meta name="pageID" content="gateway-registrations">
-
 <style type="text/css">
 <!--	@import url("style/gateways.css");    -->
 </style>
-
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
-
 </head>
-<body>
 
+<body>
 
 <p>Below is a list of all gateway service registrations. To filter by active sessions and/or specific gateways select the options 
 below and update the view.</p>
 
+<%
+    if (success != null) {
+        if (success.equals("true")) {
+%>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="/images/success-16x16.gif" width="16"
+ height="16" border="0"></td>
+        <td class="jive-icon-label">
+            Registration successfully updated.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%
+        }
+        else {
+%>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="/images/error-16x16.gif" width="16"
+ height="16" border="0"></td>
+        <td class="jive-icon-label">
+            Registration update failed.
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%
+        }
+    }
+%>
 
 <!-- BEGIN add registration -->
 <div class="jive-gateway-addregBtn" id="jiveAddRegButton">
-	<a href="#" onClick="toggleAdd(); return false" id="jiveAddRegLink">Add a new registration</a>
+	<a href="" onClick="toggleAdd(); return false" id="jiveAddRegLink">Add a new registration</a>
 </div>
 <div class="jive-gateway-addreg" id="jiveAddRegPanel" style="display: none;">
 	<div class="jive-gateway-addregPad">
-		<form action="" name="jive-addRegistration">
+		<form action="gateway-registrations.jsp" name="jive-addRegistration">
+        <input type="hidden" name="action" value="add" />
 		<div class="jive-registrations-addJid">
 			<input type="text" name="gatewayJID" size="12" maxlength="50" value=""><br>
 			<strong>user (JID)</strong>
 		</div>
 		<div class="jive-registrations-addGateway">
-			<select name="gateway" size="1">
+			<select name="gatewayType" size="1">
 			<option value="0" SELECTED> -- select -- </option>
 			<option value="aim">AIM</option>
 			<option value="icq">ICQ</option>
@@ -78,7 +300,7 @@ below and update the view.</p>
 			<strong>password</strong>
 		</div>
 		<div class="jive-registrations-addButtons">
-			<input type="submit" name="Submit" value="Add" class="savechanges" onClick="toggleAdd();"> &nbsp;
+			<input type="submit" name="Submit" value="Add" class="savechanges"> &nbsp;
 			<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleAdd();">
 		</div>
 		</form>
@@ -95,65 +317,84 @@ below and update the view.</p>
 
 	<!-- BEGIN results -->
 	<div class="jive-registrations-results">
-		Registrations: <strong>1-15</strong> of <strong><%= regCount %></strong>
+		Registrations: <strong><%= (start+1) %>-<%= topRange %></strong> of <strong><%= resCount %></strong>
 	</div>
 	<!-- END results -->
 
 
 	<!-- BEGIN results size (num per page) -->
-	<div class="jive-registrations-resultsSize">
-		<select name="numPerPage" id="numPerPage" size="1">
-		<option value="1" SELECTED>15</option>
-		<option value="2">30</option>
-		<option value="3">50</option>
-		<option value="4">100</option>
+	<div class="jive-registrations-resultsSize"><form action="gateway-registrations.jsp" method="get">
+		<select name="range" id="range" size="1" onchange="this.form.submit()">
+                <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+
+                    <option value="<%= RANGE_PRESETS[i] %>"<%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+
+                <%  } %>
 		</select>
 		<span>per page</span>
-	</div>
+	</form></div>
 	<!-- END results size -->
 
 
 	<!-- BEGIN pagination -->
 	<div class="jive-registrations-pagination">
 		<strong>Page:</strong> &nbsp; 
-		<a href="#"><strong>1</strong></a> 
-		<a href="#">2</a> 
-		<a href="#">3</a> 
-		<a href="#">4</a> -
-		<a href="#"><strong>Next &gt;</strong></a>
+            <%
+                if (numPages > 1 && ((curPage) > 1)) {
+            %>
+                    <a href="gateway-registrations.jsp?start=<%= ((curPage-2)*range) %>">&lt; Prev</a> 
+            <%
+                }
+                for (int i=0; i<numPages; i++) {
+                    boolean isCurrent = (i+1) == curPage;
+                    if (isCurrent) {
+            %>
+                        <strong><%= (i+1) %></strong> 
+            <%
+                    }
+                    else {
+            %>
+                        <a href="gateway-registrations.jsp?start=<%= (i*range) %>"><%= (i+1) %></a> 
+            <%
+                    }
+                }
+                if (numPages > 1 && ((curPage) < numPages)) {
+            %>
+                    <a href="gateway-registrations.jsp?start=<%= (curPage*range) %>">Next &gt;</a>
+            <%
+                }
+            %>
 	</div>
 	<!-- END pagination -->
-
-	
 	
 	
 	<!-- BEGIN gateway filter -->
-	<form action="" name="jive-filterForm">
+	<form action="gateway-registrations.jsp" name="jive-filterForm">
 	<div class="jive-gateway-filter" id="jiveGatewayFilters">
 		<div>
 		<strong>Filter by:</strong>
 		<label for="filterAIMcheckbox">
-			<input type="checkbox" name="filter[]" value="aim" checked id="filterAIMcheckbox"> 
+			<input type="checkbox" name="filter[]" value="aim" <%= ((filteropts.contains("aim")) ? "checked" : "") %> id="filterAIMcheckbox"> 
 			<img src="images/aim.gif" alt="" border="0"> 
 			<span>AIM</span>
 		</label>
 		<label for="filterICQcheckbox">
-			<input type="checkbox" name="filter[]" value="icq" checked id="filterICQcheckbox"> 
+			<input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("icq")) ? "checked" : "") %> id="filterICQcheckbox"> 
 			<img src="images/icq.gif" alt="" border="0"> 
 			<span>ICQ</span>
 		</label>
 		<label for="filterMSNcheckbox">
-			<input type="checkbox" name="filter[]" value="msn" checked id="filterMSNcheckbox"> 
+			<input type="checkbox" name="filter[]" value="msn" <%= ((filteropts.contains("msn")) ? "checked" : "") %> id="filterMSNcheckbox"> 
 			<img src="images/msn.gif" alt="" border="0"> 
 			<span>MSN</span>
 		</label>
 		<label for="filterYAHOOcheckbox">
-			<input type="checkbox" name="filter[]" value="yahoo" checked id="filterYAHOOcheckbox"> 
+			<input type="checkbox" name="filter[]" value="yahoo" <%= ((filteropts.contains("yahoo")) ? "checked" : "") %> id="filterYAHOOcheckbox"> 
 			<img src="images/yahoo.gif" alt="" border="0"> 
 			<span>Yahoo</span>
 		</label>
 		<label for="filterActiveOnly">
-			<input type="checkbox" name="filter[]" value="signedon" id="filterActiveOnly"> 
+			<input type="checkbox" name="filter[]" value="signedon" <%= ((filteropts.contains("signedon")) ? "checked" : "") %> id="filterActiveOnly"> 
 			<span>Signed on only</span>
 		</label>	
 		<input type="submit" name="submit" value="Update" class="filterBtn"> 
@@ -179,72 +420,28 @@ below and update the view.</p>
 	<tbody>
 		
 <%
-    for (Registration registration : registrations) {
-        long id = registration.getRegistrationID();
-        String status = "unavailable";
-        String linestatus = "offline";
-    	try {
-            ClientSession clientSession = (ClientSession)sessionManager.getSessions(registration.getJID().getNode()).toArray()[0];
-            if (clientSession != null) {
-                Presence presence = clientSession.getPresence();
-                if (presence == null) {
-                    // not logged in, leave alone
-                }
-                else if (presence.getShow() == Presence.Show.xa) {
-                    status = "away";
-                    linestatus = "online";
-                }
-                else if (presence.getShow() == Presence.Show.away) {
-                    status = "away";
-                    linestatus = "online";
-                }
-                else if (presence.getShow() == Presence.Show.chat) {
-                    status = "free_chat";
-                    linestatus = "online";
-                }
-                else if (presence.getShow() == Presence.Show.dnd) {
-                    status = "dnd";
-                    linestatus = "online";
-                }
-                else if (presence.isAvailable()) {
-                    status = "available";
-                    linestatus = "online";
-                }
-            }
-        }
-        catch (Exception e) {
-        }
-
-        Date lastLogin = registration.getLastLogin();
-        String lastLoginStr = ((lastLogin != null) ? lastLogin.toString() : "<i>never</i>");
-
-        boolean sessionActive = false;
-        try {
-            plugin.getTransportInstance(registration.getTransportType().toString()).getTransport().getSessionManager().getSession(registration.getJID());
-            sessionActive = true;
-        }
-        catch (Exception e) {
-            sessionActive = false;
-            Log.error("what the crap?", e);
-        }
+    int cnt = 0;
+    for (regResult result : regResults) {
+        cnt++;
+        if (cnt < (start+1)) { continue; }
+        if (cnt > (start+range)) { continue; }
 %>
-		<tr id="jiveRegistration<%= id %>">
+		<tr id="jiveRegistration<%= result.id %>">
 			<td align="center">
-			<img src="/images/im_<%= status %>.gif" alt="<%= linestatus %>" border="0"></td>
-			<td><%= registration.getJID() %></td>
-			<td><span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %><%= ((sessionActive) ? "on" : "off") %>"><%= registration.getUsername() %></span></td>
-			<td><%= lastLoginStr %></td>
-			<td align="center"><a href="#" onClick="toggleEdit(<%= id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><a href="#" onClick="alert('Are you sure you want to delete this registration?'); return false"><img src="/images/delete-16x16.gif" alt="" border="0"></a></td>
+			<img src="images/im_<%= result.status %>.gif" alt="<%= result.linestatus %>" border="0"></td>
+			<td><%= result.jid %></td>
+			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><%= result.username %></span></td>
+			<td><%= result.lastLogin %></td>
+			<td align="center"><a href="" onClick="toggleEdit(<%= result.id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
+			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('Are you sure you want to delete this registration?')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="/images/delete-16x16.gif" alt="" border="0"></a></form></td>
 		</tr>
-		<tr id="jiveRegistrationEdit<%= id %>" style="display: none;">
-			<td align="center">
-			<img src="/images/im_<%= status %>.gif" alt="<%= status %>" border="0"></td>
-			<td><%= registration.getJID() %></td>
-			<td colspan="4">
-			<span class="jive-gateway-<%= linestatus %> jive-gateway-<%= registration.getTransportType().toString().toUpperCase() %>on">
+		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none;">
+			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>
+			<td><%= result.jid %></td>
+			<td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="edit" /><input type="hidden" name="editid" value="<%= result.id %>" />
+			<span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
 				<div class="jive-registrations-editUsername">
-				<input type="text" name="username" size="12" maxlength="50" value="<%= registration.getUsername() %>"><br>
+				<input type="text" name="username" size="12" maxlength="50" value="<%= result.username %>"><br>
 				<strong>username</strong>
 				</div>
 				<div class="jive-registrations-editPassword">
@@ -252,11 +449,11 @@ below and update the view.</p>
 				<strong>password</strong>
 				</div>
 				<div class="jive-registrations-editButtons">
-				<input type="submit" name="Submit" value="Save Changes" class="savechanges" onClick="toggleEdit(<%= id %>);"> &nbsp;
-				<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleEdit(<%= id %>);">
+				<input type="submit" name="Submit" value="Save Changes" class="savechanges" onClick="document.getElementById.submit()"> &nbsp;
+				<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleEdit(<%= result.id %>);">
 				</div>
 			</span>
-			</td>
+			</form></td>
 		</tr>
 <%
     }
@@ -269,11 +466,31 @@ below and update the view.</p>
 	<!-- BEGIN pagination -->
 	<div class="jive-registrations-pagination">
 		<strong>Page:</strong> &nbsp; 
-		<a href="#"><strong>1</strong></a> 
-		<a href="#">2</a> 
-		<a href="#">3</a> 
-		<a href="#">4</a> -
-		<a href="#"><strong>Next &gt;</strong></a>
+            <%
+                if (numPages > 1 && ((curPage) > 1)) {
+            %>
+                    <a href="gateway-registrations.jsp?start=<%= ((curPage-2)*range) %>">&lt; Prev</a> 
+            <%
+                }
+                for (int i=0; i<numPages; i++) {
+                    boolean isCurrent = (i+1) == curPage;
+                    if (isCurrent) {
+            %>
+                        <strong><%= (i+1) %></strong> 
+            <%
+                    }
+                    else {
+            %>
+                        <a href="gateway-registrations.jsp?start=<%= (i*range) %>"><%= (i+1) %></a> 
+            <%
+                    }
+                }
+                if (numPages > 1 && ((curPage) < numPages)) {
+            %>
+                    <a href="gateway-registrations.jsp?start=<%= (curPage*range) %>">Next &gt;</a>
+            <%
+                }
+            %>
 	</div>
 	<!-- END pagination -->
 

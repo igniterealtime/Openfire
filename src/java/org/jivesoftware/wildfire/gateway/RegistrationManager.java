@@ -35,14 +35,13 @@ public class RegistrationManager implements Startable {
     private static final String ALL_REGISTRATION_COUNT =
             "SELECT count(*) FROM gatewayRegistration";
     private static final String ALL_REGISTRATIONS =
-            "SELECT registrationID FROM gatewayRegistration";
+            "SELECT registrationID FROM gatewayRegistration ORDER BY jid,transportType";
     private static final String LOAD_REGISTRATION =
-            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=? " +
-            "AND username=?";
+            "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=? AND username=?";
     private static final String ALL_USER_REGISTRATIONS =
-            "SELECT registrationID FROM gatewayRegistration WHERE jid=?";
+            "SELECT registrationID FROM gatewayRegistration WHERE jid=? ORDER BY transportType";
     private static final String ALL_GATEWAY_REGISTRATIONS =
-            "SELECT registrationID FROM gatewayRegistration WHERE transportType=?";
+            "SELECT registrationID FROM gatewayRegistration WHERE transportType=? ORDER BY jid";
     private static final String USER_GATEWAY_REGISTRATIONS =
             "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=?";
 
@@ -81,8 +80,7 @@ public class RegistrationManager implements Startable {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_REGISTRATION);
             pstmt.setLong(1, registration.getRegistrationID());
-            pstmt.executeQuery();
-
+            pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
             Log.error(sqle);

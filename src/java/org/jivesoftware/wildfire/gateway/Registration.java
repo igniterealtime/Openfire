@@ -44,6 +44,8 @@ public class Registration {
             "UPDATE gatewayRegistration SET lastLogin=? WHERE registrationID=?";
     private static final String SET_PASSWORD =
             "UPDATE gatewayRegistration SET password=? WHERE registrationID=?";
+    private static final String SET_USERNAME =
+            "UPDATE gatewayRegistration SET username=? WHERE registrationID=?";
 
     private long registrationID;
     private JID jid;
@@ -168,6 +170,34 @@ public class Registration {
     }
 
     /**
+     * Sets the username used for logging in to the transport.
+     * @param username
+     */
+    public void setUsername(String username) {
+        this.username = username;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SET_USERNAME);
+            if (username != null) {
+                pstmt.setString(1, username);
+            }
+            else {
+                pstmt.setNull(1, Types.VARCHAR);
+            }
+            pstmt.setLong(2, registrationID);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    /**
      * Returns the date that this transport registration was created.
      *
      * @return the date the registration was created.
@@ -198,7 +228,7 @@ public class Registration {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SET_LAST_LOGIN);
-            pstmt.setNull(1, Types.VARCHAR);
+            pstmt.setLong(1, lastLogin.getTime());
             pstmt.setLong(2, registrationID);
             pstmt.executeUpdate();
         }

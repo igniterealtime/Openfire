@@ -12,6 +12,7 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -108,6 +109,8 @@ public class YahooSession extends TransportSession {
                         getTransport().sendPacket(p);
 
                         yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(pType));
+
+                        getRegistration().setLastLogin(new Date());
 
                         syncUsers();
                     }

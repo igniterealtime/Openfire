@@ -7,7 +7,7 @@ CREATE TABLE gatewayRegistration (
    registrationDate  BIGINT         NOT NULL,
    lastLogin         BIGINT,
    PRIMARY KEY (registrationID),
-   INDEX gatewayReg_jid_idx(jid),
+   INDEX gatewayReg_jid_idx(jid(500)),
    INDEX gatewayReg_type_idx(transportType)
 );
 

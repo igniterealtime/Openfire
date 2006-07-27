@@ -31,6 +31,8 @@ import java.nio.channels.WritableByteChannel;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
@@ -81,6 +83,8 @@ public class TLSStreamHandler {
       */
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
+    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
+
     /**
      * Returns the identities of the remote server as defined in the specified certificate. The
      * identities are defined in the subjectDN of the certificate and it can also be defined in
@@ -96,7 +100,10 @@ public class TLSStreamHandler {
         List<String> names = getSubjectAlternativeNames(x509Certificate);
         if (names.isEmpty()) {
             String name = x509Certificate.getSubjectDN().getName();
-            name = name.replace("CN=", "");
+            Matcher matcher = cnPattern.matcher(name);
+            if (matcher.find()) {
+                name = matcher.group(2);
+            }
             // Create an array with the unique identity
             names = new ArrayList<String>();
             names.add(name);
@@ -171,7 +178,7 @@ public class TLSStreamHandler {
      * @throws java.io.IOException
      */
     public TLSStreamHandler(Socket socket, boolean clientMode, String remoteServer,
-            boolean needClientAuth) throws IOException {
+                            boolean needClientAuth) throws IOException {
         wrapper = new TLSWrapper(clientMode, needClientAuth, remoteServer);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);

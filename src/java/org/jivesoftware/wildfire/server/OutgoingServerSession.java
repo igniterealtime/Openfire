@@ -345,7 +345,7 @@ public class OutgoingServerSession extends Session {
             }
         }
         if (ServerDialback.isEnabled()) {
-            Log.debug("OS - Going to try connecting using server dialback");
+            Log.debug("OS - Going to try connecting using server dialback with: " + hostname);
             // Use server dialback over a plain connection
             return new ServerDialback().createOutgoingSession(domain, hostname, port);
         }

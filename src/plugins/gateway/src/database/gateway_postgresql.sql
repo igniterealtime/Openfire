@@ -1,6 +1,6 @@
 CREATE TABLE gatewayRegistration (
    registrationID    BIGINT         NOT NULL,
-   jid               VARCHAR(1024)  NOT NULL,
+   jid               VARCHAR(255)  NOT NULL,
    transportType     VARCHAR(15)    NOT NULL,
    username          VARCHAR(255)   NOT NULL,
    password          VARCHAR(255),

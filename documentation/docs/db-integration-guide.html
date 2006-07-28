@@ -79,7 +79,8 @@
 </ul>
 
 <p>
-    Below is a sample config file section:
+    Below is a sample config file section (note: the "..." sections in the examples indicate areas
+    where the rest of the config file would exist):
 </p>
 <pre>
 &lt;jive&gt;
@@ -121,7 +122,6 @@
       &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
     &lt;/auth&gt;
   &lt;/provider&gt;
-  ...
   &lt;jdbcAuthProvider&gt;
      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;/passwordSQL&gt;
      &lt;passwordType&gt;plain&lt;/passwordType&gt;
@@ -181,7 +181,6 @@ enable user integration.</p>
       &lt;className&gt;org.jivesoftware.wildfire.user.JDBCUserProvider&lt;/className&gt;
     &lt;/user&gt;
   &lt;/provider&gt;
-  ...
   &lt;jdbcUserProvider&gt;
      &lt;loadUserSQL&gt;SELECT name,email FROM myUser WHERE username=?&lt;/loadUserSQL&gt;
      &lt;userCountSQL&gt;SELECT COUNT(*) FROM myUser&lt;/userCountSQL&gt;
@@ -231,7 +230,6 @@ integration (see above). Use the following settings to enable group integration.
           &lt;className&gt;org.jivesoftware.wildfire.group.JDBCGroupProvider&lt;/className&gt;
       &lt;/group&gt;
   &lt;/provider&gt;
-  ...
   &lt;jdbcGroupProvider&gt;
        &lt;groupCountSQL&gt;SELECT count(*) FROM myGroups&lt;/groupCountSQL&gt;
        &lt;allGroupsSQL&gt;SELECT groupName FROM myGroups&lt;/allGroupsSQL&gt;

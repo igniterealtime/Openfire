@@ -47,8 +47,8 @@ import java.sql.SQLException;
  * &lt;/jdbcProvider&gt;
  *
  * &lt;jdbcAuthProvider&gt;
- *      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;passwordSQL&gt;
- *      &lt;passwordType&gt;plain&lt;passwordType&gt;
+ *      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;/passwordSQL&gt;
+ *      &lt;passwordType&gt;plain&lt;/passwordType&gt;
  * &lt;/jdbcAuthProvider&gt;</pre>
  *
  * The passwordType setting tells Wildfire how the password is stored. Setting the value

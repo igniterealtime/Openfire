@@ -20,6 +20,12 @@
 
 <%
     GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
+    HashMap<String,Boolean> trEnabled = new HashMap<String,Boolean>();
+    trEnabled.put("aim", plugin.getTransportInstance("aim").isEnabled());
+    trEnabled.put("icq", plugin.getTransportInstance("icq").isEnabled());
+    //trEnabled.put("irc", plugin.getTransportInstance("irc").isEnabled());
+    trEnabled.put("msn", plugin.getTransportInstance("msn").isEnabled());
+    trEnabled.put("yahoo", plugin.getTransportInstance("yahoo").isEnabled());
 
     String success = request.getParameter("success");
     webManager.init(request, response, session, application, out);
@@ -32,6 +38,7 @@
             long regId = ParamUtils.getLongParameter(request, "deleteid", -1);
             try {
                 Registration reg = new Registration(regId);
+                // TODO: Check if transport is enabled
                 plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
@@ -77,6 +84,10 @@
             String typeStr = ParamUtils.getParameter(request, "gatewayType");
             String username = ParamUtils.getParameter(request, "gatewayUser");
             String password = ParamUtils.getParameter(request, "gatewayPass");
+            if (!trEnabled.get(typeStr)) {
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
             try {
                 plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password);
                 response.sendRedirect("gateway-registrations.jsp?success=true");
@@ -284,10 +295,10 @@ below and update the view.</p>
 		<div class="jive-registrations-addGateway">
 			<select name="gatewayType" size="1">
 			<option value="0" SELECTED> -- select -- </option>
-			<option value="aim">AIM</option>
-			<option value="icq">ICQ</option>
-			<option value="msn">MSN</option>
-			<option value="yahoo">Yahoo</option>
+			<% if (trEnabled.get("aim")) { %> <option value="aim">AIM</option> <% } %>
+			<% if (trEnabled.get("icq")) { %> <option value="icq">ICQ</option> <% } %>
+			<% if (trEnabled.get("msn")) { %> <option value="msn">MSN</option> <% } %>
+			<% if (trEnabled.get("yahoo")) { %> <option value="yahoo">Yahoo</option> <% } %>
 			</select><br>
 			<strong>gateway</strong>
 		</div>

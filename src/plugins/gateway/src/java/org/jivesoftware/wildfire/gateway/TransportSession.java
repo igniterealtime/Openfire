@@ -22,7 +22,7 @@ import org.xmpp.packet.JID;
  *
  * @author Daniel Henninger
  */
-public abstract class TransportSession {
+public abstract class TransportSession implements Runnable {
 
     /**
      * Creates a TransportSession instance.
@@ -51,6 +51,11 @@ public abstract class TransportSession {
     public JID jid;
 
     /**
+     * Is this session valid?  Set to false when session is done.
+     */
+    public boolean validSession = true;
+
+    /**
      * Retrieves the registration information associated with the session.
      *
      * @return Registration information of the user associated with the session.
@@ -75,6 +80,20 @@ public abstract class TransportSession {
      */
     public JID getJID() {
         return jid;
+    }
+
+    /**
+     * Handles monitoring of whether session is still valid.
+     */
+    public void run() {
+        while (validSession) { }
+    }
+
+    /**
+     * Indicates that the session is done and should be stopped.
+     */
+    public void sessionDone() {
+        validSession = false;
     }
 
     /**

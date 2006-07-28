@@ -555,6 +555,28 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns a long value Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static long getLongProperty(String name, long defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
+            }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
      * Returns a boolean value Jive property.
      *
      * @param name the name of the property to return.

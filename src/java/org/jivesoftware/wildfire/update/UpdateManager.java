@@ -22,10 +22,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XMLWriter;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.MessageRouter;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.BasicModule;
@@ -104,7 +101,7 @@ public class UpdateManager extends BasicModule {
                     // Load last saved information (if any)
                     loadSavedInfo();
                     while (isServiceEnabled()) {
-                        waitForNextChecking();
+                        waitForNextCheck();
                         // Check if the service is still enabled
                         if (isServiceEnabled()) {
                             try {
@@ -113,8 +110,17 @@ public class UpdateManager extends BasicModule {
                                 // Refresh list of available plugins and check for plugin updates
                                 checkForPluginsUpdates(true);
                                 // Keep track of the last time we checked for updates
-                                JiveGlobals.setProperty("update.lastCheck",
-                                        String.valueOf(System.currentTimeMillis()));
+                                long now = System.currentTimeMillis();
+                                JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
+                                // As an extra precaution, make sure that that the value
+                                // we just set is saved. If not, return to make sure that
+                                // no additional update checks are performed until Wildfire
+                                // is restarted.
+                                if (now != JiveGlobals.getLongProperty("update.lastCheck", 0)) {
+                                    Log.error("Error: update service check did not save correctly. " +
+                                            "Stopping update service.");
+                                    return;
+                                }
                             }
                             catch (Exception e) {
                                 Log.error("Error checking for updates", e);
@@ -131,17 +137,21 @@ public class UpdateManager extends BasicModule {
                 }
             }
 
-            private void waitForNextChecking() throws InterruptedException {
-                long lastCheck = Long.parseLong(JiveGlobals.getProperty("update.lastCheck", "0"));
+            private void waitForNextCheck() throws InterruptedException {
+                long lastCheck = JiveGlobals.getLongProperty("update.lastCheck", 0);
                 if (lastCheck == 0) {
                     // This is the first time the server is used (since we added this feature)
                     Thread.sleep(45000);
-                } else {
+                }
+                else {
                     long elapsed = System.currentTimeMillis() - lastCheck;
-                    int frequency = getCheckFrequency() * 60 * 60 * 1000;
-                    if (elapsed < frequency) {
-                        // Sleep again before performing the next checking
+                    long frequency = getCheckFrequency() * JiveConstants.HOUR;
+                    // Sleep until we've waited the appropriate amount of time.
+                    while (elapsed < frequency) {
                         Thread.sleep(frequency - elapsed);
+                        // Update the elapsed time. This check is necessary just in case the
+                        // thread woke up early.
+                        elapsed = System.currentTimeMillis() - lastCheck;
                     }
                 }
             }
@@ -337,11 +347,18 @@ public class UpdateManager extends BasicModule {
 
     /**
      * Returns the frequency to check for updates. By default, this will happen every 48 hours.
+     * The frequency returned will never be less than 12 hours.
      *
      * @return the frequency to check for updates in hours.
      */
     public int getCheckFrequency() {
-        return JiveGlobals.getIntProperty("update.frequency", 48);
+        int frequency = JiveGlobals.getIntProperty("update.frequency", 48);
+        if (frequency < 12) {
+            return 12;
+        }
+        else {
+            return frequency;
+        }
     }
 
     /**

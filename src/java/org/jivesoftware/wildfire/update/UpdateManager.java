@@ -109,21 +109,21 @@ public class UpdateManager extends BasicModule {
                                 checkForServerUpdate(true);
                                 // Refresh list of available plugins and check for plugin updates
                                 checkForPluginsUpdates(true);
-                                // Keep track of the last time we checked for updates
-                                long now = System.currentTimeMillis();
-                                JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
-                                // As an extra precaution, make sure that that the value
-                                // we just set is saved. If not, return to make sure that
-                                // no additional update checks are performed until Wildfire
-                                // is restarted.
-                                if (now != JiveGlobals.getLongProperty("update.lastCheck", 0)) {
-                                    Log.error("Error: update service check did not save correctly. " +
-                                            "Stopping update service.");
-                                    return;
-                                }
                             }
                             catch (Exception e) {
                                 Log.error("Error checking for updates", e);
+                            }
+                            // Keep track of the last time we checked for updates. 
+                            long now = System.currentTimeMillis();
+                            JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
+                            // As an extra precaution, make sure that that the value
+                            // we just set is saved. If not, return to make sure that
+                            // no additional update checks are performed until Wildfire
+                            // is restarted.
+                            if (now != JiveGlobals.getLongProperty("update.lastCheck", 0)) {
+                                Log.error("Error: update service check did not save correctly. " +
+                                        "Stopping update service.");
+                                return;
                             }
                         }
                     }

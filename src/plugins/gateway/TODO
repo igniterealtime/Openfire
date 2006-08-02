@@ -1,0 +1,22 @@
+Gateway Plugin
+
+
+Main Todo List:
+
+- Switch to using shared rosters instead of direct roster edit for 'buddy list'
+- Evaluate whether shared rosters or direct roster edit should be used for actua
+l transport
+- Use threads for transport sessions
+- MUC/Groupchat support
+- DB files for other DB types
+- Test embedded DB
+- Typing notifications
+- Add/remove buddies from legacy contact list
+- AIM/ICQ is not pulling entire buddy list?
+
+
+
+Future Todo List:
+
+- Buddy icons
+- File transfer

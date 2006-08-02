@@ -363,14 +363,16 @@ public class SessionManager extends BasicModule {
         /**
          * Remove a session from the manager.
          *
-         * @param session The session to remove
+         * @param session The session to remove.
+         * @return true if the session was present in the map and was removed.
          */
-        void removeSession(Session session) {
+        boolean removeSession(Session session) {
             String resource = session.getAddress().getResource();
-            resources.remove(resource);
+            boolean removed = resources.remove(resource) != null;
             synchronized (priorityList) {
                 priorityList.remove(resource);
             }
+            return removed;
         }
 
         /**
@@ -1351,17 +1353,21 @@ public class SessionManager extends BasicModule {
      * Removes a session.
      *
      * @param session the session.
+     * @return true if the requested session was successfully removed.
      */
-    public void removeSession(ClientSession session) {
+    public boolean removeSession(ClientSession session) {
         // Do nothing if session is null or if the server is shutting down. Note: When the server
         // is shutting down the serverName will be null.
         if (session == null || serverName == null) {
-            return;
+            return false;
         }
+        boolean auth_removed = false;
         if (anonymousSessions.remove(session.getAddress().getResource()) != null) {
             // Fire session event.
             SessionEventDispatcher.dispatchEvent(session,
                     SessionEventDispatcher.EventType.anonymous_session_destroyed);
+            // Set that the session was found and removed
+            auth_removed = true;
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
@@ -1370,13 +1376,13 @@ public class SessionManager extends BasicModule {
                 SessionMap sessionMap = sessions.get(username);
                 if (sessionMap != null) {
                     synchronized (username.intern()) {
-                        sessionMap.removeSession(session);
+                        auth_removed = sessionMap.removeSession(session);
                     }
                     if (sessionMap.isEmpty()) {
                         sessions.remove(username);
                     }
                 }
-                if (sessionMap != null) {
+                if (auth_removed) {
                     // Fire session event.
                     SessionEventDispatcher.dispatchEvent(session,
                             SessionEventDispatcher.EventType.session_destroyed);
@@ -1384,7 +1390,8 @@ public class SessionManager extends BasicModule {
             }
         }
         // Remove the session from the pre-Authenticated sessions list (if present)
-        preAuthenticatedSessions.remove(session.getAddress().getResource());
+        boolean preauth_removed =
+                preAuthenticatedSessions.remove(session.getAddress().getResource()) != null;
         // If the user is still available then send an unavailable presence
         Presence presence = session.getPresence();
         if (presence.isAvailable()) {
@@ -1394,6 +1401,7 @@ public class SessionManager extends BasicModule {
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
+        return auth_removed || preauth_removed;
     }
 
     public void addAnonymousSession(ClientSession session) {
@@ -1433,7 +1441,7 @@ public class SessionManager extends BasicModule {
          */
         public void onConnectionClose(Object handback) {
             try {
-                ClientSession session = (ClientSession)handback;
+                ClientSession session = (ClientSession) handback;
                 try {
                     if (session.getPresence().isAvailable() || !session.wasAvailable()) {
                         // Send an unavailable presence to the user's subscribers
@@ -1447,9 +1455,10 @@ public class SessionManager extends BasicModule {
                 }
                 finally {
                     // Remove the session
-                    removeSession(session);
-                    // Decrement the counter of user sessions
-                    usersSessionsCounter.decrementAndGet();
+                    if (removeSession(session)) {
+                        // Decrement the counter of user sessions
+                        usersSessionsCounter.decrementAndGet();
+                    }
                 }
             }
             catch (Exception e) {

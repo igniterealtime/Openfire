@@ -59,11 +59,12 @@ public class DefaultUserProvider implements UserProvider {
     public User loadUser(String username) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_USER);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
@@ -71,7 +72,6 @@ public class DefaultUserProvider implements UserProvider {
             String email = rs.getString(2);
             Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
             Date modificationDate = new Date(Long.parseLong(rs.getString(4).trim()));
-            rs.close();
 
             return new User(username, name, email, creationDate, modificationDate);
         }
@@ -79,10 +79,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -155,10 +152,7 @@ public class DefaultUserProvider implements UserProvider {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                DbConnectionManager.closeConnection(pstmt, con);
             }
             return new User(username, name, email, now, now);
         }
@@ -189,9 +183,7 @@ public class DefaultUserProvider implements UserProvider {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
     }
 
@@ -199,23 +191,20 @@ public class DefaultUserProvider implements UserProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_COUNT);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return count;
     }
@@ -229,26 +218,23 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_USERS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             // Set the fetch size. This will prevent some JDBC drivers from trying
             // to load the entire result set into memory.
             DbConnectionManager.setFetchSize(rs, 500);
             while (rs.next()) {
                 usernames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return usernames;
     }
@@ -257,10 +243,11 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(numResults);
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = DbConnectionManager.createScrollablePreparedStatement(con, ALL_USERS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             DbConnectionManager.setFetchSize(rs, startIndex + numResults);
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;
@@ -268,16 +255,12 @@ public class DefaultUserProvider implements UserProvider {
                 usernames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
@@ -300,10 +283,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -325,10 +305,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -350,10 +327,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -375,10 +349,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -410,6 +381,7 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(50);
         Connection con = null;
         Statement stmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
@@ -433,20 +405,16 @@ public class DefaultUserProvider implements UserProvider {
                 }
                 sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
             }
-            ResultSet rs = stmt.executeQuery(sql.toString());
+            rs = stmt.executeQuery(sql.toString());
             while (rs.next()) {
                 usernames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (stmt != null) { stmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, stmt, con);
         }
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
@@ -475,6 +443,7 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(50);
         Connection con = null;
         Statement stmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
@@ -498,7 +467,7 @@ public class DefaultUserProvider implements UserProvider {
                 }
                 sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
             }
-            ResultSet rs = stmt.executeQuery(sql.toString());
+            rs = stmt.executeQuery(sql.toString());
             // Scroll to the start index.
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;
@@ -506,16 +475,12 @@ public class DefaultUserProvider implements UserProvider {
                 usernames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (stmt != null) { stmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, stmt, con);
         }
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }

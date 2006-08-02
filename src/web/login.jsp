@@ -81,6 +81,7 @@
             return;
 		}
 		catch (UnauthorizedException ue) {
+            Log.debug(ue);
             errors = true;
 		}
 	}

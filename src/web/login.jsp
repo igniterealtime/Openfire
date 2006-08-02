@@ -23,7 +23,7 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%! // List of allowed usernames:
-    static Map authorizedUsernames = new HashMap();
+    static Map<String, String> authorizedUsernames = new HashMap<String, String>();
     static {
         for (JID jid : XMPPServer.getInstance().getAdmins()) {
             // Only allow local users to log into the admin console
@@ -32,7 +32,7 @@
             }
         }
     }
-    static final String go(String url) {
+    static String go(String url) {
         if (url == null) {
             return "index.jsp";
         }
@@ -57,7 +57,7 @@
     String url = ParamUtils.getParameter(request,"url");
 
     // The user auth token:
-    AuthToken authToken = null;
+    AuthToken authToken;
 
     // Check the request/response for a login token
     
@@ -245,7 +245,7 @@
                             <td>&nbsp;</td>
                         </tr>
                         </table>
-                            <script language="JavaScript">
+                            <script language="JavaScript" type="text/javascript">
                                 <!--
                                 document.loginForm.username.focus();
                                 //-->

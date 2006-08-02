@@ -116,9 +116,12 @@ public class SASLAuthentication {
         }
         StringBuilder sb = new StringBuilder(195);
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        if (session.getConnection().isSecure() && session instanceof IncomingServerSession) {
+        if (session instanceof IncomingServerSession) {
             // Server connections dont follow the same rules as clients
-            sb.append("<mechanism>EXTERNAL</mechanism>");
+            if (session.getConnection().isSecure()) {
+                // Offer SASL EXTERNAL only if TLS has already been negotiated
+                sb.append("<mechanism>EXTERNAL</mechanism>");
+            }
         }
         else {
             for (String mech : getSupportedMechanisms()) {

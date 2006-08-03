@@ -8,7 +8,6 @@
                  org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.Registration,
                  org.jivesoftware.wildfire.gateway.RegistrationManager,
-                 org.jivesoftware.wildfire.gateway.TransportType,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
@@ -250,7 +249,7 @@ below and update the view.</p>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="/images/success-16x16.gif" width="16"
- height="16" border="0"></td>
+ height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             Registration successfully updated.
         </td></tr>
@@ -267,7 +266,7 @@ below and update the view.</p>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="/images/error-16x16.gif" width="16"
- height="16" border="0"></td>
+ height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             Registration update failed.
         </td></tr>

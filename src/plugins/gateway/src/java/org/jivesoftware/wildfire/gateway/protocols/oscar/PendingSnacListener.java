@@ -12,8 +12,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.util.Log;
-
 import net.kano.joscar.snac.SnacRequest;
 
 public interface PendingSnacListener {

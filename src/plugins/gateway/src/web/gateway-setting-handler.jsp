@@ -1,5 +1,4 @@
-<%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.XMPPServer,
+<%@ page import="org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.*,
                  org.jivesoftware.wildfire.gateway.GatewayPlugin"
     errorPage="error.jsp"

@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.gateway.TransportInstance;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.picocontainer.MutablePicoContainer;
@@ -39,12 +38,7 @@ public class GatewayPlugin implements Plugin {
     /**
      *  Represents all configured transport handlers.
      */
-    public Hashtable<String,TransportInstance> transports; 
-
-    /**
-     *  Represents the base component manager.
-     */
-    private ComponentManager componentManager;
+    public Hashtable<String,TransportInstance> transports;
 
     public GatewayPlugin() {
         picoContainer = new DefaultPicoContainer();
@@ -56,7 +50,7 @@ public class GatewayPlugin implements Plugin {
         picoContainer.start();
 
         transports = new Hashtable<String,TransportInstance>();
-        componentManager = ComponentManagerFactory.getComponentManager();
+        ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
         /* Set up AIM transport. */
         transports.put("aim", new TransportInstance(TransportType.aim, "AIM Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
@@ -134,8 +128,7 @@ public class GatewayPlugin implements Plugin {
      *  Returns the transport instance, identified by subdomain.
      */
     public TransportInstance getTransportInstance(String serviceName) {
-        TransportInstance trInstance = transports.get(serviceName);
-        return trInstance;
+        return transports.get(serviceName);
     }
 
 }

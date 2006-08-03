@@ -10,20 +10,13 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import org.hn.sleek.jmml.Contact;
-import org.hn.sleek.jmml.ContactList;
-import org.hn.sleek.jmml.ContactStatus;
 import org.hn.sleek.jmml.MessengerServerManager;
 import org.hn.sleek.jmml.MSNException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 

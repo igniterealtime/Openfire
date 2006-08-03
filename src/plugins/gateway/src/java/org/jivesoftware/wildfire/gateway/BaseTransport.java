@@ -79,7 +79,7 @@ public abstract class BaseTransport implements Component {
 
     /**
      * Manages all active sessions.
-     * @see org.jivesoftware.wildfire.gateway.SessionManager
+     * @see org.jivesoftware.wildfire.gateway.TransportSessionManager
      */
     public final TransportSessionManager sessionManager = new TransportSessionManager();
 

@@ -24,7 +24,6 @@ import ymsg.network.event.SessionFriendEvent;
 import ymsg.network.event.SessionListener;
 import ymsg.network.event.SessionNewMailEvent;
 import ymsg.network.event.SessionNotifyEvent;
-import ymsg.network.StatusConstants;
 import ymsg.support.MessageDecoder;
 
 /**
@@ -82,7 +81,6 @@ public class YahooSessionListener implements SessionListener {
                 p.setStatus(custommsg);
             }
 
-            long statusid = user.getStatus();
             ((YahooTransport)yahooSession.getTransport()).setUpPresencePacket(p, user.getStatus());
             yahooSession.getTransport().sendPacket(p);
         }

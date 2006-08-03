@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import org.jivesoftware.util.Log;
@@ -26,7 +25,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
-import ymsg.network.StatusConstants;
 import ymsg.network.YahooGroup;
 import ymsg.network.YahooUser;
 
@@ -173,7 +171,8 @@ public class YahooSession extends TransportSession {
         }
 
         // Ok, now lets check presence
-        for (YahooUser user : (Collection<YahooUser>)yahooSession.getUsers().values()) {
+        for (Object userObj : yahooSession.getUsers().values()) {
+            YahooUser user = (YahooUser)userObj;
             Presence p = new Presence();
             p.setTo(getJID());
             p.setFrom(getTransport().convertIDToJID(user.getId()));

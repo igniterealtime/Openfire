@@ -10,18 +10,12 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
 import org.hn.sleek.jmml.Contact;
 import org.hn.sleek.jmml.ContactChangeEvent;
-import org.hn.sleek.jmml.ContactList;
 import org.hn.sleek.jmml.ContactStatus;
 import org.hn.sleek.jmml.IncomingMessageEvent;
 import org.hn.sleek.jmml.MessengerClientAdapter;
-import org.hn.sleek.jmml.MSNException;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
@@ -183,7 +177,6 @@ public class MSNListener extends MessengerClientAdapter {
         //catch (UserNotFoundException e) {
          //   Log.error("Unable to sync MSN contact list for " + msnSession.getJID());
         //}
-        return;
     }
 
 }

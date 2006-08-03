@@ -119,7 +119,7 @@
     }
     Collection<regResult> regResults = new ArrayList<regResult>();
 
-    ArrayList filteropts = new ArrayList<String>();
+    ArrayList<String> filteropts = new ArrayList<String>();
     if (ParamUtils.getParameter(request, "filter[]") != null) {
         String[] optlist = ParamUtils.getParameters(request, "filter[]");
         for (String opt : optlist) {
@@ -336,9 +336,9 @@ below and update the view.</p>
 	<!-- BEGIN results size (num per page) -->
 	<div class="jive-registrations-resultsSize"><form action="gateway-registrations.jsp" method="get">
 		<select name="range" id="range" size="1" onchange="this.form.submit()">
-                <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+                <%  for (int rangePreset : RANGE_PRESETS) { %>
 
-                    <option value="<%= RANGE_PRESETS[i] %>"<%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+                    <option value="<%= rangePreset %>"<%= (rangePreset== range ? "selected" : "") %>><%= rangePreset %></option>
 
                 <%  } %>
 		</select>

@@ -12,9 +12,7 @@ package org.jivesoftware.wildfire.gateway;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
 import org.xmpp.component.ComponentManager;
-import org.xmpp.packet.JID;
 
 /**
  * Transport Instance
@@ -26,7 +24,6 @@ import org.xmpp.packet.JID;
 public class TransportInstance {
 
     private ComponentManager componentManager;
-    private JID jid = null;
     private String description = null;
     private String nameOfClass = null;
     public BaseTransport transport = null;
@@ -37,9 +34,8 @@ public class TransportInstance {
     /**
      *  Creates a new transport instance.
      *
-     *  @param jid Full jabber id of the transport.
-     *  @param description Short description of transport.
      *  @param type Type of transport.
+     *  @param description Short description of transport.
      *  @param classname Full name/path of class associated with instance.
      *  @param componentManager Component manager managing this instance.
      */

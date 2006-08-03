@@ -1,7 +1,5 @@
-<%@ page import="java.util.*,
-                 javax.servlet.jsp.JspWriter,
+<%@ page import="javax.servlet.jsp.JspWriter,
                  org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.util.*,
                  org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.TransportType"
     errorPage="error.jsp"

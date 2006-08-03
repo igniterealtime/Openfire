@@ -389,7 +389,11 @@ public class JDBCGroupProvider implements GroupProvider {
         return Collections.emptyList();
     }
 
-    public boolean supportsSearch() {
+    public Collection<Group> search(String query, int startIndex, int numResults) {
+        return Collections.emptyList();
+    }
+
+    public boolean isSearchSupported() {
         return false;
     }
 }

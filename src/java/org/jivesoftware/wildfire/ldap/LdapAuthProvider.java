@@ -44,7 +44,7 @@ public class LdapAuthProvider implements AuthProvider {
 
     public LdapAuthProvider() {
         manager = LdapManager.getInstance();
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.authCache.enabled")).booleanValue()) {
+        if (JiveGlobals.getXMLProperty("ldap.authCache.enabled", false)) {
             int maxSize = JiveGlobals.getXMLProperty("ldap.authCache.size", 512*1024);
             long maxLifetime = (long)JiveGlobals.getXMLProperty("ldap.authCache.maxLifetime",
                     (int)JiveConstants.HOUR * 2);
@@ -83,8 +83,9 @@ public class LdapAuthProvider implements AuthProvider {
             // example if the baseDN was set to "ou=People, o=jivesoftare, o=com"
             // then we would be able to directly load users from that node
             // of the LDAP tree. However, it's a poor assumption that only a
-            // flat structure will be used. Therefore, we search all subtrees
-            // of the baseDN for the username. So, if the baseDN is set to
+            // flat structure will be used. Therefore, we search all sub-trees
+            // of the baseDN for the username (assuming the user has not disabled
+            // sub-tree searching). So, if the baseDN is set to
             // "o=jivesoftware, o=com" then a search will include the "People"
             // node as well all the others under the base.
             userDN = manager.findUserDN(username);

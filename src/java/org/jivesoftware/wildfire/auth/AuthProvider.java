@@ -86,7 +86,7 @@ public interface AuthProvider {
      *
      * @param username the username of the user.
      * @return the user's password.
-     * @throws UserNotFoundException if the given user could not be loaded.
+     * @throws UserNotFoundException if the given user's password could not be loaded.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */

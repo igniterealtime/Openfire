@@ -364,8 +364,12 @@ public class XMLProperties {
      * @param value the new value for the property.
      */
     public synchronized void setProperty(String name, String value) {
-        if (name == null) return;
-        if (value == null) value = "";
+        if (name == null) {
+            return;
+        }
+        if (value == null) {
+            value = "";
+        }
 
         // Set cache correctly with prop name and value.
         propertyCache.put(name, value);

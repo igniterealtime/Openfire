@@ -432,7 +432,7 @@ public class LdapUserProvider implements UserProvider {
             if (fields.size() > 1) {
                 filter.append(")");
             }
-            // TODO: used paged results is supported by LDAP server.
+            // TODO: used paged results if supported by LDAP server.
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             for (int i=0; i < startIndex; i++) {
                 if (answer.hasMoreElements()) {

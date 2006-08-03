@@ -145,9 +145,17 @@
         as many fields as you'd like using comma-delimited "DisplayName/Field" pairs. You should
         ensure that any fields used for searching are properly indexed so that searches return
         quickly.</li>
-    <li>ldap.searchFilter -- the search filter that should be used when loading users. If this
-        property is not set, the default search will be for users that have the attribute specified by
-        ldap.usernameField.
+    <li>ldap.searchFilter -- an optional search filter to append to the default filter when
+        loading users. The default search filter is created using the attribute specified by
+        ldap.usernameField. For example, if the username field is "uid", then the default search
+        filter would be "(uid={0})" where {0} is dynamically replaced with the username being searched
+        for.
+        <br/><br/>
+        The most common usage of a search filter is to limit the entries that are users
+        based on objectClass. For example, a reasonable search filter for a default Active Directory
+        installation is "(objectClass=organizationalPerson)". When combined with the default
+        filter, the actual search executed would be
+        "(&(sAMAccountName={0})(objectClass=organizationalPerson))".</li>
 
     <br><br>
     <b>Group Settings</b><br><br>
@@ -161,14 +169,27 @@
 
     <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
         property is not set, the default value is <tt>description</tt>.</li>
-    <li>ldap.posixMode <font color="red"><b>**</b></font> -- a value of "true" means that users are stored within the group by their
-        user name alone. A value of "false" means that users are stored by their entire DN within
-        the group. If this property is not set, the default value is <tt>false</tt>. <b>Note:</b>
-        the posix mode must be set correctly for your server in order for group integration to
-        work.</li>
+    <li>ldap.posixMode <font color="red"><b>**</b></font> -- a value of "true" means that users are
+        stored within the group by their user name alone. A value of "false" means that users are
+        stored by their entire DN within the group. If this property is not set, the default value
+        is <tt>false</tt>. The posix mode must be set correctly for your server in
+        order for group integration to work. Posix modes for common LDAP servers:
+        <ul>
+            <li>ActiveDirectory: false</li>
+        </ul>
+    </li>
 
-    <li>ldap.groupSearchFilter -- the search filter that should be used when loading groups. If this
-        property is not set, the default value is <tt>("ldap.groupNameField"={0})</tt>.</li>
+    <li>ldap.groupSearchFilter -- an optional search filter to append to the default filter when
+        loading groups. The default group search filter is created using the attribute specified
+        by ldap.groupNameField. For example, if the group name field is "cn", then the default
+        group search filter would be "(cn={0})" where {0} is dynamically replaced with the group
+        name being searched for.
+        <br/><br/>
+        The most common usage of a search filter is to limit the entries that are groups
+        based on objectClass. For example, a reasonable search filter for a default Active Directory
+        installation is "(objectClass=group)". When combined with the default
+        filter, the actual search executed would be
+        "(&(cn={0})(objectClass=group))".</li>
 
     <br><br>
     <b>Connection Settings</b><br><br>

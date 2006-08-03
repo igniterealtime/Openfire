@@ -290,6 +290,57 @@ public class GroupManager {
     }
 
     /**
+     * Returns true if groups are read-only.
+     *
+     * @return true if groups are read-only.
+     */
+    public boolean isReadOnly() {
+        return provider.isReadOnly();
+    }
+
+    /**
+     * Returns true if searching for groups is supported.
+     *
+     * @return true if searching for groups are supported.
+     */
+    public boolean isSearchSupported() {
+        return provider.isSearchSupported();
+    }
+
+    /**
+     * Returns the groups that match the search. The search is over group names and
+     * implicitly uses wildcard matching (although the exact search semantics are left
+     * up to each provider implementation). For example, a search for "HR" should match
+     * the groups "HR", "HR Department", and "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @return all groups that match the search.
+     */
+    public Collection<Group> search(String query) {
+        return provider.search(query);
+    }
+
+    /**
+     * Returns the groups that match the search given a start index and desired number
+     * of results. The search is over group names and implicitly uses wildcard matching
+     * (although the exact search semantics are left up to each provider implementation).
+     * For example, a search for "HR" should match the groups "HR", "HR Department", and
+     * "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @return all groups that match the search.
+     */
+    public Collection<Group> search(String query, int startIndex, int numResults) {
+        return provider.search(query, startIndex, numResults);
+    }
+
+    /**
      * Returns the configured group provider. Note that this method has special access
      * privileges since only a few certain classes need to access the provider directly.
      *

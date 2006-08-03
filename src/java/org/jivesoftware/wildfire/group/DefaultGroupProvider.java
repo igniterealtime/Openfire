@@ -13,17 +13,12 @@ package org.jivesoftware.wildfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.packet.JID;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -81,9 +76,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         Collection<JID> members = getMembers(name, false);
@@ -111,9 +112,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         Collection<JID> members = getMembers(name, false);
@@ -138,9 +145,15 @@ public class DefaultGroupProvider implements GroupProvider {
             throw new GroupNotFoundException();
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
     }
@@ -173,7 +186,10 @@ public class DefaultGroupProvider implements GroupProvider {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
@@ -205,7 +221,10 @@ public class DefaultGroupProvider implements GroupProvider {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
@@ -228,9 +247,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         return count;
@@ -253,9 +278,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
@@ -285,9 +316,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
@@ -311,9 +348,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
@@ -334,9 +377,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
     }
@@ -356,9 +405,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
     }
@@ -377,15 +432,103 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
     }
 
     public boolean isReadOnly() {
         return false;
+    }
+
+    public Collection<Group> search(String query) {
+        if (query == null || "".equals(query)) {
+            return Collections.emptyList();
+        }
+        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
+        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // surrounding the whole query with two '%'. This will return more data than desired,
+        // but is better than returning less data than desired.
+        query = "%" + query.replace('*', '%') + "%";
+        if (query.endsWith("%%")) {
+            query = query.substring(0, query.length()-1);
+        }
+
+        List<String> groupNames = new ArrayList<String>();
+        Connection con = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            stmt = con.createStatement();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT groupName FROM jiveGroup WHERE groupName LIKE '").append(
+                    StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
+            rs = stmt.executeQuery(sql.toString());
+            while (rs.next()) {
+                groupNames.add(rs.getString(1));
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, stmt, con);
+        }
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+    }
+
+    public Collection<Group> search(String query, int startIndex, int numResults) {
+        if (query == null || "".equals(query)) {
+            return Collections.emptyList();
+        }
+        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
+        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // surrounding the whole query with two '%'. This will return more data than desired,
+        // but is better than returning less data than desired.
+        query = "%" + query.replace('*', '%') + "%";
+        if (query.endsWith("%%")) {
+            query = query.substring(0, query.length()-1);
+        }
+
+        List<String> groupNames = new ArrayList<String>();
+        Connection con = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            stmt = DbConnectionManager.createScrollableStatement(con);
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT groupName FROM jiveGroup WHERE groupName LIKE '").append(
+                    StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
+            rs = stmt.executeQuery(sql.toString());
+            DbConnectionManager.setFetchSize(rs, startIndex + numResults);
+            DbConnectionManager.scrollResultSet(rs, startIndex);
+            int count = 0;
+            while (rs.next() && count < numResults) {
+                groupNames.add(rs.getString(1));
+                count++;
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, stmt, con);
+        }
+        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+    }
+
+    public boolean isSearchSupported() {
+        return true;
     }
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
@@ -422,9 +565,15 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                } }
             catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
+            try {
+                if (con != null) {
+                    con.close();
+                } }
             catch (Exception e) { Log.error(e); }
         }
         return members;

@@ -384,4 +384,12 @@ public class JDBCGroupProvider implements GroupProvider {
     public boolean isReadOnly() {
         return true;
     }
+
+    public Collection<Group> search(String query) {
+        return Collections.emptyList();
+    }
+
+    public boolean supportsSearch() {
+        return false;
+    }
 }

@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.net;
 
 import org.bouncycastle.asn1.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.net.ssl.SSLEngine;
@@ -30,7 +31,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -122,16 +126,15 @@ public class TLSStreamHandler {
     private static List<String> getSubjectAlternativeNames(X509Certificate certificate) {
         List<String> identities = new ArrayList<String>();
         try {
-            Collection altNames = certificate.getSubjectAlternativeNames();
+            Collection<List<?>> altNames = certificate.getSubjectAlternativeNames();
             // Check that the certificate includes the SubjectAltName extension
             if (altNames == null) {
                 return Collections.emptyList();
             }
             // Use the type OtherName to search for the certified server name
-            for (Iterator lists=altNames.iterator(); lists.hasNext();) {
-                List item = (List) lists.next();
+            for (List item : altNames) {
                 Integer type = (Integer) item.get(0);
-                if (type.intValue() == 0) {
+                if (type == 0) {
                     // Type OtherName found so return the associated value
                     try {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
@@ -144,8 +147,12 @@ public class TLSStreamHandler {
                         // Add the decoded server name to the list of identities
                         identities.add(identity);
                     }
-                    catch (UnsupportedEncodingException e) {}
-                    catch (IOException e) {}
+                    catch (UnsupportedEncodingException e) {
+                        // Ignore
+                    }
+                    catch (IOException e) {
+                        // Ignore
+                    }
                     catch (Exception e) {
                         Log.error("Error decoding subjectAltName", e);
                     }
@@ -213,7 +220,20 @@ public class TLSStreamHandler {
             tlsEngine.beginHandshake();
         }
         else if (needClientAuth) {
-            tlsEngine.setNeedClientAuth(true);
+            // Only REQUIRE client authentication if we are fully verifying certificates
+            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
+                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
+                    !JiveGlobals
+                            .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
+            {
+                tlsEngine.setNeedClientAuth(true);
+            }
+            else {
+                // Just indicate that we would like to authenticate the client but if client
+                // certificates are self-signed or have no certificate chain then we are still
+                // good
+                tlsEngine.setWantClientAuth(true);
+            }
         }
     }
 

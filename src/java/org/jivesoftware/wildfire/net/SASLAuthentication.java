@@ -262,7 +262,7 @@ public class SASLAuthentication {
                                 }
                             }
                             catch (SaslException e) {
-                                Log.warn("SaslException", e);
+                                Log.debug("SaslException", e);
                                 authenticationFailed(session);
                                 status = Status.failed;
                             }

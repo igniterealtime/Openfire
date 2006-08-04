@@ -39,19 +39,20 @@
 <html>
     <head>
         <title><fmt:message key="setup.finished.title" /></title>
-        <meta name="showSidebar" content="false"/>
+
     </head>
 <body>
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.finished.title" />
-</p>
 
-<p>
-<fmt:message key="setup.finished.info">
-    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
-</fmt:message>
-</p>
+	<h1>
+	<fmt:message key="setup.finished.title" />
+	</h1>
+
+	<p>
+	<fmt:message key="setup.finished.info">
+	    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+	</fmt:message>
+	</p>
 
 <%
     // Figure out the URL that the user can use to login to the admin console.

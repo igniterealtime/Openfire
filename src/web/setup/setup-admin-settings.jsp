@@ -100,18 +100,19 @@
     }
 %>
 <html>
-    <head>
-        <title><fmt:message key="setup.admin.settings.account" /></title>
-    </head>
+<head>
+<title><fmt:message key="setup.admin.settings.account" /></title>
+</head>
 <body>
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.admin.settings.account" />
-</p>
 
-<p>
-<fmt:message key="setup.admin.settings.info" />
-</p>
+	<h1>
+	<fmt:message key="setup.admin.settings.account" />
+	</h1>
+
+	<p>
+	<fmt:message key="setup.admin.settings.info" />
+	</p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -128,6 +129,11 @@
     </span>
 
 <%  } %>
+
+
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
+
 
 <script language="JavaScript" type="text/javascript">
 var clicked = false;
@@ -199,7 +205,7 @@ function checkClick() {
 %>
 
 <tr valign="top">
-    <td class="jive-label">
+    <td class="jive-label" align="right">
         <fmt:message key="setup.admin.settings.email" />
     </td>
     <td>
@@ -218,7 +224,7 @@ function checkClick() {
     </td>
 </tr>
 <tr valign="top">
-    <td class="jive-label">
+    <td class="jive-label" align="right">
         <fmt:message key="setup.admin.settings.new_password" />
     </td>
     <td>
@@ -237,7 +243,7 @@ function checkClick() {
     </td>
 </tr>
 <tr valign="top">
-    <td class="jive-label">
+    <td class="jive-label" align="right">
         <fmt:message key="setup.admin.settings.confirm_password" />
     </td>
     <td>
@@ -252,16 +258,19 @@ function checkClick() {
 </tr>
 </table>
 
-<br><br>
 
-<hr size="0">
 
-<div align="right">
-    <input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
-    <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />">
-</div>
+<br>
 
-</form>
+		<div align="right">
+			<input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
+			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+
+	</form>
+	</div>
+	<!-- END jive-contentBox -->
+
 
 <script language="JavaScript" type="text/javascript">
 <!--

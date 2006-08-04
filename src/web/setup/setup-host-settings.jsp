@@ -103,30 +103,28 @@
 </head>
 <body>
 
-<style type="text/css">
-LABEL { font-weight : normal; }
-</style>
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.host.settings.title" />
-</p>
+	<h1>
+	<fmt:message key="setup.host.settings.title" />
+	</h1>
 
-<p>
-<fmt:message key="setup.host.settings.info" />
-</p>
+	<p>
+	<fmt:message key="setup.host.settings.info" />
+	</p>
 
-<form action="setup-host-settings.jsp" name="f" method="post">
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
+
+		<form action="setup-host-settings.jsp" name="f" method="post">
 
 <table cellpadding="3" cellspacing="0" border="0" width="100%">
 <tr valign="top">
-    <td width="1%" nowrap>
+    <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.domain" />
         <%  if (errors.get("domain") != null) { %>
-
             <span class="jive-error-text"><br>
             <fmt:message key="setup.host.settings.invalid_domain" />
             </span>
-
         <%  } %>
     </td>
     <td width="99%">
@@ -140,14 +138,12 @@ LABEL { font-weight : normal; }
 </tr>
 <% if (XMPPServer.getInstance().isStandAlone()){ %>
 <tr valign="top">
-    <td width="1%" nowrap>
+    <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.port" />
         <%  if (errors.get("embeddedPort") != null) { %>
-
             <span class="jive-error-text"><br>
             <fmt:message key="setup.host.settings.invalid_port" />
             </span>
-
         <%  } %>
     </td>
     <td width="99%">
@@ -160,14 +156,12 @@ LABEL { font-weight : normal; }
     </td>
 </tr>
 <tr valign="top">
-    <td width="1%" nowrap>
+    <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.secure_port" />
         <%  if (errors.get("securePort") != null) { %>
-
             <span class="jive-error-text"><br>
             <fmt:message key="setup.host.settings.invalid_port" />
             </span>
-
         <%  } %>
     </td>
     <td width="99%">
@@ -184,17 +178,21 @@ LABEL { font-weight : normal; }
 
 <br><br>
 
-<hr size="0">
 
-<div align="right">
-<input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
-</div>
-</form>
+		<div align="right">
+			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+	</form>
+
+	</div>
+	<!-- END jive-contentBox -->
+
 
 <script language="JavaScript" type="text/javascript">
 // give focus to domain field
 document.f.domain.focus();
 </script>
+
 
 </body>
 </html>

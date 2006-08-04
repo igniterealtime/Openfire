@@ -87,24 +87,24 @@ A:active {
     padding-left : 20px;
 }
 .jive-setup-checklist-box {
-    border-width : 0px 1px 1px 0px;
-    border-color : #ccc;
+    border-width: 0px 1px 1px 0px;
+    border-color: #ccc;
     border-style : solid;
     padding-left : 1em;
     padding-right : 1em;
 }
 .jive-error-text {
-    color : #f00;
-}
+	color: #f00;
+	}
 .jive-label {
-    padding-right : 10px;
-    padding-top : 6px;
+	padding-right: 10px;
+	padding-top: 6px;
 }
 .jive-description {
-    font-family : verdana;
-    font-size : 0.8em;
-}
+	font-family: verdana;
+	font-size: 0.8em;
+	}
 .jive-custom-datasource .jive-label {
-    font-size : 0.8em;
-    font-family : verdana;
-}
+	font-size: 0.8em;
+	font-family: verdana;
+	}

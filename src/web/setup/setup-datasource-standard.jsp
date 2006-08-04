@@ -194,22 +194,22 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="setup.datasource.standard.title" /></title>
-    </head>
+<head>
+<title><fmt:message key="setup.datasource.standard.title" /></title>
+</head>
 <body>
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.datasource.standard.title" />
-</p>
+	<h1>
+	<fmt:message key="setup.datasource.standard.title" />
+	</h1>
 
-<p>
-<fmt:message key="setup.datasource.standard.info" /> <fmt:message key="title" />.
-</p>
+	<p>
+	<fmt:message key="setup.datasource.standard.info" /> <fmt:message key="title" />.
+	</p>
 
-<p>
-<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /><tt>[Wildfire_HOME]/resources/database</tt>.
-</p>
+	<p>
+	<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /> <tt>[Wildfire_HOME]/resources/database</tt>.
+	</p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -226,6 +226,12 @@
     </span>
 
 <%  } %>
+
+
+
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
+
 
 <%  // DB preset data
     List<String[]> presets = new ArrayList<String []>();
@@ -256,13 +262,12 @@ function checkSubmit() {
 }
 </script>
 
-<form action="setup-datasource-standard.jsp" method="post" name="dbform"
- onsubmit="return checkSubmit();">
+<form action="setup-datasource-standard.jsp" method="post" name="dbform" onsubmit="return checkSubmit();">
 
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
-    <td colspan="2">
-        <fmt:message key="setup.datasource.standard.label" />:
+	<td nowrap align="right"><fmt:message key="setup.datasource.standard.label" />:</td>
+    <td>
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
             <%  for (int i=0; i<presets.size(); i++) {
@@ -271,11 +276,10 @@ function checkSubmit() {
                 <option value="<%= i %>"> &#149; <%= data[0] %>
             <%  } %>
         </select>
-        <br><br>
     </td>
 </tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.jdbc" />
     </td>
     <td>
@@ -295,9 +299,8 @@ function checkSubmit() {
         <%  } %>
     </td>
 </tr>
-<tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.url" />
     </td>
     <td>
@@ -319,7 +322,7 @@ function checkSubmit() {
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.username" />
     </td>
     <td>
@@ -339,9 +342,8 @@ function checkSubmit() {
         <%  } %>
     </td>
 </tr>
-<tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.password" />
     </td>
     <td>
@@ -363,7 +365,7 @@ function checkSubmit() {
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.connect" />
     </td>
     <td>
@@ -394,9 +396,8 @@ function checkSubmit() {
         <%  } %>
     </td>
 </tr>
-<tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
-    <td class="jive-label" nowrap>
+    <td nowrap align="right">
         <fmt:message key="setup.datasource.standard.timeout" />
     </td>
     <td>
@@ -420,15 +421,15 @@ function checkSubmit() {
 
 <br><br>
 
-<hr size="0">
+		<div align="right"><span class="jive-description">
+			<fmt:message key="setup.datasource.standard.note" /></span>
+			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+	</form>
 
-<div align="right">
-    <input type="submit" name="continue" value=" <fmt:message key="global.continue" /> ">
-    <br>
-    <fmt:message key="setup.datasource.standard.note" />
-</div>
+	</div>
+	<!-- END jive-contentBox -->
 
-</form>
 
 </body>
 </html>

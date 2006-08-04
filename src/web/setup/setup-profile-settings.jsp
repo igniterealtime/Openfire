@@ -31,23 +31,65 @@
 
 %>
 <html>
-    <head>
-        <title>Profile Settings</title>
-    </head>
+<head>
+<title>Profile Settings</title>
+</head>
 <body>
 
-<p class="jive-setup-page-header">
+	<h1>
     Profile Settings
-</p>
+	</h1>
 
-<p>
-Blah blah.
-</p>
+	<p>
+	Choose whether or not Wildfire integrates with an existing directory server for user profiles.
+	</p>
+
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
+	<form action="setup-profile-settings.jsp" name="profileform" method="post">
+
+<table cellpadding="3" cellspacing="2" border="0">
+<tr>
+    <td align="center" valign="top">
+        <input type="radio" name="mode" value="" id="rb01" checked>
+    </td>
+    <td>
+        <label for="rb01"><b>None (default)</b></label><br>
+	    No directory server available.
+    </td>
+</tr>
+<tr>
+    <td align="center" valign="top">
+        <input type="radio" name="mode" value="" id="rb02" disabled>
+    </td>
+    <td>
+        <label for="rb02"><b>Integrate with a directory server</b></label><br>
+	    Use an existing directory server (such as Active Directory, OpenLDAP, etc) for profile integration.
+    </td>
+</tr>
+<tr>
+    <td align="center" valign="top">
+        <input type="radio" name="mode" value="" id="rb03" disabled>
+    </td>
+    <td>
+        <label for="rb03"><b>Other</b></label><br>
+	    If you have a custom profile integration system, selecting this will create the config file
+	    <tt>\wildfire\foo.conf</tt>, though you will need to edit it manually after you complete the setup process.
+    </td>
+</tr>
+</table>
+
+<br>
+
+		<div align="right">
+			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+
+	</form>
+	</div>
+	<!-- END jive-contentBox -->
 
 
-<form action="setup-profile-settings.jsp" name="profileform" method="post">
-
-</form>
 
 </body>
 </html>

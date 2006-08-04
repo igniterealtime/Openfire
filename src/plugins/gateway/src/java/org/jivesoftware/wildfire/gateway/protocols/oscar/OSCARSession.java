@@ -33,8 +33,6 @@ import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
@@ -53,29 +51,18 @@ public class OSCARSession extends TransportSession {
     /**
      * Initialize a new session object for OSCAR
      * 
-     * @param info The subscription information to use during login.
-     * @param gateway The gateway that created this session.
+     * @param registration The registration information to use during login.
+     * @param transport The transport that created this session.
      */
     public OSCARSession(Registration registration, JID jid, OSCARTransport transport) {
         super(registration, jid, transport);
     }
 
-    /**
-     * OSCAR Session Pieces
-     */
-    private LoginConnection loginConn = null;
     private BOSConnection bosConn = null;
-    private Set services = new HashSet();
+    private Set<ServiceConnection> services = new HashSet<ServiceConnection>();
     private Boolean loggedIn = false;
     private PresenceType presenceType = null;
     private String verboseStatus = null;
-    
-    /**
-     * The Screenname, Password, and JID associated with this session.
-     */
-    private JID jid;
-    private String legacyname = null;
-    private String legacypass = null;
     
     /**
      * SSI tracking variables.
@@ -87,7 +74,7 @@ public class OSCARSession extends TransportSession {
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!isLoggedIn()) {
-            loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
+            LoginConnection loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
             loginConn.connect();
 
             loggedIn = true;
@@ -161,8 +148,8 @@ public class OSCARSession extends TransportSession {
     protected SnacManager snacMgr = new SnacManager(new PendingSnacListener() {
         public void dequeueSnacs(SnacRequest[] pending) {
             //Log.debug("dequeuing " + pending.length + " snacs");
-            for (int i = 0; i < pending.length; i++) {
-                handleRequest(pending[i]);
+            for (SnacRequest aPending : pending) {
+                handleRequest(aPending);
             }
         }
     });
@@ -213,6 +200,14 @@ public class OSCARSession extends TransportSession {
 
     void serviceConnected(ServiceConnection conn) {
         services.add(conn);
+    }
+
+    public boolean isServiceConnected(ServiceConnection conn) {
+        return services.contains(conn);
+    }
+
+    public Set<ServiceConnection> getServiceConnections() {
+        return services;
     }
 
     void serviceReady(ServiceConnection conn) {

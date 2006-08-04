@@ -12,8 +12,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.util.Log;
-
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
 import net.kano.joscar.flapcmd.*;
@@ -88,16 +86,16 @@ public class BOSConnection extends BasicFlapConnection {
                     0)));
 
         } else if (cmd instanceof YourInfoCmd) {
-            YourInfoCmd yic = (YourInfoCmd) cmd;
-
-            FullUserInfo info = yic.getUserInfo();
+//            YourInfoCmd yic = (YourInfoCmd) cmd;
+//
+//            FullUserInfo info = yic.getUserInfo();
 
             //Log.debug("got my user info: " + info);
 
         } else if (cmd instanceof UserInfoCmd) {
-            UserInfoCmd uic = (UserInfoCmd) cmd;
-
-            String sn = uic.getUserInfo().getScreenname();
+//            UserInfoCmd uic = (UserInfoCmd) cmd;
+//
+//            String sn = uic.getUserInfo().getScreenname();
             //Log.debug("user info for " + sn + ": "
             //        + uic.getInfoData());
 
@@ -114,13 +112,13 @@ public class BOSConnection extends BasicFlapConnection {
             SsiDataCmd sdc = (SsiDataCmd) cmd;
 
             SsiItem[] items = sdc.getItems();
-            for (int i = 0; i < items.length; i++) {
-                SsiItemObj obj = itemFactory.getItemObj(items[i]);
+            for (SsiItem item : items) {
+                SsiItemObj obj = itemFactory.getItemObj(item);
                 if (obj instanceof BuddyItem) {
-                    oscarSession.gotBuddy((BuddyItem)obj);
+                    oscarSession.gotBuddy((BuddyItem) obj);
                 }
                 else if (obj instanceof GroupItem) {
-                    oscarSession.gotGroup((GroupItem)obj);
+                    oscarSession.gotGroup((GroupItem) obj);
                 }
                 //Log.debug("- " + (obj == null ? (Object) items[i]
                 //        : (Object) obj));

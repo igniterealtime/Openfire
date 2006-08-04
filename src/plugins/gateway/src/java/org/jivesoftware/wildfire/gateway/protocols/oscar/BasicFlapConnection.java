@@ -12,18 +12,12 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
@@ -31,22 +25,13 @@ import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.ratelim.*;
 import net.kano.joscar.rv.*;
 import net.kano.joscar.rvcmd.*;
-import net.kano.joscar.rvcmd.addins.*;
-import net.kano.joscar.rvcmd.chatinvite.*;
-import net.kano.joscar.rvcmd.directim.*;
-import net.kano.joscar.rvcmd.getfile.*;
-import net.kano.joscar.rvcmd.icon.*;
-import net.kano.joscar.rvcmd.sendbl.*;
-import net.kano.joscar.rvcmd.sendfile.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.buddy.*;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
-import net.kano.joscar.snaccmd.rooms.*;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 public abstract class BasicFlapConnection extends BaseFlapConnection {
@@ -69,12 +54,12 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
     protected RvSessionListener rvSessionListener = new RvSessionListener() {
         public void handleRv(RecvRvEvent event) {
-            RvCommand cmd = event.getRvCommand();
-
-            RvSession session = event.getRvSession();
-            SnacCommand snaccmd = event.getSnacCommand();
-            if (!(snaccmd instanceof RecvRvIcbm)) return;
-            RecvRvIcbm icbm = (RecvRvIcbm) snaccmd;
+//            RvCommand cmd = event.getRvCommand();
+//
+//            RvSession session = event.getRvSession();
+//            SnacCommand snaccmd = event.getSnacCommand();
+//            if (!(snaccmd instanceof RecvRvIcbm)) return;
+//            RecvRvIcbm icbm = (RecvRvIcbm) snaccmd;
             //Log.debug("got rendezvous on session <" + session + ">");
             //Log.debug("- command: " + cmd);
         }
@@ -124,7 +109,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     }
 
     protected void handleSnacPacket(SnacPacketEvent e) {
-        SnacPacket packet = e.getSnacPacket();
+//        SnacPacket packet = e.getSnacPacket();
         //Log.debug("got snac packet type "
         //        + Integer.toHexString(packet.getFamily()) + "/"
         //        + Integer.toHexString(packet.getCommand()) + ": "
@@ -152,15 +137,14 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
             String sn = icbm.getSenderInfo().getScreenname();
             InstantMessage message = icbm.getMessage();
-            String msg = null;
-            msg = OscarTools.stripHtml(message.getMessage());
+            String msg = OscarTools.stripHtml(message.getMessage());
 
             Message jmessage = new Message();
             jmessage.setTo(oscarSession.getRegistration().getJID());
             jmessage.setBody(msg);
             jmessage.setType(Message.Type.chat);
             jmessage.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
-            oscarSession.getTransport().sendPacket((Packet)jmessage);
+            oscarSession.getTransport().sendPacket(jmessage);
 
             //sendRequest(new SnacRequest(new SendImIcbm(sn, msg), null));
 
@@ -189,7 +173,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             p.setTo(oscarSession.getJID());
             p.setFrom(oscarSession.getTransport().convertIDToJID(info.getScreenname()));
 
-            if (info.getAwayStatus() == true) {
+            if (info.getAwayStatus()) {
                 p.setShow(Presence.Show.away);
             }
 
@@ -227,7 +211,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             oscarSession.getTransport().sendPacket(p);
         }
         else if (cmd instanceof RateChange) {
-            RateChange rc = (RateChange) cmd;
+//            RateChange rc = (RateChange) cmd;
 
             //Log.debug("rate change: current avg is "
             //        + rc.getRateInfo().getCurrentAvg());
@@ -235,7 +219,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     }
 
     protected void handleSnacResponse(SnacResponseEvent e) {
-        SnacPacket packet = e.getSnacPacket();
+//        SnacPacket packet = e.getSnacPacket();
         //Log.debug("got snac response type "
         //        + Integer.toHexString(packet.getFamily()) + "/"
         //        + Integer.toHexString(packet.getCommand()) + ": "
@@ -261,7 +245,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     public int[] getSnacFamilies() { return snacFamilies; }
 
     protected void setSnacFamilies(int[] families) {
-        this.snacFamilies = (int[]) families.clone();
+        this.snacFamilies = families.clone();
         Arrays.sort(snacFamilies);
     }
 
@@ -330,7 +314,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             p.setTo(oscarSession.getJID());
             p.setFrom(oscarSession.getTransport().convertIDToJID(info.getScreenname()));
 
-            if (info.getAwayStatus() == true) {
+            if (info.getAwayStatus()) {
                 p.setShow(Presence.Show.away);
             }
 

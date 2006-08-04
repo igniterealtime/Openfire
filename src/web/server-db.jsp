@@ -151,6 +151,15 @@
         catch (SQLException e) { Log.error(e); }
     }
 %>
+    <br/><br/>
+    <table border="0">
+        <tr>
+            <td valign="center">
+                <a href="server-db-stats.jsp"><img src="images/arrow_right_blue.gif" width="24" height="24" border="0" alt="<fmt:message key="server.db_stats.title" />" /></a>
+            </td>
+            <td valign="center"><a href="server-db-stats.jsp"><fmt:message key="server.db_stats.title" /></a></td>
+        </tr>
+    </table>
 
     </body>
 </html>

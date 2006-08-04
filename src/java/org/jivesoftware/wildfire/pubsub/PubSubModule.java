@@ -302,8 +302,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         String[] jids;
         if (property != null) {
             jids = property.split(",");
-            for (int i = 0; i < jids.length; i++) {
-                sysadmins.add(jids[i].trim().toLowerCase());
+            for (String jid : jids) {
+                sysadmins.add(jid.trim().toLowerCase());
             }
         }
         nodeCreationRestricted =
@@ -312,8 +312,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
         if (property != null) {
             jids = property.split(",");
-            for (int i = 0; i < jids.length; i++) {
-                allowedToCreate.add(jids[i].trim().toLowerCase());
+            for (String jid : jids) {
+                allowedToCreate.add(jid.trim().toLowerCase());
             }
         }
 
@@ -329,28 +329,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
             leafDefaultConfiguration.setAccessModel(AccessModel.open);
             leafDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
-            leafDefaultConfiguration.setDeliverPayloads(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.deliverPayloads", false));
-            leafDefaultConfiguration.setLanguage(
-                    JiveGlobals.getProperty("xmpp.pubsub.default.language", "English"));
-            leafDefaultConfiguration.setMaxPayloadSize(
-                    JiveGlobals.getIntProperty("xmpp.pubsub.default.language", 5120));
-            leafDefaultConfiguration.setNotifyConfigChanges(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.notify.configChanges", true));
-            leafDefaultConfiguration.setNotifyDelete(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.notify.delete", true));
-            leafDefaultConfiguration.setNotifyRetract(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.notify.retract", true));
-            leafDefaultConfiguration.setPersistPublishedItems(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.persistItems", false));
-            leafDefaultConfiguration.setMaxPublishedItems(
-                    JiveGlobals.getIntProperty("xmpp.pubsub.default.maxPublishedItems", -1));
-            leafDefaultConfiguration.setPresenceBasedDelivery(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.presenceBasedDelivery", false));
-            leafDefaultConfiguration.setSendItemSubscribe(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.sendItemSubscribe", true));
-            leafDefaultConfiguration.setSubscriptionEnabled(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.subscriptionEnabled", true));
+            leafDefaultConfiguration.setDeliverPayloads(true);
+            leafDefaultConfiguration.setLanguage("English");
+            leafDefaultConfiguration.setMaxPayloadSize(5120);
+            leafDefaultConfiguration.setNotifyConfigChanges(true);
+            leafDefaultConfiguration.setNotifyDelete(true);
+            leafDefaultConfiguration.setNotifyRetract(true);
+            leafDefaultConfiguration.setPersistPublishedItems(false);
+            leafDefaultConfiguration.setMaxPublishedItems(-1);
+            leafDefaultConfiguration.setPresenceBasedDelivery(false);
+            leafDefaultConfiguration.setSendItemSubscribe(true);
+            leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
             PubSubPersistenceManager.createDefaultConfiguration(this, leafDefaultConfiguration);
         }
@@ -362,25 +351,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
             collectionDefaultConfiguration.setAccessModel(AccessModel.open);
             collectionDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
-            collectionDefaultConfiguration.setDeliverPayloads(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.deliverPayloads", false));
-            collectionDefaultConfiguration.setLanguage(
-                    JiveGlobals.getProperty("xmpp.pubsub.default.language", "English"));
-            collectionDefaultConfiguration.setNotifyConfigChanges(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.notify.configChanges", true));
-            collectionDefaultConfiguration.setNotifyDelete(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.notify.delete", true));
-            collectionDefaultConfiguration.setNotifyRetract(
-                    JiveGlobals.getBooleanProperty("xmpp.pubsub.default.notify.retract", true));
-            collectionDefaultConfiguration.setPresenceBasedDelivery(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.presenceBasedDelivery", false));
-            collectionDefaultConfiguration.setSubscriptionEnabled(JiveGlobals.getBooleanProperty(
-                    "xmpp.pubsub.default.subscriptionEnabled", true));
-            leafDefaultConfiguration.setReplyPolicy(null);
-            leafDefaultConfiguration
+            collectionDefaultConfiguration.setDeliverPayloads(false);
+            collectionDefaultConfiguration.setLanguage("English");
+            collectionDefaultConfiguration.setNotifyConfigChanges(true);
+            collectionDefaultConfiguration.setNotifyDelete(true);
+            collectionDefaultConfiguration.setNotifyRetract(true);
+            collectionDefaultConfiguration.setPresenceBasedDelivery(false);
+            collectionDefaultConfiguration.setSubscriptionEnabled(true);
+            collectionDefaultConfiguration.setReplyPolicy(null);
+            collectionDefaultConfiguration
                     .setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
-            leafDefaultConfiguration.setMaxLeafNodes(
-                    JiveGlobals.getIntProperty("xmpp.pubsub.default.maxLeafNodes", -1));
+            collectionDefaultConfiguration.setMaxLeafNodes(-1);
             PubSubPersistenceManager
                     .createDefaultConfiguration(this, collectionDefaultConfiguration);
         }

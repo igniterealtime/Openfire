@@ -110,7 +110,7 @@
                 session.setAttribute("jive.setup.sidebar.3","done");
                 session.setAttribute("jive.setup.sidebar.4","in_progress");
                 // Redirect
-                response.sendRedirect("setup-admin-settings.jsp");
+                response.sendRedirect("setup-profile-settings.jsp");
                 return;
             }
         }

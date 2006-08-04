@@ -130,23 +130,27 @@
                 String step2 = (String)session.getAttribute("jive.setup.sidebar.2");
                 String step3 = (String)session.getAttribute("jive.setup.sidebar.3");
                 String step4 = (String)session.getAttribute("jive.setup.sidebar.4");
+                String step5 = (String)session.getAttribute("jive.setup.sidebar.4");
 
                 if (step1 == null) { step1 = IN_PROGRESS; }
                 if (step2 == null) { step2 = INCOMPLETE; }
                 if (step3 == null) { step3 = INCOMPLETE; }
                 if (step4 == null) { step4 = INCOMPLETE; }
+                if (step5 == null) { step5 = INCOMPLETE; }
 
-                String[] items = {step1, step2, step3, step4};
+                String[] items = {step1, step2, step3, step4, step5};
                 String[] names = {
                     LocaleUtils.getLocalizedString("setup.sidebar.language"),
                     LocaleUtils.getLocalizedString("setup.sidebar.settings"),
                     LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
+                    LocaleUtils.getLocalizedString("setup.sidebar.profile"),
                     LocaleUtils.getLocalizedString("setup.sidebar.admin")
                 };
                 String[] links = {
                     "index.jsp",
                     "setup-host-settings.jsp",
                     "setup-datasource-settings.jsp",
+                    "setup-profile-settings.jsp",
                     "setup-admin-settings.jsp"
                 };
             %>

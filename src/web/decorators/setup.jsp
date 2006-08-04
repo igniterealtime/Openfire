@@ -101,7 +101,7 @@
 <!-- BEGIN jive-header -->
 <div id="jive-header">
 	<div id="jive-logo" title="wildfire"></div>
-	<div id="jive-header-text">Setup</div>
+	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
 	<div id="sidebar-top"></div>
 </div>
 <!-- END jive-header -->
@@ -122,13 +122,20 @@
                 String step2 = (String)session.getAttribute("jive.setup.sidebar.2");
                 String step3 = (String)session.getAttribute("jive.setup.sidebar.3");
                 String step4 = (String)session.getAttribute("jive.setup.sidebar.4");
-                String step5 = (String)session.getAttribute("jive.setup.sidebar.4");
+                String step5 = (String)session.getAttribute("jive.setup.sidebar.5");
 
                 if (step1 == null) { step1 = IN_PROGRESS; }
                 if (step2 == null) { step2 = INCOMPLETE; }
                 if (step3 == null) { step3 = INCOMPLETE; }
                 if (step4 == null) { step4 = INCOMPLETE; }
                 if (step5 == null) { step5 = INCOMPLETE; }
+
+                int currentStep = 1;
+                if (step1.equals(DONE)) { currentStep = 2; }
+                if (step2.equals(DONE)) { currentStep = 3; }
+                if (step3.equals(DONE)) { currentStep = 4; }
+                if (step4.equals(DONE)) { currentStep = 5; }
+                if (step5.equals(DONE)) { currentStep = 6; }
 
                 String[] items = {step1, step2, step3, step4, step5};
                 String[] names = {
@@ -160,12 +167,15 @@
 			<%  } %>
 		</ul>
 	</div>
+
+    <div class="jive-sidebar-group">
+		<strong><fmt:message key="setup.sidebar.title" /></strong>
+		<img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0">
+	</div>
+
     <%  } %>
 
-	<div class="jive-sidebar-group">
-		<strong>Setup Progress</strong>
-		<img src="../images/setup_sidebar_progress1.gif" alt="" width="142" height="13" border="0">
-	</div>
+
 </div>
 <!-- END jive-sidebar -->
 

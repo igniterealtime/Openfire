@@ -98,9 +98,9 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="setup.host.settings.title" /></title>
-    </head>
+<head>
+<title><fmt:message key="setup.host.settings.title" /></title>
+</head>
 <body>
 
 <style type="text/css">

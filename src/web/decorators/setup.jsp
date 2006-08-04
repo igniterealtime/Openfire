@@ -87,43 +87,35 @@
 
 <html>
 <head>
-	<title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
-	<link rel="stylesheet" type="text/css" href="setup-style.css">
+<title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
+
+<style type="text/css" title="setupStyle" media="screen">
+	@import "../style/setup.css";
+</style>
+
 </head>
 
 <body>
 
-<span class="jive-setup-header">
-<table cellpadding="8" cellspacing="0" border="0" width="100%">
-<tr>
-    <td>
-        <fmt:message key="title" /> <fmt:message key="setup.title" />
-    </td>
-</tr>
-</table>
-</span>
-<table bgcolor="#bbbbbb" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
-<table bgcolor="#dddddd" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
-<table bgcolor="#eeeeee" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
 
-<br>
+<!-- BEGIN jive-header -->
+<div id="jive-header">
+	<div id="jive-logo" title="wildfire"></div>
+	<div id="jive-header-text">Setup</div>
+	<div id="sidebar-top"></div>
+</div>
+<!-- END jive-header -->
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr valign="top">
+
+
+<!-- BEGIN jive-sidebar -->
+<div id="jive-sidebar">
     <%  if (showSidebar) { %>
-        <td width="1%" nowrap>
            <%!
                 final String INCOMPLETE = "incomplete";
                 final String IN_PROGRESS = "in_progress";
                 final String DONE = "done";
             %>
-
             <%  // Get sidebar values from the session:
 
                 String step1 = (String)session.getAttribute("jive.setup.sidebar.1");
@@ -154,54 +146,46 @@
                     "setup-admin-settings.jsp"
                 };
             %>
-
-
-        <div style="width:200px;">
-            <div class="jive-setup-sidebar-top">
-                <b><fmt:message key="setup.sidebar.title" /></b>
-            </div>
-            <div class="jive-setup-sidebar-bottom">
-            <table cellpadding="5" cellspacing="0" border="0">
-                    <%  for (int i=0; i<items.length; i++) { %>
-                        <tr>
-                        <%  if (INCOMPLETE.equals(items[i])) { %>
-
-                            <td width="1%"><img src="../images/bullet-red-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <%= names[i] %>
-                            </td>
-
-                        <%  } else if (IN_PROGRESS.equals(items[i])) { %>
-
-                            <td width="1%"><img src="../images/bullet-yellow-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <a href="<%= links[i] %>"><%= names[i] %></a>
-                            </td>
-
-                        <%  } else { %>
-
-                            <td width="1%"><img src="../images/bullet-green-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <a href="<%= links[i] %>"><%= names[i] %></a>
-                            </td>
-
-                        <%  } %>
-                        </tr>
-                    <%  } %>
-                    <tr><td colspan="2"><br><br><br><br></td></tr>
-                </table>
-            </div>
-        </div>
-
-        </td>
-        <td width="1%" nowrap><img src="../images/blank.gif" width="15" height="1" border="0" alt=""></td>
+	<div class="jive-sidebar-group">
+	<strong><fmt:message key="setup.sidebar.title" /></strong>
+		<ul>
+			<%  for (int i=0; i<items.length; i++) { %>
+				<%  if (INCOMPLETE.equals(items[i])) { %>
+				<li><%= names[i] %></li>
+				<%  } else if (IN_PROGRESS.equals(items[i])) { %>
+				<li class="jiveCurrent"><%= names[i] %></li>
+				<%  } else { %>
+				<li class="jiveComplete"><!--<a href="<%= links[i] %>">--><%= names[i] %></li>
+				<%  } %>
+			<%  } %>
+		</ul>
+	</div>
     <%  } %>
-    <td width="98%">
+
+	<div class="jive-sidebar-group">
+		<strong>Setup Progress</strong>
+		<img src="../images/setup_sidebar_progress1.gif" alt="" width="142" height="13" border="0">
+	</div>
+</div>
+<!-- END jive-sidebar -->
+
+
+
+<!-- BEGIN jive-body -->
+<div id="jive-body">
 
     <decorator:body/>
 
-    </td></tr>
-</table>
+</div>
+<!-- END jive-body -->
+
+
+
+<!-- BEGIN jive-footer -->
+<div id="jive-footer"></div>
+<!-- END jive-footer -->
+
+
 
 </body>
 </html>

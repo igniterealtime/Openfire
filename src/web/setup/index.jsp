@@ -64,27 +64,29 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="setup.index.title" /></title>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="setup.index.title" /></title>
+</head>
+<body>
 
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.index.title" />
-</p>
+	<h1>
+	<fmt:message key="setup.index.title" />
+	</h1>
 
-<p>
+	<p>
+	<fmt:message key="setup.index.info">
+		<fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+	</fmt:message>
+	</p>
 
-<fmt:message key="setup.index.info">
-    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
-</fmt:message>
-</p>
 
-<form action="index.jsp" name="sform">
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
 
-<b><fmt:message key="setup.index.choose_lang" /></b>
+	<h2><fmt:message key="setup.index.choose_lang" /></h2>
 
+	<form action="index.jsp" name="sform">
 <%  boolean usingPreset = false;
     Locale[] locales = Locale.getAvailableLocales();
     for (int i=0; i<locales.length; i++) {
@@ -92,105 +94,64 @@
         if (usingPreset) { break; }
     }
 %>
+		<div id="jive-setup-language">
+			<p>
+			<label for="loc01">
+			<input type="radio" name="localeCode" value="cs_CZ" <%= ("cs_CZ".equals(locale.toString()) ? "checked" : "") %> id="loc01" />
+			<b>Czech</b> (cs_CZ)
+			</label><br>
 
-<ul>
-<table cellpadding="4" cellspacing="0" border="0">
-<tbody>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="cs_CZ" <%= ("cs_CZ".equals(locale.toString()) ? "checked" : "") %>
-             id="loc01" />
-        </td>
-        <td colspan="2">
-            <label for="loc01"><b>Czech</b> (cs_CZ)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="de" <%= ("de".equals(locale.toString()) ? "checked" : "") %>
-             id="loc02" />
-        </td>
-        <td colspan="2">
-            <label for="loc02"><b>Deutsch</b> (de)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="en" <%= ("en".equals(locale.toString()) ? "checked" : "") %>
-             id="loc03" />
-        </td>
-        <td colspan="2">
-            <label for="loc03"><b>English</b> (en)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="es" <%= ("es".equals(locale.toString()) ? "checked" : "") %>
-             id="loc04" />
-        </td>
-        <td colspan="2">
-            <label for="loc04"><b>Espa&ntilde;ol</b> (es)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %>
-             id="loc05" />
-        </td>
-        <td colspan="2">
-            <label for="loc05"><b>Fran&ccedil;ais</b> (fr)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %>
-             id="loc06" />
-        </td>
-        <td colspan="2">
-            <label for="loc06"><b>Nederlands</b> (nl)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="pl_PL" <%= ("pl_PL".equals(locale.toString()) ? "checked" : "") %>
-             id="loc07" />
-        </td>
-        <td colspan="2">
-            <label for="loc07"><b>Polski</b> (pl_PL)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
-             id="loc08" />
-        </td>
-        <td colspan="2">
-            <label for="loc08"><b>Portugu&ecirc;s Brasileiro</b> (pt_BR)</label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-             id="loc09" />
-        </td>
-        <td>
-            <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="../images/language_zh_CN.gif" border="0" /></a>
-        </td>
-        <td>
-            <label for="loc09"><b>Simplified Chinese</b> (zh_CN)</label>
-        </td>
-    </tr>
-</tbody>
-</table>
-</ul>
+			<label for="loc02">
+			<input type="radio" name="localeCode" value="de" <%= ("de".equals(locale.toString()) ? "checked" : "") %> id="loc02" />
+			<b>Deutsch</b> (de)
+			</label><br>
 
-<br/>
-<hr size="0">
+			<label for="loc03">
+			<input type="radio" name="localeCode" value="en" <%= ("en".equals(locale.toString()) ? "checked" : "") %> id="loc03" />
+			<b>English</b> (en)
+			</label><br>
 
-<div align="right">
-<input type="submit" name="save" value=" <fmt:message key="global.continue" /> ">
-</div>
-</form>
+			<label for="loc04">
+			<input type="radio" name="localeCode" value="es" <%= ("es".equals(locale.toString()) ? "checked" : "") %> id="loc04" />
+			<b>Espa&ntilde;ol</b> (es)
+			</label><br>
 
-    </body>
+			<label for="loc05">
+			<input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %> id="loc05" />
+			<b>Fran&ccedil;ais</b> (fr)
+			</label><br>
+
+			<label for="loc06">
+			<input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %> id="loc06" />
+			<b>Nederlands</b> (nl)
+			</label><br>
+
+			<label for="loc07">
+			<input type="radio" name="localeCode" value="pl_PL" <%= ("pl_PL".equals(locale.toString()) ? "checked" : "") %> id="loc07" />
+			<b>Polski</b> (pl_PL)
+			</label><br>
+
+			<label for="loc08">
+			<input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %> id="loc08" />
+			<b>Portugu&ecirc;s Brasileiro</b> (pt_BR)
+			</label><br>
+
+			<label for="loc09">
+			<input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %> id="loc09" />
+            <img src="../images/setup_language_zh_CN.gif" border="0" align="top" />
+            <b>Simplified Chinese</b> (zh_CN)
+			</label><br>
+			</p>
+		</div>
+
+		<div align="right">
+			<input type="Submit" name="save" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+	</form>
+
+	</div>
+	<!-- END jive-contentBox -->
+
+
+</body>
 </html>

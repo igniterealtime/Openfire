@@ -186,9 +186,9 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
+            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
+            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
             for (int i = 0; i < ((list.length > 20) ? 20 : list.length); i++) {
                 ProfiledConnectionEntry pce = list[i];
@@ -253,9 +253,9 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
+            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
+            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
             for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
                 ProfiledConnectionEntry pce = list[i];
@@ -320,9 +320,9 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
+            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
+            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
             for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
                 ProfiledConnectionEntry pce = list[i];
@@ -387,9 +387,9 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
+            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
+            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
             for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
                 ProfiledConnectionEntry pce = list[i];

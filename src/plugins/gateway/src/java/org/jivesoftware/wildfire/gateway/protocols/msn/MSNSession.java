@@ -93,35 +93,35 @@ public class MSNSession extends TransportSession {
     }
 
     /**
-     * Have we successfully logged in to MSN?
+     * Retrieves the manager for this session.
+     */
+    public MessengerServerManager getManager() {
+        return msnManager;
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
      */
     public Boolean isLoggedIn() {
         return msnManager.isConnected();
     }
 
     /**
-     * Adds a contact to the user's MSN contact list.
-     *
-     * @param jid JID of contact to be added.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
      */
     public void addContact(JID jid) {
-        // TODO: check jabber group and use it
+        // @todo check jabber group and use it
     }
 
     /**
-     * Removes a contact from the user's MSN contact list.
-     *
-     * @param jid JID of contact to be added.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
      */
     public void removeContact(JID jid) {
-        // TODO: check jabber group and use it
+        // @todo check jabber group and use it
     }
 
     /**
-     * Sends a message from the jabber user to a MSN contact.
-     *
-     * @param jid JID of contact to send message to.
-     * @param message Message to send to yahoo contact.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendMessage(org.xmpp.packet.JID, String)
      */
     public void sendMessage(JID jid, String message) {
         try {
@@ -133,16 +133,14 @@ public class MSNSession extends TransportSession {
     }
 
     /**
-     * Asks for transport to send information about a contact if possible.
-     *
-     * @param jid JID of contact to be probed.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        // TODO: yeah
+        // @todo need to implement this
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String) 
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         try {
@@ -154,10 +152,10 @@ public class MSNSession extends TransportSession {
     }
 
     /**
-     * Retrieves the manager for this session.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
-    public MessengerServerManager getManager() {
-        return msnManager;
+    public void resendContactStatuses(JID jid) {
+        // @todo need to implement this
     }
 
 }

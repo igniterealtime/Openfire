@@ -103,7 +103,10 @@ public class OSCARSession extends TransportSession {
         p.setFrom(getTransport().getJID());
         getTransport().sendPacket(p);
     }
-    
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
+     */
     public void addContact(JID jid) {
         Integer newBuddyId = highestBuddyId + 1;
         Integer groupId = -1;
@@ -123,6 +126,9 @@ public class OSCARSession extends TransportSession {
             new BuddyItem(getTransport().convertJIDToID(jid), newBuddyId, groupId).toSsiItem() }));
     }
 
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
+     */
     public void removeContact(JID jid) {
         for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equals(getTransport().convertJIDToID(jid))) {
@@ -132,6 +138,9 @@ public class OSCARSession extends TransportSession {
         }
     }
 
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendMessage(org.xmpp.packet.JID, String)
+     */
     public void sendMessage(JID jid, String message) {
         request(new SendImIcbm(getTransport().convertJIDToID(jid), message));
     }
@@ -153,6 +162,7 @@ public class OSCARSession extends TransportSession {
             }
         }
     });
+
     synchronized void handleRequest(SnacRequest request) {
         int family = request.getCommand().getFamily();
         if (snacMgr.isPending(family)) {
@@ -272,16 +282,14 @@ public class OSCARSession extends TransportSession {
     }
 
     /**
-     * Asks for transport to send information about a contact if possible.
-     *
-     * @param jid JID of contact to be probed.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
         bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         if (presenceType != PresenceType.available && presenceType != PresenceType.chat) {
@@ -297,6 +305,13 @@ public class OSCARSession extends TransportSession {
 
         this.presenceType = presenceType;
         this.verboseStatus = verboseStatus;
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
+     */
+    public void resendContactStatuses(JID jid) {
+        // @todo need to implement this
     }
 
 }

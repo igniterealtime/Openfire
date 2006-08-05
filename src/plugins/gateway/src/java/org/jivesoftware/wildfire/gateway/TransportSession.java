@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
+import java.util.TreeMap;
 
 /**
  * Interface for a transport session.
@@ -46,9 +47,14 @@ public abstract class TransportSession implements Runnable {
     public BaseTransport transport;
 
     /**
-     * JID the session is associated with.  (includes specific resource)
+     * The bare JID the session is associated with.
      */
     public JID jid;
+
+    /**
+     * All JIDs (including resources) that are associated with this session.
+     */
+    public TreeMap<Integer,String> resources = new TreeMap<Integer,String>();
 
     /**
      * Is this session valid?  Set to false when session is done.
@@ -74,12 +80,21 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
-     * Retrieves the jid associated with the session.
+     * Retrieves the bare jid associated with the session.
      *
      * @return JID of the user associated with this session.
      */
     public JID getJID() {
         return jid;
+    }
+
+    /**
+     * Retrieves the JID of the highest priority resource.
+     *
+     * @return Full JID including resource with highest priority.
+     */
+    public JID getJIDWithHighestPriority() {
+        return new JID(jid.getNode(),jid.getDomain(),resources.get(resources.lastKey()));
     }
 
     /**
@@ -141,5 +156,12 @@ public abstract class TransportSession implements Runnable {
      * @param jid JID to be checked.
     */
     public abstract void retrieveContactStatus(JID jid);
+
+    /**
+     * Asks the legacy service to send presence packets for all known contacts.
+     *
+     * @param jid JID to have the presence packets sent to.
+     */
+    public abstract void resendContactStatuses(JID jid);
 
 }

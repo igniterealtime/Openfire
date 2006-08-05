@@ -146,7 +146,7 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * Have we successfully logged in to Yahoo?
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
      */
     public Boolean isLoggedIn() {
         return loggedIn;
@@ -188,12 +188,10 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * Adds a contact to the user's Yahoo contact list.
-     *
-     * @param jid JID of contact to be added.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
      */
     public void addContact(JID jid) {
-        // TODO: check jabber group and use it
+        // @todo check jabber group and use it
         try {
             yahooSession.addFriend(jid.getNode(), "Yahoo Transport");
         }
@@ -203,12 +201,10 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * Removes a contact from the user's Yahoo contact list.
-     *
-     * @param jid JID of contact to be added.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
      */
     public void removeContact(JID jid) {
-        // TODO: check jabber group and use it
+        // @todo check jabber group and use it
         try {
             yahooSession.removeFriend(jid.getNode(), "Yahoo Transport");
         }
@@ -218,10 +214,7 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * Sends a message from the jabber user to a Yahoo contact.
-     *
-     * @param jid JID of contact to send message to.
-     * @param message Message to send to yahoo contact.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendMessage(org.xmpp.packet.JID, String)
      */
     public void sendMessage(JID jid, String message) {
         try {
@@ -233,7 +226,7 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         try {
@@ -247,9 +240,7 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * Asks for transport to send information about a contact if possible.
-     *
-     * @param jid JID of contact to be probed.
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
         YahooUser user = yahooSession.getUser(jid.getNode());
@@ -264,6 +255,26 @@ public class YahooSession extends TransportSession {
 
         ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
         getTransport().sendPacket(p);
-    }   
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
+     */
+    public void resendContactStatuses(JID jid) {
+        for (Object userObj : yahooSession.getUsers().values()) {
+            YahooUser user = (YahooUser)userObj;
+            Presence p = new Presence();
+            p.setTo(jid);
+            p.setFrom(getTransport().convertIDToJID(user.getId()));
+
+            String custommsg = user.getCustomStatusMessage();
+            if (custommsg != null) {
+                p.setStatus(custommsg);
+            }
+
+            ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
+            getTransport().sendPacket(p);
+        }
+    }
 
 }

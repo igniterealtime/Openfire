@@ -185,7 +185,20 @@ form {
 .jive-error-text {
 	color : #f00;
 	}
-
+.jive_setup_launchAdmin a,
+.jive_setup_launchAdmin a:visited {
+	position: relative;
+	padding: 6px 9px 6px 9px;
+	margin: 20px 0px 0px 0px;
+	font-size: 13px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	color: #fff;
+	border: 1px solid #0c2d4c;
+	background: #255480 url(../images/setup_btn_bg-bigblue.gif) repeat-x;
+	text-decoration: none;
+	-moz-border-radius: 4px;
+	}
 
 
 /* --------------------------------------------- */

@@ -43,7 +43,6 @@
     </head>
 <body>
 
-
 	<h1>
 	<fmt:message key="setup.finished.title" />
 	</h1>
@@ -75,14 +74,11 @@
         url = url.replace("setup/setup-finished.jsp", "login.jsp?username=admin");
     }
 %>
-<ul>
-<table border="0">
-    <tr>
-    <td><a href="<%= url %>"><img src="../images/arrow_right_blue.gif" width="24" height="24" alt="" border="0"></a></td>
-    <td><a href="<%= url %>"><fmt:message key="setup.finished.login" /></a></td>
-    </tr>
-</table>
-</ul>
+
+<br><br>
+	<div class="jive_setup_launchAdmin">
+		<a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
+	</div>
 
 
 </body>

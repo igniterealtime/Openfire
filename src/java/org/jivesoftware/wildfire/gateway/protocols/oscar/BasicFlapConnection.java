@@ -33,6 +33,7 @@ import net.kano.joscar.snaccmd.icbm.*;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
 
 public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
@@ -140,13 +141,11 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             String msg = OscarTools.stripHtml(message.getMessage());
 
             Message jmessage = new Message();
-            jmessage.setTo(oscarSession.getRegistration().getJID());
+            jmessage.setTo(oscarSession.getJIDWithHighestPriority());
             jmessage.setBody(msg);
             jmessage.setType(Message.Type.chat);
             jmessage.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
             oscarSession.getTransport().sendPacket(jmessage);
-
-            //sendRequest(new SnacRequest(new SendImIcbm(sn, msg), null));
 
             String str = dateFormat.format(new Date()) + " IM from "
                     + sn + ": " + msg;
@@ -349,6 +348,53 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             p.setFrom(oscarSession.getTransport().convertIDToJID(sn));
             oscarSession.getTransport().sendPacket(p);
         }
+    }
+
+    /**
+     * Retrieves and sends last known status for all buddies.
+     *
+     * This retrieves all known statuses and sends each one of them to the specified JID.
+     * This is typically used when a new resource comes online.
+     *
+     * @param jid JID (with resource) to send the list to.
+     */
+    public void getAndSendAllStatuses(JID jid) {
+        for (FullUserInfo info : buddystore.values()) {
+            buddystore.put(info.getScreenname(), info);
+            Presence p = new Presence();
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(info.getScreenname()));
+
+            if (info.getAwayStatus()) {
+                p.setShow(Presence.Show.away);
+            }
+
+            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            if (extraInfo != null) {
+                for (ExtraInfoBlock i : extraInfo) {
+                    ExtraInfoData data = i.getExtraData();
+
+                    if (i.getType() == ExtraInfoBlock.TYPE_AVAILMSG) {
+                        ByteBlock msgBlock = data.getData();
+                        int len = BinaryTools.getUShort(msgBlock, 0);
+                        byte[] msgBytes = msgBlock.subBlock(2, len).toByteArray(
+);
+                        String msg;
+                        try {
+                            msg = new String(msgBytes, "UTF-8");
+                        }
+                        catch (UnsupportedEncodingException e1) {
+                            continue;
+                        }
+                        if (msg.length() > 0) {
+                            p.setStatus(msg);
+                        }
+                    }
+                }
+            }
+            oscarSession.getTransport().sendPacket(p);
+        }
+        
     }
 
 }

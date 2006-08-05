@@ -11,6 +11,8 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
+import org.jivesoftware.util.Log;
+
 import java.util.TreeMap;
 
 /**
@@ -101,7 +103,7 @@ public abstract class TransportSession implements Runnable {
      * Handles monitoring of whether session is still valid.
      */
     public void run() {
-        while (validSession) { }
+        while (validSession) { Log.debug("This is the loop running.  Just want to catch it doing so."); }
     }
 
     /**

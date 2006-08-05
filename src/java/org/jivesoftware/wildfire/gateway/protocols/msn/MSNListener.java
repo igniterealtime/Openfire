@@ -50,7 +50,7 @@ public class MSNListener extends MessengerClientAdapter {
     public void incomingMessage(IncomingMessageEvent event) {
         Message m = new Message();
         m.setType(Message.Type.chat);
-        m.setTo(msnSession.getJID());
+        m.setTo(msnSession.getJIDWithHighestPriority());
         m.setFrom(msnSession.getTransport().convertIDToJID(event.getUserName()));
         m.setBody(event.getMessage());
         msnSession.getTransport().sendPacket(m);

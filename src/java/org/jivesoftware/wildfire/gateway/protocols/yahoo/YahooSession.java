@@ -129,6 +129,9 @@ public class YahooSession extends TransportSession {
      * Log out of Yahoo.
      */
     public void logOut() {
+        loggedIn = false;
+        loggingIn = false;
+        loginAttempts = 0;        
         try {
             yahooSession.logout();
         }
@@ -136,9 +139,6 @@ public class YahooSession extends TransportSession {
             Log.debug("Failed to log out from Yahoo.");
         }
         yahooSession.reset();
-        loggedIn = false;
-        loggingIn = false;
-        loginAttempts = 0;
         Presence p = new Presence(Presence.Type.unavailable);
         p.setTo(getJID());
         p.setFrom(getTransport().getJID());

@@ -61,8 +61,32 @@ public class YahooSessionListener implements SessionListener {
     public void messageReceived(SessionEvent event) {
         Message m = new Message();
         m.setType(Message.Type.chat);
-        m.setTo(yahooSession.getJID());
+        m.setTo(yahooSession.getJIDWithHighestPriority());
         m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        m.setBody(messageDecoder.decodeToText(event.getMessage()));
+        yahooSession.getTransport().sendPacket(m);
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#offlineMessageReceived(ymsg.network.event.SessionEvent)
+     */
+    public void offlineMessageReceived(SessionEvent event) {
+        Message m = new Message();
+        m.setType(Message.Type.chat);
+        m.setTo(yahooSession.getJIDWithHighestPriority());
+        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        m.setBody(messageDecoder.decodeToText(event.getMessage()));
+        yahooSession.getTransport().sendPacket(m);
+    }
+
+    /**
+     * @see ymsg.network.event.SessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
+     */
+    public void newMailReceived(SessionNewMailEvent event) {
+        Message m = new Message();
+        m.setType(Message.Type.headline);
+        m.setTo(yahooSession.getJIDWithHighestPriority());
+        m.setFrom(yahooSession.getTransport().getJID());
         m.setBody(messageDecoder.decodeToText(event.getMessage()));
         yahooSession.getTransport().sendPacket(m);
     }
@@ -107,18 +131,22 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
+     * @see ymsg.network.event.SessionListener#connectionClosed(ymsg.network.event.SessionEvent)
+     */
+    public void connectionClosed(SessionEvent event) {
+        Log.error(event.toString());
+        if (yahooSession.isLoggedIn()) {
+            yahooSession.logOut();                            
+        }
+    }
+
+    /**
      * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
      */
     public void fileTransferReceived(SessionFileTransferEvent event) {
         Log.info(event.toString());
     }
 
-    /**
-     * @see ymsg.network.event.SessionListener#connectionClosed(ymsg.network.event.SessionEvent)
-     */
-    public void connectionClosed(SessionEvent event) {
-        Log.info(event.toString());
-    }
 
     /**
      * @see ymsg.network.event.SessionListener#listReceived(ymsg.network.event.SessionEvent)
@@ -135,13 +163,6 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#offlineMessageReceived(ymsg.network.event.SessionEvent)
-     */
-    public void offlineMessageReceived(SessionEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
      * @see ymsg.network.event.SessionListener#errorPacketReceived(ymsg.network.event.SessionErrorEvent)
      */
     public void errorPacketReceived(SessionErrorEvent event) {
@@ -154,13 +175,6 @@ public class YahooSessionListener implements SessionListener {
     public void inputExceptionThrown(SessionExceptionEvent event) {
         event.getException().printStackTrace();
         Log.error(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
-     */
-    public void newMailReceived(SessionNewMailEvent event) {
-        Log.debug(event.toString());
     }
 
     /**

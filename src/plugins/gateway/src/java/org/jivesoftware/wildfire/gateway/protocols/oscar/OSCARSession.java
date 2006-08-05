@@ -311,7 +311,7 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
-        // @todo need to implement this
+        bosConn.getAndSendAllStatuses(jid);
     }
 
 }

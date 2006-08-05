@@ -117,7 +117,7 @@
 
 		<form action="setup-host-settings.jsp" name="f" method="post">
 
-<table cellpadding="3" cellspacing="0" border="0" width="100%">
+<table cellpadding="3" cellspacing="0" border="0">
 <tr valign="top">
     <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.domain" />

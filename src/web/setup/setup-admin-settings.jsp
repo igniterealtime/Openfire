@@ -274,7 +274,7 @@ function checkClick() {
 
 <script language="JavaScript" type="text/javascript">
 <!--
-document.acctform.password.focus();
+document.acctform.newPassword.focus();
 //-->
 </script>
 

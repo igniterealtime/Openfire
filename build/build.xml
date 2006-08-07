@@ -313,8 +313,6 @@
                      excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class,org/jivesoftware/wildfire/launcher/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.dir}" includes="database/*.sql"/>
-            <fileset dir="${src.dir}" includes="database/upgrade/**/*.sql"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
             <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
             <manifest>

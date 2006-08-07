@@ -10,6 +10,7 @@
 
 package org.jivesoftware.database;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -17,10 +18,7 @@ import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginClassLoader;
 import org.jivesoftware.wildfire.container.PluginManager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.sql.*;
 import java.util.Arrays;
 
@@ -69,7 +67,13 @@ public class SchemaManager {
             return checkSchema(con, "wildfire", DATABASE_VERSION,
                     new ResourceLoader() {
                         public InputStream loadResource(String resourceName) {
-                            return SchemaManager.class.getResourceAsStream("/database/" + resourceName);
+                            File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
+                                    "resources" + File.separator + "database", resourceName);
+                            try {
+                                return new FileInputStream(file);
+                            } catch (FileNotFoundException e) {
+                                return null;
+                            }
                         }
                     });
         }
@@ -233,12 +237,17 @@ public class SchemaManager {
             }
 
             // Run all upgrade scripts until we're up to the latest schema.
-            for (int i=currentVersion+1; i <= DATABASE_VERSION; i++) {
+            for (int i = currentVersion + 1; i <= DATABASE_VERSION; i++) {
                 // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
-                String resourceName = "upgrade/" + i + "/" + schemaKey + "_" +
-                        DbConnectionManager.getDatabaseType() + ".sql";
-                InputStream resource = resourceLoader.loadResource(resourceName);
-                if (resource == null) {
+                InputStream resource;
+                String path = JiveGlobals.getHomeDirectory() + File.separator + "resources" +
+                        File.separator + "database" + File.separator + "upgrade" + File.separator +
+                        i;
+                String filename = schemaKey + "_" + DbConnectionManager.getDatabaseType() + ".sql";
+                File file = new File(path, filename);
+                try {
+                    resource = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
                     // If the resource is null, the specific upgrade number is not available.
                     continue;
                 }

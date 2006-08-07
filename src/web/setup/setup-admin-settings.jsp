@@ -28,8 +28,6 @@
 <%! // Global vars, methods, etc
     void setSetupFinished(HttpSession session) {
         JiveGlobals.setXMLProperty("setup","true");
-        // update the sidebar status
-        session.setAttribute("jive.setup.sidebar.4","done");
     }
 %>
 
@@ -101,7 +99,8 @@
 %>
 <html>
 <head>
-<title><fmt:message key="setup.admin.settings.account" /></title>
+    <title><fmt:message key="setup.admin.settings.account" /></title>
+    <meta name="currentStep" content="4"/>
 </head>
 <body>
 

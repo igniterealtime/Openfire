@@ -50,9 +50,6 @@
             }
             else {
                 JiveGlobals.setLocale(newLocale);
-                // update the sidebar status
-                session.setAttribute("jive.setup.sidebar.1","done");
-                session.setAttribute("jive.setup.sidebar.2","in_progress");
                 // redirect
                 response.sendRedirect("setup-host-settings.jsp");
                 return;
@@ -66,6 +63,7 @@
 <html>
 <head>
 <title><fmt:message key="setup.index.title" /></title>
+<meta name="currentStep" content="0"/>
 </head>
 <body>
 

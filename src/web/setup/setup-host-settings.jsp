@@ -73,11 +73,7 @@
             xmlSettings.put("adminConsole.securePort",Integer.toString(securePort));
             session.setAttribute("xmlSettings", xmlSettings);
 
-            // update the sidebar status
-            session.setAttribute("jive.setup.sidebar.2","done");
-            session.setAttribute("jive.setup.sidebar.3","in_progress");
-
-            // successful, so redirect
+            // Successful, so redirect
             response.sendRedirect("setup-datasource-settings.jsp");
             return;
         }
@@ -99,7 +95,8 @@
 
 <html>
 <head>
-<title><fmt:message key="setup.host.settings.title" /></title>
+    <title><fmt:message key="setup.host.settings.title" /></title>
+    <meta name="currentStep" content="1"/>
 </head>
 <body>
 

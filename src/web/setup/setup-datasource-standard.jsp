@@ -153,9 +153,6 @@
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);
             if (testConnection(errors)) {
-                // Update the sidebar status
-                session.setAttribute("jive.setup.sidebar.3","done");
-                session.setAttribute("jive.setup.sidebar.4","in_progress");
                 // Success, move on
                 response.sendRedirect("setup-profile-settings.jsp");
                 return;
@@ -195,7 +192,8 @@
 
 <html>
 <head>
-<title><fmt:message key="setup.datasource.standard.title" /></title>
+    <title><fmt:message key="setup.datasource.standard.title" /></title>
+    <meta name="currentStep" content="2"/>
 </head>
 <body>
 

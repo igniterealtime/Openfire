@@ -120,10 +120,7 @@
             DbConnectionManager.setConnectionProvider(conProvider);
             // Try to establish a connection to the datasource
             if (testConnection(errors)) {
-                // update the sidebar status
-                session.setAttribute("jive.setup.sidebar.3","done");
-                session.setAttribute("jive.setup.sidebar.4","in_progress");
-                // All good, so redirect
+                // Finished, so redirect
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
             }
@@ -134,8 +131,8 @@
 <html>
     <head>
         <title><fmt:message key="setup.datasource.jndi.setting" /></title>
+        <meta name="currentStep" content="2"/>
     </head>
-
 <body>
 
 <p class="jive-setup-page-header">

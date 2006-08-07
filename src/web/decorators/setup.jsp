@@ -34,6 +34,7 @@
         sidebar = "true";
     }
     boolean showSidebar = Boolean.parseBoolean(sidebar);
+    int currentStep = decoratedPage.getIntProperty("meta.currentStep");
 %>
 
 <%!
@@ -110,35 +111,8 @@
 
 <!-- BEGIN jive-sidebar -->
 <div id="jive-sidebar">
-    <%  if (showSidebar) { %>
-           <%!
-                final String INCOMPLETE = "incomplete";
-                final String IN_PROGRESS = "in_progress";
-                final String DONE = "done";
-            %>
-            <%  // Get sidebar values from the session:
-
-                String step1 = (String)session.getAttribute("jive.setup.sidebar.1");
-                String step2 = (String)session.getAttribute("jive.setup.sidebar.2");
-                String step3 = (String)session.getAttribute("jive.setup.sidebar.3");
-                String step4 = (String)session.getAttribute("jive.setup.sidebar.4");
-                String step5 = (String)session.getAttribute("jive.setup.sidebar.5");
-
-                if (step1 == null) { step1 = IN_PROGRESS; }
-                if (step2 == null) { step2 = INCOMPLETE; }
-                if (step3 == null) { step3 = INCOMPLETE; }
-                if (step4 == null) { step4 = INCOMPLETE; }
-                if (step5 == null) { step5 = INCOMPLETE; }
-
-                int currentStep = 1;
-                if (step1.equals(DONE)) { currentStep = 2; }
-                if (step2.equals(DONE)) { currentStep = 3; }
-                if (step3.equals(DONE)) { currentStep = 4; }
-                if (step4.equals(DONE)) { currentStep = 5; }
-                if (step5.equals(DONE)) { currentStep = 6; }
-
-                String[] items = {step1, step2, step3, step4, step5};
-                String[] names = {
+    <%  if (showSidebar) {
+               String[] names = {
                     LocaleUtils.getLocalizedString("setup.sidebar.language"),
                     LocaleUtils.getLocalizedString("setup.sidebar.settings"),
                     LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
@@ -156,10 +130,10 @@
 	<div class="jive-sidebar-group">
 	<strong><fmt:message key="setup.sidebar.title" /></strong>
 		<ul>
-			<%  for (int i=0; i<items.length; i++) { %>
-				<%  if (INCOMPLETE.equals(items[i])) { %>
+			<%  for (int i=0; i<names.length; i++) { %>
+				<%  if (currentStep < i) { %>
 				<li><%= names[i] %></li>
-				<%  } else if (IN_PROGRESS.equals(items[i])) { %>
+				<%  } else if (currentStep == i) { %>
 				<li class="jiveCurrent"><%= names[i] %></li>
 				<%  } else { %>
 				<li class="jiveComplete"><!--<a href="<%= links[i] %>">--><%= names[i] %></li>

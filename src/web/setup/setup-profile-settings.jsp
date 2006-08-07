@@ -30,9 +30,6 @@
 
     boolean next = request.getParameter("continue") != null;
     if (next) {
-        // Update the sidebar status
-        session.setAttribute("jive.setup.sidebar.4","done");
-        session.setAttribute("jive.setup.sidebar.5","in_progress");
         // Redirect
         response.sendRedirect("setup-admin-settings.jsp");
         return;
@@ -40,7 +37,8 @@
 %>
 <html>
 <head>
-<title>Profile Settings</title>
+    <title>Profile Settings</title>
+    <meta name="currentStep" content="3"/>
 </head>
 <body>
 

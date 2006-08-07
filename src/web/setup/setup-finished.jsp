@@ -39,7 +39,7 @@
 <html>
     <head>
         <title><fmt:message key="setup.finished.title" /></title>
-
+        <meta name="currentStep" content="5"/>
     </head>
 <body>
 

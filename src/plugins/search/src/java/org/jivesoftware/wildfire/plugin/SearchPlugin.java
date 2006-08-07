@@ -31,6 +31,7 @@ import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 import java.io.File;
 import java.util.*;
@@ -191,7 +192,9 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             if ("jabber:iq:search".equals(namespace)) {
                 try {
                     IQ replyPacket = handleIQ(packet);
-                    componentManager.sendPacket(this, replyPacket);
+                    if (replyPacket != null) {
+                        componentManager.sendPacket(this, replyPacket);
+                    }
                 }
                 catch (ComponentException e) {
                     componentManager.getLog().error(e);
@@ -237,6 +240,17 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         else if (IQ.Type.set.equals(packet.getType())) {
             return processSetPacket(packet);
+        } else
+        if (IQ.Type.result.equals(packet.getType()) || IQ.Type.error.equals(packet.getType())) {
+            // Ignore
+        }
+        else {
+            // Unknown type was sent so
+            IQ reply = new IQ(IQ.Type.error, packet.getID());
+            reply.setFrom(packet.getTo());
+            reply.setTo(packet.getFrom());
+            reply.setError(PacketError.Condition.bad_request);
+            return reply;
         }
 
         return null;
@@ -326,7 +340,10 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 Element searchField = (Element) fields.next();
             
                 String field = searchField.attributeValue("var");
-                String value = searchField.element("value").getTextTrim();
+                String value = "";
+                if (searchField.element("value") != null) {
+                    value = searchField.element("value").getTextTrim();
+                }
                 if (field.equals("search")) {
                     search = value;
                 }

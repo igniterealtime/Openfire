@@ -255,9 +255,14 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     public void groupDeleting(Group group, Map params) {
-        // Iterate on all the group users and update their rosters
-        for (JID deletedUser : getAffectedUsers(group)) {
-            groupUserDeleted(group, deletedUser);
+        // Get group members
+        Collection<JID> users = new HashSet<JID>(group.getMembers());
+        users.addAll(group.getAdmins());
+        // Get users whose roster will be updated
+        Collection<JID> affectedUsers = getAffectedUsers(group);
+        // Iterate on group members and update rosters of affected users
+        for (JID deletedUser : users) {
+            groupUserDeleted(group, affectedUsers, deletedUser);
         }
     }
 
@@ -618,6 +623,11 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 if (roster != null) {
                     roster.addSharedUser(group, addedUser);
                 }
+                // Check if the roster is still not in memory
+                if (addedUserRoster == null && server.isLocal(addedUser)) {
+                    addedUserRoster =
+                            (Roster) CacheManager.getCache("Roster").get(addedUser.getNode());
+                }
                 // Update the roster of the newly added group user.
                 if (addedUserRoster != null) {
                     Collection<Group> groups = GroupManager.getInstance().getGroups(userToUpdate);
@@ -680,6 +690,11 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             // Only update rosters in memory
             if (roster != null) {
                 roster.deleteSharedUser(group, deletedUser);
+            }
+            // Check if the roster is still not in memory
+            if (deletedUserRoster == null && server.isLocal(deletedUser)) {
+                deletedUserRoster =
+                        (Roster) CacheManager.getCache("Roster").get(deletedUser.getNode());
             }
             // Update the roster of the newly deleted group user.
             if (deletedUserRoster != null) {

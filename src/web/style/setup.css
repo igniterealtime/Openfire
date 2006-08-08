@@ -131,6 +131,9 @@ form {
 	margin: 0px;
 	padding: 0px 0px 14px 0px;
 	}
+#jive-body h1 span {
+	color: #255480;
+	}
 #jive-body p {
 	margin: 0px;
 	padding: 0px 0px 14px 0px;
@@ -147,17 +150,168 @@ form {
 	background: #f5f5f5 url(../images/setup_contentbox_bg.gif) repeat-x top;
 	-moz-border-radius: 4px;
 	}
-.jive-contentBox h2 {	
+.jive-contentBox h2 {
 	margin: 0px;
 	padding: 0px 0px 10px 0px;
 	font-size: 11pt;
 	color: #09345b;
 	}
+
+
+
+/* styles specific to the 'stepbar' (seen on the LDAP screens) */
+#jive-contentBox_stepbar {
+	display: block;
+	margin: 5px 0px 0px 0px;
+	padding: 3px;
+	border: 1px solid #aec2d6;
+	background-color: #eaf1f8;
+	color: #09345b;
+	font-size: 8pt;
+	}
+#jive-contentBox_stepbar span {
+	margin-right: 32px;
+	}
+#jive-contentBox_stepbar span strong {
+	color: #09345b;
+	}
+#jive-contentBox_stepbar span em {
+	color: #666;
+	font-style: normal;
+	}
+/* contentBox style, used with 'stepbar' above (seen on the LDAP screens) */
+.jive-contentBox_for-stepbar {
+	margin: 0px 0px 20px 0px;
+	border-top: 0px;
+	-moz-border-radius: 0px 0px 4px 4px;
+	}
+.jive-contentBox_for-stepbar h2 {
+	font-size: 14pt;
+	color: #396b9c;
+	}
+.jive-contentBox_for-stepbar h2 span {
+	font-size: 10pt;
+	color: #000;
+	}
+
+/* blue div container (seen on the LDAP screens) */
+.jive-contentBox_bluebox {
+	display: block;
+	position: relative;
+	border: 1px solid #dcdcdc;
+	background-color: #eaeff4;
+	-moz-border-radius: 3px;
+	margin: 0px 0px 12px 0px;
+	padding: 12px;
+	}
+.jive-contentBox_bluebox strong {
+	color: #09345b;
+	}
+
+/* form elements for LDAP */
+.jive-contentBox td select {
+	z-index: 10;
+	float: left;
+	}
+.jive-contentBox td input {
+	float: left;
+	}
+.jive-contentBox td select#jiveLDAPserverType,
+.jive-contentBox td input#jiveLDAPbasedn,
+.jive-contentBox td input#jiveLDAPadmindn {
+	width: 270px;
+	}
+.jive-contentBox td input#jiveLDAPhost,
+.jive-contentBox td input#jiveLDAPadminpwd {
+	width: 160px;
+	}
+
+
+/* button to toggle the advanced settings panel */
+.jiveAdvancedButton {
+	display: block;
+	position: relative;
+	width: auto;
+	clear: both;
+	margin-top: 0px;
+	}
+.jiveAdvancedButton a {
+	padding: 2px 0px 2px 14px;
+	margin: 0px 0px 5px 0px;
+	background: url('../images/twisty_closed_9x9.gif') no-repeat left;
+	background-position: 1px;
+	color: #34679a;
+	}
+a.jiveAdvancedButtonOn {
+	background: transparent url('../images/twisty_opened_9x9.gif') no-repeat left;
+	background-position: 1px;
+	}
+/* advanced settings panel (for Connection Settings) */
+.jiveadvancedPanelcs {
+	display: block;
+	position: relative;
+	clear: both;
+	background: #ececec;
+	border: 1px solid #dcdcdc;
+	margin: 5px 0px 10px 0px;
+	padding: 0px;
+	overflow: hidden;
+	-moz-border-radius: 4px;
+	}
+.jiveadvancedPanelcs div {
+	margin: 12px;
+	}
+.jiveadvancedPanelcs div table {
+	
+	background-color: #fff;
+	border: 1px solid #ccc;
+	}
+.jiveadvancedPanelcs div table th,
+.jiveadvancedPanelcs div table td {
+	font-size: 11px;
+	padding: 3px 5px 3px 5px;
+	}
+.jiveadvancedPanelcs div table th {
+	color: #fff;
+	font-weight: bold;
+	background-color: #82a1bc;
+	}
+.jiveadvancedPanelcs div table td.jive-advancedLabel {
+	color: #09345b;
+	font-weight: bold;
+	background-color: #eaeff4;
+	text-align: right;
+	}
+.jiveadvancedPanelcs div table td.jive-advancedDesc {
+	color: #333;
+	}
+.jiveadvancedPanelcs div table td.jive-advancedCenter {
+	text-align: center;
+	}
+.jiveadvancedPanelcs div table td input {
+	float: none;
+	}
+.jiveadvancedPanelcs div table td.jive-advancedBorderBottom {
+	border-bottom: 1px solid #e8e8e8;
+	}
+.jiveadvancedPanelcs div table td.jive-advancedBorderRight {
+	border-right: 1px solid #e8e8e8;
+	}
+
+
+
+/* language selection specific styles */
 #jive-setup-language {
 	padding: 0px 0px 10px 18px;
 	}
 #jive-setup-language p {
 	line-height: 180%;
+	}
+
+
+/* form buttons throughout setup process */
+.jive-buttons {
+	padding-top: 15px;
 	}
 .jive-contentBox input#jive-setup-save {
 	padding: 2px 5px 2px 5px;
@@ -169,7 +323,8 @@ form {
 	border: 1px solid #7c7c7c;
 	background: #d6892c url(../images/setup_btn_bg-orange.gif) repeat-x;
 	}
-.jive-contentBox input#jive-setup-skip {
+.jive-contentBox input#jive-setup-skip,
+.jive-contentBox input#jive-setup-back {
 	padding: 2px 5px 2px 5px;
 	margin: 0px 10px 0px 0px;
 	font-size: 11px;
@@ -178,6 +333,39 @@ form {
 	color: #fff;
 	border: 1px solid #7c7c7c;
 	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
+	}
+.jive-contentBox button#jive-setup-test {
+	padding: 2px 5px 1px 5px;
+	margin: 0px 10px 0px 0px;
+	font-size: 11px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	color: #fff;
+	border: 1px solid #7c7c7c;
+	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
+	}
+.jive-contentBox button#jive-setup-test img {
+	vertical-align: text-top;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	}
+.jive-contentBox a#jive-setup-test2 {
+	padding: 3px 5px 3px 5px;
+	margin: 0px 10px 0px 0px;
+	font-size: 11px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	color: #fff;
+	border: 1px solid #7c7c7c;
+	text-decoration: none;
+	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
+	}
+.jive-contentBox a#jive-setup-test2 img {
+	vertical-align: text-top;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
 	}
 .jive-description {
 	font-size: 11px;
@@ -199,6 +387,112 @@ form {
 	text-decoration: none;
 	-moz-border-radius: 4px;
 	}
+
+
+
+
+/* --------------------------------------------- */
+/*  Tooltip styles                               */
+/* --------------------------------------------- */
+.jive-setup-helpicon {
+	display: block;
+	float: left;
+	width: 17px;
+	height: 17px;
+	}
+.jive-setup-helpicon a {
+	display: block;
+	width: 14px;
+	height: 14px;
+	margin: 3px 0px 0px 3px;
+	background: transparent url(../images/setup_helpicon.gif) no-repeat;
+	}
+div.jiveTooltip {
+	position: absolute;
+	width: 330px;
+	padding: 6px;
+	background-color: #f9f5d5;
+	border: 1px solid #999;
+	text-align: left;
+	z-index: 20;
+	-moz-border-radius: 0px;
+	filter: progid:DXImageTransform.Microsoft.Alpha(opacity=92);
+	-moz-opacity: .92;
+	-khtml-opacity: .92;
+	}
+div.jiveTooltip .contents {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #333;
+	margin: 0;
+	padding: 0 3px;
+	filter: progid:DXImageTransform.Microsoft.Alpha(opacity=100);
+	-moz-opacity: 1;
+	-khtml-opacity: 1;
+	}
+
+
+
+/* --------------------------------------------- */
+/*  Test settings panel                          */
+/* --------------------------------------------- */
+
+.jive-testPanel {
+	display: block;
+	position: relative;
+	float: left;
+	margin: 0px;
+	padding: 0px;
+	border: 2px solid #666666;
+	background-color: #f8f7eb;
+	overflow: hidden;
+	z-index: 9997;
+	-moz-border-radius: 6px;
+	}
+.jive-testPanel-content {
+	display: block;
+	float: left;
+	padding: 20px;
+	font-size: 8pt;
+	z-index: 9999;
+	}
+.jive-testPanel-close a,
+.jive-testPanel-close a:visited {
+	float: right;
+	color: #666;
+	padding: 2px 5px 2px 18px;
+	margin: 0px;
+	font-size: 8pt;
+	background: transparent url(../images/setup_btn_closetestx.gif) no-repeat left;
+	background-position: 4;
+	border: 1px solid #ccc;
+	z-index: 9999;
+	}
+.jive-testPanel-close a:hover {
+	background-color: #e9e8d9;
+	}
+.jive-testPanel-content h2 {
+	font-size: 14pt;
+	color: #396b9c;
+	margin: 0px 0px 10px 0px;
+	padding: 0px;
+	}
+.jive-testPanel-content h2 span {
+	font-size: 10pt;
+	color: #000;
+	}
+.jive-testPanel-content h4 {
+	font-size: 12pt;
+	margin: 0px 0px 10px 0px;
+	padding: 0px;
+	}
+.jive-testPanel-content h4.jive-testSuccess {
+	color: #1e7100;
+	}
+.jive-testPanel-content h4.jive-testError {
+	color: #890000;
+	}
+
 
 
 /* --------------------------------------------- */

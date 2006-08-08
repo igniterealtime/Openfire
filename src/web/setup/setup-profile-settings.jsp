@@ -30,9 +30,17 @@
 
     boolean next = request.getParameter("continue") != null;
     if (next) {
-        // Redirect
-        response.sendRedirect("setup-admin-settings.jsp");
-        return;
+        // Figure out where to send the user.
+        String mode = request.getParameter("mode");
+
+        if ("default".equals(mode)) {
+            response.sendRedirect("setup-admin-settings.jsp");
+            return;
+        }
+        else if ("ldap".equals(mode)) {
+            response.sendRedirect("setup-ldap-server.jsp");
+            return;
+        }
     }
 %>
 <html>
@@ -47,7 +55,7 @@
 	</h1>
 
 	<p>
-	Choose whether or not Wildfire integrates with an existing directory server for user profiles.
+	Choose the user and group system to use with Wildfire.
 	</p>
 
 	<!-- BEGIN jive-contentBox -->
@@ -57,30 +65,31 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="" id="rb01" checked>
+        <input type="radio" name="mode" value="default" id="rb01" checked>
     </td>
     <td>
-        <label for="rb01"><b>None (default)</b></label><br>
-	    No directory server available.
+        <label for="rb01"><b>Default</b></label><br>
+	    Store users and groups in the Wildfire database. This is the best option for simple
+        deployments.
     </td>
 </tr>
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="" id="rb02" disabled>
+        <input type="radio" name="mode" value="ldap" id="rb02">
     </td>
     <td>
-        <label for="rb02"><b>Integrate with a directory server</b></label><br>
-	    Use an existing directory server (such as Active Directory, OpenLDAP, etc) for profile integration.
+        <label for="rb02"><b>Directory Server (LDAP)</b></label><br>
+	    Integrate with a directory server such as Active Directory or OpenLDAP using the
+        LDAP protocol. Users and groups are stored in the directory and treated as read-only.
     </td>
 </tr>
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="" id="rb03" disabled>
+        <input type="radio" name="mode" value="other" id="rb03" disabled>
     </td>
     <td>
         <label for="rb03"><b>Other</b></label><br>
-	    If you have a custom profile integration system, selecting this will create the config file
-	    <tt>\wildfire\foo.conf</tt>, though you will need to edit it manually after you complete the setup process.
+	    Users and groups are stored in a different external system.
     </td>
 </tr>
 </table>

@@ -257,10 +257,7 @@ function checkClick() {
 </tr>
 </table>
 
-
-
 <br>
-
 		<div align="right">
 			<input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
 			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">

@@ -22,6 +22,12 @@ import net.kano.joscar.snaccmd.*;
 
 import java.net.InetAddress;
 
+/**
+ * Base class for all FLAP handlers.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public abstract class BaseFlapConnection extends ClientFlapConn {
     protected ClientSnacProcessor sp;
     OSCARSession oscarSession;

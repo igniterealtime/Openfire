@@ -14,6 +14,12 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import net.kano.joscar.snac.SnacRequest;
 
+/**
+ * Handles events from pending SNAC manager.
+ * 
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public interface PendingSnacListener {
     void dequeueSnacs(SnacRequest[] pending);
 }

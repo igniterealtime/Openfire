@@ -31,11 +31,28 @@ public abstract class TransportSession implements Runnable {
      * Creates a TransportSession instance.
      *
      * @param registration Registration this session is associated with.
+     * @param jid JID of user associated with this session.
+     * @param transport Transport this session is associated with.
      */
     public TransportSession(Registration registration, JID jid, BaseTransport transport) {
-        this.jid = jid;
+        this.jid = new JID(jid.toBareJID());
         this.registration = registration;
         this.transport = transport;
+    }
+
+    /**
+     * Convenience constructor that includes priority.
+     *
+     * @param registration Registration this session is associated with.
+     * @param jid JID of user associated with this session.
+     * @param transport Transport this session is associated with.
+     * @param priority Priority associated with session.
+     */
+    public TransportSession(Registration registration, JID jid, BaseTransport transport, Integer priority) {
+        this.jid = new JID(jid.toBareJID());
+        this.registration = registration;
+        this.transport = transport;
+        addResource(jid.getResource(), priority);
     }
 
     /**
@@ -62,6 +79,34 @@ public abstract class TransportSession implements Runnable {
      * Is this session valid?  Set to false when session is done.
      */
     public boolean validSession = true;
+
+    /**
+     * Associates a resource with the session, and tracks it's priority.
+     */
+    public void addResource(String resource, Integer priority) {
+        resources.put(priority, resource);
+    }
+
+    /**
+     * Removes an association of a resource with the session.
+     */
+    public void removeResource(String resource) {
+        for (Integer i : resources.keySet()) {
+            if (resources.get(i).equals(resource)) {
+                resources.remove(i);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Returns the number of active resources.
+     *
+     * @return Number of active resources.
+     */
+    public int getResourceCount() {
+        return resources.size();
+    }
 
     /**
      * Retrieves the registration information associated with the session.

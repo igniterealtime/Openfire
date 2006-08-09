@@ -26,6 +26,12 @@ import net.kano.joscar.ssiitem.*;
 
 import java.net.InetAddress;
 
+/**
+ * Handles BOS related packets.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public class BOSConnection extends BasicFlapConnection {
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
 

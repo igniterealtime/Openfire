@@ -19,6 +19,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles pending SNAC commands.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public class PendingSnacMgr {
 
     protected Map<Integer,List<SnacRequest>> snacs = new HashMap<Integer,List<SnacRequest>>();

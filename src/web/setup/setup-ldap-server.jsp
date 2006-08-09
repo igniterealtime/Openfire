@@ -66,7 +66,7 @@ activeLink = thisID.id+"Link";
 }
 </script>
 
-	<h1>Profile Settings <span>- Connection Settings</span></h1>
+	<h1>Profile Settings <span>- LDAP Connection Settings</span></h1>
 
 	<p>Configure the directory server connection settings here.</p>
 
@@ -97,13 +97,14 @@ activeLink = thisID.id+"Link";
 				<option value="1" SELECTED>--Select directory server type--</option>
 				<option value="2">Active Directory</option>
 				<option value="3">OpenLDAP</option>
-				</select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'Lorem ipsum dolor something about this form option blah blah', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+                <option value="4">Other or Unknown</option>
+                </select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'Lorem ipsum dolor something about this form option blah blah', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right">Host:</td>
-			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server host; e.g. localhost or machine.example.com, etc. It is possible to use many LDAP servers but all of them <b>should share the same configuration</b> (e.g. SSL, baseDN, admin account, etc). To specify many LDAP servers use the comma or the white space character as delimiter.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server host name; e.g. localhost or ldap.example.com, etc.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			<td align="right">&nbsp;Port:</td>
-			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server port number. If this property is not set, the default value is 389.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="389"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server port number. The default value is 389.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right">Base DN:</td>

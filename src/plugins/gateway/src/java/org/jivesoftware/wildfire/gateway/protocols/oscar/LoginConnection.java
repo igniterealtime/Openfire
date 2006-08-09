@@ -23,6 +23,12 @@ import net.kano.joscar.snaccmd.auth.*;
 
 import java.net.InetAddress;
 
+/**
+ * Handles the login process with the OSCAR login server.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public class LoginConnection extends BaseFlapConnection {
     protected boolean loggedin = false;
 

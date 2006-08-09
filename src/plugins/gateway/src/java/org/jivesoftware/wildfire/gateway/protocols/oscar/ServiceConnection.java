@@ -23,6 +23,12 @@ import net.kano.joscar.snaccmd.search.*;
 
 import java.net.InetAddress;
 
+/**
+ * Represents a connection to a particular OSCAR service.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public class ServiceConnection extends BasicFlapConnection {
 
     protected int serviceFamily;

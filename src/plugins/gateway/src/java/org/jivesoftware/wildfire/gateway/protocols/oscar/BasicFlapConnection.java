@@ -35,6 +35,12 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 
+/**
+ * Handles incoming FLAP packets.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
     protected boolean sentClientReady = false;

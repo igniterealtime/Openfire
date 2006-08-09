@@ -12,7 +12,10 @@ package org.jivesoftware.wildfire.gateway;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.ComponentManager;
+
+import java.util.Map;
 
 /**
  * Transport Instance
@@ -21,7 +24,7 @@ import org.xmpp.component.ComponentManager;
  *
  * @author Daniel Henninger
  */
-public class TransportInstance {
+public class TransportInstance implements PropertyEventListener {
 
     private ComponentManager componentManager;
     private String description = null;
@@ -156,6 +159,38 @@ public class TransportInstance {
      */
     public BaseTransport getTransport() {
         return transport;
+    }
+
+    public void propertySet(String property, Map params) {
+        if (property.equals("plugin.gateway."+this.type.toString()+"Enabled")) {
+            enabled = Boolean.parseBoolean((String)params.get("value"));
+            if (enabled) {
+                if (!running) {
+                    startInstance();
+                }
+            }
+            else {
+                if (running) {
+                    stopInstance();
+                }
+            }
+        }
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        if (property.equals("plugin.gateway."+this.type.toString()+"Enabled")) {
+            if (running) {
+                stopInstance();
+            }
+        }
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+        // Ignore
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+        // Ignore
     }
 
 }

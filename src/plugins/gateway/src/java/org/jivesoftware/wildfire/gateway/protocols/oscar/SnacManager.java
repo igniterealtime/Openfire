@@ -21,6 +21,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles incoming SNAC packets.
+ *
+ * @author Daniel Henninger
+ * Heavily inspired by joscardemo from the joscar project.
+ */
 public class SnacManager {
     protected Map<Integer,List<BasicFlapConnection>> conns = new HashMap<Integer,List<BasicFlapConnection>>();
     protected PendingSnacMgr pendingSnacs = new PendingSnacMgr();

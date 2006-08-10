@@ -205,7 +205,27 @@ form {
 	padding: 12px;
 	}
 .jive-contentBox_bluebox strong {
+	display: block;
+	position: relative;
 	color: #09345b;
+	padding-bottom: 3px;
+	}
+
+/* grey div container (seen on the LDAP screens) */
+.jive-contentBox_greybox {
+	display: block;
+	position: relative;
+	border: 1px solid #dcdcdc;
+	background-color: #ececec;
+	-moz-border-radius: 3px;
+	margin: 0px 0px 12px 0px;
+	padding: 12px;
+	}
+.jive-contentBox_greybox strong {
+	display: block;
+	position: relative;
+	color: #09345b;
+	padding-bottom: 3px;
 	}
 
 /* form elements for LDAP */
@@ -222,9 +242,19 @@ form {
 	width: 270px;
 	}
 .jive-contentBox td input#jiveLDAPhost,
-.jive-contentBox td input#jiveLDAPadminpwd {
+.jive-contentBox td input#jiveLDAPadminpwd,
+.jive-contentBox td input#jiveLDAPusername,
+.jive-contentBox td input#jiveLDAPsearchfields,
+.jive-contentBox td input#jiveLDAPsearchfilter,
+.jive-contentBox td input#jiveLDAPgroupname,
+.jive-contentBox td input#jiveLDAPgroupmember,
+.jive-contentBox td input#jiveLDAPgroupdesc,
+.jive-contentBox td input#jiveLDAPgroupsearchfilter{
 	width: 160px;
 	}
+.jive-contentBox td label {
+	margin-right: 5px;
+}
 
 
 /* button to toggle the advanced settings panel */
@@ -246,6 +276,9 @@ a.jiveAdvancedButtonOn {
 	background: transparent url('../images/twisty_opened_9x9.gif') no-repeat left;
 	background-position: 1px;
 	}
+.jiveAdvancedButtonTopPad {
+	margin-top: 7px;
+	}
 /* advanced settings panel (for Connection Settings) */
 .jiveadvancedPanelcs {
 	display: block;
@@ -262,7 +295,6 @@ a.jiveAdvancedButtonOn {
 	margin: 12px;
 	}
 .jiveadvancedPanelcs div table {
-	
 	background-color: #fff;
 	border: 1px solid #ccc;
 	}
@@ -271,7 +303,8 @@ a.jiveAdvancedButtonOn {
 	font-size: 11px;
 	padding: 3px 5px 3px 5px;
 	}
-.jiveadvancedPanelcs div table th {
+.jiveadvancedPanelcs div table th,
+.jive-vcardTable th {
 	color: #fff;
 	font-weight: bold;
 	background-color: #82a1bc;
@@ -291,14 +324,48 @@ a.jiveAdvancedButtonOn {
 .jiveadvancedPanelcs div table td input {
 	float: none;
 	}
-.jiveadvancedPanelcs div table td.jive-advancedBorderBottom {
+.jiveadvancedPanelcs div table td.jive-advancedBorderBottom,
+.jive-vcardTable td.jive-vardBorderBottom {
 	border-bottom: 1px solid #e8e8e8;
 	}
-.jiveadvancedPanelcs div table td.jive-advancedBorderRight {
+.jiveadvancedPanelcs div table td.jive-advancedBorderRight,
+.jive-vcardTable td.jive-vardBorderRight {
 	border-right: 1px solid #e8e8e8;
 	}
-
-
+.jiveadvancedPanelu {
+	margin-top: 8px;
+	background-color: #fafafa;
+	border: 1px solid #dcdcdc;
+	-moz-border-radius: 3px;
+	padding: 8px;
+	}
+.jiveadvancedPanelu td {
+	white-space: nowrap;
+	}
+.jive-vcardTable {
+	width: 90%;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	}
+html>body .jive-vcardTable {
+	width: 100%;
+	}
+.jive-vcardTable th,
+.jive-vcardTable td {
+	font-size: 11px;
+	padding: 2px 5px 2px 5px;
+	}
+.jive-vcardTable th {
+	text-align: left;
+	}
+.jive-vcardTable td.jive-vcardTable-label,
+.jive-vcardTable td.jive-vcardTable-label strong {
+	color: #333;
+	}
+.jive-vcardTable td.jive-vcardTable-value input {
+	font-size: 10px;
+	width: 230px;
+	}
 
 /* language selection specific styles */
 #jive-setup-language {
@@ -492,6 +559,56 @@ div.jiveTooltip .contents {
 .jive-testPanel-content h4.jive-testError {
 	color: #890000;
 	}
+.jive-testpanel-vcard {
+	display: block;
+	float: left;
+	width: 682px;
+	border: 1px solid #d8d7c6;
+	padding: 4px;
+	background-color: #fff;
+	}
+.jive-testTable-vcard {
+	float: left;
+	}
+.jive-testpanel-vcard-header {
+	border: 1px solid #dddddd;
+	background-color: #eaeaea;
+	font-weight: bold;
+	padding: 1px 2px 1px 4px;
+	font-size: 8pt;
+	}
+.jive-testpanel-vcard-label {
+	text-align: right;
+	padding: 1px 2px 1px 6px;
+	color: #666;
+	font-size: 8pt;
+	}
+.jive-testpanel-vcard-value {
+	text-align: left;
+	padding: 1px 8px 1px 2px;
+	font-size: 8pt;
+	}
+.jive-testpanel-vcard-value a {
+	color: #34679a;
+	}
+.jive-testpanel-vcard-value strong {
+	color: #890000;
+	}
+.jive-testpanel-vcard-next {
+	text-align: right;
+	padding-top: 12px;
+	}
+.jive-testpanel-vcard-next a {
+	display: block;
+	float: right;
+	font-weight: bold;
+	padding-right: 18px;
+	margin-right: 4px;
+	background: transparent url(../images/setup_nextprofile.gif) no-repeat right;
+	color: #34679a;
+	text-decoration: none;
+	}
+
 
 
 

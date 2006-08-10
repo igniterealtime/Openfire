@@ -27,8 +27,10 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages the registration and delegation of Components. The ComponentManager
@@ -45,7 +47,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class InternalComponentManager implements ComponentManager, RoutableChannelHandler {
 
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
+    private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
+    /**
+     * Holds the list of listeners that will be notified of component events.
+     */
+    private List<ComponentEventListener> listeners =
+            new CopyOnWriteArrayList<ComponentEventListener>();
 
     private static InternalComponentManager instance = new InternalComponentManager();
     /**
@@ -104,6 +112,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             throw e;
         }
 
+        // Notify listeners that a new component has been registered
+        for (ComponentEventListener listener : listeners) {
+            listener.componentRegistered(component, componentJID);
+        }
+
         // Check for potential interested users.
         checkPresences();
         // Send a disco#info request to the new component. If the component provides information
@@ -113,6 +126,8 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
 
     public void removeComponent(String subdomain) {
         Component component = components.remove(subdomain);
+        // Remove any info stored with the component being removed
+        componentInfo.remove(subdomain);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
@@ -130,6 +145,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         if (component != null) {
             component.shutdown();
         }
+
+        // Notify listeners that a new component has been registered
+        for (ComponentEventListener listener : listeners) {
+            listener.componentUnregistered(component, componentJID);
+        }
     }
 
     public void sendPacket(Component component, Packet packet) {
@@ -137,6 +157,39 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         if (router != null) {
             router.route(packet);
         }
+    }
+
+    /**
+     * Adds a new listener that will be notified of component events. Events being
+     * notified are: 1) when a component is added to the component manager, 2) when
+     * a component is deleted and 3) when disco#info is received from a component.
+     *
+     * @param listener the new listener to notify of component events.
+     */
+    public void addListener(ComponentEventListener listener) {
+        listeners.add(listener);
+        // Notify the new listener about existing components
+        for (Map.Entry<String, Component> entry : components.entrySet()) {
+            String subdomain = entry.getKey();
+            Component component = entry.getValue();
+            JID componentJID = new JID(subdomain + "." + serverDomain);
+            listener.componentRegistered(component, componentJID);
+            // Check if there is disco#info stored for the component
+            IQ disco = componentInfo.get(subdomain);
+            if (disco != null) {
+                listener.componentInfoReceived(component, disco);
+            }
+        }
+    }
+
+    /**
+     * Removes the specified listener from the listeners being notified of component
+     * events.
+     *
+     * @param listener the listener to remove.
+     */
+    public void removeListener(ComponentEventListener listener) {
+        listeners.remove(listener);
     }
 
     public String getProperty(String name) {
@@ -336,6 +389,13 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                     catch (Exception e) {
                         Log.error("Error processing disco packet of component: " + component +
                                 " - " + packet.toXML(), e);
+                    }
+                    // Store the IQ disco#info returned by the component
+                    String subdomain = packet.getFrom().getDomain().replace("." + serverDomain, "");
+                    componentInfo.put(subdomain, iq);
+                    // Notify listeners that a component answered the disco#info request
+                    for (ComponentEventListener listener : listeners) {
+                        listener.componentInfoReceived(component, iq);
                     }
                 }
             }

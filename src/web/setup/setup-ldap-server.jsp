@@ -36,35 +36,7 @@
 
 </head>
 
-<style type="text/css" title="setupStyle" media="screen">
-	@import "../style/lightbox.css";
-</style>
 <body>
-<script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
-<script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
-<script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
-<script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
-<script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
-<script language="javascript" type="text/javascript">
-/*
-togglePanel function
-This is for showing and hiding the advanced options panel.
-This toggles toggles an individual panel (slides up and down).
-*/
-
-function togglePanel(thisID) {
-
-activeLink = thisID.id+"Link";
-
-	if ($(thisID).style.display != 'none') {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "";
-	} else {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "jiveAdvancedButtonOn";
-	}
-}
-</script>
 
 	<h1>Profile Settings <span>- LDAP Connection Settings</span></h1>
 

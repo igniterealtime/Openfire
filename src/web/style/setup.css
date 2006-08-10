@@ -244,17 +244,19 @@ form {
 .jive-contentBox td input#jiveLDAPhost,
 .jive-contentBox td input#jiveLDAPadminpwd,
 .jive-contentBox td input#jiveLDAPusername,
-.jive-contentBox td input#jiveLDAPsearchfields,
-.jive-contentBox td input#jiveLDAPsearchfilter,
 .jive-contentBox td input#jiveLDAPgroupname,
 .jive-contentBox td input#jiveLDAPgroupmember,
 .jive-contentBox td input#jiveLDAPgroupdesc,
 .jive-contentBox td input#jiveLDAPgroupsearchfilter{
 	width: 160px;
 	}
+.jive-contentBox td input#jiveLDAPsearchfields,
+.jive-contentBox td input#jiveLDAPsearchfilter {
+	width: 220px;
+	}
 .jive-contentBox td label {
 	margin-right: 5px;
-}
+	}
 
 
 /* button to toggle the advanced settings panel */
@@ -284,6 +286,7 @@ a.jiveAdvancedButtonOn {
 	display: block;
 	position: relative;
 	clear: both;
+	width: 100%;
 	background: #ececec;
 	border: 1px solid #dcdcdc;
 	margin: 5px 0px 10px 0px;
@@ -334,6 +337,7 @@ a.jiveAdvancedButtonOn {
 	}
 .jiveadvancedPanelu {
 	margin-top: 8px;
+	width: 97%;
 	background-color: #fafafa;
 	border: 1px solid #dcdcdc;
 	-moz-border-radius: 3px;
@@ -342,6 +346,9 @@ a.jiveAdvancedButtonOn {
 .jiveadvancedPanelu td {
 	white-space: nowrap;
 	}
+
+
+
 .jive-vcardTable {
 	width: 90%;
 	background-color: #fff;
@@ -435,9 +442,13 @@ html>body .jive-vcardTable {
 	border: 0px;
 	}
 .jive-description {
+	display: block;
+	clear: both;
 	font-size: 11px;
 	}
 .jive-error-text {
+	display: block;
+	clear: both;
 	color : #f00;
 	}
 .jive_setup_launchAdmin a,

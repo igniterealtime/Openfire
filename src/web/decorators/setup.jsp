@@ -92,7 +92,15 @@
 
 <style type="text/css" title="setupStyle" media="screen">
 	@import "../style/setup.css";
+	@import "../style/lightbox.css";
 </style>
+
+<script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
+<script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
+<script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
+<script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
+<script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
+<script language="javascript" type="text/javascript" src="../js/setup.js"></script>
 
 </head>
 

@@ -283,17 +283,11 @@ function checkSubmit() {
     <td>
         <input type="text" name="driver" size="50" maxlength="150"
          value="<%= ((driver != null) ? driver : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.jdbc_info" />
-        </span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.jdbc_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("driver") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("driver") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
@@ -304,17 +298,11 @@ function checkSubmit() {
     <td>
         <input type="text" name="serverURL" size="50" maxlength="250"
          value="<%= ((serverURL != null) ? serverURL : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.valid_url" />
-        </span>
+	    <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.valid_url" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("serverURL") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("serverURL") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
@@ -326,17 +314,11 @@ function checkSubmit() {
     <td>
         <input type="text" name="username" size="20" maxlength="50"
          value="<%= ((username != null) ? username : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.username_info" />
-        </span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.username_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("username") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("username") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
@@ -347,17 +329,11 @@ function checkSubmit() {
     <td>
         <input type="password" name="password" size="20" maxlength="50"
          value="<%= ((password != null) ? password : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.password_info" />
-        </span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.password_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("password") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("password") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
@@ -367,30 +343,20 @@ function checkSubmit() {
         <fmt:message key="setup.datasource.standard.connect" />
     </td>
     <td>
-        <fmt:message key="setup.datasource.standard.min" /> <input type="text" name="minConnections" size="5" maxlength="5"
-         value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
-        &nbsp;
-        <fmt:message key="setup.datasource.standard.max" /> <input type="text" name="maxConnections" size="5" maxlength="5"
-         value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.pool" />
-        </span>
+        <span style="display: block; float: left; padding: 2px 2px 0px 0px;"><fmt:message key="setup.datasource.standard.min" /></span>
+	    <input type="text" name="minConnections" size="5" maxlength="5" value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
+        <span style="display: block; float: left; padding: 2px 2px 0px 5px;"><fmt:message key="setup.datasource.standard.max" /></span>
+	    <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("minConnections") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("minConnections") %>
             </span>
-
         <%  } %>
         <%  if (errors.get("maxConnections") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("maxConnections") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
@@ -400,24 +366,18 @@ function checkSubmit() {
     </td>
     <td>
         <input type="text" name="connectionTimeout" size="5" maxlength="5"
-         value="<%= connectionTimeout %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.datasource.standard.timeout_info" />
-        </span>
+         value="<%= connectionTimeout %>"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;">Days</span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.timeout_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
         <%  if (errors.get("connectionTimeout") != null) { %>
-
-            <br>
             <span class="jive-error-text">
             <%= errors.get("connectionTimeout") %>
             </span>
-
         <%  } %>
     </td>
 </tr>
 </table>
 
-<br><br>
+<br>
 
 		<div align="right"><span class="jive-description">
 			<fmt:message key="setup.datasource.standard.note" /></span>

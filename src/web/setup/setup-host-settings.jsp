@@ -118,56 +118,47 @@
 <tr valign="top">
     <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.domain" />
-        <%  if (errors.get("domain") != null) { %>
-            <span class="jive-error-text"><br>
-            <fmt:message key="setup.host.settings.invalid_domain" />
-            </span>
-        <%  } %>
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="domain"
          value="<%= ((domain != null) ? domain : "") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.host.settings.hostname" />
-        </span>
+	    <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.hostname" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
+        <%  if (errors.get("domain") != null) { %>
+            <span class="jive-error-text">
+            <fmt:message key="setup.host.settings.invalid_domain" />
+            </span>
+        <%  } %>
     </td>
 </tr>
 <% if (XMPPServer.getInstance().isStandAlone()){ %>
 <tr valign="top">
     <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.port" />
-        <%  if (errors.get("embeddedPort") != null) { %>
-            <span class="jive-error-text"><br>
-            <fmt:message key="setup.host.settings.invalid_port" />
-            </span>
-        <%  } %>
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="embeddedPort"
          value="<%= ((embeddedPort != Integer.MIN_VALUE) ? ""+embeddedPort : "9090") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.host.settings.port_number" />
-        </span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
+        <%  if (errors.get("embeddedPort") != null) { %>
+            <span class="jive-error-text">
+            <fmt:message key="setup.host.settings.invalid_port" />
+            </span>
+        <%  } %>
     </td>
 </tr>
 <tr valign="top">
     <td width="1%" nowrap align="right">
         <fmt:message key="setup.host.settings.secure_port" />
-        <%  if (errors.get("securePort") != null) { %>
-            <span class="jive-error-text"><br>
-            <fmt:message key="setup.host.settings.invalid_port" />
-            </span>
-        <%  } %>
     </td>
     <td width="99%">
         <input type="text" size="6" maxlength="6" name="securePort"
          value="<%= ((securePort != Integer.MIN_VALUE) ? ""+securePort : "9091") %>">
-        <span class="jive-description">
-        <br>
-        <fmt:message key="setup.host.settings.secure_port_number" />
-        </span>
+        <span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.secure_port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span>
+         <%  if (errors.get("securePort") != null) { %>
+            <span class="jive-error-text">
+            <fmt:message key="setup.host.settings.invalid_port" />
+            </span>
+        <%  } %>
     </td>
 </tr>
 <% } %>

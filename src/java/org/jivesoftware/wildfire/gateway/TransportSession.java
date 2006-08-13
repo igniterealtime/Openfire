@@ -25,7 +25,7 @@ import java.util.TreeMap;
  *
  * @author Daniel Henninger
  */
-public abstract class TransportSession implements Runnable {
+public abstract class TransportSession extends Thread {
 
     /**
      * Creates a TransportSession instance.
@@ -147,9 +147,9 @@ public abstract class TransportSession implements Runnable {
     /**
      * Handles monitoring of whether session is still valid.
      */
-    public void run() {
-        while (validSession) { Log.debug("This is the loop running.  Just want to catch it doing so."); }
-    }
+//    public void run() {
+//        while (validSession) { }
+//    }
 
     /**
      * Indicates that the session is done and should be stopped.

@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
-import org.hn.sleek.jmml.ContactStatus;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.PresenceType;
@@ -18,6 +17,7 @@ import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import net.sf.jml.MsnUserStatus;
 
 /**
  * MSN Transport Interface.
@@ -61,27 +61,27 @@ public class MSNTransport extends BaseTransport {
      *
      * @param jabStatus Jabber presence type.
      */
-    public String convertJabStatusToMSN(PresenceType jabStatus) {
+    public MsnUserStatus convertJabStatusToMSN(PresenceType jabStatus) {
         if (jabStatus == PresenceType.available) {
-            return ContactStatus.ONLINE;
+            return MsnUserStatus.ONLINE;
         }
         else if (jabStatus == PresenceType.away) {
-            return ContactStatus.AWAY;
+            return MsnUserStatus.AWAY;
         }
         else if (jabStatus == PresenceType.xa) {
-            return ContactStatus.AWAY;
+            return MsnUserStatus.AWAY;
         }
         else if (jabStatus == PresenceType.dnd) {
-            return ContactStatus.BUSY;
+            return MsnUserStatus.BUSY;
         }
         else if (jabStatus == PresenceType.chat) {
-            return ContactStatus.ONLINE;
+            return MsnUserStatus.ONLINE;
         }
         else if (jabStatus == PresenceType.unavailable) {
-            return ContactStatus.OFFLINE;
+            return MsnUserStatus.OFFLINE;
         }
         else {
-            return ContactStatus.ONLINE;
+            return MsnUserStatus.ONLINE;
         }
     }
 
@@ -91,28 +91,28 @@ public class MSNTransport extends BaseTransport {
      * @param msnStatus MSN ContactStatus constant.
      */
     public void setUpPresencePacket(Presence packet, String msnStatus) {
-        if (msnStatus.equals(ContactStatus.ONLINE)) {
+        if (msnStatus.equals(MsnUserStatus.ONLINE)) {
             // We're good, send as is..
         }
-        else if (msnStatus.equals(ContactStatus.AWAY)) {
+        else if (msnStatus.equals(MsnUserStatus.AWAY)) {
             packet.setShow(Presence.Show.away);
         }
-        else if (msnStatus.equals(ContactStatus.BE_RIGHT_BACK)) {
+        else if (msnStatus.equals(MsnUserStatus.BE_RIGHT_BACK)) {
             packet.setShow(Presence.Show.away);
         }
-        else if (msnStatus.equals(ContactStatus.BUSY)) {
+        else if (msnStatus.equals(MsnUserStatus.BUSY)) {
             packet.setShow(Presence.Show.dnd);
         }
-        else if (msnStatus.equals(ContactStatus.IDLE)) {
+        else if (msnStatus.equals(MsnUserStatus.IDLE)) {
             packet.setShow(Presence.Show.away);
         }
-        else if (msnStatus.equals(ContactStatus.OFFLINE)) {
+        else if (msnStatus.equals(MsnUserStatus.OFFLINE)) {
             packet.setType(Presence.Type.unavailable);
         }
-        else if (msnStatus.equals(ContactStatus.ON_THE_PHONE)) {
+        else if (msnStatus.equals(MsnUserStatus.ON_THE_PHONE)) {
             packet.setShow(Presence.Show.dnd);
         }
-        else if (msnStatus.equals(ContactStatus.OUT_TO_LUNCH)) {
+        else if (msnStatus.equals(MsnUserStatus.OUT_TO_LUNCH)) {
             packet.setShow(Presence.Show.xa);
         }
     }

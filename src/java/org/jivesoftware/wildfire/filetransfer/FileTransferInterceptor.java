@@ -31,6 +31,6 @@ public interface FileTransferInterceptor {
      * not go through.
      *
      */
-    void interceptFileTransfer(FileTransferProgress transfer, boolean isReady)
+    void interceptFileTransfer(FileTransfer transfer, boolean isReady)
             throws FileTransferRejectedException;
 }

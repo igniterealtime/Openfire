@@ -27,6 +27,7 @@ import org.xmpp.packet.JID;
 
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Provides several utility methods for file transfer manager implementaions to utilize.
@@ -38,6 +39,9 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
     private static final String CACHE_NAME = "File Transfer Cache";
 
     private final Map<String, FileTransfer> fileTransferMap;
+
+    private final List<FileTransferInterceptor> fileTransferInterceptorList
+            = new ArrayList<FileTransferInterceptor>();
 
     /**
      * Default constructor creates the cache.
@@ -93,13 +97,9 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
     }
 
     public boolean acceptIncomingFileTransferRequest(FileTransfer transfer)
+            throws FileTransferRejectedException
     {
-        try {
-            fireFileTransferMetaIntercept(transfer);
-        }
-        catch (FileTransferRejectedException e) {
-            return false;
-        }
+        fireFileTransferIntercept(transfer, false);
         if(transfer != null) {
             String streamID = transfer.getSessionID();
             JID from = new JID(transfer.getInitiator());
@@ -125,8 +125,8 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         cacheFileTransfer(transferDigest, transfer);
     }
 
-    private FileTransfer createFileTransfer(String packetID, JID from,
-                                                     JID to, Element siElement) {
+    private FileTransfer createFileTransfer(JID from,
+                                            JID to, Element siElement) {
         String streamID = siElement.attributeValue("id");
         String mimeType = siElement.attributeValue("mime-type");
         String profile = siElement.attributeValue("profile");
@@ -147,22 +147,26 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return transfer;
     }
 
-
-
     public void addFileTransferInterceptor(FileTransferInterceptor interceptor) {
+        fileTransferInterceptorList.add(interceptor);
     }
 
     public void removeFileTransferInterceptor(FileTransferInterceptor interceptor) {
+        fileTransferInterceptorList.remove(interceptor);
     }
 
-    public void fireFileTransferIntercept(FileTransferProgress transfer)
+    public void fireFileTransferIntercept(FileTransferProgress transfer, boolean isReady)
             throws FileTransferRejectedException
     {
+        fireFileTransferIntercept(fileTransferMap.get(transfer.getSessionID()), isReady);
     }
 
-    private void fireFileTransferMetaIntercept(FileTransfer transfer) throws
-            FileTransferRejectedException
+    private void fireFileTransferIntercept(FileTransfer transfer, boolean isReady)
+            throws FileTransferRejectedException
     {
+        for(FileTransferInterceptor interceptor : fileTransferInterceptorList) {
+            interceptor.interceptFileTransfer(transfer, isReady);
+        }
     }
 
     /**
@@ -187,13 +191,17 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                     if (iq.getType().equals(IQ.Type.set)) {
                         JID from = iq.getFrom();
                         JID to = iq.getTo();
-                        String packetID = iq.getID();
 
                         FileTransfer transfer =
-                                createFileTransfer(packetID, from, to, childElement);
+                                createFileTransfer(from, to, childElement);
 
-                        if (transfer == null || !acceptIncomingFileTransferRequest(transfer)) {
-                            throw new PacketRejectedException();
+                        try {
+                            if (transfer == null || !acceptIncomingFileTransferRequest(transfer)) {
+                                throw new PacketRejectedException();
+                            }
+                        }
+                        catch (FileTransferRejectedException e) {
+                            throw new PacketRejectedException(e);
                         }
                     }
                 }

@@ -44,7 +44,7 @@ public interface FileTransferManager extends Module {
      * @param transfer the transfer to test for acceptance
      * @return true if it should be accepted false if it should not.
      */
-    boolean acceptIncomingFileTransferRequest(FileTransfer transfer);
+    boolean acceptIncomingFileTransferRequest(FileTransfer transfer) throws FileTransferRejectedException;
 
     /**
      * Registers that a transfer has begun through the proxy connected to the server.
@@ -62,5 +62,6 @@ public interface FileTransferManager extends Module {
 
     void removeFileTransferInterceptor(FileTransferInterceptor interceptor);
 
-    void fireFileTransferIntercept(FileTransferProgress transfer) throws FileTransferRejectedException;
+    void fireFileTransferIntercept(FileTransferProgress transfer, boolean isReady)
+            throws FileTransferRejectedException;
 }

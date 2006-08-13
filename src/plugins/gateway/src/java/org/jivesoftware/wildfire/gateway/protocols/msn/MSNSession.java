@@ -11,9 +11,10 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import java.util.Date;
-import org.hn.sleek.jmml.MessengerServerManager;
-import org.hn.sleek.jmml.MSNException;
-import org.jivesoftware.util.Log;
+import net.sf.jml.MsnMessenger;
+import net.sf.jml.MsnProtocol;
+import net.sf.jml.Email;
+import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -38,14 +39,19 @@ public class MSNSession extends TransportSession {
     public MSNSession(Registration registration, JID jid, MSNTransport transport) {
         super(registration, jid, transport);
 
-        msnManager = MessengerServerManager.getInstance();
-        msnManager.addMessengerClientListener(new MSNListener(this));
+        msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
+        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP11 });
     }
 
     /**
      * MSN session
      */
-    private MessengerServerManager msnManager = null;
+    private MsnMessenger msnMessenger = null;
+
+    /**
+     * Login status
+     */
+    private boolean loginStatus = false;
 
     /**
      * Log in to MSN.
@@ -55,22 +61,20 @@ public class MSNSession extends TransportSession {
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
-            try {
-                msnManager.signIn(registration.getUsername(), registration.getPassword(), ((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            msnMessenger.setLogIncoming(true);
+            msnMessenger.setLogOutgoing(true);
+            msnMessenger.addListener(new MSNListener(this));
+            msnMessenger.login();
 
-                Presence p = new Presence();
-                p.setTo(getJID());
-                p.setFrom(getTransport().getJID());
-                getTransport().sendPacket(p);
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
 
-                msnManager.setPrivacyMode(true);
-                msnManager.setReverseListBehaviour(true);
+            getRegistration().setLastLogin(new Date());
 
-                getRegistration().setLastLogin(new Date());
-            }
-            catch (MSNException e) {
-                Log.error("MSN exception thrown while logging in:", e);
-            }
+            loginStatus = true;
         }
     }
 
@@ -79,31 +83,27 @@ public class MSNSession extends TransportSession {
      */
     public void logOut() {
         if (this.isLoggedIn()) {
-            try {
-                msnManager.signOut();
-                Presence p = new Presence(Presence.Type.unavailable);
-                p.setTo(getJID());
-                p.setFrom(getTransport().getJID());
-                getTransport().sendPacket(p);
-            }
-            catch (MSNException e) {
-                Log.error("MSN exception thrown while logging out:", e);
-            }
+            msnMessenger.logout();
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
+            loginStatus = false;
         }
     }
 
     /**
      * Retrieves the manager for this session.
      */
-    public MessengerServerManager getManager() {
-        return msnManager;
+    public MsnMessenger getManager() {
+        return msnMessenger;
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
      */
     public Boolean isLoggedIn() {
-        return msnManager.isConnected();
+        return loginStatus;
     }
 
     /**
@@ -124,12 +124,7 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#sendMessage(org.xmpp.packet.JID, String)
      */
     public void sendMessage(JID jid, String message) {
-        try {
-            msnManager.sendMessage(getTransport().convertJIDToID(jid), message);
-        }
-        catch (MSNException e) {
-            Log.error("MSN exception while sending message:", e);
-        }
+        msnMessenger.sendText(Email.parseStr(getTransport().convertJIDToID(jid)), message);
     }
 
     /**
@@ -143,12 +138,7 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String) 
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
-        try {
-            msnManager.setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
-        }
-        catch (MSNException e) {
-            Log.error("MSN exception while setting status:", e);
-        }
+        // @todo need to implement this
     }
 
     /**

@@ -40,6 +40,7 @@ public class MSNTransport extends BaseTransport {
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus) {
         Log.debug("Logging in to MSN gateway.");
         TransportSession session = new MSNSession(registration, jid, this);
+        session.start();
         ((MSNSession)session).logIn(presenceType, verboseStatus);
         return session;
     }
@@ -52,6 +53,7 @@ public class MSNTransport extends BaseTransport {
     public void registrationLoggedOut(TransportSession session) {
         Log.debug("Logging out of MSN gateway.");
         ((MSNSession)session).logOut();
+        session.stop();
     }
 
     /**

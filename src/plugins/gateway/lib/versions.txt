@@ -1,7 +1,10 @@
 Name                   |  Version
 ---------------------------------------------
-joscar.jar             | 0.9.3 (patched)
+cindy.jar              | 2.4.3
+commons-logging.jar    | 1.1
+jml.jar                | 1.0a2
 jmml.jar               | cvs-2006-07-19
-picocontainer          | 1.2.0
+joscar.jar             | 0.9.3 (patched)
+picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61
 ymsg_support.jar       | 0.6

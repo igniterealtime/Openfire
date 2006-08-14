@@ -204,7 +204,7 @@ public abstract class BaseTransport implements Component {
                 // This packet is to the transport itself.
                 if (packet.getType() == null) {
                     // User has come online.
-                    TransportSession session = null;
+                    TransportSession session;
                     try {
                         session = sessionManager.getSession(from);
 
@@ -219,7 +219,7 @@ public abstract class BaseTransport implements Component {
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
                     // User has gone offline.
-                    TransportSession session = null;
+                    TransportSession session;
                     try {
                         session = sessionManager.getSession(from);
                         if (session.isLoggedIn()) {
@@ -235,7 +235,7 @@ public abstract class BaseTransport implements Component {
                 }
                 else if (packet.getType() == Presence.Type.probe) {
                     // Client is asking for presence status.
-                    TransportSession session = null;
+                    TransportSession session;
                     try {
                         session = sessionManager.getSession(from);
                         if (session.isLoggedIn()) {
@@ -428,6 +428,8 @@ public abstract class BaseTransport implements Component {
      */
     private List<Packet> handleIQRegister(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
+        JID from = packet.getFrom();
+        JID to = packet.getTo();
 
         Element remove = packet.getChildElement().element("remove");
         if (remove != null) {
@@ -437,15 +439,15 @@ public abstract class BaseTransport implements Component {
 
             // Tell the end user the transport went byebye.
             Presence unavailable = new Presence(Presence.Type.unavailable);
-            unavailable.setTo(packet.getFrom());
-            unavailable.setFrom(packet.getTo());
+            unavailable.setTo(from);
+            unavailable.setFrom(to);
             reply.add(unavailable);
 
             try {
-                this.deleteRegistration(packet.getFrom());
+                this.deleteRegistration(from);
             }
             catch (UserNotFoundException e) {
-                Log.error("Error cleaning up contact list of: " + packet.getFrom());
+                Log.error("Error cleaning up contact list of: " + from);
                 result.setError(Condition.bad_request);
             }
 
@@ -499,10 +501,10 @@ public abstract class BaseTransport implements Component {
                     reply.add(result);
 
                     try {
-                        this.addNewRegistration(packet.getFrom(), username, password);
+                        this.addNewRegistration(from, username, password);
                     }
                     catch (UserNotFoundException e) {
-                        Log.error("Someone attempted to register with the gateway who is not registered with the server: " + packet.getFrom());
+                        Log.error("Someone attempted to register with the gateway who is not registered with the server: " + from);
                         IQ eresult = IQ.createResultIQ(packet);
                         eresult.setError(Condition.bad_request);
                         reply.add(eresult);
@@ -511,8 +513,8 @@ public abstract class BaseTransport implements Component {
                     // Lets ask them what their presence is, maybe log
                     // them in immediately.
                     Presence p = new Presence(Presence.Type.probe);
-                    p.setTo(packet.getFrom());
-                    p.setFrom(packet.getTo());
+                    p.setTo(from);
+                    p.setFrom(to);
                     reply.add(p);
                 }
             }
@@ -534,8 +536,17 @@ public abstract class BaseTransport implements Component {
                 passwordField.setType(FormField.Type.text_private);
 
                 response.addElement("instructions").addText("Please enter your " + this.getName() + " username and password.");
-                response.addElement("username");
-                response.addElement("password");
+                Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+                if (registrations.iterator().hasNext()) {
+                    Registration registration = registrations.iterator().next();
+                    response.addElement("registered");
+                    response.addElement("username").addText(registration.getUsername());
+                    response.addElement("password").addText(registration.getPassword());
+                }
+                else {
+                    response.addElement("username");
+                    response.addElement("password");
+                }
 
                 result.setChildElement(response);
 
@@ -702,10 +713,10 @@ public abstract class BaseTransport implements Component {
      * @param userjid JID of user to have item added to their roster.
      * @param contactjid JID to add to roster.
      * @param nickname Nickname of item. (can be null)
-     * @param group Group item is to be placed in. (can be null)
+     * @param groups List of group the item is to be placed in. (can be null)
      * @throws UserNotFoundException if userjid not found.
      */
-    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, String group) throws UserNotFoundException {
+    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, ArrayList<String> groups) throws UserNotFoundException {
         try {
             Roster roster = rosterManager.getRoster(userjid.getNode());
             try {
@@ -719,13 +730,11 @@ public abstract class BaseTransport implements Component {
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     changed = true;
                 }
-                if (!gwitem.getNickname().equals(nickname)) {
+                if (nickname != null && !gwitem.getNickname().equals(nickname)) {
                     gwitem.setNickname(nickname);
                     changed = true;
                 }
                 List<String> curgroups = gwitem.getGroups();
-                List<String> groups = new ArrayList<String>();
-                groups.add(group);
                 if (curgroups != groups) {
                     try {
                         gwitem.setGroups(groups);
@@ -745,8 +754,6 @@ public abstract class BaseTransport implements Component {
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     gwitem.setNickname(nickname);
-                    List<String> groups = new ArrayList<String>();
-                    groups.add(group);
                     try {
                         gwitem.setGroups(groups);
                     }
@@ -768,6 +775,26 @@ public abstract class BaseTransport implements Component {
         catch (UserNotFoundException e) {
             throw new UserNotFoundException("Could not find roster for " + userjid.toString());
         }
+    }
+
+    /**
+     * Either updates or adds a JID to a user's roster.
+     *
+     * Tries to only edit the roster if it has to.
+     *
+     * @param userjid JID of user to have item added to their roster.
+     * @param contactjid JID to add to roster.
+     * @param nickname Nickname of item. (can be null)
+     * @param group Group item is to be placed in. (can be null)
+     * @throws UserNotFoundException if userjid not found.
+     */
+    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, String group) throws UserNotFoundException {
+        ArrayList<String> groups = null;
+        if (group != null) {
+            groups = new ArrayList<String>();
+            groups.add(group);
+        }
+        addOrUpdateRosterItem(userjid, contactjid, nickname, groups);
     }
 
     /**
@@ -966,7 +993,7 @@ public abstract class BaseTransport implements Component {
         try {
             Roster roster = rosterManager.getRoster(jid.getNode());
             for (RosterItem ri : roster.getRosterItems()) {
-                if (ri.getJid().getDomain() == this.jid.getDomain()) {
+                if (ri.getJid().getDomain().equals(this.jid.getDomain())) {
                     try {
                         roster.deleteRosterItem(ri.getJid(), false);
                     }

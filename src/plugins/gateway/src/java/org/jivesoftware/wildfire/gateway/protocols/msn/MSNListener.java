@@ -47,12 +47,12 @@ public class MSNListener extends MsnAdapter {
      * Handles incoming messages from MSN.
      */
     public void instantMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message, MsnContact friend) {
-        Log.debug("MSN: Received im to " + switchboard + " from " + friend + ": " + message.toString());
+        Log.debug("MSN: Received im to " + switchboard + " from " + friend + ": " + message.getContent());
         Message m = new Message();
         m.setType(Message.Type.chat);
         m.setTo(msnSession.getJIDWithHighestPriority());
         m.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
-        m.setBody(message.toString());
+        m.setBody(message.getContent());
         msnSession.getTransport().sendPacket(m);
     }
 

@@ -11,8 +11,6 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
-import org.jivesoftware.util.Log;
-
 import java.util.TreeMap;
 
 /**
@@ -25,7 +23,7 @@ import java.util.TreeMap;
  *
  * @author Daniel Henninger
  */
-public abstract class TransportSession extends Thread {
+public abstract class TransportSession implements Runnable {
 
     /**
      * Creates a TransportSession instance.
@@ -147,9 +145,9 @@ public abstract class TransportSession extends Thread {
     /**
      * Handles monitoring of whether session is still valid.
      */
-//    public void run() {
-//        while (validSession) { }
-//    }
+    public void run() {
+        while (validSession) { }
+    }
 
     /**
      * Indicates that the session is done and should be stopped.

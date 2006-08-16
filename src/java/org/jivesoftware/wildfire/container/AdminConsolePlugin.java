@@ -161,11 +161,12 @@ public class AdminConsolePlugin implements Plugin {
             if (logImpl instanceof LogImpl) {
                 LogImpl log = (LogImpl)logImpl;
                 // Ignore INFO logs unless debugging turned on.
-                if (!Log.isDebugEnabled()) {
-                    log.setVerbose(-1);
+                if (Log.isDebugEnabled() &&
+                        JiveGlobals.getBooleanProperty("jetty.debug.enabled", true)) {
+                    log.setVerbose(1);
                 }
                 else {
-                    log.setVerbose(1);
+                    log.setVerbose(-1);
                 }
                 log.add(logSink);
             }

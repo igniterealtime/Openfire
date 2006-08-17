@@ -43,9 +43,12 @@ public class YahooSession extends TransportSession {
      * Create a Yahoo Session instance.
      *
      * @param registration Registration informationed used for logging in.
+     * @param jid JID associated with this session.
+     * @param transport Transport instance associated with this session
+     * @param priority Priority of this session
      */
-    public YahooSession(Registration registration, JID jid, YahooTransport transport) {
-        super(registration, jid, transport);
+    public YahooSession(Registration registration, JID jid, YahooTransport transport, Integer priority) {
+        super(registration, jid, transport, priority);
 
         yahooSession = new Session();
         yahooSession.addSessionListener(new YahooSessionListener(this));

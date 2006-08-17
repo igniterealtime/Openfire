@@ -35,9 +35,12 @@ public class MSNSession extends TransportSession {
      * Create a MSN Session instance.
      *
      * @param registration Registration informationed used for logging in.
+     * @param jid JID associated with this session.
+     * @param transport Transport instance associated with this session.
+     * @param priority Priority of this session.
      */
-    public MSNSession(Registration registration, JID jid, MSNTransport transport) {
-        super(registration, jid, transport);
+    public MSNSession(Registration registration, JID jid, MSNTransport transport, Integer priority) {
+        super(registration, jid, transport, priority);
 
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
         msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP11 });

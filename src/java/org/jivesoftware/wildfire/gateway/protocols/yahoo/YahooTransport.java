@@ -37,9 +37,9 @@ public class YahooTransport extends BaseTransport {
      * @param presenceType Type of presence.
      * @param verboseStatus Longer status description.
      */
-    public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus) {
+    public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         Log.debug("Logging in to Yahoo gateway.");
-        TransportSession session = new YahooSession(registration, jid, this);
+        TransportSession session = new YahooSession(registration, jid, this, priority);
 //        Thread sessionThread = new Thread(session);
 //        sessionThread.start();
         ((YahooSession)session).logIn(presenceType, verboseStatus);

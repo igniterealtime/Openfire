@@ -34,8 +34,8 @@ public class OSCARTransport extends BaseTransport {
      * @param presenceType Type of presence.
      * @param verboseStatus Longer status description.
      */
-    public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus) {
-        TransportSession session = new OSCARSession(registration, jid, this);
+    public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
+        TransportSession session = new OSCARSession(registration, jid, this, priority);
 //        Thread sessionThread = new Thread(session);
 //        sessionThread.start();
         ((OSCARSession)session).logIn(presenceType, verboseStatus);

@@ -10,16 +10,20 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
-import java.util.Date;
-import net.sf.jml.MsnMessenger;
-import net.sf.jml.MsnProtocol;
-import net.sf.jml.Email;
+import net.sf.jml.*;
 import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.gateway.TransportBuddy;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Represents a MSN session.
@@ -52,6 +56,11 @@ public class MSNSession extends TransportSession {
     private MsnMessenger msnMessenger = null;
 
     /**
+     * MSN contacts/friends.
+     */
+    private HashMap<String,MsnContact> msnContacts = new HashMap<String,MsnContact>();
+
+    /**
      * Login status
      */
     private boolean loginStatus = false;
@@ -69,15 +78,6 @@ public class MSNSession extends TransportSession {
             msnMessenger.setLogOutgoing(true);
             msnMessenger.addListener(new MSNListener(this));
             msnMessenger.login();
-
-            Presence p = new Presence();
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-
-            getRegistration().setLastLogin(new Date());
-
-            loginStatus = true;
         }
     }
 
@@ -110,10 +110,54 @@ public class MSNSession extends TransportSession {
     }
 
     /**
+     * Sets login status flag (am i logged in or not)
+     */
+    public void setLoginStatus(Boolean status) {
+        loginStatus = status;
+    }
+
+    /**
+     * Records information about a person on the user's contact list.
+     */
+    public void storeFriend(MsnContact msnContact) {
+        msnContacts.put(msnContact.getEmail().toString(), msnContact);
+    }
+
+    /**
+     * Syncs up the MSN roster with the jabber roster.
+     */
+    public void syncUsers() {
+        List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
+        for (MsnContact friend : msnContacts.values()) {
+            ArrayList<String> friendGroups = new ArrayList<String>();
+            for (MsnGroup group : friend.getBelongGroups()) {
+                friendGroups.add(group.getGroupName());
+            }
+            legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getDisplayName(), friendGroups.get(0)));
+        }
+        try {
+            getTransport().syncLegacyRoster(getJID(), legacyusers);
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Unable to sync MSN contact list for " + getJID());
+        }
+
+        // Lets send initial presence statuses
+        for (MsnContact friend : msnContacts.values()) {
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().convertIDToJID(friend.getEmail().toString()));
+            ((MSNTransport)getTransport()).setUpPresencePacket(p, friend.getStatus());
+            getTransport().sendPacket(p);
+        }
+    }
+
+    /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
      */
     public void addContact(JID jid) {
         // @todo check jabber group and use it
+        msnMessenger.addFriend(Email.parseStr(getTransport().convertJIDToID(jid)), getTransport().convertJIDToID(jid));
     }
 
     /**
@@ -121,6 +165,7 @@ public class MSNSession extends TransportSession {
      */
     public void removeContact(JID jid) {
         // @todo check jabber group and use it
+        msnMessenger.removeFriend(Email.parseStr(getTransport().convertJIDToID(jid)), false);
     }
 
     /**
@@ -134,21 +179,35 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        // @todo need to implement this
+        MsnContact msnContact = msnContacts.get(getTransport().convertJIDToID(jid));
+        if (msnContact == null) {
+            return;
+        }
+        Presence p = new Presence();
+        p.setTo(getJID());
+        p.setFrom(getTransport().convertIDToJID(msnContact.getEmail().toString()));
+        ((MSNTransport)getTransport()).setUpPresencePacket(p, msnContact.getStatus());
+        getTransport().sendPacket(p);
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String) 
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
-        // @todo need to implement this
+        msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
-        // @todo need to implement this
+        for (MsnContact friend : msnContacts.values()) {
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().convertIDToJID(friend.getEmail().toString()));
+            ((MSNTransport)getTransport()).setUpPresencePacket(p, friend.getStatus());
+            getTransport().sendPacket(p);
+        }
     }
 
 }

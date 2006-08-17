@@ -19,6 +19,8 @@ import net.sf.jml.MsnContact;
 import net.sf.jml.MsnMessenger;
 import net.sf.jml.message.MsnInstantMessage;
 
+import java.util.Date;
+
 /**
  * MSN Listener Interface.
  *
@@ -44,7 +46,7 @@ public class MSNListener extends MsnAdapter {
     public MSNSession msnSession = null;
 
     /**
-     * Handles incoming messages from MSN.
+     * Handles incoming messages from MSN users.
      */
     public void instantMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message, MsnContact friend) {
         Log.debug("MSN: Received im to " + switchboard + " from " + friend + ": " + message.getContent());
@@ -56,6 +58,18 @@ public class MSNListener extends MsnAdapter {
         msnSession.getTransport().sendPacket(m);
     }
 
+    /**
+     * Handles incoming system messages from MSN.
+     */
+    public void systemMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message) {
+        Log.debug("MSN: Received system msg to " + switchboard + " from MSN: " + message.getContent());
+        Message m = new Message();
+        m.setType(Message.Type.chat);
+        m.setTo(msnSession.getJIDWithHighestPriority());
+        m.setFrom(msnSession.getTransport().getJID());
+        m.setBody(message.getContent());
+        msnSession.getTransport().sendPacket(m);
+    }
 
     /**
      * The user's login has completed and was accepted.
@@ -65,6 +79,31 @@ public class MSNListener extends MsnAdapter {
         Presence p = new Presence();
         p.setTo(msnSession.getJID());
         p.setFrom(msnSession.getTransport().getJID());
+        msnSession.getTransport().sendPacket(p);
+
+        msnSession.getRegistration().setLastLogin(new Date());
+
+        msnSession.setLoginStatus(true);
+    }
+
+    /**
+     * Contact list has been synced.
+     */
+    public void contactListSyncCompleted(MsnMessenger messenger) {
+        for (MsnContact msnContact : messenger.getContactList().getContacts()) {
+            msnSession.storeFriend(msnContact);
+        }
+        msnSession.syncUsers();
+    }
+
+    /**
+     * A friend for this user has changed status.
+     */
+    public void contactStatusChanged(MsnMessenger messenger, MsnContact friend) {
+        Presence p = new Presence();
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
+        ((MSNTransport)msnSession.getTransport()).setUpPresencePacket(p, friend.getStatus());
         msnSession.getTransport().sendPacket(p);
     }
 

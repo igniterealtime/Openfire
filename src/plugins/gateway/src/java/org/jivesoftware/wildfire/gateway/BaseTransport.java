@@ -329,7 +329,10 @@ public abstract class BaseTransport implements Component {
             reply.addAll(handleIQVersion(packet));
         }
         else {
-            Log.debug("Unabled iq request:" + xmlns);
+            Log.debug("Unable to handle iq request:" + xmlns);
+            IQ error = IQ.createResultIQ(packet);
+            error.setError(Condition.bad_request);
+            reply.add(error);
         }
 
         return reply;

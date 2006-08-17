@@ -91,7 +91,7 @@ public class MSNTransport extends BaseTransport {
      *
      * @param msnStatus MSN ContactStatus constant.
      */
-    public void setUpPresencePacket(Presence packet, String msnStatus) {
+    public void setUpPresencePacket(Presence packet, MsnUserStatus msnStatus) {
         if (msnStatus.equals(MsnUserStatus.ONLINE)) {
             // We're good, send as is..
         }

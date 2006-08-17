@@ -52,10 +52,12 @@ public class OSCARSession extends TransportSession {
      * Initialize a new session object for OSCAR
      * 
      * @param registration The registration information to use during login.
+     * @param jid The JID associated with this session.
      * @param transport The transport that created this session.
+     * @param priority Priority of this session.
      */
-    public OSCARSession(Registration registration, JID jid, OSCARTransport transport) {
-        super(registration, jid, transport);
+    public OSCARSession(Registration registration, JID jid, OSCARTransport transport, Integer priority) {
+        super(registration, jid, transport, priority);
     }
 
     private BOSConnection bosConn = null;

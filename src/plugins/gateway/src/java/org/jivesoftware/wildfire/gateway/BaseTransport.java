@@ -194,7 +194,7 @@ public abstract class BaseTransport implements Component {
         try {
             if (to.getNode() == null) {
                 Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
-                if (!registrations.iterator().hasNext()) {
+                if (registrations.isEmpty()) {
                     // User is not registered with us.
                     Log.debug("Unable to find registration.");
                     return reply;
@@ -212,7 +212,7 @@ public abstract class BaseTransport implements Component {
                         session.updateStatus(getPresenceType(packet), packet.getStatus());
                     }
                     catch (NotFoundException e) {
-                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus());
+                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
                         //sessionManager.storeSession(registration.getJID(), session);
                         sessionManager.storeSession(from, session);
                     }
@@ -1031,7 +1031,7 @@ public abstract class BaseTransport implements Component {
      * @param verboseStatus Longer status description.
      * @return A session instance for the new login.
      */
-    public abstract TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus);
+    public abstract TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority);
 
     /**
      * Will handle logging out of the legacy service.

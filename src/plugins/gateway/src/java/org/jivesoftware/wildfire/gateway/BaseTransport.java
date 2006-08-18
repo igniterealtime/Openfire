@@ -10,34 +10,27 @@
 
 package org.jivesoftware.wildfire.gateway;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
+import org.xmpp.packet.*;
 import org.xmpp.packet.PacketError.Condition;
-import org.xmpp.packet.Presence;
+
+import java.util.*;
 
 /**
  * Base class of all transport implementations.
@@ -200,7 +193,7 @@ public abstract class BaseTransport implements Component {
                     return reply;
                 }
                 Registration registration = registrations.iterator().next();
-    
+
                 // This packet is to the transport itself.
                 if (packet.getType() == null) {
                     // User has come online.
@@ -258,7 +251,7 @@ public abstract class BaseTransport implements Component {
                 // This packet is to a user at the transport.
                 try {
                     TransportSession session = sessionManager.getSession(from);
-                
+
                     if (packet.getType() == Presence.Type.probe) {
                         // Presence probe, lets try to tell them.
                         session.retrieveContactStatus(packet.getTo());
@@ -419,7 +412,7 @@ public abstract class BaseTransport implements Component {
             }
             reply.add(result);
         }
-        
+
         return reply;
     }
 
@@ -578,7 +571,7 @@ public abstract class BaseTransport implements Component {
             result.setChildElement(query);
             reply.add(result);
         }
-        
+
         return reply;
     }
 
@@ -753,7 +746,11 @@ public abstract class BaseTransport implements Component {
             }
             catch (UserNotFoundException e) {
                 try {
-                    RosterItem gwitem = roster.createRosterItem(contactjid, true);
+                    // Create new roster item for the gateway service or legacy contact. Only
+                    // roster items related to the gateway service will be persistent. Roster
+                    // items of legacy users are never persisted in the DB.
+                    RosterItem gwitem =
+                            roster.createRosterItem(contactjid, true, contactjid.getNode() != null);
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     gwitem.setNickname(nickname);

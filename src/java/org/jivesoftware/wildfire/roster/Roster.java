@@ -163,6 +163,8 @@ public class Roster implements Cacheable {
                         ")");
             }
         }
+        // Fire event indicating that a roster has just been loaded
+        RosterEventDispatcher.rosterLoaded(this);
     }
 
     /**
@@ -190,12 +192,12 @@ public class Roster implements Cacheable {
     }
 
     /**
-     * Gets a user from the roster. If the roster item does not exist, an empty one is created.
-     * The new roster item is not stored in the roster until it is added using
-     * addRosterItem().
+     * Returns the roster item that is associated with the specified JID. If no roster item
+     * was found then a UserNotFoundException will be thrown.
      *
      * @param user the XMPPAddress for the roster item to retrieve
-     * @return The roster item associated with the user XMPPAddress
+     * @return The roster item associated with the user XMPPAddress.
+     * @throws UserNotFoundException if no roster item was found for the specified JID.
      */
     public RosterItem getRosterItem(JID user) throws UserNotFoundException {
         RosterItem item = rosterItems.get(user.toBareJID());
@@ -235,26 +237,29 @@ public class Roster implements Cacheable {
      * Create a new item to the roster. Roster items may not be created that contain the same user
      * address as an existing item.
      *
-     * @param user the item to add to the roster.
-     * @param push     True if the new item must be push to the user
+     * @param user       The item to add to the roster.
+     * @param push       True if the new item must be pushed to the user.
+     * @param persistent True if the new roster item should be persisted to the DB.
      */
-    public RosterItem createRosterItem(JID user, boolean push) throws UserAlreadyExistsException,
-            SharedGroupException {
-        return createRosterItem(user, null, null, push);
+    public RosterItem createRosterItem(JID user, boolean push, boolean persistent)
+            throws UserAlreadyExistsException, SharedGroupException {
+        return createRosterItem(user, null, null, push, persistent);
     }
 
     /**
      * Create a new item to the roster. Roster items may not be created that contain the same user
      * address as an existing item.
      *
-     * @param user     the item to add to the roster.
-     * @param nickname The nickname for the roster entry (can be null)
-     * @param push     True if the new item must be push to the user
+     * @param user       The item to add to the roster.
+     * @param nickname   The nickname for the roster entry (can be null).
+     * @param push       True if the new item must be push to the user.
+     * @param persistent True if the new roster item should be persisted to the DB.
      * @param groups   The list of groups to assign this roster item to (can be null)
      */
-    public RosterItem createRosterItem(JID user, String nickname, List<String> groups, boolean push)
+    public RosterItem createRosterItem(JID user, String nickname, List<String> groups, boolean push,
+                                       boolean persistent)
             throws UserAlreadyExistsException, SharedGroupException {
-        RosterItem item = provideRosterItem(user, nickname, groups, push);
+        RosterItem item = provideRosterItem(user, nickname, groups, push, persistent);
         rosterItems.put(item.getJid().toBareJID(), item);
         return item;
     }
@@ -268,34 +273,38 @@ public class Roster implements Cacheable {
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, SharedGroupException {
-        RosterItem rosterItem = provideRosterItem(item, true);
+        RosterItem rosterItem = provideRosterItem(item, true, true);
         rosterItems.put(item.getJID().toBareJID(), rosterItem);
     }
 
     /**
      * <p>Generate a new RosterItem for use with createRosterItem.<p>
      *
-     * @param item The item to copy settings for the new item in this roster
-     * @param push     True if the new item must be push to the user
-     * @return The newly created roster items ready to be stored by the Roster item's hash table
+     * @param item       The item to copy settings for the new item in this roster.
+     * @param push       True if the new item must be push to the user.
+     * @param persistent True if the new roster item should be persisted to the DB.
+     * @return The newly created roster items ready to be stored by the Roster item's hash table.
      */
-    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item, boolean push)
+    protected RosterItem provideRosterItem(org.xmpp.packet.Roster.Item item, boolean push,
+                                           boolean persistent)
             throws UserAlreadyExistsException, SharedGroupException {
         return provideRosterItem(item.getJID(), item.getName(),
-                new ArrayList<String>(item.getGroups()), push);
+                new ArrayList<String>(item.getGroups()), push, persistent);
     }
 
     /**
-     * <p>Generate a new RosterItem for use with createRosterItem.<p>
+     * Generate a new RosterItem for use with createRosterItem.
      *
-     * @param user     The roster jid address to create the roster item for
-     * @param nickname The nickname to assign the item (or null for none)
-     * @param groups   The groups the item belongs to (or null for none)
-     * @param push     True if the new item must be push to the user
+     * @param user       The roster jid address to create the roster item for.
+     * @param nickname   The nickname to assign the item (or null for none).
+     * @param groups     The groups the item belongs to (or null for none).
+     * @param push       True if the new item must be push to the user.
+     * @param persistent True if the new roster item should be persisted to the DB.
      * @return The newly created roster items ready to be stored by the Roster item's hash table
      */
     protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups,
-            boolean push) throws UserAlreadyExistsException, SharedGroupException {
+                                           boolean push, boolean persistent)
+            throws UserAlreadyExistsException, SharedGroupException {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
             Collection<Group> sharedGroups = GroupManager.getInstance().getSharedGroups();
@@ -312,12 +321,19 @@ public class Roster implements Cacheable {
         org.xmpp.packet.Roster.Item item = roster.addItem(user, nickname, null,
                 org.xmpp.packet.Roster.Subscription.none, groups);
 
-        RosterItem rosterItem = rosterItemProvider.createItem(username, new RosterItem(item));
+        RosterItem rosterItem = new RosterItem(item);
+        // Check if we need to make the new roster item persistent
+        if (persistent) {
+            rosterItemProvider.createItem(username, rosterItem);
+        }
 
         if (push) {
             // Broadcast the roster push to the user
             broadcast(roster);
         }
+
+        // Fire event indicating that a roster item has been added
+        RosterEventDispatcher.contactAdded(this, rosterItem);
 
         return rosterItem;
     }
@@ -341,27 +357,33 @@ public class Roster implements Cacheable {
             }
             return;
         }
-        // If the item only had shared groups before this update then make it persistent
-        if (item.isShared() && item.getID() == 0) {
-            // Do nothing if item is only shared and it is using the default user name
-            if (item.isOnlyShared()) {
-                String defaultContactName;
+        // Check if the item is not persistent
+        if (item.getID() == 0) {
+            // Make the item persistent if a new nickname has been set for a shared contact
+            if (item.isShared()) {
+                // Do nothing if item is only shared and it is using the default user name
+                if (item.isOnlyShared()) {
+                    String defaultContactName;
+                    try {
+                        defaultContactName = UserNameManager.getUserName(item.getJid());
+                    }
+                    catch (UserNotFoundException e) {
+                        // Cannot update a roster item for a local user that does not exist
+                        defaultContactName = item.getNickname();
+                    }
+                    if (defaultContactName.equals(item.getNickname())) {
+                        return;
+                    }
+                }
                 try {
-                    defaultContactName = UserNameManager.getUserName(item.getJid());
+                    rosterItemProvider.createItem(username, item);
                 }
-                catch (UserNotFoundException e) {
-                    // Cannot update a roster item for a local user that does not exist
-                    defaultContactName = item.getNickname();
-                }
-                if (defaultContactName.equals(item.getNickname())) {
-                    return;
+                catch (UserAlreadyExistsException e) {
+                    // Do nothing. We shouldn't be here.
                 }
             }
-            try {
-                rosterItemProvider.createItem(username, item);
-            }
-            catch (UserAlreadyExistsException e) {
-                // Do nothing. We shouldn't be here.
+            else {
+                // Item is not persistent and it does not belong to a shared contact so do nothing
             }
         }
         else {
@@ -377,6 +399,8 @@ public class Roster implements Cacheable {
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
             probePresence(item.getJid());
         }*/
+        // Fire event indicating that a roster item has been updated
+        RosterEventDispatcher.contactUpdated(this, item);
     }
 
     /**
@@ -431,6 +455,8 @@ public class Roster implements Cacheable {
                 roster.setType(IQ.Type.set);
                 roster.addItem(user, org.xmpp.packet.Roster.Subscription.remove);
                 broadcast(roster);
+                // Fire event indicating that a roster item has been deleted
+                RosterEventDispatcher.contactDeleted(this, item);
             }
 
             return item;

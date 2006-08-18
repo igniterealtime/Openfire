@@ -229,7 +229,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // an unknown user
                     return false;
                 }
-                item = roster.createRosterItem(target, false);
+                item = roster.createRosterItem(target, false, true);
                 newItem = true;
             }
             // Get a snapshot of the item state

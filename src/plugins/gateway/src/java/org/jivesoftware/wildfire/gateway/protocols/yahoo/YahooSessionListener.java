@@ -87,7 +87,7 @@ public class YahooSessionListener implements SessionListener {
         m.setType(Message.Type.headline);
         m.setTo(yahooSession.getJIDWithHighestPriority());
         m.setFrom(yahooSession.getTransport().getJID());
-        m.setBody(messageDecoder.decodeToText(event.getMessage()));
+        m.setBody("You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.");
         yahooSession.getTransport().sendPacket(m);
     }
 

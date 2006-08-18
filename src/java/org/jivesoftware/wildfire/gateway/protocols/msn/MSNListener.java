@@ -91,6 +91,7 @@ public class MSNListener extends MsnAdapter {
      */
     public void contactListSyncCompleted(MsnMessenger messenger) {
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
+            Log.debug("Got contact "+msnContact);
             msnSession.storeFriend(msnContact);
         }
         msnSession.syncUsers();
@@ -105,6 +106,7 @@ public class MSNListener extends MsnAdapter {
         p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
         ((MSNTransport)msnSession.getTransport()).setUpPresencePacket(p, friend.getStatus());
         msnSession.getTransport().sendPacket(p);
+        msnSession.storeFriend(friend);
     }
 
 }

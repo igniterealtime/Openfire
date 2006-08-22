@@ -208,6 +208,14 @@ public abstract class BaseTransport implements Component {
                         session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
                         //sessionManager.storeSession(registration.getJID(), session);
                         sessionManager.storeSession(from, session);
+
+                        // TODO: TEMPORARY: Since we are using shared groups now, we will clean up our testers rosters for them.
+                        try {
+                            cleanUpRoster(from, true);
+                        }
+                        catch (UserNotFoundException ee) {
+                            throw new UserNotFoundException("Unable to find roster.");
+                        }
                     }
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
@@ -301,8 +309,10 @@ public abstract class BaseTransport implements Component {
 
         if (xmlns == null) {
             // No namespace defined.
-            // TODO: Should we return an error?
             Log.debug("No XMLNS:" + packet.toString());
+            IQ error = IQ.createResultIQ(packet);
+            error.setError(Condition.bad_request);
+            reply.add(error);
             return reply;
         }
 
@@ -750,7 +760,7 @@ public abstract class BaseTransport implements Component {
                     // roster items related to the gateway service will be persistent. Roster
                     // items of legacy users are never persisted in the DB.
                     RosterItem gwitem =
-                            roster.createRosterItem(contactjid, true, contactjid.getNode() != null);
+                            roster.createRosterItem(contactjid, true, contactjid.getNode() == null);
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     gwitem.setNickname(nickname);
@@ -974,6 +984,14 @@ public abstract class BaseTransport implements Component {
         catch (UserNotFoundException e) {
             throw new UserNotFoundException("User not registered with server.");
         }
+
+        // Clean up any leftover roster items from other transports.
+        try {
+            cleanUpRoster(jid, true);
+        }
+        catch (UserNotFoundException ee) {
+            throw new UserNotFoundException("Unable to find roster.");
+        }
     }
 
     /**
@@ -991,10 +1009,37 @@ public abstract class BaseTransport implements Component {
 
         // Clean up the user's contact list.
         try {
+            cleanUpRoster(jid, false);
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Unable to find roster.");
+        }
+    }
+
+    /**
+     * Cleans a roster of entries related to this transport.
+     *
+     * This function will run through the roster of the specified user and clean up any
+     * entries that share the domain of this transport.  This is primarily used during registration
+     * to clean up leftovers from other transports.
+     *
+     * @param jid JID of user whose roster we want to clean up.
+     * @param leaveDomain If set, we do not touch the roster item associated with the domain itself.
+     * @throws UserNotFoundException if the user is not found.
+     */
+    public void cleanUpRoster(JID jid, Boolean leaveDomain) throws UserNotFoundException {
+        try {
             Roster roster = rosterManager.getRoster(jid.getNode());
             for (RosterItem ri : roster.getRosterItems()) {
                 if (ri.getJid().getDomain().equals(this.jid.getDomain())) {
+                    if (ri.isShared()) {
+                        continue;
+                    }
+                    if (leaveDomain && ri.getJid().getNode() == null) {
+                        continue;
+                    }
                     try {
+                        Log.debug("Cleaning up roster entry " + ri.getJid().toString());
                         roster.deleteRosterItem(ri.getJid(), false);
                     }
                     catch (Exception e) {

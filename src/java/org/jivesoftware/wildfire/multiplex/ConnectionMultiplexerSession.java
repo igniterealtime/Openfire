@@ -204,7 +204,7 @@ public class ConnectionMultiplexerSession extends Session {
             return session;
         }
         catch (Exception e) {
-            Log.error("An error occured while creating a ComponentSession", e);
+            Log.error("An error occured while creating a Connection Manager Session", e);
             // Close the underlying connection
             connection.close();
             return null;

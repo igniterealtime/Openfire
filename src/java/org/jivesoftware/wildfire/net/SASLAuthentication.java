@@ -124,7 +124,7 @@ public class SASLAuthentication {
             }
         }
         else {
-            for (String mech : getSupportedMechanisms()) {
+            for (String mech : mechanisms) {
                 if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
                     // Check if the user provider in use supports passwords retrieval. Accessing
                     // to the users passwords will be required by the CallbackHandler
@@ -171,17 +171,17 @@ public class SASLAuthentication {
                     session.setSessionData("SaslMechanism", mechanism);
                     //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
                     if (mechanism.equalsIgnoreCase("PLAIN") &&
-                            getSupportedMechanisms().contains("PLAIN")) {
+                            mechanisms.contains("PLAIN")) {
                         status = doPlainAuthentication(session, doc);
                     }
                     else if (mechanism.equalsIgnoreCase("ANONYMOUS") &&
-                            getSupportedMechanisms().contains("ANONYMOUS")) {
+                            mechanisms.contains("ANONYMOUS")) {
                         status = doAnonymousAuthentication(session);
                     }
                     else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
                         status = doExternalAuthentication(session, doc);
                     }
-                    else if (getSupportedMechanisms().contains(mechanism)) {
+                    else if (mechanisms.contains(mechanism)) {
                         // The selected SASL mechanism requires the server to send a challenge
                         // to the client
                         try {
@@ -226,13 +226,13 @@ public class SASLAuthentication {
                     // Store the requested SASL mechanism by the client
                     mechanism = (String) session.getSessionData("SaslMechanism");
                     if (mechanism.equalsIgnoreCase("PLAIN") &&
-                            getSupportedMechanisms().contains("PLAIN")) {
+                            mechanisms.contains("PLAIN")) {
                         status = doPlainAuthentication(session, doc);
                     }
                     else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
                         status = doExternalAuthentication(session, doc);
                     }
-                    else if (getSupportedMechanisms().contains(mechanism)) {
+                    else if (mechanisms.contains(mechanism)) {
                         SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
@@ -478,7 +478,7 @@ public class SASLAuthentication {
      * @return the list of supported SASL mechanisms by the server.
      */
     public static Set<String> getSupportedMechanisms() {
-        return mechanisms;
+        return Collections.unmodifiableSet(mechanisms);
     }
 
     private static void initMechanisms() {
@@ -504,7 +504,7 @@ public class SASLAuthentication {
                 }
             }
 
-            if (getSupportedMechanisms().contains("GSSAPI")) {
+            if (mechanisms.contains("GSSAPI")) {
                 if (JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
                     System.setProperty("java.security.krb5.debug",
                             JiveGlobals.getXMLProperty("sasl.gssapi.debug", "false"));

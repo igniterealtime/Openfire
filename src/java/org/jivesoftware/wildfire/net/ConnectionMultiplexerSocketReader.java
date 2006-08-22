@@ -183,6 +183,13 @@ public class ConnectionMultiplexerSocketReader extends SocketReader {
         return false;
     }
 
+    protected void shutdown() {
+        super.shutdown();
+        // Shutdown the pool of threads that are processing packets sent by
+        // the remote server
+        threadPool.shutdown();
+    }
+
     String getName() {
         return "ConnectionMultiplexer SR - " + hashCode();
     }

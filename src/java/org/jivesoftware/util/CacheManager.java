@@ -43,7 +43,7 @@ public class CacheManager {
      *                        looked up.
      * @param size the size the cache can grow to, in bytes.
      */
-    public static Cache initializeCache(String name, String propertiesName, int size) {
+    public static <K,V> Cache<K,V> initializeCache(String name, String propertiesName, int size) {
         return initializeCache(name, propertiesName, size, DEFAULT_EXPIRATION_TIME);
     }
 
@@ -66,14 +66,14 @@ public class CacheManager {
      * @param size the size  the cache can grow to, in bytes.
      * @param expirationTime the default max lifetime of the cache, in milliseconds.
      */
-    public static Cache initializeCache(String name, String propertiesName, int size,
+    public static <K,V> Cache<K,V> initializeCache(String name, String propertiesName, int size,
             long expirationTime) {
-        Cache cache = caches.get(name);
+        Cache<K,V> cache = caches.get(name);
         if (cache == null) {
             size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
             expirationTime = (long) JiveGlobals.getIntProperty(
                     "cache." + propertiesName + ".expirationTime", (int) expirationTime);
-            cache = new Cache(name, size, expirationTime);
+            cache = new Cache<K,V>(name, size, expirationTime);
             caches.put(name, cache);
         }
         return cache;
@@ -87,7 +87,7 @@ public class CacheManager {
      * @return the cache found, or <tt>null</tt> if no cache by that name
      *      has been initialized.
      */
-    public static Cache getCache(String name) {
+    public static <K,V> Cache<K,V> getCache(String name) {
         return caches.get(name);
     }
 

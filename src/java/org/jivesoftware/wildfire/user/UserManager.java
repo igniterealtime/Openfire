@@ -47,9 +47,10 @@ public class UserManager implements IQResultListener {
 
     static {
         // Initialize caches.
-        userCache = CacheManager.initializeCache("User", "userCache", 512 * 1024);
-        remoteUsersCache =
-                CacheManager.initializeCache("Remote Users Existence", "remoteUsersCache", 512 * 1024);
+        userCache = CacheManager.initializeCache("User", "userCache", 512 * 1024,
+                JiveConstants.MINUTE*30);
+        remoteUsersCache = CacheManager.initializeCache("Remote Users Existence", "remoteUsersCache",
+                512 * 1024, JiveConstants.MINUTE*30);
         CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",

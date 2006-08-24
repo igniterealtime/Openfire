@@ -49,12 +49,12 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        groupCache = CacheManager.initializeCache("Group", "group", 512 * 1024);
+        groupCache = CacheManager.initializeCache("Group", "group", 512 * 1024,
+                JiveConstants.MINUTE*30);
 
         // A cache for all groups and groups related to a particular user
-        String cacheName = "User Group Cache";
-        CacheManager.initializeCache(cacheName, "userGroup", 512 * 1024, 1000 * 60 * 60 * 3);
-        userGroupCache = CacheManager.getCache(cacheName);
+        userGroupCache = CacheManager.initializeCache("User Group Cache", "userGroup",
+                512 * 1024, JiveConstants.MINUTE*3);
 
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",

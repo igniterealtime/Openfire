@@ -17,9 +17,9 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.XMPPServer;
 
 import java.io.*;
@@ -433,13 +433,14 @@ public class PluginManager {
                     // we add a "plugin" attribute to each tab, sidebar, and item so that
                     // the the renderer knows where to load the i18n Strings from.
                     String[] elementNames = new String [] { "tab", "sidebar", "item" };
-                    for (int i=0; i<elementNames.length; i++) {
-                        List values = adminElement.selectNodes("//" + elementNames[i]);
+                    for (String elementName : elementNames) {
+                        List values = adminElement.selectNodes("//" + elementName);
                         for (Object value : values) {
-                            Element element = (Element)value;
+                            Element element = (Element) value;
                             // Make sure there's a name or description. Otherwise, no need to
                             // override i18n settings.
-                            if (element.attribute("name") != null || element.attribute("value") != null) {
+                            if (element.attribute("name") != null ||
+                                    element.attribute("value") != null) {
                                 element.addAttribute("plugin", pluginName);
                             }
                         }
@@ -909,6 +910,8 @@ public class PluginManager {
                     return;
                 }
                 dir.mkdir();
+                // Set the date of the JAR file to the newly created folder
+                dir.setLastModified(file.lastModified());
                 Log.debug("Extracting plugin: " + pluginName);
                 for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
                     JarEntry entry = (JarEntry)e.nextElement();

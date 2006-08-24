@@ -205,10 +205,6 @@ public abstract class BaseTransport implements Component {
                         session.updateStatus(getPresenceType(packet), packet.getStatus());
                     }
                     catch (NotFoundException e) {
-                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
-                        //sessionManager.storeSession(registration.getJID(), session);
-                        sessionManager.storeSession(from, session);
-
                         // TODO: TEMPORARY: Since we are using shared groups now, we will clean up our testers rosters for them.
                         try {
                             cleanUpRoster(from, true);
@@ -216,6 +212,11 @@ public abstract class BaseTransport implements Component {
                         catch (UserNotFoundException ee) {
                             throw new UserNotFoundException("Unable to find roster.");
                         }
+
+                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
+                        //sessionManager.storeSession(registration.getJID(), session);
+                        sessionManager.storeSession(from, session);
+
                     }
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
@@ -978,12 +979,6 @@ public abstract class BaseTransport implements Component {
             registrationManager.createRegistration(jid, this.transportType, username, password);
         }
 
-        try {
-            addOrUpdateRosterItem(jid, this.getJID(), this.getDescription(), "Transports");
-        }
-        catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User not registered with server.");
-        }
 
         // Clean up any leftover roster items from other transports.
         try {
@@ -992,6 +987,14 @@ public abstract class BaseTransport implements Component {
         catch (UserNotFoundException ee) {
             throw new UserNotFoundException("Unable to find roster.");
         }
+            
+        try {
+            addOrUpdateRosterItem(jid, this.getJID(), this.getDescription(), "Transports");
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("User not registered with server.");
+        }
+
     }
 
     /**

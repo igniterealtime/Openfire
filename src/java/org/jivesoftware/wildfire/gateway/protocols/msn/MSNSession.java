@@ -129,9 +129,14 @@ public class MSNSession extends TransportSession {
     public void syncUsers() {
         List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
         for (MsnContact friend : msnContacts.values()) {
+            Log.debug("Syncing contact " + friend);
             ArrayList<String> friendGroups = new ArrayList<String>();
             for (MsnGroup group : friend.getBelongGroups()) {
+                Log.debug("   Found group " + group);
                 friendGroups.add(group.getGroupName());
+            }
+            if (friendGroups.size() < 1) {
+                friendGroups.add("MSN Contacts");
             }
             legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getDisplayName(), friendGroups.get(0)));
         }

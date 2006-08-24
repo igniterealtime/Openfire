@@ -3,18 +3,20 @@ Gateway Plugin
 
 Main Todo List:
 
-- Switch to using shared rosters instead of direct roster edit for 'buddy list'
-- Evaluate whether shared rosters or direct roster edit should be used for actual transport
 - Use threads for transport sessions
-- MUC/Groupchat support
 - DB files for other DB types
-- Typing notifications
 - Add/remove buddies from legacy contact list
 - AIM/ICQ is not pulling entire buddy list?
-
+- Add support for nicknames for Yahoo [not server stored like others]
+- AIM/ICQ may be leaving you logged in after disconnect, not sure yet
+- Add access restriction support
+- Add handling of options from web interface
+- MSN doesn't know the status of other contacts upon login
 
 
 Future Todo List:
 
 - Buddy icons
 - File transfer
+- MUC/Groupchat support
+- Typing notifications

@@ -269,8 +269,16 @@ public class OSCARSession extends TransportSession {
             if (nickname == null) {
                 nickname = buddy.getScreenname();
             }
+            
             int groupid = buddy.getGroupId();
-            String groupname = groups.get(groupid).getGroupName();
+            String groupname = "Buddies";
+            if (groups.containsKey(groupid)) {
+                groupname = groups.get(groupid).getGroupName();
+                if (groupname.length() < 1) {
+                    groupname = "Buddies";
+                }
+            }
+
             legacyusers.add(new TransportBuddy(buddy.getScreenname(), nickname, groupname));
         }
         try {

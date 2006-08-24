@@ -68,6 +68,12 @@
     </head>
     <body>
 
+<% if (UserManager.getUserProvider().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="user.read_only"/>
+</div>
+<% } %>
+
 <p>
 <fmt:message key="user.delete.info" />
 <b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a></b>
@@ -85,6 +91,19 @@
 <input type="submit" name="delete" value="<fmt:message key="user.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
+
+    <% if (UserManager.getUserProvider().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

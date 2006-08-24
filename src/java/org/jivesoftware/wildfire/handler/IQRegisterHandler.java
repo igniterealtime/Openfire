@@ -319,9 +319,16 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 }
                                 newUser = user;
                             }
-                            else {
+                            else if (password != null && password.trim().length() > 0) {
                                 // An admin can create new accounts when logged in.
                                 newUser = userManager.createUser(username, password, null, email);
+                            }
+                            else {
+                                // Deny registration of users with no password
+                                reply = IQ.createResultIQ(packet);
+                                reply.setChildElement(packet.getChildElement().createCopy());
+                                reply.setError(PacketError.Condition.not_acceptable);
+                                return reply;
                             }
                         }
                     }

@@ -2,7 +2,7 @@ Name                   |  Version
 ---------------------------------------------
 cindy.jar              | 2.4.3
 commons-logging.jar    | 1.1
-jml.jar                | 1.0a2
+jml.jar                | 1.0a2 (patched)
 jmml.jar               | cvs-2006-07-19
 joscar.jar             | 0.9.3 (patched)
 picocontainer.jar      | 1.2.0

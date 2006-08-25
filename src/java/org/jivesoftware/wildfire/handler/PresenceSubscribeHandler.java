@@ -78,6 +78,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
 
     private RoutingTable routingTable;
     private XMPPServer localServer;
+    private String serverName;
     private PacketDeliverer deliverer;
     private PresenceManager presenceManager;
     private RosterManager rosterManager;
@@ -88,11 +89,24 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     }
 
     public void process(Packet xmppPacket) throws PacketException {
-        Presence presence = (Presence)xmppPacket;
+        Presence presence = (Presence) xmppPacket;
         try {
             JID senderJID = presence.getFrom();
             JID recipientJID = presence.getTo();
             Presence.Type type = presence.getType();
+
+            // Reject presence subscription requests sent to the local server itself.
+            if (recipientJID == null || recipientJID.toString().equals(serverName)) {
+                if (type == Presence.Type.subscribe) {
+                    Presence reply = new Presence();
+                    reply.setTo(senderJID);
+                    reply.setFrom(recipientJID);
+                    reply.setType(Presence.Type.unsubscribed);
+                    deliverer.deliver(reply);
+                }
+                return;
+            }
+
             try {
                 Roster senderRoster = getRoster(senderJID);
                 if (senderRoster != null) {
@@ -458,6 +472,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
+        serverName = server.getServerInfo().getName();
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
         presenceManager = server.getPresenceManager();

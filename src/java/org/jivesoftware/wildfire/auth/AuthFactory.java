@@ -12,7 +12,6 @@
 package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import java.security.MessageDigest;
@@ -108,7 +107,7 @@ public class AuthFactory {
      */
     public static String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException {
-        return authProvider.getPassword(username);
+        return authProvider.getPassword(username.toLowerCase());
     }
 
     /**

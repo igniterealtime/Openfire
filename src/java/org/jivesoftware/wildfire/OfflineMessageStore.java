@@ -11,6 +11,7 @@
 
 package org.jivesoftware.wildfire;
 
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -31,6 +32,8 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -61,6 +64,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
+    /**
+     * Pattern to use for detecting invalid XML characters. Invalid XML characters will
+     * be removed from the stored offline messages.
+     */
+    private Pattern pattern = Pattern.compile("&\\#[\\d]+;");
 
     /**
      * Returns the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
@@ -165,8 +173,19 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             while (rs.next()) {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
-                OfflineMessage message = new OfflineMessage(creationDate,
-                        xmlReader.read(new StringReader(msgXML)).getRootElement());
+                OfflineMessage message;
+                try {
+                    message = new OfflineMessage(creationDate,
+                            xmlReader.read(new StringReader(msgXML)).getRootElement());
+                } catch (DocumentException e) {
+                    // Try again after removing invalid XML chars (e.g. &#12;)
+                    Matcher matcher = pattern.matcher(msgXML);
+                    if (matcher.find()) {
+                        msgXML = matcher.replaceAll("");
+                    }
+                    message = new OfflineMessage(creationDate,
+                            xmlReader.read(new StringReader(msgXML)).getRootElement());
+                }
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());

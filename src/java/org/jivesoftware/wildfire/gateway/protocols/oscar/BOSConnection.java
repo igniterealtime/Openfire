@@ -26,6 +26,8 @@ import net.kano.joscar.ssiitem.*;
 
 import java.net.InetAddress;
 
+import org.jivesoftware.util.Log;
+
 /**
  * Handles BOS related packets.
  *
@@ -121,9 +123,11 @@ public class BOSConnection extends BasicFlapConnection {
             for (SsiItem item : items) {
                 SsiItemObj obj = itemFactory.getItemObj(item);
                 if (obj instanceof BuddyItem) {
+                    Log.debug("AIM got buddy item " + obj);
                     oscarSession.gotBuddy((BuddyItem) obj);
                 }
                 else if (obj instanceof GroupItem) {
+                    Log.debug("AIM got group item " + obj);
                     oscarSession.gotGroup((GroupItem) obj);
                 }
                 //Log.debug("- " + (obj == null ? (Object) items[i]

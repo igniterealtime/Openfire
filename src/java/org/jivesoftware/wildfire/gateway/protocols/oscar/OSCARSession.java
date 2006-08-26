@@ -69,9 +69,9 @@ public class OSCARSession extends TransportSession {
     /**
      * SSI tracking variables.
      */
-    private Map<Integer,BuddyItem> buddies = new HashMap<Integer,BuddyItem>();
+    private Map<String,BuddyItem> buddies = new HashMap<String,BuddyItem>();
     private Map<Integer,GroupItem> groups = new HashMap<Integer,GroupItem>();
-    private Integer highestBuddyId = -1;
+    private Map<Integer,Integer> highestBuddyIdPerGroup = new HashMap<Integer,Integer>();
     private Integer highestGroupId = -1;
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
@@ -110,22 +110,32 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
      */
     public void addContact(JID jid) {
-        Integer newBuddyId = highestBuddyId + 1;
         Integer groupId = -1;
+
         for (GroupItem g : groups.values()) {
             if ("Transport Buddies".equals(g.getGroupName())) {
                 groupId = g.getId();
             }
         }
+
         if (groupId == -1) {
             Integer newGroupId = highestGroupId + 1;
-            request(new CreateItemsCmd(new SsiItem[] {
-                new GroupItem("Transport Buddies", newGroupId).toSsiItem() }));
+            GroupItem newGroup = new GroupItem("Transport Buddies", newGroupId);
+            request(new CreateItemsCmd(new SsiItem[] { newGroup.toSsiItem() }));
             highestGroupId = newGroupId;
             groupId = newGroupId;
+            groups.put(groupId, newGroup);
         }
-        request(new CreateItemsCmd(new SsiItem[] {
-            new BuddyItem(getTransport().convertJIDToID(jid), newBuddyId, groupId).toSsiItem() }));
+
+        Integer newBuddyId = 1;
+        if (highestBuddyIdPerGroup.containsKey(groupId)) {
+            newBuddyId = highestBuddyIdPerGroup.get(groupId) + 1;
+        }
+        highestBuddyIdPerGroup.put(groupId, newBuddyId);
+
+        BuddyItem newBuddy = new BuddyItem(getTransport().convertJIDToID(jid), newBuddyId, groupId);
+        request(new CreateItemsCmd(new SsiItem[] { newBuddy.toSsiItem() }));
+        buddies.put(groupId+"."+newBuddyId, newBuddy);
     }
 
     /**
@@ -135,7 +145,7 @@ public class OSCARSession extends TransportSession {
         for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equals(getTransport().convertJIDToID(jid))) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
-                buddies.remove(i.getId());
+                buddies.remove(i.getGroupId()+"."+i.getId());
             }
         }
     }
@@ -238,9 +248,12 @@ public class OSCARSession extends TransportSession {
      */
     void gotBuddy(BuddyItem buddy) {
         //Log.debug("Found buddy item: " + buddy.toString());
-        buddies.put(buddy.getId(), buddy);
-        if (buddy.getId() > highestBuddyId) {
-            highestBuddyId = buddy.getId();
+        buddies.put(buddy.getGroupId()+"."+buddy.getId(), buddy);
+        if (!highestBuddyIdPerGroup.containsKey(buddy.getGroupId())) {
+            highestBuddyIdPerGroup.put(buddy.getGroupId(), -1);
+        }
+        if (buddy.getId() > highestBuddyIdPerGroup.get(buddy.getGroupId())) {
+            highestBuddyIdPerGroup.put(buddy.getGroupId(), buddy.getId());
         }
     }
 
@@ -252,6 +265,9 @@ public class OSCARSession extends TransportSession {
     void gotGroup(GroupItem group) {
         //Log.debug("Found group item: " + group.toString());
         groups.put(group.getId(), group);
+        if (!highestBuddyIdPerGroup.containsKey(group.getId())) {
+            highestBuddyIdPerGroup.put(group.getId(), -1);
+        }
         if (group.getId() > highestGroupId) {
             highestGroupId = group.getId();
         }

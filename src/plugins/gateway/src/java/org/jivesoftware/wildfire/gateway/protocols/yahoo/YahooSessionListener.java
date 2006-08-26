@@ -136,7 +136,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#connectionClosed(ymsg.network.event.SessionEvent)
      */
     public void connectionClosed(SessionEvent event) {
-        Log.error(event.toString());
+        Log.debug(event.toString());
         if (yahooSession.isLoggedIn()) {
             yahooSession.logOut();                            
         }
@@ -146,7 +146,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
      */
     public void fileTransferReceived(SessionFileTransferEvent event) {
-        Log.info(event.toString());
+        Log.debug(event.toString());
     }
 
 
@@ -154,7 +154,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#listReceived(ymsg.network.event.SessionEvent)
      */
     public void listReceived(SessionEvent event) {
-        Log.info(event.toString());
+        Log.debug(event.toString());
     }
 
     /**

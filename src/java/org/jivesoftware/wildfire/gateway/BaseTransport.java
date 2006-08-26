@@ -202,10 +202,16 @@ public abstract class BaseTransport implements Component {
                         session = sessionManager.getSession(from);
 
                         if (session.hasResource(from.getResource())) {
-                            // Well, this could represent a status change.
-                            session.updateStatus(getPresenceType(packet), packet.getStatus());
+                            Log.debug("An existing resource has changed status: " + from);
+
+                            if (session.isHighestPriority(from.getResource())) {
+                                // Well, this could represent a status change.
+                                session.updateStatus(getPresenceType(packet), packet.getStatus());
+                            }
                         }
                         else {
+                            Log.debug("A new resource has come online: " + from);
+
                             // This is a new resource, lets send them what we know.
                             session.addResource(from.getResource(), packet.getPriority());
                             // Tell the new resource what the state of their buddy list is.
@@ -225,6 +231,8 @@ public abstract class BaseTransport implements Component {
                             throw new UserNotFoundException("Unable to find roster.");
                         }
 
+                        Log.debug("A new session has come online: " + from);
+
                         session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
                         sessionManager.storeSession(from, session);
 
@@ -240,6 +248,8 @@ public abstract class BaseTransport implements Component {
 
                             // Just one of the resources, lets adjust accordingly.
                             if (session.isHighestPriority(resource)) {
+                                Log.debug("A high priority resource (of multiple) has gone offline: " + from);
+
                                 // Ooh, the highest resource went offline, drop to next highest.
                                 session.removeResource(resource);
 
@@ -250,11 +260,15 @@ public abstract class BaseTransport implements Component {
                                 sendPacket(p);
                             }
                             else {
+                                Log.debug("A low priority resource (of multiple) has gone offline: " + from);
+
                                 // Meh, lower priority, big whoop.
                                 session.removeResource(resource);
                             }
                         }
                         else {
+                            Log.debug("A final resource has gone offline: " + from);
+
                             // No more resources, byebye.
                             if (session.isLoggedIn()) {
                                 this.registrationLoggedOut(session);

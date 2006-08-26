@@ -120,7 +120,7 @@ public class JiveGlobals {
     public static TimeZone getTimeZone() {
         if (timeZone == null) {
             if (properties != null) {
-                String timeZoneID = (String)properties.get("locale.timeZone");
+                String timeZoneID = properties.get("locale.timeZone");
                 if (timeZoneID == null) {
                     timeZone = TimeZone.getDefault();
                 }
@@ -505,7 +505,7 @@ public class JiveGlobals {
             }
             properties = JiveProperties.getInstance();
         }
-        return (String)properties.get(name);
+        return properties.get(name);
     }
 
     /**
@@ -523,7 +523,7 @@ public class JiveGlobals {
             }
             properties = JiveProperties.getInstance();
         }
-        String value = (String)properties.get(name);
+        String value = properties.get(name);
         if (value != null) {
             return value;
         }
@@ -696,7 +696,7 @@ public class JiveGlobals {
      *
      * @param propertyMap a map of properties, keyed on property name.
      */
-    public static void setProperties(Map propertyMap) {
+    public static void setProperties(Map<String, String> propertyMap) {
         if (properties == null) {
             if (isSetupMode()) {
                 return;

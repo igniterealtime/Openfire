@@ -83,12 +83,14 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
      */
     public void newMailReceived(SessionNewMailEvent event) {
-        Message m = new Message();
-        m.setType(Message.Type.headline);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().getJID());
-        m.setBody("You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.");
-        yahooSession.getTransport().sendPacket(m);
+        if (event.getMailCount() > 0) {
+            Message m = new Message();
+            m.setType(Message.Type.headline);
+            m.setTo(yahooSession.getJIDWithHighestPriority());
+            m.setFrom(yahooSession.getTransport().getJID());
+            m.setBody("You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.");
+            yahooSession.getTransport().sendPacket(m);
+        }
     }
 
     /**

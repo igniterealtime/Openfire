@@ -196,13 +196,25 @@ public abstract class BaseTransport implements Component {
 
                 // This packet is to the transport itself.
                 if (packet.getType() == null) {
-                    // User has come online.
+                    // A user's resource has come online.
                     TransportSession session;
                     try {
                         session = sessionManager.getSession(from);
 
-                        // Well, this could represent a status change.
-                        session.updateStatus(getPresenceType(packet), packet.getStatus());
+                        if (session.hasResource(from.getResource())) {
+                            // Well, this could represent a status change.
+                            session.updateStatus(getPresenceType(packet), packet.getStatus());
+                        }
+                        else {
+                            // This is a new resource, lets send them what we know.
+                            session.addResource(from.getResource(), packet.getPriority());
+                            // Tell the new resource what the state of their buddy list is.
+                            session.resendContactStatuses(from);
+                            // If this priority is the highest, treat it's status as golden
+                            if (session.isHighestPriority(from.getResource())) {
+                                session.updateStatus(getPresenceType(packet), packet.getStatus());
+                            }
+                        }
                     }
                     catch (NotFoundException e) {
                         // TODO: TEMPORARY: Since we are using shared groups now, we will clean up our testers rosters for them.
@@ -214,22 +226,42 @@ public abstract class BaseTransport implements Component {
                         }
 
                         session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
-                        //sessionManager.storeSession(registration.getJID(), session);
                         sessionManager.storeSession(from, session);
 
                     }
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
-                    // User has gone offline.
+                    // A user's resource has gone offline.
                     TransportSession session;
                     try {
                         session = sessionManager.getSession(from);
-                        if (session.isLoggedIn()) {
-                            this.registrationLoggedOut(session);
-                        }
+                        if (session.getResourceCount() > 1) {
+                            String resource = from.getResource();
 
-                        //sessionManager.removeSession(registration.getJID());
-                        sessionManager.removeSession(from);
+                            // Just one of the resources, lets adjust accordingly.
+                            if (session.isHighestPriority(resource)) {
+                                // Ooh, the highest resource went offline, drop to next highest.
+                                session.removeResource(resource);
+
+                                // Lets ask the next highest resource what it's presence is.
+                                Presence p = new Presence(Presence.Type.probe);
+                                p.setTo(session.getJIDWithHighestPriority());
+                                p.setFrom(this.getJID());
+                                sendPacket(p);
+                            }
+                            else {
+                                // Meh, lower priority, big whoop.
+                                session.removeResource(resource);
+                            }
+                        }
+                        else {
+                            // No more resources, byebye.
+                            if (session.isLoggedIn()) {
+                                this.registrationLoggedOut(session);
+                            }
+
+                            sessionManager.removeSession(from);
+                        }
                     }
                     catch (NotFoundException e) {
                         Log.debug("Ignoring unavailable presence for inactive seession.");

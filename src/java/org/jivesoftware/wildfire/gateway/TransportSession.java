@@ -143,6 +143,26 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
+     * Given a resource, returns whether it's priority is the highest.
+     *
+     * @param resource Resource to be checked.
+     * @return True or false if the resource is the highest priority.
+     */
+    public Boolean isHighestPriority(String resource) {
+        return (resources.get(resources.lastKey()).equals(resource));
+    }
+
+    /**
+     * Given a resource, returns whether the resource is currently associated with this session.
+     *
+     * @param resource Resource to be checked.
+     * @return True of false if the resource is associated with this session.
+     */
+    public Boolean hasResource(String resource) {
+        return (resources.containsValue(resource));
+    }
+
+    /**
      * Handles monitoring of whether session is still valid.
      */
     public void run() {

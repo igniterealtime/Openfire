@@ -322,6 +322,9 @@ public class Roster implements Cacheable {
                 org.xmpp.packet.Roster.Subscription.none, groups);
 
         RosterItem rosterItem = new RosterItem(item);
+        // Fire event indicating that a roster item is about to be added
+        persistent = RosterEventDispatcher.addingContact(this, rosterItem, persistent);
+
         // Check if we need to make the new roster item persistent
         if (persistent) {
             rosterItemProvider.createItem(username, rosterItem);
@@ -998,7 +1001,7 @@ public class Roster implements Cacheable {
                     // Do not delete the item if deletedUser belongs to a public group since the
                     // subcription status will change
                     !(deletedGroup.isUser(deletedUser) &&
-                    rosterManager.isGroupPublic(deletedGroup))) {
+                    RosterManager.isPulicSharedGroup(deletedGroup))) {
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(deletedUser, false);
@@ -1007,7 +1010,7 @@ public class Roster implements Cacheable {
                 // Remove the shared group from the item if deletedUser does not belong to a
                 // public group
                 if (!(deletedGroup.isUser(deletedUser) &&
-                        rosterManager.isGroupPublic(deletedGroup))) {
+                        RosterManager.isPulicSharedGroup(deletedGroup))) {
                     item.removeSharedGroup(deletedGroup);
                 }
                 // Get the groups of the deleted user

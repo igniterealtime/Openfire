@@ -67,6 +67,29 @@ public class RosterEventDispatcher {
     }
 
     /**
+     * Notifies listeners that a contact is about to be added to a roster. New contacts
+     * may be persisted to the database or not. Listeners may indicate that contact about
+     * to be persisted should not be persisted. Only one listener is needed to return
+     * <tt>false</tt> so that the contact is not persisted.
+     *
+     * @param roster the roster that was updated.
+     * @param item the new roster item.
+     * @param persistent true if the new contact is going to be saved to the database.
+     * @return false if the contact should not be persisted to the database.
+     */
+    public static boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
+        boolean answer = persistent;
+        if (!listeners.isEmpty()) {
+            for (RosterEventListener listener : listeners) {
+                if (!listener.addingContact(roster, item, persistent)) {
+                    answer = false;
+                }
+            }
+        }
+        return answer;
+    }
+
+    /**
      * Notifies the listeners that a contact has been added to a roster.
      *
      * @param roster the roster that was updated.

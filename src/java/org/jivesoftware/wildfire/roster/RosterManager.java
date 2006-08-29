@@ -239,7 +239,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return a collection of Groups obtained by parsing a comma delimited String with the name
      *         of groups.
      */
-    private Collection<String> parseGroupNames(String groupNames) {
+    private static Collection<String> parseGroupNames(String groupNames) {
         Collection<String> answer = new HashSet<String>();
         if (groupNames != null) {
             StringTokenizer tokenizer = new StringTokenizer(groupNames, ",");
@@ -361,7 +361,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @param group the group to check if it may be considered a shared group.
      * @return true if the specified Group may be included in a user roster.
      */
-    public boolean isSharedGroup(Group group) {
+    public static boolean isSharedGroup(Group group) {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         if ("onlyGroup".equals(showInRoster) || "everybody".equals(showInRoster)) {
             return true;
@@ -376,39 +376,10 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @param group the group to check if it may be seen by all users in the system.
      * @return true if the specified Group may be seen by all users in the system.
      */
-    public boolean isPulicSharedGroup(Group group) {
+    public static boolean isPulicSharedGroup(Group group) {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         if ("everybody".equals(showInRoster)) {
             return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if a shared group may be seen by any of the specified groups. The groups
-     * contained in the collection may or may not be a shared groups.
-     *
-     * @param sharedGroup the shared group to check its visibility.
-     * @param groups the groups to check if any of them can see the shared group.
-     * @return true if any of the specified groups can see the shared group.
-     */
-    public boolean isSharedGroupVisible(Group sharedGroup, Collection<Group> groups) {
-        if (groups.isEmpty()) {
-            return false;
-        }
-        Map<String, String> properties = sharedGroup.getProperties();
-        String showInRoster = properties.get("sharedRoster.showInRoster");
-        if ("everybody".equals(showInRoster)) {
-            return true;
-        }
-        if ("onlyGroup".equals(showInRoster)) {
-            Collection<String> groupNames = new ArrayList<String>(groups.size());
-            for (Group group : groups) {
-                groupNames.add(group.getName());
-            }
-            Collection<String> visibleGroups =
-                    parseGroupNames(properties.get("sharedRoster.groupList"));
-            return !Collections.disjoint(visibleGroups, groupNames);
         }
         return false;
     }
@@ -757,21 +728,6 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             }
         }
         return answer;
-    }
-
-    /**
-     * Returns true if a given group is visible to any user. That means, if any user can
-     * see the group in his roster.
-     *
-     * @param group the group to check if the user can see.
-     * @return true if a given group is visible by any user.
-     */
-    boolean isGroupPublic(Group group) {
-        String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-        if ("everybody".equals(showInRoster)) {
-            return true;
-        }
-        return false;
     }
 
     /**

@@ -66,7 +66,7 @@ public class ConnectionMultiplexerSession extends Session {
     static {
         // Set the TLS policy stored as a system property
         String policyName = JiveGlobals.getProperty("xmpp.multiplex.tls.policy",
-                Connection.TLSPolicy.optional.toString());
+                Connection.TLSPolicy.disabled.toString());
         tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
 
         // Set the Compression policy stored as a system property

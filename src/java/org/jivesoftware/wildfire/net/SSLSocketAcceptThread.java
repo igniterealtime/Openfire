@@ -73,9 +73,6 @@ public class SSLSocketAcceptThread extends Thread {
     public SSLSocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
             throws IOException {
         super("Secure Socket Listener");
-        this.connManager = connManager;
-        this.serverPort = serverPort;
-        int port = serverPort.getPort();
         // Listen on a specific network interface if it has been set.
         String interfaceName = JiveGlobals.getXMLProperty("network.interface");
         InetAddress bindInterface = null;
@@ -83,12 +80,19 @@ public class SSLSocketAcceptThread extends Thread {
             try {
                 if (interfaceName.trim().length() > 0) {
                     bindInterface = InetAddress.getByName(interfaceName);
+                    // Create the new server port based on the new bind address
+                    serverPort = new ServerPort(serverPort.getPort(),
+                            serverPort.getDomainNames().get(0), interfaceName, serverPort.isSecure(),
+                            serverPort.getSecurityType(), serverPort.getType());
                 }
             }
             catch (UnknownHostException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
+        this.connManager = connManager;
+        this.serverPort = serverPort;
+        int port = serverPort.getPort();
         serverSocket = SSLConfig.createServerSocket(port, bindInterface);
     }
 

@@ -12,7 +12,8 @@
 package org.jivesoftware.wildfire;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a port on which the server will listen for connections.
@@ -24,17 +25,16 @@ import java.util.Iterator;
 public class ServerPort {
 
     private int port;
-    private ArrayList<String> names;
+    private List<String> names = new ArrayList<String>(1);
     private String address;
     private boolean secure;
     private String algorithm;
     private Type type;
 
     public ServerPort(int port, String name, String address,
-            boolean isSecure, String algorithm, Type type)
+                      boolean isSecure, String algorithm, Type type)
     {
         this.port = port;
-        this.names = new ArrayList<String>(1);
         this.names.add(name);
         this.address = address;
         this.secure = isSecure;
@@ -58,8 +58,8 @@ public class ServerPort {
      *
      * @return the server domain name(s) as Strings.
      */
-    public Iterator getDomainNames() {
-        return names.iterator();
+    public List<String> getDomainNames() {
+        return Collections.unmodifiableList(names);
     }
 
     /**
@@ -124,6 +124,10 @@ public class ServerPort {
      */
     public boolean isConnectionManagerPort() {
         return type == Type.connectionManager;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public static enum Type {

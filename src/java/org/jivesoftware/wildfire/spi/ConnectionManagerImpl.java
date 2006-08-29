@@ -88,11 +88,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start servers socket unless it's been disabled.
         if (isServerListenerEnabled()) {
             int port = getServerListenerPort();
-            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
-                    false, null, ServerPort.Type.server);
             try {
-                serverSocketThread = new SocketAcceptThread(this, serverPort);
-                ports.add(serverPort);
+                serverSocketThread = new SocketAcceptThread(this, new ServerPort(port, serverName,
+                        localIPAddress, false, null, ServerPort.Type.server));
+                ports.add(serverSocketThread.getServerPort());
                 serverSocketThread.setDaemon(true);
                 serverSocketThread.setPriority(Thread.MAX_PRIORITY);
                 serverSocketThread.start();
@@ -121,11 +120,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start multiplexers socket unless it's been disabled.
         if (isConnectionManagerListenerEnabled()) {
             int port = getConnectionManagerListenerPort();
-            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
-                    false, null, ServerPort.Type.connectionManager);
             try {
-                multiplexerSocketThread = new SocketAcceptThread(this, serverPort);
-                ports.add(serverPort);
+                multiplexerSocketThread = new SocketAcceptThread(this, new ServerPort(port,
+                        serverName, localIPAddress, false, null,
+                        ServerPort.Type.connectionManager));
+                ports.add(multiplexerSocketThread.getServerPort());
                 multiplexerSocketThread.setDaemon(true);
                 multiplexerSocketThread.setPriority(Thread.MAX_PRIORITY);
                 multiplexerSocketThread.start();
@@ -154,11 +153,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled()) {
             int port = getComponentListenerPort();
-            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
-                    false, null, ServerPort.Type.component);
             try {
-                componentSocketThread = new SocketAcceptThread(this, serverPort);
-                ports.add(serverPort);
+                componentSocketThread = new SocketAcceptThread(this, new ServerPort(port,
+                        serverName, localIPAddress, false, null, ServerPort.Type.component));
+                ports.add(componentSocketThread.getServerPort());
                 componentSocketThread.setDaemon(true);
                 componentSocketThread.setPriority(Thread.MAX_PRIORITY);
                 componentSocketThread.start();
@@ -187,11 +185,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients plain socket unless it's been disabled.
         if (isClientListenerEnabled()) {
             int port = getClientListenerPort();
-            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
-                    false, null, ServerPort.Type.client);
+
             try {
-                socketThread = new SocketAcceptThread(this, serverPort);
-                ports.add(serverPort);
+                socketThread = new SocketAcceptThread(this, new ServerPort(port, serverName,
+                        localIPAddress, false, null, ServerPort.Type.client));
+                ports.add(socketThread.getServerPort());
                 socketThread.setDaemon(true);
                 socketThread.setPriority(Thread.MAX_PRIORITY);
                 socketThread.start();
@@ -224,11 +222,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             if ("".equals(algorithm) || algorithm == null) {
                 algorithm = "TLS";
             }
-            ServerPort serverPort = new ServerPort(port, serverName, localIPAddress,
-                    true, algorithm, ServerPort.Type.client);
             try {
-                sslSocketThread = new SSLSocketAcceptThread(this, serverPort);
-                ports.add(serverPort);
+                sslSocketThread = new SSLSocketAcceptThread(this, new ServerPort(port, serverName,
+                        localIPAddress, true, algorithm, ServerPort.Type.client));
+                ports.add(sslSocketThread.getServerPort());
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.setPriority(Thread.MAX_PRIORITY);
                 sslSocketThread.start();
